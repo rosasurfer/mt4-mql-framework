@@ -20,6 +20,8 @@ extern int    iParameter = 12345;
 #include <test/testlibrary.mqh>
 //#include <test/teststatic.mqh>
 
+#include <structs.mqh>
+
 
 /**
  * Main-Funktion
@@ -41,6 +43,17 @@ int onTick() {
          if (__LOG) log(StringConcatenate("onTick()   trend change ", ifString(trend > 0, "up  ", "down"), " ", TimeToStr(Tick.Time, TIME_FULL)));
       }
    }
+
+
+   static bool done;
+   if (!done) {
+      int lpContext;
+      int /*EXECUTION_CONTEXT*/ec[]; if (!ArraySize(ec)) InitializeExecutionContext(ec, lpContext);
+      //EXECUTION_CONTEXT.toStr(ec, true);
+
+      done = true;
+   }
+
 
 
    /*

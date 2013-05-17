@@ -255,8 +255,8 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
-   int lpContext;
-   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec, lpContext);
+   int lpSuperContext;
+   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec, lpSuperContext);
    sec[EC_LAST_ERROR] = NO_ERROR;
 
    int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
@@ -273,7 +273,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
                           "",                                        // ________________
-                          lpContext,                                 // __SuperContext__
+                          lpSuperContext,                            // __SuperContext__
                           iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
@@ -882,7 +882,7 @@ string StringToHexStr(string value) {
  *
  * @param  int id
  *
- * @return string
+ * @return string oder Leerstring, wenn die übergebene ID ungültig ist
  */
 string __whereamiToStr(int id) {
    switch (id) {
@@ -890,7 +890,7 @@ string __whereamiToStr(int id) {
       case FUNC_START : return("FUNC_START" );
       case FUNC_DEINIT: return("FUNC_DEINIT");
    }
-   return("unknown ("+ id +")");
+   return(_empty(catch("__whereamiToStr()   invalid parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7956,6 +7956,63 @@ string PeriodFlagToStr(int flags) {
 
 
 /**
+ * Gibt die lesbare Version eines ChartProperty-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener ChartProperty-Flags
+ *
+ * @return string
+ */
+string ChartPropertiesToStr(int flags) {
+   string result = "";
+
+   if (_bool(flags & CP_OFFLINE)) result = StringConcatenate(result, "|CP_OFFLINE");   // vor Chart, um Lesbarkeit zu erhöhen
+   if (_bool(flags & CP_CHART  )) result = StringConcatenate(result, "|CP_CHART"  );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version eines Init-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener Init-Flags
+ *
+ * @return string
+ */
+string InitFlagsToStr(int flags) {
+   string result = "";
+
+   if (_bool(flags & INIT_TIMEZONE           )) result = StringConcatenate(result, "|INIT_TIMEZONE"           );
+   if (_bool(flags & INIT_PIPVALUE           )) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
+   if (_bool(flags & INIT_BARS_ON_HIST_UPDATE)) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
+   if (_bool(flags & INIT_CUSTOMLOG          )) result = StringConcatenate(result, "|INIT_CUSTOMLOG"          );
+   if (_bool(flags & INIT_HSTLIB             )) result = StringConcatenate(result, "|INIT_HSTLIB"             );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt die lesbare Version eines Deinit-Flags zurück.
+ *
+ * @param  int flags - Kombination verschiedener Deinit-Flags
+ *
+ * @return string
+ */
+string DeinitFlagsToStr(int flags) {
+   string result = "";
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
  * Gibt die lesbare Version eines FileAccess-Modes zurück.
  *
  * @param  int mode - Kombination verschiedener FileAccess-Modes
@@ -8226,7 +8283,7 @@ string UninitializeReasonToStr(int reason) {
 
 
 /**
- * Gibt den Titelbartext des angegebenen Fensters oder den Text des angegebenen Windows-Control zurück.
+ * Gibt den Titelzeilentext des angegebenen Fensters oder den Text des angegebenen Windows-Control zurück.
  *
  * @param  int hWnd - Handle
  *
