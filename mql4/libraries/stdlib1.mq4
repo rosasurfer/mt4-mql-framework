@@ -4105,6 +4105,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "axitrader-"         )) return("AxiTrader"       );
    else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
    else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
+   else if (StringStartsWith(server, "cmap-"              )) return("IC Markets"      );
    else if (StringStartsWith(server, "collectivefx-"      )) return("CollectiveFX"    );
    else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
    else if (StringStartsWith(server, "easyforex-"         )) return("EasyForex"       );
@@ -8074,6 +8075,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "axitrader-"         )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "cmap-"              )) timezone = "Europe/London";        // IC Markets
    else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
