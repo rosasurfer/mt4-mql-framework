@@ -17,8 +17,8 @@ extern int    iParameter = 12345;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <test/testlibrary.mqh>
-//#include <test/teststatic.mqh>
+//#include <test/testlibrary.mqh>
+#include <test/teststatic.mqh>
 
 
 /**
@@ -27,8 +27,8 @@ extern int    iParameter = 12345;
  * @return int - Fehlerstatus
  */
 int onTick() {
+   /*
    int iNull[];
-
    if (EventListener.BarOpen(iNull, F_PERIOD_H1)) {
       int    timeframe   = PERIOD_H1;
       string maPeriods   = "3";
@@ -41,17 +41,20 @@ int onTick() {
          if (__LOG) log(StringConcatenate("onTick()   trend change ", ifString(trend > 0, "up  ", "down"), " ", TimeToStr(Tick.Time, TIME_FULL)));
       }
    }
+   */
 
 
-   /*
-   bool st = true;
-   bool si = false;
-   bool in = false;
-   //GlobalPrimitives(st, in);
-   //LocalPrimitives(in);
+   bool st = true;               // static ...
+   bool si = false;              // sized array declaration
+   bool in = false;              // initializer
+
+   GlobalPrimitives(st, in);
+   //LocalPrimitives (    in);
 
    //GlobalArrays(st, si, in);
-   //LocalArrays(st, si, in);
+   //LocalArrays (st, si, in);
+
+   /*
    */
    return(last_error);
 }

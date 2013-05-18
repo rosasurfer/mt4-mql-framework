@@ -10,7 +10,9 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-#include <test/testlibrary.mqh>
+
+//#include <test/testlibrary.mqh>
+#include <test/teststatic.mqh>
 
 
 /**
@@ -20,20 +22,28 @@ int __DEINIT_FLAGS__[];
  */
 int onTick() {
 
-   debug("onTick()   Tick.prevTime="+ TimeToStr(Tick.prevTime, TIME_FULL) +"   Tick.Time="+ TimeToStr(Tick.Time, TIME_FULL));
-
-
    /*
    bool st = true;               // static ...
    bool si = false;              // sized array declaration
    bool in = true;               // initializer
 
    //GlobalPrimitives(st, in);
-   //LocalPrimitives(in);
+   //LocalPrimitives (    in);
 
    //GlobalArrays(st, si, in);
-   //LocalArrays(st, si, in);
+   //LocalArrays (st, si, in);
    */
-
    return(last_error);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+void DummyCalls() {
+   GlobalPrimitives(NULL, NULL);
+   LocalPrimitives(NULL);
+   GlobalArrays(NULL, NULL, NULL);
+   LocalArrays(NULL, NULL, NULL);
 }
