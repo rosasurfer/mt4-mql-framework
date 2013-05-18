@@ -255,8 +255,10 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
-   int lpSuperContext;
-   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec, lpSuperContext);
+
+   // TODO: !!! EXECUTION_CONTEXT des Hauptprogramms übergeben
+
+   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec);
    sec[EC_LAST_ERROR] = NO_ERROR;
 
    int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
@@ -273,7 +275,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
                           "",                                        // ________________
-                          lpSuperContext,                            // __SuperContext__
+                          sec[EC_SIGNATURE],                         // __SuperContext__
                           iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
@@ -886,11 +888,12 @@ string StringToHexStr(string value) {
  */
 string __whereamiToStr(int id) {
    switch (id) {
+      case 0          : return("0"          );
       case FUNC_INIT  : return("FUNC_INIT"  );
       case FUNC_START : return("FUNC_START" );
       case FUNC_DEINIT: return("FUNC_DEINIT");
    }
-   return(_empty(catch("__whereamiToStr()   invalid parameter id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("__whereamiToStr()   unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7704,10 +7707,11 @@ bool IsPendingTradeOperation(int value) {
 string ModuleTypeToStr(int type) {
    string result = "";
 
-   if (_bool(type & T_EXPERT   )) StringConcatenate(result, "|T_EXPERT"   );
-   if (_bool(type & T_SCRIPT   )) StringConcatenate(result, "|T_SCRIPT"   );
-   if (_bool(type & T_INDICATOR)) StringConcatenate(result, "|T_INDICATOR");
-   if (_bool(type & T_LIBRARY  )) StringConcatenate(result, "|T_LIBRARY"  );
+   if (!type)                     result = StringConcatenate(result, "|0"          );
+   if (_bool(type & T_EXPERT   )) result = StringConcatenate(result, "|T_EXPERT"   );
+   if (_bool(type & T_SCRIPT   )) result = StringConcatenate(result, "|T_SCRIPT"   );
+   if (_bool(type & T_INDICATOR)) result = StringConcatenate(result, "|T_INDICATOR");
+   if (_bool(type & T_LIBRARY  )) result = StringConcatenate(result, "|T_LIBRARY"  );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -7725,10 +7729,10 @@ string ModuleTypeToStr(int type) {
 string ModuleTypeDescription(int type) {
    string result = "";
 
-   if (_bool(type & T_EXPERT   )) StringConcatenate(result, ".Expert"   );
-   if (_bool(type & T_SCRIPT   )) StringConcatenate(result, ".Script"   );
-   if (_bool(type & T_INDICATOR)) StringConcatenate(result, ".Indicator");
-   if (_bool(type & T_LIBRARY  )) StringConcatenate(result, ".Library"  );
+   if (_bool(type & T_EXPERT   )) result = StringConcatenate(result, ".Expert"   );
+   if (_bool(type & T_SCRIPT   )) result = StringConcatenate(result, ".Script"   );
+   if (_bool(type & T_INDICATOR)) result = StringConcatenate(result, ".Indicator");
+   if (_bool(type & T_LIBRARY  )) result = StringConcatenate(result, ".Library"  );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -7940,6 +7944,7 @@ int PeriodFlag(int period=NULL) {
 string PeriodFlagToStr(int flags) {
    string result = "";
 
+   if (!flags)                      result = StringConcatenate(result, "|0"  );
    if (_bool(flags & F_PERIOD_M1 )) result = StringConcatenate(result, "|M1" );
    if (_bool(flags & F_PERIOD_M5 )) result = StringConcatenate(result, "|M5" );
    if (_bool(flags & F_PERIOD_M15)) result = StringConcatenate(result, "|M15");
@@ -7966,6 +7971,7 @@ string PeriodFlagToStr(int flags) {
 string ChartPropertiesToStr(int flags) {
    string result = "";
 
+   if (!flags)                    result = StringConcatenate(result, "|0"         );
    if (_bool(flags & CP_OFFLINE)) result = StringConcatenate(result, "|CP_OFFLINE");   // vor Chart, um Lesbarkeit zu erhöhen
    if (_bool(flags & CP_CHART  )) result = StringConcatenate(result, "|CP_CHART"  );
 
@@ -7985,6 +7991,7 @@ string ChartPropertiesToStr(int flags) {
 string InitFlagsToStr(int flags) {
    string result = "";
 
+   if (!flags)                                  result = StringConcatenate(result, "|0"                       );
    if (_bool(flags & INIT_TIMEZONE           )) result = StringConcatenate(result, "|INIT_TIMEZONE"           );
    if (_bool(flags & INIT_PIPVALUE           )) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
    if (_bool(flags & INIT_BARS_ON_HIST_UPDATE)) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
@@ -8007,6 +8014,9 @@ string InitFlagsToStr(int flags) {
 string DeinitFlagsToStr(int flags) {
    string result = "";
 
+   if (!flags) result = StringConcatenate(result, "|0"      );
+   else        result = StringConcatenate(result, "|"+ flags);
+
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
    return(result);
@@ -8023,6 +8033,7 @@ string DeinitFlagsToStr(int flags) {
 string FileAccessModeToStr(int mode) {
    string result = "";
 
+   if (!mode)                    result = StringConcatenate(result, "|0"         );
    if (_bool(mode & FILE_CSV  )) result = StringConcatenate(result, "|FILE_CSV"  );
    if (_bool(mode & FILE_BIN  )) result = StringConcatenate(result, "|FILE_BIN"  );
    if (_bool(mode & FILE_READ )) result = StringConcatenate(result, "|FILE_READ" );

@@ -45,17 +45,6 @@ int onTick() {
    }
 
 
-   static bool done;
-   if (!done) {
-      int lpContext;
-      int /*EXECUTION_CONTEXT*/ec[]; if (!ArraySize(ec)) InitializeExecutionContext(ec, lpContext);
-      EXECUTION_CONTEXT.toStr(ec, true);
-
-      done = true;
-   }
-
-
-
    /*
    bool st = true;
    bool si = false;

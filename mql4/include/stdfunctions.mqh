@@ -5,16 +5,18 @@
 
 
 // globale Variablen, stehen überall zur Verfügung
-int      __lpExecutionContext;                              // Zeiger auf Original des ExecutionContext
-int      __ExecutionContext[];                              // ExecutionContext des aktuellen Programms (je nach Modultyp Original oder Kopie)
-int      __SuperContext    [];                              // evt. SuperContext des aktuellen Programms (falls gesetzt immer Kopie)
+int      __ExecutionContext[];                              // ExecutionContext des aktuellen Programms (in Libraries Kopie)
+int      __SuperContext    [];                              // SuperContext des aktuellen Programms (NULL oder Kopie)
+
+int      __lpExecutionContext;                              // Zeiger auf ExecutionContext
+//int    __lpSuperContext;                                  // Zeiger auf SuperContext (im Modul definiert)
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
-bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei Test.VisualMode=Off oder Test.Optimization=On)
-bool     IsOfflineChart;                                    // ob der aktuelle Chart ein Offline-Chart ist
+bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
+bool     IsOfflineChart;                                    // ob der Chart ein Offline-Chart ist
 
 bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
@@ -1118,31 +1120,31 @@ int ResetLastError() {
 /**
  * Initialisiert einen EXECUTION_CONTEXT-Buffer.
  *
- * @param  int ec[] - das für den Buffer zu verwendende Integer-Array
- * @param  int &ptr - Zeiger auf zu kopierenden Context (nach Rückkehr immer != NULL)
+ * @param  int ec[]          - das für den Buffer zu verwendende Integer-Array
+ * @param  int lpCopyContext - Zeiger auf zu kopierenden Context (default: NULL)
  *
  * @return int - Fehlerstatus
  *
  *
  * NOTE: In der Headerdatei implementiert, um Verwendung vor Library-Initialisierung zu ermöglichen.
  */
-int InitializeExecutionContext(int &ec[], int &ptr) {
-   if (ArrayDimension(ec) != 1)                return(catch("InitializeExecutionContext(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
-   if (ptr!=NULL) /*&&*/ if (ptr < 0x00010000) return(catch("InitializeExecutionContext(2)   invalid parameter ptr = "+ ptr +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
+int InitializeExecutionContext(int &ec[], int lpCopyContext=NULL) {
+   if (ArrayDimension(ec) != 1)                                    return(catch("InitializeExecutionContext(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
+   if (lpCopyContext!=NULL) /*&&*/ if (lpCopyContext < 0x00010000) return(catch("InitializeExecutionContext(2)   invalid parameter lpCopyContext = 0x"+ IntToHexStr(lpCopyContext) +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize)
       ArrayResize(ec, EXECUTION_CONTEXT.intSize);
 
-   if (!ptr) {
+   if (!lpCopyContext) {
       ArrayInitialize(ec, 0);
       ec[EC_SIGNATURE] = GetBufferAddress(ec);
-      ptr = ec[EC_SIGNATURE];
    }
    else {
-      CopyMemory(GetBufferAddress(ec), ptr, EXECUTION_CONTEXT.size);
+      CopyMemory(GetBufferAddress(ec), lpCopyContext, EXECUTION_CONTEXT.size);
 
       // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-      if (ptr != ec[EC_SIGNATURE])             return(catch("InitializeExecutionContext(3)   invalid EXECUTION_CONTEXT found at memory address "+ IntToHexStr(ptr), ERR_RUNTIME_ERROR));
+      if (lpCopyContext != ec[EC_SIGNATURE])
+         return(catch("InitializeExecutionContext(3)   invalid EXECUTION_CONTEXT found at memory address 0x"+ IntToHexStr(lpCopyContext), ERR_RUNTIME_ERROR));
    }
    return(catch("InitializeExecutionContext(4)"));
 }
@@ -1873,7 +1875,7 @@ void __DummyCalls() {
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
    Indicator.IsTesting();
-   InitializeExecutionContext(iNulls, iNull);
+   InitializeExecutionContext(iNulls);
    IsError(NULL);
    IsExpert();
    IsIndicator();
