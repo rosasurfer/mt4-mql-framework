@@ -798,7 +798,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
    // rekursive Aufrufe abfangen
-   static bool recursive;
+   static bool recursive = false;                                    // static: EA+Indicator ok
    if (recursive)
       return(error);
    recursive = true;
@@ -1117,6 +1117,13 @@ int ResetLastError() {
 }
 
 
+#import "structs1.ex4"
+   int    ec.Signature           (/*EXECUTION_CONTEXT*/int ec[]                  );
+   int    ec.setSignature        (/*EXECUTION_CONTEXT*/int ec[], int  signature  );
+   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+#import
+
+
 /**
  * Initialisiert einen EXECUTION_CONTEXT-Buffer.
  *
@@ -1137,14 +1144,12 @@ int InitializeExecutionContext(int &ec[], int lpCopyContext=NULL) {
 
    if (!lpCopyContext) {
       ArrayInitialize(ec, 0);
-      ec[EC_SIGNATURE] = GetBufferAddress(ec);
+      ec.setSignature(ec, GetBufferAddress(ec));
    }
    else {
       CopyMemory(GetBufferAddress(ec), lpCopyContext, EXECUTION_CONTEXT.size);
-
       // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-      if (lpCopyContext != ec[EC_SIGNATURE])
-         return(catch("InitializeExecutionContext(3)   invalid EXECUTION_CONTEXT found at memory address 0x"+ IntToHexStr(lpCopyContext), ERR_RUNTIME_ERROR));
+      if (ec.Signature(ec) != lpCopyContext)                       return(catch("InitializeExecutionContext(3)   invalid EXECUTION_CONTEXT found at memory address 0x"+ IntToHexStr(lpCopyContext), ERR_RUNTIME_ERROR));
    }
    return(catch("InitializeExecutionContext(4)"));
 }

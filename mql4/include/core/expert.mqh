@@ -62,9 +62,8 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       ec.SetWhereami();
       ec.SetLoggingEnabled();
       ec.SetLogFile();
-
-      EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
       */
+      EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
 
 
 

@@ -20,8 +20,6 @@ extern int    iParameter = 12345;
 #include <test/testlibrary.mqh>
 //#include <test/teststatic.mqh>
 
-#include <structs.mqh>
-
 
 /**
  * Main-Funktion

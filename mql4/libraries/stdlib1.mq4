@@ -504,8 +504,6 @@ M15::Moving Average::stdlib::onTick()   MODE_FREEZELEVEL       = 0
  * @param  int destination - Zieladresse
  * @param  int source      - Quelladdrese
  * @param  int bytes       - Anzahl zu kopierender Bytes
- *
- * @return string
  */
 void CopyMemory(int destination, int source, int bytes) {
    RtlMoveMemory(destination, source, bytes);
