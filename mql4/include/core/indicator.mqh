@@ -407,18 +407,11 @@ int SetLastError(int error, int param=NULL) {
          __STATUS_ERROR = true;
    }
 
-   // bei iCustom() Fehler an Aufrufer weiterreichen
+   // ggf. Fehler an Aufrufer weiterreichen
    if (IsSuperContext()) {
-      /*EXECUTION_CONTEXT*/int sec[]; error = InitializeExecutionContext(sec, __lpSuperContext);
-
-      if (IsError(error)) {
-         __lpSuperContext = NULL;
-         SetLastError(error);
-      }
-      else {
-         sec[EC_LAST_ERROR] = last_error;
-         CopyMemory(__lpSuperContext, GetBufferAddress(sec), EXECUTION_CONTEXT.size);
-      }
+      /*EXECUTION_CONTEXT*/int sec[]; InitializeExecutionContext(sec, __lpSuperContext);
+      sec[EC_LAST_ERROR] = last_error;
+      CopyMemory(__lpSuperContext, GetBufferAddress(sec), EXECUTION_CONTEXT.size);
    }
    return(last_error);
 }

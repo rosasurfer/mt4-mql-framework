@@ -30,17 +30,58 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
 
-   // (1) EXECUTION_CONTEXT und globale Context-Variablen initialisieren
+   // (1) EXECUTION_CONTEXT und Variablen initialisieren
    if (!__lpExecutionContext) {
-      InitializeExecutionContext(__ExecutionContext, __lpExecutionContext);
+      /**
+       * typedef struct _EXECUTION_CONTEXT {
+       *    int    signature;             //   4      => ec[ 0]      // Signatur                         (konstant)   => Validierung des Speicherblocks
+       *    LPTSTR lpName;                //   4      => ec[ 1]      // Programmname                     (konstant)   => wie heiße ich
+       *    int    type;                  //   4      => ec[ 2]      // Programmtype                     (konstant)   => was bin ich
+       *    int    chartProperties;       //   4      => ec[ 3]      // Chart-Flags: Offline|Chart       (konstant)   => wie sehe ich aus
+       *    LPTR   lpSuperContext;        //   4      => ec[ 4]      // übergeordneter Execution-Context (konstant)   => wie wurde ich geladen
+       *    int    initFlags;             //   4      => ec[ 5]      // init-Flags                       (konstant)   => wie werde ich initialisiert
+       *    int    deinitFlags;           //   4      => ec[ 6]      // init-Flags                       (konstant)   => wie werde ich initialisiert
+       *    int    uninitializeReason;    //   4      => ec[ 7]      // letzter Uninitialize-Reason      (variabel)   => woher komme ich
+       *    int    whereami;              //   4      => ec[ 8]      // MQL-Rootfunktion des Programms   (variabel)   => wo bin ich
+       *    BOOL   loggingEnabled;        //   4      => ec[ 9]      // Log-Status                       (konstant)   => wie verhalte ich mich
+       *    LPTSTR lpLogFile;             //   4      => ec[10]      // Pfad/Name der Logdatei           (variabel)   => wie verhalte ich mich
+       *    int    lastError;             //   4      => ec[11]      // letzter aufgetretener Fehler     (variabel)   => Fehlerrückmeldung
+       * } EXECUTION_CONTEXT, ec;         //  48 byte = int[12]
+       */
+
+      InitializeExecutionContext(__ExecutionContext);
+      __lpExecutionContext = ec.Signature(__ExecutionContext);
+
+      /*
+      ec.SetName();
+      ec.SetType();
+      ec.SetChartProperties();
+      ec.SetInitFlags();
+      ec.SetDeinitFlags();
+      ec.SetUninitializeReason();
+      ec.SetWhereami();
+      ec.SetLoggingEnabled();
+      ec.SetLogFile();
+
+      EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+      */
+
+
+
+      __NAME__       = WindowExpertName();
+      int initFlags  = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
+      IsChart        = !IsTesting() || IsVisualMode();
+    //IsOfflineChart = IsChart && ???
+      __LOG          = IsLoggingEnabled();
+      __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
+
+      PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+      PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
+      Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+      PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+      PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
    }
 
-   __NAME__       = WindowExpertName();
-   int initFlags  = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
-   IsChart        = !IsTesting() || IsVisualMode();
- //IsOfflineChart = IsChart && ???
-   __LOG          = IsLoggingEnabled();
-   __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
 
 
 
@@ -48,15 +89,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
 
-   // (2) globale Formatvariablen re-initialisieren
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
-   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-
-   // (3) stdlib re-initialisieren (Indikatoren setzen Variablen nach jedem deinit() zurück)
+   // (2) stdlib re-initialisieren
    int iNull[];
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), iNull);
    if (IsError(error))
@@ -64,7 +97,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
-   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
+   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -94,7 +127,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-   // (5)  EA's ggf. aktivieren
+   // (4)  EA's ggf. aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
@@ -103,13 +136,13 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-   // (6) nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
+   // (5) nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (7) im Tester ChartInfo-Anzeige konfigurieren
+   // (6) im Tester ChartInfo-Anzeige konfigurieren
    if (IsVisualMode()) {
       chartInfo.appliedPrice = PRICE_BID;                                     // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
       chartInfo.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
@@ -120,7 +153,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
                                                                               // User-Routinen *können*, müssen aber nicht implementiert werden.
-   // (8) user-spezifische init()-Routinen aufrufen                           //
+   // (7) user-spezifische init()-Routinen aufrufen                           //
    onInit();                                                                  // Preprocessing-Hook
                                                                               //
    if (!__STATUS_ERROR) {                                                     //
@@ -142,7 +175,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       return(last_error);
 
 
-   // (9) außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken
+   // (8) außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken
    if (IsTesting()) {
       Test.fromDate    = TimeCurrent();
       Test.startMillis = GetTickCount();
