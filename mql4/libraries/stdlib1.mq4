@@ -11589,7 +11589,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          // Restposition finden
          if (NE(lots, openLots)) {
             string strValue, strValue2;
-            if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {  // Fall-Back zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
+            if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {  // Fallback zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
                // Der Tester überschreibt den OrderComment statt mit "to #2" mit "partial close".
                if (OrderComment() != "partial close")          return(_false(oe.setError(oe, catch("OrderCloseEx(13)   unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                strValue  = StringConcatenate("split from #", ticket);

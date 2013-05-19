@@ -50,6 +50,7 @@ int      last_error;                                        // der letzte Fehler
 #define WHOLE_ARRAY                 0
 #define MAX_SYMBOL_LENGTH          12
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
+#define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
 #define NL                          "\n"                    // new line, MQL schreibt 0x0D0A
 #define TAB                         "\t"                    // tab
 
@@ -825,7 +826,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // (2) Fehler loggen
       bool logged, alerted;
       if (__LOG_CUSTOM)
-         logged = logged || log.custom(StringConcatenate("ERROR: ", name, "::", message));            // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+         logged = logged || log.custom(StringConcatenate("ERROR: ", name, "::", message));            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
          logged  = true;
@@ -898,7 +899,7 @@ int warn(string message, int error=NO_ERROR) {
    // (2) Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
-      logged = logged || log.custom(StringConcatenate("WARN: ", name, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      logged = logged || log.custom(StringConcatenate("WARN: ", name, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);    // global Log: ggf. mit Instanz-ID
       logged  = true;
@@ -963,7 +964,7 @@ int log(string message, int error=NO_ERROR) {
 
    // (2) ggf. Custom-Log benutzen oder ...
    if (__LOG_CUSTOM)
-      if (log.custom(StringConcatenate(name, "::", message)))        // custom Log: ohne Instanz-ID, bei Fehler Fall-back zum Standard-Logging
+      if (log.custom(StringConcatenate(name, "::", message)))        // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
 
 

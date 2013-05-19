@@ -10,8 +10,100 @@ datetime Test.fromDate,    Test.toDate;
 int      Test.startMillis, Test.stopMillis;                          // in Millisekunden
 
 
+#import "structs1.ex4"
+   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
+   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
+   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
+   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
+   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
+   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
+   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
+   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
+   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
+   bool   ec.setLoggingEnabled    (/*EXECUTION_CONTEXT*/int ec[], bool loggingEnabled    );
+   int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput       );
+#import
+
+
 /**
- * Globale init()-Funktion für Expert Adviser.
+ * Initialisiert den EXECUTION_CONTEXT des Experts.
+ *
+ * @return int - Fehlerstatus
+ */
+int InitExecutionContext() {
+   if (__lpExecutionContext != 0) return(catch("InitExecutionContext(1)   __lpExecutionContext not NULL: 0x"+ IntToHexStr(__lpExecutionContext), ERR_ILLEGAL_STATE));
+
+
+   // (1) Speicher für ExpertName und LogFileName alloziieren
+   string names[2]; names[0] = WindowExpertName();                                              // ExpertName  (Länge konstant)
+                    names[1] = CreateString(MAX_PATH);                                          // LogFileName (Länge variabel)
+
+   int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
+                    CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
+                    CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
+
+
+   // (2) globale Variablen initialisieren
+   int initFlags   = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;                                     // in Experts wird die hstLib immer initialisiert
+   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+
+   __NAME__       = names[0];
+   IsChart        = !IsTesting() || IsVisualMode();
+ //IsOfflineChart = IsChart && ???
+   __LOG          = IsLoggingEnabled();
+   __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
+
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+
+
+   // (3) EXECUTION_CONTEXT initialisieren
+   /**
+    * typedef struct _EXECUTION_CONTEXT {
+    *    int    signature;             //   4      => ec[ 0]      // Signatur                         (konstant)   => Validierung des Speicherblocks
+    *    LPTSTR lpName;                //   4      => ec[ 1]      // Programmname                     (konstant)   => wie heiße ich
+    *    int    type;                  //   4      => ec[ 2]      // Programmtype                     (konstant)   => was bin ich
+    *    int    chartProperties;       //   4      => ec[ 3]      // Chart-Flags: Offline|Chart       (konstant)   => wie sehe ich aus
+    *    LPTR   lpSuperContext;        //   4      => ec[ 4]      // übergeordneter Execution-Context (konstant)   => wie wurde ich geladen
+    *    int    initFlags;             //   4      => ec[ 5]      // init-Flags                       (konstant)   => wie werde ich initialisiert
+    *    int    deinitFlags;           //   4      => ec[ 6]      // init-Flags                       (konstant)   => wie werde ich initialisiert
+    *    int    uninitializeReason;    //   4      => ec[ 7]      // letzter Uninitialize-Reason      (variabel)   => woher komme ich
+    *    int    whereami;              //   4      => ec[ 8]      // MQL-Rootfunktion des Programms   (variabel)   => wo bin ich
+    *    BOOL   loggingEnabled;        //   4      => ec[ 9]      // Logstatus                        (konstant)   => wie verhalte ich mich
+    *    LPTSTR lpLogFile;             //   4      => ec[10]      // Pfad/Name der Logdatei           (konstant)   => wie verhalte ich mich
+    *    int    lastError;             //   4      => ec[11]      // letzter aufgetretener Fehler     (variabel)   => Fehlerrückmeldung
+    * } EXECUTION_CONTEXT, ec;         //  48 byte = int[12]
+    */
+   ArrayResize    (__ExecutionContext, EXECUTION_CONTEXT.intSize);
+   ArrayInitialize(__ExecutionContext, 0);
+
+   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
+   ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
+   ec.setType              (__ExecutionContext, __TYPE__                                                                );
+   ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
+   ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
+   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
+   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                            );
+   ec.setLoggingEnabled    (__ExecutionContext, __LOG                                                                   );
+   ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
+
+   __lpExecutionContext = ec.Signature(__ExecutionContext);
+
+
+   if (IsError(catch("InitExecutionContext(2)")))
+      __lpExecutionContext = 0;
+   return(last_error);
+}
+
+
+/**
+ * Globale init()-Funktion für Experts.
  *
  * Nur bei Aufruf durch das Terminal wird der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung
  * zurückgesetzt.
@@ -29,72 +121,18 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-
-   // (1) EXECUTION_CONTEXT und Variablen initialisieren
+   // (1) EXECUTION_CONTEXT initialisieren
    if (!__lpExecutionContext) {
-      /**
-       * typedef struct _EXECUTION_CONTEXT {
-       *    int    signature;             //   4      => ec[ 0]      // Signatur                         (konstant)   => Validierung des Speicherblocks
-       *    LPTSTR lpName;                //   4      => ec[ 1]      // Programmname                     (konstant)   => wie heiße ich
-       *    int    type;                  //   4      => ec[ 2]      // Programmtype                     (konstant)   => was bin ich
-       *    int    chartProperties;       //   4      => ec[ 3]      // Chart-Flags: Offline|Chart       (konstant)   => wie sehe ich aus
-       *    LPTR   lpSuperContext;        //   4      => ec[ 4]      // übergeordneter Execution-Context (konstant)   => wie wurde ich geladen
-       *    int    initFlags;             //   4      => ec[ 5]      // init-Flags                       (konstant)   => wie werde ich initialisiert
-       *    int    deinitFlags;           //   4      => ec[ 6]      // init-Flags                       (konstant)   => wie werde ich initialisiert
-       *    int    uninitializeReason;    //   4      => ec[ 7]      // letzter Uninitialize-Reason      (variabel)   => woher komme ich
-       *    int    whereami;              //   4      => ec[ 8]      // MQL-Rootfunktion des Programms   (variabel)   => wo bin ich
-       *    BOOL   loggingEnabled;        //   4      => ec[ 9]      // Log-Status                       (konstant)   => wie verhalte ich mich
-       *    LPTSTR lpLogFile;             //   4      => ec[10]      // Pfad/Name der Logdatei           (variabel)   => wie verhalte ich mich
-       *    int    lastError;             //   4      => ec[11]      // letzter aufgetretener Fehler     (variabel)   => Fehlerrückmeldung
-       * } EXECUTION_CONTEXT, ec;         //  48 byte = int[12]
-       */
-
-      InitializeExecutionContext(__ExecutionContext);
-      __lpExecutionContext = ec.Signature(__ExecutionContext);
-
-      /*
-      ec.SetName();
-      ec.SetType();
-      ec.SetChartProperties();
-      ec.SetInitFlags();
-      ec.SetDeinitFlags();
-      ec.SetUninitializeReason();
-      ec.SetWhereami();
-      ec.SetLoggingEnabled();
-      ec.SetLogFile();
-
-      EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-      */
-
-
-
-      __NAME__       = WindowExpertName();
-      int initFlags  = SumInts(__INIT_FLAGS__) | INIT_HSTLIB;           // in Experts wird die historyLib immer initialisiert
-      IsChart        = !IsTesting() || IsVisualMode();
-    //IsOfflineChart = IsChart && ???
-      __LOG          = IsLoggingEnabled();
-      __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
-
-      PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-      PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
-      Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-      PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-      PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+      InitExecutionContext();
+      //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
    }
 
 
-
-
-
-
-
-
    // (2) stdlib re-initialisieren
-   int iNull[];
+   int iNull[], initFlags=ec.InitFlags(__ExecutionContext);
    int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), iNull);
-   if (IsError(error))
-      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
-                                                                              // #define INIT_PIPVALUE
+   if (IsError(error))                                                        // #define INIT_TIMEZONE               in stdlib_init()
+      return(SetLastError(error));                                            // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_HSTLIB
