@@ -44,17 +44,16 @@ int onTick() {
    */
 
 
-   bool st = true;              // static ...
-   bool si = true;              // sized array declaration
-   bool in = false;               // initializer
+   /*
+   bool st = true;               // static ...
+   bool si = true;               // sized array declaration
+   bool in = false;              // initializer
 
    //GlobalPrimitives(st, in);
    //LocalPrimitives (    in);
 
    //GlobalArrays(st, si, in);
-   LocalArrays (st, si, in);
-
-   /*
+   //LocalArrays (st, si, in);
    */
    return(last_error);
 }
