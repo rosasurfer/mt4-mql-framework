@@ -130,7 +130,7 @@ void GlobalArrays(bool st, bool si, bool in) {
    if (st) {
       if (si) {
          if (in) {
-            debug("GlobalArrays(static si=1, in=1)   g.ints="+ IntsToStr(g.ints.st.si.in, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.st.si.in, NULL) +"  g.strings="+ StringsToStr(g.strings.st.si.in, NULL));
+            debug("GlobalArrays(static si=1, in=1)   g.ints="+ IntsToStr(g.ints.st.si.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.st.si.in)) +"  g.doubles="+ DoublesToStr(g.doubles.st.si.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.st.si.in)) +"  g.strings="+ StringsToStr(g.strings.st.si.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.st.si.in)));
             if (ArraySize(g.ints.st.si.in   ) != 2) ArrayResize(g.ints.st.si.in,    2);
             if (ArraySize(g.doubles.st.si.in) != 2) ArrayResize(g.doubles.st.si.in, 2);
             if (ArraySize(g.strings.st.si.in) != 2) ArrayResize(g.strings.st.si.in, 2);
@@ -142,7 +142,7 @@ void GlobalArrays(bool st, bool si, bool in) {
             g.strings.st.si.in[0] = CharToStr(StringGetChar(g.strings.st.si.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("GlobalArrays(static si=1, in=0)   g.ints="+ IntsToStr(g.ints.st.si, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.st.si, NULL) +"  g.strings="+ StringsToStr(g.strings.st.si, NULL));
+            debug("GlobalArrays(static si=1, in=0)   g.ints="+ IntsToStr(g.ints.st.si, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.st.si)) +"  g.doubles="+ DoublesToStr(g.doubles.st.si, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.st.si)) +"  g.strings="+ StringsToStr(g.strings.st.si, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.st.si)) );
             if (ArraySize(g.ints.st.si   ) != 2) ArrayResize(g.ints.st.si,    2);
             if (ArraySize(g.doubles.st.si) != 2) ArrayResize(g.doubles.st.si, 2);
             if (ArraySize(g.strings.st.si) != 2) ArrayResize(g.strings.st.si, 2);
@@ -156,7 +156,7 @@ void GlobalArrays(bool st, bool si, bool in) {
       }
       else/*(!si)*/{
          if (in) {
-            debug("GlobalArrays(static si=0, in=1)   g.ints="+ IntsToStr(g.ints.st.in, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.st.in, NULL) +"  g.strings="+ StringsToStr(g.strings.st.in, NULL));
+            debug("GlobalArrays(static si=0, in=1)   g.ints="+ IntsToStr(g.ints.st.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.st.in)) +"  g.doubles="+ DoublesToStr(g.doubles.st.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.st.in)) +"  g.strings="+ StringsToStr(g.strings.st.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.st.in)));
             if (ArraySize(g.ints.st.in   ) != 2) ArrayResize(g.ints.st.in,    2);
             if (ArraySize(g.doubles.st.in) != 2) ArrayResize(g.doubles.st.in, 2);
             if (ArraySize(g.strings.st.in) != 2) ArrayResize(g.strings.st.in, 2);
@@ -168,7 +168,7 @@ void GlobalArrays(bool st, bool si, bool in) {
             g.strings.st.in[0] = CharToStr(StringGetChar(g.strings.st.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("GlobalArrays(static si=0, in=0)   g.ints="+ IntsToStr(g.ints.st, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.st, NULL) +"  g.strings="+ StringsToStr(g.strings.st, NULL));
+            debug("GlobalArrays(static si=0, in=0)   g.ints="+ IntsToStr(g.ints.st, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.st)) +"  g.doubles="+ DoublesToStr(g.doubles.st, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.st)) +"  g.strings="+ StringsToStr(g.strings.st, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.st)));
             if (ArraySize(g.ints.st   ) != 2) ArrayResize(g.ints.st,    2);
             if (ArraySize(g.doubles.st) != 2) ArrayResize(g.doubles.st, 2);
             if (ArraySize(g.strings.st) != 2) ArrayResize(g.strings.st, 2);
@@ -183,7 +183,7 @@ void GlobalArrays(bool st, bool si, bool in) {
    else/*(!st)*/{
       if (si) {
          if (in) {
-            debug("GlobalArrays(si=1, in=1)   g.ints="+ IntsToStr(g.ints.si.in, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.si.in, NULL) +"  g.strings="+ StringsToStr(g.strings.si.in, NULL));
+            debug("GlobalArrays(si=1, in=1)   g.ints="+ IntsToStr(g.ints.si.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.si.in)) +"  g.doubles="+ DoublesToStr(g.doubles.si.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.si.in)) +"  g.strings="+ StringsToStr(g.strings.si.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.si.in)));
             if (ArraySize(g.ints.si.in   ) != 2) ArrayResize(g.ints.si.in,    2);
             if (ArraySize(g.doubles.si.in) != 2) ArrayResize(g.doubles.si.in, 2);
             if (ArraySize(g.strings.si.in) != 2) ArrayResize(g.strings.si.in, 2);
@@ -195,7 +195,7 @@ void GlobalArrays(bool st, bool si, bool in) {
             g.strings.si.in[0] = CharToStr(StringGetChar(g.strings.si.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("GlobalArrays(si=1, in=0)   g.ints="+ IntsToStr(g.ints.si, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.si, NULL) +"  g.strings="+ StringsToStr(g.strings.si, NULL));
+            debug("GlobalArrays(si=1, in=0)   g.ints="+ IntsToStr(g.ints.si, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.si)) +"  g.doubles="+ DoublesToStr(g.doubles.si, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.si)) +"  g.strings="+ StringsToStr(g.strings.si, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.si)));
             if (ArraySize(g.ints.si   ) != 2) ArrayResize(g.ints.si,    2);
             if (ArraySize(g.doubles.si) != 2) ArrayResize(g.doubles.si, 2);
             if (ArraySize(g.strings.si) != 2) ArrayResize(g.strings.si, 2);
@@ -209,7 +209,7 @@ void GlobalArrays(bool st, bool si, bool in) {
       }
       else/*(!si)*/{
          if (in) {
-            debug("GlobalArrays(si=0, in=1)   g.ints="+ IntsToStr(g.ints.in, NULL) +"  g.doubles="+ DoublesToStr(g.doubles.in, NULL) +"  g.strings="+ StringsToStr(g.strings.in, NULL));
+            debug("GlobalArrays(si=0, in=1)   g.ints="+ IntsToStr(g.ints.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints.in)) +"  g.doubles="+ DoublesToStr(g.doubles.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles.in)) +"  g.strings="+ StringsToStr(g.strings.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings.in)));
             if (ArraySize(g.ints.in   ) != 2) ArrayResize(g.ints.in,    2);
             if (ArraySize(g.doubles.in) != 2) ArrayResize(g.doubles.in, 2);
             if (ArraySize(g.strings.in) != 2) ArrayResize(g.strings.in, 2);
@@ -221,7 +221,7 @@ void GlobalArrays(bool st, bool si, bool in) {
             g.strings.in[0] = CharToStr(StringGetChar(g.strings.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("GlobalArrays(si=0, in=0)   g.ints="+ IntsToStr(g.ints, NULL) +"  g.doubles="+ DoublesToStr(g.doubles, NULL) +"  g.strings="+ StringsToStr(g.strings, NULL));
+            debug("GlobalArrays(si=0, in=0)   g.ints="+ IntsToStr(g.ints, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(g.ints)) +"  g.doubles="+ DoublesToStr(g.doubles, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(g.doubles)) +"  g.strings="+ StringsToStr(g.strings, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(g.strings)));
             if (ArraySize(g.ints   ) != 2) ArrayResize(g.ints,    2);
             if (ArraySize(g.doubles) != 2) ArrayResize(g.doubles, 2);
             if (ArraySize(g.strings) != 2) ArrayResize(g.strings, 2);
@@ -275,7 +275,7 @@ void LocalArrays(bool st, bool si, bool in) {
    if (st) {
       if (si) {
          if (in) {
-            debug("LocalArrays(static si=1, in=1)   l.ints="+ IntsToStr(l.ints.st.si.in, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.st.si.in, NULL) +"  l.strings="+ StringsToStr(l.strings.st.si.in, NULL));
+            debug("LocalArrays(static si=1, in=1)   l.ints="+ IntsToStr(l.ints.st.si.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.st.si.in)) +"  l.doubles="+ DoublesToStr(l.doubles.st.si.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.st.si.in)) +"  l.strings="+ StringsToStr(l.strings.st.si.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.st.si.in)));
             if (ArraySize(l.ints.st.si.in   ) != 2) ArrayResize(l.ints.st.si.in,    2);
             if (ArraySize(l.doubles.st.si.in) != 2) ArrayResize(l.doubles.st.si.in, 2);
             if (ArraySize(l.strings.st.si.in) != 2) ArrayResize(l.strings.st.si.in, 2);
@@ -287,7 +287,7 @@ void LocalArrays(bool st, bool si, bool in) {
             l.strings.st.si.in[0] = CharToStr(StringGetChar(l.strings.st.si.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("LocalArrays(static si=1, in=0)   l.ints="+ IntsToStr(l.ints.st.si, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.st.si, NULL) +"  l.strings="+ StringsToStr(l.strings.st.si, NULL));
+            debug("LocalArrays(static si=1, in=0)   l.ints="+ IntsToStr(l.ints.st.si, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.st.si)) +"  l.doubles="+ DoublesToStr(l.doubles.st.si, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.st.si)) +"  l.strings="+ StringsToStr(l.strings.st.si, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.st.si)));
             if (ArraySize(l.ints.st.si   ) != 2) ArrayResize(l.ints.st.si,    2);
             if (ArraySize(l.doubles.st.si) != 2) ArrayResize(l.doubles.st.si, 2);
             if (ArraySize(l.strings.st.si) != 2) ArrayResize(l.strings.st.si, 2);
@@ -301,7 +301,7 @@ void LocalArrays(bool st, bool si, bool in) {
       }
       else/*(!si)*/{
          if (in) {
-            debug("LocalArrays(static si=0, in=1)   l.ints="+ IntsToStr(l.ints.st.in, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.st.in, NULL) +"  l.strings="+ StringsToStr(l.strings.st.in, NULL));
+            debug("LocalArrays(static si=0, in=1)   l.ints="+ IntsToStr(l.ints.st.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.st.in)) +"  l.doubles="+ DoublesToStr(l.doubles.st.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.st.in)) +"  l.strings="+ StringsToStr(l.strings.st.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.st.in)));
             if (ArraySize(l.ints.st.in   ) != 2) ArrayResize(l.ints.st.in,    2);
             if (ArraySize(l.doubles.st.in) != 2) ArrayResize(l.doubles.st.in, 2);
             if (ArraySize(l.strings.st.in) != 2) ArrayResize(l.strings.st.in, 2);
@@ -313,7 +313,7 @@ void LocalArrays(bool st, bool si, bool in) {
             l.strings.st.in[0] = CharToStr(StringGetChar(l.strings.st.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("LocalArrays(static si=0, in=0)   l.ints="+ IntsToStr(l.ints.st, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.st, NULL) +"  l.strings="+ StringsToStr(l.strings.st, NULL));
+            debug("LocalArrays(static si=0, in=0)   l.ints="+ IntsToStr(l.ints.st, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.st)) +"  l.doubles="+ DoublesToStr(l.doubles.st, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.st)) +"  l.strings="+ StringsToStr(l.strings.st, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.st)));
             if (ArraySize(l.ints.st   ) != 2) ArrayResize(l.ints.st,    2);
             if (ArraySize(l.doubles.st) != 2) ArrayResize(l.doubles.st, 2);
             if (ArraySize(l.strings.st) != 2) ArrayResize(l.strings.st, 2);
@@ -328,7 +328,7 @@ void LocalArrays(bool st, bool si, bool in) {
    else/*(!st)*/{
       if (si) {
          if (in) {
-            debug("LocalArrays(si=1, in=1)   l.ints="+ IntsToStr(l.ints.si.in, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.si.in, NULL) +"  l.strings="+ StringsToStr(l.strings.si.in, NULL));
+            debug("LocalArrays(si=1, in=1)   l.ints="+ IntsToStr(l.ints.si.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.si.in)) +"  l.doubles="+ DoublesToStr(l.doubles.si.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.si.in)) +"  l.strings="+ StringsToStr(l.strings.si.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.si.in)));
             if (ArraySize(l.ints.si.in   ) != 2) ArrayResize(l.ints.si.in,    2);
             if (ArraySize(l.doubles.si.in) != 2) ArrayResize(l.doubles.si.in, 2);
             if (ArraySize(l.strings.si.in) != 2) ArrayResize(l.strings.si.in, 2);
@@ -340,7 +340,7 @@ void LocalArrays(bool st, bool si, bool in) {
             l.strings.si.in[0] = CharToStr(StringGetChar(l.strings.si.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("LocalArrays(si=1, in=0)   l.ints="+ IntsToStr(l.ints.si, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.si, NULL) +"  l.strings="+ StringsToStr(l.strings.si, NULL));
+            debug("LocalArrays(si=1, in=0)   l.ints="+ IntsToStr(l.ints.si, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.si)) +"  l.doubles="+ DoublesToStr(l.doubles.si, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.si)) +"  l.strings="+ StringsToStr(l.strings.si, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.si)));
             if (ArraySize(l.ints.si   ) != 2) ArrayResize(l.ints.si,    2);
             if (ArraySize(l.doubles.si) != 2) ArrayResize(l.doubles.si, 2);
             if (ArraySize(l.strings.si) != 2) ArrayResize(l.strings.si, 2);
@@ -354,7 +354,7 @@ void LocalArrays(bool st, bool si, bool in) {
       }
       else/*(!si)*/{
          if (in) {
-            debug("LocalArrays(si=0, in=1)   l.ints="+ IntsToStr(l.ints.in, NULL) +"  l.doubles="+ DoublesToStr(l.doubles.in, NULL) +"  l.strings="+ StringsToStr(l.strings.in, NULL));
+            debug("LocalArrays(si=0, in=1)   l.ints="+ IntsToStr(l.ints.in, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints.in)) +"  l.doubles="+ DoublesToStr(l.doubles.in, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles.in)) +"  l.strings="+ StringsToStr(l.strings.in, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings.in)));
             if (ArraySize(l.ints.in   ) != 2) ArrayResize(l.ints.in,    2);
             if (ArraySize(l.doubles.in) != 2) ArrayResize(l.doubles.in, 2);
             if (ArraySize(l.strings.in) != 2) ArrayResize(l.strings.in, 2);
@@ -366,7 +366,7 @@ void LocalArrays(bool st, bool si, bool in) {
             l.strings.in[0] = CharToStr(StringGetChar(l.strings.in[0], 0) + 1);
          }
          else/*(!in)*/{
-            debug("LocalArrays(si=0, in=0)   l.ints="+ IntsToStr(l.ints, NULL) +"  l.doubles="+ DoublesToStr(l.doubles, NULL) +"  l.strings="+ StringsToStr(l.strings, NULL));
+            debug("LocalArrays(si=0, in=0)   l.ints="+ IntsToStr(l.ints, NULL) +" 0x"+ IntToHexStr(GetIntsAddress(l.ints)) +"  l.doubles="+ DoublesToStr(l.doubles, NULL) +" 0x"+ IntToHexStr(GetDoublesAddress(l.doubles)) +"  l.strings="+ StringsToStr(l.strings, NULL) +" 0x"+ IntToHexStr(GetStringsAddress(l.strings)));
             if (ArraySize(l.ints   ) != 2) ArrayResize(l.ints,    2);
             if (ArraySize(l.doubles) != 2) ArrayResize(l.doubles, 2);
             if (ArraySize(l.strings) != 2) ArrayResize(l.strings, 2);
