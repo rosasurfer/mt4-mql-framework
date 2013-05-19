@@ -12782,9 +12782,15 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 #import "stdlib2.ex4"
    int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
 #import "sample1.ex4"
-   int    GetBufferAddress(int buffer[]);
+   int    GetBoolsAddress  (bool   array[]);
 #import "sample2.ex4"
-   int    GetStringAddress(string value);
+   int    GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
+#import "sample3.ex4"
+   int    GetDoublesAddress(double array[]);
+#import "sample4.ex4"
+   int    GetStringsAddress(string array[]);
+#import "sample5.ex4"
+   int    GetStringAddress (string value);
 #import "sample.dll"
    string GetStringValue(int address);
 #import "structs2.ex4"

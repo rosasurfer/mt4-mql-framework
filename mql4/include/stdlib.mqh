@@ -578,6 +578,7 @@
 
    int      onStart();
    int      onTick();
+   void     DummyCalls();
    string   ParametersToStr();
    int      ShowStatus();                                            // für EA's
 
@@ -598,21 +599,16 @@
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 
 
-   // "abstrakte" Funktionen: müssen bei Verwendung im Programm implementiert werden
-   /*abstract*/ void DummyCalls();
-
-
-   // Tests
-   string   StaticString();
-   bool     StaticBool();
-   int      StaticInt();
-   double   StaticDouble();
-
-
 #import "sample1.ex4"
-   int      GetBufferAddress(int buffer[]);
+   int      GetBoolsAddress  (bool   array[]);
 #import "sample2.ex4"
-   int      GetStringAddress(string value);
+   int      GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
+#import "sample3.ex4"
+   int      GetDoublesAddress(double array[]);
+#import "sample4.ex4"
+   int      GetStringsAddress(string array[]);
+#import "sample5.ex4"
+   int      GetStringAddress (string value);
 #import "sample.dll"
    string   GetStringValue(int address);
 #import
