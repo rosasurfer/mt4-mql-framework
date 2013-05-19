@@ -16,7 +16,9 @@
    bool     IsLibrary();
    bool     This.IsTesting();                                        // Shortkey für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
 
+   int      InitializeExecutionContext(int buffer[], int lpCopyContext);
    bool     IsSuperContext();
+
    bool     IsLoggingEnabled();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
@@ -130,7 +132,6 @@
    int      InitializeBuffer          (int    buffer[], int length);
    int      InitializeDoubleBuffer    (double buffer[], int size  );
    int      InitializeStringBuffer    (string buffer[], int length);
-   int      InitializeExecutionContext(int    buffer[], int lpCopyContext);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
@@ -565,7 +566,7 @@
    int      WM_MT4();                                                // MetaTrader4_Internal_Message (wird wie Pseudo-Konstante benutzt)
 
 
-   // Default-Implementierungen der MQL-Basis- und Userfunktionen
+   // Default-Implementierungen: müssen bei Verwendung im Programm implementiert werden
    int      onInit();
    int      onInitParameterChange();
    int      onInitChartChange();
@@ -576,11 +577,11 @@
    int      onInitRecompile();
    int      afterInit();
 
-   int      onStart();
-   int      onTick();
-   void     DummyCalls();
+   int      onStart();                                               // Scripte
+   int      onTick();                                                // EA's + Indikatoren
+   int      ShowStatus();                                            // EA's
    string   ParametersToStr();
-   int      ShowStatus();                                            // für EA's
+   void     DummyCalls();
 
    int      onDeinit();
    int      onDeinitParameterChange();
