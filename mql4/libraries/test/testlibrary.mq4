@@ -23,14 +23,14 @@ int __DEINIT_FLAGS__[];
  * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  bool   isChart            - Hauptprogramm-Variable IsChart
  * @param  bool   isOfflineChart     - Hauptprogramm-Variable IsOfflineChart
- * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
+ * @param  bool   logging            - Hauptprogramm-Variable __LOG
  * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
-int testlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpSuperContext, int initFlags, int uninitializeReason) {
+int testlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpSuperContext, int initFlags, int uninitializeReason) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -40,7 +40,7 @@ int testlib_init(int type, string name, int whereami, bool isChart, bool isOffli
    initFlags       |= SumInts(__INIT_FLAGS__);
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
-   __LOG            = loggingEnabled;
+   __LOG            = logging;
    __LOG_CUSTOM     = _bool(initFlags & INIT_CUSTOMLOG);
    __lpSuperContext = lpSuperContext;
 

@@ -5,18 +5,16 @@
 
 
 // globale Variablen, stehen überall zur Verfügung
-int      __ExecutionContext[];                              // ExecutionContext des aktuellen Programms (in Libraries Kopie)
-int      __SuperContext    [];                              // SuperContext des aktuellen Programms (NULL oder Kopie)
-
-int      __lpExecutionContext;                              // Zeiger auf ExecutionContext
-//int    __lpSuperContext;                                  // Zeiger auf SuperContext (im Modul definiert)
+int      __ExecutionContext[];                              // aktueller ExecutionContext
+int      __lpExecutionContext;                              // Zeiger auf Original des ExecutionContexts
+//int    __lpSuperContext;                                  // Zeiger auf Original des SuperContexts (wird je Modultyp definiert)
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
-bool     __LOG;                                             // ob das Logging aktiviert ist
-bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     IsOfflineChart;                                    // ob der Chart ein Offline-Chart ist
+bool     __LOG;                                             // ob das Logging aktiviert ist
+bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 
 bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
@@ -125,13 +123,12 @@ int      last_error;                                        // der letzte Fehler
 #define INIT_PIPVALUE               2           // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
 #define INIT_BARS_ON_HIST_UPDATE    4           //
 #define INIT_CUSTOMLOG              8           // das Programm verwendet ein eigenes Logfile
-#define INIT_HSTLIB                16           // initialisiert die History-Library
 
 
 // Chart-Property-Flags
 #define CP_CHART                    1           // impliziert VisualMode=On
 #define CP_OFFLINE                  2           // nur in Verbindung mit CP_CHART gesetzt
-#define CP_OFFLINE_CHART            3           // Shortkey für: CP_OFFLINE|CP_CHART
+#define CP_OFFLINE_CHART            3           // kurz für: CP_OFFLINE|CP_CHART
 
 
 // Object property ids, siehe ObjectSet()
@@ -1084,6 +1081,12 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 }
 
 
+#import "structs1.ex4"
+   int ec.LastError   (/*EXECUTION_CONTEXT*/int ec[]               );
+   int ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+#import
+
+
 /**
  * Ob der angegebene Wert einen Fehler darstellt.
  *
@@ -1115,44 +1118,6 @@ int ResetLastError() {
    int error = last_error;
    SetLastError(NO_ERROR);
    return(error);
-}
-
-
-#import "structs1.ex4"
-   int    ec.Signature           (/*EXECUTION_CONTEXT*/int ec[]                  );
-   int    ec.setSignature        (/*EXECUTION_CONTEXT*/int ec[], int  signature  );
-   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
-#import
-
-
-/**
- * Initialisiert einen EXECUTION_CONTEXT-Buffer.
- *
- * @param  int ec[]          - das für den Buffer zu verwendende Integer-Array
- * @param  int lpCopyContext - Zeiger auf zu kopierenden Context (default: NULL)
- *
- * @return int - Fehlerstatus
- *
- *
- * NOTE: In der Headerdatei implementiert, um Verwendung vor Library-Initialisierung zu ermöglichen.
- */
-int InitializeExecutionContext(int &ec[], int lpCopyContext=NULL) {
-   if (ArrayDimension(ec) != 1)                                    return(catch("InitializeExecutionContext(1)   too many dimensions of parameter ec = "+ ArrayDimension(ec), ERR_INCOMPATIBLE_ARRAYS));
-   if (lpCopyContext!=NULL) /*&&*/ if (lpCopyContext < 0x00010000) return(catch("InitializeExecutionContext(2)   invalid parameter lpCopyContext = 0x"+ IntToHexStr(lpCopyContext) +" (not a pointer)", ERR_INVALID_FUNCTION_PARAMVALUE));
-
-   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize)
-      ArrayResize(ec, EXECUTION_CONTEXT.intSize);
-
-   if (!lpCopyContext) {
-      ArrayInitialize(ec, 0);
-      ec.setSignature(ec, GetBufferAddress(ec));
-   }
-   else {
-      CopyMemory(GetBufferAddress(ec), lpCopyContext, EXECUTION_CONTEXT.size);
-      // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-      if (ec.Signature(ec) != lpCopyContext)                       return(catch("InitializeExecutionContext(3)   invalid EXECUTION_CONTEXT found at memory address 0x"+ IntToHexStr(lpCopyContext), ERR_RUNTIME_ERROR));
-   }
-   return(catch("InitializeExecutionContext(4)"));
 }
 
 
@@ -1271,7 +1236,7 @@ bool SelectTicket(int ticket, string location, bool storeSelection=false, bool o
       OrderPop(location);
 
    int error = GetLastError();
-   return(_false(catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(IsError(error), error, ERR_INVALID_TICKET))));
+   return(_false(catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(!error, ERR_INVALID_TICKET, error))));
 }
 
 
@@ -1396,11 +1361,11 @@ double PipValue(double lots = 1.0) {
  *
  * NOTE: In der Headerdatei implementiert, um Verwendung vor Aufruf von stdlib_init() zu ermöglichen.
  */
-bool IsLoggingEnabled() {
+bool IsLogging() {
    string name = __NAME__;
    if (IsLibrary()) {
       if (StringLen(__NAME__) == 0)
-         return(_false(catch("IsLoggingEnabled()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+         return(_false(catch("IsLogging()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 
@@ -1841,13 +1806,6 @@ int Ceil(double value) {
 }
 
 
-// Ist das Flag INIT_HSTLIB gesetzt, werden die Root-Funktionen der History benötigt.
-#import "history.ex4"
-   int history_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason);
-   int history_deinit(int deinitFlags, int uninitializeReason);
-#import
-
-
 /**
  * Unterdrückt unnütze Compilerwarnungen.
  */
@@ -1880,15 +1838,14 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   Indicator.IsSuperContext();
    Indicator.IsTesting();
-   InitializeExecutionContext(iNulls);
    IsError(NULL);
    IsExpert();
    IsIndicator();
    IsLastError();
-   IsLoggingEnabled();
+   IsLogging();
    IsScript();
-   IsSuperContext();
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);

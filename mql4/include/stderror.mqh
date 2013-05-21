@@ -126,7 +126,7 @@
 // Custom errors
 #define ERR_WIN32_ERROR                                            5000    // win32 api error
 #define ERR_FUNCTION_NOT_IMPLEMENTED                               5001    // function not implemented
-#define ERR_INVALID_INPUT                                          5002    // invalid input parameter
+#define ERR_INVALID_INPUT_PARAMVALUE                               5002    // invalid input parameter
 #define ERR_INVALID_CONFIG_PARAMVALUE                              5003    // invalid configuration parameter
 #define ERS_TERMINAL_NOT_READY                                     5004    // terminal not yet ready                 // in Scripten Fehler, sonst Status
 #define ERR_INVALID_TIMEZONE_CONFIG                                5005    // invalid or missing timezone configuration

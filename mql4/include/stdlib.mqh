@@ -8,6 +8,8 @@
    bool     Expert.IsTesting();
 
    bool     IsIndicator();
+   int      Indicator.InitExecutionContext(int ec[]);
+   bool     Indicator.IsSuperContext();
    bool     Indicator.IsTesting();
 
    bool     IsScript();
@@ -16,10 +18,7 @@
    bool     IsLibrary();
    bool     This.IsTesting();                                        // Shortkey für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
 
-   int      InitializeExecutionContext(int buffer[], int lpCopyContext);
-   bool     IsSuperContext();
-
-   bool     IsLoggingEnabled();
+   bool     IsLogging();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);
@@ -595,7 +594,7 @@
 
 
    // erweiterte Root-Funktionen
-   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpICUSTOM, int initFlags, int uninitializeReason, int tickData[]);
+   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpICUSTOM, int initFlags, int uninitializeReason, int tickData[]);
    int      stdlib_start (int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(int deinitFlags, int uninitializeReason);
 
@@ -612,6 +611,8 @@
    int      GetStringAddress (string value);
 #import "sample.dll"
    string   GetStringValue(int address);
+#import "structs1.ex4"
+   string   EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
 #import
 
 

@@ -23,14 +23,14 @@ int __DEINIT_FLAGS__[];
  * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  bool   isChart            - Hauptprogramm-Variable IsChart
  * @param  bool   isOfflineChart     - Hauptprogramm-Variable IsOfflineChart
- * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
+ * @param  bool   logging            - Hauptprogramm-Variable __LOG
  * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
  *
  * @return int - Fehlerstatus
  */
-int history_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpSuperContext, int initFlags, int uninitializeReason) {
+int history_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpSuperContext, int initFlags, int uninitializeReason) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -40,7 +40,7 @@ int history_init(int type, string name, int whereami, bool isChart, bool isOffli
    initFlags       |= SumInts(__INIT_FLAGS__);
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
-   __LOG            = loggingEnabled;
+   __LOG            = logging;
    __LOG_CUSTOM     = _bool(initFlags & INIT_CUSTOMLOG);
    __lpSuperContext = lpSuperContext;
 
@@ -429,9 +429,9 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    int offset;
    return(_int(-1, catch("HistoryFile.FindBar(6)   Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_FUNCTION_NOT_IMPLEMENTED)));
 
-   if (IsError(last_error|catch("HistoryFile.FindBar(7)", ERR_FUNCTION_NOT_IMPLEMENTED)))
-      return(-1);
-   return(offset);
+   if (!last_error|catch("HistoryFile.FindBar(7)", ERR_FUNCTION_NOT_IMPLEMENTED))
+      return(offset);
+   return(-1);
 }
 
 
@@ -819,9 +819,10 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
    hf.hFile.valid = hFile;
 
    ArrayResize(hh, 0);
-   if (IsError(catch("HistoryFile.Open(7)")))
-      return(0);
-   return(hFile);
+
+   if (!catch("HistoryFile.Open(7)"))
+      return(hFile);
+   return(0);
 }
 
 
