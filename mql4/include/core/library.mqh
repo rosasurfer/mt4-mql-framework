@@ -7,7 +7,6 @@ int __lpSuperContext = NULL;
  * Initialisierung der Library.
  *
  * @return int - Fehlerstatus
- *
  */
 int init() {
    // Im Tester globale Arrays zurücksetzen (zur Zeit kein besserer Workaround).
@@ -23,7 +22,7 @@ int init() {
  *
  *
  * NOTE: Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
- *       *wenn* die init()-Funktion implementiert wird.
+ *       wenn die init()-Funktion implementiert wurde.
  */
 int start() {
    return(catch("start()", ERR_WRONG_JUMP));
@@ -91,9 +90,9 @@ bool IsIndicator() {
  *
  * @return bool
  */
-bool IsSuperContext() {
+bool Indicator.IsSuperContext() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("IsSuperContext()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Indicator.IsSuperContext()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
    return(__lpSuperContext != 0);
 }
 
@@ -149,6 +148,8 @@ bool This.IsTesting() {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
+
    // __STATUS_ERROR ist ein Status des Hauptprogramms und wird in Libraries nicht gesetzt
-   return(error);
+
+   return(ec.setLastError(__ExecutionContext, last_error));
 }

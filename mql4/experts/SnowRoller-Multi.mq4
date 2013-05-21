@@ -13,8 +13,8 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
 #include <core/expert.mqh>
+
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 
@@ -662,7 +662,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
    if (!interactive)
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
 
-   if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT);
+   if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMVALUE);
    ForceSound("chord.wav");
    int button = ForceMessageBox(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 

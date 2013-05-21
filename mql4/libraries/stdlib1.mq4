@@ -43,7 +43,7 @@ int __DEINIT_FLAGS__[];
  * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
  * @param  bool   isChart            - Callermodule-Variable IsChart
  * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
- * @param  bool   loggingEnabled     - Hauptprogramm-Variable __LOG
+ * @param  bool   logging            - Hauptprogramm-Variable __LOG
  * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
  * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
  * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
@@ -51,7 +51,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool loggingEnabled, int lpSuperContext, int initFlags, int uninitializeReason, int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
+int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpSuperContext, int initFlags, int uninitializeReason, int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -61,7 +61,7 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    initFlags       |= SumInts(__INIT_FLAGS__);
    IsChart          = isChart;
    IsOfflineChart   = isOfflineChart;
-   __LOG            = loggingEnabled;
+   __LOG            = logging;
    __LOG_CUSTOM     = _bool(initFlags & INIT_CUSTOMLOG);
    __lpSuperContext = lpSuperContext;
 
@@ -240,6 +240,60 @@ int stdlib_GetLastError() {
 }
 
 
+#import "structs1.ex4"
+   int ec.setSignature(/*EXECUTION_CONTEXT*/int ec[], int signature);
+   int ec.setLpName   (/*EXECUTION_CONTEXT*/int ec[], int lpName   );
+   int ec.setLpLogFile(/*EXECUTION_CONTEXT*/int ec[], int lpLogFile);
+#import
+
+
+/**
+ * Initialisiert den EXECUTION_CONTEXT eines Indikators.
+ *
+ * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls (Indikator)
+ *
+ * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: In Indikatoren liegt das Original des EXECUTION_CONTEXT in der Library, der Indikator hält eine Kopie.
+ */
+int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
+   __TYPE__ |= T_INDICATOR;                                                                        // Type der Library initialisieren (Aufruf immer aus Indikator)
+
+
+   // (1) Context ggf. initialisieren
+   if (ArraySize(__ExecutionContext) == 0) {
+      // (1.1) Speicher für Context alloziieren
+      ArrayResize    (__ExecutionContext, EXECUTION_CONTEXT.intSize);
+      ec.setSignature(__ExecutionContext, GetBufferAddress(__ExecutionContext));
+
+      // (1.2) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
+      string names[2]; names[0] = CreateString(MAX_PATH);                                          // Programm-Name (Länge variabel, da hier noch nicht bekannt)
+                       names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
+      int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
+                       CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
+                       CopyMemory(lpNames[0], GetBufferAddress(lpNames)+8, 1);                     // beide Strings mit <NUL> initialisieren (lpNames[2] = <NUL>)
+                       CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);
+
+      // (1.3) Zeiger auf die Namen im Context speichern
+      ec.setLpName   (__ExecutionContext, lpNames[0]);
+      ec.setLpLogFile(__ExecutionContext, lpNames[1]);
+   }
+
+
+   // (2) Context ins Hauptmodul kopieren
+   ArrayCopy(ec, __ExecutionContext);
+
+
+   if (!catch("Indicator.InitExecutionContext"))
+      return(NO_ERROR);
+
+   ArrayResize(__ExecutionContext, 0);
+   ArrayResize(ec,                 0);
+   return(last_error);
+}
+
+
 /**
  * Berechnet den angegebenen Wert des Custom-Indikators "Moving Average" und gibt ihn zurück.
  *
@@ -255,13 +309,11 @@ int stdlib_GetLastError() {
  * @return double - Wert oder 0, falls ein Fehler auftrat
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar) {
+   if (IsLastError())
+      return(0);
 
-   // TODO: !!! EXECUTION_CONTEXT des Hauptprogramms übergeben
-
-   int /*EXECUTION_CONTEXT*/sec[]; if (!ArraySize(sec)) InitializeExecutionContext(sec);
-   sec[EC_LAST_ERROR] = NO_ERROR;
-
-   int maMaxValues = Max(5 + 8*maTrendLag, 50);                      // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
+   int maMaxValues    = Max(5 + 8*maTrendLag, 50);                   // mindestens 50 Werte berechnen, um redundante Indikator-Instanzen zu vermeiden
+   int lpLocalContext = GetBufferAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                                 // MA.Periods
@@ -275,7 +327,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           0,                                         // Shift.V
                           maMaxValues,                               // Max.Values
                           "",                                        // ________________
-                          sec[EC_SIGNATURE],                         // __SuperContext__
+                          lpLocalContext,                            // __SuperContext__
                           iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
@@ -286,10 +338,10 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
       warn("icMovingAverage(2)   ERS_HISTORY_UPDATE (tick="+ Tick +")");   // TODO: geladene Bars prüfen
    }
 
-   if (IsError(sec[EC_LAST_ERROR]))
-      return(_NULL(SetLastError(sec[EC_LAST_ERROR])));
-
-   return(value);
+   error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
+   if (!error)
+      return(value);
+   return(_NULL(SetLastError(error)));
 }
 
 
@@ -1083,9 +1135,9 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
    if (!chars) length = ArrayResize(names, 0);                       // keine Sections gefunden (File nicht gefunden oder leer)
    else        length = ExplodeStrings(buffer, names);
 
-   if (IsError(catch("GetPrivateProfileSectionNames")))
-      return(-1);
-   return(length);
+   if (!catch("GetPrivateProfileSectionNames"))
+      return(length);
+   return(-1);
 }
 
 
@@ -1423,9 +1475,9 @@ string GetLocalConfigPath() {
 
    static.result[0] = iniFile;
 
-   if (IsError(catch("GetLocalConfigPath(2)")))
-      return("");
-   return(static.result[0]);
+   if (!catch("GetLocalConfigPath(2)"))
+      return(static.result[0]);
+   return("");
 }
 
 
@@ -1465,9 +1517,9 @@ string GetGlobalConfigPath() {
 
    static.result[0] = iniFile;
 
-   if (IsError(catch("GetGlobalConfigPath(2)")))
-      return("");
-   return(static.result[0]);
+   if (!catch("GetGlobalConfigPath(2)"))
+      return(static.result[0]);
+   return("");
 }
 
 
@@ -1696,9 +1748,9 @@ string CreateLegendLabel(string name) {
    else GetLastError();
    ObjectSetText(label, " ");
 
-   if (IsError(catch("CreateLegendLabel()")))
-      return("");
-   return(label);
+   if (!catch("CreateLegendLabel()"))
+      return(label);
+   return("");
 }
 
 
@@ -3615,9 +3667,9 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
          break;
    }
 
-   if (IsError(catch("BufferWCharsToStr(3)")))
-      return("");
-   return(result);
+   if (!catch("BufferWCharsToStr(3)"))
+      return(result);
+   return("");
 }
 
 
@@ -3693,9 +3745,9 @@ int ExplodeStrings(int buffer[], string &results[]) {
       }
    }
 
-   if (IsError(catch("ExplodeStrings()")))
-      return(0);
-   return(ArraySize(results));
+   if (!catch("ExplodeStrings()"))
+      return(ArraySize(results));
+   return(0);
 }
 
 
@@ -3932,9 +3984,9 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
    //debug("GetWin32ShortcutTarget()   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
-   if (IsError(catch("GetWin32ShortcutTarget(13)")))
-      return("");
-   return(target);
+   if (!catch("GetWin32ShortcutTarget(13)"))
+      return(target);
+   return("");
 }
 
 
@@ -4193,7 +4245,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
    if (FileSize(hFile) == 0) {
       FileClose(hFile);
       ArrayResize(result, 0);
-      return(ifInt(IsError(catch("FileReadLines(2)")), -1, 0));
+      return(ifInt(!catch("FileReadLines(2)"), 0, -1));
    }
 
 
@@ -4286,7 +4338,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
 
    if (ArraySize(lines) > 0)
       ArrayResize(lines, 0);
-   return(ifInt(IsError(catch("FileReadLines(6)")), -1, i));
+   return(ifInt(!catch("FileReadLines(6)"), i, -1));
 }
 
 
@@ -4956,9 +5008,9 @@ datetime TimeGMT() {
    datetime time  = StrToTime(strTime);
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_int(-1, catch("TimeGMT()", error)));
-   return(time);
+   if (!error)
+      return(time);
+   return(_int(-1, catch("TimeGMT()", error)));
 }
 
 
@@ -5177,9 +5229,9 @@ string StringReplace(string object, string search, string replace) {
    result = StringConcatenate(result, StringSubstr(object, startPos));
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_empty(catch("StringReplace()", error)));
-   return(result);
+   if (!error)
+      return(result);
+   return(_empty(catch("StringReplace()", error)));
 }
 
 
@@ -5872,7 +5924,7 @@ datetime FXTToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())          // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
+   if (Indicator.IsTesting()) /*&&*/ if (!Indicator.IsSuperContext())   // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(_false(catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE)));
 
    if (ArraySize(results) != 0)
@@ -5881,17 +5933,17 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (flags == NULL)
       flags = PeriodFlag(Period());
 
-   /*                                                                // TODO: Listener für PERIOD_MN1 implementieren
+   /*                                                                   // TODO: Listener für PERIOD_MN1 implementieren
    +--------------------------+--------------------------+
    | Aufruf bei erstem Tick   | Aufruf bei weiterem Tick |
    +--------------------------+--------------------------+
-   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |           // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
+   | Tick.prevTime = 0;       | Tick.prevTime = time[1]; |              // time[] stellt hier nur eine Pseudovariable dar (existiert nicht)
    | Tick.Time     = time[0]; | Tick.Time     = time[0]; |
    +--------------------------+--------------------------+
    */
-   static datetime bar.openTimes[], bar.closeTimes[];                // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
+   static datetime bar.openTimes[], bar.closeTimes[];                   // OpenTimes/-CloseTimes der Bars der jeweiligen Perioden
 
-                                                                     // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
+                                                                        // die am häufigsten verwendeten Perioden zuerst (beschleunigt Ausführung)
    static int sizeOfPeriods, periods    []={  PERIOD_H1,   PERIOD_M30,   PERIOD_M15,   PERIOD_M5,   PERIOD_M1,   PERIOD_H4,   PERIOD_D1,   PERIOD_W1/*,   PERIOD_MN1*/},
                              periodFlags[]={F_PERIOD_H1, F_PERIOD_M30, F_PERIOD_M15, F_PERIOD_M5, F_PERIOD_M1, F_PERIOD_H4, F_PERIOD_D1, F_PERIOD_W1/*, F_PERIOD_MN1*/};
    if (sizeOfPeriods == 0) {
@@ -5905,7 +5957,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    for (int i=0; i < sizeOfPeriods; i++) {
       if (flags & periodFlags[i] != 0) {
          // BarOpen/Close-Time des aktuellen Ticks ggf. neuberechnen
-         if (Tick.Time >= bar.closeTimes[i]) {                       // true sowohl bei Initialisierung als auch bei BarOpen
+         if (Tick.Time >= bar.closeTimes[i]) {                          // true sowohl bei Initialisierung als auch bei BarOpen
             bar.openTimes [i] = Tick.Time - Tick.Time % (periods[i]*MINUTES);
             bar.closeTimes[i] = bar.openTimes[i]      + (periods[i]*MINUTES);
          }
@@ -5913,7 +5965,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
          // Event anhand des vorherigen Ticks bestimmen
          if (Tick.prevTime < bar.openTimes[i]) {
             if (!Tick.prevTime) {
-               if (Expert.IsTesting())                               // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
+               if (Expert.IsTesting())                                  // im Tester ist der 1. Tick BarOpen-Event      TODO: !!! nicht für alle Timeframes !!!
                   isEvent = ArrayPushInt(results, periods[i]);
             }
             else {
@@ -5971,10 +6023,9 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
    ArrayCopy(results, accountData);
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_false(catch("EventListener.AccountChange()", error)));
-
-   return(eventStatus);
+   if (!error)
+      return(eventStatus);
+   return(_false(catch("EventListener.AccountChange()", error)));
 }
 
 
@@ -6147,10 +6198,9 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    //debug("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_false(catch("EventListener.PositionOpen(2)", error, O_POP)));
-
-   return(eventStatus && OrderPop("EventListener.PositionOpen(3)"));
+   if (!error)
+      return(eventStatus && OrderPop("EventListener.PositionOpen(2)"));
+   return(_false(catch("EventListener.PositionOpen(3)", error, O_POP)));
 }
 
 
@@ -6242,10 +6292,9 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
    //debug("EventListener.PositionClose()   eventStatus: "+ eventStatus);
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_false(catch("EventListener.PositionClose(3)", error, O_POP)));
-
-   return(eventStatus && OrderPop("EventListener.PositionClose(4)"));
+   if (!error)
+      return(eventStatus && OrderPop("EventListener.PositionClose(3)"));
+   return(_false(catch("EventListener.PositionClose(4)", error, O_POP)));
 }
 
 
@@ -6353,10 +6402,9 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
    }
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_int(-1, catch("Explode()", error)));
-
-   return(ArraySize(results));
+   if (!error)
+      return(ArraySize(results));
+   return(_int(-1, catch("Explode()", error)));
 }
 
 
@@ -6682,9 +6730,9 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    else if (buffer[0] == "yes" ) result = true;
    else if (buffer[0] == "on"  ) result = true;
 
-   if (IsError(catch("GetConfigBool()")))
-      return(false);
-   return(result);
+   if (!catch("GetConfigBool()"))
+      return(result);
+   return(false);
 }
 
 
@@ -6708,9 +6756,9 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);
 
-   if (IsError(catch("GetConfigDouble()")))
-      return(0);
-   return(result);
+   if (!catch("GetConfigDouble()"))
+      return(result);
+   return(0);
 }
 
 
@@ -6729,9 +6777,9 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
        result = GetPrivateProfileIntA(section, key, result,       GetLocalConfigPath());
 
-   if (IsError(catch("GetConfigInt()")))
-      return(0);
-   return(result);
+   if (!catch("GetConfigInt()"))
+      return(result);
+   return(0);
 }
 
 
@@ -6909,9 +6957,9 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    else if (buffer[0] == "yes" ) result = true;
    else if (buffer[0] == "on"  ) result = true;
 
-   if (IsError(catch("GetGlobalConfigBool()")))
-      return(false);
-   return(result);
+   if (!catch("GetGlobalConfigBool()"))
+      return(result);
+   return(false);
 }
 
 
@@ -6932,9 +6980,9 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
    double result = StrToDouble(buffer[0]);
 
-   if (IsError(catch("GetGlobalConfigDouble()")))
-      return(0);
-   return(result);
+   if (!catch("GetGlobalConfigDouble()"))
+      return(result);
+   return(0);
 }
 
 
@@ -6950,9 +6998,9 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
 
-   if (IsError(catch("GetGlobalConfigInt()")))
-      return(0);
-   return(result);
+   if (!catch("GetGlobalConfigInt()"))
+      return(result);
+   return(0);
 }
 
 
@@ -7067,9 +7115,9 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
-   if (IsError(catch("GetPrivateProfileString()")))
-      return("");
-   return(buffer[0]);
+   if (!catch("GetPrivateProfileString()"))
+      return(buffer[0]);
+   return("");
 }
 
 
@@ -7099,9 +7147,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    else if (buffer[0] == "yes" ) result = true;
    else if (buffer[0] == "on"  ) result = true;
 
-   if (IsError(catch("GetLocalConfigBool()")))
-      return(false);
-   return(result);
+   if (!catch("GetLocalConfigBool()"))
+      return(result);
+   return(false);
 }
 
 
@@ -7122,9 +7170,9 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);
 
-   if (IsError(catch("GetLocalConfigDouble()")))
-      return(0);
-   return(result);
+   if (!catch("GetLocalConfigDouble()"))
+      return(result);
+   return(0);
 }
 
 
@@ -7140,9 +7188,9 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 int GetLocalConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetLocalConfigPath());     // gibt auch negative Werte richtig zurück
 
-   if (IsError(catch("GetLocalConfigInt()")))
-      return(0);
-   return(result);
+   if (!catch("GetLocalConfigInt()"))
+      return(result);
+   return(0);
 }
 
 
@@ -7299,7 +7347,7 @@ string ErrorDescription(int error) {
       // custom errors
       case ERR_WIN32_ERROR                : return("win32 api error"                                           ); // 5000
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                  ); // 5001
-      case ERR_INVALID_INPUT              : return("invalid input parameter value"                             ); // 5002
+      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                             ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                     ); // 5003
       case ERS_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); // 5004 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); // 5005
@@ -7441,7 +7489,7 @@ string ErrorToStr(int error) {
       // custom errors
       case ERR_WIN32_ERROR                : return("ERR_WIN32_ERROR"                ); // 5000
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("ERR_FUNCTION_NOT_IMPLEMENTED"   ); // 5001
-      case ERR_INVALID_INPUT              : return("ERR_INVALID_INPUT"              ); // 5002
+      case ERR_INVALID_INPUT_PARAMVALUE   : return("ERR_INVALID_INPUT_PARAMVALUE"   ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
       case ERS_TERMINAL_NOT_READY         : return("ERS_TERMINAL_NOT_READY"         ); // 5004 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); // 5005
@@ -7526,9 +7574,9 @@ int GetLocalToGMTOffset() {
       offset *= -60;
    }
 
-   if (IsError(catch("GetLocalToGMTOffset()")))
-      return(EMPTY_VALUE);
-   return(offset);
+   if (!catch("GetLocalToGMTOffset()"))
+      return(offset);
+   return(EMPTY_VALUE);
 }
 
 
@@ -7970,8 +8018,8 @@ string ChartPropertiesToStr(int flags) {
    string result = "";
 
    if (!flags)                    result = StringConcatenate(result, "|0"         );
-   if (_bool(flags & CP_OFFLINE)) result = StringConcatenate(result, "|CP_OFFLINE");   // vor Chart, um Lesbarkeit zu erhöhen
    if (_bool(flags & CP_CHART  )) result = StringConcatenate(result, "|CP_CHART"  );
+   if (_bool(flags & CP_OFFLINE)) result = StringConcatenate(result, "|CP_OFFLINE");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -7994,7 +8042,6 @@ string InitFlagsToStr(int flags) {
    if (_bool(flags & INIT_PIPVALUE           )) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
    if (_bool(flags & INIT_BARS_ON_HIST_UPDATE)) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
    if (_bool(flags & INIT_CUSTOMLOG          )) result = StringConcatenate(result, "|INIT_CUSTOMLOG"          );
-   if (_bool(flags & INIT_HSTLIB             )) result = StringConcatenate(result, "|INIT_HSTLIB"             );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -9221,9 +9268,9 @@ int StringFindR(string object, string search) {
       lastFound = result;
    }
 
-   if (IsError(catch("StringFindR()")))
-      return(-1);
-   return(lastFound);
+   if (!catch("StringFindR()"))
+      return(lastFound);
+   return(-1);
 }
 
 
@@ -9255,9 +9302,9 @@ string StringToLower(string value) {
       else if (191 < char)  if (char < 223) result = StringSetChar(result, i, char+32);
    }
 
-   if (IsError(catch("StringToLower()")))
-      return("");
-   return(result);
+   if (!catch("StringToLower()"))
+      return(result);
+   return("");
 }
 
 
@@ -9289,9 +9336,9 @@ string StringToUpper(string value) {
       else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
    }
 
-   if (IsError(catch("StringToUpper()")))
-      return("");
-   return(result);
+   if (!catch("StringToUpper()"))
+      return(result);
+   return("");
 }
 
 
@@ -9329,9 +9376,9 @@ string UrlEncode(string value) {
       else                              result = StringConcatenate(result, "%", CharToHexStr(char));
    }
 
-   if (IsError(catch("UrlEncode()")))
-      return("");
-   return(result);
+   if (!catch("UrlEncode()"))
+      return(result);
+   return("");
 }
 
 
@@ -9661,9 +9708,9 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
    color rgb = r + g<<8 + b<<16;
 
    int error = GetLastError();
-   if (IsError(error))
-      return(_int(-1, catch("HSVValuesToRGBColor(4)", error)));
-   return(rgb);
+   if (!error)
+      return(rgb);
+   return(_int(-1, catch("HSVValuesToRGBColor(4)", error)));
 }
 
 
@@ -10006,9 +10053,9 @@ string NumberToStr(double number, string mask) {
 
    //debug("NumberToStr(double="+ DoubleToStr(number, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
 
-   if (IsError(catch("NumberToStr()")))
-      return("");
-   return(outStr);
+   if (!catch("NumberToStr()"))
+      return(outStr);
+   return("");
 }
 
 
@@ -12470,9 +12517,9 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    ArrayResize(lots, 0);
 
-   if (IsError(catch("OrderMultiClose.Flatten(7)")))
-      return(_ZERO(oes.setError(oes, -1, last_error)));
-   return(newTicket);
+   if (!catch("OrderMultiClose.Flatten(7)"))
+      return(newTicket);
+   return(_ZERO(oes.setError(oes, -1, last_error)));
 }
 
 

@@ -23,8 +23,8 @@ int __DEINIT_FLAGS__[];
 int onTick() {
 
    /*
-   bool st = true;               // static ...
-   bool si = true;               // sized array declaration
+   bool st = false;              // static ...
+   bool si = false;              // sized array declaration
    bool in = false;              // initializer
 
    //GlobalPrimitives(st, in);
@@ -33,6 +33,7 @@ int onTick() {
    //GlobalArrays(st, si, in);
    //LocalArrays (st, si, in);
    */
+
    return(last_error);
 }
 

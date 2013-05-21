@@ -5,7 +5,6 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
 #include <core/expert.mqh>
 
 

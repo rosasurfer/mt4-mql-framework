@@ -50,7 +50,7 @@ int onInit() {
          case 'L': orderType = OP_BUY;  Close.Direction = "long";  break;
          case 'S': orderType = OP_SELL; Close.Direction = "short"; break;
          default:
-            return(catch("onInit(1)   Invalid input parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT));
+            return(catch("onInit(1)   Invalid input parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
       }
    }
 
@@ -60,10 +60,10 @@ int onInit() {
       strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0) {
          if (!StringIsDigit(strValue))
-            return(catch("onInit(2)   Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT));
+            return(catch("onInit(2)   Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          int iValue = StrToInteger(strValue);
          if (iValue <= 0)
-            return(catch("onInit(3)   Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT));
+            return(catch("onInit(3)   Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          ArrayPushInt(orderTickets, iValue);
       }
    }
@@ -74,10 +74,10 @@ int onInit() {
       strValue = StringTrim(values[i]);
       if (StringLen(strValue) > 0) {
          if (!StringIsDigit(strValue))
-            return(catch("onInit(4)   Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT));
+            return(catch("onInit(4)   Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (iValue <= 0)
-            return(catch("onInit(5)   Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT));
+            return(catch("onInit(5)   Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          ArrayPushInt(orderMagics, iValue);
       }
    }

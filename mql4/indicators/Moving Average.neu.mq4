@@ -69,21 +69,21 @@ int onInit() {
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "") int ma.timeframe = Period();
    else                        ma.timeframe = PeriodToId(MA.Timeframe);
-   if (ma.timeframe == -1)             return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT));
+   if (ma.timeframe == -1)             return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // MA.Periods
    string strValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(strValue))     return(catch("onInit(2)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   if (!StringIsNumeric(strValue))     return(catch("onInit(2)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    double dValue = StrToDouble(strValue);
-   if (dValue <= 0)                    return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
-   if (MathModFix(dValue, 0.5) != 0)   return(catch("onInit(4)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   if (dValue <= 0)                    return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (MathModFix(dValue, 0.5) != 0)   return(catch("onInit(4)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    strValue = NumberToStr(dValue, ".+");
    if (StringEndsWith(strValue, ".5")) {                             // gebrochene Perioden in ganze Bars umrechnen
       switch (ma.timeframe) {
          case PERIOD_M1 :
          case PERIOD_M5 :
          case PERIOD_M15:
-         case PERIOD_MN1:              return(catch("onInit(5)   Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+         case PERIOD_MN1:              return(catch("onInit(5)   Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
          case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
          case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
          case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
@@ -97,7 +97,7 @@ int onInit() {
       case PERIOD_W1: dValue *= 120; ma.timeframe = PERIOD_H1; break;
    }
    ma.periods = MathRound(dValue);
-   if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT));
+   if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
       double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl Bars = Range in Minuten
       ma.periods = MathRound(minutes/Period());
@@ -117,7 +117,7 @@ int onInit() {
    else if (strValue == "SMMA") ma.method = MODE_SMMA;
    else if (strValue == "LWMA") ma.method = MODE_LWMA;
    else if (strValue == "ALMA") ma.method = MODE_ALMA;
-   else                                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT));
+   else                                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.Method = strValue;
 
    // MA.AppliedPrice
@@ -136,16 +136,16 @@ int onInit() {
       else if (char == "M") ma.appliedPrice = PRICE_MEDIAN;
       else if (char == "T") ma.appliedPrice = PRICE_TYPICAL;
       else if (char == "W") ma.appliedPrice = PRICE_WEIGHTED;
-      else return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT));
+      else return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    }
    else ma.appliedPrice = PRICE_CLOSE;                               // Default bei fehlendem Parameter
    MA.AppliedPrice = AppliedPriceDescription(ma.appliedPrice);
 
    // Trend.Lag
-   if (Trend.Lag < 0)                  return(catch("onInit(9)   Invalid input parameter Trend.Lag = "+ Trend.Lag, ERR_INVALID_INPUT));
+   if (Trend.Lag < 0)                  return(catch("onInit(9)   Invalid input parameter Trend.Lag = "+ Trend.Lag, ERR_INVALID_INPUT_PARAMVALUE));
 
    // Max.Values
-   if (Max.Values < -1)                return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT));
+   if (Max.Values < -1)                return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
 
    // (2.1) Bufferverwaltung
@@ -261,7 +261,7 @@ int onTick() {
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
 
    if (startBar < 0) {                                                  // Signalisieren, wenn Bars für Berechnung nicht ausreichen.
-      if (IsSuperContext())
+      if (Indicator.IsSuperContext())
          return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);
    }

@@ -8,8 +8,8 @@ int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
-
 #include <core/expert.mqh>
+
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 
@@ -2986,7 +2986,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
    if (!interactive)
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
 
-   if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT);
+   if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMVALUE);
    ForceSound("chord.wav");
    int button = ForceMessageBox(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 
@@ -3144,8 +3144,8 @@ int ShowStatus() {
 
    string str.error, l.msg, s.msg;
 
-   if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT), "]");
-   else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error       ), "]");
+   if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT_PARAMVALUE), "]");
+   else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error                  ), "]");
 
    switch (sequence.status[D_LONG]) {
       case STATUS_UNINITIALIZED:

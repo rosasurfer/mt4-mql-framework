@@ -33,7 +33,7 @@ int onInit() {
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);
    if (StringLen(LFX.Labels) == 0)
-      return(catch("onInit(1)   Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT));
+      return(catch("onInit(1)   Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // Parameter splitten und die einzelnen Label trimmen
    sizeOfLabels = Explode(LFX.Labels, ",", labels, NULL);

@@ -258,7 +258,7 @@ int UploadDataFile(string filename, string &lpErrorMsg) {
    ArrayResize(response, 0);
    ArrayResize(values,   0);
 
-   if (IsError(catch("UploadDataFile()")))
-      return(last_error);
-   return(errorCode);
+   if (!catch("UploadDataFile()"))
+      return(errorCode);
+   return(last_error);
 }
