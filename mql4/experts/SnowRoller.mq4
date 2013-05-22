@@ -481,7 +481,7 @@ bool StopSequence() {
 
    if (sizeOfPositions > 0) {
       int oeFlags = NULL;
-      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeBuffer(oes, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
          return(_false(SetLastError(stdlib_GetLastError())));
@@ -1460,7 +1460,7 @@ bool ProcessClientStops(int stops[]) {
       return(true);
 
    int button, ticket;
-   /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
 
    // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
@@ -1733,7 +1733,7 @@ bool Grid.AddOrder(int type, int level) {
 
 
    // (1) Order in den Markt legen
-   /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
    int ticket = SubmitStopOrder(type, level, oe);
 
    double pendingPrice = oe.OpenPrice(oe);
@@ -1871,7 +1871,7 @@ bool Grid.AddPosition(int type, int level) {
 
 
    // (1) Position öffnen
-   /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
    bool clientSL = false;
    int  ticket   = SubmitMarketOrder(type, level, clientSL, oe);     // zuerst versuchen, server-seitigen StopLoss zu setzen...
 
@@ -2034,7 +2034,7 @@ bool Grid.TrailPendingOrder(int i) {
       // TODO: ChartMarker nachziehen
    }
    else {                                                            // server-seitige Orders
-      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
          return(_false(SetLastError(oe.Error(oe))));
       ArrayResize(oe, 0);
@@ -2068,7 +2068,7 @@ bool Grid.DeleteOrder(int i) {
 
    if (orders.ticket[i] > 0) {
       int oeFlags = NULL;
-      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
       if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe))
          return(_false(SetLastError(oe.Error(oe))));

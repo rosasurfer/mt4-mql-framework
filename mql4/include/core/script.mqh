@@ -16,20 +16,21 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!__lpExecutionContext) {
-      InitExecutionContext();
-      //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-   }
+   if (!ec.Signature(__ExecutionContext))
+      if (IsError(InitExecutionContext()))
+         return(last_error);
 
 
    // (2) stdlib initialisieren
-   int iNull[], initFlags=ec.InitFlags(__ExecutionContext);
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), iNull);
+   int iNull[];
+   int error = stdlib_init(__ExecutionContext, iNull);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
+   int initFlags = ec.InitFlags(__ExecutionContext);
+
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(1)"))) return(last_error);
@@ -62,6 +63,7 @@ int init() {
                                                                               //
    if (__STATUS_ERROR)
       return(last_error);
+
    catch("init(5)");
    return(last_error);
 }
@@ -89,12 +91,9 @@ int init() {
  * Initialisiert den EXECUTION_CONTEXT des Scripts.
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: In Scripts liegt das Original des EXECUTION_CONTEXT im Script, Libraries halten eine Kopie.
  */
 int InitExecutionContext() {
-   if (__lpExecutionContext != 0) return(catch("InitExecutionContext(1)   __lpExecutionContext not NULL: 0x"+ IntToHexStr(__lpExecutionContext), ERR_ILLEGAL_STATE));
+   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   ec.Signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
 
    // (1) Speicher für Programm- und LogFileName alloziieren
@@ -114,8 +113,8 @@ int InitExecutionContext() {
    __NAME__        = names[0];
    IsChart         = !IsTesting() || IsVisualMode();
  //IsOfflineChart  = IsChart && ???
-   __LOG           = IsLogging();
-   __LOG_CUSTOM    = initFlags & INIT_CUSTOMLOG;
+   __LOG           = true;
+   __LOG_CUSTOM    = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
 
    PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints       = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
@@ -125,7 +124,6 @@ int InitExecutionContext() {
 
 
    // (3) EXECUTION_CONTEXT initialisieren
-   ArrayResize    (__ExecutionContext, EXECUTION_CONTEXT.intSize);
    ArrayInitialize(__ExecutionContext, 0);
 
    ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
@@ -139,11 +137,9 @@ int InitExecutionContext() {
    ec.setLogging           (__ExecutionContext, __LOG                                                                   );
    ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
 
-   __lpExecutionContext = ec.Signature(__ExecutionContext);
-
 
    if (IsError(catch("InitExecutionContext(2)")))
-      __lpExecutionContext = 0;
+      ArrayInitialize(__ExecutionContext, 0);
    return(last_error);
 }
 
@@ -174,7 +170,8 @@ int start() {
 
 
    // (1) init() war immer erfolgreich
-   __WHEREAMI__ = FUNC_START;
+   __WHEREAMI__                    = FUNC_START;
+   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
@@ -204,8 +201,10 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__    = FUNC_DEINIT;
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   __WHEREAMI__ =                               FUNC_DEINIT;
+   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+
 
    // (1) User-spezifische deinit()-Routinen aufrufen                         // User-Routinen *können*, müssen aber nicht implementiert werden.
    int error = onDeinit();                                                    // Preprocessing-Hook
@@ -232,7 +231,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(deinitFlags, UninitializeReason());
+   error = stdlib_deinit(__ExecutionContext);
    if (IsError(error))
       SetLastError(error);
 

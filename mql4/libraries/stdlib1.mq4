@@ -38,49 +38,46 @@ int __DEINIT_FLAGS__[];
 /**
  * Initialisierung der Library. Informiert die Library über das Aufrufen der init()-Funktion des Hauptprogramms.
  *
- * @param  int    type               - Programmtyp
- * @param  string name               - Programmname
- * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
- * @param  bool   isChart            - Callermodule-Variable IsChart
- * @param  bool   isOfflineChart     - Callermodule-Variable IsOfflineChart
- * @param  bool   logging            - Hauptprogramm-Variable __LOG
- * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
- * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int    uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
- * @param  int    tickData[]         - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
+ * @param  int ec[]       - EXECUTION_CONTEXT des Hauptmoduls
+ * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpSuperContext, int initFlags, int uninitializeReason, int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
+int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__        |= type;
-   __NAME__         = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__     = whereami;
-   initFlags       |= SumInts(__INIT_FLAGS__);
-   IsChart          = isChart;
-   IsOfflineChart   = isOfflineChart;
-   __LOG            = logging;
-   __LOG_CUSTOM     = _bool(initFlags & INIT_CUSTOMLOG);
-   __lpSuperContext = lpSuperContext;
+   // (1) Context in die Library kopieren
+   ArrayCopy(__ExecutionContext, ec);
+   __lpSuperContext = ec.lpSuperContext(ec);
 
 
-   // (1) globale Variablen re-initialisieren
+   // (2) globale Variablen (re-)initialisieren
+   int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
+
+   __TYPE__      |=                   ec.Type           (ec);
+   __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.Whereami       (ec);
+   IsChart        =             _bool(ec.ChartProperties(ec) & CP_CHART);
+   IsOfflineChart =                   ec.ChartProperties(ec) & CP_OFFLINE && IsChart;
+   __LOG          =                   ec.Logging        (ec);
+   __LOG_CUSTOM   = _bool(initFlags & INIT_CUSTOMLOG);
+
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   // (2) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
+
+   // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
    if (!GetApplicationWindow())                                      // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
       return(last_error);                                            // bei Shutdown). Die Funktion GetUIThreadId() ist jedoch auf ein gültiges Hauptfenster-Handle angewiesen,
    if (!GetUIThreadId())                                             // das Handle muß deshalb vorher (also hier) ermittelt werden.
       return(last_error);
 
 
-   // (3) user-spezifische Init-Tasks ausführen
+   // (4) user-spezifische Init-Tasks ausführen
    if (_bool(initFlags & INIT_TIMEZONE)) {                           // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
@@ -109,10 +106,10 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    }
 
 
-   // (4) nur für EA's durchzuführende globale Initialisierungen
+   // (5) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
-      if (IntInArray(reasons, uninitializeReason))
+      if (IntInArray(reasons, ec.UninitializeReason(ec)))
          OrderSelect(0, SELECT_BY_TICKET);
 
       if (IsTesting()) {                                             // nur im Tester
@@ -127,7 +124,7 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
    }
 
 
-   // (5) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
+   // (6) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
@@ -150,7 +147,8 @@ int stdlib_init(int type, string name, int whereami, bool isChart, bool isOfflin
  * @return int - Fehlerstatus
  */
 int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
-   __WHEREAMI__ = FUNC_START;
+   __WHEREAMI__                    = FUNC_START;
+   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
 
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
@@ -178,8 +176,7 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
 /**
  * Deinitialisierung der Library. Informiert die Library über das Aufrufen der deinit()-Funktion des Hauptprogramms.
  *
- * @param  int deinitFlags        - durchzuführende Deinitialisierungstasks (default: keine)
- * @param  int uninitializeReason - der letzte UninitializeReason() des Hauptprogramms
+ * @param  int ec[] - EXECUTION_CONTEXT
  *
  * @return int - Fehlerstatus
  *
@@ -187,14 +184,26 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
-int stdlib_deinit(int deinitFlags, int uninitializeReason) {
-   __WHEREAMI__  = FUNC_DEINIT;
-   deinitFlags  |= SumInts(__DEINIT_FLAGS__);
+int stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
+   __WHEREAMI__ =                               FUNC_DEINIT;
+   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT              );
+   ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));
 
+
+   // (1) ggf. noch gehaltene Locks freigeben
    int error = NO_ERROR;
-
    if (!ReleaseLocks(true))
       error = last_error;
+
+
+   // (2) EXECUTION_CONTEXT von Indikatoren zwischenspeichern
+   if (IsIndicator()) {
+      ArrayCopy(__ExecutionContext, ec);
+      if (IsError(catch("stdlib_deinit"))) {
+         ArrayInitialize(__ExecutionContext, 0);
+         error = last_error;
+      }
+   }
    return(error);
 }
 
@@ -240,34 +249,22 @@ int stdlib_GetLastError() {
 }
 
 
-#import "structs1.ex4"
-   int ec.setSignature(/*EXECUTION_CONTEXT*/int ec[], int signature);
-   int ec.setLpName   (/*EXECUTION_CONTEXT*/int ec[], int lpName   );
-   int ec.setLpLogFile(/*EXECUTION_CONTEXT*/int ec[], int lpLogFile);
-#import
-
-
 /**
- * Initialisiert den EXECUTION_CONTEXT eines Indikators.
+ * Restauriert den in der Library zwischengespeicherten EXECUTION_CONTEXT eines Indikators.
  *
- * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls (Indikator)
+ * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls, wird mit gespeicherter Version überschrieben
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: In Indikatoren liegt das Original des EXECUTION_CONTEXT in der Library, der Indikator hält eine Kopie.
  */
 int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__ |= T_INDICATOR;                                                                        // Type der Library initialisieren (Aufruf immer aus Indikator)
 
 
    // (1) Context ggf. initialisieren
-   if (ArraySize(__ExecutionContext) == 0) {
-      // (1.1) Speicher für Context alloziieren
-      ArrayResize    (__ExecutionContext, EXECUTION_CONTEXT.intSize);
-      ec.setSignature(__ExecutionContext, GetBufferAddress(__ExecutionContext));
+   if (!ec.Signature(__ExecutionContext)) {
+      ArrayInitialize(__ExecutionContext, 0);
 
-      // (1.2) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
+      // (1.1) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
       string names[2]; names[0] = CreateString(MAX_PATH);                                          // Programm-Name (Länge variabel, da hier noch nicht bekannt)
                        names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
       int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
@@ -275,7 +272,7 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
                        CopyMemory(lpNames[0], GetBufferAddress(lpNames)+8, 1);                     // beide Strings mit <NUL> initialisieren (lpNames[2] = <NUL>)
                        CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);
 
-      // (1.3) Zeiger auf die Namen im Context speichern
+      // (1.2) Zeiger auf die Namen im Context speichern
       ec.setLpName   (__ExecutionContext, lpNames[0]);
       ec.setLpLogFile(__ExecutionContext, lpNames[1]);
    }
@@ -288,8 +285,8 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
    if (!catch("Indicator.InitExecutionContext"))
       return(NO_ERROR);
 
-   ArrayResize(__ExecutionContext, 0);
-   ArrayResize(ec,                 0);
+   ArrayInitialize(ec,                 0);
+   ArrayInitialize(__ExecutionContext, 0);
    return(last_error);
 }
 
@@ -1120,14 +1117,14 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
  */
 int GetPrivateProfileSectionNames(string fileName, string names[]) {
    int bufferSize = 200;
-   int buffer[]; InitializeBuffer(buffer, bufferSize);
+   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
 
    int chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
 
    // zu kleinen Buffer abfangen
    while (chars == bufferSize-2) {
       bufferSize <<= 1;
-      InitializeBuffer(buffer, bufferSize);
+      InitializeByteBuffer(buffer, bufferSize);
       chars = GetPrivateProfileSectionNamesA(buffer, bufferSize, fileName);
    }
 
@@ -1192,7 +1189,7 @@ string GetTerminalVersion() {
    if (!infoSize)
       return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
-   int infoBuffer[]; InitializeBuffer(infoBuffer, infoSize);
+   int infoBuffer[]; InitializeByteBuffer(infoBuffer, infoSize);
    if (!GetFileVersionInfoA(fileName[0], 0, infoSize, infoBuffer))
       return(_empty(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
 
@@ -1272,18 +1269,18 @@ int GetTerminalBuild() {
 
 
 /**
- * Initialisiert einen Buffer zur Aufnahme von Bytes der gewünschten Anzahl. Byte-Buffer können in MQL nur über Integer-Arrays dargestellt werden.
+ * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Bytes.
  *
  * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
  * @param  int length   - Anzahl der im Buffer zu speichernden Bytes
  *
  * @return int - Fehlerstatus
  */
-int InitializeBuffer(int buffer[], int length) {
+int InitializeByteBuffer(int buffer[], int length) {
    int dimensions = ArrayDimension(buffer);
 
-   if (dimensions > 2) return(catch("InitializeBuffer(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
-   if (length < 0)     return(catch("InitializeBuffer(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (dimensions > 2) return(catch("InitializeByteBuffer(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
+   if (length < 0)     return(catch("InitializeByteBuffer(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 entspricht length % 4
    else                    length = length >> 2 + 1;
@@ -1293,19 +1290,34 @@ int InitializeBuffer(int buffer[], int length) {
          ArrayResize(buffer, length);
    }
    else if (ArrayRange(buffer, 1) != length) {                       // Dimension 2: mehrdimensionale Arrays können nicht dynamisch angepaßt werden
-      return(catch("InitializeBuffer(3)   cannot adjust size of dimension 2 at runtime (size="+ ArrayRange(buffer, 1) +")", ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("InitializeByteBuffer(3)   cannot runtime adjust size of dimension 2 (size="+ ArrayRange(buffer, 1) +")", ERR_INCOMPATIBLE_ARRAYS));
    }
 
    ArrayInitialize(buffer, 0);
-   return(catch("InitializeBuffer(3)"));
+   return(catch("InitializeByteBuffer(3)"));
 }
 
 
 /**
- * Initialisiert einen Buffer zur Aufnahme der gewünschten Menge von Doubles.
+ * Alias
+ *
+ * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Zeichen.
+ *
+ * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
+ * @param  int length   - Anzahl der im Buffer zu speichernden Zeichen
+ *
+ * @return int - Fehlerstatus
+ */
+int InitializeCharBuffer(int buffer[], int length) {
+   return(InitializeByteBuffer(buffer, length));
+}
+
+
+/**
+ * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Doubles.
  *
  * @param  double buffer[] - das für den Buffer zu verwendende Double-Array
- * @param  int    size     - Anzahl der aufzunehmenden Double-Werte
+ * @param  int    size     - Anzahl der im Buffer zu speichernden Doubles
  *
  * @return int - Fehlerstatus
  */
@@ -3389,8 +3401,7 @@ double SumDoubles(double values[]) {
 
 
 /**
- * Gibt den Inhalt eines Byte-Buffers als lesbaren String zurück. NUL-Bytes (0x00h) werden gestrichelt (…), Control-Character (< 0x20h) fett (•) dargestellt.
- * Nützlich, um einen Bufferinhalt schnell visualisieren zu können.
+ * Gibt die lesbare Version eines Zeichenbuffers zurück. <NUL>-Characters (0x00h) werden gestrichelt (…), Control-Characters (< 0x20h) fett (•) dargestellt.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
  *
@@ -3617,7 +3628,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
    if (dimensions == 1)
       return(BufferCharsToStr(buffer, from, length));
 
-   int dest[]; InitializeBuffer(dest, ArraySize(buffer)*4);
+   int dest[]; InitializeByteBuffer(dest, ArraySize(buffer)*4);
    CopyMemory(GetBufferAddress(dest), GetBufferAddress(buffer), ArraySize(buffer)*4);
 
    string result = BufferCharsToStr(dest, from, length);
@@ -3674,7 +3685,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
 
 
 /**
- * Schreibt einen String an die angegebene Position eines Byte-Buffers.
+ * Schreibt einen String an die angegebene Position eines Byte-Buffers. Der String wird mit einem <NUL>-Byte abgeschlossen.
  *
  * @param  int    buffer[] - Byte-Buffer (kann mehr-dimensional sein)
  * @param  int    offset   - Schreiboffset innerhalb des Buffers
@@ -3684,7 +3695,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
  */
 int BufferSetString(int buffer[], int offset, string value) {
    int chars = ArraySize(buffer) << 2;
-   int len   = StringLen(value) + 1;                  // + terminierendes NUL-Zeichen
+   int len   = StringLen(value) + 1;                  // + terminierendes NUL-Byte
 
    if (offset < 0)         return(catch("BufferSetString(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (offset >= chars)    return(catch("BufferSetString(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -3837,7 +3848,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
       _lclose(hFile);
       return("");
    }
-   int buffer[]; InitializeBuffer(buffer, fileSize);
+   int buffer[]; InitializeByteBuffer(buffer, fileSize);
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
@@ -4097,7 +4108,7 @@ string GetServerDirectory() {
 
       // Datei suchen und Verzeichnisnamen auslesen
       string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
       int hFindDir=FindFirstFileA(pattern, wfd), next=hFindDir;
 
       while (next > 0) {
@@ -4198,12 +4209,12 @@ string ShortAccountCompany() {
  * @return int - Fehlerstatus
  */
 int WinExecAndWait(string cmdLine, int cmdShow) {
-   /*STARTUPINFO*/int si[]; InitializeBuffer(si, STARTUPINFO.size);
+   /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO.size);
       si.setCb        (si, STARTUPINFO.size);
       si.setFlags     (si, STARTF_USESHOWWINDOW);
       si.setShowWindow(si, cmdShow);
 
-   int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeBuffer(pi, PROCESS_INFORMATION.size);
+   int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeByteBuffer(pi, PROCESS_INFORMATION.size);
    string sNull;
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
@@ -4994,7 +5005,7 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
  * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
-   /*SYSTEMTIME*/int st[]; InitializeBuffer(st, SYSTEMTIME.size);
+   /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
    GetSystemTime(st);
 
    int year  = st.Year(st);
@@ -7562,7 +7573,7 @@ string EventToStr(int event) {
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetLocalToGMTOffset() {
-   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeBuffer(tzi, TIME_ZONE_INFORMATION.size);
+   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);
    int type = GetTimeZoneInformation(tzi);
 
    int offset = 0;
@@ -9393,7 +9404,7 @@ bool IsFile(string filename) {
    bool result;
 
    if (StringLen(filename) > 0) {
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
 
       int hSearch = FindFirstFileA(filename, wfd);
 
@@ -9422,7 +9433,7 @@ bool IsDirectory(string filename) {
          filename = StringLeft(filename, -1);
       }
 
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
 
       int hSearch = FindFirstFileA(filename, wfd);
 
@@ -9484,7 +9495,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
    ArrayResize(lpResults, 0);
 
    string name;
-   /*WIN32_FIND_DATA*/ int wfd[]; InitializeBuffer(wfd, WIN32_FIND_DATA.size);
+   /*WIN32_FIND_DATA*/ int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
    int hSearch = FindFirstFileA(pattern, wfd), next=hSearch;
 
    while (next > 0) {
@@ -12096,7 +12107,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    // (2) schnelles Close, wenn nur ein Ticket angegeben wurde
    if (sizeOfTickets == 1) {
-      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(7)")));
       CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
@@ -12122,7 +12133,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (4) Tickets gemeinsam schließen, wenn alle zum selben Symbol gehören
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfTickets); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfTickets); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
@@ -12167,7 +12178,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             ArrayPushInt(group, tickets.copy[i]);
       }
       sizeOfGroup = ArraySize(group);
-      ArrayResize(oes2, sizeOfGroup); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+      ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
       int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);
       if (IsLastError())
@@ -12221,7 +12232,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             ArrayPushInt(group, tickets.copy[n]);
       }
       sizeOfGroup = ArraySize(group);
-      ArrayResize(oes2, sizeOfGroup); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+      ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error)));
@@ -12269,7 +12280,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    // (1) schnelles Close, wenn nur ein Ticket angegeben wurde
    if (sizeOfTickets == 1) {
-      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error)));
       CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
@@ -12306,7 +12317,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (4) Gesamtposition glatt stellen
-   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
    int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);
    if (IsLastError())
@@ -12340,7 +12351,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (5) Teilpositionen auflösen
-   ArrayResize(oes2, sizeOfCopy); InitializeBuffer(oes2, ORDER_EXECUTION.size);
+   ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
    if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
       return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(5)")));
@@ -12470,7 +12481,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
             }
          }
       }
-      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
       if (closeTicket != 0) {
          // (3.1) partielles oder vollständiges OrderClose eines vorhandenen Tickets
@@ -12606,7 +12617,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(7)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
 
 
-      /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+      /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))                     // erste und Opposite-Position schließen
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.Flattened(8)")));
 
@@ -12788,7 +12799,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
  */
 bool DeletePendingOrders(color markerColor=CLR_NONE) {
    int oeFlags = NULL;
-   /*ORDER_EXECUTION*/int oe[]; InitializeBuffer(oe, ORDER_EXECUTION.size);
+   /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
    int size  = OrdersTotal();
    if (size > 0) {
@@ -12840,6 +12851,21 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    int    GetStringAddress (string value);
 #import "sample.dll"
    string GetStringValue(int address);
+#import "structs1.ex4"
+   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                        );
+   string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                        );
+   bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                        );
+
+   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int lpName            );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int whereami          );
+   int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int lpLogFile         );
 #import "structs2.ex4"
    // MQL-Structs Getter und Setter
    //int      hh.Version         (/*HISTORY_HEADER*/int hh[]);                        int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);

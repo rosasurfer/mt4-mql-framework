@@ -26,7 +26,7 @@ extern int    iParameter = 12345;
  * @return int - Fehlerstatus
  */
 int onTick() {
-   /*
+
    int iNull[];
    if (EventListener.BarOpen(iNull, F_PERIOD_H1)) {
       int    timeframe   = PERIOD_H1;
@@ -40,7 +40,6 @@ int onTick() {
          if (__LOG) log(StringConcatenate("onTick()   trend change ", ifString(trend > 0, "up  ", "down"), " ", TimeToStr(Tick.Time, TIME_FULL)));
       }
    }
-   */
 
 
    /*

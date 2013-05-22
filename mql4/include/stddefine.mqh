@@ -4,10 +4,12 @@
 #include <stderror.mqh>
 
 
+#define EXECUTION_CONTEXT.intSize   12                      // ceil(EXECUTION_CONTEXT.size/4)
+
+
 // globale Variablen, stehen überall zur Verfügung
-int      __ExecutionContext[];                              // aktueller ExecutionContext
-int      __lpExecutionContext;                              // Zeiger auf Original des ExecutionContexts
-//int    __lpSuperContext;                                  // Zeiger auf Original des SuperContexts (wird je Modultyp definiert)
+int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
+//int    __lpSuperContext;                                  // Zeiger auf ggf. existierenden SuperContext (wird je Modultyp definiert)
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
@@ -316,8 +318,8 @@ int      last_error;                                        // der letzte Fehler
 #define EC_INIT_FLAGS                  5
 #define EC_DEINIT_FLAGS                6
 #define EC_UNINITIALIZE_REASON         7
-#define EC_WHERE_AM_I                  8
-#define EC_LOGGING_ENABLED             9
+#define EC_WHEREAMI                    8
+#define EC_LOGGING                     9
 #define EC_LPLOGFILE                  10
 #define EC_LAST_ERROR                 11
 
@@ -1369,8 +1371,8 @@ bool IsLogging() {
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 
-   if (This.IsTesting()) return(GetConfigBool("Logging", "Tester."+ name, false));     // default: OFF
-   else                  return(GetConfigBool("Logging",            name, true ));     // default: ON
+   if (!This.IsTesting()) return(GetConfigBool("Logging",            name, true ));    // Online    default: ON
+   else                   return(GetConfigBool("Logging", "Tester."+ name, false));    // im Tester default: OFF
 }
 
 
