@@ -31,26 +31,27 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!__lpExecutionContext) {
-      InitExecutionContext();
-      //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-   }
+   if (!ec.Signature(__ExecutionContext))
+      if (IsError(InitExecutionContext()))
+         return(last_error);
 
 
    // (2) stdlib (re-)initialisieren
-   int iNull[], initFlags=ec.InitFlags(__ExecutionContext);
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), iNull);
+   int iNull[];
+   int error = stdlib_init(__ExecutionContext, iNull);
    if (IsError(error))
       return(SetLastError(error));
 
 
-   // (3) in Experts auch die history-lib (re-)initialisieren
-   error = history_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason());
+   // (3) in Experts immer auch die history-lib (re-)initialisieren
+   error = history_init(__ExecutionContext);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
    // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
+   int initFlags = ec.InitFlags(__ExecutionContext);
+
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -137,7 +138,6 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 #import "structs1.ex4"
    int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                         );
    int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
 
    int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
@@ -157,12 +157,9 @@ int init() { // throws ERS_TERMINAL_NOT_READY
  * Initialisiert den EXECUTION_CONTEXT des Experts.
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: In Experts liegt das Original des EXECUTION_CONTEXT im Expert, Libraries halten eine Kopie.
  */
 int InitExecutionContext() {
-   if (__lpExecutionContext != 0) return(catch("InitExecutionContext(1)   __lpExecutionContext not NULL: 0x"+ IntToHexStr(__lpExecutionContext), ERR_ILLEGAL_STATE));
+   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
 
    // (1) Speicher für Programm- und LogFileName alloziieren
@@ -193,25 +190,24 @@ int InitExecutionContext() {
 
 
    // (3) EXECUTION_CONTEXT initialisieren
-   ArrayResize    (__ExecutionContext, EXECUTION_CONTEXT.intSize);
    ArrayInitialize(__ExecutionContext, 0);
 
    ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
    ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
    ec.setType              (__ExecutionContext, __TYPE__                                                                );
    ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
+ //ec.setLpSuperContext    ...bereits initialisiert
    ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
    ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                            );
    ec.setLogging           (__ExecutionContext, __LOG                                                                   );
    ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
-
-   __lpExecutionContext = ec.Signature(__ExecutionContext);
+ //ec.setLastError         ...bereits initialisiert
 
 
    if (IsError(catch("InitExecutionContext(2)")))
-      __lpExecutionContext = 0;
+      ArrayInitialize(__ExecutionContext, 0);
    return(last_error);
 }
 
@@ -276,7 +272,8 @@ int start() {
       prev_error = last_error;                                       // weiterer Tick: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
    }
-   __WHEREAMI__ = FUNC_START;
+   __WHEREAMI__                    = FUNC_START;
+   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
 
 
    // (2) bei Bedarf Input-Dialog aufrufen
@@ -352,8 +349,10 @@ int start() {
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  */
 int deinit() {
-   __WHEREAMI__    = FUNC_DEINIT;
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   __WHEREAMI__ =                               FUNC_DEINIT;
+   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+
 
    if (IsTesting()) {
       Test.toDate     = TimeCurrent();
@@ -387,7 +386,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(deinitFlags, UninitializeReason());
+   error = stdlib_deinit(__ExecutionContext);
    if (IsError(error))
       SetLastError(error);
 

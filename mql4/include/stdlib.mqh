@@ -8,9 +8,9 @@
    bool     Expert.IsTesting();
 
    bool     IsIndicator();
-   int      Indicator.InitExecutionContext(int ec[]);
-   bool     Indicator.IsSuperContext();
    bool     Indicator.IsTesting();
+   int      Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
+   bool     Indicator.IsSuperContext();
 
    bool     IsScript();
    bool     Script.IsTesting();
@@ -128,9 +128,9 @@
 
 
    // Buffer-Funktionen
-   int      InitializeBuffer          (int    buffer[], int length);
-   int      InitializeDoubleBuffer    (double buffer[], int size  );
-   int      InitializeStringBuffer    (string buffer[], int length);
+   int      InitializeCharBuffer  (int    buffer[], int length);  int InitializeByteBuffer(int buffer[], int length);                  // Alias
+   int      InitializeDoubleBuffer(double buffer[], int size  );
+   int      InitializeStringBuffer(string buffer[], int length);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
@@ -594,9 +594,9 @@
 
 
    // erweiterte Root-Funktionen
-   int      stdlib_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpICUSTOM, int initFlags, int uninitializeReason, int tickData[]);
+   int      stdlib_init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
    int      stdlib_start (int tick, datetime tickTime, int validBars, int changedBars);
-   int      stdlib_deinit(int deinitFlags, int uninitializeReason);
+   int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
 #import "sample1.ex4"

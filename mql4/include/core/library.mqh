@@ -11,7 +11,7 @@ int __lpSuperContext = NULL;
 int init() {
    // Im Tester globale Arrays zurücksetzen (zur Zeit kein besserer Workaround).
    Tester.ResetGlobalArrays();
-   return(NO_ERROR);
+   return(catch("init()"));
 }
 
 
@@ -40,10 +40,10 @@ int start() {
  *
  *       2) Bei Testende wird diese deinit()-Funktion (wenn implementiert) u.U. zweimal aufgerufen. Beim zweiten mal ist die Library zurückgesetzt,
  *          der Variablen-Status also undefiniert.
-int deinit() {
-   return(NO_ERROR);
-}
 */
+int deinit() {
+   return(catch("deinit()"));
+}
 
 
 /**

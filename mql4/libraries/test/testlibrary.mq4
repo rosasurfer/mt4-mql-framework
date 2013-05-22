@@ -11,41 +11,37 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 
 #include <core/library.mqh>
-
+#include <structs.mqh>
 #include <test/teststatic.mqh>
 
 
 /**
  * Initialisierung
  *
- * @param  int    type               - Typ des aufrufenden Programms
- * @param  string name               - Name des aufrufenden Programms
- * @param  int    whereami           - ID der vom Terminal ausgeführten Root-Funktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
- * @param  bool   isChart            - Hauptprogramm-Variable IsChart
- * @param  bool   isOfflineChart     - Hauptprogramm-Variable IsOfflineChart
- * @param  bool   logging            - Hauptprogramm-Variable __LOG
- * @param  int    lpSuperContext     - Speicheradresse eines übergeordneten EXECUTION_CONTEXT (nur bei per iCustom() geladenem Indikator gesetzt)
- * @param  int    initFlags          - durchzuführende Initialisierungstasks (default: keine)
- * @param  int    uninitializeReason - der letzte UninitializeReason() des aufrufenden Programms
+ * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls
  *
  * @return int - Fehlerstatus
  */
-int testlib_init(int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpSuperContext, int initFlags, int uninitializeReason) {
+int testlib_init(/*EXECUTION_CONTEXT*/int ec[]) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
-   __TYPE__        |= type;
-   __NAME__         = StringConcatenate(name, "::", WindowExpertName());
-   __WHEREAMI__     = whereami;
-   initFlags       |= SumInts(__INIT_FLAGS__);
-   IsChart          = isChart;
-   IsOfflineChart   = isOfflineChart;
-   __LOG            = logging;
-   __LOG_CUSTOM     = _bool(initFlags & INIT_CUSTOMLOG);
-   __lpSuperContext = lpSuperContext;
+   // (1) Context in die Library kopieren
+   ArrayCopy(__ExecutionContext, ec);
+   __lpSuperContext = ec.lpSuperContext(ec);
 
 
-   // globale Variablen re-initialisieren
+   // (2) globale Variablen (re-)initialisieren
+   int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
+
+   __TYPE__      |=                   ec.Type           (ec);
+   __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.Whereami       (ec);
+   IsChart        =             _bool(ec.ChartProperties(ec) & CP_CHART);
+   IsOfflineChart =                   ec.ChartProperties(ec) & CP_OFFLINE && IsChart;
+   __LOG          =                   ec.Logging        (ec);
+   __LOG_CUSTOM   = _bool(initFlags & INIT_CUSTOMLOG);
+
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;

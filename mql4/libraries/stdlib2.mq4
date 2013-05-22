@@ -31,14 +31,14 @@ int __DEINIT_FLAGS__[];
 int GetPrivateProfileKeys.2(string fileName, string section, string keys[]) {
    string sNull;
    int bufferSize = 200;
-   int buffer[]; InitializeBuffer(buffer, bufferSize);
+   int buffer[]; InitializeByteBuffer(buffer, bufferSize);
 
    int chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
 
    // zu kleinen Buffer abfangen
    while (chars == bufferSize-2) {
       bufferSize <<= 1;
-      InitializeBuffer(buffer, bufferSize);
+      InitializeByteBuffer(buffer, bufferSize);
       chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
    }
 

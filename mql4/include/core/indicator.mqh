@@ -25,16 +25,14 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!__lpExecutionContext) {
+   if (!ec.Signature(__ExecutionContext))
       if (IsError(InitExecutionContext()))
          return(last_error);
-      //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-   }
 
 
-   // (2) stdlib (re-)initialisieren (Indikatoren setzen Variablen nach jedem init-Cycle zurück)
-   int tickData[3], initFlags=ec.InitFlags(__ExecutionContext);
-   int error = stdlib_init(__TYPE__, __NAME__, __WHEREAMI__, IsChart, IsOfflineChart, __LOG, __lpSuperContext, initFlags, UninitializeReason(), tickData);
+   // (2) stdlib (re-)initialisieren
+   int tickData[3];
+   int error = stdlib_init(__ExecutionContext, tickData);
    if (IsError(error))
       return(SetLastError(error));
 
@@ -44,6 +42,8 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
    // (3) user-spezifische Init-Tasks ausführen
+   int initFlags = ec.InitFlags(__ExecutionContext);
+
    if (_bool(initFlags & INIT_PIPVALUE)) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -107,6 +107,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                           );
    int    ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                           );
 
+   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
    string ec.setName              (/*EXECUTION_CONTEXT*/int ec[], string name              );
    int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
    int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int    chartProperties   );
@@ -126,64 +127,65 @@ int init() { // throws ERS_TERMINAL_NOT_READY
  * @return int - Fehlerstatus
  *
  *
- * NOTE: In Indikatoren liegt das Original des EXECUTION_CONTEXT in der Library, der Indikator hält eine Kopie.
+ * NOTE: Der EXECUTION_CONTEXT im Hauptmodul *kann* nach jedem init-Cycle an einer neuen Adresse liegen (ec.Signature ist NICHT konstant).
  */
 int InitExecutionContext() {
-   if (__lpExecutionContext != 0) return(catch("InitExecutionContext(1)   __lpExecutionContext not NULL: 0x"+ IntToHexStr(__lpExecutionContext), ERR_ILLEGAL_STATE));
+   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
 
-   // (1) globale Variablen initialisieren (werden später ggf. mit Werten aus existierendem oder SuperContext überschrieben)
+   // (1) globale Variablen initialisieren (werden später ggf. mit Werten aus restauriertem oder SuperContext überschrieben)
    __NAME__       = WindowExpertName();
    IsChart        = !IsTesting() || IsVisualMode();                  // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
  //IsOfflineChart = IsChart && ???                                   //       in Indicator::init() IsChart=On signalisiert.
-   __LOG          = false;
-   __LOG_CUSTOM   = false;
+   __LOG          = true;
+   __LOG_CUSTOM   = false;                                           // Custom-Logging gibt es nur für Strategien/Experts
 
 
-   // (2) Original des EXECUTION_CONTEXT aus Library in den Indikator kopieren
-   if (IsError(Indicator.InitExecutionContext(__ExecutionContext)))
-      return(SetLastError(stdlib_GetLastError()));
+   // (2) in Library gespeicherten EXECUTION_CONTEXT restaurieren
+   int error = Indicator.InitExecutionContext(__ExecutionContext);
+   if (IsError(error))
+      return(SetLastError(error));
 
 
-   // (3) Context ggf. initialisieren (wenn nicht initialisiert, ist u.a. ec.Type nicht gesetzt)
-   if (!ec.Type(__ExecutionContext)) {
+   // (3) Context ggf. initialisieren
+   if (!ec.Signature(__ExecutionContext)) {
       // (3.1) temporäre Kopie eines existierenden SuperContexts erstellen und die betroffenen globalen Variablen überschreiben
-      int sec[EXECUTION_CONTEXT.intSize], chartProperties;
+      int super[EXECUTION_CONTEXT.intSize], chartProperties;
       if (__lpSuperContext != NULL) {
-         if (__lpSuperContext < 0x00010000)         return(catch("InitExecutionContext(2)   invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
-         CopyMemory(GetBufferAddress(sec), __lpSuperContext, EXECUTION_CONTEXT.size);
-         if (ec.Signature(sec) != __lpSuperContext) return(catch("InitExecutionContext(3)   invalid super context found at memory address 0x"+ IntToHexStr(__lpSuperContext), ERR_RUNTIME_ERROR));
+         if (__lpSuperContext < 0x00010000) return(catch("InitExecutionContext(2)   invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
+         CopyMemory(GetBufferAddress(super), __lpSuperContext, EXECUTION_CONTEXT.size);
 
-         IsChart        = _bool(ec.ChartProperties(sec) & CP_CHART);
-         IsOfflineChart =       ec.ChartProperties(sec) & CP_OFFLINE && IsChart;
-         __LOG          =       ec.Logging        (sec);
-
-         ec.setLpSuperContext(__ExecutionContext, __lpSuperContext);
+         IsChart        = _bool(ec.ChartProperties(super) & CP_CHART);
+         IsOfflineChart =       ec.ChartProperties(super) & CP_OFFLINE && IsChart;
+         __LOG          =       ec.Logging        (super);
       }
 
       // (3.2) Context-Variablen setzen
-    //ec.setSignature         ...bereits gesetzt
+    //ec.setSignature          ...wird später gesetzt
       ec.setName              (__ExecutionContext, __NAME__);
       ec.setType              (__ExecutionContext, __TYPE__);
       ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
-    //ec.setLpSuperContext    ...bereits gesetzt
+      ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
-      ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
-      ec.setWhereami          (__ExecutionContext, __WHEREAMI__);
-      ec.setLogging           (__ExecutionContext, __LOG);
+    //ec.setUninitializeReason ...wird später gesetzt
+    //ec.setWhereami           ...wird später gesetzt
+      ec.setLogging           (__ExecutionContext, __LOG                    );
     //ec.setLpLogFile         ...bereits gesetzt
     //ec.setLastError         ...bereits NULL
-
-      // (3.3) Original in der Library mit modifiziertem Context überschreiben
-      CopyMemory(ec.Signature(__ExecutionContext), GetBufferAddress(__ExecutionContext), EXECUTION_CONTEXT.size);
    }
    else {
-      // (3.4) globale Variablen mit Werten aus restauriertem Context überschreiben
+      // (3.3) Context war bereits initialisiert, globale Variablen und variable Context-Werte aktualisieren
       IsChart        = _bool(ec.ChartProperties(__ExecutionContext) & CP_CHART);
       IsOfflineChart =       ec.ChartProperties(__ExecutionContext) & CP_OFFLINE && IsChart;
       __LOG          =       ec.Logging        (__ExecutionContext);
+
    }
+
+   // (3.4) Signature und variable Context-Werte aktualisieren
+   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext));
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                );
+   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                        );
 
 
    // (4) restliche globale Variablen initialisieren
@@ -200,8 +202,8 @@ int InitExecutionContext() {
    PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   if (!catch("InitExecutionContext(4)"))
-      __lpExecutionContext = ec.Signature(__ExecutionContext);
+   if (IsError(catch("InitExecutionContext(4)")))
+      ArrayInitialize(__ExecutionContext, 0);
    return(last_error);
 }
 
@@ -301,9 +303,10 @@ int start() {
       return(SetLastError(ERS_TERMINAL_NOT_READY));                        // kann bei Terminal-Start auftreten
    */
 
-   __WHEREAMI__                  = FUNC_START;
-   __STATUS_HISTORY_UPDATE       = false;
-   __STATUS_HISTORY_INSUFFICIENT = false;
+   __WHEREAMI__                    = FUNC_START;
+   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
+   __STATUS_HISTORY_UPDATE         = false;
+   __STATUS_HISTORY_INSUFFICIENT   = false;
 
 
    // (4) ChangedBars berechnen
@@ -342,8 +345,9 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__    = FUNC_DEINIT;
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   __WHEREAMI__ =                               FUNC_DEINIT;
+   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -370,8 +374,8 @@ int deinit() {
    }
 
 
-   // (3) stdlib deinitialisieren
-   error = stdlib_deinit(deinitFlags, UninitializeReason());
+   // (3) stdlib deinitialisieren und Context speichern
+   error = stdlib_deinit(__ExecutionContext);
    if (IsError(error))
       SetLastError(error);
 
@@ -415,10 +419,9 @@ bool IsIndicator() {
  * @return bool
  *
  *
- * NOTE: Ist in stdlib implementiert, damit das Ergebnis gecacht werden kann.
+ * NOTE: Nur in stdlib implementiert, damit das Ergebnis gecacht werden kann.
  *
 bool Indicator.IsTesting() {
-   return(result);
 }
  */
 

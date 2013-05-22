@@ -66,8 +66,8 @@
 
 
    // Library-Management
-   int      history_init  (int type, string name, int whereami, bool isChart, bool isOfflineChart, bool logging, int lpICUSTOM, int initFlags, int uninitializeReason);
-   int      history_deinit(int deinitFlags, int uninitializeReason);
+   int      history_init  (/*EXECUTION_CONTEXT*/int ec[]);
+   int      history_deinit(/*EXECUTION_CONTEXT*/int ec[]);
    int      history_GetLastError();
 
 #import
