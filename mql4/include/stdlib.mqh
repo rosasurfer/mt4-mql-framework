@@ -579,7 +579,7 @@
    int      onStart();                                               // Scripte
    int      onTick();                                                // EA's + Indikatoren
    int      ShowStatus();                                            // EA's
-   string   ParametersToStr();
+   string   InputsToStr();
    void     DummyCalls();
 
    int      onDeinit();

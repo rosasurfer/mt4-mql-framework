@@ -30,8 +30,8 @@ int onTick() {
    int iNull[];
    if (EventListener.BarOpen(iNull, F_PERIOD_H1)) {
       int    timeframe   = PERIOD_H1;
-      string maPeriods   = "3";
-      string maTimeframe = "D1";
+      string maPeriods   = "25";
+      string maTimeframe = "H1";
       string maMethod    = "ALMA";
       int    maTrendLag  = 0;
 

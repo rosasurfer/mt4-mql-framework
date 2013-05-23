@@ -69,82 +69,6 @@ int init() {
 }
 
 
-#import "structs1.ex4"
-   int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
-
-   int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
-   int  ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int  ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
-   int  ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
-   int  ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
-   int  ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
-   int  ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
-   int  ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
-   bool ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
-   int  ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
-   int  ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
-#import
-
-
-/**
- * Initialisiert den EXECUTION_CONTEXT des Scripts.
- *
- * @return int - Fehlerstatus
- */
-int InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   ec.Signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
-
-
-   // (1) Speicher für Programm- und LogFileName alloziieren
-   string names[2]; names[0] = WindowExpertName();                                              // Programm-Name (Länge konstant)
-                    names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
-
-   int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
-                    CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
-
-                    CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
-
-
-   // (2) globale Variablen initialisieren
-   int initFlags   = SumInts(__INIT_FLAGS__  );
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
-
-   __NAME__        = names[0];
-   IsChart         = !IsTesting() || IsVisualMode();
- //IsOfflineChart  = IsChart && ???
-   __LOG           = true;
-   __LOG_CUSTOM    = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
-
-   PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints       = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
-   Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-
-   // (3) EXECUTION_CONTEXT initialisieren
-   ArrayInitialize(__ExecutionContext, 0);
-
-   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
-   ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
-   ec.setType              (__ExecutionContext, __TYPE__                                                                );
-   ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
-   ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
-   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
-   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                            );
-   ec.setLogging           (__ExecutionContext, __LOG                                                                   );
-   ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
-
-
-   if (IsError(catch("InitExecutionContext(2)")))
-      ArrayInitialize(__ExecutionContext, 0);
-   return(last_error);
-}
-
-
 /**
  * Globale start()-Funktion für Scripte.
  *
@@ -236,6 +160,82 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
+   return(last_error);
+}
+
+
+#import "structs1.ex4"
+   int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
+   int  ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                         );
+   int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
+
+   int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
+   int  ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
+   int  ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
+   int  ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
+   int  ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
+   int  ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
+   int  ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
+   int  ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
+   bool ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
+   int  ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
+   int  ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
+#import
+
+
+/**
+ * Initialisiert den EXECUTION_CONTEXT des Scripts.
+ *
+ * @return int - Fehlerstatus
+ */
+int InitExecutionContext() {
+   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   ec.Signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+
+
+   // (1) Speicher für Programm- und LogFileName alloziieren
+   string names[2]; names[0] = WindowExpertName();                                              // Programm-Name (Länge konstant)
+                    names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
+
+   int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
+                    CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
+
+                    CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
+
+
+   // (2) globale Variablen initialisieren
+   int initFlags   = SumInts(__INIT_FLAGS__  );
+   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+
+   __NAME__        = names[0];
+   IsChart         = !IsTesting() || IsVisualMode();
+ //IsOfflineChart  = IsChart && ???
+   __LOG           = true;
+   __LOG_CUSTOM    = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
+
+   PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints       = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
+   Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+
+
+   // (3) EXECUTION_CONTEXT initialisieren
+   ArrayInitialize(__ExecutionContext, 0);
+
+   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
+   ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
+   ec.setType              (__ExecutionContext, __TYPE__                                                                );
+   ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
+   ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
+   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
+   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                            );
+   ec.setLogging           (__ExecutionContext, __LOG                                                                   );
+   ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
+
+
+   if (IsError(catch("InitExecutionContext(2)")))
+      ArrayInitialize(__ExecutionContext, 0);
    return(last_error);
 }
 

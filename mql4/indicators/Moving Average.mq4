@@ -374,8 +374,8 @@ void SetIndicatorStyles() {
  *
  * @return string
  */
-string ParametersToStr() {
-   return(StringConcatenate("parameters:   ",
+string InputsToStr() {
+   return(StringConcatenate("init()   inputs: ",
 
                             "MA.Periods=\"",      MA.Periods                 , "\"; ",
                             "MA.Timeframe=\"",    MA.Timeframe               , "\"; ",

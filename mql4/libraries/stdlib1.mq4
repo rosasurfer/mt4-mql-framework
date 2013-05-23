@@ -235,7 +235,7 @@ int    onDeinitRemove()          {                                              
 int    onDeinitRecompile()       {                                                                             return(NO_ERROR); }
 int    afterDeinit()             {                                                                             return(NO_ERROR); }
 
-string ParametersToStr()         {                                             return("parameters:   function not implemented"); }
+string InputsToStr()             {                                           return("InputsToStr()   function not implemented"); }
 int    ShowStatus()              { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(NO_ERROR); }
 
 
