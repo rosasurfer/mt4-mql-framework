@@ -640,8 +640,8 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
  *
  * @return string
  */
-string ParametersToStr() {
-   return(StringConcatenate("parameters:   ",
+string InputsToStr() {
+   return(StringConcatenate("init()   inputs: ",
 
                             "Sound.Alerts=",                BoolToStr(Sound.Alerts)                     , "; ",
                             "SMS.Alerts=",                  BoolToStr(SMS.Alerts)                       , "; ",

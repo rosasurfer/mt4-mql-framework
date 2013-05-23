@@ -961,13 +961,13 @@ int log(string message, int error=NO_ERROR) {
       message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
 
-   // (2) ggf. Custom-Log benutzen oder ...
+   // (2) Custom-Log benutzen oder ...
    if (__LOG_CUSTOM)
       if (log.custom(StringConcatenate(name, "::", message)))        // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
 
 
-   // (3) ggf. Global-Log benutzen
+   // (3) Global-Log benutzen
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
