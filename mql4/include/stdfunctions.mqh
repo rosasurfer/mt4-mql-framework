@@ -1083,12 +1083,6 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 }
 
 
-#import "structs1.ex4"
-   int ec.LastError   (/*EXECUTION_CONTEXT*/int ec[]               );
-   int ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
-#import
-
-
 /**
  * Ob der angegebene Wert einen Fehler darstellt.
  *

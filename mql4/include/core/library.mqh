@@ -136,6 +136,11 @@ bool This.IsTesting() {
 }
 
 
+#import "structs1.ex4"
+   int ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+#import
+
+
 /**
  * Setzt den internen Fehlercode des Moduls.
  *

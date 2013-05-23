@@ -84,6 +84,7 @@ int init() {
    int  ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
    bool ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
    int  ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
+   int  ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
 #import
 
 

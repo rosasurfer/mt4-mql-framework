@@ -12861,6 +12861,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                        );
    bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                        );
 
    int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int lpName            );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
