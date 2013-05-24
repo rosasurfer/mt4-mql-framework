@@ -799,7 +799,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    // rekursive Aufrufe abfangen
    static bool recursive = false;                                    // static: EA+Indicator ok
    if (recursive)
-      return(error);
+      return(debug("catch()   recursive error: "+ location, error));
    recursive = true;
 
 

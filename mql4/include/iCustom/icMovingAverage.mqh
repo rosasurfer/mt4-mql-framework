@@ -1,3 +1,9 @@
+
+#import "structs1.ex4"
+   int  ec.LastError (/*EXECUTION_CONTEXT*/int ec[]);
+#import
+
+
 /**
  * Berechnet den angegebenen Wert des Custom-Indikators "Moving Average" und gibt ihn zurück.
  *

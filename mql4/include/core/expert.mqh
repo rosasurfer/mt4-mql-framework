@@ -218,7 +218,7 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       SetLastError(stdlib_GetLastError());
       ShowStatus();
       return(last_error);
@@ -321,7 +321,6 @@ int deinit() {
 #import "structs1.ex4"
    int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
    int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                         );
 
    int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
    int  ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );

@@ -140,6 +140,7 @@ int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
  * Informiert die Library über das Aufrufen der start()-Funktion des laufenden Programms. Durch Übergabe des aktuellen Ticks kann die Library später erkennen,
  * ob verschiedene Funktionsaufrufe während desselben oder unterschiedlicher Ticks erfolgen.
  *
+ * @param  int      ec[]        - EXECUTION_CONTEXT des Hauptmoduls
  * @param  int      tick        - Tickzähler, nicht identisch mit Volume[0] (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
  * @param  datetime tickTime    - Zeitpunkt des Ticks                       (synchronisiert den Wert des aufrufenden Moduls mit dem der Library)
  * @param  int      validBars   - Anzahl der seit dem letzten Tick unveränderten Bars oder -1, wenn die Funktion nicht aus einem Indikator aufgerufen wird
@@ -147,7 +148,16 @@ int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
  *
  * @return int - Fehlerstatus
  */
-int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
+int stdlib_start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+   // Library nach Recompile neu initialisieren
+   if (__TYPE__ == T_LIBRARY) {
+      if (UninitializeReason() == REASON_RECOMPILE) {
+         int iNull[];
+         if (IsError(stdlib_init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
+            return(last_error);
+      }
+   }
+
    __WHEREAMI__                    = FUNC_START;
    __ExecutionContext[EC_WHEREAMI] = FUNC_START;
 
@@ -186,6 +196,15 @@ int stdlib_start(int tick, datetime tickTime, int validBars, int changedBars) {
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
+   // Library nach Recompile neu initialisieren
+   if (__TYPE__ == T_LIBRARY) {
+      if (UninitializeReason() == REASON_RECOMPILE) {
+         int iNull[];
+         if (IsError(stdlib_init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
+            return(last_error);
+      }
+   }
+
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT              );
    ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));

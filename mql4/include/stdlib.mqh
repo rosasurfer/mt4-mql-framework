@@ -595,7 +595,7 @@
 
    // erweiterte Root-Funktionen
    int      stdlib_init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
-   int      stdlib_start (int tick, datetime tickTime, int validBars, int changedBars);
+   int      stdlib_start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
