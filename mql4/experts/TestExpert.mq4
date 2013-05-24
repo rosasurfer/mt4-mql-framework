@@ -29,9 +29,8 @@ int onTick() {
       string maPeriods   = "25";
       string maTimeframe = "H1";
       string maMethod    = "ALMA";
-      int    maTrendLag  = 0;
 
-      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
       if (trend==1 || trend==-1) {
          if (__LOG) log(StringConcatenate("onTick()   trend change ", ifString(trend > 0, "up  ", "down"), " ", TimeToStr(Tick.Time, TIME_FULL)));
       }

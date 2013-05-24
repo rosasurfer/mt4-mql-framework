@@ -41,7 +41,6 @@ string   start.trend.condition.txt;
 double   start.trend.periods;
 int      start.trend.timeframe, start.trend.timeframeFlag;           // maximal PERIOD_H1
 string   start.trend.method;
-int      start.trend.lag;
 
 // -------------------------------------------------------
 bool     stop.profitAbs.condition;
@@ -219,9 +218,8 @@ bool IsStartSignal(int direction) {
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
       string maTimeframe = PeriodDescription(start.trend.timeframe);
       string maMethod    = start.trend.method;
-      int    maTrendLag  = start.trend.lag;
 
-      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
       if (!trend) {
          int error = stdlib_GetLastError();
          if (IsError(error))
@@ -2776,7 +2774,6 @@ void StoreConfiguration(bool save=true) {
    static int    _start.trend.timeframe;
    static int    _start.trend.timeframeFlag;
    static string _start.trend.method;
-   static int    _start.trend.lag;
 
    static bool   _stop.profitAbs.condition;
    static string _stop.profitAbs.condition.txt;
@@ -2794,7 +2791,6 @@ void StoreConfiguration(bool save=true) {
       _start.trend.timeframe        = start.trend.timeframe;
       _start.trend.timeframeFlag    = start.trend.timeframeFlag;
       _start.trend.method           = start.trend.method;
-      _start.trend.lag              = start.trend.lag;
 
       _stop.profitAbs.condition     = stop.profitAbs.condition;
       _stop.profitAbs.condition.txt = stop.profitAbs.condition.txt;
@@ -2812,7 +2808,6 @@ void StoreConfiguration(bool save=true) {
       start.trend.timeframe         = _start.trend.timeframe;
       start.trend.timeframeFlag     = _start.trend.timeframeFlag;
       start.trend.method            = _start.trend.method;
-      start.trend.lag               = _start.trend.lag;
 
       stop.profitAbs.condition      = _stop.profitAbs.condition;
       stop.profitAbs.condition.txt  = _stop.profitAbs.condition.txt;
@@ -2899,17 +2894,6 @@ bool ValidateConfiguration(bool interactive) {
       else if (key == "LWMA") start.trend.method = key;
       else if (key == "ALMA") start.trend.method = key;
       else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-      // value="7XD1[+2]"
-      if (Explode(value, "+", elems, NULL) == 1) {
-         start.trend.lag = 0;
-      }
-      else {
-         value = StringTrim(elems[1]);
-         if (!StringIsDigit(value))              return(_false(ValidateConfig.HandleError("ValidateConfiguration(17)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-         start.trend.lag = StrToInteger(value);
-         if (start.trend.lag < 0)                return(_false(ValidateConfig.HandleError("ValidateConfiguration(18)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-         value = elems[0];
-      }
       // value="7XD1"
       if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       elems[1]              = StringTrim(elems[1]);
@@ -2929,7 +2913,7 @@ bool ValidateConfiguration(bool interactive) {
       }
       start.trend.periods       = NormalizeDouble(dValue, 1);
       start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
-      start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] + ifString(!start.trend.lag, "", "+"+ start.trend.lag) +")";
+      start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
       start.trend.condition     = true;
 
       StartConditions           = start.trend.condition.txt;

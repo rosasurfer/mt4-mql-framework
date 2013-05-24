@@ -120,7 +120,6 @@ string   start.trend.condition.txt;
 double   start.trend.periods;
 int      start.trend.timeframe, start.trend.timeframeFlag;           // maximal PERIOD_H1
 string   start.trend.method;
-int      start.trend.lag;
 
 bool     start.price.condition;
 string   start.price.condition.txt;
@@ -143,7 +142,6 @@ string   stop.trend.condition.txt;
 double   stop.trend.periods;
 int      stop.trend.timeframe, stop.trend.timeframeFlag;             // maximal PERIOD_H1
 string   stop.trend.method;
-int      stop.trend.lag;
 
 bool     stop.price.condition;
 string   stop.price.condition.txt;
@@ -1144,9 +1142,8 @@ bool IsStartSignal() {
             string maPeriods   = NumberToStr(start.trend.periods, ".+");
             string maTimeframe = PeriodDescription(start.trend.timeframe);
             string maMethod    = start.trend.method;
-            int    maTrendLag  = start.trend.lag;
 
-            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
             if (!trend) {
                int error = stdlib_GetLastError();
                if (IsError(error))
@@ -1309,9 +1306,8 @@ bool IsStopSignal() {
             string maPeriods   = NumberToStr(stop.trend.periods, ".+");
             string maTimeframe = PeriodDescription(stop.trend.timeframe);
             string maMethod    = stop.trend.method;
-            int    maTrendLag  = stop.trend.lag;
 
-            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+            int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
             if (!trend) {
                int error = stdlib_GetLastError();
                if (IsError(error))
@@ -2837,17 +2833,6 @@ bool ValidateConfiguration(bool interactive) {
             else if (key == "LWMA") start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(25)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            // value="7XD1[+2]"
-            if (Explode(value, "+", elems, NULL) == 1) {
-               start.trend.lag = 0;
-            }
-            else {
-               value = StringTrim(elems[1]);
-               if (!StringIsDigit(value))              return(_false(ValidateConfig.HandleError("ValidateConfiguration(26)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-               start.trend.lag = StrToInteger(value);
-               if (start.trend.lag < 0)                return(_false(ValidateConfig.HandleError("ValidateConfiguration(27)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-               value = elems[0];
-            }
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(28)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[1]              = StringTrim(elems[1]);
@@ -2868,7 +2853,7 @@ bool ValidateConfiguration(bool interactive) {
             start.trend.periods       = NormalizeDouble(dValue, 1);
             start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
             start.trend.condition     = true;
-            start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] + ifString(!start.trend.lag, "", "+"+ start.trend.lag) +")";
+            start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
             exprs[i]                  = start.trend.condition.txt;
          }
 
@@ -2969,17 +2954,6 @@ bool ValidateConfiguration(bool interactive) {
             else if (key == "LWMA") stop.trend.method = key;
             else if (key == "ALMA") stop.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(53)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-            // value="7XD1[+2]"
-            if (Explode(value, "+", elems, NULL) == 1) {
-               stop.trend.lag = 0;
-            }
-            else {
-               value = StringTrim(elems[1]);
-               if (!StringIsDigit(value))              return(_false(ValidateConfig.HandleError("ValidateConfiguration(54)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-               stop.trend.lag = StrToInteger(value);
-               if (stop.trend.lag < 0)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(55)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-               value = elems[0];
-            }
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(56)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             elems[1]             = StringTrim(elems[1]);
@@ -3000,7 +2974,7 @@ bool ValidateConfiguration(bool interactive) {
             stop.trend.periods       = NormalizeDouble(dValue, 1);
             stop.trend.timeframeFlag = PeriodFlag(stop.trend.timeframe);
             stop.trend.condition     = true;
-            stop.trend.condition.txt = "@trend("+ stop.trend.method +":"+ elems[0] +"x"+ elems[1] + ifString(!stop.trend.lag, "", "+"+ stop.trend.lag) +")";
+            stop.trend.condition.txt = "@trend("+ stop.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
             exprs[i]                 = stop.trend.condition.txt;
          }
 
@@ -3144,7 +3118,6 @@ void StoreConfiguration(bool save=true) {
    static int      _start.trend.timeframe;
    static int      _start.trend.timeframeFlag;
    static string   _start.trend.method;
-   static int      _start.trend.lag;
 
    static bool     _start.price.condition;
    static string   _start.price.condition.txt;
@@ -3167,7 +3140,6 @@ void StoreConfiguration(bool save=true) {
    static int      _stop.trend.timeframe;
    static int      _stop.trend.timeframeFlag;
    static string   _stop.trend.method;
-   static int      _stop.trend.lag;
 
    static bool     _stop.price.condition;
    static string   _stop.price.condition.txt;
@@ -3210,7 +3182,6 @@ void StoreConfiguration(bool save=true) {
       _start.trend.timeframe        = start.trend.timeframe;
       _start.trend.timeframeFlag    = start.trend.timeframeFlag;
       _start.trend.method           = start.trend.method;
-      _start.trend.lag              = start.trend.lag;
 
       _start.price.condition        = start.price.condition;
       _start.price.condition.txt    = start.price.condition.txt;
@@ -3233,7 +3204,6 @@ void StoreConfiguration(bool save=true) {
       _stop.trend.timeframe         = stop.trend.timeframe;
       _stop.trend.timeframeFlag     = stop.trend.timeframeFlag;
       _stop.trend.method            = stop.trend.method;
-      _stop.trend.lag               = stop.trend.lag;
 
       _stop.price.condition         = stop.price.condition;
       _stop.price.condition.txt     = stop.price.condition.txt;
@@ -3276,7 +3246,6 @@ void StoreConfiguration(bool save=true) {
       start.trend.timeframe         = _start.trend.timeframe;
       start.trend.timeframeFlag     = _start.trend.timeframeFlag;
       start.trend.method            = _start.trend.method;
-      start.trend.lag               = _start.trend.lag;
 
       start.price.condition         = _start.price.condition;
       start.price.condition.txt     = _start.price.condition.txt;
@@ -3299,7 +3268,6 @@ void StoreConfiguration(bool save=true) {
       stop.trend.timeframe          = _stop.trend.timeframe;
       stop.trend.timeframeFlag      = _stop.trend.timeframeFlag;
       stop.trend.method             = _stop.trend.method;
-      stop.trend.lag                = _stop.trend.lag;
 
       stop.price.condition          = _stop.price.condition;
       stop.price.condition.txt      = _stop.price.condition.txt;

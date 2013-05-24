@@ -25,7 +25,6 @@ string start.trend.condition.txt;
 double start.trend.periods;
 int    start.trend.timeframe, start.trend.timeframeFlag;             // maximal PERIOD_H1
 string start.trend.method;
-int    start.trend.lag;
 
 // -------------------------------------------------------
 bool   start.price.condition;
@@ -89,9 +88,8 @@ bool IsStartSignal() {
       string maPeriods   = NumberToStr(start.trend.periods, ".+");
       string maTimeframe = PeriodDescription(start.trend.timeframe);
       string maMethod    = start.trend.method;
-      int    maTrendLag  = start.trend.lag;
 
-      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+      int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
       if (!trend) {
          int error = stdlib_GetLastError();
          if (IsError(error))

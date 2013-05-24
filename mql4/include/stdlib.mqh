@@ -290,7 +290,7 @@
 
 
    // Indikatoren
-   double   icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int maTrendLag, int iBuffer, int iBar);
+   double   icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar);
 
 
    // Locks

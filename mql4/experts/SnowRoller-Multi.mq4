@@ -37,7 +37,6 @@ string   start.trend.condition.txt;
 double   start.trend.periods;
 int      start.trend.timeframe, start.trend.timeframeFlag;           // maximal PERIOD_H1
 string   start.trend.method;
-int      start.trend.lag;
 
 bool     start.level.condition;
 string   start.level.condition.txt;
@@ -431,9 +430,8 @@ bool IsStartSignal(int &lpSignal) {
          string maPeriods   = NumberToStr(start.trend.periods, ".+");
          string maTimeframe = PeriodDescription(start.trend.timeframe);
          string maMethod    = start.trend.method;
-         int    maTrendLag  = start.trend.lag;
 
-         int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", maTrendLag, MovingAverage.MODE_TREND_LAGGED, 1);
+         int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
          if (!trend) {
             int error = stdlib_GetLastError();
             if (IsError(error))
@@ -467,7 +465,6 @@ void StoreConfiguration(bool save=true) {
    static int    _start.trend.timeframe;
    static int    _start.trend.timeframeFlag;
    static string _start.trend.method;
-   static int    _start.trend.lag;
 
    static bool   _start.level.condition;
    static string _start.level.condition.txt;
@@ -484,7 +481,6 @@ void StoreConfiguration(bool save=true) {
       _start.trend.timeframe     = start.trend.timeframe;
       _start.trend.timeframeFlag = start.trend.timeframeFlag;
       _start.trend.method        = start.trend.method;
-      _start.trend.lag           = start.trend.lag;
 
       _start.level.condition     = start.level.condition;
       _start.level.condition.txt = start.level.condition.txt;
@@ -501,7 +497,6 @@ void StoreConfiguration(bool save=true) {
       start.trend.timeframe      = _start.trend.timeframe;
       start.trend.timeframeFlag  = _start.trend.timeframeFlag;
       start.trend.method         = _start.trend.method;
-      start.trend.lag            = _start.trend.lag;
 
       start.level.condition      = _start.level.condition;
       start.level.condition.txt  = _start.level.condition.txt;
@@ -535,19 +530,19 @@ bool ValidateConfiguration(bool interactive) {
 
 
    // (3) GridSize
-   if (GridSize < 1)                             return(_false(ValidateConfig.HandleError("ValidateConfiguration(9)", "Invalid GridSize = "+ GridSize, interactive)));
+   if (GridSize < 1)                             return(_false(ValidateConfig.HandleError("ValidateConfiguration(1)", "Invalid GridSize = "+ GridSize, interactive)));
 
 
    // (4) LotSize
-   if (LE(LotSize, 0))                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(11)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+"), interactive)));
+   if (LE(LotSize, 0))                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(2)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+"), interactive)));
    double minLot  = MarketInfo(Symbol(), MODE_MINLOT );
    double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT );
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error))                           return(_false(catch("ValidateConfiguration(12)   symbol=\""+ Symbol() +"\"", error)));
-   if (LT(LotSize, minLot))                      return(_false(ValidateConfig.HandleError("ValidateConfiguration(13)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
-   if (GT(LotSize, maxLot))                      return(_false(ValidateConfig.HandleError("ValidateConfiguration(14)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
-   if (MathModFix(LotSize, lotStep) != 0)        return(_false(ValidateConfig.HandleError("ValidateConfiguration(15)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
+   if (IsError(error))                           return(_false(catch("ValidateConfiguration(3)   symbol=\""+ Symbol() +"\"", error)));
+   if (LT(LotSize, minLot))                      return(_false(ValidateConfig.HandleError("ValidateConfiguration(4)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
+   if (GT(LotSize, maxLot))                      return(_false(ValidateConfig.HandleError("ValidateConfiguration(5)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
+   if (MathModFix(LotSize, lotStep) != 0)        return(_false(ValidateConfig.HandleError("ValidateConfiguration(6)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
 
 
    // (5) StartConditions, AND-verknüpft: "(@trend(xxMA:7xD1[+1] && @level(3)"
@@ -565,19 +560,19 @@ bool ValidateConfiguration(bool interactive) {
       for (int i=0; i < sizeOfExprs; i++) {
          expr = StringToLower(StringTrim(exprs[i]));
          if (StringLen(expr) == 0) {
-            if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(7)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             break;
          }
-         if (StringGetChar(expr, 0) != '@')            return(_false(ValidateConfig.HandleError("ValidateConfiguration(17)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-         if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfiguration(18)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-         if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfiguration(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (StringGetChar(expr, 0) != '@')            return(_false(ValidateConfig.HandleError("ValidateConfiguration(8)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (Explode(expr, "(", elems, NULL) != 2)     return(_false(ValidateConfig.HandleError("ValidateConfiguration(9)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfiguration(10)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
-         if (StringLen(value) == 0)                    return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (StringLen(value) == 0)                    return(_false(ValidateConfig.HandleError("ValidateConfiguration(11)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
          if (key == "@trend") {
-            if (start.trend.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(21)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple trend conditions)", interactive)));
-            if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(24)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (start.trend.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(12)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple trend conditions)", interactive)));
+            if (Explode(value, ":", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(13)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             key   = StringToUpper(StringTrim(elems[0]));
             value = StringToUpper(elems[1]);
             // key="ALMA"
@@ -586,31 +581,20 @@ bool ValidateConfiguration(bool interactive) {
             else if (key == "SMMA") start.trend.method = key;
             else if (key == "LWMA") start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
-            else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(25)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            // value="7XD1[+2]"
-            if (Explode(value, "+", elems, NULL) == 1) {
-               start.trend.lag = 0;
-            }
-            else {
-               value = StringTrim(elems[1]);
-               if (!StringIsDigit(value))              return(_false(ValidateConfig.HandleError("ValidateConfiguration(26)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-               start.trend.lag = StrToInteger(value);
-               if (start.trend.lag < 0)                return(_false(ValidateConfig.HandleError("ValidateConfiguration(27)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-               value = elems[0];
-            }
+            else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(14)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             // value="7XD1"
-            if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(28)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(15)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[1]              = StringTrim(elems[1]);
             start.trend.timeframe = PeriodToId(elems[1]);
-            if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(29)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
-            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(30)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(17)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             dValue = StrToDouble(value);
-            if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(31)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfiguration(32)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (dValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(18)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfiguration(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[0] = NumberToStr(dValue, ".+");
             switch (start.trend.timeframe) {           // Timeframes > H1 auf H1 umrechnen, iCustom() soll unabhängig vom MA mit maximal PERIOD_H1 laufen
-               case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(33)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+               case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
                case PERIOD_H4 : dValue *=   4; start.trend.timeframe = PERIOD_H1; break;
                case PERIOD_D1 : dValue *=  24; start.trend.timeframe = PERIOD_H1; break;
                case PERIOD_W1 : dValue *= 120; start.trend.timeframe = PERIOD_H1; break;
@@ -618,22 +602,22 @@ bool ValidateConfiguration(bool interactive) {
             start.trend.periods       = NormalizeDouble(dValue, 1);
             start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
             start.trend.condition     = true;
-            start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] + ifString(!start.trend.lag, "", "+"+ start.trend.lag) +")";
+            start.trend.condition.txt = "@trend("+ start.trend.method +":"+ elems[0] +"x"+ elems[1] +")";
             exprs[i]                  = start.trend.condition.txt;
          }
 
          else if (key == "@level") {
-            if (start.level.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(41)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple level conditions)", interactive)));
-            if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(42)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (start.level.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(21)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple level conditions)", interactive)));
+            if (!StringIsInteger(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(22)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             iValue = StrToInteger(value);
-            if (iValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(43)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
-            if (ArraySize(sequence.start.event) != 0)  return(_false(ValidateConfig.HandleError("ValidateConfiguration(44)", "Invalid StartConditions = \""+ StartConditions +"\" (illegal level statement)", interactive)));
+            if (iValue <= 0)                           return(_false(ValidateConfig.HandleError("ValidateConfiguration(23)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+            if (ArraySize(sequence.start.event) != 0)  return(_false(ValidateConfig.HandleError("ValidateConfiguration(24)", "Invalid StartConditions = \""+ StartConditions +"\" (illegal level statement)", interactive)));
             start.level.condition     = true;
             start.level.value         = iValue;
             start.level.condition.txt = key +"("+ iValue +")";
             exprs[i]                  = start.level.condition.txt;
          }
-         else                                          return(_false(ValidateConfig.HandleError("ValidateConfiguration(45)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         else                                          return(_false(ValidateConfig.HandleError("ValidateConfiguration(25)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       }
       StartConditions = JoinStrings(exprs, " && ");
    }
@@ -643,7 +627,7 @@ bool ValidateConfiguration(bool interactive) {
    if (interactive)
       __STATUS_INVALID_INPUT = false;
 
-   return(!last_error|catch("ValidateConfiguration(77)"));
+   return(!last_error|catch("ValidateConfiguration(26)"));
 }
 
 

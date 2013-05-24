@@ -304,9 +304,8 @@ int      last_error;                                        // der letzte Fehler
 #define BUFFER_7          BUFFER_INDEX_6
 #define BUFFER_8          BUFFER_INDEX_7
 
-#define MovingAverage.MODE_MA             0     // Moving Average.mq4
-#define MovingAverage.MODE_TREND          1     // Trend ohne Verzögerung
-#define MovingAverage.MODE_TREND_LAGGED   2     // Trend mit Verzögerung
+#define MovingAverage.MODE_MA          0        // Wert
+#define MovingAverage.MODE_TREND       1        // Trend
 
 
 // EXECUTION_CONTEXT element identifiers
@@ -1361,7 +1360,7 @@ bool IsLogging() {
    string name = __NAME__;
    if (IsLibrary()) {
       if (StringLen(__NAME__) == 0)
-         return(_false(catch("IsLogging()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+         return(_false(catch("IsLogging()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 

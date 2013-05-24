@@ -321,6 +321,7 @@ int deinit() {
 #import "structs1.ex4"
    int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
    int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
+   int  ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                         );
 
    int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
    int  ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );

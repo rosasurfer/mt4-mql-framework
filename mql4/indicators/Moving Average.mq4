@@ -13,7 +13,6 @@ extern string MA.Timeframe    = "";                                  // Timefram
 extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";
 extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern int    Trend.Lag       = 0;                                   // zusätzliche Trendwechsel-Verzögerung in Bars: größer/gleich 0
 extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend = Orange;
 
@@ -26,15 +25,14 @@ extern int    Max.Values      = 2000;                                // Höchstan
 #include <core/indicator.mqh>
 
 #define MovingAverage.MODE_MA             0                          // Buffer-Identifier
-#define MovingAverage.MODE_TREND          1                          // Trend ohne Verzögerung (Trend.Lag = 0)
-#define MovingAverage.MODE_TREND_LAGGED   2                          // Trend mit Verzögerung
-#define MovingAverage.MODE_UPTREND        3
-#define MovingAverage.MODE_DOWNTREND      4
-#define MovingAverage.MODE_UPTREND2       5
+#define MovingAverage.MODE_TREND          1
+#define MovingAverage.MODE_UPTREND        2
+#define MovingAverage.MODE_DOWNTREND      3
+#define MovingAverage.MODE_UPTREND2       4
 
 #property indicator_chart_window
 
-#property indicator_buffers 6
+#property indicator_buffers 5
 
 #property indicator_width1  0
 #property indicator_width2  0
@@ -44,8 +42,7 @@ extern int    Max.Values      = 2000;                                // Höchstan
 #property indicator_width6  2
 
 double bufferMA         [];                                          // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
-double bufferTrend      [];                                          // Trend: +/-         unsichtbar (ohne Verzögerung)
-double bufferTrendLagged[];                                          // Trend: +/-         unsichtbar (mit Verzögerung)
+double bufferTrend      [];                                          // Trend: +/-         unsichtbar
 double bufferUpTrend    [];                                          // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend  [];                                          // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
 double bufferUpTrend_2  [];                                          // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
@@ -141,20 +138,16 @@ int onInit() {
    else ma.appliedPrice = PRICE_CLOSE;                               // Default bei fehlendem Parameter
    MA.AppliedPrice = AppliedPriceDescription(ma.appliedPrice);
 
-   // Trend.Lag
-   if (Trend.Lag < 0)                  return(catch("onInit(9)   Invalid input parameter Trend.Lag = "+ Trend.Lag, ERR_INVALID_INPUT_PARAMVALUE));
-
    // Max.Values
-   if (Max.Values < -1)                return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
+   if (Max.Values < -1)                return(catch("onInit(9)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
 
    // (2.1) Bufferverwaltung
-   SetIndexBuffer(MovingAverage.MODE_MA,           bufferMA         );  // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
-   SetIndexBuffer(MovingAverage.MODE_TREND,        bufferTrend      );  // Trend: +/-         unsichtbar (ohne Verzögerung)
-   SetIndexBuffer(MovingAverage.MODE_TREND_LAGGED, bufferTrendLagged);  // Trend: +/-         unsichtbar (mit Verzögerung)
-   SetIndexBuffer(MovingAverage.MODE_UPTREND,      bufferUpTrend    );  // UpTrend-Linie 1:   sichtbar
-   SetIndexBuffer(MovingAverage.MODE_DOWNTREND,    bufferDownTrend  );  // DownTrend-Linie:   sichtbar
-   SetIndexBuffer(MovingAverage.MODE_UPTREND2,     bufferUpTrend_2  );  // UpTrend-Linie 2:   sichtbar
+   SetIndexBuffer(MovingAverage.MODE_MA,        bufferMA       );    // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
+   SetIndexBuffer(MovingAverage.MODE_TREND,     bufferTrend    );    // Trend: +/-         unsichtbar
+   SetIndexBuffer(MovingAverage.MODE_UPTREND,   bufferUpTrend  );    // UpTrend-Linie 1:   sichtbar
+   SetIndexBuffer(MovingAverage.MODE_DOWNTREND, bufferDownTrend);    // DownTrend-Linie:   sichtbar
+   SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend_2);    // UpTrend-Linie 2:   sichtbar
 
    // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
@@ -163,29 +156,26 @@ int onInit() {
    indicatorName = StringConcatenate(MA.Method, "(", MA.Periods, strTimeframe, strAppliedPrice, ")");
 
    IndicatorShortName(indicatorName);
-   SetIndexLabel(MovingAverage.MODE_MA,           indicatorName);       // Anzeige im "Data Window"
-   SetIndexLabel(MovingAverage.MODE_TREND,        NULL);
-   SetIndexLabel(MovingAverage.MODE_TREND_LAGGED, NULL);
-   SetIndexLabel(MovingAverage.MODE_UPTREND,      NULL);
-   SetIndexLabel(MovingAverage.MODE_DOWNTREND,    NULL);
-   SetIndexLabel(MovingAverage.MODE_UPTREND2,     NULL);
+   SetIndexLabel(MovingAverage.MODE_MA,        indicatorName);       // Anzeige im "Data Window"
+   SetIndexLabel(MovingAverage.MODE_TREND,     NULL);
+   SetIndexLabel(MovingAverage.MODE_UPTREND,   NULL);
+   SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL);
+   SetIndexLabel(MovingAverage.MODE_UPTREND2,  NULL);
    IndicatorDigits(SubPipDigits);
 
    // (2.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
-   SetIndexDrawBegin(MovingAverage.MODE_MA,           startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_TREND,        startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_TREND_LAGGED, startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_UPTREND,      startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND,    startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,     startDraw);
+   SetIndexDrawBegin(MovingAverage.MODE_MA,        startDraw);
+   SetIndexDrawBegin(MovingAverage.MODE_TREND,     startDraw);
+   SetIndexDrawBegin(MovingAverage.MODE_UPTREND,   startDraw);
+   SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw);
+   SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw);
 
-   SetIndexShift(MovingAverage.MODE_MA,           Shift.H);
-   SetIndexShift(MovingAverage.MODE_TREND,        Shift.H);
-   SetIndexShift(MovingAverage.MODE_TREND_LAGGED, Shift.H);
-   SetIndexShift(MovingAverage.MODE_UPTREND,      Shift.H);
-   SetIndexShift(MovingAverage.MODE_DOWNTREND,    Shift.H);
-   SetIndexShift(MovingAverage.MODE_UPTREND2,     Shift.H);
+   SetIndexShift(MovingAverage.MODE_MA,        Shift.H);
+   SetIndexShift(MovingAverage.MODE_TREND,     Shift.H);
+   SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.H);
+   SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.H);
+   SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.H);
 
    shift.v = Shift.V * Pip;                                          // TODO: Digits/Point-Fehler abfangen
 
@@ -214,7 +204,7 @@ int onInit() {
       ReverseDoubleArray(wALMA);                                     // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
    }
 
-   return(catch("onInit(11)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -242,12 +232,11 @@ int onTick() {
 
    // vor kompletter Neuberechnung alle Buffer zurücksetzen
    if (!ValidBars) {
-      ArrayInitialize(bufferMA,          EMPTY_VALUE);
-      ArrayInitialize(bufferTrend,                 0);
-      ArrayInitialize(bufferTrendLagged,           0);
-      ArrayInitialize(bufferUpTrend,     EMPTY_VALUE);
-      ArrayInitialize(bufferDownTrend,   EMPTY_VALUE);
-      ArrayInitialize(bufferUpTrend_2,   EMPTY_VALUE);
+      ArrayInitialize(bufferMA,        EMPTY_VALUE);
+      ArrayInitialize(bufferTrend,               0);
+      ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
+      ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
+      ArrayInitialize(bufferUpTrend_2, EMPTY_VALUE);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -289,7 +278,7 @@ int onTick() {
       bufferMA[bar] += shift.v;
 
 
-      // (2.2) Raw-Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
+      // (2.2) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
       curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
       prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
@@ -298,29 +287,23 @@ int onTick() {
       else                           bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
 
 
-      // (2.3) verzögerter Trend
-      if (Sign(bufferTrend[bar]) == Sign(bufferTrendLagged[bar+1])) bufferTrendLagged[bar] = MathRound(bufferTrendLagged[bar+1] + Sign(bufferTrendLagged[bar+1]));
-      else if (MathAbs(bufferTrend[bar]) <= Trend.Lag)              bufferTrendLagged[bar] = MathRound(bufferTrendLagged[bar+1] + Sign(bufferTrendLagged[bar+1]));
-      else                                                          bufferTrendLagged[bar] = Sign(bufferTrend[bar]);    // Trendwechsel
-
-
-      // (2.4) Trend coloring anhand des verzögerten Trends
-      if (bufferTrendLagged[bar] > 0) {
+      // (2.3) Trend coloring
+      if (bufferTrend[bar] > 0) {
          bufferUpTrend  [bar] = bufferMA[bar];
          bufferDownTrend[bar] = EMPTY_VALUE;
 
-         if (bufferTrendLagged[bar+1] < 0) bufferUpTrend  [bar+1] = bufferMA[bar+1];
-         else                              bufferDownTrend[bar+1] = EMPTY_VALUE;
+         if (bufferTrend[bar+1] < 0) bufferUpTrend  [bar+1] = bufferMA[bar+1];
+         else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
       }
-      else /*(bufferTrendLagged[bar] < 0)*/ {
+      else /*(bufferTrend[bar] < 0)*/ {
          bufferUpTrend  [bar] = EMPTY_VALUE;
          bufferDownTrend[bar] = bufferMA[bar];
 
-         if (bufferTrendLagged[bar+1] > 0) {                               // Wenn vorher Up-Trend...
+         if (bufferTrend[bar+1] > 0) {                               // Wenn vorher Up-Trend...
             bufferDownTrend[bar+1] = bufferMA[bar+1];
-            if (Bars > bar+2) /*&&*/ if (bufferTrendLagged[bar+2] < 0) {   // ...und Up-Trend nur eine Bar lang war, ...
+            if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {   // ...und Up-Trend nur eine Bar lang war, ...
                bufferUpTrend_2[bar+2] = bufferMA[bar+2];
-               bufferUpTrend_2[bar+1] = bufferMA[bar+1];                   // ... dann Down-Trend mit Up-Trend 2 überlagern.
+               bufferUpTrend_2[bar+1] = bufferMA[bar+1];             // ... dann Down-Trend mit Up-Trend 2 überlagern.
             }
          }
          else {
@@ -334,13 +317,13 @@ int onTick() {
 
 
    // (3.1) Legende aktualisieren: Farbe bei Trendwechsel
-   if (Sign(bufferTrendLagged[0]) != Sign(lastTrend)) {
-      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrendLagged[0]>0, Color.UpTrend, Color.DownTrend));
+   if (Sign(bufferTrend[0]) != Sign(lastTrend)) {
+      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("onTick(2)", error));
    }
-   lastTrend = bufferTrendLagged[0];
+   lastTrend = bufferTrend[0];
 
 
    // (3.2) Legende aktualisieren: Wert bei Änderung
@@ -360,12 +343,11 @@ int onTick() {
  * in der Regel in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MovingAverage.MODE_MA,           DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MovingAverage.MODE_TREND,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MovingAverage.MODE_TREND_LAGGED, DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MovingAverage.MODE_UPTREND,      DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(MovingAverage.MODE_DOWNTREND,    DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
-   SetIndexStyle(MovingAverage.MODE_UPTREND2,     DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MovingAverage.MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MovingAverage.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MovingAverage.MODE_UPTREND,   DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MovingAverage.MODE_DOWNTREND, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
+   SetIndexStyle(MovingAverage.MODE_UPTREND2,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
 }
 
 
@@ -382,7 +364,6 @@ string InputsToStr() {
                             "MA.Method=\"",       MA.Method                  , "\"; ",
                             "MA.AppliedPrice=\"", MA.AppliedPrice            , "\"; ",
 
-                            "Trend.Lag=",         Trend.Lag                  , "; ",
                             "Color.UpTrend=",     ColorToStr(Color.UpTrend)  , "; ",
                             "Color.DownTrend=",   ColorToStr(Color.DownTrend), "; ",
 
