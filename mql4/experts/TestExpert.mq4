@@ -16,10 +16,6 @@ extern int    iParameter = 12345;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-//#include <test/testlibrary.mqh>
-#include <test/teststatic.mqh>
-
-
 /**
  * Main-Funktion
  *
@@ -41,29 +37,5 @@ int onTick() {
       }
    }
 
-
-   /*
-   bool st = true;               // static ...
-   bool si = true;               // sized array declaration
-   bool in = false;              // initializer
-
-   //GlobalPrimitives(st, in);
-   //LocalPrimitives (    in);
-
-   //GlobalArrays(st, si, in);
-   //LocalArrays (st, si, in);
-   */
    return(last_error);
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-void DummyCalls() {
-   GlobalPrimitives(NULL, NULL);
-   LocalPrimitives(NULL);
-   GlobalArrays(NULL, NULL, NULL);
-   LocalArrays(NULL, NULL, NULL);
 }
