@@ -53,7 +53,7 @@ int deinit() {
  */
 bool IsExpert() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("IsExpert()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("IsExpert()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_EXPERT);
 }
 
@@ -65,7 +65,7 @@ bool IsExpert() {
  */
 bool Expert.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Expert.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Expert.IsTesting()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
 
    if (IsTesting()) /*&&*/ if (IsExpert())
       return(true);
@@ -80,7 +80,7 @@ bool Expert.IsTesting() {
  */
 bool IsIndicator() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("IsIndicator()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("IsIndicator()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_INDICATOR);
 }
 
@@ -92,7 +92,7 @@ bool IsIndicator() {
  */
 bool Indicator.IsSuperContext() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Indicator.IsSuperContext()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("Indicator.IsSuperContext()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
    return(__lpSuperContext != 0);
 }
 
@@ -104,7 +104,7 @@ bool Indicator.IsSuperContext() {
  */
 bool IsScript() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("IsScript()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("IsScript()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
    return(__TYPE__ & T_SCRIPT);
 }
 
@@ -126,7 +126,7 @@ bool IsLibrary() {
  */
 bool This.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("This.IsTesting()   function must not be used before library initialization", ERR_RUNTIME_ERROR)));
+      return(_false(catch("This.IsTesting()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
 
    if (   IsExpert()) return(   Expert.IsTesting());
    if (   IsScript()) return(   Script.IsTesting());
