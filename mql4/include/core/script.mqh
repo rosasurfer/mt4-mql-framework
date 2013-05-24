@@ -105,7 +105,7 @@ int start() {
 
 
    // (3) stdLib benachrichtigen
-   if (stdlib_start(Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
       return(SetLastError(stdlib_GetLastError()));
 
 

@@ -64,6 +64,12 @@ int history_init(/*EXECUTION_CONTEXT*/int ec[]) {
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. Diese deinit()-Funktion wird deswegen u.U. nicht mehr ausgeführt.
  */
 int history_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
+   // Library nach Recompile neu initialisieren
+   if (__TYPE__ == T_LIBRARY)
+      if (UninitializeReason() == REASON_RECOMPILE)
+         if (IsError(history_init(ec)))
+            return(last_error);
+
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT              );
    ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));
