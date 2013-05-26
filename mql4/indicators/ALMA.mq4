@@ -164,11 +164,11 @@ int onInit() {
    // (4) ALMA-Gewichtungen der einzelnen Bars berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
    if (ma.periods > 1) {                                             // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, ma.periods);
-      int    m = MathRound(GaussianOffset * (ma.periods-1));
+      double m = MathRound(GaussianOffset * (ma.periods-1));
       double s = ma.periods / Sigma;
       double wSum;
       for (int i=0; i < ma.periods; i++) {
-         wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
+         wALMA[i] = MathExp(-(i-m)*(i-m)/(2*s*s));
          wSum += wALMA[i];
       }
       for (i=0; i < ma.periods; i++) {
