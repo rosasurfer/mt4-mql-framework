@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 
 extern string MA.Periods       = "200";
 extern string MA.Timeframe     = "";                                 // Timeframe: [M1|M5|M15|...], default = aktueller Timeframe
-extern string MA.Method        = "SMA* | EMA | SMMA | LWMA | ALMA";
+extern string MA.Method        = "SMA | EMA | SMMA | LWMA | ALMA*";
 extern string MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend    = DodgerBlue;                         // Farbverwaltung hier, damit Code Zugriff hat
@@ -108,13 +108,23 @@ int onInit() {
    }
    else strValue = MA.Method;
    strValue = StringToUpper(StringTrim(strValue));
-   if      (strValue == "SMA" ) ma.method = MODE_SMA;
-   else if (strValue == "EMA" ) ma.method = MODE_EMA;
-   else if (strValue == "SMMA") ma.method = MODE_SMMA;
-   else if (strValue == "LWMA") ma.method = MODE_LWMA;
-   else if (strValue == "ALMA") ma.method = MODE_ALMA;
-   else                                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   MA.Method = strValue;
+   if      (strValue==        "SMA"
+         || strValue==   "MODE_SMA"
+         || strValue==""+ MODE_SMA)  ma.method = MODE_SMA;           // Es werden jeweils kurzer Name, langer Name oder numerische Darstellung akzeptiert.
+   else if (strValue==        "EMA"
+         || strValue==   "MODE_EMA"
+         || strValue==""+ MODE_EMA)  ma.method = MODE_EMA;
+   else if (strValue==        "SMMA"
+         || strValue==   "MODE_SMMA"
+         || strValue==""+ MODE_SMMA) ma.method = MODE_SMMA;
+   else if (strValue==        "LWMA"
+         || strValue==   "MODE_LWMA"
+         || strValue==""+ MODE_LWMA) ma.method = MODE_LWMA;
+   else if (strValue==        "ALMA"
+         || strValue==   "MODE_ALMA"
+         || strValue==""+ MODE_ALMA) ma.method = MODE_ALMA;
+   else return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   MA.Method = MovingAverageMethodDescription(ma.method);
 
    // MA.AppliedPrice
    if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
