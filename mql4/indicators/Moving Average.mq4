@@ -8,27 +8,27 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string MA.Periods      = "200";
-extern string MA.Timeframe    = "";                                  // Timeframe: [M1|M5|M15|...], default = aktueller Timeframe
-extern string MA.Method       = "SMA* | EMA | SMMA | LWMA | ALMA";
-extern string MA.AppliedPrice = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.Periods       = "200";
+extern string MA.Timeframe     = "";                                 // Timeframe: [M1|M5|M15|...], default = aktueller Timeframe
+extern string MA.Method        = "SMA* | EMA | SMMA | LWMA | ALMA";
+extern string MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend   = DodgerBlue;                          // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend = Orange;
+extern color  Color.UpTrend    = DodgerBlue;                         // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend  = Orange;
 
-extern int    Shift.H         = 0;                                   // horizontale Shift in Bars
-extern int    Shift.V         = 0;                                   // vertikale Shift in Pips
-extern int    Max.Values      = 2000;                                // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+extern int    Shift.Horizontal = 0;                                  // horizontale Shift in Bars
+extern int    Shift.Vertical   = 0;                                  // vertikale Shift in Pips
+extern int    Max.Values       = 2000;                               // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 
-#define MovingAverage.MODE_MA             0                          // Buffer-Identifier
-#define MovingAverage.MODE_TREND          1
-#define MovingAverage.MODE_UPTREND        2
-#define MovingAverage.MODE_DOWNTREND      3
-#define MovingAverage.MODE_UPTREND2       4
+#define MovingAverage.MODE_MA          0                             // Buffer-Identifier
+#define MovingAverage.MODE_TREND       1
+#define MovingAverage.MODE_UPTREND     2
+#define MovingAverage.MODE_DOWNTREND   3
+#define MovingAverage.MODE_UPTREND2    4
 
 #property indicator_chart_window
 
@@ -36,10 +36,9 @@ extern int    Max.Values      = 2000;                                // Höchstan
 
 #property indicator_width1  0
 #property indicator_width2  0
-#property indicator_width3  0
+#property indicator_width3  2
 #property indicator_width4  2
 #property indicator_width5  2
-#property indicator_width6  2
 
 double bufferMA         [];                                          // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
 double bufferTrend      [];                                          // Trend: +/-         unsichtbar
@@ -51,7 +50,7 @@ int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
 double wALMA[];                                                      // Gewichtungen der einzelnen Bars bei ALMA
-double shift.v;
+double shift.vertical;
 string legendLabel, indicatorName;
 
 
@@ -171,13 +170,13 @@ int onInit() {
    SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw);
 
-   SetIndexShift(MovingAverage.MODE_MA,        Shift.H);
-   SetIndexShift(MovingAverage.MODE_TREND,     Shift.H);
-   SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.H);
-   SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.H);
-   SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.H);
+   SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal);
+   SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal);
+   SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal);
+   SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal);
+   SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal);
 
-   shift.v = Shift.V * Pip;                                          // TODO: Digits/Point-Fehler abfangen
+   shift.vertical = Shift.Vertical * Pip;                            // TODO: Digits/Point-Fehler abfangen
 
 
    // (2.4) Styles
@@ -189,7 +188,7 @@ int onInit() {
    PushChartObject(legendLabel);
 
 
-   // (4) ALMA-Gewichtungen berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
+   // (4) ALMA-Gewichtungen berechnen
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {            // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, ma.periods);
       double wSum, gaussianOffset=0.85, sigma=6.0, s=ma.periods/sigma;
@@ -275,7 +274,7 @@ int onTick() {
             default:          for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
       }
-      bufferMA[bar] += shift.v;
+      bufferMA[bar] += shift.vertical;
 
 
       // (2.2) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
@@ -367,8 +366,8 @@ string InputsToStr() {
                             "Color.UpTrend=",     ColorToStr(Color.UpTrend)  , "; ",
                             "Color.DownTrend=",   ColorToStr(Color.DownTrend), "; ",
 
-                            "Shift.H=",           Shift.H                    , "; ",
-                            "Shift.V=",           Shift.V                    , "; ",
+                            "Shift.Horizontal=",  Shift.Horizontal           , "; ",
+                            "Shift.Vertical=",    Shift.Vertical             , "; ",
                             "Max.Values=",        Max.Values                 , "; ")
    );
 }
