@@ -1349,7 +1349,7 @@ double PipValue(double lots = 1.0) {
 
 
 /**
- * Ob das Logging im aktuellen Programm aktiviert ist. Standardm‰ﬂig ist das Logging auﬂerhalb des Testers ON und innerhalb des Testers OFF.
+ * Ob das Logging f¸r das aktuelle Programm aktiviert ist. Standardm‰ﬂig ist das Logging auﬂerhalb des Testers ON und innerhalb des Testers OFF.
  *
  * @return bool
  *
@@ -1364,8 +1364,8 @@ bool IsLogging() {
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 
-   if (!This.IsTesting()) return(GetConfigBool("Logging",            name, true ));    // Online    default: ON
-   else                   return(GetConfigBool("Logging", "Tester."+ name, false));    // im Tester default: OFF
+   if (!This.IsTesting()) return(GetConfigBool("Logging", name,     true ));     // Online    default: ON
+   else                   return(GetConfigBool("Logging", "Tester", false));     // im Tester default: OFF
 }
 
 
