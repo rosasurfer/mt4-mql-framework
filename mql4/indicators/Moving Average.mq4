@@ -201,10 +201,11 @@ int onInit() {
    // (4) ALMA-Gewichtungen berechnen
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {            // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(wALMA, ma.periods);
-      double wSum, gaussianOffset=0.85, sigma=6.0, s=ma.periods/sigma;
-      int m = MathRound(gaussianOffset * (ma.periods-1));
+      double wSum, gaussianOffset=0.85, sigma=6.0;
+      double m = MathRound(gaussianOffset * (ma.periods-1));
+      double s = ma.periods/sigma;
       for (int i=0; i < ma.periods; i++) {
-         wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
+         wALMA[i] = MathExp(-(i-m)*(i-m)/(2*s*s));
          wSum += wALMA[i];
       }
       for (i=0; i < ma.periods; i++) {
