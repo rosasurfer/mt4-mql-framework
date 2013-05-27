@@ -23,6 +23,11 @@
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);
 
+   bool     IsError(int value);
+   bool     IsErrorCode(int value);
+   int      SetLastError(int error, int param);
+   int      stdlib_GetLastError();
+
    string   GetTerminalVersion();
    int      GetTerminalBuild();
    int      GetApplicationWindow();
@@ -223,12 +228,6 @@
 
    string   GetDayOfWeek(datetime time, bool longFormat);
    datetime TimeGMT();
-
-
-   // Error-Handling
-   bool     IsError(int value);
-   bool     IsErrorCode(int value);
-   int      stdlib_GetLastError();
 
 
    // Event-Listener: *können* bei Verwendung im Programm durch alternative/effizientere Versionen überschrieben werden
