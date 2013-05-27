@@ -744,7 +744,7 @@ int start.RelaunchInputDialog() {
    }
 
    if (IsError(error))
-      SetLastError(error);
+      SetLastError(error, NULL);
    return(error);
 }
 
@@ -775,6 +775,7 @@ int debug(string message, int error=NO_ERROR) {
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
    return(error);
+   __DummyCalls();
 }
 
 
@@ -852,7 +853,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
          alerted = true;
       }
-      SetLastError(error);                                                                      // je nach Programmtyp unterschiedlich Implementierung
+      SetLastError(error, NULL);                                                                // je nach Programmtyp unterschiedlich Implementierung
    }
 
    if (orderPop)
@@ -925,6 +926,7 @@ int warn(string message, int error=NO_ERROR) {
    }
 
    return(error);
+   __DummyCalls();
 }
 
 
@@ -976,6 +978,7 @@ int log(string message, int error=NO_ERROR) {
    Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
 
    return(error);
+   __DummyCalls();
 }
 
 
@@ -1111,7 +1114,7 @@ bool IsLastError() {
  */
 int ResetLastError() {
    int error = last_error;
-   SetLastError(NO_ERROR);
+   SetLastError(NO_ERROR, NULL);
    return(error);
 }
 
@@ -1856,7 +1859,7 @@ void __DummyCalls() {
    Round(NULL);
    Script.IsTesting();
    SelectTicket(NULL, NULL);
-   SetLastError(NULL);
+   SetLastError(NULL, NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
    WaitForTicket(NULL);
