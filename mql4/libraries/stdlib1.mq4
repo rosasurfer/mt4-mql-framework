@@ -7328,7 +7328,7 @@ string ErrorDescription(int error) {
       case ERR_WIN32_ERROR                : return("win32 api error"                                           ); // 5000
       case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                  ); // 5001
       case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                             ); // 5002
-      case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration parameter value"                     ); // 5003
+      case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                               ); // 5003
       case ERS_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); // 5004 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); // 5005
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       ); // 5006
