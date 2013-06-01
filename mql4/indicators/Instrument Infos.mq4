@@ -17,7 +17,7 @@ color  Font.Color.Disabled = Gray;
 string Font.Name           = "Tahoma";
 int    Font.Size           = 9;
 
-string names[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SWAPLONG","SWAPSHORT","STARTING","EXPIRATION","ACCOUNT_SERVER","ACCOUNT_LEVERAGE","STOPOUT_LEVEL"};
+string names[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SWAPLONG","SWAPSHORT","ACCOUNT_SERVER","ACCOUNT_LEVERAGE","STOPOUT_LEVEL"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
@@ -34,11 +34,9 @@ string names[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLE
 #define I_MARGINHEDGED        12
 #define I_SWAPLONG            13
 #define I_SWAPSHORT           14
-#define I_STARTING            15
-#define I_EXPIRATION          16
-#define I_ACCOUNT_SERVER      17
-#define I_ACCOUNT_LEVERAGE    18
-#define I_STOPOUT_LEVEL       19
+#define I_ACCOUNT_SERVER      15
+#define I_ACCOUNT_LEVERAGE    16
+#define I_STOPOUT_LEVEL       17
 
 
 /**
@@ -107,7 +105,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 284);//269
+      ObjectSet(label, OBJPROP_YDISTANCE, 245);
       ObjectSetText(label, "g", 174, "Webdings", Background.Color);
       PushChartObject(label);
    }
@@ -123,7 +121,7 @@ int CreateLabels() {
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet(label, OBJPROP_XDISTANCE,  20);
-            static int fields[] = {I_POINT, I_SPREAD, I_LOTSIZE, I_MARGINREQUIRED, I_SWAPLONG, I_STARTING, I_ACCOUNT_SERVER};
+            static int fields[] = {I_POINT, I_SPREAD, I_LOTSIZE, I_MARGINREQUIRED, I_SWAPLONG, I_ACCOUNT_SERVER};
             if (IntInArray(fields, i))
                yCoord += 8;
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
@@ -144,15 +142,14 @@ int CreateLabels() {
  */
 int UpdateInfos() {
    string strBool[] = { "no","yes" };
-   string strMCM[]  = { "Forex","CFD","CFD Futures","CFD Index","CFD Leverage" };               // margin calculation modes
-   string strPCM[]  = { "Forex","CFD","Futures" };                                              // profit calculation modes
-   string strSCM[]  = { "in points","in base currency","by interest","in margin currency" };    // swap calculation modes
+   string strMCM [] = { "Forex","CFD","CFD Futures","CFD Index","CFD Leverage" };               // margin calculation modes
+   string strPCM [] = { "Forex","CFD","Futures" };                                              // profit calculation modes
+   string strSCM [] = { "in points","in base currency","by interest","in margin currency" };    // swap calculation modes
 
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
-
-   bool   tradeAllowed = NE(MarketInfo(symbol, MODE_TRADEALLOWED), 0);
-   color  Font.Color   = ifInt(tradeAllowed, Font.Color.Enabled, Font.Color.Disabled);
+   bool   tradeAllowed    = _bool(MarketInfo(symbol, MODE_TRADEALLOWED));
+   color  Font.Color      = ifInt(tradeAllowed, Font.Color.Enabled, Font.Color.Disabled);
 
                                                                         ObjectSetText(names[I_TRADEALLOWED  ], "Trading enabled: "+ strBool[0+tradeAllowed], Font.Size, Font.Name, Font.Color);
                                                                         ObjectSetText(names[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat), Font.Size, Font.Name, Font.Color);
@@ -175,10 +172,8 @@ int UpdateInfos() {
    double maxLot            = MarketInfo(symbol, MODE_MAXLOT        );  ObjectSetText(names[I_MAXLOT        ], "Max lot:   "      + NumberToStr(maxLot, ", .+"), Font.Size, Font.Name, Font.Color);
 
    double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = EMPTY;
-
-   double lotValue          = Bid/tickSize * tickValue;
+   double lotValue          = Close[0]/tickSize * tickValue;
    double leverage          = lotValue/marginRequired;                  ObjectSetText(names[I_MARGINREQUIRED], "Margin required: "+ ifString(marginRequired==EMPTY, "", NumberToStr(marginRequired, ", .2+") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), Font.Size, Font.Name, ifInt(marginRequired==EMPTY, Font.Color.Disabled, Font.Color));
-
    double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED  );
           marginHedged      = marginHedged/lotSize * 100;               ObjectSetText(names[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(marginRequired==EMPTY, "", Round(marginHedged) +"%"), Font.Size, Font.Name, ifInt(marginRequired==EMPTY, Font.Color.Disabled, Font.Color));
 
@@ -187,12 +182,12 @@ int UpdateInfos() {
    double swapShort         = MarketInfo(symbol, MODE_SWAPSHORT     );
       double swapLongD, swapShortD, swapLongY, swapShortY;
       if (swapType == SCM_POINTS) {
-         swapLongD  = swapLong *Point/Pip;       swapLongY  = swapLongD *Pip*360*100/Bid;
-         swapShortD = swapShort*Point/Pip;       swapShortY = swapShortD*Pip*360*100/Bid;
+         swapLongD  = swapLong *Point/Pip;       swapLongY  = swapLongD *Pip*360*100/Close[0];
+         swapShortD = swapShort*Point/Pip;       swapShortY = swapShortD*Pip*360*100/Close[0];
       }
       else if (swapType == SCM_INTEREST) {
-         swapLongD  = swapLong *Bid/100/360/Pip; swapLongY  = swapLong;
-         swapShortD = swapShort*Bid/100/360/Pip; swapShortY = swapShort;
+         swapLongD  = swapLong *Close[0]/100/360/Pip; swapLongY  = swapLong;
+         swapShortD = swapShort*Close[0]/100/360/Pip; swapShortY = swapShort;
       }
       else {
          if (swapType == SCM_BASE_CURRENCY) {
@@ -202,9 +197,6 @@ int UpdateInfos() {
       }
       ObjectSetText(names[I_SWAPLONG ], "Swap long:  "+ NumberToStr(swapLongD,  "+.2") +" pip = "+ NumberToStr(swapLongY,  "+.2") +"% p.a.", Font.Size, Font.Name, Font.Color);
       ObjectSetText(names[I_SWAPSHORT], "Swap short: "+ NumberToStr(swapShortD, "+.2") +" pip = "+ NumberToStr(swapShortY, "+.2") +"% p.a.", Font.Size, Font.Name, Font.Color);
-
-   double futureStart      = MarketInfo(symbol, MODE_STARTING  );       ObjectSetText(names[I_STARTING        ], "Future start: "          + ifString(!futureStart,      "", TimeToStr(futureStart     )), Font.Size, Font.Name, ifInt(!futureStart,      Font.Color.Disabled, Font.Color));
-   double futureExpiration = MarketInfo(symbol, MODE_EXPIRATION);       ObjectSetText(names[I_EXPIRATION      ], "Future expiration: "     + ifString(!futureExpiration, "", TimeToStr(futureExpiration)), Font.Size, Font.Name, ifInt(!futureExpiration, Font.Color.Disabled, Font.Color));
 
    string accountServer   = GetServerDirectory();                       ObjectSetText(names[I_ACCOUNT_SERVER  ], "Account server: "        + accountServer, Font.Size, Font.Name, ifInt(!StringLen(accountServer), Font.Color.Disabled, Font.Color));
    int    accountLeverage = AccountLeverage();                          ObjectSetText(names[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ Round(accountLeverage)), Font.Size, Font.Name, ifInt(!accountLeverage, Font.Color.Disabled, Font.Color));
