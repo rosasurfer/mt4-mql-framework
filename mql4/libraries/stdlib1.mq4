@@ -10282,7 +10282,7 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                        return(error     ); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   illegal parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (IsError(BufferSetString(oe, 4, symbol))) return("");                                                                                                             return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                       return(digits    ); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = MathRound(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
@@ -10318,7 +10318,7 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
                                                                                               oe[i][ 0] = error;                                                        return(error     ); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   illegal parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 4, symbol))) return("");                                                                                     return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                       return(digits    ); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = MathRound(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
