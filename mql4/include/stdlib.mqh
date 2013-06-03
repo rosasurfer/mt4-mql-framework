@@ -146,9 +146,6 @@
    string   BufferCharsToStr (int buffer[], int from, int length);  //string BufferGetStringA(int buffer[], int from, int length);     // Alias
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
 
-   int      BufferSetString(int buffer[], int offset, string value);  int BufferSetStringA(int buffer[], int offset, string value);    // Alias
-                                                                    //int BufferSetStringW(int buffer[], int offset, string value);
-
    int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);                     // Alias
    int      ExplodeStringsW(int buffer[], string results[]);
 
