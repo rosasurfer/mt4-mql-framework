@@ -3654,36 +3654,6 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
 
 
 /**
- * Schreibt einen String an die angegebene Position eines Byte-Buffers. Der String wird mit einem <NUL>-Byte abgeschlossen.
- *
- * @param  int    buffer[] - Byte-Buffer (kann mehr-dimensional sein)
- * @param  int    offset   - Schreiboffset innerhalb des Buffers
- * @param  string value    - zu schreibender Wert
- *
- * @return int - Fehlerstatus
- */
-int BufferSetString(int buffer[], int offset, string value) {
-   int chars = ArraySize(buffer) << 2;
-   int len   = StringLen(value) + 1;                  // + terminierendes NUL-Byte
-
-   if (offset < 0)         return(catch("BufferSetString(1)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (offset >= chars)    return(catch("BufferSetString(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (offset+len > chars) return(catch("BufferSetString(3)   buffer overrun for parameters offset="+ offset +" and value=\""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
-
-   CopyMemory(GetBufferAddress(buffer)+offset, GetStringAddress(value), StringLen(value)+1);
-   return(NO_ERROR);
-}
-
-
-/**
- * Alias für BufferSetString()
- */
-int BufferSetStringA(int buffer[], int offset, string value) {
-   return(BufferSetString(buffer, offset, value));
-}
-
-
-/**
  * Konvertiert einen String-Buffer in ein String-Array.
  *
  * @param  int    buffer[]  - Buffer mit durch NUL-Zeichen getrennten Strings, terminiert durch ein weiteres NUL-Zeichen
@@ -10198,7 +10168,7 @@ string ColorToStr(color value)   {
  *
  * typedef struct _ORDER_EXECUTION {
  *    int  error;             //   4      => oe[ 0]      // Fehlercode
- *    char symbol[13];        //  16      => oe[ 1]      // OrderSymbol, bis zu 12 Zeichen + NUL (3 Byte Überhang)
+ *    char symbol[12];        //  16      => oe[ 1]      // OrderSymbol, bis zu 11 Zeichen + <NUL>
  *    int  digits;            //   4      => oe[ 5]      // Digits des Ordersymbols
  *    int  stopDistance;      //   4      => oe[ 6]      // Stop-Distance in Points
  *    int  freezeDistance;    //   4      => oe[ 7]      // Freeze-Distance in Points
@@ -10216,7 +10186,7 @@ string ColorToStr(color value)   {
  *    int  swap;              //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
  *    int  commission;        //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
  *    int  profit;            //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
- *    char comment[28];       //  28      => oe[22]      // Orderkommentar, bis zu 27 Zeichen + NUL
+ *    char comment[28];       //  28      => oe[22]      // Orderkommentar, bis zu 27 Zeichen + <NUL>
  *    int  duration;          //   4      => oe[29]      // Dauer der Auführung in Millisekunden
  *    int  requotes;          //   4      => oe[30]      // Anzahl aufgetretener Requotes
  *    int  slippage;          //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
@@ -10282,8 +10252,8 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                        return(error     ); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   illegal parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (IsError(BufferSetString(oe, 4, symbol))) return("");                                                                                                             return(symbol    ); }
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   CopyMemory(GetBufferAddress(oe)+4, GetStringAddress(symbol), StringLen(symbol)+1);                                                                                   return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                       return(digits    ); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = MathRound(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
 double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 7]    = MathRound(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
@@ -10304,9 +10274,11 @@ double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[20]   += MathRound(comission * 100);                                   return(comission ); }
 double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]    = MathRound(profit * 100);                                      return(profit    ); }
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]   += MathRound(profit * 100);                                      return(profit    ); }
+
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
-   if (StringLen(comment) > 27)                   return(_empty(catch("oe.setComment()   invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (IsError(BufferSetString(oe, 88, comment))) return("");                                                                                                           return(comment   ); }
+   if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
+   if ( StringLen(comment) > 27) return(_empty(catch("oe.setComment()   too long parameter comment = \""+ comment +"\" (> 27)"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   CopyMemory(GetBufferAddress(oe)+88, GetStringAddress(comment), StringLen(comment)+1);                                                                                return(comment   ); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                     return(milliSec  ); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                     return(requotes  ); }
 double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[31]    = MathRound(slippage * MathPow(10, oe.Digits(oe)<<31>>31));     return(slippage  ); }
@@ -10318,8 +10290,8 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
                                                                                               oe[i][ 0] = error;                                                        return(error     ); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   illegal parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 4, symbol))) return("");                                                                                     return(symbol    ); }
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   CopyMemory(GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 4, GetStringAddress(symbol), StringLen(symbol)+1);                                                          return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                       return(digits    ); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = MathRound(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
 double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 7] = MathRound(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
@@ -10340,9 +10312,11 @@ double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][20]+= MathRound(comission * 100);                                   return(comission ); }
 double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21] = MathRound(profit * 100);                                      return(profit    ); }
 double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21]+= MathRound(profit * 100);                                      return(profit    ); }
+
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
-   if (StringLen(comment) > 27) return(_empty(catch("oes.setComment()   invalid parameter comment = \""+ comment +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (IsError(BufferSetString(oe, ArrayRange(oe, 1)*i*4 + 88, comment))) return("");                                                                                   return(comment   ); }
+   if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
+   if ( StringLen(comment) > 27) return(_empty(catch("oes.setComment()   too long parameter comment = \""+ comment +"\" (> 27)"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   CopyMemory(GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 88, GetStringAddress(comment), StringLen(comment)+1);                                                       return(comment   ); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][29] = milliSec;                                                     return(milliSec  ); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][30] = requotes;                                                     return(requotes  ); }
 double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][31] = MathRound(slippage * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(slippage  ); }
