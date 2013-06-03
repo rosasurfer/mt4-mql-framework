@@ -7508,7 +7508,7 @@ string EventToStr(int event) {
 
 
 /**
- * Gibt den Offset der angegebenen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
+ * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
