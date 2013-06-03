@@ -608,7 +608,8 @@
 #import "sample.dll"
    string   GetStringValue(int address);
 #import "structs1.ex4"
-   string   EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+   string   EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+   string   HISTORY_HEADER.toStr   (/*HISTORY_HEADER*/   int hh[], bool debugOutput);
 #import
 
 
