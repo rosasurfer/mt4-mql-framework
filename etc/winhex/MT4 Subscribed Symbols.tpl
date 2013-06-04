@@ -6,7 +6,6 @@
 //   char symbol[12];                      12            0        // Symbol
 // } SYMBOL_SUBSCRIBED, ss;             = 128 byte
 //
-//
 
 template    "MT4 Subscribed Symbols"
 description "File 'symbols.sel'"

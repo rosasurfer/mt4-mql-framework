@@ -30,5 +30,5 @@ begin
       move         8
       double       "Close"
       double       "Volume"
-   }[3]
+   }[4]
 end
