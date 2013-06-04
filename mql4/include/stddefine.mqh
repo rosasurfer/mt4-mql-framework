@@ -702,8 +702,15 @@ int      last_error;                                        // der letzte Fehler
 // Struct sizes
 #define BAR.size                               44
 #define BAR.intSize                            11     // ceil(BAR.size/4)
-#define RATE_INFO.size                   BAR.size
-#define RATE_INFO.intSize             BAR.intSize
+
+#define TICK.size                              40
+#define TICK.intSize                           10     // ceil(TICK.size/4)
+
+#define SYMBOL_GROUP.size                      80
+#define SYMBOL_GROUP.intSize                   20     // ceil(SYMBOL_GROUP.size/4)
+
+#define SYMBOL_SUBSCRIBED.size                128
+#define SYMBOL_SUBSCRIBED.intSize              32     // ceil(SYMBOL_SUBSCRIBED.size/4)
 
 #define HISTORY_HEADER.size                   148
 #define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
