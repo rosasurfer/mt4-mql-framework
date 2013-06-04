@@ -1,14 +1,15 @@
 //
-// MQL structure BarInfo
+// MQL structure BAR (Dateiformat ".hst")
 //
-// typedef struct _BAR {
-//   int    time;       //  4        bar[   0]
-//   double open;       //  8        bar[1, 2]
-//   double low;        //  8        bar[3, 4]
-//   double high;       //  8        bar[5, 6]
-//   double close;      //  8        bar[7, 8]
-//   double volume;     //  8        bar[9,10]
-// } BAR, bar;          // 44 byte = int[  11]
+//                                        size        offset
+// typedef struct _BAR {                  ----        ------
+//   int    time;                           4            0        // BarOpen-Time
+//   double open;                           8            4
+//   double low;                            8           12
+//   double high;                           8           20
+//   double close;                          8           28
+//   double volume;                         8           36        // Double, jedoch immer Ganzzahl
+// } BAR, bar;                           = 44 byte
 //
 
 template    "MT4 History Data"
