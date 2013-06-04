@@ -23,6 +23,8 @@ extern int    iParameter = 12345;
  */
 int onTick() {
 
+   //DebugMarketInfo("onTick()");
+
    /*
    int iNull[];
    if (EventListener.BarOpen(iNull, F_PERIOD_H1)) {
