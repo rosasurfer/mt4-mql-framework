@@ -20,7 +20,7 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern bool   Dont.Overwrite.FXT.Files       = true;
-extern string _1____________________________ = "The 2GB limit removal works in Windows 7, Vista and Server 2008 only.";
+extern string _1____________________________ = "The 2GB limit removal works in Windows Vista, 7 and Server 2008 only.";
 extern bool   Remove.2GB.Limit               = false;
 extern string _2____________________________ = "The variable spread option requires variable spread FXT files.";
 extern bool   Use.Variable.Spread.Files      = false;
