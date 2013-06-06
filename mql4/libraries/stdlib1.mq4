@@ -9871,7 +9871,7 @@ string StringRepeat(string input, int times) {
 
 
 /**
- * Returns a numeric value rounded to the specified number of decimals - works around a precision bug in MQL4.
+ * Returns a numeric value rounded to the specified number of decimals.
  *
  * @param  double number
  * @param  int    decimals
@@ -9879,10 +9879,18 @@ string StringRepeat(string input, int times) {
  * @return double - rounded value
  */
 double MathRoundEx(double number, int decimals) {
-   // TODO: Verarbeitung negativer decimals prüfen
+   if (decimals > 0) return(NormalizeDouble(number, decimals));
 
-   double operand = MathPow(10, decimals);
-   return(MathRound(number*operand + Sign(number)*0.000000000001) / operand);
+   if (decimals == 0) {
+      int iNumber = MathRound(number);
+      return(iNumber);
+   }
+
+   // decimals < 0
+   double faktor = MathPow(10, decimals);                            // -1:  1234.5 => 1230
+   int    value  = MathRound(number * faktor);                       // -2:  1234.5 => 1200
+         iNumber = MathRound( value / faktor);                       // -3:  1234.5 => 1000
+   return(iNumber);
 }
 
 
@@ -9914,14 +9922,14 @@ string NumberToStr(double number, string mask) {
    int maskLen = StringLen(mask);
 
    // zu allererst Separatorenformat erkennen
-   bool swapSeparators = (StringFind(mask, ";")  > -1);
+   bool swapSeparators = (StringFind(mask, ";") > -1);
       string sepThousand=",", sepDecimal=".";
       if (swapSeparators) {
          sepThousand = ".";
          sepDecimal  = ",";
       }
       int sepPos = StringFind(mask, ",");
-   bool separators = (sepPos  > -1);
+   bool separators = (sepPos > -1);
       if (separators) /*&&*/ if (sepPos+1 < maskLen) {
          sepThousand = StringSubstr(mask, sepPos+1, 1);  // user-spezifischen 1000-Separator auslesen und aus Maske löschen
          mask        = StringConcatenate(StringSubstr(mask, 0, sepPos+1), StringSubstr(mask, sepPos+2));
@@ -9988,7 +9996,7 @@ string NumberToStr(double number, string mask) {
    }
 
    // übrige Modifier
-   bool round = (StringFind(mask, "R")  > -1);
+   bool round = (StringFind(mask, "R") > -1);
    // --- Ende Maske parsen ---------------------------
 
 
