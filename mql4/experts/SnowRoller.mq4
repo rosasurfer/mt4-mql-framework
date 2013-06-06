@@ -25,7 +25,6 @@
  *  - Bug: Crash, wenn Statusdatei der geladenen Testsequenz gelöscht wird
  *  - Logging aller MessageBoxen
  *
- *  - Build 419 silently crashes (1 mal)
  *  - Alpari: wiederholte Trade-Timeouts von exakt 200 sec. (Socket-Timeout ?)
  *  - Alpari: StopOrder-Slippage EUR/USD bis 4.1 pip, GBP/AUD bis 6 pip, GBP/JPY bis 21.4 pip
  *  - FxPro: zu viele Traderequests in zu kurzer Zeit => ERR_TRADE_TIMEOUT
@@ -2262,13 +2261,15 @@ int CreateMagicNumber(int level) {
 
 
 /**
- * Zeigt den aktuellen Status der Sequenz an.
+ * Zeigt den aktuellen Laufzeitstatus an.
  *
- * @return int - Fehlerstatus
+ * @param  int error - anzuzeigender Fehler
+ *
+ * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
  */
-int ShowStatus() {
+int ShowStatus(int error=NO_ERROR) {
    if (!IsChart)
-      return(NO_ERROR);
+      return(error);
 
    string msg, str.error;
 
@@ -2311,7 +2312,9 @@ int ShowStatus() {
    if (status == STATUS_UNINITIALIZED) ObjectDelete(label);
    else                                ObjectSetText(label, StringConcatenate(Sequence.ID, "|", status), 1);
 
-   return(catch("ShowStatus(3)"));
+   if (!catch("ShowStatus(3)"))
+      return(error);
+   return(last_error);
 }
 
 

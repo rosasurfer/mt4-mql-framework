@@ -3118,13 +3118,15 @@ int ClearStickyStatus() {
 
 
 /**
- * Zeigt den aktuellen Status der Sequenz an.
+ * Zeigt den aktuellen Laufzeitstatus an.
  *
- * @return int - Fehlerstatus
+ * @param  int error - anzuzeigender Fehler
+ *
+ * @return int - derselbe Fehler oder der aktuelle Fehlerstatus, falls kein Fehler übergeben wurde
  */
-int ShowStatus() {
+int ShowStatus(int error=NO_ERROR) {
    if (!IsChart)
-      return(NO_ERROR);
+      return(error);
 
    string str.error, l.msg, s.msg;
 
@@ -3174,7 +3176,9 @@ int ShowStatus() {
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
 
-   return(catch("ShowStatus(3)"));
+   if (!catch("ShowStatus(3)"))
+      return(error);
+   return(last_error);
 }
 
 
