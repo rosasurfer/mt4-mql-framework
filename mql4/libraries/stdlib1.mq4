@@ -4940,11 +4940,23 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
 
 
 /**
+ * Alias
+ *
  * Gibt die aktuelle Zeit in GMT zurück.
  *
- * @return datetime - GMT-Zeitpunkt oder -1, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit
  */
 datetime TimeGMT() {
+   return(GetSystemTimeEx());
+}
+
+
+/**
+ * Gibt die aktuelle Zeit in GMT zurück.
+ *
+ * @return datetime - GMT-Zeit
+ */
+datetime GetSystemTimeEx() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
    GetSystemTime(st);
 
@@ -4956,12 +4968,29 @@ datetime TimeGMT() {
    int sec   = st.Second(st);
 
    string strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
-   datetime time  = StrToTime(strTime);
+   return(StrToTime(strTime));
+}
 
-   int error = GetLastError();
-   if (!error)
-      return(time);
-   return(_int(-1, catch("TimeGMT()", error)));
+
+/**
+ * Gibt die aktuelle Zeit in lokaler Zeit zurück.  Die MQL-Funktion TimeLocal() gibt im Gegensatz zu dieser Funktion im Tester
+ * die modellierte Serverzeit zurück.
+ *
+ * @return datetime - lokale Zeit
+ */
+datetime GetLocalTimeEx() {
+   /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
+   GetLocalTime(st);
+
+   int year  = st.Year(st);
+   int month = st.Month(st);
+   int day   = st.Day(st);
+   int hour  = st.Hour(st);
+   int min   = st.Minute(st);
+   int sec   = st.Second(st);
+
+   string strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
+   return(StrToTime(strTime));
 }
 
 
@@ -10010,6 +10039,145 @@ string NumberToStr(double number, string mask) {
    return("");
 }
 
+
+/**
+ * Converts an MT4 datetime value to a formatted string, according to the instructions in the mask.
+ *
+ * Mask parameters:
+ *
+ *   Y      = 4 digit year
+ *   y      = 2 digit year
+ *   M      = 2 digit month
+ *   m      = 1-2 digit month
+ *   N      = full month name, e.g. November
+ *   n      = 3 char month name, e.g. Nov
+ *   D      = 2 digit day of month
+ *   d      = 1-2 digit day of month
+ *   T or t = append 'th' to day of month, e.g. 14th, 23rd, etc.
+ *   W      = full weekday name, e.g. Tuesday
+ *   w      = 3 char weekday name, e.g. Tue
+ *   H      = 2 digit hour (defaults to 24-hour time unless 'a' or 'A' are included)
+ *   h      = 1-2 digit hour (defaults to 24-hour time unless 'a' or 'A' are included)
+ *   a      = convert to 12-hour time and append lowercase am/pm
+ *   A      = convert to 12-hour time and append uppercase AM/PM
+ *   I      = 2 digit minutes in the hour
+ *   i      = 1-2 digit minutes in the hour
+ *   S      = 2 digit seconds in the minute
+ *   s      = 1-2 digit seconds in the minute
+ *
+ *   All other characters in the mask are output 'as is'.  You can output reserved characters 'as is' by
+ *   preceding them with an exclamation mark:
+ *
+ *      e.g. DateToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
+ *
+ *   You can also embed any text inside single quotes at the left or right of the mask:
+ *
+ *      e.g. DateToStr(StrToTime("2010.07.30"), "'xxx'w D n Y'yyy'")  =>  "xxxFri 30 Jul 2010yyy"
+ *
+ * @param  datetime time
+ * @param  string   mask
+ *
+ * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
+ */
+string DateToStr(datetime time, string mask) {
+   string ltext="", rtext="";
+
+   if (StringSubstr(mask, 0, 1) == "'") {
+      for (int k1=1; k1 < StringLen(mask); k1++) {
+         if (StringSubstr(mask, k1, 1) == "'")
+            break;
+         ltext = ltext + StringSubstr(mask, k1, 1);
+      }
+      mask = StringSubstr(mask, k1+1);
+   }
+
+   if (StringRight(mask, 1) == "'") {
+      for (int k2=StringLen(mask)-2; k2 >= 0; k2--) {
+         if (StringSubstr(mask, k2, 1) == "'")
+            break;
+         rtext = StringSubstr(mask, k2, 1) + rtext;
+      }
+      mask = StringSubstr(mask, 0, k2);
+   }
+
+   if (mask == "")
+      mask = "Y.M.D H:I:S";
+
+   bool blank = false;
+   if (StringSubstr(StringToUpper(mask), 0, 1) == "B") {
+      blank = true;
+      mask  = StringRight(mask, -1);
+   }
+
+   string mth[12] = {"January","February","March","April","May","June","July","August","September","October","November","December"};
+   string dow[ 7] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
+
+   int dd  = TimeDay      (time);
+   int mm  = TimeMonth    (time);
+   int yy  = TimeYear     (time);
+   int dw  = TimeDayOfWeek(time);
+   int hr  = TimeHour     (time);
+   int min = TimeMinute   (time);
+   int sec = TimeSeconds  (time);
+
+   bool h12f = false;
+   if (StringFind(StringToUpper(mask), "A", 0) >= 0)
+      h12f = true;
+
+   int h12 = 12;
+   if      (hr > 12) h12 = hr - 12;
+   else if (hr >  0) h12 = hr;
+
+   string ampm = "am";
+   if (hr > 12)
+      ampm = "pm";
+
+   switch (MathMod(dd, 10)) {
+      case 1: string d10 = "st"; break;
+      case 2:        d10 = "nd"; break;
+      case 3:        d10 = "rd"; break;
+      default:       d10 = "th";
+   }
+   if (dd > 10) /*&&*/ if (dd < 14)
+      d10 = "th";
+
+   string outdate = "";
+
+   for (int i=0; i < StringLen(mask); i++) {
+      string char = StringSubstr(mask, i, 1);
+      if (char == "!") {
+         outdate = outdate + StringSubstr(mask, i+1, 1);
+         i++;
+         continue;
+      }
+      if      (char == "d")                outdate = outdate +                    dd;
+      else if (char == "D")                outdate = outdate + StringRight("0"+   dd, 2);
+      else if (char == "m")                outdate = outdate +                    mm;
+      else if (char == "M")                outdate = outdate + StringRight("0"+   mm, 2);
+      else if (char == "y")                outdate = outdate + StringRight("0"+   yy, 2);
+      else if (char == "Y")                outdate = outdate + StringRight("000"+ yy, 4);
+      else if (char == "n")                outdate = outdate + StringSubstr(mth[mm-1], 0, 3);
+      else if (char == "N")                outdate = outdate +              mth[mm-1];
+      else if (char == "w")                outdate = outdate + StringSubstr(dow[dw], 0, 3);
+      else if (char == "W")                outdate = outdate +              dow[dw];
+      else if (char == "h" &&  h12f)       outdate = outdate +                    h12;
+      else if (char == "H" &&  h12f)       outdate = outdate + StringRight("0"+   h12, 2);
+      else if (char == "h" && !h12f)       outdate = outdate +                    hr;
+      else if (char == "H" && !h12f)       outdate = outdate + StringRight("0"+   hr, 2);
+      else if (char == "i")                outdate = outdate +                    min;
+      else if (char == "I")                outdate = outdate + StringRight("0"+   min, 2);
+      else if (char == "s")                outdate = outdate +                    sec;
+      else if (char == "S")                outdate = outdate + StringRight("0"+   sec, 2);
+      else if (char == "a")                outdate = outdate + ampm;
+      else if (char == "A")                outdate = outdate + StringToUpper(ampm);
+      else if (StringToUpper(char) == "T") outdate = outdate + d10;
+      else                                 outdate = outdate + char;
+   }
+   if (blank) /*&&*/ if (!time)
+      outdate = StringRepeat(" ", StringLen(outdate));
+
+   return(ltext + outdate + rtext);
+}
 
 
 /**

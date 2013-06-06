@@ -224,7 +224,8 @@
    datetime GetServerNextSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
 
    string   GetDayOfWeek(datetime time, bool longFormat);
-   datetime TimeGMT();
+   datetime GetLocalTimeEx();
+   datetime GetSystemTimeEx(); datetime TimeGMT();                // Alias
 
 
    // Event-Listener: *können* bei Verwendung im Programm durch alternative/effizientere Versionen überschrieben werden
@@ -468,6 +469,7 @@
    string   AppliedPriceToStr      (int appliedPrice);
    string   ChartPropertiesToStr(int flags);
    string   InitFlagsToStr  (int flags);
+   string   DateToStr(datetime time, string mask);
    string   DeinitFlagsToStr(int flags);
    string   ErrorDescription(int error);
    string   ErrorToStr      (int error);
