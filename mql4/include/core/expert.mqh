@@ -12,7 +12,7 @@ int      Test.startMillis, Test.stopMillis;                          // in Milli
 
 
 /**
- * Globale init()-Funktion für Experts.
+ * Globale init()-Funktion für Expert Adviser.
  *
  * Bei Aufruf durch das Terminal wird der letzte Errorcode 'last_error' in 'prev_error' gespeichert und vor Abarbeitung
  * zurückgesetzt.
@@ -116,7 +116,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }                                                                          //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook wird immer ausgeführt (auch bei __STATUS_ERROR)
-   ShowStatus();                                                              //
+   ShowStatus(NO_ERROR);                                                              //
 
    if (__STATUS_ERROR)
       return(last_error);
@@ -137,97 +137,77 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
 /**
- * Globale start()-Funktion für Experts.
+ * Globale start()-Funktion für Expert Adviser.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_READY zurück,
- *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
- *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
- *
- * - Der letzte Errorcode 'last_error' wird in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
+ * Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_READY zurück,
+ * wird init() erneut ausgeführt. Bei erneutem Fehler bricht start() ab.
  *
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS_ERROR) {
-      ShowStatus();
-      return(last_error);
-   }
+   if (__STATUS_ERROR)
+      return(ShowStatus(last_error));
 
 
    // "Time machine"-Bug im Tester abfangen
    if (IsTesting()) {
       static datetime time, lastTime;
       time = TimeCurrent();
-      if (time < lastTime) {
-         catch("start(1)   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR);
-         ShowStatus();
-         return(last_error);
-      }
+      if (time < lastTime)
+         return(ShowStatus(catch("start(1)   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR)));
       lastTime = time;
    }
 
 
-   int error;
-                                                                     // einfacher Zähler, der konkrete Wert hat keine Bedeutung
-   Tick++; Ticks = Tick;
+   Tick++; Ticks = Tick;                                                   // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;
    ChangedBars   = -1;
 
 
-   // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
+   // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war
    if (__WHEREAMI__ == FUNC_INIT) {
+      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
+
       if (IsLastError()) {
-         if (last_error != ERS_TERMINAL_NOT_READY) {                 // init() ist mit hartem Fehler zurückgekehrt
-            ShowStatus();
-            return(last_error);
-         }
-         __WHEREAMI__ = FUNC_START;
-         if (IsError(init())) {                                      // init() erneut aufrufen
-            __WHEREAMI__ = FUNC_INIT;                                // erneuter Fehler (hart oder weich)
-            ShowStatus();
-            return(last_error);
+         if (last_error != ERS_TERMINAL_NOT_READY)                         // init() ist mit hartem Fehler zurückgekehrt
+            return(ShowStatus(last_error));
+
+         if (IsError(init())) {                                            // init() ist mit weichem Fehler zurückgekehrt => erneut aufrufen
+            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_INIT);  // erneuter Fehler (hart oder weich), __WHEREAMI__ zurücksetzen
+            return(ShowStatus(last_error));
          }
       }
-      last_error = NO_ERROR;                                         // init() war erfolgreich
+      last_error = NO_ERROR;                                               // init() war erfolgreich
    }
    else {
-      prev_error = last_error;                                       // weiterer Tick: last_error sichern und zurücksetzen
+      prev_error = last_error;                                             // weiterer Tick: last_error sichern und zurücksetzen
       last_error = NO_ERROR;
    }
-   __WHEREAMI__                    = FUNC_START;
-   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
 
 
    // (2) bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      ShowStatus();
-      return(last_error);
+      return(ShowStatus(last_error));
    }
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars) {
-      SetLastError(debug("start()   Bars=0", ERS_TERMINAL_NOT_READY));
-      ShowStatus();
-      return(last_error);
-   }
+   if (!Bars)
+      return(ShowStatus(SetLastError(debug("start()   Bars=0", ERS_TERMINAL_NOT_READY))));
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
-      SetLastError(stdlib_GetLastError());
-      ShowStatus();
-      return(last_error);
-   }
+   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      return(ShowStatus(SetLastError(stdlib_GetLastError())));
 
 
    // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
-      error = NO_ERROR;
+      int error = NO_ERROR;
       chartInfo.positionChecked = false;
       error |= ChartInfo.UpdatePrice();
       error |= ChartInfo.UpdateSpread();
@@ -235,10 +215,8 @@ int start() {
       error |= ChartInfo.UpdatePosition();
       error |= ChartInfo.UpdateTime();
       error |= ChartInfo.UpdateMarginLevels();
-      if (error != NO_ERROR) {                                       // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
-         ShowStatus();
-         return(last_error);
-      }
+      if (error != NO_ERROR)                                               // error ist hier die Summe aller in ChartInfo.* aufgetretenen Fehler
+         return(ShowStatus(last_error));
    }
 
 
@@ -257,8 +235,7 @@ int start() {
 
    if (IsTesting()) /*&&*/ if (!IsVisualMode())
       return(last_error);
-   ShowStatus();
-   return(last_error);
+   return(ShowStatus(last_error));
 }
 
 

@@ -256,7 +256,7 @@ int    onDeinitRecompile()       {                                              
 int    afterDeinit()             {                                                                             return(NO_ERROR); }
 
 string InputsToStr()             {                                           return("InputsToStr()   function not implemented"); }
-int    ShowStatus()              { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(NO_ERROR); }
+int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(error   ); }
 
 
 /**
