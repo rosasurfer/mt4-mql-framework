@@ -9282,10 +9282,7 @@ string StringToLower(string value) {
       else if (char < 91) { if (char >  64) result = StringSetChar(result, i, char+32); }
       else if (191 < char)  if (char < 223) result = StringSetChar(result, i, char+32);
    }
-
-   if (!catch("StringToLower()"))
-      return(result);
-   return("");
+   return(result);
 }
 
 
@@ -9316,10 +9313,7 @@ string StringToUpper(string value) {
       else if (char == 154)                 result = StringSetChar(result, i, char-16);
       else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
    }
-
-   if (!catch("StringToUpper()"))
-      return(result);
-   return("");
+   return(result);
 }
 
 
@@ -10073,14 +10067,10 @@ string NumberToStr(double number, string mask) {
  *   S      = 2 digit seconds in the minute
  *   s      = 1-2 digit seconds in the minute
  *
- *   All other characters in the mask are output 'as is'.  You can output reserved characters 'as is' by
- *   preceding them with an exclamation mark:
+ *   All other characters in the mask are output 'as is'.  You can output reserved characters by  preceding
+ *   them with an exclamation mark:
  *
  *      e.g. DateToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
- *
- *   You can also embed any text inside single quotes at the left or right of the mask:
- *
- *      e.g. DateToStr(StrToTime("2010.07.30"), "'xxx'w D n Y'yyy'")  =>  "xxxFri 30 Jul 2010yyy"
  *
  * @param  datetime time
  * @param  string   mask
@@ -10088,37 +10078,11 @@ string NumberToStr(double number, string mask) {
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
 string DateToStr(datetime time, string mask) {
-   string ltext="", rtext="";
-
-   if (StringSubstr(mask, 0, 1) == "'") {
-      for (int k1=1; k1 < StringLen(mask); k1++) {
-         if (StringSubstr(mask, k1, 1) == "'")
-            break;
-         ltext = ltext + StringSubstr(mask, k1, 1);
-      }
-      mask = StringSubstr(mask, k1+1);
-   }
-
-   if (StringRight(mask, 1) == "'") {
-      for (int k2=StringLen(mask)-2; k2 >= 0; k2--) {
-         if (StringSubstr(mask, k2, 1) == "'")
-            break;
-         rtext = StringSubstr(mask, k2, 1) + rtext;
-      }
-      mask = StringSubstr(mask, 0, k2);
-   }
-
-   if (mask == "")
+   if (StringLen(mask) == 0)
       mask = "Y.M.D H:I:S";
 
-   bool blank = false;
-   if (StringSubstr(StringToUpper(mask), 0, 1) == "B") {
-      blank = true;
-      mask  = StringRight(mask, -1);
-   }
-
-   string mth[12] = {"January","February","March","April","May","June","July","August","September","October","November","December"};
-   string dow[ 7] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
+   string months[12] = { "January","February","March","April","May","June","July","August","September","October","November","December" };
+   string wdays [ 7] = { "Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday" };
 
    int dd  = TimeDay      (time);
    int mm  = TimeMonth    (time);
@@ -10128,17 +10092,14 @@ string DateToStr(datetime time, string mask) {
    int min = TimeMinute   (time);
    int sec = TimeSeconds  (time);
 
-   bool h12f = false;
-   if (StringFind(StringToUpper(mask), "A", 0) >= 0)
-      h12f = true;
+   bool h12f = StringFind(StringToUpper(mask), "A", 0) >= 0;
 
    int h12 = 12;
    if      (hr > 12) h12 = hr - 12;
    else if (hr >  0) h12 = hr;
 
-   string ampm = "am";
-   if (hr > 12)
-      ampm = "pm";
+   if (hr <= 12) string ampm = "am";
+   else                 ampm = "pm";
 
    switch (MathMod(dd, 10)) {
       case 1: string d10 = "st"; break;
@@ -10149,42 +10110,42 @@ string DateToStr(datetime time, string mask) {
    if (dd > 10) /*&&*/ if (dd < 14)
       d10 = "th";
 
-   string outdate = "";
+   string result = "";
 
    for (int i=0; i < StringLen(mask); i++) {
       string char = StringSubstr(mask, i, 1);
       if (char == "!") {
-         outdate = outdate + StringSubstr(mask, i+1, 1);
+         result = result + StringSubstr(mask, i+1, 1);
          i++;
          continue;
       }
-      if      (char == "d")                outdate = outdate +                    dd;
-      else if (char == "D")                outdate = outdate + StringRight("0"+   dd, 2);
-      else if (char == "m")                outdate = outdate +                    mm;
-      else if (char == "M")                outdate = outdate + StringRight("0"+   mm, 2);
-      else if (char == "y")                outdate = outdate + StringRight("0"+   yy, 2);
-      else if (char == "Y")                outdate = outdate + StringRight("000"+ yy, 4);
-      else if (char == "n")                outdate = outdate + StringSubstr(mth[mm-1], 0, 3);
-      else if (char == "N")                outdate = outdate +              mth[mm-1];
-      else if (char == "w")                outdate = outdate + StringSubstr(dow[dw], 0, 3);
-      else if (char == "W")                outdate = outdate +              dow[dw];
-      else if (char == "h" &&  h12f)       outdate = outdate +                    h12;
-      else if (char == "H" &&  h12f)       outdate = outdate + StringRight("0"+   h12, 2);
-      else if (char == "h" && !h12f)       outdate = outdate +                    hr;
-      else if (char == "H" && !h12f)       outdate = outdate + StringRight("0"+   hr, 2);
-      else if (char == "i")                outdate = outdate +                    min;
-      else if (char == "I")                outdate = outdate + StringRight("0"+   min, 2);
-      else if (char == "s")                outdate = outdate +                    sec;
-      else if (char == "S")                outdate = outdate + StringRight("0"+   sec, 2);
-      else if (char == "a")                outdate = outdate + ampm;
-      else if (char == "A")                outdate = outdate + StringToUpper(ampm);
-      else if (StringToUpper(char) == "T") outdate = outdate + d10;
-      else                                 outdate = outdate + char;
+      if      (char == "d")                result = result +                    dd;
+      else if (char == "D")                result = result + StringRight("0"+   dd, 2);
+      else if (char == "m")                result = result +                    mm;
+      else if (char == "M")                result = result + StringRight("0"+   mm, 2);
+      else if (char == "y")                result = result + StringRight("0"+   yy, 2);
+      else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
+      else if (char == "n")                result = result + StringSubstr(months[mm-1], 0, 3);
+      else if (char == "N")                result = result +              months[mm-1];
+      else if (char == "w")                result = result + StringSubstr(wdays [dw], 0, 3);
+      else if (char == "W")                result = result +              wdays [dw];
+      else if (char == "h") {
+         if (h12f)                         result = result +                    h12;
+         else                              result = result +                    hr; }
+      else if (char == "H") {
+         if (h12f)                         result = result + StringRight("0"+   h12, 2);
+         else                              result = result + StringRight("0"+   hr, 2);
+      }
+      else if (char == "i")                result = result +                    min;
+      else if (char == "I")                result = result + StringRight("0"+   min, 2);
+      else if (char == "s")                result = result +                    sec;
+      else if (char == "S")                result = result + StringRight("0"+   sec, 2);
+      else if (char == "a")                result = result + ampm;
+      else if (char == "A")                result = result + StringToUpper(ampm);
+      else if (char == "t" || char == "T") result = result + d10;
+      else                                 result = result + char;
    }
-   if (blank) /*&&*/ if (!time)
-      outdate = StringRepeat(" ", StringLen(outdate));
-
-   return(ltext + outdate + rtext);
+   return(result);
 }
 
 
