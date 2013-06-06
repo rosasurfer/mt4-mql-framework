@@ -211,7 +211,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars) {
-      SetLastError(debug("start()   Bars = 0", ERS_TERMINAL_NOT_READY));
+      SetLastError(debug("start()   Bars=0", ERS_TERMINAL_NOT_READY));
       ShowStatus();
       return(last_error);
    }
@@ -255,6 +255,8 @@ int start() {
       Tester.Stop();
 
 
+   if (IsTesting()) /*&&*/ if (!IsVisualMode())
+      return(last_error);
    ShowStatus();
    return(last_error);
 }

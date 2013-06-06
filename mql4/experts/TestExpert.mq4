@@ -5,7 +5,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <core/expert.mqh>
+//#include <core/expert.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ extern int    iParameter = 12345;
  *
  * @return int - Fehlerstatus
  */
-int onTick() {
+int start() {
 
    //DebugMarketInfo("onTick()");
 
@@ -41,4 +41,5 @@ int onTick() {
    */
 
    return(last_error);
+   catch("start()");
 }
