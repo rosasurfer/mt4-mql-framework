@@ -10301,9 +10301,9 @@ string ColorToStr(color value)   {
 
 
 /**
- * MQL structure ORDER_EXECUTION
+ * MT4 structure ORDER_EXECUTION
  *
- * typedef struct _ORDER_EXECUTION {
+ * struct ORDER_EXECUTION {
  *    int  error;             //   4      => oe[ 0]      // Fehlercode
  *    char symbol[12];        //  16      => oe[ 1]      // OrderSymbol, bis zu 11 Zeichen + <NUL>
  *    int  digits;            //   4      => oe[ 5]      // Digits des Ordersymbols
@@ -10329,7 +10329,7 @@ string ColorToStr(color value)   {
  *    int  slippage;          //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
  *    int  remainingTicket;   //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
  *    int  remainingLots;     //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
- * } ORDER_EXECUTION, oe;     // 136 byte = int[34]
+ * } oe;                      // 136 byte = int[34]
  */
 
 // Getter
