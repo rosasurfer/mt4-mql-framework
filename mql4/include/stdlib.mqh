@@ -349,8 +349,9 @@
    string   StringRight(string value, int n);
 
    string   StringTrim(string value);
-   string   StringLeftPad(string input, int length, string pad_string);
+   string   StringLeftPad (string input, int length, string pad_string);
    string   StringRightPad(string input, int length, string pad_string);
+   string   StringPad     (string input, int length, string pad_string, int pad_type);
 
    string   StringToLower(string value);
    string   StringToUpper(string value);

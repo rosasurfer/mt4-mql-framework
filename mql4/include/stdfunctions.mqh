@@ -699,6 +699,12 @@ int      last_error;                                        // der letzte Fehler
 #define OE_CATCH_EXECUTION_STOPPING             4     // ERS_EXECUTION_STOPPING (Status)
 
 
+// String padding types, siehe StringPad()
+#define STR_PAD_LEFT                            1
+#define STR_PAD_RIGHT                           2
+#define STR_PAD_BOTH                            3
+
+
 // Struct sizes
 #define BAR.size                               44
 #define BAR.intSize                            11     // ceil(BAR.size/4)

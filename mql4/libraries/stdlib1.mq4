@@ -5262,6 +5262,46 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
 
 
 /**
+ * Pad a string to a certain length with another string.
+ *
+ * @param  string input
+ * @param  int    pad_length
+ * @param  string pad_string - Pad-String                                         (default: Leerzeichen  )
+ * @param  int    pad_type   - Pad-Type [STR_PAD_LEFT|STR_PAD_RIGHT|STR_PAD_BOTH] (default: STR_PAD_RIGHT)
+ *
+ * @return string - String oder Leerstring, falls ein Fehler auftrat
+ */
+string StringPad(string input, int pad_length, string pad_string=" ", int pad_type=STR_PAD_RIGHT) {
+   int lenInput = StringLen(input);
+   if (pad_length <= lenInput)
+      return(input);
+
+   int lenPadStr = StringLen(pad_string);
+   if (lenPadStr < 1)
+      return(_empty(catch("StringPad(1)   illegal parameter pad_string = \""+ pad_string +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (pad_type == STR_PAD_LEFT ) return(StringLeftPad (input, pad_length, pad_string));
+   if (pad_type == STR_PAD_RIGHT) return(StringRightPad(input, pad_length, pad_string));
+
+
+   if (pad_type == STR_PAD_BOTH) {
+      int padLengthLeft  = (pad_length-lenInput)/2 + (pad_length-lenInput)<<2;
+      int padLengthRight = (pad_length-lenInput)/2;
+
+      string paddingLeft  = StringRepeat(pad_string, padLengthLeft );
+      string paddingRight = StringRepeat(pad_string, padLengthRight);
+      if (lenPadStr > 1) {
+         paddingLeft  = StringSubstr(paddingLeft,  0, padLengthLeft );
+         paddingRight = StringSubstr(paddingRight, 0, padLengthRight);
+      }
+      return(paddingLeft + input + paddingRight);
+   }
+
+   return(_empty(catch("StringPad(2)   illegal parameter pad_type = "+ pad_type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
  * Gibt die Startzeit der vorherigen Handelssession für den angegebenen Tradeserver-Zeitpunkt zurück.
  *
  * @param  datetime serverTime - Tradeserver-Zeitpunkt
