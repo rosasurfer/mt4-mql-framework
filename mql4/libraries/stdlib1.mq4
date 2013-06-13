@@ -5285,7 +5285,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
 
 
    if (pad_type == STR_PAD_BOTH) {
-      int padLengthLeft  = (pad_length-lenInput)/2 + (pad_length-lenInput)<<2;
+      int padLengthLeft  = (pad_length-lenInput)/2 + (pad_length-lenInput)%2;
       int padLengthRight = (pad_length-lenInput)/2;
 
       string paddingLeft  = StringRepeat(pad_string, padLengthLeft );
@@ -10121,7 +10121,7 @@ string DateToStr(datetime time, string mask) {
    if (StringLen(mask) == 0)
       mask = "Y.M.D H:I:S";
 
-   string months[12] = { "January","February","March","April","May","June","July","August","September","October","November","December" };
+   string months[12] = { "","January","February","March","April","May","June","July","August","September","October","November","December" };
    string wdays [ 7] = { "Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday" };
 
    int dd  = TimeDay      (time);
@@ -10165,8 +10165,8 @@ string DateToStr(datetime time, string mask) {
       else if (char == "M")                result = result + StringRight("0"+   mm, 2);
       else if (char == "y")                result = result + StringRight("0"+   yy, 2);
       else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
-      else if (char == "n")                result = result + StringSubstr(months[mm-1], 0, 3);
-      else if (char == "N")                result = result +              months[mm-1];
+      else if (char == "n")                result = result + StringSubstr(months[mm], 0, 3);
+      else if (char == "N")                result = result +              months[mm];
       else if (char == "w")                result = result + StringSubstr(wdays [dw], 0, 3);
       else if (char == "W")                result = result +              wdays [dw];
       else if (char == "h") {
