@@ -34,6 +34,13 @@
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
+   /*
+   bool SystemTimeToTzSpecificLocalTime(
+      LPTIME_ZONE_INFORMATION lpTimeZoneInformation,  // pointer to time zone of interest
+      LPSYSTEMTIME lpUniversalTime,                   // pointer to universal time of interest
+      LPSYSTEMTIME lpLocalTime                        // pointer to structure to receive local time
+   );
+   */
    int  LoadLibraryA(string lpLibFileName);
    void OutputDebugStringA(string lpMessage);
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
