@@ -4960,10 +4960,10 @@ datetime GetSystemTimeEx() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
    GetSystemTime(st);
 
-   int year  = st.Year(st);
-   int month = st.Month(st);
-   int day   = st.Day(st);
-   int hour  = st.Hour(st);
+   int year  = st.Year  (st);
+   int month = st.Month (st);
+   int day   = st.Day   (st);
+   int hour  = st.Hour  (st);
    int min   = st.Minute(st);
    int sec   = st.Second(st);
 
