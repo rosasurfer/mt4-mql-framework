@@ -1,15 +1,16 @@
 //
-// MQL structure SUBSCRIBED_SYMBOL (Dateiformat "symbols.sel")
+// MT4 structure SUBSCRIBED_SYMBOL (Dateiformat "symbols.sel")
 //
 //                                        size        offset
-// typedef struct _SUBSCRIBED_SYMBOL {    ----        ------
+// struct SUBSCRIBED_SYMBOL {             ----        ------
 //   char   symbol[12];                    12            0        // Symbol
 //   int    digits;                         4           12        // Digits
 //   int    index;                          4           16        // Index des Symbols in "symbols.raw"
 //   char   undocumented[12];              12           20
-//   double point;                          8           32        // Point (oder TickSize ???)
-//   char   undocumented[8];                8           40
-//   int    direction;                      4           48        // Direction: 0 - UpTick, 1 - DownTick, 2 - n/a
+//   double point;                          8           32        // Point
+//   int    spread;                         4           40        // Spread (evt. NULL)
+//   char   undocumented[4];                4           44
+//   int    tick;                           4           48        // Direction: 0 - Uptick, 1 - Downtick, 2 - n/a
 //   char   undocumented[4];                4           52
 //   int    time;                           4           56        // Time
 //   char   undocumented[4];                4           60
@@ -20,7 +21,7 @@
 //   char   reserved[16];                  16           96
 //   double bid;                            8          112        // Bid (Wiederholung)
 //   double ask;                            8          120        // Ask (Wiederholung)
-// } SUBSCRIBED_SYMBOL, ss;             = 128 byte
+// } ss;                                = 128 byte
 //
 
 template    "MT4 Subscribed Symbols"
@@ -28,7 +29,7 @@ description "File 'symbols.sel'"
 
 applies_to  file
 fixed_start 0
-requires    0 "90 01"      // Version = 400
+requires    0 "90 01"               // Version = 400
 
 begin
    move 4
@@ -41,8 +42,9 @@ begin
      move 4
      hex 12       "(undocumented)"
      double       "Point"
-     hex  8       "(undocumented)"
-     uint32       "Direction: 0 - Uptick, 1 - Downtick, 2 - n/a"
+     uint32       "Spread"
+     hex  4       "(undocumented)"
+     uint32       "Tick: 0 - Up, 1 - Down, 2 - n/a"
      hex  4       "(undocumented)"
      UNIXDateTime "Time"
      hex  4       "(undocumented)"
@@ -52,4 +54,11 @@ begin
      double       "Session Low"
      move 32
   }[128]
+
+
+//{ char[12]     "Symbol"
+//  move 28
+//  uint32       "Spread"
+//  move 84
+//}[128]
 end
