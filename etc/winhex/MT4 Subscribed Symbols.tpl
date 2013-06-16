@@ -8,7 +8,9 @@
 //   int    index;                          4           16        // Index des Symbols in "symbols.raw"
 //   char   undocumented[12];              12           20
 //   double point;                          8           32        // Point (oder TickSize ???)
-//   char   undocumented[16];              16           40
+//   char   undocumented[8];                8           40
+//   int    direction;                      4           48        // Direction: 0 - UpTick, 1 - DownTick, 2 - n/a
+//   char   undocumented[4];                4           52
 //   int    time;                           4           56        // Time
 //   char   undocumented[4];                4           60
 //   double bid;                            8           64        // Bid
@@ -39,7 +41,9 @@ begin
      move 4
      hex 12       "(undocumented)"
      double       "Point"
-     hex 16       "(undocumented)"
+     hex  8       "(undocumented)"
+     uint32       "Direction: 0 - Uptick, 1 - Downtick, 2 - n/a"
+     hex  4       "(undocumented)"
      UNIXDateTime "Time"
      hex  4       "(undocumented)"
      double       "Bid"
@@ -48,10 +52,4 @@ begin
      double       "Session Low"
      move 32
   }[128]
-
- //{
- //   move 96
- //   hex 16       "(undocumented)"
- //   move 16
- //}[8]
 end
