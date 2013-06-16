@@ -47,7 +47,7 @@ begin
      double       "Session High"
      double       "Session Low"
      move 32
-  }[8]
+  }[128]
 
  //{
  //   move 96
