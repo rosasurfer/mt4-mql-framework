@@ -2,7 +2,7 @@
 // Structure DUKASCOPY_BAR (Dateiformat "BID|ASK_candles_*.bin", Big-Endian)
 //
 //                                        size        offset
-// struct DUKASCOPY_BAR {                 ----        ------
+// struct big-endian DUKASCOPY_BAR {      ----        ------
 //   int    timedelta;                      4            0        // Zeitdifferenz in Sekunden zum Dateistart
 //   int    open;                           4            4        // in Points
 //   int    close;                          4            8        // in Points
@@ -16,7 +16,6 @@ template    "Dukascopy Bar Data"
 description "Files 'BID|ASK_candles_*.bin'"
 
 applies_to  file
-fixed_start 0
 big-endian
 multiple
 
