@@ -3,7 +3,7 @@
 //
 //                                        size        offset
 // struct big-endian DUKASCOPY_BAR {      ----        ------
-//   int    timedelta;                      4            0        // Zeitdifferenz in Sekunden zum Dateistart
+//   int    deltaTime;                      4            0        // Zeitdifferenz in Sekunden zum Dateistart
 //   int    open;                           4            4        // in Points
 //   int    close;                          4            8        // in Points
 //   int    low;                            4           12        // in Points
@@ -21,7 +21,7 @@ multiple
 
 begin
    { endsection
-      uint32   "TimeDelta (sec)"
+      uint32   "DeltaTime (sec)"
       uint32   "Open"
       move  8
       uint32   "High"
