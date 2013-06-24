@@ -4106,6 +4106,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "atcbrokersest-"     )) return("ATC"             );
    else if (StringStartsWith(server, "atcbrokersliq1-"    )) return("ATC"             );
    else if (StringStartsWith(server, "axitrader-"         )) return("AxiTrader"       );
+   else if (StringStartsWith(server, "axitraderusa-"      )) return("AxiTrader"       );
    else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
    else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
    else if (StringStartsWith(server, "cmap-"              )) return("IC Markets"      );
@@ -8149,6 +8150,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "FXT";
    else if (StringStartsWith(directory, "axitrader-"         )) timezone = "Europe/Kiev";          // oder FXT ???
+   else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "cmap-"              )) timezone = "Europe/London";        // IC Markets
@@ -8169,7 +8171,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
    else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "metaquotes-"        )) timezone = "GMT";                  // unbestätigt
+   else if (StringStartsWith(directory, "metaquotes-"        )) timezone = "GMT";                  // Dummy-Wert
    else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "pepperstone-"       )) timezone = "FXT";
