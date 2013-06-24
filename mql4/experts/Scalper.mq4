@@ -1,5 +1,5 @@
 /**
- * Scalp Manager
+ * Super Grid
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
