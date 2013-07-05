@@ -7537,19 +7537,20 @@ string ErrorToStr(int error) {
  */
 string ShellExecuteErrorToStr(int error) {
    switch (error) {
-      case 0                     : return("Out of memory or resources."                        );
-      case ERROR_BAD_FORMAT      : return("Incorrect file format."                             );
-      case SE_ERR_FNF            : return("File not found."                                    );
-      case SE_ERR_PNF            : return("Path not found."                                    );
-      case SE_ERR_ACCESSDENIED   : return("Access denied."                                     );
-      case SE_ERR_OOM            : return("Out of memory."                                     );
-      case SE_ERR_SHARE          : return("A sharing violation occurred."                      );
-      case SE_ERR_ASSOCINCOMPLETE: return("File association information incomplete or invalid.");
-      case SE_ERR_DDETIMEOUT     : return("DDE operation timed out."                           );
-      case SE_ERR_DDEFAIL        : return("DDE operation failed."                              );
-      case SE_ERR_DDEBUSY        : return("DDE operation is busy."                             );
-      case SE_ERR_NOASSOC        : return("File association information not available."        );
-      case SE_ERR_DLLNOTFOUND    : return("Dynamic-link library not found."                    );
+      case 0                     : return("Out of memory or resources."                        );     //  0
+      case ERROR_BAD_FORMAT      : return("Incorrect file format."                             );     // 11
+
+      case SE_ERR_FNF            : return("File not found."                                    );     //  2
+      case SE_ERR_PNF            : return("Path not found."                                    );     //  3
+      case SE_ERR_ACCESSDENIED   : return("Access denied."                                     );     //  5
+      case SE_ERR_OOM            : return("Out of memory."                                     );     //  8
+      case SE_ERR_SHARE          : return("A sharing violation occurred."                      );     // 26
+      case SE_ERR_ASSOCINCOMPLETE: return("File association information incomplete or invalid.");     // 27
+      case SE_ERR_DDETIMEOUT     : return("DDE operation timed out."                           );     // 28
+      case SE_ERR_DDEFAIL        : return("DDE operation failed."                              );     // 29
+      case SE_ERR_DDEBUSY        : return("DDE operation is busy."                             );     // 30
+      case SE_ERR_NOASSOC        : return("File association information not available."        );     // 31
+      case SE_ERR_DLLNOTFOUND    : return("Dynamic-link library not found."                    );     // 32
    }
    return("unknown error");
 }
