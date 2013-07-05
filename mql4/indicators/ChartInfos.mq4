@@ -67,6 +67,7 @@ int onTick() {
    ChartInfo.UpdateSpread();
    ChartInfo.UpdateUnitSize();
    ChartInfo.UpdatePosition();
+   ChartInfo.UpdateTime();
    ChartInfo.UpdateMarginLevels();
 
    return(last_error);
