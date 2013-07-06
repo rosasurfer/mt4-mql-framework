@@ -1,5 +1,10 @@
 /**
- * Simple ALMA Trendchange Strategy (max. eine Position fester Größe mit fixem TP/SL).
+ * Simple ALMA Trendchange Strategy.
+ *
+ *
+ * - EUR/USD
+ * - Einstieg bei Trendwechsel ALMA(25xH1)
+ * - TP/SL: 30 pip
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];

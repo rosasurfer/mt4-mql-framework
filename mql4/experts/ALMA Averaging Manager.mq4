@@ -1,5 +1,13 @@
 /**
- * Averaging Trademanager
+ * ALMA Averaging Manager
+ *
+ *
+ * - EUR/USD
+ * - Einstieg bei Trendwechsel ALMA(72xH1) => 3xD1 (1 Unit)
+ * - Level 1:   1 Unit @    0 pip,  TP: L1 + 40 pip
+ * - Level 2:   1 Unit @  -40 pip,  TP: L1           (Money-Equivalent von L1)
+ * - Level 3: 2*1 Unit @ -100 pip,  TP: L1 - 50 pip  (Money-Equivalent von L1)
+ * - SL: Level 1 - 150 pip
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
