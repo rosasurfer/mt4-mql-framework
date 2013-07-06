@@ -7,8 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/expert.mqh>
 
-#include <Scaling/define.mqh>
-#include <Scaling/functions.mqh>
+#include <Averaging/define.mqh>
+#include <Averaging/functions.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////

@@ -15,8 +15,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/expert.mqh>
 
-#include <Scaling/define.mqh>
-#include <Scaling/functions.mqh>
+#include <Averaging/define.mqh>
+#include <Averaging/functions.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
@@ -49,8 +49,8 @@ string trade.startCondition[1];
 int    trade.status        [1];
 
 
-#include <Scaling/init.mqh>
-#include <Scaling/deinit.mqh>
+#include <Averaging/init.mqh>
+#include <Averaging/deinit.mqh>
 
 
 /**

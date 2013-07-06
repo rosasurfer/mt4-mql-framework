@@ -1,3 +1,10 @@
+/**
+ * Die Funktion icMovingAverage() ist in einer Headerdatei implementiert, um direkt in EA's inkludiert werden zu können.
+ * Dies ist nur dann notwendig, wenn der verwendete Indikator nach Testende bei VisualMode=On gezeichnet werden soll.
+ *
+ * Der Tester zeichnet die Zeichenbuffer eines per iCustom() aufgerufenen Indikators nur dann, wenn der iCustom()-Aufruf
+ * direkt im EA erfolgt (nicht jedoch bei Aufruf in einer Library).
+ */
 
 #import "structs1.ex4"
    int  ec.LastError (/*EXECUTION_CONTEXT*/int ec[]);
@@ -16,31 +23,27 @@
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
  * @return double - Wert oder 0, falls ein Fehler auftrat
- *
- *
- * NOTE: In Headerdatei implementiert, da im Tester die Zeichenbuffer des aufgerufenen Indikators nach Testende nur dann gezeichnet werden,
- *       wenn der Aufruf von iCustom() direkt im Expert erfolgt (nicht jedoch bei Aufruf in einer Library).
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
    if (IsLastError())
       return(0);
 
-   int maMaxValues    = 10;                                          // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
+   int maMaxValues    = 10;                                                // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
    int lpLocalContext = GetBufferAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
-                          maPeriods,                                 // MA.Periods
-                          maTimeframe,                               // MA.Timeframe
-                          maMethod,                                  // MA.Method
-                          maAppliedPrice,                            // AppliedPrice
-                          ForestGreen,                               // Color.UpTrend
-                          Red,                                       // Color.DownTrend
-                          0,                                         // Shift.Horizontal
-                          0,                                         // Shift.Vertical
-                          maMaxValues,                               // Max.Values
-                          "",                                        // ________________
-                          lpLocalContext,                            // __SuperContext__
-                          iBuffer, iBar);                            // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+                          maPeriods,                                       // MA.Periods
+                          maTimeframe,                                     // MA.Timeframe
+                          maMethod,                                        // MA.Method
+                          maAppliedPrice,                                  // AppliedPrice
+                          ForestGreen,                                     // Color.UpTrend
+                          Red,                                             // Color.DownTrend
+                          0,                                               // Shift.Horizontal
+                          0,                                               // Shift.Vertical
+                          maMaxValues,                                     // Max.Values
+                          "",                                              // ________________
+                          lpLocalContext,                                  // __SuperContext__
+                          iBuffer, iBar);                                  // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
    int error = GetLastError();
 
