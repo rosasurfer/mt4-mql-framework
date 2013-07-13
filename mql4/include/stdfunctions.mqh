@@ -42,10 +42,10 @@ int      last_error;                                        // der letzte Fehler
 
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // kleinster Integer-Value: -2147483648
-#define INT_MAX            0x7FFFFFFF                       // größter Integer-Value:    2147483647
-#define EMPTY                      -1
+#define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648
+#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647
 #define EMPTY_VALUE           INT_MAX                       // empty custom indicator value
+#define EMPTY                      -1
 #define CLR_NONE                   -1                       // no color
 #define WHOLE_ARRAY                 0
 #define MAX_SYMBOL_LENGTH          12
