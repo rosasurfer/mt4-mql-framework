@@ -1,5 +1,5 @@
 /**
- * Grid Manager für zwei diskretionäre Trades
+ * Grid Manager für bis zu zwei diskretionäre Trades
  *
  *
  * Regeln:
@@ -16,6 +16,16 @@
  * -----
  *  - Anzeige des aktuellen SL-Levels vor Einstieg
  *  - Multi-Account-Fähigkeit (Master/Client)
+ *
+ *
+ * Notes:
+ * ------
+ *  - PriceAction (im Sinne von Momentum) ist ein Ergebnis des aktuellen Flows.
+ *  - Der Flow ist ein Ergebnis der Emotionen der letzten paar Tage.
+ *  - Die Emotionen der letzten Tage sind immer die Emotionen von Verlierern (Angst).
+ *  - Die für den aktuellen Flow relevanten Pivot-Punkte sind nur im Kontext erkennbar (optisch, nicht per Indikator).
+ *  - Eine automatisierte Strategie müßte die Pivot-Punkte und die Emotionen, die zu ihnen geführt haben, interpretieren.
+ *  - So ein System ist mit den mir bekannten oder zur Verfügung stehenden Mitteln nicht realisierbar.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
