@@ -9,7 +9,7 @@
 #define NO_ERROR                                           ERR_NO_ERROR
 
 // Trading errors
-#define ERR_NO_RESULT                                                 1    // Tradeserver-Wechsel während OrderModify()
+#define ERR_NO_RESULT                                                 1    // Server-Wechsel während OrderModify()
 #define ERR_COMMON_ERROR                                              2    // trade denied
 #define ERR_INVALID_TRADE_PARAMETERS                                  3
 #define ERR_SERVER_BUSY                                               4
