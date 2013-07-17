@@ -8,7 +8,7 @@
  *      Compile-Fehlern falsche Zeilennummern zurückgibt.
  *
  *  (2) Um die Ermittlung eines TZ-Offsets für einen Zeitpunkt zu beschleunigen, sind auch für Jahre, in denen kein Wechsel stattfand,
- *      Zeiten angegeben. Durch diese Pseudo-Werte sind die Zeilenindizes eines Jahres in allen Zeitzonen identisch:
+ *      Zeiten angegeben. Durch diese Pseudo-Werte sind die Zeilenindizes eines jeden Jahres in allen Zeitzonen identisch:
  *
  *         int i = TimeYear(datetime) - 1970;
  */
