@@ -87,6 +87,14 @@ int      last_error;                                        // der letzte Fehler
 #define FRIDAY                      5
 #define SATURDAY                    6
 
+#define SUN                    SUNDAY
+#define MON                    MONDAY
+#define TUE                   TUESDAY
+#define WED                 WEDNESDAY
+#define THU                  THURSDAY
+#define FRI                    FRIDAY
+#define SAT                  SATURDAY
+
 
 // Time-Flags, siehe TimeToStr()
 #define TIME_DATE                   1

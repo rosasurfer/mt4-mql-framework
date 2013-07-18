@@ -25,6 +25,7 @@ extern int    iParameter = 12345;
  * @return int - Fehlerstatus
  */
 int init() {
+   /*
    datetime time = D'2013.11.03 05:59:59';
    datetime lastTransition, nextTransition;
    int      lastOffset, nextOffset;
@@ -34,6 +35,7 @@ int init() {
       if (lastTransition >= 0) debug("init()   lastTransition="+ DateToStr(lastTransition, "w, D.M.Y H:I") +" ("+ (lastOffset/HOURS) +")");
       if (nextTransition >= 0) debug("init()   nextTransition="+ DateToStr(nextTransition, "w, D.M.Y H:I") +" ("+ (nextOffset/HOURS) +")");
    }
+   */
    return(0);
 }
 
@@ -43,7 +45,7 @@ int init() {
  *
  * @param  datetime  time           - Zeit
  * @param  datetime &lastTransition - Zeitpunkt des letzten DST-Wechsels oder -1, wenn der letzte Wechsel unbekannt ist
- * @param  int      &lastOffset     - GMT-Offset seit dem letzten Wechsel (der aktuelle Offset)
+ * @param  int      &lastOffset     - GMT-Offset seit dem letzten Wechsel (der aktuell gültige Offset)
  * @param  datetime &nextTransition - Zeitpunkt des nächsten DST-Wechsels oder -1, wenn der nächste Wechsel unbekannt ist
  * @param  int      &nextOffset     - GMT-Offset nach dem nächsten Wechsel
  *
@@ -62,10 +64,10 @@ bool GetTimezoneTransitions(datetime time, datetime &lastTransition, int &lastOf
     *
     * Szenarien:                       Wechsel zu DST (TR_TO_DST)                Wechsel zu Normalzeit (TR_TO_STD)
     * ----------                       ----------------------------------        ----------------------------------
-    *  kein Wechsel, Normalzeit:       -1                      DST_OFFSET        -1                      STD_OFFSET        // das ganze Jahr Normalzeit
-    *  kein Wechsel, DST:              -1                      DST_OFFSET        INT_MAX                 STD_OFFSET        // das ganze Jahr DST
-    *  1 Wechsel zu DST:               1975.04.11 00:00:00     DST_OFFSET        INT_MAX                 STD_OFFSET        // das Jahr beginnt mit Normalzeit und endet mit DST
-    *  1 Wechsel zu Normalzeit:        -1                      DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // das Jahr beginnt mit DST und endet mit Normalzeit
+    *  kein Wechsel, Normalzeit:       -1                      DST_OFFSET        -1                      STD_OFFSET        // durchgehend Normalzeit
+    *  kein Wechsel, DST:              -1                      DST_OFFSET        INT_MAX                 STD_OFFSET        // durchgehend DST
+    *  1 Wechsel zu DST:               1975.04.11 00:00:00     DST_OFFSET        INT_MAX                 STD_OFFSET        // Jahr beginnt mit Normalzeit und endet mit DST
+    *  1 Wechsel zu Normalzeit:        -1                      DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // Jahr beginnt mit DST und endet mit Normalzeit
     *  2 Wechsel:                      1975.04.01 00:00:00     DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // Normalzeit -> DST -> Normalzeit
     */
    int y=TimeYear(time), i, iMin=0, iMax=2037-1970;
@@ -111,5 +113,8 @@ bool GetTimezoneTransitions(datetime time, datetime &lastTransition, int &lastOf
  */
 int start() {
    return(last_error);
-   catch("start()");
+
+   datetime iNull;
+   catch(NULL);
+   GetTimezoneTransitions(NULL, iNull, iNull, iNull, iNull);
 }
