@@ -1,5 +1,5 @@
 /**
- * Umschaltzeiten von Normal- zu Sommerzeit und zurück für die integrierten Zeitzonen.
+ * Umschaltzeiten von Normal- zu Sommerzeit und zurück für die integrierten Zeitzonen (1970 bis 2037).
  *
  *
  * Um die Ermittlung eines TZ-Offsets für einen Zeitpunkt zu beschleunigen, sind auch für Jahre, in denen kein Wechsel stattfindet,
@@ -10,17 +10,17 @@
  *
  * Logik:
  * ------
- *  if      (datetime < TR_TO_DST  ) offset = STD_OFFSET;      // Normalzeit zu Jahresbeginn
- *  else if (datetime < TR_FROM_DST) offset = DST_OFFSET;      // DST
- *  else                             offset = STD_OFFSET;      // Normalzeit zu Jahresende
+ *  if      (datetime < TR_TO_DST) offset = STD_OFFSET;     // Normalzeit zu Jahresbeginn
+ *  else if (datetime < TR_TO_STD) offset = DST_OFFSET;     // DST
+ *  else                           offset = STD_OFFSET;     // Normalzeit zu Jahresende
  *
  *
- * Szenarien:                       Wechsel zu DST (TR_TO_DST)                Wechsel zu Normalzeit (TR_FROM_DST)
- * ----------                       ----------------------------------        -----------------------------------
- *  kein Wechsel, Normalzeit:       -1 oder Folgejahr       DST_OFFSET        -1 oder 1.1.            STD_OFFSET        // das ganze Jahr Normalzeit
- *  kein Wechsel, DST:              1.1.                    DST_OFFSET        Folgejahr               STD_OFFSET        // das ganze Jahr DST
- *  1 Wechsel zu DST:               1975.04.11 00:00:00     DST_OFFSET        Folgejahr               STD_OFFSET        // das Jahr beginnt mit Normalzeit und endet mit DST
- *  1 Wechsel zu Normalzeit:        1.1.                    DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // das Jahr beginnt mit DST und endet mit Normalzeit
+ * Szenarien:                       Wechsel zu DST (TR_TO_DST)                Wechsel zu Normalzeit (TR_TO_STD)
+ * ----------                       ----------------------------------        ----------------------------------
+ *  kein Wechsel, Normalzeit:       -1                      DST_OFFSET        -1                      STD_OFFSET        // das ganze Jahr Normalzeit
+ *  kein Wechsel, DST:              -1                      DST_OFFSET        INT_MAX                 STD_OFFSET        // das ganze Jahr DST
+ *  1 Wechsel zu DST:               1975.04.11 00:00:00     DST_OFFSET        INT_MAX                 STD_OFFSET        // das Jahr beginnt mit Normalzeit und endet mit DST
+ *  1 Wechsel zu Normalzeit:        -1                      DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // das Jahr beginnt mit DST und endet mit Normalzeit
  *  2 Wechsel:                      1975.04.01 00:00:00     DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // Normalzeit -> DST -> Normalzeit
  */
 
@@ -29,8 +29,8 @@
 #define TR_TO_DST.local          1        // Umschaltzeit zu DST in lokaler Zeit
 #define DST_OFFSET               2
 
-#define TR_FROM_DST.gmt          3        // Umschaltzeit zu Normalzeit in GMT
-#define TR_FROM_DST.local        4        // Umschaltzeit zu Normalzeit in lokaler Zeit
+#define TR_TO_STD.gmt            3        // Umschaltzeit zu Normalzeit in GMT
+#define TR_TO_STD.local          4        // Umschaltzeit zu Normalzeit in lokaler Zeit
 #define STD_OFFSET               5
 
 #define MINUS_1_HOUR         -3600        // Timezone-Offsets
@@ -63,7 +63,7 @@
 // Europe/Kiev: GMT+0200,GMT+0300
 int transitions.Europe_Kiev[50][6] = {
    // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
-   -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,  // das ganze Jahr Normalzeit
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
@@ -175,7 +175,7 @@ int transitions.FXT[50][6] = {
 // Europe/Minsk: GMT+0200,GMT+0300 (seit Sommer 2011 ständige Sommerzeit, davor Europe/Kiev)
 int transitions.Europe_Minsk[50][6] = {
    // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
-   -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,  // das ganze Jahr Normalzeit
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
@@ -216,22 +216,22 @@ int transitions.Europe_Minsk[50][6] = {
    D'2008.03.30 01:00:00', D'2008.03.30 03:00:00', PLUS_3_HOURS,     D'2008.10.26 01:00:00', D'2008.10.26 04:00:00', PLUS_2_HOURS,
    D'2009.03.29 01:00:00', D'2009.03.29 03:00:00', PLUS_3_HOURS,     D'2009.10.25 01:00:00', D'2009.10.25 04:00:00', PLUS_2_HOURS,
    D'2010.03.28 01:00:00', D'2010.03.28 03:00:00', PLUS_3_HOURS,     D'2010.10.31 01:00:00', D'2010.10.31 04:00:00', PLUS_2_HOURS,
-   D'2011.03.27 01:00:00', D'2011.03.27 03:00:00', PLUS_3_HOURS,     D'2011.12.31 23:59:59', D'2011.12.31 23:59:59', PLUS_2_HOURS,    // seit Sommer 2011 ständige Sommerzeit
-   D'2012.01.01 00:00:00', D'2012.01.01 00:00:00', PLUS_3_HOURS,     D'2012.12.31 23:59:59', D'2012.12.31 23:59:59', PLUS_2_HOURS,
-   D'2013.01.01 00:00:00', D'2013.01.01 00:00:00', PLUS_3_HOURS,     D'2013.12.31 23:59:59', D'2013.12.31 23:59:59', PLUS_2_HOURS,
-   D'2014.01.01 00:00:00', D'2014.01.01 00:00:00', PLUS_3_HOURS,     D'2014.12.31 23:59:59', D'2014.12.31 23:59:59', PLUS_2_HOURS,
-   D'2015.01.01 00:00:00', D'2015.01.01 00:00:00', PLUS_3_HOURS,     D'2015.12.31 23:59:59', D'2015.12.31 23:59:59', PLUS_2_HOURS,
-   D'2016.01.01 00:00:00', D'2016.01.01 00:00:00', PLUS_3_HOURS,     D'2016.12.31 23:59:59', D'2016.12.31 23:59:59', PLUS_2_HOURS,
-   D'2017.01.01 00:00:00', D'2017.01.01 00:00:00', PLUS_3_HOURS,     D'2017.12.31 23:59:59', D'2017.12.31 23:59:59', PLUS_2_HOURS,
-   D'2018.01.01 00:00:00', D'2018.01.01 00:00:00', PLUS_3_HOURS,     D'2018.12.31 23:59:59', D'2018.12.31 23:59:59', PLUS_2_HOURS,
-   D'2019.01.01 00:00:00', D'2019.01.01 00:00:00', PLUS_3_HOURS,     D'2019.12.31 23:59:59', D'2019.12.31 23:59:59', PLUS_2_HOURS,
+   D'2011.03.27 01:00:00', D'2011.03.27 03:00:00', PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,  // seit Sommer 2011 ständige Sommerzeit
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
+   -1,                     -1,                     PLUS_3_HOURS,     INT_MAX,                INT_MAX,                PLUS_2_HOURS,
 };
 
 
 // Europe/Berlin: GMT+0100,GMT+0200
 int transitions.Europe_Berlin[50][6] = {
    // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
-   -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
+   -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,   // das ganze Jahr Normalzeit
    -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
    -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
    -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
@@ -287,8 +287,8 @@ int transitions.Europe_Berlin[50][6] = {
 // Europe/London: GMT+0000,GMT+0100
 int transitions.Europe_London[50][6] = {
    // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
-   D'1970.01.01 00:00:00', D'1970.01.01 00:00:00', PLUS_1_HOUR,      D'1971.01.01 00:00:00', D'1971.01.01 00:00:00', 0,             // das ganze Jahr Sommerzeit
-   D'1971.01.01 00:00:00', D'1971.01.01 00:00:00', PLUS_1_HOUR,      D'1971.10.31 02:00:00', D'1971.10.31 03:00:00', 0,             // erster Wechsel zu Winterzeit
+   -1,                     -1,                     PLUS_1_HOUR,      INT_MAX,                INT_MAX,                0,             // das ganze Jahr Sommerzeit
+   -1,                     -1,                     PLUS_1_HOUR,      D'1971.10.31 02:00:00', D'1971.10.31 03:00:00', 0,             // erster Wechsel zu Winterzeit
    D'1972.03.19 02:00:00', D'1972.03.19 02:00:00', PLUS_1_HOUR,      D'1972.10.29 02:00:00', D'1972.10.29 03:00:00', 0,
    D'1973.03.18 02:00:00', D'1973.03.18 02:00:00', PLUS_1_HOUR,      D'1973.10.28 02:00:00', D'1973.10.28 03:00:00', 0,
    D'1974.03.17 02:00:00', D'1974.03.17 02:00:00', PLUS_1_HOUR,      D'1974.10.27 02:00:00', D'1974.10.27 03:00:00', 0,

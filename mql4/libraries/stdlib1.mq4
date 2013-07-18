@@ -962,9 +962,9 @@ int GetGMTToFXTOffset(datetime gmtTime) {
    int offset, year=TimeYear(gmtTime)-1970;
 
    // FXT
-   if      (gmtTime < transitions.FXT[year][TR_TO_DST.gmt  ]) offset = -transitions.FXT[year][STD_OFFSET];
-   else if (gmtTime < transitions.FXT[year][TR_FROM_DST.gmt]) offset = -transitions.FXT[year][DST_OFFSET];
-   else                                                       offset = -transitions.FXT[year][STD_OFFSET];
+   if      (gmtTime < transitions.FXT[year][TR_TO_DST.gmt]) offset = -transitions.FXT[year][STD_OFFSET];
+   else if (gmtTime < transitions.FXT[year][TR_TO_STD.gmt]) offset = -transitions.FXT[year][DST_OFFSET];
+   else                                                     offset = -transitions.FXT[year][STD_OFFSET];
 
    return(offset);
 }
@@ -1029,36 +1029,36 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
    int offset, year=TimeYear(serverTime)-1970;
 
    if (timezone == "America/New_York") {
-      if      (serverTime < transitions.America_New_York[year][TR_TO_DST.local  ]) offset = transitions.America_New_York[year][STD_OFFSET];
-      else if (serverTime < transitions.America_New_York[year][TR_FROM_DST.local]) offset = transitions.America_New_York[year][DST_OFFSET];
-      else                                                                         offset = transitions.America_New_York[year][STD_OFFSET];
+      if      (serverTime < transitions.America_New_York[year][TR_TO_DST.local]) offset = transitions.America_New_York[year][STD_OFFSET];
+      else if (serverTime < transitions.America_New_York[year][TR_TO_STD.local]) offset = transitions.America_New_York[year][DST_OFFSET];
+      else                                                                       offset = transitions.America_New_York[year][STD_OFFSET];
    }
    else if (timezone == "Europe/Berlin") {
-      if      (serverTime < transitions.Europe_Berlin   [year][TR_TO_DST.local  ]) offset = transitions.Europe_Berlin   [year][STD_OFFSET];
-      else if (serverTime < transitions.Europe_Berlin   [year][TR_FROM_DST.local]) offset = transitions.Europe_Berlin   [year][DST_OFFSET];
-      else                                                                         offset = transitions.Europe_Berlin   [year][STD_OFFSET];
+      if      (serverTime < transitions.Europe_Berlin   [year][TR_TO_DST.local]) offset = transitions.Europe_Berlin   [year][STD_OFFSET];
+      else if (serverTime < transitions.Europe_Berlin   [year][TR_TO_STD.local]) offset = transitions.Europe_Berlin   [year][DST_OFFSET];
+      else                                                                       offset = transitions.Europe_Berlin   [year][STD_OFFSET];
    }
    else if (timezone == "Europe/Kiev") {
-      if      (serverTime < transitions.Europe_Kiev     [year][TR_TO_DST.local  ]) offset = transitions.Europe_Kiev     [year][STD_OFFSET];
-      else if (serverTime < transitions.Europe_Kiev     [year][TR_FROM_DST.local]) offset = transitions.Europe_Kiev     [year][DST_OFFSET];
-      else                                                                         offset = transitions.Europe_Kiev     [year][STD_OFFSET];
+      if      (serverTime < transitions.Europe_Kiev     [year][TR_TO_DST.local]) offset = transitions.Europe_Kiev     [year][STD_OFFSET];
+      else if (serverTime < transitions.Europe_Kiev     [year][TR_TO_STD.local]) offset = transitions.Europe_Kiev     [year][DST_OFFSET];
+      else                                                                       offset = transitions.Europe_Kiev     [year][STD_OFFSET];
    }
    else if (timezone == "Europe/London") {
-      if      (serverTime < transitions.Europe_London   [year][TR_TO_DST.local  ]) offset = transitions.Europe_London   [year][STD_OFFSET];
-      else if (serverTime < transitions.Europe_London   [year][TR_FROM_DST.local]) offset = transitions.Europe_London   [year][DST_OFFSET];
-      else                                                                         offset = transitions.Europe_London   [year][STD_OFFSET];
+      if      (serverTime < transitions.Europe_London   [year][TR_TO_DST.local]) offset = transitions.Europe_London   [year][STD_OFFSET];
+      else if (serverTime < transitions.Europe_London   [year][TR_TO_STD.local]) offset = transitions.Europe_London   [year][DST_OFFSET];
+      else                                                                       offset = transitions.Europe_London   [year][STD_OFFSET];
    }
    else if (timezone == "Europe/Minsk") {
-      if      (serverTime < transitions.Europe_Minsk    [year][TR_TO_DST.local  ]) offset = transitions.Europe_Minsk    [year][STD_OFFSET];
-      else if (serverTime < transitions.Europe_Minsk    [year][TR_FROM_DST.local]) offset = transitions.Europe_Minsk    [year][DST_OFFSET];
-      else                                                                         offset = transitions.Europe_Minsk    [year][STD_OFFSET];
+      if      (serverTime < transitions.Europe_Minsk    [year][TR_TO_DST.local]) offset = transitions.Europe_Minsk    [year][STD_OFFSET];
+      else if (serverTime < transitions.Europe_Minsk    [year][TR_TO_STD.local]) offset = transitions.Europe_Minsk    [year][DST_OFFSET];
+      else                                                                       offset = transitions.Europe_Minsk    [year][STD_OFFSET];
    }
    else if (timezone == "FXT") {
-      if      (serverTime < transitions.FXT             [year][TR_TO_DST.local  ]) offset = transitions.FXT             [year][STD_OFFSET];
-      else if (serverTime < transitions.FXT             [year][TR_FROM_DST.local]) offset = transitions.FXT             [year][DST_OFFSET];
-      else                                                                         offset = transitions.FXT             [year][STD_OFFSET];
+      if      (serverTime < transitions.FXT             [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET];
+      else if (serverTime < transitions.FXT             [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET];
+      else                                                                       offset = transitions.FXT             [year][STD_OFFSET];
    }
-   else if (timezone == "GMT")                                                     offset = 0;
+   else if (timezone == "GMT")                                                   offset = 0;
    else
       return(_int(EMPTY_VALUE, catch("GetServerToGMTOffset(2)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
@@ -6905,9 +6905,9 @@ int GetFXTToGMTOffset(datetime fxtTime) {
    int offset, year=TimeYear(fxtTime)-1970;
 
    // FXT
-   if      (fxtTime < transitions.FXT[year][TR_TO_DST.local  ]) offset = transitions.FXT[year][STD_OFFSET];
-   else if (fxtTime < transitions.FXT[year][TR_FROM_DST.local]) offset = transitions.FXT[year][DST_OFFSET];
-   else                                                         offset = transitions.FXT[year][STD_OFFSET];
+   if      (fxtTime < transitions.FXT[year][TR_TO_DST.local]) offset = transitions.FXT[year][STD_OFFSET];
+   else if (fxtTime < transitions.FXT[year][TR_TO_STD.local]) offset = transitions.FXT[year][DST_OFFSET];
+   else                                                       offset = transitions.FXT[year][STD_OFFSET];
 
    return(offset);
 }
@@ -7051,36 +7051,36 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
    int offset, year=TimeYear(gmtTime)-1970;
 
    if (timezone == "America/New_York") {
-      if      (gmtTime < transitions.America_New_York[year][TR_TO_DST.gmt  ]) offset = -transitions.America_New_York[year][STD_OFFSET];
-      else if (gmtTime < transitions.America_New_York[year][TR_FROM_DST.gmt]) offset = -transitions.America_New_York[year][DST_OFFSET];
-      else                                                                    offset = -transitions.America_New_York[year][STD_OFFSET];
+      if      (gmtTime < transitions.America_New_York[year][TR_TO_DST.gmt]) offset = -transitions.America_New_York[year][STD_OFFSET];
+      else if (gmtTime < transitions.America_New_York[year][TR_TO_STD.gmt]) offset = -transitions.America_New_York[year][DST_OFFSET];
+      else                                                                  offset = -transitions.America_New_York[year][STD_OFFSET];
    }
    else if (timezone == "Europe/Berlin") {
-      if      (gmtTime < transitions.Europe_Berlin   [year][TR_TO_DST.gmt  ]) offset = -transitions.Europe_Berlin   [year][STD_OFFSET];
-      else if (gmtTime < transitions.Europe_Berlin   [year][TR_FROM_DST.gmt]) offset = -transitions.Europe_Berlin   [year][DST_OFFSET];
-      else                                                                    offset = -transitions.Europe_Berlin   [year][STD_OFFSET];
+      if      (gmtTime < transitions.Europe_Berlin   [year][TR_TO_DST.gmt]) offset = -transitions.Europe_Berlin   [year][STD_OFFSET];
+      else if (gmtTime < transitions.Europe_Berlin   [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Berlin   [year][DST_OFFSET];
+      else                                                                  offset = -transitions.Europe_Berlin   [year][STD_OFFSET];
    }
    else if (timezone == "Europe/Kiev") {
-      if      (gmtTime < transitions.Europe_Kiev     [year][TR_TO_DST.gmt  ]) offset = -transitions.Europe_Kiev     [year][STD_OFFSET];
-      else if (gmtTime < transitions.Europe_Kiev     [year][TR_FROM_DST.gmt]) offset = -transitions.Europe_Kiev     [year][DST_OFFSET];
-      else                                                                    offset = -transitions.Europe_Kiev     [year][STD_OFFSET];
+      if      (gmtTime < transitions.Europe_Kiev     [year][TR_TO_DST.gmt]) offset = -transitions.Europe_Kiev     [year][STD_OFFSET];
+      else if (gmtTime < transitions.Europe_Kiev     [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Kiev     [year][DST_OFFSET];
+      else                                                                  offset = -transitions.Europe_Kiev     [year][STD_OFFSET];
    }
    else if (timezone == "Europe/London") {
-      if      (gmtTime < transitions.Europe_London   [year][TR_TO_DST.gmt  ]) offset = -transitions.Europe_London   [year][STD_OFFSET];
-      else if (gmtTime < transitions.Europe_London   [year][TR_FROM_DST.gmt]) offset = -transitions.Europe_London   [year][DST_OFFSET];
-      else                                                                    offset = -transitions.Europe_London   [year][STD_OFFSET];
+      if      (gmtTime < transitions.Europe_London   [year][TR_TO_DST.gmt]) offset = -transitions.Europe_London   [year][STD_OFFSET];
+      else if (gmtTime < transitions.Europe_London   [year][TR_TO_STD.gmt]) offset = -transitions.Europe_London   [year][DST_OFFSET];
+      else                                                                  offset = -transitions.Europe_London   [year][STD_OFFSET];
    }
    else if (timezone == "Europe/Minsk") {
-      if      (gmtTime < transitions.Europe_Minsk    [year][TR_TO_DST.gmt  ]) offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
-      else if (gmtTime < transitions.Europe_Minsk    [year][TR_FROM_DST.gmt]) offset = -transitions.Europe_Minsk    [year][DST_OFFSET];
-      else                                                                    offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
+      if      (gmtTime < transitions.Europe_Minsk    [year][TR_TO_DST.gmt]) offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
+      else if (gmtTime < transitions.Europe_Minsk    [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Minsk    [year][DST_OFFSET];
+      else                                                                  offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
    }
    else if (timezone == "FXT") {
-      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt  ]) offset = -transitions.FXT             [year][STD_OFFSET];
-      else if (gmtTime < transitions.FXT             [year][TR_FROM_DST.gmt]) offset = -transitions.FXT             [year][DST_OFFSET];
-      else                                                                    offset = -transitions.FXT             [year][STD_OFFSET];
+      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET];
+      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET];
+      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET];
    }
-   else if (timezone == "GMT")                                                offset =  0;
+   else if (timezone == "GMT")                                              offset =  0;
    else
       return(_int(EMPTY_VALUE, catch("GetGMTToServerTimeOffset(2)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
@@ -10092,6 +10092,9 @@ string NumberToStr(double number, string mask) {
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
 string DateToStr(datetime time, string mask) {
+   if (time < 0)
+      return(_empty(catch("DateToStr()   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
    if (StringLen(mask) == 0)
       mask = "Y.M.D H:I:S";
 
