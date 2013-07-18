@@ -2,16 +2,37 @@
  * Umschaltzeiten von Normal- zu Sommerzeit und zurück für die integrierten Zeitzonen.
  *
  *
- * Notes:
+ * Um die Ermittlung eines TZ-Offsets für einen Zeitpunkt zu beschleunigen, sind auch für Jahre, in denen kein Wechsel stattfindet,
+ * Umschaltzeiten angegeben. Durch diese Pseudo-Werte sind die Zeilenindizes eines jeden Jahres in allen Zeitzonen identisch:
+ *
+ *    int i = TimeYear(datetime) - 1970;
+ *
+ *
+ * Logik:
  * ------
- *  (1) Ausgelagert, da der Compiler über mehrere Zeilen verteilte Array-Initializer als in einer Zeile stehend interpretiert und bei
- *      Compile-Fehlern falsche Zeilennummern zurückgibt.
+ *  if      (datetime < TR_TO_DST  ) offset = STD_OFFSET;      // Normalzeit zu Jahresbeginn
+ *  else if (datetime < TR_FROM_DST) offset = DST_OFFSET;      // DST
+ *  else                             offset = STD_OFFSET;      // Normalzeit zu Jahresende
  *
- *  (2) Um die Ermittlung eines TZ-Offsets für einen Zeitpunkt zu beschleunigen, sind auch für Jahre, in denen kein Wechsel stattfand,
- *      Zeiten angegeben. Durch diese Pseudo-Werte sind die Zeilenindizes eines jeden Jahres in allen Zeitzonen identisch:
  *
- *         int i = TimeYear(datetime) - 1970;
+ * Szenarien:                       Wechsel zu DST (TR_TO_DST)                Wechsel zu Normalzeit (TR_FROM_DST)
+ * ----------                       ----------------------------------        -----------------------------------
+ *  kein Wechsel, Normalzeit:       -1 oder Folgejahr       DST_OFFSET        -1 oder 1.1.            STD_OFFSET        // das ganze Jahr Normalzeit
+ *  kein Wechsel, DST:              1.1.                    DST_OFFSET        Folgejahr               STD_OFFSET        // das ganze Jahr DST
+ *  1 Wechsel zu DST:               1975.04.11 00:00:00     DST_OFFSET        Folgejahr               STD_OFFSET        // das Jahr beginnt mit Normalzeit und endet mit DST
+ *  1 Wechsel zu Normalzeit:        1.1.                    DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // das Jahr beginnt mit DST und endet mit Normalzeit
+ *  2 Wechsel:                      1975.04.01 00:00:00     DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // Normalzeit -> DST -> Normalzeit
  */
+
+// Spaltenindizes der Transition-Arrays
+#define TR_TO_DST.gmt            0        // Umschaltzeit zu DST in GMT
+#define TR_TO_DST.local          1        // Umschaltzeit zu DST in lokaler Zeit
+#define DST_OFFSET               2
+
+#define TR_FROM_DST.gmt          3        // Umschaltzeit zu Normalzeit in GMT
+#define TR_FROM_DST.local        4        // Umschaltzeit zu Normalzeit in lokaler Zeit
+#define STD_OFFSET               5
+
 #define MINUS_1_HOUR         -3600        // Timezone-Offsets
 #define MINUS_2_HOURS        -7200
 #define MINUS_3_HOURS       -10800
@@ -38,18 +59,10 @@
 #define PLUS_11_HOURS        39600
 #define PLUS_12_HOURS        43200
 
-#define gmt.TR_TO_DST            0        // Spaltenindizes der Transition-Arrays
-#define local.TR_TO_DST          1
-#define DST_OFFSET               2
-
-#define gmt.TR_FROM_DST          3
-#define local.TR_FROM_DST        4
-#define STD_OFFSET               5
-
 
 // Europe/Kiev: GMT+0200,GMT+0300
 int transitions.Europe_Kiev[50][6] = {
-   // Wechsel zu Sommerzeit (GMT und lokale Zeit)  DST-Offset        // Wechsel zu Normalzeit (GMT und lokale Zeit)  Std.-Offset
+   // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
@@ -105,7 +118,7 @@ int transitions.Europe_Kiev[50][6] = {
 
 // FXT: GMT+0200,GMT+0300 (wie Europe/Kiev, jedoch mit Umschaltzeiten von America/New_York; entspricht America/New_York+0700)
 int transitions.FXT[50][6] = {
-   // Wechsel zu Sommerzeit (GMT und lokale Zeit)  DST-Offset        // Wechsel zu Normalzeit (GMT und lokale Zeit)  Std.-Offset
+   // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
    D'1970.04.26 07:00:00', D'1970.04.26 09:00:00', PLUS_3_HOURS,     D'1970.10.25 06:00:00', D'1970.10.25 09:00:00', PLUS_2_HOURS,
    D'1971.04.25 07:00:00', D'1971.04.25 09:00:00', PLUS_3_HOURS,     D'1971.10.31 06:00:00', D'1971.10.31 09:00:00', PLUS_2_HOURS,
    D'1972.04.30 07:00:00', D'1972.04.30 09:00:00', PLUS_3_HOURS,     D'1972.10.29 06:00:00', D'1972.10.29 09:00:00', PLUS_2_HOURS,
@@ -161,7 +174,7 @@ int transitions.FXT[50][6] = {
 
 // Europe/Minsk: GMT+0200,GMT+0300 (seit Sommer 2011 ständige Sommerzeit, davor Europe/Kiev)
 int transitions.Europe_Minsk[50][6] = {
-   // Wechsel zu Sommerzeit (GMT und lokale Zeit)  DST-Offset        // Wechsel zu Normalzeit (GMT und lokale Zeit)  Std.-Offset
+   // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
    -1,                     -1,                     PLUS_3_HOURS,     -1,                     -1,                     PLUS_2_HOURS,
@@ -217,7 +230,7 @@ int transitions.Europe_Minsk[50][6] = {
 
 // Europe/Berlin: GMT+0100,GMT+0200
 int transitions.Europe_Berlin[50][6] = {
-   // Wechsel zu Sommerzeit (GMT und lokale Zeit)  DST-Offset        // Wechsel zu Normalzeit (GMT und lokale Zeit)  Std.-Offset
+   // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
    -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
    -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
    -1,                     -1,                     PLUS_2_HOURS,     -1,                     -1,                     PLUS_1_HOUR,
@@ -273,9 +286,9 @@ int transitions.Europe_Berlin[50][6] = {
 
 // Europe/London: GMT+0000,GMT+0100
 int transitions.Europe_London[50][6] = {
-   // Wechsel zu Sommerzeit (GMT und lokale Zeit)  DST-Offset        // Wechsel zu Normalzeit (GMT und lokale Zeit)  Std.-Offset
-   D'1970.01.01 00:00:00', D'1970.01.01 00:00:00', PLUS_1_HOUR,      D'1971.01.01 00:00:00', D'1971.01.01 00:00:00', 0,    // das ganze Jahr Sommerzeit
-   D'1971.01.01 00:00:00', D'1971.01.01 00:00:00', PLUS_1_HOUR,      D'1971.10.31 02:00:00', D'1971.10.31 03:00:00', 0,    // erster Wechsel zu Winterzeit
+   // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
+   D'1970.01.01 00:00:00', D'1970.01.01 00:00:00', PLUS_1_HOUR,      D'1971.01.01 00:00:00', D'1971.01.01 00:00:00', 0,             // das ganze Jahr Sommerzeit
+   D'1971.01.01 00:00:00', D'1971.01.01 00:00:00', PLUS_1_HOUR,      D'1971.10.31 02:00:00', D'1971.10.31 03:00:00', 0,             // erster Wechsel zu Winterzeit
    D'1972.03.19 02:00:00', D'1972.03.19 02:00:00', PLUS_1_HOUR,      D'1972.10.29 02:00:00', D'1972.10.29 03:00:00', 0,
    D'1973.03.18 02:00:00', D'1973.03.18 02:00:00', PLUS_1_HOUR,      D'1973.10.28 02:00:00', D'1973.10.28 03:00:00', 0,
    D'1974.03.17 02:00:00', D'1974.03.17 02:00:00', PLUS_1_HOUR,      D'1974.10.27 02:00:00', D'1974.10.27 03:00:00', 0,
@@ -329,7 +342,7 @@ int transitions.Europe_London[50][6] = {
 
 // America/New_York: GMT-0500,GMT-0400
 int transitions.America_New_York[50][6] = {
-   // Wechsel zu Sommerzeit (GMT und lokale Zeit)  DST-Offset        // Wechsel zu Normalzeit (GMT und lokale Zeit)  Std.-Offset
+   // Wechsel zu DST                               DST-Offset        // Wechsel zu Normalzeit                        Std.-Offset
    D'1970.04.26 07:00:00', D'1970.04.26 02:00:00', MINUS_4_HOURS,    D'1970.10.25 06:00:00', D'1970.10.25 02:00:00', MINUS_5_HOURS,
    D'1971.04.25 07:00:00', D'1971.04.25 02:00:00', MINUS_4_HOURS,    D'1971.10.31 06:00:00', D'1971.10.31 02:00:00', MINUS_5_HOURS,
    D'1972.04.30 07:00:00', D'1972.04.30 02:00:00', MINUS_4_HOURS,    D'1972.10.29 06:00:00', D'1972.10.29 02:00:00', MINUS_5_HOURS,
