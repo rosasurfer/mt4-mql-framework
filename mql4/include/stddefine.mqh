@@ -115,6 +115,12 @@ int      last_error;                                        // der letzte Fehler
 #define PERIOD_MN1              43200           // monthly (30 Tage)
 
 
+// Arrayindizes für Timezone-Transitionsdaten
+#define TR_TIME                     0
+#define TR_OFFSET                   1
+#define TR_DST                      2
+
+
 // MQL Programmtyp-Flags
 #define T_INDICATOR                 1
 #define T_EXPERT                    2

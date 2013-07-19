@@ -15,20 +15,25 @@
  *  else                           offset = STD_OFFSET;     // Normalzeit zu Jahresende
  *
  *
- * Szenarien:                       Wechsel zu DST (TR_TO_DST)                Wechsel zu Normalzeit (TR_TO_STD)
- * ----------                       ----------------------------------        ----------------------------------
- *  kein Wechsel, Normalzeit:       -1                      DST_OFFSET        -1                      STD_OFFSET        // durchgehend Normalzeit
- *  kein Wechsel, DST:              -1                      DST_OFFSET        INT_MAX                 STD_OFFSET        // durchgehend DST
- *  1 Wechsel zu DST:               1975.04.11 00:00:00     DST_OFFSET        INT_MAX                 STD_OFFSET        // Jahr beginnt mit Normalzeit und endet mit DST
- *  1 Wechsel zu Normalzeit:        -1                      DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // Jahr beginnt mit DST und endet mit Normalzeit
- *  2 Wechsel:                      1975.04.01 00:00:00     DST_OFFSET        1975.11.01 00:00:00     STD_OFFSET        // Normalzeit -> DST -> Normalzeit
+ * Szenarien:                           Wechsel zu DST (TR_TO_DST)              Wechsel zu Normalzeit (TR_TO_STD)
+ * ----------                           ----------------------------------      ----------------------------------
+ *  kein Wechsel, ständig Normalzeit:   -1                      DST_OFFSET      -1                      STD_OFFSET      // durchgehend Normalzeit
+ *  kein Wechsel, ständig DST:          -1                      DST_OFFSET      INT_MAX                 STD_OFFSET      // durchgehend DST
+ *  1 Wechsel zu DST:                   1975.04.11 00:00:00     DST_OFFSET      INT_MAX                 STD_OFFSET      // Jahr beginnt mit Normalzeit und endet mit DST
+ *  1 Wechsel zu Normalzeit:            -1                      DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Jahr beginnt mit DST und endet mit Normalzeit
+ *  2 Wechsel:                          1975.04.01 00:00:00     DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Normalzeit -> DST -> Normalzeit
  */
 
 // Spaltenindizes der Transition-Arrays
+//dow                            0
 #define TR_TO_DST.gmt            1        // Umschaltzeit zu DST in GMT
+//dow                            2
 #define TR_TO_DST.local          3        // Umschaltzeit zu DST in lokaler Zeit
 #define DST_OFFSET               4
+
+//dow                            5
 #define TR_TO_STD.gmt            6        // Umschaltzeit zu Normalzeit in GMT
+//dow                            7
 #define TR_TO_STD.local          8        // Umschaltzeit zu Normalzeit in lokaler Zeit
 #define STD_OFFSET               9
 
@@ -62,17 +67,17 @@
 // Europe/Kiev: GMT+0200,GMT+0300
 int transitions.Europe_Kiev[68][10] = {
    // Wechsel zu DST                                         DST-Offset       // Wechsel zu Normalzeit                                  Std.-Offset
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS, // durchgehend Normalzeit
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS, // durchgehend Normalzeit
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
    TUE, D'1981.03.31 21:00:00', WED, D'1981.04.01 01:00:00', PLUS_4_HOURS,    WED, D'1981.09.30 20:00:00', WED, D'1981.09.30 23:00:00', PLUS_3_HOURS,
    WED, D'1982.03.31 21:00:00', THU, D'1982.04.01 01:00:00', PLUS_4_HOURS,    THU, D'1982.09.30 20:00:00', THU, D'1982.09.30 23:00:00', PLUS_3_HOURS,
    THU, D'1983.03.31 21:00:00', FRI, D'1983.04.01 01:00:00', PLUS_4_HOURS,    FRI, D'1983.09.30 20:00:00', FRI, D'1983.09.30 23:00:00', PLUS_3_HOURS,
@@ -83,7 +88,7 @@ int transitions.Europe_Kiev[68][10] = {
    SAT, D'1988.03.26 23:00:00', SUN, D'1988.03.27 03:00:00', PLUS_4_HOURS,    SAT, D'1988.09.24 23:00:00', SUN, D'1988.09.25 02:00:00', PLUS_3_HOURS,
    SAT, D'1989.03.25 23:00:00', SUN, D'1989.03.26 03:00:00', PLUS_4_HOURS,    SAT, D'1989.09.23 23:00:00', SUN, D'1989.09.24 02:00:00', PLUS_3_HOURS,
    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    SAT, D'1990.06.30 23:00:00', SUN, D'1990.07.01 01:00:00', PLUS_2_HOURS, // Offsetänderung
-   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_2_HOURS, // durchgehend Normalzeit
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_2_HOURS, // durchgehend Normalzeit
    SAT, D'1992.03.28 22:00:00', SUN, D'1992.03.29 01:00:00', PLUS_3_HOURS,    SAT, D'1992.09.26 21:00:00', SAT, D'1992.09.26 23:00:00', PLUS_2_HOURS,
    SAT, D'1993.03.27 22:00:00', SUN, D'1993.03.28 01:00:00', PLUS_3_HOURS,    SAT, D'1993.09.25 21:00:00', SAT, D'1993.09.25 23:00:00', PLUS_2_HOURS,
    SAT, D'1994.03.26 22:00:00', SUN, D'1994.03.27 01:00:00', PLUS_3_HOURS,    SAT, D'1994.09.24 21:00:00', SAT, D'1994.09.24 23:00:00', PLUS_2_HOURS,
@@ -210,17 +215,17 @@ int transitions.FXT[68][10] = {
 // Europe/Minsk: GMT+0200,GMT+0300 (seit Sommer 2011 durchgehend Sommerzeit, davor wie Europe/Kiev)
 int transitions.Europe_Minsk[68][10] = {
    // Wechsel zu DST                                         DST-Offset       // Wechsel zu Normalzeit                                  Std.-Offset
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS, // durchgehend Normalzeit
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS, // durchgehend Normalzeit
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,
    TUE, D'1981.03.31 21:00:00', WED, D'1981.04.01 01:00:00', PLUS_4_HOURS,    WED, D'1981.09.30 20:00:00', WED, D'1981.09.30 23:00:00', PLUS_3_HOURS,
    WED, D'1982.03.31 21:00:00', THU, D'1982.04.01 01:00:00', PLUS_4_HOURS,    THU, D'1982.09.30 20:00:00', THU, D'1982.09.30 23:00:00', PLUS_3_HOURS,
    THU, D'1983.03.31 21:00:00', FRI, D'1983.04.01 01:00:00', PLUS_4_HOURS,    FRI, D'1983.09.30 20:00:00', FRI, D'1983.09.30 23:00:00', PLUS_3_HOURS,
@@ -230,8 +235,8 @@ int transitions.Europe_Minsk[68][10] = {
    SAT, D'1987.03.28 23:00:00', SUN, D'1987.03.29 03:00:00', PLUS_4_HOURS,    SAT, D'1987.09.26 23:00:00', SUN, D'1987.09.27 02:00:00', PLUS_3_HOURS,
    SAT, D'1988.03.26 23:00:00', SUN, D'1988.03.27 03:00:00', PLUS_4_HOURS,    SAT, D'1988.09.24 23:00:00', SUN, D'1988.09.25 02:00:00', PLUS_3_HOURS,
    SAT, D'1989.03.25 23:00:00', SUN, D'1989.03.26 03:00:00', PLUS_4_HOURS,    SAT, D'1989.09.23 23:00:00', SUN, D'1989.09.24 02:00:00', PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS, // durchgehend Normalzeit
-   SAT, D'1991.03.30 23:00:00', SUN, D'1991.03.31 02:00:00', PLUS_3_HOURS,    SUN, D'1991.09.29 00:00:00', SUN, D'1991.09.29 02:00:00', PLUS_2_HOURS, // Offsetanpassung
+   -1,  -1,                     -1,  -1,                     PLUS_4_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_3_HOURS, // durchgehend Normalzeit
+   SAT, D'1991.03.30 23:00:00', SUN, D'1991.03.31 02:00:00', PLUS_3_HOURS,    SUN, D'1991.09.29 00:00:00', SUN, D'1991.09.29 02:00:00', PLUS_2_HOURS, // Offsetänderung
    SAT, D'1992.03.28 22:00:00', SUN, D'1992.03.29 01:00:00', PLUS_3_HOURS,    SAT, D'1992.09.26 22:00:00', SUN, D'1992.09.27 00:00:00', PLUS_2_HOURS,
    SUN, D'1993.03.28 00:00:00', SUN, D'1993.03.28 03:00:00', PLUS_3_HOURS,    SUN, D'1993.09.26 00:00:00', SUN, D'1993.09.26 02:00:00', PLUS_2_HOURS,
    SUN, D'1994.03.27 00:00:00', SUN, D'1994.03.27 03:00:00', PLUS_3_HOURS,    SUN, D'1994.09.25 00:00:00', SUN, D'1994.09.25 02:00:00', PLUS_2_HOURS,
@@ -251,49 +256,49 @@ int transitions.Europe_Minsk[68][10] = {
    SUN, D'2008.03.30 00:00:00', SUN, D'2008.03.30 03:00:00', PLUS_3_HOURS,    SUN, D'2008.10.26 00:00:00', SUN, D'2008.10.26 02:00:00', PLUS_2_HOURS,
    SUN, D'2009.03.29 00:00:00', SUN, D'2009.03.29 03:00:00', PLUS_3_HOURS,    SUN, D'2009.10.25 00:00:00', SUN, D'2009.10.25 02:00:00', PLUS_2_HOURS,
    SUN, D'2010.03.28 00:00:00', SUN, D'2010.03.28 03:00:00', PLUS_3_HOURS,    SUN, D'2010.10.31 00:00:00', SUN, D'2010.10.31 02:00:00', PLUS_2_HOURS,
-   SUN, D'2011.03.27 00:00:00', SUN, D'2011.03.27 03:00:00', PLUS_3_HOURS,    SUN, INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS, // seit Sommer 2011
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS, // durchgehend Sommerzeit
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
-   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_3_HOURS,
+   SUN, D'2011.03.27 00:00:00', SUN, D'2011.03.27 03:00:00', PLUS_3_HOURS,    SUN, INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS, // seit Sommer 2011
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS, // durchgehend Sommerzeit
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
+   -1,  -1,                     -1,  -1,                     PLUS_3_HOURS,    -1,  INT_MAX,                -1,  INT_MAX,                PLUS_2_HOURS,
 };
 
 
 // Europe/Berlin: GMT+0100,GMT+0200
 int transitions.Europe_Berlin[68][10] = {
    // Wechsel zu DST                                         DST-Offset       // Wechsel zu Normalzeit                                  Std.-Offset
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,  // durchgehend Normalzeit
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,  // durchgehend Normalzeit
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
+   -1,  -1,                     -1,  -1,                     PLUS_2_HOURS,    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,
    SUN, D'1980.04.06 01:00:00', SUN, D'1980.04.06 03:00:00', PLUS_2_HOURS,    SUN, D'1980.09.28 01:00:00', SUN, D'1980.09.28 02:00:00', PLUS_1_HOUR,
    SUN, D'1981.03.29 01:00:00', SUN, D'1981.03.29 03:00:00', PLUS_2_HOURS,    SUN, D'1981.09.27 01:00:00', SUN, D'1981.09.27 02:00:00', PLUS_1_HOUR,
    SUN, D'1982.03.28 01:00:00', SUN, D'1982.03.28 03:00:00', PLUS_2_HOURS,    SUN, D'1982.09.26 01:00:00', SUN, D'1982.09.26 02:00:00', PLUS_1_HOUR,
@@ -358,7 +363,7 @@ int transitions.Europe_Berlin[68][10] = {
 // Europe/London: GMT+0000,GMT+0100
 int transitions.Europe_London[68][10] = {
    // Wechsel zu DST                                         DST-Offset       // Wechsel zu Normalzeit                                  Std.-Offset
-   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  INT_MAX,                -1,  INT_MAX,                PLUS_1_HOUR,  // durchgehend Sommerzeit (1)
+   -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     -1,  INT_MAX,                -1,  INT_MAX,                0,            // durchgehend Sommerzeit (1)
    -1,  -1,                     -1,  -1,                     PLUS_1_HOUR,     SUN, D'1971.10.31 02:00:00', SUN, D'1971.10.31 02:00:00', 0,
    SUN, D'1972.03.19 02:00:00', SUN, D'1972.03.19 03:00:00', PLUS_1_HOUR,     SUN, D'1972.10.29 02:00:00', SUN, D'1972.10.29 02:00:00', 0,
    SUN, D'1973.03.18 02:00:00', SUN, D'1973.03.18 03:00:00', PLUS_1_HOUR,     SUN, D'1973.10.28 02:00:00', SUN, D'1973.10.28 02:00:00', 0,
