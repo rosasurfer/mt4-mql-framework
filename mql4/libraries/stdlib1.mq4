@@ -10061,25 +10061,25 @@ string NumberToStr(double number, string mask) {
  *
  * Mask parameters:
  *
- *   Y      = 4 digit year
  *   y      = 2 digit year
- *   M      = 2 digit month
+ *   Y      = 4 digit year
  *   m      = 1-2 digit month
- *   N      = full month name, e.g. November
+ *   M      = 2 digit month
  *   n      = 3 char month name, e.g. Nov
- *   D      = 2 digit day of month
+ *   N      = full month name, e.g. November
  *   d      = 1-2 digit day of month
+ *   D      = 2 digit day of month
  *   T or t = append 'th' to day of month, e.g. 14th, 23rd, etc.
- *   W      = full weekday name, e.g. Tuesday
  *   w      = 3 char weekday name, e.g. Tue
- *   H      = 2 digit hour (defaults to 24-hour time unless 'a' or 'A' are included)
- *   h      = 1-2 digit hour (defaults to 24-hour time unless 'a' or 'A' are included)
- *   a      = convert to 12-hour time and append lowercase am/pm
- *   A      = convert to 12-hour time and append uppercase AM/PM
- *   I      = 2 digit minutes in the hour
+ *   W      = full weekday name, e.g. Tuesday
+ *   h      = 1-2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
+ *   H      = 2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
+ *   a      = 12-hour format and append lowercase am/pm
+ *   A      = 12-hour format and append uppercase AM/PM
  *   i      = 1-2 digit minutes in the hour
- *   S      = 2 digit seconds in the minute
+ *   I      = 2 digit minutes in the hour
  *   s      = 1-2 digit seconds in the minute
+ *   S      = 2 digit seconds in the minute
  *
  *   All other characters in the mask are output 'as is'.  You can output reserved characters by  preceding
  *   them with an exclamation mark:
