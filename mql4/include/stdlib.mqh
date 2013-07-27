@@ -183,49 +183,50 @@
 
    // Date/Time
    datetime FXTToGMT(datetime fxtTime);
-   datetime FXTToServerTime(datetime fxtTime);                    // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime FXTToServerTime(datetime fxtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
 
    datetime GMTToFXT(datetime gmtTime);
-   datetime GMTToServerTime(datetime gmtTime);                    // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GMTToServerTime(datetime gmtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime ServerToFXT(datetime serverTime);                     // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime ServerToGMT(datetime serverTime);                     // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ServerToFXT(datetime serverTime);                                                               // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ServerToGMT(datetime serverTime);                                                               // throws ERR_INVALID_TIMEZONE_CONFIG
 
    int      GetFXTToGMTOffset(datetime fxtTime);
-   int      GetFXTToServerTimeOffset(datetime fxtTime);           // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetFXTToServerTimeOffset(datetime fxtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
 
    int      GetGMTToFXTOffset(datetime gmtTime);
-   int      GetGMTToServerTimeOffset(datetime gmtTime);           // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetGMTToServerTimeOffset(datetime gmtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   int      GetServerToFXTOffset(datetime serverTime);            // throws ERR_INVALID_TIMEZONE_CONFIG
-   int      GetServerToGMTOffset(datetime serverTime);            // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetServerToFXTOffset(datetime serverTime);                                                      // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetServerToGMTOffset(datetime serverTime);                                                      // throws ERR_INVALID_TIMEZONE_CONFIG
 
    int      GetLocalToGMTOffset();
 
    datetime GetFXTPrevSessionStartTime(datetime fxtTime);
    datetime GetFXTPrevSessionEndTime(datetime fxtTime);
-   datetime GetFXTSessionStartTime(datetime fxtTime);             // throws ERR_MARKET_CLOSED
-   datetime GetFXTSessionEndTime(datetime fxtTime);               // throws ERR_MARKET_CLOSED
+   datetime GetFXTSessionStartTime(datetime fxtTime);                                                       // throws ERR_MARKET_CLOSED
+   datetime GetFXTSessionEndTime(datetime fxtTime);                                                         // throws ERR_MARKET_CLOSED
    datetime GetFXTNextSessionStartTime(datetime fxtTime);
    datetime GetFXTNextSessionEndTime(datetime fxtTime);
 
    datetime GetGMTPrevSessionStartTime(datetime gmtTime);
    datetime GetGMTPrevSessionEndTime(datetime gmtTime);
-   datetime GetGMTSessionStartTime(datetime gmtTime);             // throws ERR_MARKET_CLOSED
-   datetime GetGMTSessionEndTime(datetime gmtTime);               // throws ERR_MARKET_CLOSED
+   datetime GetGMTSessionStartTime(datetime gmtTime);                                                       // throws ERR_MARKET_CLOSED
+   datetime GetGMTSessionEndTime(datetime gmtTime);                                                         // throws ERR_MARKET_CLOSED
    datetime GetGMTNextSessionStartTime(datetime gmtTime);
    datetime GetGMTNextSessionEndTime(datetime gmtTime);
 
-   datetime GetServerPrevSessionStartTime(datetime serverTime);   // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime GetServerPrevSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime GetServerSessionStartTime(datetime serverTime);       // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime GetServerSessionEndTime(datetime serverTime);         // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime GetServerNextSessionStartTime(datetime serverTime);   // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime GetServerNextSessionEndTime(datetime serverTime);     // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerPrevSessionStartTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerPrevSessionEndTime(datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerSessionStartTime(datetime serverTime);                                                 // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+   datetime GetServerSessionEndTime(datetime serverTime);                                                   // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+   datetime GetServerNextSessionStartTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetServerNextSessionEndTime(datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
 
    string   GetDayOfWeek(datetime time, bool longFormat);
    datetime GetLocalTimeEx();
-   datetime GetSystemTimeEx(); datetime TimeGMT();                // Alias
+   datetime GetSystemTimeEx(); datetime TimeGMT();                                                          // Alias
+   bool     GetServerTimezoneTransitions(datetime serverTime, int lastTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
    // Event-Listener: *können* bei Verwendung im Programm durch alternative/effizientere Versionen überschrieben werden
