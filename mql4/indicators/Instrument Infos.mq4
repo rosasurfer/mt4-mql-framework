@@ -221,7 +221,6 @@ int UpdateInfos() {
    string serverSession   = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", DateToStr(D'1970.01.02' + tzOffset, "H:I-H:I")));
 
                                                                         ObjectSetText(labels[I_SERVER_SESSION  ], "Server session:     "  + serverSession, Font.Size, Font.Name, ifInt(!StringLen(serverSession), Font.Color.Disabled, Font.Color));
-
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);
