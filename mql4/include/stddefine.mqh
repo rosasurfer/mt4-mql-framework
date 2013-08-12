@@ -116,9 +116,9 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Arrayindizes für Timezone-Transitionsdaten
-#define TR_TIME                     0
-#define TR_OFFSET                   1
-#define TR_DST                      2
+#define I_TRANSITION_TIME           0
+#define I_TRANSITION_OFFSET         1
+#define I_TRANSITION_DST            2
 
 
 // MQL Programmtyp-Flags
