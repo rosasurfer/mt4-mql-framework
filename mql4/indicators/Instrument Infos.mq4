@@ -11,11 +11,14 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-color  Background.Color    = C'212,208,200';
-color  Font.Color.Enabled  = Blue;
-color  Font.Color.Disabled = Gray;
-string Font.Name           = "Tahoma";
-int    Font.Size           = 9;
+color  bg.color              = C'212,208,200';
+string bg.fontName           = "Webdings";
+int    bg.fontSize           = 197;
+
+color  fg.fontColor.Enabled  = Blue;
+color  fg.fontColor.Disabled = Gray;
+string fg.fontName           = "Tahoma";
+int    fg.fontSize           = 9;
 
 string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
@@ -84,31 +87,30 @@ int onTick() {
  *
  */
 int CreateLabels() {
-   int c = 10;
+   int n = 10;       // Counter für eindeutige Labels
 
    // Background
-   c++;
-   string label = StringConcatenate(__NAME__, ".", c, ".Background");
+   string label = StringConcatenate(__NAME__, ".", n, ".Background");
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 134);
-      ObjectSetText(label, "g", 174, "Webdings", Background.Color);
+      ObjectSet(label, OBJPROP_XDISTANCE,  14);
+      ObjectSet(label, OBJPROP_YDISTANCE, 136);
+      ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       PushChartObject(label);
    }
    else GetLastError();
 
-   c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Background");
+   n++;
+   label = StringConcatenate(__NAME__, ".", n, ".Background");
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, 14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 284);
-      ObjectSetText(label, "g", 174, "Webdings", Background.Color);
+      ObjectSet(label, OBJPROP_XDISTANCE,  14);
+      ObjectSet(label, OBJPROP_YDISTANCE, 257);
+      ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       PushChartObject(label);
    }
    else GetLastError();
@@ -116,8 +118,8 @@ int CreateLabels() {
    // Textlabel
    int yCoord = 140;
    for (int i=0; i < ArraySize(labels); i++) {
-      c++;
-      label = StringConcatenate(__NAME__, ".", c, ".", labels[i]);
+      n++;
+      label = StringConcatenate(__NAME__, ".", n, ".", labels[i]);
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -128,7 +130,7 @@ int CreateLabels() {
             if (IntInArray(fields, i))
                yCoord += 8;
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
-         ObjectSetText(label, " ", Font.Size, Font.Name);
+         ObjectSetText(label, " ", fg.fontSize, fg.fontName);
          PushChartObject(label);
          labels[i] = label;
       }
@@ -152,33 +154,33 @@ int UpdateInfos() {
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
    bool   tradeAllowed    = _bool(MarketInfo(symbol, MODE_TRADEALLOWED));
-   color  Font.Color      = ifInt(tradeAllowed, Font.Color.Enabled, Font.Color.Disabled);
+   color  fg.fontColor    = ifInt(tradeAllowed, fg.fontColor.Enabled, fg.fontColor.Disabled);
 
-                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ strBool[0+tradeAllowed], Font.Size, Font.Name, Font.Color);
-                                                                        ObjectSetText(labels[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat), Font.Size, Font.Name, Font.Color);
-   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat), Font.Size, Font.Name, Font.Color);
+                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ strBool[0+tradeAllowed],                              fg.fontSize, fg.fontName, fg.fontColor);
+                                                                        ObjectSetText(labels[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat),                      fg.fontSize, fg.fontName, fg.fontColor);
+   double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat),                   fg.fontSize, fg.fontName, fg.fontColor);
 
    double spread       = MarketInfo(symbol, MODE_SPREAD     )/PipPoints;
    double stopLevel    = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints;
    double freezeLevel  = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
-      string strSpread      = DoubleToStr(spread,      Digits<<31>>31); ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + strSpread +" pip", Font.Size, Font.Name, Font.Color);
-      string strStopLevel   = DoubleToStr(stopLevel,   Digits<<31>>31); ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   + strStopLevel +" pip", Font.Size, Font.Name, Font.Color);
-      string strFreezeLevel = DoubleToStr(freezeLevel, Digits<<31>>31); ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   + strFreezeLevel +" pip", Font.Size, Font.Name, Font.Color);
+      string strSpread      = DoubleToStr(spread,      Digits<<31>>31); ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + strSpread +" pip",                                    fg.fontSize, fg.fontName, fg.fontColor);
+      string strStopLevel   = DoubleToStr(stopLevel,   Digits<<31>>31); ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   + strStopLevel +" pip",                                 fg.fontSize, fg.fontName, fg.fontColor);
+      string strFreezeLevel = DoubleToStr(freezeLevel, Digits<<31>>31); ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   + strFreezeLevel +" pip",                               fg.fontSize, fg.fontName, fg.fontColor);
 
    double tickValue         = MarketInfo(symbol, MODE_TICKVALUE     );
    double pointValue        = tickValue/(tickSize/Point);
-   double pipValue          = PipPoints * pointValue;                   ObjectSetText(labels[I_TICKVALUE     ], "Pip value:  "     + NumberToStr(pipValue, ", .2+") +" "+ accountCurrency, Font.Size, Font.Name, Font.Color);
+   double pipValue          = PipPoints * pointValue;                   ObjectSetText(labels[I_TICKVALUE     ], "Pip value:  "     + NumberToStr(pipValue, ", .2+") +" "+ accountCurrency, fg.fontSize, fg.fontName, fg.fontColor);
 
-   double lotSize           = MarketInfo(symbol, MODE_LOTSIZE       );  ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + NumberToStr(lotSize, ", .+") +" units", Font.Size, Font.Name, Font.Color);
-   double minLot            = MarketInfo(symbol, MODE_MINLOT        );  ObjectSetText(labels[I_MINLOT        ], "Min lot:    "     + NumberToStr(minLot, ", .+"), Font.Size, Font.Name, Font.Color);
-   double lotStep           = MarketInfo(symbol, MODE_LOTSTEP       );  ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + NumberToStr(lotStep, ", .+"), Font.Size, Font.Name, Font.Color);
-   double maxLot            = MarketInfo(symbol, MODE_MAXLOT        );  ObjectSetText(labels[I_MAXLOT        ], "Max lot:   "      + NumberToStr(maxLot, ", .+"), Font.Size, Font.Name, Font.Color);
+   double lotSize           = MarketInfo(symbol, MODE_LOTSIZE       );  ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + NumberToStr(lotSize, ", .+") +" units",               fg.fontSize, fg.fontName, fg.fontColor);
+   double minLot            = MarketInfo(symbol, MODE_MINLOT        );  ObjectSetText(labels[I_MINLOT        ], "Min lot:    "     + NumberToStr(minLot, ", .+"),                          fg.fontSize, fg.fontName, fg.fontColor);
+   double lotStep           = MarketInfo(symbol, MODE_LOTSTEP       );  ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + NumberToStr(lotStep, ", .+"),                         fg.fontSize, fg.fontName, fg.fontColor);
+   double maxLot            = MarketInfo(symbol, MODE_MAXLOT        );  ObjectSetText(labels[I_MAXLOT        ], "Max lot:   "      + NumberToStr(maxLot, ", .+"),                          fg.fontSize, fg.fontName, fg.fontColor);
 
    double marginRequired    = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = EMPTY;
    double lotValue          = Close[0]/tickSize * tickValue;
-   double leverage          = lotValue/marginRequired;                  ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(marginRequired==EMPTY, "", NumberToStr(marginRequired, ", .2+") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), Font.Size, Font.Name, ifInt(marginRequired==EMPTY, Font.Color.Disabled, Font.Color));
+   double leverage          = lotValue/marginRequired;                  ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(marginRequired==EMPTY, "", NumberToStr(marginRequired, ", .2+") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fg.fontSize, fg.fontName, ifInt(marginRequired==EMPTY, fg.fontColor.Disabled, fg.fontColor));
    double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED  );
-          marginHedged      = marginHedged/lotSize * 100;               ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(marginRequired==EMPTY, "", Round(marginHedged) +"%"), Font.Size, Font.Name, ifInt(marginRequired==EMPTY, Font.Color.Disabled, Font.Color));
+          marginHedged      = marginHedged/lotSize * 100;               ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(marginRequired==EMPTY, "", Round(marginHedged) +"%"), fg.fontSize, fg.fontName, ifInt(marginRequired==EMPTY, fg.fontColor.Disabled, fg.fontColor));
 
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE      );
    double swapLong          = MarketInfo(symbol, MODE_SWAPLONG      );
@@ -198,13 +200,13 @@ int UpdateInfos() {
          else if (swapType == SCM_MARGIN_CURRENCY) {     // Deposit-Currency
          }
       }
-      ObjectSetText(labels[I_SWAPLONG ], "Swap long:  "+ NumberToStr(swapLongD,  "+.2") +" pip = "+ NumberToStr(swapLongY,  "+.2") +"% p.a.", Font.Size, Font.Name, Font.Color);
-      ObjectSetText(labels[I_SWAPSHORT], "Swap short: "+ NumberToStr(swapShortD, "+.2") +" pip = "+ NumberToStr(swapShortY, "+.2") +"% p.a.", Font.Size, Font.Name, Font.Color);
+      ObjectSetText(labels[I_SWAPLONG ], "Swap long:  "+ NumberToStr(swapLongD,  "+.2") +" pip = "+ NumberToStr(swapLongY,  "+.2") +"% p.a.", fg.fontSize, fg.fontName, fg.fontColor);
+      ObjectSetText(labels[I_SWAPSHORT], "Swap short: "+ NumberToStr(swapShortD, "+.2") +" pip = "+ NumberToStr(swapShortY, "+.2") +"% p.a.", fg.fontSize, fg.fontName, fg.fontColor);
 
-   int    accountLeverage = AccountLeverage();                          ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ Round(accountLeverage)), Font.Size, Font.Name, ifInt(!accountLeverage, Font.Color.Disabled, Font.Color));
-   int    stopoutLevel    = AccountStopoutLevel();                      ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), Font.Size, Font.Name, ifInt(!accountLeverage, Font.Color.Disabled, Font.Color));
+   int    accountLeverage = AccountLeverage();                          ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ Round(accountLeverage)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
+   int    stopoutLevel    = AccountStopoutLevel();                      ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
 
-   string serverName      = GetServerDirectory();                       ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+ serverName, Font.Size, Font.Name, ifInt(!StringLen(serverName), Font.Color.Disabled, Font.Color));
+   string serverName      = GetServerDirectory();                       ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+ serverName, fg.fontSize, fg.fontName, ifInt(!StringLen(serverName), fg.fontColor.Disabled, fg.fontColor));
    string serverTimezone  = GetServerTimezone();
       string strOffset;
       if (StringLen(serverTimezone) > 0) {
@@ -216,11 +218,11 @@ int UpdateInfos() {
          }
          serverTimezone = serverTimezone + ifString(serverTimezone=="FXT", "", " (FXT"+ strOffset +")");
       }
-                                                                        ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "    + serverTimezone, Font.Size, Font.Name, ifInt(!StringLen(serverTimezone), Font.Color.Disabled, Font.Color));
+                                                                        ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "    + serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
 
    string serverSession   = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", DateToStr(D'1970.01.02' + tzOffset, "H:I-H:I")));
 
-                                                                        ObjectSetText(labels[I_SERVER_SESSION  ], "Server session:     "  + serverSession, Font.Size, Font.Name, ifInt(!StringLen(serverSession), Font.Color.Disabled, Font.Color));
+                                                                        ObjectSetText(labels[I_SERVER_SESSION  ], "Server session:     "  + serverSession,  fg.fontSize, fg.fontName, ifInt(!StringLen(serverSession),  fg.fontColor.Disabled, fg.fontColor));
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);
