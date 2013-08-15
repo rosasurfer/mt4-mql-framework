@@ -8298,7 +8298,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
    else if (StringStartsWith(directory, "globalprime-"       )) timezone = "GMT";
-   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "Europe/London";
+   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
    else if (StringStartsWith(directory, "liteforex-"         )) timezone = "Europe/Minsk";
