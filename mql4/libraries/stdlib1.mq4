@@ -4266,6 +4266,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "finfx-"             )) return("FinFX"           );
    else if (StringStartsWith(server, "forex-"             )) return("Forex Ltd"       );
    else if (StringStartsWith(server, "forexbaltic-"       )) return("FB Capital"      );
+   else if (StringStartsWith(server, "fxopen-"            )) return("FXOpen"          );
    else if (StringStartsWith(server, "fxprimus-"          )) return("FX Primus"       );
    else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
    else if (StringStartsWith(server, "fxdd-"              )) return("FXDD"            );
@@ -8292,6 +8293,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
    else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
+   else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "fxprimus-"          )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
