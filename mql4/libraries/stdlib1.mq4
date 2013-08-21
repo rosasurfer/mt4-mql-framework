@@ -6911,7 +6911,7 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
 
 /**
  * Gibt einen Konfigurationswert als Double zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
- * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Die Zeilen der Werte abschließende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -6937,7 +6937,7 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
 /**
  * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
- * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Die Zeilen der Werte abschließende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7133,7 +7133,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Double zurück.
+ * Gibt einen globalen Konfigurationswert als Double zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7156,7 +7156,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Integer zurück.
+ * Gibt einen globalen Konfigurationswert als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7312,7 +7312,7 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als Double zurück.
+ * Gibt einen lokalen Konfigurationswert als Double zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7335,7 +7335,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als Integer zurück.
+ * Gibt einen lokalen Konfigurationswert als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
