@@ -20,7 +20,7 @@ color  fg.fontColor.Disabled = Gray;
 string fg.fontName           = "Tahoma";
 int    fg.fontSize           = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","COMMISSION","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
@@ -35,13 +35,14 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPL
 #define I_MAXLOT              10
 #define I_MARGINREQUIRED      11
 #define I_MARGINHEDGED        12
-#define I_SWAPLONG            13
-#define I_SWAPSHORT           14
-#define I_ACCOUNT_LEVERAGE    15
-#define I_STOPOUT_LEVEL       16
-#define I_SERVER_NAME         17
-#define I_SERVER_TIMEZONE     18
-#define I_SERVER_SESSION      19
+#define I_COMMISSION          13
+#define I_SWAPLONG            14
+#define I_SWAPSHORT           15
+#define I_ACCOUNT_LEVERAGE    16
+#define I_STOPOUT_LEVEL       17
+#define I_SERVER_NAME         18
+#define I_SERVER_TIMEZONE     19
+#define I_SERVER_SESSION      20
 
 
 /**
@@ -87,7 +88,9 @@ int onTick() {
  *
  */
 int CreateLabels() {
-   int n = 10;       // Counter für eindeutige Labels
+   int x =  3;                   // X-Ausgangskoordinate
+   int y = 73;                   // Y-Ausgangskoordinate
+   int n = 10;                   // Counter für eindeutige Labels
 
    // Background
    string label = StringConcatenate(__NAME__, ".", n, ".Background");
@@ -95,8 +98,8 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE,  14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 136);
+      ObjectSet(label, OBJPROP_XDISTANCE, x);
+      ObjectSet(label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       PushChartObject(label);
    }
@@ -108,15 +111,15 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE,  14);
-      ObjectSet(label, OBJPROP_YDISTANCE, 257);
+      ObjectSet(label, OBJPROP_XDISTANCE, x    );
+      ObjectSet(label, OBJPROP_YDISTANCE, y+143);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       PushChartObject(label);
    }
    else GetLastError();
 
    // Textlabel
-   int yCoord = 140;
+   int yCoord = y + 4;
    for (int i=0; i < ArraySize(labels); i++) {
       n++;
       label = StringConcatenate(__NAME__, ".", n, ".", labels[i]);
@@ -124,9 +127,9 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(label, OBJPROP_XDISTANCE,  20);
+         ObjectSet(label, OBJPROP_XDISTANCE, x+6);
             // Separator vor den folgenden Labeln
-            static int fields[] = {I_POINT, I_SPREAD, I_LOTSIZE, I_MARGINREQUIRED, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
+            static int fields[] = {I_POINT, I_SPREAD, I_LOTSIZE, I_MARGINREQUIRED, I_COMMISSION, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
             if (IntInArray(fields, i))
                yCoord += 8;
          ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
@@ -156,7 +159,7 @@ int UpdateInfos() {
    bool   tradeAllowed    = _bool(MarketInfo(symbol, MODE_TRADEALLOWED));
    color  fg.fontColor    = ifInt(tradeAllowed, fg.fontColor.Enabled, fg.fontColor.Disabled);
 
-                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ strBool[0+tradeAllowed],                              fg.fontSize, fg.fontName, fg.fontColor);
+                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ strBool[_int(tradeAllowed)],                          fg.fontSize, fg.fontName, fg.fontColor);
                                                                         ObjectSetText(labels[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat),                      fg.fontSize, fg.fontName, fg.fontColor);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat),                   fg.fontSize, fg.fontName, fg.fontColor);
 
@@ -181,6 +184,8 @@ int UpdateInfos() {
    double leverage          = lotValue/marginRequired;                  ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(marginRequired==EMPTY, "", NumberToStr(marginRequired, ", .2+") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fg.fontSize, fg.fontName, ifInt(marginRequired==EMPTY, fg.fontColor.Disabled, fg.fontColor));
    double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED  );
           marginHedged      = marginHedged/lotSize * 100;               ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(marginRequired==EMPTY, "", Round(marginHedged) +"%"), fg.fontSize, fg.fontName, ifInt(marginRequired==EMPTY, fg.fontColor.Disabled, fg.fontColor));
+
+   double commission        = 7.00;                                     ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2") +" "+ accountCurrency +"/lot = "+ NumberToStr(commission/pipValue, ".1") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
 
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE      );
    double swapLong          = MarketInfo(symbol, MODE_SWAPLONG      );
