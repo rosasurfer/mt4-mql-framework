@@ -149,17 +149,12 @@ int CreateLabels() {
  * @return int - Fehlerstatus
  */
 int UpdateInfos() {
-   string strBool[] = { "no","yes" };
-   string strMCM [] = { "Forex","CFD","CFD Futures","CFD Index","CFD Leverage" };               // margin calculation modes
-   string strPCM [] = { "Forex","CFD","Futures" };                                              // profit calculation modes
-   string strSCM [] = { "in points","in base currency","by interest","in margin currency" };    // swap calculation modes
-
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
-   bool   tradeAllowed    = _bool(MarketInfo(symbol, MODE_TRADEALLOWED));
+   int    tradeAllowed    = MarketInfo(symbol, MODE_TRADEALLOWED);
    color  fg.fontColor    = ifInt(tradeAllowed, fg.fontColor.Enabled, fg.fontColor.Disabled);
 
-                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ strBool[_int(tradeAllowed)],                          fg.fontSize, fg.fontName, fg.fontColor);
+                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ ifString(tradeAllowed, "no", "yes"),                  fg.fontSize, fg.fontName, fg.fontColor);
                                                                         ObjectSetText(labels[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat),                      fg.fontSize, fg.fontName, fg.fontColor);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat),                   fg.fontSize, fg.fontName, fg.fontColor);
 
@@ -185,7 +180,7 @@ int UpdateInfos() {
    double marginHedged      = MarketInfo(symbol, MODE_MARGINHEDGED  );
           marginHedged      = marginHedged/lotSize * 100;               ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(marginRequired==EMPTY, "", Round(marginHedged) +"%"), fg.fontSize, fg.fontName, ifInt(marginRequired==EMPTY, fg.fontColor.Disabled, fg.fontColor));
 
-   double commission        = 7.00;                                     ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2") +" "+ accountCurrency +"/lot = "+ NumberToStr(commission/pipValue, ".1") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
+   double commission        = GetCommission();                          ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2") +" "+ accountCurrency +"/lot = "+ NumberToStr(commission/pipValue, ".1") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
 
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE      );
    double swapLong          = MarketInfo(symbol, MODE_SWAPLONG      );
@@ -233,6 +228,25 @@ int UpdateInfos() {
       return(NO_ERROR);
    return(catch("UpdateInfos()", error));
 }
+
+
+/**
+ * Gibt die Commissions-Rate des Accounts in der Accountwährung zurück.
+ *
+ * @return double
+ */
+double GetCommission() {
+   string company  = ShortAccountCompany();
+   int    account  = GetAccountNumber();
+   string currency = AccountCurrency();
+
+   double commission = GetGlobalConfigDouble("Commissions", company +"."+ currency +"."+ account, GetGlobalConfigDouble("Commissions", company +"."+ currency, 0));
+   if (commission < 0)
+      return(_int(-1, catch("GetCommission()   invalid configuration value [Commissions] "+ company +"."+ currency +"."+ account +" = "+ NumberToStr(commission, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+
+   return(commission);
+}
+
 
 /*
 MODE_TRADEALLOWED       Trade is allowed for the symbol.
