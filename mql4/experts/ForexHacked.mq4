@@ -39,34 +39,38 @@ extern double MassHedgeBooster = 1.01;
 extern int    TradesDeep       = 5;
 extern string EA_Name          = "ForexHacked 2.5";
 extern int    PipStarter       = 31;
+
 extern bool   UseNewsFilter    = false;
 extern int    MinsBeforeNews   = 60;
 extern int    MinsAfterNews    = 60;
 extern int    NewsImpact       = 3;
 
-double earnings        = 0.0;
-double priceadd        = 0.0;
-int    stoploss        = 0;
-int    gi_208          = 5000;
+
+double priceadd;
+int    stoploss;
+int    gi_208 = 5000;
 double gd_244;
-bool   gi_260;
+bool   gb_260;
+
 int    imaaverage      = 7;
 int    imamashift      = 0;
 int    imamamethod     = MODE_LWMA;
 int    imaappliedprice = PRICE_WEIGHTED;
+
 double isarstep        = 0.25;
 double isarmax         = 0.2;
+
 int    previoustime;
 double point;
 int    lotround;
-bool   gi_384;
-bool   gi_388;
-bool   gi_392;
-bool   gi_396;
+bool   gb_384;
+bool   gb_388;
+bool   gb_392;
+bool   gb_396;
 int    ticket;
 int    command;
 string hedgetext       = "hedged";
-int    filename;
+int    hFile;
 
 
 /**
@@ -96,13 +100,14 @@ int init() {
    }
 
    lotround = MathRound((-MathLog(MarketInfo(Symbol(), MODE_LOTSTEP))) / 2.302585093);
-   gi_384 = false;
-   gi_388 = false;
-   gi_392 = false;
-   gi_396 = false;
+   gb_384 = false;
+   gb_388 = false;
+   gb_392 = false;
+   gb_396 = false;
    ticket = -1;
-   gi_260 = false;
-   filename = FileOpen(WindowExpertName() +"_"+ Time[0] +"_"+ Symbol() +"_"+ MagicNumber +".log", FILE_WRITE);
+   gb_260 = false;
+
+   hFile   = FileOpen(WindowExpertName() +"_"+ Symbol() +"_"+ MagicNumber +".log", FILE_WRITE);
    command = -1;
 
    return(0);
@@ -113,7 +118,7 @@ int init() {
  *
  */
 int deinit() {
-   FileClose(filename);
+   FileClose(hFile);
    return(0);
 }
 
@@ -158,29 +163,29 @@ int start() {
    }
 
    if (count_4 >= TradesDeep) {
-      if (!gi_396) {
-         Log("Allow long hedge! trades="+ count_4 +",TradesDeep="+ TradesDeep);
-         gi_396 = true;
+      if (!gb_396) {
+         Log("Allow long hedge! trades="+ count_4 +", TradesDeep="+ TradesDeep);
+         gb_396 = true;
       }
    }
    if (count_8 >= TradesDeep) {
-      if (!gi_392) {
-         Log("Allow short hedge! trades="+ count_8 +",TradesDeep="+ TradesDeep);
-         gi_392 = true;
+      if (!gb_392) {
+         Log("Allow short hedge! trades="+ count_8 +", TradesDeep="+ TradesDeep);
+         gb_392 = true;
       }
    }
 
-   bool li_16 = false;
+   bool lb_16 = false;
    if ((100-StopLossPct) * AccountBalance()/100 >= AccountEquity()) {
-      Log("AccountBalance="+ AccountBalance() +",AccountEquity=" + AccountEquity());
-      gi_260 = true;
-      li_16  = true;
+      Log("AccountBalance="+ AccountBalance() +", AccountEquity=" + AccountEquity());
+      gb_260 = true;
+      lb_16  = true;
    }
 
    if ((TakeProfitPct+100) * AccountBalance()/100 <= AccountEquity())
-      gi_260 = true;
+      gb_260 = true;
 
-   if (gi_260) {
+   if (gb_260) {
       for (pos_0=OrdersTotal()-1; pos_0 >= 0; pos_0--) {
          if (OrderSelect(pos_0, SELECT_BY_POS)) {
             if (OrderMagicNumber() == MagicNumber) {
@@ -193,14 +198,14 @@ int start() {
          }
       }
 
-      gi_260 = false;
-      if (li_16) {
+      gb_260 = false;
+      if (lb_16) {
          Sleep(1000 * StoppedOutPause);
-         li_16 = false;
+         lb_16 = false;
       }
 
-      gi_396 = false;
-      gi_392 = false;
+      gb_396 = false;
+      gb_392 = false;
    }
 
    if (SupportECN) {
@@ -231,37 +236,17 @@ int start() {
 
    ManageBuy();
    ManageSell();
+
    if (!PauseNewTrades && IsTradeTime() && (!UseNewsFilter || !NewsTime())) {
-      if (gi_388)
-         if (OpenBuy(1) == true)
-            gi_388 = false;
-      if (gi_384)
-         if (OpenSell(1) == true)
-            gi_384 = false;
+      if (gb_388)
+         if (OpenBuy(1))
+            gb_388 = false;
+      if (gb_384)
+         if (OpenSell(1))
+            gb_384 = false;
    }
    ChartComment();
    return(0);
-}
-
-
-/**
- *
- */
-void Log(string as_0) {
-   if (filename >= 0)
-      FileWrite(filename, TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS) +": "+ as_0);
-}
-
-
-/**
- *
- */
-double CalcLots(double a_minlot_0) {
-   if (a_minlot_0 < 0)
-      Print("ERROR tmp=" + (AccountEquity()-gi_208) + ", AccountEquity()=" + AccountEquity());
-
-   Log("Equity="+ AccountEquity() +", lots="+ a_minlot_0);
-   return(a_minlot_0);
 }
 
 
@@ -295,6 +280,31 @@ int IsTradeTime() {
 /**
  *
  */
+int StrategySignal() {
+   double isar_0 = iSAR(NULL, 0, isarstep, isarmax, 0);
+   double ima_8  =  iMA(NULL, 0, imaaverage, imamashift, imamamethod, imaappliedprice, 0);
+
+   if (isar_0 > ima_8) return(-1);
+   if (isar_0 < ima_8) return( 1);
+   return(0);
+}
+
+
+/**
+ *
+ */
+double CalcLots(double a_minlot_0) {
+   if (a_minlot_0 < 0)
+      Print("ERROR tmp=" + (AccountEquity()-gi_208) + ", AccountEquity()=" + AccountEquity());
+
+   Log("Equity="+ AccountEquity() +", lots="+ a_minlot_0);
+   return(a_minlot_0);
+}
+
+
+/**
+ *
+ */
 double GetLastLotSize(int ai_0) {
    for (int pos_4=OrdersTotal()-1; pos_4 >= 0; pos_4--) {
       if (OrderSelect(pos_4, SELECT_BY_POS)) {
@@ -314,136 +324,150 @@ double GetLastLotSize(int ai_0) {
 /**
  *
  */
-int OpenBuy(bool ai_0 = false) {
-   int ticket_4;
-   double lots_40;
-   double price_8 = 0;
-   double price_16 = 0;
-   string ls_24 = "";
-   bool li_ret_32 = true;
-
-   if (TimeCurrent() - previoustime < 60)
+double Drawdown() {
+   if (AccountEquity() >= AccountBalance())
       return(0);
-   if (ai_0 && (!gi_392))
-      return(0);
-
-   if (!GlobalVariableCheck("PERMISSION")) {
-      GlobalVariableSet("PERMISSION", TimeCurrent());
-      if (!SupportECN)
-      {
-         if (ai_0)
-         {
-            if (OrderSelect(ticket, SELECT_BY_TICKET))
-               price_16 = OrderTakeProfit() - MarketInfo(Symbol(), MODE_SPREAD) * Point;
-         }
-         else
-            price_8 = Ask + priceadd * Point;
-      }
-      if (ai_0)
-         ls_24 = hedgetext;
-      if (AllowiStopLoss == true)
-         price_16 = Ask - stoploss * Point;
-      if (ai_0)
-         lots_40 = NormalizeDouble(GetLastLotSize(1) * MassHedgeBooster, 2);
-      else
-         lots_40 = CalcLots(gd_244);
-      if (!SupportECN)
-         ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Green);
-      else {
-         ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Green);
-         Sleep(1000);
-         OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
-      }
-      previoustime = TimeCurrent();
-      if (ticket_4 != -1)
-      {
-         if (!ai_0)
-         {
-            ticket = ticket_4;
-            Log("BUY hedgedTicket=" + ticket);
-         }
-         else
-         {
-            Log("BUY Hacked_ticket=" + ticket_4);
-            command = 0;
-         }
-      }
-      else
-      {
-         Log("failed sell");
-         li_ret_32 = false;
-      }
-   }
-   GlobalVariableDel("PERMISSION");
-   return(li_ret_32);
+   return(100 * (1-(AccountEquity()/AccountBalance())));
 }
 
 
 /**
  *
  */
-int OpenSell(bool ai_0 = false) {
-   int ticket_4;
-   double lots_36;
-   double price_8 = 0;
-   double price_16 = 0;
+bool OpenBuy(bool ab_0 = false) {
+   int    ticket_4;
+   double lots_40;
+   double price_8;
+   double price_16;
    string ls_24 = "";
-   bool li_ret_32 = true;
-   if (TimeCurrent() - previoustime < 60)
-      return(0);
-   if (ai_0 && (!gi_396))
-   return(0);
-   if (!GlobalVariableCheck("PERMISSION"))
-   {
+   bool   lb_ret_32 = true;
+
+   if (TimeCurrent()-previoustime < 60)
+      return(false);
+   if (ab_0 && !gb_392)
+      return(false);
+
+   if (!GlobalVariableCheck("PERMISSION")) {
       GlobalVariableSet("PERMISSION", TimeCurrent());
-      if (!SupportECN)
-      {
-         if (ai_0)
-         {
+
+      if (!SupportECN) {
+         if (ab_0) {
+            if (OrderSelect(ticket, SELECT_BY_TICKET))
+               price_16 = OrderTakeProfit() - MarketInfo(Symbol(), MODE_SPREAD) * Point;
+         }
+         else {
+            price_8 = Ask + priceadd * Point;
+         }
+      }
+
+      if (ab_0)
+         ls_24 = hedgetext;
+
+      if (AllowiStopLoss)
+         price_16 = Ask - stoploss * Point;
+
+      if (ab_0) lots_40 = NormalizeDouble(GetLastLotSize(1) * MassHedgeBooster, 2);
+      else      lots_40 = CalcLots(gd_244);
+
+      if (!SupportECN) {
+         ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Green);
+      }
+      else {
+         ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Green);
+         Sleep(1000);
+         OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
+      }
+
+      previoustime = TimeCurrent();
+
+      if (ticket_4 != -1) {
+         if (!ab_0) {
+            ticket = ticket_4;
+            Log("BUY hedgedTicket=" + ticket);
+         }
+         else {
+            Log("BUY Hacked_ticket=" + ticket_4);
+            command = 0;
+         }
+      }
+      else {
+         Log("failed sell");
+         lb_ret_32 = false;
+      }
+   }
+
+   GlobalVariableDel("PERMISSION");
+   return(lb_ret_32);
+}
+
+
+/**
+ *
+ */
+bool OpenSell(bool ab_0 = false) {
+   int    ticket_4;
+   double lots_36;
+   double price_8;
+   double price_16;
+   string ls_24 = "";
+   bool   lb_ret_32 = true;
+
+   if (TimeCurrent()-previoustime < 60)
+      return(false);
+   if (ab_0 && !gb_396)
+      return(false);
+
+   if (!GlobalVariableCheck("PERMISSION")) {
+      GlobalVariableSet("PERMISSION", TimeCurrent());
+
+      if (!SupportECN) {
+         if (ab_0) {
             if (OrderSelect(ticket, SELECT_BY_TICKET))
                price_16 = OrderTakeProfit() + MarketInfo(Symbol(), MODE_SPREAD) * Point;
          }
-         else
+         else {
             price_8 = Bid - priceadd * Point;
+         }
       }
-      if (ai_0)
+
+      if (ab_0)
          ls_24 = hedgetext;
-      if (AllowiStopLoss == true)
+
+      if (AllowiStopLoss)
          price_16 = Bid + stoploss * Point;
-      if (ai_0)
-         lots_36 = NormalizeDouble(GetLastLotSize(0) * MassHedgeBooster, 2);
-      else
-         lots_36 = CalcLots(gd_244);
-      if (!SupportECN)
+
+      if (ab_0) lots_36 = NormalizeDouble(GetLastLotSize(0) * MassHedgeBooster, 2);
+      else      lots_36 = CalcLots(gd_244);
+
+      if (!SupportECN) {
          ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Pink);
-      else
-      {
+      }
+      else {
          ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Pink);
          Sleep(1000);
          OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
       }
+
       previoustime = TimeCurrent();
-      if (ticket_4 != -1)
-      {
-         if (!ai_0)
-         {
+
+      if (ticket_4 != -1) {
+         if (!ab_0) {
             ticket = ticket_4;
             Log("SELL hedgedTicket=" + ticket);
          }
-         else
-         {
+         else {
             Log("SELL Hacked_ticket=" + ticket_4);
             command = 1;
          }
       }
-      else
-      {
+      else {
          Log("failed sell");
-         li_ret_32 = false;
+         lb_ret_32 = false;
       }
    }
+
    GlobalVariableDel("PERMISSION");
-   return(li_ret_32);
+   return(lb_ret_32);
 }
 
 
@@ -451,27 +475,23 @@ int OpenSell(bool ai_0 = false) {
  *
  */
 void ManageBuy() {
-   int datetime_0 = 0;
-   double order_open_price_4 = 0;
-   double order_lots_12 = 0;
-   double order_takeprofit_20 = 0;
-   int cmd_28 = -1;
-   int ticket_32 = 0;
-   int pos_36 = 0;
-   int count_40 = 0;
-   for (pos_36 = 0; pos_36 < OrdersTotal(); pos_36++)
-   {
-      if (OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES))
-      {
-         if (OrderMagicNumber() == MagicNumber && OrderType() == OP_BUY)
-         {
+   int    datetime_0;
+   double order_open_price_4;
+   double order_lots_12;
+   double order_takeprofit_20;
+   int    cmd_28 = -1;
+   int    ticket_32;
+   int    count_40;
+
+   for (int pos_36=0; pos_36 < OrdersTotal(); pos_36++) {
+      if (OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderMagicNumber()==MagicNumber && OrderType()==OP_BUY) {
             count_40++;
-            if (OrderOpenTime() > datetime_0)
-            {
-               datetime_0 = OrderOpenTime();
-               order_open_price_4 = OrderOpenPrice();
-               cmd_28 = OrderType();
-               ticket_32 = OrderTicket();
+            if (OrderOpenTime() > datetime_0) {
+               datetime_0          = OrderOpenTime();
+               order_open_price_4  = OrderOpenPrice();
+               cmd_28              = OrderType();
+               ticket_32           = OrderTicket();
                order_takeprofit_20 = OrderTakeProfit();
             }
             if (OrderLots() > order_lots_12)
@@ -479,32 +499,30 @@ void ManageBuy() {
          }
       }
    }
-   int li_44 = MathRound(MathLog(order_lots_12 / Lots) / MathLog(Booster)) + 1.0;
+
+   int li_44 = MathRound(MathLog(order_lots_12/Lots) / MathLog(Booster)) + 1;
    if (li_44 < 0)
       li_44 = 0;
    gd_244 = NormalizeDouble(Lots * MathPow(Booster, li_44), lotround);
-   if (li_44 == 0 && StrategySignal() == 1 && IsTradeTime() && !(UseNewsFilter && NewsTime()))
-   {
-      if (OpenBuy() == true)
+
+   if (!li_44 && StrategySignal()==1 && IsTradeTime() && (!UseNewsFilter || !NewsTime())) {
+      if (OpenBuy())
          if (MassHedge)
-            gi_384 = true;
+            gb_384 = true;
    }
-   else
-   {
-      if (order_open_price_4 - Ask > PipStarter * point && order_open_price_4 > 0.0 && count_40 < MaxBuyOrders)
-      {
-         if (!(OpenBuy()))
-            return;
-         if (!(MassHedge))
-            return;
-         gi_384 = true;
+   else if (order_open_price_4-Ask > PipStarter*point && order_open_price_4 > 0 && count_40 < MaxBuyOrders) {
+      if (!OpenBuy())
          return;
-      }
+      if (!MassHedge)
+         return;
+      gb_384 = true;
+      return;
    }
-   for (pos_36 = 0; pos_36 < OrdersTotal(); pos_36++)
-   {
+
+   for (pos_36=0; pos_36 < OrdersTotal(); pos_36++) {
       OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES);
-      if (OrderMagicNumber() != MagicNumber || OrderType() != OP_BUY || OrderTakeProfit() == order_takeprofit_20 || order_takeprofit_20 == 0.0)
+
+      if (OrderMagicNumber()!=MagicNumber || OrderType()!=OP_BUY || OrderTakeProfit()==order_takeprofit_20 || order_takeprofit_20==0)
          continue;
       OrderModify(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), order_takeprofit_20, 0, Pink);
       Sleep(1000);
@@ -515,42 +533,24 @@ void ManageBuy() {
 /**
  *
  */
-int StrategySignal() {
-   double isar_0 = iSAR(NULL, 0, isarstep, isarmax, 0);
-   double ima_8 = iMA(NULL, 0, imaaverage, imamashift, imamamethod, imaappliedprice, 0);
-   if (isar_0 > ima_8)
-      return(-1);
-   if (isar_0 < ima_8)
-      return(1);
-   return(0);
-}
-
-
-/**
- *
- */
 void ManageSell() {
-   int datetime_0 = 0;
-   double order_open_price_4 = 0;
-   double order_lots_12 = 0;
-   double order_takeprofit_20 = 0;
-   int cmd_28 = -1;
-   int ticket_32 = 0;
-   int pos_36 = 0;
-   int count_40 = 0;
-   for (pos_36 = 0; pos_36 < OrdersTotal(); pos_36++)
-   {
-      if (OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES))
-      {
-         if (OrderMagicNumber() == MagicNumber && OrderType() == OP_SELL)
-         {
+   int    datetime_0;
+   double order_open_price_4;
+   double order_lots_12;
+   double order_takeprofit_20;
+   int    cmd_28 = -1;
+   int    ticket_32;
+   int    count_40;
+
+   for (int pos_36=0; pos_36 < OrdersTotal(); pos_36++) {
+      if (OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderMagicNumber()==MagicNumber && OrderType()==OP_SELL) {
             count_40++;
-            if (OrderOpenTime() > datetime_0)
-            {
-               datetime_0 = OrderOpenTime();
-               order_open_price_4 = OrderOpenPrice();
-               cmd_28 = OrderType();
-               ticket_32 = OrderTicket();
+            if (OrderOpenTime() > datetime_0) {
+               datetime_0          = OrderOpenTime();
+               order_open_price_4  = OrderOpenPrice();
+               cmd_28              = OrderType();
+               ticket_32           = OrderTicket();
                order_takeprofit_20 = OrderTakeProfit();
             }
             if (OrderLots() > order_lots_12)
@@ -558,35 +558,31 @@ void ManageSell() {
          }
       }
    }
-   int li_44 = MathRound(MathLog(order_lots_12 / Lots) / MathLog(Booster)) + 1.0;
+
+   int li_44 = MathRound(MathLog(order_lots_12/Lots) / MathLog(Booster)) + 1;
    if (li_44 < 0)
       li_44 = 0;
+
    gd_244 = NormalizeDouble(Lots * MathPow(Booster, li_44), lotround);
-   if (li_44 == 0 && StrategySignal() == -1 && IsTradeTime() && !(UseNewsFilter && NewsTime()))
-   {
-      if (OpenSell() == true)
+
+   if (!li_44 && StrategySignal()==-1 && IsTradeTime() && (!UseNewsFilter || !NewsTime())) {
+      if (OpenSell())
          if (MassHedge)
-            gi_388 = true;
+            gb_388 = true;
    }
-   else
-   {
-      if (Bid - order_open_price_4 > PipStarter * point && order_open_price_4 > 0.0 && count_40 < MaxSellOrders)
-      {
-         if (!(OpenSell()))
-            return;
-         if (!(MassHedge))
-            return;
-         gi_388 = true;
+   else if (Bid-order_open_price_4 > PipStarter*point && order_open_price_4 > 0 && count_40 < MaxSellOrders) {
+      if (!OpenSell())
          return;
-      }
+      if (!MassHedge)
+         return;
+      gb_388 = true;
+      return;
    }
-   for (pos_36 = 0; pos_36 < OrdersTotal(); pos_36++)
-   {
-      if (OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES))
-      {
-         if (OrderMagicNumber() == MagicNumber && OrderType() == OP_SELL)
-         {
-            if (OrderTakeProfit() == order_takeprofit_20 || order_takeprofit_20 == 0.0)
+
+   for (pos_36=0; pos_36 < OrdersTotal(); pos_36++) {
+      if (OrderSelect(pos_36, SELECT_BY_POS, MODE_TRADES)) {
+         if (OrderMagicNumber()==MagicNumber && OrderType()==OP_SELL) {
+            if (OrderTakeProfit()==order_takeprofit_20 || order_takeprofit_20==0)
                continue;
             OrderModify(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), order_takeprofit_20, 0, Pink);
          }
@@ -599,44 +595,8 @@ void ManageSell() {
  *
  */
 void ChartComment() {
-   string dbl2str_0 = DoubleToStr(BalanceDeviation(2), 2);
-   if (UseNewsFilter && NewsTime())
-   {
-      Comment ("Pending news event...");
-   }
-   for (int pos_8 = 0; pos_8 < OrdersHistoryTotal(); pos_8++)
-      if (OrderSelect(pos_8, SELECT_BY_POS, MODE_HISTORY) && OrderMagicNumber() == MagicNumber && OrderSymbol() == Symbol() && OrderType() <= OP_SELL)
-         earnings += OrderProfit() + OrderCommission() + OrderSwap();
-   Comment(" \nForexHacked V2.5 Loaded Successfully™ ",
-      "\nAccount Leverage  :  " + "1 : " + AccountLeverage(),
-      "\nAccount Type  :  " + AccountServer(),
-      "\nServer Time  :  " + TimeToStr(TimeCurrent(), TIME_SECONDS),
-      "\nAccount Equity  = ", AccountEquity(),
-      "\nFree Margin     = ", AccountFreeMargin(),
-   "\nDrawdown  :  ", dbl2str_0, " \n" + Symbol(), " Earnings  :  " + earnings);
-}
-
-
-/**
- *
- */
-double BalanceDeviation(int ai_0) {
-   double ld_ret_4;
-   if (ai_0 == 2)
-   {
-      ld_ret_4 = (AccountEquity() / AccountBalance() - 1.0) / (-0.01);
-      if (ld_ret_4 <= 0.0)
-         return(0);
-      return(ld_ret_4);
-   }
-   if (ai_0 == 1)
-   {
-      ld_ret_4 = 100.0 * (AccountEquity() / AccountBalance() - 1.0);
-      if (ld_ret_4 <= 0.0)
-         return(0);
-      return(ld_ret_4);
-   }
-   return(0.0);
+   Comment("\nForexHacked v2.5 loaded successfully",
+           "\nDrawdown:  ", DoubleToStr(Drawdown(), 2), "%");
 }
 
 
@@ -644,21 +604,28 @@ double BalanceDeviation(int ai_0) {
  *
  */
 bool NewsTime() {
-   bool News = false;
+   bool News;
    static int PrevMinute = -1;
-   if (Minute() != PrevMinute && !IsTesting())
-   {
+
+   if (Minute()!=PrevMinute && !IsTesting()) {
       PrevMinute = Minute();
       int minutesSincePrevEvent = iCustom(NULL, 0, "FFCal", true, true, false, true, true, 1, 0);
       int minutesUntilNextEvent = iCustom(NULL, 0, "FFCal", true, true, false, true, true, 1, 1);
-      if ((minutesUntilNextEvent <= MinsBeforeNews) || (minutesSincePrevEvent <= MinsAfterNews))
-      {
+
+      if (minutesUntilNextEvent <= MinsBeforeNews || minutesSincePrevEvent <= MinsAfterNews) {
          int impactOfNextEvent = iCustom(NULL, 0, "FFCal", true, true, false, true, true, 2, 1);
          if (impactOfNextEvent >= NewsImpact)
-         {
             News = true;
-            }
-         }
       }
+   }
    return(News);
+}
+
+
+/**
+ *
+ */
+void Log(string msg) {
+   if (hFile >= 0)
+      FileWrite(hFile, TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS) +": "+ msg);
 }
