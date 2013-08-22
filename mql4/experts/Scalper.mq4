@@ -1,5 +1,5 @@
 /**
- * Grid Manager für bis zu zwei diskretionäre Trades
+ * Grid-Manager für bis zu zwei diskretionäre Trades
  *
  *
  * Regeln:
@@ -15,17 +15,6 @@
  * Todo:
  * -----
  *  - Anzeige des aktuellen SL-Levels vor Einstieg
- *  - genaue Statistiken für vergangene Trades sind ohne Backtests einzige Analysemöglichkeit
- *
- *
- * Notes:
- * ------
- *  - Momentum ist ein Ergebnis des aktuellen Flows.
- *  - Der Flow ist ein Ergebnis der Emotionen der letzten paar Tage.
- *  - Die Emotionen der letzten Tage sind immer die Emotionen von Verlierern (Angst).
- *  - Die für den aktuellen Flow relevanten Pivot-Punkte sind nur im Kontext erkennbar (optisch, nicht per Indikator).
- *  - Eine automatisierte Strategie müßte die Pivot-Punkte und die Emotionen, die zu ihnen geführt haben, interpretieren.
- *  - Ein solches System ist mit den mir bekannten und zur Verfügung stehenden Mitteln nicht realisierbar.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
