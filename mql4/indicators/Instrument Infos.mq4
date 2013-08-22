@@ -181,10 +181,11 @@ int UpdateInfos() {
           marginHedged      = marginHedged/lotSize * 100;               ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(marginRequired==EMPTY, "", Round(marginHedged) +"%"), fg.fontSize, fg.fontName, ifInt(marginRequired==EMPTY, fg.fontColor.Disabled, fg.fontColor));
 
    double commission        = GetCommission();
-   double commissionUSD;
-   double commissionPip     = NormalizeDouble(commission/pipValue, ifInt(Digits==PipDigits, 1, 2));
+   double commissionUSD     = ConvertCurrency(commission, accountCurrency, "USD");
+   double commissionUSDLot  = GetCommissionUSDLot(commissionUSD);
+   double commissionPip     = NormalizeDouble(commission/pipValue, Digits+1-PipDigits);
                                                                         ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +"/lot = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
-
+                                                                      //ObjectSetText(labels[I_COMMISSION    ], "Commission:  $"    + NumberToStr(commission, ".2R") +"/USD-lot = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
    int    swapType          = MarketInfo(symbol, MODE_SWAPTYPE      );
    double swapLong          = MarketInfo(symbol, MODE_SWAPLONG      );
    double swapShort         = MarketInfo(symbol, MODE_SWAPSHORT     );
@@ -234,7 +235,7 @@ int UpdateInfos() {
 
 
 /**
- * Gibt die Commissions-Rate des Accounts in der Accountwährung zurück.
+ * Gibt die Commission-Rate des Accounts in der Accountwährung zurück.
  *
  * @return double
  */
@@ -248,6 +249,50 @@ double GetCommission() {
       return(_int(-1, catch("GetCommission()   invalid configuration value [Commissions] "+ company +"."+ currency +"."+ account +" = "+ NumberToStr(commission, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
 
    return(commission);
+}
+
+
+/**
+ * Gibt die Commission-Rate des Accounts in USD je gehandelte USD-Lot zurück.
+ *
+ * @param  double stdCommission - Commission-Rate in USD je Lot der Basiswährung
+ *
+ * @return double
+ */
+double GetCommissionUSDLot(double stdCommission) {
+   return(0);
+}
+
+
+/**
+ * Konvertiert den angegebenen Betrag einer Währung in eine andere Währung.
+ *
+ * @param  double amount - Betrag
+ * @param  string from   - Ausgangswährung
+ * @param  string to     - Zielwährung
+ *
+ * @return double
+ */
+double ConvertCurrency(double amount, string from, string to) {
+   double result = amount;
+
+   if (NE(amount, 0)) {
+      from = StringToUpper(from);
+      to   = StringToUpper(to);
+      if (from != to) {
+         // direktes Currency-Pair suchen
+         // bei Mißerfolg Crossrates zum USD bestimmen
+         // Kurse ermitteln
+         // Ergebnis berechnen
+      }
+   }
+
+   static bool done;
+   if (!done) {
+      //debug("ConvertCurrency()   "+ NumberToStr(amount, ".2+") +" "+ from +" = "+ NumberToStr(result, ".2+R") +" "+ to);
+      done = true;
+   }
+   return(result);
 }
 
 
