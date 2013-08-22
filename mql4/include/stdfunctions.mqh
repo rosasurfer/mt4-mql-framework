@@ -729,8 +729,8 @@ int      last_error;                                        // der letzte Fehler
 #define SYMBOL_GROUP.size                      80
 #define SYMBOL_GROUP.intSize                   20     // ceil(SYMBOL_GROUP.size/4)
 
-#define SYMBOL_SUBSCRIBED.size                128
-#define SYMBOL_SUBSCRIBED.intSize              32     // ceil(SYMBOL_SUBSCRIBED.size/4)
+#define SUBSCRIBED_SYMBOL.size                128
+#define SUBSCRIBED_SYMBOL.intSize              32     // ceil(SUBSCRIBED_SYMBOL.size/4)
 
 #define HISTORY_HEADER.size                   148
 #define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
