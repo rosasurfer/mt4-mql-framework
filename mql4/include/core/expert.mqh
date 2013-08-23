@@ -208,7 +208,7 @@ int start() {
    // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
       int error = NO_ERROR;
-      chartInfo.positionChecked = false;
+      chartInfo.positionsChecked = false;
       error |= ChartInfo.UpdatePrice();
       error |= ChartInfo.UpdateSpread();
       error |= ChartInfo.UpdateUnitSize();
