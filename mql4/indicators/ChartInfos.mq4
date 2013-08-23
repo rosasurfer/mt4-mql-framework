@@ -1,10 +1,5 @@
 /**
- * Zeigt im Chart verschiedene Informationen an.
- *  - oben links:  Name des Instruments
- *  - oben rechts: aktueller Kurs und Spread
- *  - unten Mitte: Größe einer Handels-Unit und die im Moment gehaltene Position
- *
- * NOTE: letzte Version mit Performance-Display: v1.38
+ * Zeigt im Chart verschiedene aktuelle Informationen an.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
@@ -61,7 +56,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   chartInfo.positionChecked = false;
+   chartInfo.positionsChecked = false;
 
    ChartInfo.UpdatePrice();
    ChartInfo.UpdateSpread();
