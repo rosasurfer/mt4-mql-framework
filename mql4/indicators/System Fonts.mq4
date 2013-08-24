@@ -49,11 +49,11 @@ int CreateLabels() {
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(label, OBJPROP_XDISTANCE, (fontSize-fromFontSize)*520 + 14);
-         ObjectSet(label, OBJPROP_YDISTANCE, 90);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, (fontSize-fromFontSize)*520 + 14);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 90);
          ObjectSetText(label, "g", 390, "Webdings", backgroundColor);
-         PushChartObject(label);
+         PushObject   (label);
       }
       else GetLastError();
 
@@ -65,11 +65,11 @@ int CreateLabels() {
          if (ObjectFind(label) > -1)
             ObjectDelete(label);
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-            ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-            ObjectSet(label, OBJPROP_XDISTANCE, (fontSize-fromFontSize)*520 + 20);
-            ObjectSet(label, OBJPROP_YDISTANCE, i*17 + yCoord);
+            ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+            ObjectSet    (label, OBJPROP_XDISTANCE, (fontSize-fromFontSize)*520 + 20);
+            ObjectSet    (label, OBJPROP_YDISTANCE, i*17 + yCoord);
             ObjectSetText(label, StringConcatenate(text, ifString(fontNames[i]=="", fontSize, fontNames[i])), fontSize, fontNames[i], fontColor);
-            PushChartObject(label);
+            PushObject   (label);
          }
          else GetLastError();
       }

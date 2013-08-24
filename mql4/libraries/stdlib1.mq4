@@ -9153,7 +9153,7 @@ string chart.objects[];
  *
  * @return int - Anzahl der gespeicherten Label oder -1, falls ein Fehler auftrat
  */
-int PushChartObject(string label) {
+int PushObject(string label) {
    return(ArrayPushString(chart.objects, label));
 }
 

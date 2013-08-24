@@ -79,11 +79,11 @@ int CreateLabels() {
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, 33);
-      ObjectSet(label, OBJPROP_YDISTANCE, 54);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 33);
+      ObjectSet    (label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
-      PushChartObject(label);
+      PushObject   (label);
    }
    else GetLastError();
 
@@ -92,11 +92,11 @@ int CreateLabels() {
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet(label, OBJPROP_XDISTANCE, 13);
-      ObjectSet(label, OBJPROP_YDISTANCE, 54);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 13);
+      ObjectSet    (label, OBJPROP_YDISTANCE, 54);
       ObjectSetText(label, "g", 92, "Webdings", bgColor);
-      PushChartObject(label);
+      PushObject   (label);
    }
    else GetLastError();
 
@@ -109,11 +109,11 @@ int CreateLabels() {
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE,  119);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE,  119);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, StringLeft(symbols[i], 3) +":", fontSize, fontName, fontColor);
-         PushChartObject(label);
+         PushObject   (label);
          symbols[i] = label;
       }
       else GetLastError();
@@ -123,11 +123,11 @@ int CreateLabels() {
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, 59);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 59);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         PushChartObject(label);
+         PushObject   (label);
       }
       else GetLastError();
 
@@ -136,11 +136,11 @@ int CreateLabels() {
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet(label, OBJPROP_XDISTANCE, 19); // 19 oder 2
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 19); // 19 oder 2
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         PushChartObject(label);
+         PushObject   (label);
       }
       else GetLastError();
    }
