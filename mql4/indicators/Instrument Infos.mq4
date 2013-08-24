@@ -97,11 +97,11 @@ int CreateLabels() {
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, x);
-      ObjectSet(label, OBJPROP_YDISTANCE, y);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
-      PushChartObject(label);
+      PushObject   (label);
    }
    else GetLastError();
 
@@ -110,11 +110,11 @@ int CreateLabels() {
    if (ObjectFind(label) > -1)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, x    );
-      ObjectSet(label, OBJPROP_YDISTANCE, y+143);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x    );
+      ObjectSet    (label, OBJPROP_YDISTANCE, y+143);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
-      PushChartObject(label);
+      PushObject   (label);
    }
    else GetLastError();
 
@@ -126,15 +126,15 @@ int CreateLabels() {
       if (ObjectFind(label) > -1)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(label, OBJPROP_XDISTANCE, x+6);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, x+6);
             // Separator vor den folgenden Labeln
             static int fields[] = {I_POINT, I_SPREAD, I_LOTSIZE, I_MARGINREQUIRED, I_COMMISSION, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
             if (IntInArray(fields, i))
                yCoord += 8;
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", fg.fontSize, fg.fontName);
-         PushChartObject(label);
+         PushObject   (label);
          labels[i] = label;
       }
       else GetLastError();

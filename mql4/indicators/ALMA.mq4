@@ -158,7 +158,7 @@ int onInit() {
 
    // (3) Chart-Legende erzeugen
    legendLabel = CreateLegendLabel(indicatorName);
-   PushChartObject(legendLabel);
+   PushObject(legendLabel);
 
 
    // (4) ALMA-Gewichtungen der einzelnen Bars berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())

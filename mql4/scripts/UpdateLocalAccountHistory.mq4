@@ -268,7 +268,7 @@ int onStart() {
 
 
 /**
- * Sortiert die übergebenen Ticketdaten nach CloseTime ASC, OpenTime ASC, Ticket ASC.
+ * Sortiert die übergebenen Ticketdaten nach CloseTime_asc, OpenTime_asc, Ticket_asc.
  *
  * @param  int keys[] - Array mit Sortierschlüsseln
  *

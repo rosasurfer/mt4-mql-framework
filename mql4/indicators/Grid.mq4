@@ -172,10 +172,10 @@ int DrawGrid() {
             sepStyle = STYLE_DASHDOTDOT;
             sepColor = C'231,192,221';
          }
-         ObjectSet(label, OBJPROP_STYLE, sepStyle);
-         ObjectSet(label, OBJPROP_COLOR, sepColor);
-         ObjectSet(label, OBJPROP_BACK , true  );
-         PushChartObject(label);
+         ObjectSet (label, OBJPROP_STYLE, sepStyle);
+         ObjectSet (label, OBJPROP_COLOR, sepColor);
+         ObjectSet (label, OBJPROP_BACK , true  );
+         PushObject(label);
       }
       else GetLastError();
       lastChartTime = chartTime;

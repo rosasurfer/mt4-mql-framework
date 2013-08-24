@@ -432,7 +432,7 @@
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    bool     ObjectDeleteSilent(string label, string location);
-   int      PushChartObject(string label);
+   int      PushObject(string label);
    int      RemoveChartObjects();
 
    int      iAccountBalance(int account, double buffer[], int bar);

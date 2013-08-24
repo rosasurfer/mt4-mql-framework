@@ -210,11 +210,11 @@ int CreateStatusBox() {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(1)"));
-      PushChartObject(label);
+      PushObject(label);
    }
-   ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet(label, OBJPROP_XDISTANCE, x[0]);
-   ObjectSet(label, OBJPROP_YDISTANCE, y   );
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, x[0]);
+   ObjectSet    (label, OBJPROP_YDISTANCE, y   );
    ObjectSetText(label, "g", fontSize, "Webdings", color.Background);
 
 
@@ -223,11 +223,11 @@ int CreateStatusBox() {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(2)"));
-      PushChartObject(label);
+      PushObject(label);
    }
-   ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet(label, OBJPROP_XDISTANCE, x[1]);
-   ObjectSet(label, OBJPROP_YDISTANCE, y   );
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, x[1]);
+   ObjectSet    (label, OBJPROP_YDISTANCE, y   );
    ObjectSetText(label, "g", fontSize, "Webdings", color.Background);
 
 
@@ -236,11 +236,11 @@ int CreateStatusBox() {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("CreateStatusBox(3)"));
-      PushChartObject(label);
+      PushObject(label);
    }
-   ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet(label, OBJPROP_XDISTANCE, x[2]);
-   ObjectSet(label, OBJPROP_YDISTANCE, y   );
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, x[2]);
+   ObjectSet    (label, OBJPROP_YDISTANCE, y   );
    ObjectSetText(label, "g", fontSize, "Webdings", color.Background);
 
    return(catch("CreateStatusBox(4)"));

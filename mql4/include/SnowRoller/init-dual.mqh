@@ -126,11 +126,11 @@ int CreateStatusBox() {
       if (ObjectFind(label) != 0) {
          if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
             return(_false(catch("CreateStatusBox(1)")));
-         PushChartObject(label);
+         PushObject(label);
       }
-      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(label, OBJPROP_XDISTANCE, x   );
-      ObjectSet(label, OBJPROP_YDISTANCE, y[i]);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, x   );
+      ObjectSet    (label, OBJPROP_YDISTANCE, y[i]);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
    return(!catch("CreateStatusBox(2)"));
