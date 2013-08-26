@@ -2,7 +2,7 @@
  * Zeigt im Chart verschiedene aktuelle Informationen an.
  */
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE};
+int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 

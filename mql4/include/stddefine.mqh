@@ -1357,26 +1357,40 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
 /**
  * Gibt den PipValue des aktuellen Instrument für die angegebene Lotsize zurück.
  *
- * @param  double lots - Lotsize (default: 1 lot)
+ * @param  double lots       - Lotsize (default: 1 lot)
+ * @param  bool   hideErrors - ob Laufzeitfehler abgefangen werden sollen (default: nein)
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  *
  *
  * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
-double PipValue(double lots=1) {
-   if (lots < 0.00000001) return(_NULL(catch("PipValue(1)   illegal parameter lots = "+ NumberToStr(lots, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (!TickSize)         return(_NULL(catch("PipValue(2)   illegal TickSize = "+ NumberToStr(TickSize, ".+"), ERR_RUNTIME_ERROR)));
+double PipValue(double lots=1, bool hideErrors=false) {
+   if (!TickSize) {
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                   // schlägt fehl, wenn kein Tick vorhanden ist
+      int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+      if (IsError(error)) {                                             // - ERR_UNKNOWN_SYMBOL: synthetisches Symbol im Offline-Chart
+         if (!hideErrors) catch("PipValue(1)", error);
+         return(0);
+      }
+      if (!TickSize) {
+         if (!hideErrors) catch("PipValue(2)   illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
+         return(0);
+      }
+   }
 
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);          // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
-
-   int error = GetLastError();
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);             // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
+   error = GetLastError();
    if (!error) {
-      if (!tickValue)
-         return(_NULL(catch("PipValue(3)   illegal TickValue = "+ NumberToStr(tickValue, ".+"), ERR_INVALID_MARKET_DATA)));
+      if (!tickValue) {
+         if (!hideErrors) catch("PipValue(3)   illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
+         return(0);
+      }
       return(Pip/TickSize * tickValue * lots);
    }
-   return(_NULL(catch("PipValue(4)", error)));
+
+   if (!hideErrors) catch("PipValue(4)", error);
+   return(0);
 }
 
 
