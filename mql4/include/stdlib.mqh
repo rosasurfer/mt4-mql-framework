@@ -403,7 +403,7 @@
    // sonstiges
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
-   double   PipValue(double lots);
+   double   PipValue(double lots, bool hideErrors);
    int      SortTicketsChronological(int tickets[]);
 
    string   GetCurrency(int id);
