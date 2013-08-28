@@ -12,7 +12,7 @@
 extern string _________        = "Magic Number Must be UNIQUE for each chart!";
 extern int    MagicNumber      = 133714;
 extern double Lots             = 0.01;
-extern double TakeProfit       = 45.0;
+extern double TakeProfit       = 45;
 extern double Booster          = 1.7;
 extern int    MaxBuyOrders     = 9;
 extern int    MaxSellOrders    = 9;
@@ -29,8 +29,8 @@ extern bool   allowTrending    = false;
 extern int    trendTrigger     = 3;
 extern int    trendPips        = 5;
 extern int    trendStoploss    = 5;
-extern double StopLossPct      = 100.0;
-extern double TakeProfitPct    = 100.0;
+extern double StopLossPct      = 100;
+extern double TakeProfitPct    = 100;
 extern bool   PauseNewTrades   = false;
 extern int    StoppedOutPause  = 600;
 extern bool   SupportECN       = true;
@@ -52,13 +52,13 @@ int    gi_208 = 5000;
 double gd_244;
 bool   gb_260;
 
+double isarstep        = 0.25;
+double isarmax         = 0.2;
+
 int    imaaverage      = 7;
 int    imamashift      = 0;
 int    imamamethod     = MODE_LWMA;
 int    imaappliedprice = PRICE_WEIGHTED;
-
-double isarstep        = 0.25;
-double isarmax         = 0.2;
 
 int    previoustime;
 double point;
@@ -347,56 +347,50 @@ bool OpenBuy(bool ab_0 = false) {
    if (ab_0 && !gb_392)
       return(false);
 
-   if (!GlobalVariableCheck("PERMISSION")) {
-      GlobalVariableSet("PERMISSION", TimeCurrent());
-
-      if (!SupportECN) {
-         if (ab_0) {
-            if (OrderSelect(ticket, SELECT_BY_TICKET))
-               price_16 = OrderTakeProfit() - MarketInfo(Symbol(), MODE_SPREAD) * Point;
-         }
-         else {
-            price_8 = Ask + priceadd * Point;
-         }
-      }
-
-      if (ab_0)
-         ls_24 = hedgetext;
-
-      if (AllowiStopLoss)
-         price_16 = Ask - stoploss * Point;
-
-      if (ab_0) lots_40 = NormalizeDouble(GetLastLotSize(1) * MassHedgeBooster, 2);
-      else      lots_40 = CalcLots(gd_244);
-
-      if (!SupportECN) {
-         ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Green);
+   if (!SupportECN) {
+      if (ab_0) {
+         if (OrderSelect(ticket, SELECT_BY_TICKET))
+            price_16 = OrderTakeProfit() - MarketInfo(Symbol(), MODE_SPREAD) * Point;
       }
       else {
-         ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Green);
-         Sleep(1000);
-         OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
-      }
-
-      previoustime = TimeCurrent();
-
-      if (ticket_4 != -1) {
-         if (!ab_0) {
-            ticket = ticket_4;
-            Log("BUY hedgedTicket=" + ticket);
-         }
-         else {
-            Log("BUY Hacked_ticket=" + ticket_4);
-            command = 0;
-         }
-      }
-      else {
-         Log("failed sell");
-         lb_ret_32 = false;
+         price_8 = Ask + priceadd * Point;
       }
    }
 
-   GlobalVariableDel("PERMISSION");
+   if (ab_0)
+      ls_24 = hedgetext;
+
+   if (AllowiStopLoss)
+      price_16 = Ask - stoploss * Point;
+
+   if (ab_0) lots_40 = NormalizeDouble(GetLastLotSize(1) * MassHedgeBooster, 2);
+   else      lots_40 = CalcLots(gd_244);
+
+   if (!SupportECN) {
+      ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Green);
+   }
+   else {
+      ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Green);
+      Sleep(1000);
+      OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
+   }
+
+   previoustime = TimeCurrent();
+
+   if (ticket_4 != -1) {
+      if (!ab_0) {
+         ticket = ticket_4;
+         Log("BUY hedgedTicket=" + ticket);
+      }
+      else {
+         Log("BUY Hacked_ticket=" + ticket_4);
+         command = 0;
+      }
+   }
+   else {
+      Log("failed sell");
+      lb_ret_32 = false;
+   }
    return(lb_ret_32);
 }
 
@@ -417,56 +411,51 @@ bool OpenSell(bool ab_0 = false) {
    if (ab_0 && !gb_396)
       return(false);
 
-   if (!GlobalVariableCheck("PERMISSION")) {
-      GlobalVariableSet("PERMISSION", TimeCurrent());
-
-      if (!SupportECN) {
-         if (ab_0) {
-            if (OrderSelect(ticket, SELECT_BY_TICKET))
-               price_16 = OrderTakeProfit() + MarketInfo(Symbol(), MODE_SPREAD) * Point;
-         }
-         else {
-            price_8 = Bid - priceadd * Point;
-         }
-      }
-
-      if (ab_0)
-         ls_24 = hedgetext;
-
-      if (AllowiStopLoss)
-         price_16 = Bid + stoploss * Point;
-
-      if (ab_0) lots_36 = NormalizeDouble(GetLastLotSize(0) * MassHedgeBooster, 2);
-      else      lots_36 = CalcLots(gd_244);
-
-      if (!SupportECN) {
-         ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Pink);
+   if (!SupportECN) {
+      if (ab_0) {
+         if (OrderSelect(ticket, SELECT_BY_TICKET))
+            price_16 = OrderTakeProfit() + MarketInfo(Symbol(), MODE_SPREAD) * Point;
       }
       else {
-         ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Pink);
-         Sleep(1000);
-         OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
-      }
-
-      previoustime = TimeCurrent();
-
-      if (ticket_4 != -1) {
-         if (!ab_0) {
-            ticket = ticket_4;
-            Log("SELL hedgedTicket=" + ticket);
-         }
-         else {
-            Log("SELL Hacked_ticket=" + ticket_4);
-            command = 1;
-         }
-      }
-      else {
-         Log("failed sell");
-         lb_ret_32 = false;
+         price_8 = Bid - priceadd * Point;
       }
    }
 
-   GlobalVariableDel("PERMISSION");
+   if (ab_0)
+      ls_24 = hedgetext;
+
+   if (AllowiStopLoss)
+      price_16 = Bid + stoploss * Point;
+
+   if (ab_0) lots_36 = NormalizeDouble(GetLastLotSize(0) * MassHedgeBooster, 2);
+   else      lots_36 = CalcLots(gd_244);
+
+   if (!SupportECN) {
+      ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Pink);
+   }
+   else {
+      ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Pink);
+      Sleep(1000);
+      OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
+   }
+
+   previoustime = TimeCurrent();
+
+   if (ticket_4 != -1) {
+      if (!ab_0) {
+         ticket = ticket_4;
+         Log("SELL hedgedTicket=" + ticket);
+      }
+      else {
+         Log("SELL Hacked_ticket=" + ticket_4);
+         command = 1;
+      }
+   }
+   else {
+      Log("failed sell");
+      lb_ret_32 = false;
+   }
+
    return(lb_ret_32);
 }
 
