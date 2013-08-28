@@ -24,7 +24,7 @@ extern int    Max.Values       = 2000;                               // Höchstan
 
 #include <core/indicator.mqh>
 
-#define MovingAverage.MODE_MA          0                             // Buffer-Identifier
+#define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
 #define MovingAverage.MODE_UPTREND     2
 #define MovingAverage.MODE_DOWNTREND   3
@@ -40,16 +40,16 @@ extern int    Max.Values       = 2000;                               // Höchstan
 #property indicator_width4  2
 #property indicator_width5  2
 
-double bufferMA         [];                                          // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
-double bufferTrend      [];                                          // Trend: +/-         unsichtbar
-double bufferUpTrend    [];                                          // UpTrend-Linie 1:   sichtbar
-double bufferDownTrend  [];                                          // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
-double bufferUpTrend_2  [];                                          // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
+double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
+double bufferTrend    [];                       // Trend: +/-         unsichtbar
+double bufferUpTrend  [];                       // UpTrend-Linie 1:   sichtbar
+double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
+double bufferUpTrend_2[];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
 
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
-double wALMA[];                                                      // Gewichtungen der einzelnen Bars bei ALMA
+double wALMA[];                                 // Gewichtungen der einzelnen Bars bei ALMA
 double shift.vertical;
 string legendLabel, indicatorName;
 
