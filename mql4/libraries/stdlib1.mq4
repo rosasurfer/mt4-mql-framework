@@ -10043,30 +10043,6 @@ string StringRepeat(string input, int times) {
 
 
 /**
- * Returns a numeric value rounded to the specified number of decimals.
- *
- * @param  double number
- * @param  int    decimals
- *
- * @return double - rounded value
- */
-double MathRoundEx(double number, int decimals) {
-   if (decimals > 0) return(NormalizeDouble(number, decimals));
-
-   if (decimals == 0) {
-      int iNumber = MathRound(number);
-      return(iNumber);
-   }
-
-   // decimals < 0
-   double faktor = MathPow(10, decimals);                            // -1:  1234.5 => 1230
-   int    value  = MathRound(number * faktor);                       // -2:  1234.5 => 1200
-         iNumber = MathRound( value / faktor);                       // -3:  1234.5 => 1000
-   return(iNumber);
-}
-
-
-/**
  * Formatiert einen numerischen Wert im angegebenen Format und gibt den resultierenden String zurück.
  * The basic mask is "n" or "n.d" where n is the number of digits to the left and d is the number of digits to the right of the decimal point.
  *
@@ -10175,7 +10151,7 @@ string NumberToStr(double number, string mask) {
    // --- Beginn Wertverarbeitung ---------------------
    // runden
    if (round)
-      number = MathRoundEx(number, nRight);
+      number = RoundEx(number, nRight);
    string outStr = number;
 
    // negatives Vorzeichen entfernen (ist in leadSign gespeichert)

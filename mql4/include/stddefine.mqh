@@ -1824,6 +1824,83 @@ int Round(double value) {
 
 
 /**
+ * Erweiterte Version von MathRound(), rundet auf die angegebene Anzahl von positiven oder negativen Dezimalstellen.
+ *
+ * @param  double number
+ * @param  int    decimals (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundEx(double number, int decimals=0) {
+   if (decimals > 0)
+      return(NormalizeDouble(number, decimals));
+
+   if (decimals == 0)
+      return(MathRound(number));
+
+   // decimals < 0
+   double factor = MathPow(10, decimals);                            // -1:  1234.5678 => 1230
+          number = MathRound(number * factor) / factor;              // -2:  1234.5678 => 1200
+          number = MathRound(number);                                // -3:  1234.5678 => 1000
+   return(number);
+}
+
+
+/**
+ * Erweiterte Version von MathFloor(), rundet mit der angegebenen Anzahl von positiven oder negativen Dezimalstellen ab.
+ *
+ * @param  double number
+ * @param  int    decimals (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundFloor(double number, int decimals=0) {
+   if (decimals > 0) {
+      double factor = MathPow(10, decimals);                         // +1:  1234.5678 => 1234.5
+             number = MathFloor(number * factor) / factor;           // +2:  1234.5678 => 1234.56
+             number = NormalizeDouble(number, decimals);             // +3:  1234.5678 => 1234.567
+      return(number);
+   }
+
+   if (decimals == 0)
+      return(MathFloor(number));
+
+   // decimals < 0
+   factor = MathPow(10, decimals);                                   // -1:  1234.5678 => 1230
+   number = MathFloor(number * factor) / factor;                     // -2:  1234.5678 => 1200
+   number = MathRound(number);                                       // -3:  1234.5678 => 1000
+   return(number);
+}
+
+
+/**
+ * Erweiterte Version von MathCeil(), rundet mit der angegebenen Anzahl von positiven oder negativen Dezimalstellen auf.
+ *
+ * @param  double number
+ * @param  int    decimals (default: 0)
+ *
+ * @return double - rounded value
+ */
+double RoundCeil(double number, int decimals=0) {
+   if (decimals > 0) {
+      double factor = MathPow(10, decimals);                         // +1:  1234.5678 => 1234.6
+             number = MathCeil(number * factor) / factor;            // +2:  1234.5678 => 1234.57
+             number = NormalizeDouble(number, decimals);             // +3:  1234.5678 => 1234.568
+      return(number);
+   }
+
+   if (decimals == 0)
+      return(MathCeil(number));
+
+   // decimals < 0
+   factor = MathPow(10, decimals);                                   // -1:  1234.5678 => 1240
+   number = MathCeil(number * factor) / factor;                      // -2:  1234.5678 => 1300
+   number = MathRound(number);                                       // -3:  1234.5678 => 2000
+   return(number);
+}
+
+
+/**
  * Integer-Version von MathFloor()
  *
  * @param  double value - Zahl
@@ -1900,6 +1977,9 @@ void __DummyCalls() {
    PipValue();
    ResetLastError();
    Round(NULL);
+   RoundEx(NULL);
+   RoundFloor(NULL);
+   RoundCeil(NULL);
    Script.IsTesting();
    SelectTicket(NULL, NULL);
    SetLastError(NULL, NULL);

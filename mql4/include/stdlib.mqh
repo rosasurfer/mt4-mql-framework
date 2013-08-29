@@ -317,16 +317,18 @@
    bool     GE(double a, double b, int digits);
 
    double   MathModFix(double a, double b);
-   double   MathRoundEx(double value, int decimals);
    int      CountDecimals(double value);
 
    int      Abs(int value);
    int      Min(int a, int b);
    int      Max(int a, int b);
-   int      Floor(double value);
-   int      Ceil(double value);
-   int      Round(double value);
-   int      Sign(double value);
+   int      Floor     (double value);
+   int      Ceil      (double value);
+   int      Sign      (double value);
+   int      Round     (double value);
+   double   RoundEx   (double value, int decimals);
+   double   RoundFloor(double value, int decimals);
+   double   RoundCeil (double value, int decimals);
 
 
    // Strings
