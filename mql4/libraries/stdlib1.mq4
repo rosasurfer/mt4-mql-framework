@@ -2949,7 +2949,7 @@ bool DoubleInArray(double haystack[], double needle) {
 
 
 /**
- * Prüft, ob ein String in einem Array enthalten ist.
+ * Prüft, ob ein String in einem Array enthalten ist (Groß-/Kleinschreibung wird beachtet).
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -2959,6 +2959,20 @@ bool DoubleInArray(double haystack[], double needle) {
 bool StringInArray(string haystack[], string needle) {
    if (ArrayDimension(haystack) > 1) return(_false(catch("StringInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
    return(SearchStringArray(haystack, needle) > -1);
+}
+
+
+/**
+ * Prüft, ob ein String in einem Array enthalten ist (Groß-/Kleinschreibung wird nicht beachtet).
+ *
+ * @param  string haystack[] - zu durchsuchendes Array
+ * @param  string needle     - zu suchender Wert
+ *
+ * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
+ */
+bool StringInArrayI(string haystack[], string needle) {
+   if (ArrayDimension(haystack) > 1) return(_false(catch("StringInArrayI()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   return(SearchStringArrayI(haystack, needle) > -1);
 }
 
 
@@ -3023,7 +3037,7 @@ int SearchDoubleArray(double haystack[], double needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück.
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück (Groß-/Kleinschreibung wird beachtet).
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -3036,6 +3050,28 @@ int SearchStringArray(string haystack[], string needle) {
 
    for (int i=0; i < size; i++) {
       if (haystack[i] == needle)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück (Groß-/Kleinschreibung wird nicht beachtet).
+ *
+ * @param  string haystack[] - zu durchsuchendes Array
+ * @param  string needle     - zu suchender Wert
+ *
+ * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
+ */
+int SearchStringArrayI(string haystack[], string needle) {
+   if (ArrayDimension(haystack) > 1) return(_int(-1, catch("SearchStringArrayI()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(haystack);
+   needle = StringToLower(needle);
+
+   for (int i=0; i < size; i++) {
+      if (StringToLower(haystack[i]) == needle)
          return(i);
    }
    return(-1);
