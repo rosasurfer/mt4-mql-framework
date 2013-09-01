@@ -91,11 +91,11 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (7) im Tester ChartInfo-Anzeige konfigurieren
    if (IsVisualMode()) {
-      chartInfos.appliedPrice = PRICE_BID;                                    // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
-      chartInfos.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-      if (LT(chartInfos.leverage, 1))
-         return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(chartInfos.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-      if (IsError(ChartInfos.CreateLabels()))
+      ci.appliedPrice = PRICE_BID;                                            // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
+      ci.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+      if (LT(ci.leverage, 1))
+         return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ci.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (IsError(CI.CreateLabels()))
          return(last_error);
    }
 
@@ -208,14 +208,14 @@ int start() {
    // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
       int error = NO_ERROR;
-      chartInfos.positionsAnalyzed = false;
-      error |= ChartInfos.UpdatePrice();
-      error |= ChartInfos.UpdateSpread();
-      error |= ChartInfos.UpdateUnitSize();
-      error |= ChartInfos.UpdatePosition();
-      error |= ChartInfos.UpdateTime();
-      error |= ChartInfos.UpdateMarginLevels();
-      if (error != NO_ERROR)                                               // error ist hier die Summe aller in ChartInfos.* aufgetretenen Fehler
+      ci.positionsAnalyzed = false;
+      error |= CI.UpdatePrice();
+      error |= CI.UpdateSpread();
+      error |= CI.UpdateUnitSize();
+      error |= CI.UpdatePosition();
+      error |= CI.UpdateTime();
+      error |= CI.UpdateMarginLevels();
+      if (error != NO_ERROR)                                               // error ist hier die Summe aller in CI.* aufgetretenen Fehler
          return(ShowStatus(last_error));
    }
 
