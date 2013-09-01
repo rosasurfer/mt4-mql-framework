@@ -1925,6 +1925,26 @@ int Ceil(double value) {
 
 
 /**
+ * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (ein NULL-Pointer) ist.
+ *
+ * @param  string value - zu prüfende Stringvariable
+ *
+ * @return bool
+ */
+bool StringIsNull(string value) {
+   int error = GetLastError();
+
+   if (error == ERR_NOT_INITIALIZED_STRING)
+      return(true);
+
+   if (error != NO_ERROR)
+      catch("StringIsNull()", error);
+
+   return(false);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -1985,6 +2005,7 @@ void __DummyCalls() {
    SetLastError(NULL, NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
+   StringIsNull(NULL);
    WaitForTicket(NULL);
    warn(NULL);
 }

@@ -97,15 +97,17 @@
    int      ArrayInsertString (string array[], int offset, string values  );
    int      ArrayInsertStrings(string array[], int offset, string values[]);
 
-   bool     BoolInArray  (bool   haystack[], bool   needle);
-   bool     IntInArray   (int    haystack[], int    needle);
-   bool     DoubleInArray(double haystack[], double needle);
-   bool     StringInArray(string haystack[], string needle);
+   bool     BoolInArray   (bool   haystack[], bool   needle);
+   bool     IntInArray    (int    haystack[], int    needle);
+   bool     DoubleInArray (double haystack[], double needle);
+   bool     StringInArray (string haystack[], string needle);
+   bool     StringInArrayI(string haystack[], string needle);
 
-   int      SearchBoolArray  (bool   haystack[], bool   needle);
-   int      SearchIntArray   (int    haystack[], int    needle);
-   int      SearchDoubleArray(double haystack[], double needle);
-   int      SearchStringArray(string haystack[], string needle);
+   int      SearchBoolArray   (bool   haystack[], bool   needle);
+   int      SearchIntArray    (int    haystack[], int    needle);
+   int      SearchDoubleArray (double haystack[], double needle);
+   int      SearchStringArray (string haystack[], string needle);
+   int      SearchStringArrayI(string haystack[], string needle);
 
    bool     ReverseBoolArray  (bool   array[]);
    bool     ReverseIntArray   (int    array[]);
@@ -338,6 +340,7 @@
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
+   bool     StringIsNull(string value);
 
    bool     StringContains(string object, string substring);
    bool     StringIContains(string object, string substring);
