@@ -3899,7 +3899,7 @@ int ExplodeStringsA(int buffer[], string results[]) {
  *
  */
 int ExplodeStringsW(int buffer[], string results[]) {
-   return(catch("ExplodeStringsW()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(catch("ExplodeStringsW()", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -7540,7 +7540,7 @@ string ErrorDescription(int error) {
 
       // custom errors
       case ERR_WIN32_ERROR                : return("win32 api error"                                           ); // 5000
-      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("function not implemented"                                  ); // 5001
+      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   ); // 5001
       case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                             ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                               ); // 5003
       case ERS_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); // 5004 Status
@@ -7682,7 +7682,7 @@ string ErrorToStr(int error) {
 
       // custom errors
       case ERR_WIN32_ERROR                : return("ERR_WIN32_ERROR"                ); // 5000
-      case ERR_FUNCTION_NOT_IMPLEMENTED   : return("ERR_FUNCTION_NOT_IMPLEMENTED"   ); // 5001
+      case ERR_NOT_IMPLEMENTED            : return("ERR_NOT_IMPLEMENTED"            ); // 5001
       case ERR_INVALID_INPUT_PARAMVALUE   : return("ERR_INVALID_INPUT_PARAMVALUE"   ); // 5002
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); // 5003
       case ERS_TERMINAL_NOT_READY         : return("ERS_TERMINAL_NOT_READY"         ); // 5004 Status
@@ -13098,18 +13098,18 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
 
 // "abstrakte" Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ int  onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onAccountChange  (int    data[]) { return(catch("onAccountChange()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onAccountPayment (int    data[]) { return(catch("onAccountPayment()",  ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onOrderPlace     (int    data[]) { return(catch("onOrderPlace()",      ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onOrderChange    (int    data[]) { return(catch("onOrderChange()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onOrderCancel    (int    data[]) { return(catch("onOrderCancel()",     ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onPositionOpen   (int    data[]) { return(catch("onPositionOpen()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onPositionClose  (int    data[]) { return(catch("onPositionClose()",   ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onChartCommand   (string data[]) { return(catch("onChartCommand()",    ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onInternalCommand(string data[]) { return(catch("onInternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onExternalCommand(string data[]) { return(catch("onExternalCommand()", ERR_FUNCTION_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                     { return(catch("DummyCalls()",        ERR_FUNCTION_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onAccountChange  (int    data[]) { return(catch("onAccountChange()",   ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onAccountPayment (int    data[]) { return(catch("onAccountPayment()",  ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onOrderPlace     (int    data[]) { return(catch("onOrderPlace()",      ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onOrderChange    (int    data[]) { return(catch("onOrderChange()",     ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onOrderCancel    (int    data[]) { return(catch("onOrderCancel()",     ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onPositionOpen   (int    data[]) { return(catch("onPositionOpen()",    ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onPositionClose  (int    data[]) { return(catch("onPositionClose()",   ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onChartCommand   (string data[]) { return(catch("onChartCommand()",    ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onInternalCommand(string data[]) { return(catch("onInternalCommand()", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ int  onExternalCommand(string data[]) { return(catch("onExternalCommand()", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ void DummyCalls()                     { return(catch("DummyCalls()",        ERR_NOT_IMPLEMENTED)); }
 
 
 #import "stdlib2.ex4"
