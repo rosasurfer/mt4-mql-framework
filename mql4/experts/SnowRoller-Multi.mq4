@@ -199,7 +199,7 @@ bool StartSequence(int hSeq) {
       int iNull;
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
-      return(_false(catch("StartSequence(3.1)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+      return(_false(catch("StartSequence(3.1)", ERR_NOT_IMPLEMENTED)));
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
@@ -233,7 +233,7 @@ void RedrawStartStop(int hSeq) {
    if (!IsChart)                                   return;
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   return(_NULL(catch("RedrawStartStop(2)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(_NULL(catch("RedrawStartStop(2)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -314,7 +314,7 @@ double GridBase.Reset(int hSeq, datetime time, double value) {
    if (__STATUS_ERROR)                             return(0);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_ZERO(catch("GridBase.Reset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   return(_ZERO(catch("GridBase.Reset(2)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(_ZERO(catch("GridBase.Reset(2)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -336,7 +336,7 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
    if (sequence.status[hSeq] != STATUS_STARTING)     return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE)));
 
-   return(_false(catch("UpdateOpenPositions(4)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(_false(catch("UpdateOpenPositions(4)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -353,7 +353,7 @@ bool UpdatePendingOrders(int hSeq) {
    if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(_false(catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE)));
 
-   return(_false(catch("UpdatePendingOrders(4)", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(_false(catch("UpdatePendingOrders(4)", ERR_NOT_IMPLEMENTED)));
 }
 
 

@@ -201,7 +201,7 @@ int FindHistory(string symbol) {
  * @return bool - Erfolgsstatus
  */
 bool ResetHistory(int hHst) {
-   return(!catch("ResetHistory()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(!catch("ResetHistory()", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -429,9 +429,9 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
 
    // (6) Zeitpunkt liegt irgendwo innerhalb der Zeitreihe
    int offset;
-   return(_int(-1, catch("HistoryFile.FindBar(6)   Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_FUNCTION_NOT_IMPLEMENTED)));
+   return(_int(-1, catch("HistoryFile.FindBar(6)   Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
 
-   if (!last_error|catch("HistoryFile.FindBar(7)", ERR_FUNCTION_NOT_IMPLEMENTED))
+   if (!last_error|catch("HistoryFile.FindBar(7)", ERR_NOT_IMPLEMENTED))
       return(offset);
    return(-1);
 }
@@ -730,7 +730,7 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
  * @return bool - Erfolgsstatus
  */
 bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
-   return(!last_error|catch("HistoryFile.MoveBars()", ERR_FUNCTION_NOT_IMPLEMENTED));
+   return(!last_error|catch("HistoryFile.MoveBars()", ERR_NOT_IMPLEMENTED));
 }
 
 
