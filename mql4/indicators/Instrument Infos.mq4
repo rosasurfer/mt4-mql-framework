@@ -235,24 +235,6 @@ int UpdateInfos() {
 
 
 /**
- * Gibt die Commission-Rate des Accounts in der Accountwährung zurück.
- *
- * @return double
- */
-double GetCommission() {
-   string company  = ShortAccountCompany();
-   int    account  = GetAccountNumber();
-   string currency = AccountCurrency();
-
-   double commission = GetGlobalConfigDouble("Commissions", company +"."+ currency +"."+ account, GetGlobalConfigDouble("Commissions", company +"."+ currency, 0));
-   if (commission < 0)
-      return(_int(-1, catch("GetCommission()   invalid configuration value [Commissions] "+ company +"."+ currency +"."+ account +" = "+ NumberToStr(commission, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
-
-   return(commission);
-}
-
-
-/**
  * Gibt die Commission-Rate des Accounts in USD je gehandelte USD-Lot zurück.
  *
  * @param  double stdCommission - Commission-Rate in USD je Lot der Basiswährung

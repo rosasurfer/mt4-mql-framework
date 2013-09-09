@@ -270,6 +270,24 @@ int stdlib_GetLastError() {
 
 
 /**
+ * Gibt die Commission-Rate des Accounts in der Accountwährung zurück.
+ *
+ * @return double
+ */
+double GetCommission() {
+   string company  = ShortAccountCompany();
+   int    account  = GetAccountNumber();
+   string currency = AccountCurrency();
+
+   double commission = GetGlobalConfigDouble("Commissions", company +"."+ currency +"."+ account, GetGlobalConfigDouble("Commissions", company +"."+ currency, 0));
+   if (commission < 0)
+      return(_int(-1, catch("GetCommission()   invalid configuration value [Commissions] "+ company +"."+ currency +"."+ account +" = "+ NumberToStr(commission, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
+
+   return(commission);
+}
+
+
+/**
  * Ermittelt Zeitpunkt und Offset der jeweils nächsten DST-Wechsel der angebenen Serverzeit.
  *
  * @param  datetime serverTime       - Serverzeit
