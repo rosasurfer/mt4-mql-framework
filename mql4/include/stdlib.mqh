@@ -34,12 +34,16 @@
    int      GetTesterWindow();
    int      GetUIThreadId();
    string   GetServerDirectory();
-   string   GetServerTimezone();                                     // throws ERR_INVALID_TIMEZONE_CONFIG
-   int      GetAccountNumber();
-   string   ShortAccountCompany();
+
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
 
+
+   // Account-Informationen
+   int      GetAccountNumber();
+   string   ShortAccountCompany();
+   string   GetServerTimezone();                                     // throws ERR_INVALID_TIMEZONE_CONFIG
+   double   GetCommission();
    int      DebugMarketInfo(string location);
 
 
