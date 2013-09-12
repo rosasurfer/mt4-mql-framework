@@ -61,9 +61,10 @@ int onTick() {
    CI.UpdatePrice();
    CI.UpdateSpread();
    CI.UpdateUnitSize();
-   CI.UpdatePosition();
-   CI.UpdateTime();
-   CI.UpdateMarginLevels();
+
+   if (!CI.UpdatePosition())
+      if (!CI.UpdateTime())
+         CI.UpdateMarginLevels();
 
    return(last_error);
 }
