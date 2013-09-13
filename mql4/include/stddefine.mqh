@@ -659,7 +659,7 @@ int      last_error;                                        // der letzte Fehler
 #define MT4_TICK                                2     // künstlicher Tick: Ausführung von start()
 #define MT4_COMPILE_REQUEST                 12345
 #define MT4_COMPILE_PERMISSION              12346
-#define MT4_COMPILE_FINISHED                12349     // Rescan und Reload modifizierter .ex4-Files
+#define MT4_MQL_REFRESH                     12349     // Rescan und Reload modifizierter .ex4-Files
 
 
 // MT4 command ids (Menüpunkte, Toolbars, Hotkeys)
