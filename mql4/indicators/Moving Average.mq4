@@ -49,7 +49,7 @@ double bufferUpTrend_2[];                       // UpTrend-Linie 2:   sichtbar (
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
-double wALMA[];                                 // Gewichtungen der einzelnen Bars bei ALMA
+double wALMA[];                                 // Gewichtungen der einzelnen Bars eines ALMA
 double shift.vertical;
 string legendLabel, indicatorName;
 
@@ -309,11 +309,11 @@ int onTick() {
          bufferUpTrend  [bar] = EMPTY_VALUE;
          bufferDownTrend[bar] = bufferMA[bar];
 
-         if (bufferTrend[bar+1] > 0) {                               // Wenn vorher Up-Trend...
+         if (bufferTrend[bar+1] > 0) {                                  // Wenn vorher Up-Trend...
             bufferDownTrend[bar+1] = bufferMA[bar+1];
-            if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {   // ...und Up-Trend nur eine Bar lang war, ...
+            if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {      // ...und Up-Trend nur eine Bar lang war, ...
                bufferUpTrend_2[bar+2] = bufferMA[bar+2];
-               bufferUpTrend_2[bar+1] = bufferMA[bar+1];             // ... dann Down-Trend mit Up-Trend 2 überlagern.
+               bufferUpTrend_2[bar+1] = bufferMA[bar+1];                // ... dann Down-Trend mit Up-Trend 2 überlagern.
             }
          }
          else {
@@ -323,14 +323,14 @@ int onTick() {
    }
 
 
-   static double lastTrend, lastValue;                                     // Trend und Value des letzten Ticks
+   static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks
 
 
    // (3.1) Legende aktualisieren: Farbe bei Trendwechsel
    if (Sign(bufferTrend[0]) != Sign(lastTrend)) {
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("onTick(2)", error));
    }
    lastTrend = bufferTrend[0];

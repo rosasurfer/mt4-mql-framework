@@ -31,11 +31,11 @@ int init() {
    if (GetServerTimezoneTransitions(time, lastTransition, nextTransition)) {
       debug("init()   time="+ DateToStr(time, "w, D.M.Y H:I"));
 
-      if (lastTransition[TR_TIME] >= 0) debug("init()   lastTransition="+ DateToStr(lastTransition[TR_TIME], "w, D.M.Y H:I") +" ("+ ifString(lastTransition[TR_OFFSET]>=0, "+", "") + (lastTransition[TR_OFFSET]/HOURS) +"), DST="+ lastTransition[TR_DST]);
-      else                              debug("init()   lastTransition="+ lastTransition[TR_TIME]);
+      if (lastTransition[I_TRANSITION_TIME] >= 0) debug("init()   lastTransition="+ DateToStr(lastTransition[I_TRANSITION_TIME], "w, D.M.Y H:I") +" ("+ ifString(lastTransition[I_TRANSITION_OFFSET]>=0, "+", "") + (lastTransition[I_TRANSITION_OFFSET]/HOURS) +"), DST="+ lastTransition[I_TRANSITION_DST]);
+      else                                        debug("init()   lastTransition="+ lastTransition[I_TRANSITION_TIME]);
 
-      if (nextTransition[TR_TIME] >= 0) debug("init()   nextTransition="+ DateToStr(nextTransition[TR_TIME], "w, D.M.Y H:I") +" ("+ ifString(nextTransition[TR_OFFSET]>=0, "+", "") + (nextTransition[TR_OFFSET]/HOURS) +"), DST="+ nextTransition[TR_DST]);
-      else                              debug("init()   nextTransition="+ nextTransition[TR_TIME]);
+      if (nextTransition[I_TRANSITION_TIME] >= 0) debug("init()   nextTransition="+ DateToStr(nextTransition[I_TRANSITION_TIME], "w, D.M.Y H:I") +" ("+ ifString(nextTransition[I_TRANSITION_OFFSET]>=0, "+", "") + (nextTransition[I_TRANSITION_OFFSET]/HOURS) +"), DST="+ nextTransition[I_TRANSITION_DST]);
+      else                                        debug("init()   nextTransition="+ nextTransition[I_TRANSITION_TIME]);
    }
    return(0);
 }
