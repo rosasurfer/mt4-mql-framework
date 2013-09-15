@@ -17,7 +17,7 @@ string Positions.SoundOnOpen       = "OrderFilled.wav";
 string Positions.SoundOnClose      = "PositionClosed.wav";
 
 bool   Track.MovingAverage         = false;
-double MovingAverage.Periods       = 0;
+double MovingAverage.Periods       = 0;                              // die Angabe fraktionaler Werte ist möglich, z.B. 3.5 x D1
 int    MovingAverage.Timeframe     = 0;                              // M1 | M5 | M15 etc.
 int    MovingAverage.Method        = MODE_SMA;                       // SMA | EMA | SMMA | LWMA | ALMA
 
@@ -27,6 +27,10 @@ int    BollingerBands.MA.Timeframe = 0;                              // M1 | M5 
 int    BollingerBands.MA.Method    = MODE_SMA;                       // SMA | EMA | SMMA | LWMA | ALMA
 double BollingerBands.Deviation    = 2.0;                            // Std.-Abweichung
 
+bool   Track.NewHighLow            = false;
+
+bool   Track.BreakPreviousRange    = false;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
@@ -34,7 +38,6 @@ double BollingerBands.Deviation    = 2.0;                            // Std.-Abw
 #property indicator_chart_window
 
 int    movingAverage.TimeframeFlag;                                  // Timeframe-Flag für EventListener.BarOpen (max. F_PERIOD_H1)
-
 string strMovingAverage;
 string strBollingerBands;
 
@@ -141,7 +144,6 @@ int onInit() {
       }
    }
    */
-   debug("onInit()   Sound.Alerts="+ Sound.Alerts +"  SMS.Alerts="+ ifString(SMS.Alerts, ""+ SMS.Receiver, SMS.Alerts) +"  Track.Positions="+ Track.Positions +"  Track.MovingAverage="+ ifString(Track.MovingAverage, StringConcatenate("", strMovingAverage), Track.MovingAverage));
 
 
    // (2) Anzeigeoptionen
@@ -209,6 +211,27 @@ int onTick() {
    if (Track.BollingerBands) {
       if (!CheckBollingerBands())
          return(last_error);
+   }
+
+
+   // (4) Track.NewHighLow
+   if (Track.NewHighLow) {
+      // aktuelle Range ermitteln
+      while (true) {
+         // Bruch der Range überwachen
+         bool Bruch = false;
+         if (Bruch) {
+            // wenn seit letzten Bruch mind. Zeitspanne X verstrichen ist, Bruch signalisieren
+            // Range aktualisieren
+         }
+      }
+   }
+
+
+   // (5) Track.BreakPreviousRange
+   if (Track.BreakPreviousRange) {
+      // letzte Range ermitteln
+      // Bruch überwachen
    }
 
    return(last_error);
@@ -651,7 +674,11 @@ string InputsToStr() {
           StringConcatenate("BollingerBands.MA.Periods=",   BollingerBands.MA.Periods                   , "; ",
                             "BollingerBands.MA.Timeframe=", BollingerBands.MA.Timeframe                 , "; ",
                             "BollingerBands.MA.Method=",    BollingerBands.MA.Method                    , "; ",
-                            "BollingerBands.Deviation=",    NumberToStr(BollingerBands.Deviation, ".1+"), "; "), ""))
+                            "BollingerBands.Deviation=",    NumberToStr(BollingerBands.Deviation, ".1+"), "; "), ""),
+
+                            "Track.NewHighLow=",            BoolToStr(Track.NewHighLow)                 , "; ",
+
+                            "Track.BreakPreviousRange=",    BoolToStr(Track.BreakPreviousRange)         , "; ")
    );
 }
 

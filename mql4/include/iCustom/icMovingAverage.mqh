@@ -1,18 +1,16 @@
 /**
- * Die Funktion icMovingAverage() ist in einer Headerdatei implementiert, um direkt in EA's inkludiert werden zu können.
- * Dies ist nur dann notwendig, wenn der verwendete Indikator nach Testende bei VisualMode=On gezeichnet werden soll.
- *
- * Der Tester zeichnet die Zeichenbuffer eines per iCustom() aufgerufenen Indikators nur dann, wenn der iCustom()-Aufruf
- * direkt im EA erfolgt (nicht jedoch bei Aufruf in einer Library).
+ * In Headerdatei implementiert, um direkt in EA's inkludiert werden zu können.  Dies ist notwendig, wenn die Indikatorausgabe
+ * im Tester nach Testende bei VisualMode=On gezeichnet werden soll.  Der Tester zeichnet den Inhalt der Buffer nur dann, wenn
+ * der iCustom()-Aufruf direkt im EA erfolgt (nicht bei Aufruf in einer Library).
  */
 
 #import "structs1.ex4"
-   int  ec.LastError (/*EXECUTION_CONTEXT*/int ec[]);
+   int  ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
 #import
 
 
 /**
- * Berechnet den angegebenen Wert des Custom-Indikators "Moving Average" und gibt ihn zurück.
+ * Berechnet den angegebenen Wert des "Moving Average"-Indikators und gibt ihn zurück.
  *
  * @param  int    timeframe      - Timeframe, in dem der Indikator geladen wird
  * @param  string maPeriods      - Indikator-Parameter
@@ -56,5 +54,6 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
    error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
       return(value);
+
    return(_NULL(SetLastError(error)));
 }
