@@ -207,23 +207,20 @@ int start() {
 
    // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
-      int error = NO_ERROR;
       ci.positionsAnalyzed = false;
-      error |= CI.UpdatePrice();
-      error |= CI.UpdateSpread();
-      error |= CI.UpdateUnitSize();
-      error |= CI.UpdatePosition();
-      error |= CI.UpdateTime();
-      error |= CI.UpdateMarginLevels();
-      if (error != NO_ERROR)                                               // error ist hier die Summe aller in CI.* aufgetretenen Fehler
-         return(ShowStatus(last_error));
+      if (!CI.UpdatePrice()       ) return(ShowStatus(last_error));
+      if (!CI.UpdateSpread()      ) return(ShowStatus(last_error));
+      if (!CI.UpdateUnitSize()    ) return(ShowStatus(last_error));
+      if (!CI.UpdatePosition()    ) return(ShowStatus(last_error));
+      if (!CI.UpdateMarginLevels()) return(ShowStatus(last_error));
+      if (!CI.UpdateTime()        ) return(ShowStatus(last_error));
    }
 
 
    // (6) Main-Funktion aufrufen und auswerten
    onTick();
 
-   error = GetLastError();
+   int error = GetLastError();
    if (error != NO_ERROR)
       catch("start(2)", error);
 
