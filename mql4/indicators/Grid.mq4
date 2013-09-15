@@ -6,11 +6,11 @@ int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
-//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////// Externe Parameter //////////////////////////////////////////////////////////////////////////////
 
 extern color Grid.Color = LightGray;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 
@@ -218,20 +218,14 @@ int DrawGrid() {
  * @return datetime - erster Wochentag des Monats oder -1, falls ein Fehler auftrat
  */
 datetime GetFirstWeekdayOfMonth(int year, int month) {
-   if (1970 > year || year > 2037) {
-      catch("GetFirstWeekdayOfMonth(1)   invalid parameter year: "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
-   if (1 > month || month > 12) {
-      catch("GetFirstWeekdayOfMonth(2)   invalid parameter month: "+ month, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
+   if (year  < 1970 || 2037 < year ) return(_int(-1, catch("GetFirstWeekdayOfMonth(1)   illegal parameter year = "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (month <    1 ||   12 < month) return(_int(-1, catch("GetFirstWeekdayOfMonth(2)   invalid parameter month = "+ month, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime result = StrToTime(StringConcatenate(year, ".", month, ".01 00:00:00"));
+   datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", month, ".01 00:00:00"));
 
-   int dow = TimeDayOfWeek(result);
-   if      (dow == SATURDAY) result += 2*DAYS;
-   else if (dow == SUNDAY  ) result += 1*DAY;
+   int dow = TimeDayOfWeek(firstDayOfMonth);
 
-   return(result);
+   if (dow == SATURDAY) return(firstDayOfMonth += 2*DAYS);
+   if (dow == SUNDAY  ) return(firstDayOfMonth += 1*DAY);
+                        return(firstDayOfMonth);
 }
