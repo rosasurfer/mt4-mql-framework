@@ -50,12 +50,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-
-   if (!icEventTracker(PERIOD_H1))
-      return(last_error);
-
+   icEventTracker(PERIOD_H1);
    return(last_error);
-   catch(NULL);
 }
 
 
@@ -70,18 +66,10 @@ int ShowStatus(int error=NO_ERROR) {
    if (!IsChart)
       return(error);
 
-   string str.error;
-
-   if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT_PARAMVALUE), "]");
-   else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error                  ), "]");
-
-
    // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
-   Comment(StringConcatenate(NL, NL, NL, __NAME__, str.error));
+   Comment(NL+NL+NL+ __NAME__ + ifString(!error, "", "  ["+ ErrorDescription(last_error) +"]"));
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
 
-   if (!catch("ShowStatus()"))
-      return(error);
-   return(last_error);
+   return(error);
 }
