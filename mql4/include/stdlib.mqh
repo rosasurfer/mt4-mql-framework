@@ -294,6 +294,7 @@
 
 
    // Indikatoren
+   bool     icEventTracker (int timeframe);
    double   icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar);
 
 
