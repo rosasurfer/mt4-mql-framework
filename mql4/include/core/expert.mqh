@@ -207,6 +207,7 @@ int start() {
 
    // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
    if (IsVisualMode()) {
+      // TODO: ChartInfos-Indikator per iCustom() aufrufen
       ci.positionsAnalyzed = false;
       if (!CI.UpdatePrice()       ) return(ShowStatus(last_error));
       if (!CI.UpdateSpread()      ) return(ShowStatus(last_error));

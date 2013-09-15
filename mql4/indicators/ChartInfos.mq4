@@ -58,13 +58,12 @@ int onDeinit() {
 int onTick() {
    ci.positionsAnalyzed = false;
 
-   CI.UpdatePrice();
-   CI.UpdateSpread();
-   CI.UpdateUnitSize();
-
-   if (!CI.UpdatePosition())
-      if (!CI.UpdateTime())
-         CI.UpdateMarginLevels();
+   if (!CI.UpdatePrice()       ) return(last_error);
+   if (!CI.UpdateSpread()      ) return(last_error);
+   if (!CI.UpdateUnitSize()    ) return(last_error);
+   if (!CI.UpdatePosition()    ) return(last_error);
+   if (!CI.UpdateMarginLevels()) return(last_error);
+   if (!CI.UpdateTime()        ) return(last_error);
 
    return(last_error);
 }
