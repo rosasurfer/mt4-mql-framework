@@ -362,7 +362,7 @@ void SetIndicatorStyles() {
 
 
 /**
- * String-Repräsentation der Input-Parameter fürs Logging.
+ * String-Repräsentation der Input-Parameter fürs Logging bei Aufruf durch iCustom().
  *
  * @return string
  */

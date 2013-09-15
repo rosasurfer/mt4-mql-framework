@@ -224,8 +224,8 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
    datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", month, ".01 00:00:00"));
 
    int dow = TimeDayOfWeek(firstDayOfMonth);
-
    if (dow == SATURDAY) return(firstDayOfMonth + 2*DAYS);
    if (dow == SUNDAY  ) return(firstDayOfMonth + 1*DAY );
-                        return(firstDayOfMonth         );
+
+   return(firstDayOfMonth);
 }
