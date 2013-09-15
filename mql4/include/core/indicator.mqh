@@ -86,12 +86,12 @@ int init() { // throws ERS_TERMINAL_NOT_READY
                                                                            //
 
    // (5) bei Aufruf durch iCustom() Parameter loggen
-   if (__LOG && Indicator.IsSuperContext())
+   if (__LOG) /*&&*/ if (Indicator.IsSuperContext())
       log(InputsToStr());
 
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (!__STATUS_ERROR && UninitializeReason()==REASON_PARAMETERS)
+   if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS)
       Chart.SendTick(false);                                               // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
 
    catch("init(3)");

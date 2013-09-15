@@ -6,15 +6,15 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
-////////////////////////////////////////////////// Default-Konfiguration (keine Input-Variablen) //////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////// Default-Konfiguration (keine Input-Variablen) ////////////////////////////////////////////////////////////////
 
 bool   Sound.Alerts                = true;
 bool   SMS.Alerts                  = false;
 string SMS.Receiver                = "";
 
 bool   Track.Positions             = true;
-string Sound.PositionOpen          = "OrderFilled.wav";
-string Sound.PositionClose         = "PositionClosed.wav";
+string Positions.SoundOnOpen       = "OrderFilled.wav";
+string Positions.SoundOnClose      = "PositionClosed.wav";
 
 bool   Track.MovingAverage         = false;
 double MovingAverage.Periods       = 0;
@@ -27,7 +27,7 @@ int    BollingerBands.MA.Timeframe = 0;                              // M1 | M5 
 int    BollingerBands.MA.Method    = MODE_SMA;                       // SMA | EMA | SMMA | LWMA | ALMA
 double BollingerBands.Deviation    = 2.0;                            // Std.-Abweichung
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 
@@ -45,11 +45,11 @@ string strBollingerBands;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // -- Beginn - Parametervalidierung
-   // Sound.Alerts
+   // (1) Parametervalidierung
+   // (1.1) Sound.Alerts
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
 
-   // SMS.Alerts
+   // (1.2) SMS.Alerts
    SMS.Alerts = GetConfigBool("EventTracker", "SMS.Alerts", SMS.Alerts);
    if (SMS.Alerts) {
       // SMS.Receiver
@@ -57,10 +57,10 @@ int onInit() {
       if (!StringIsDigit(SMS.Receiver))                SMS.Alerts = _false(catch("onInit(1)   invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   // Track.Positions
+   // (1.3) Track.Positions
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
 
-   // Track.MovingAverage
+   // (1.4) Track.MovingAverage
    Track.MovingAverage = GetConfigBool("EventTracker."+ StdSymbol(), "MovingAverage", Track.MovingAverage);
    if (Track.MovingAverage) {
       // MovingAverage.Timeframe zuerst, da Gültigkeit von Periods davon abhängt
@@ -103,7 +103,7 @@ int onInit() {
    }
 
    /*
-   // Track.BollingerBands
+   // (1.5) Track.BollingerBands
    Track.BollingerBands = GetConfigBool("EventTracker."+ StdSymbol(), "BollingerBands", Track.BollingerBands);
    if (Track.BollingerBands) {
       // BollingerBands.MA.Periods
@@ -141,12 +141,10 @@ int onInit() {
       }
    }
    */
-   // -- Ende - Parametervalidierung
    debug("onInit()   Sound.Alerts="+ Sound.Alerts +"  SMS.Alerts="+ ifString(SMS.Alerts, ""+ SMS.Receiver, SMS.Alerts) +"  Track.Positions="+ Track.Positions +"  Track.MovingAverage="+ ifString(Track.MovingAverage, StringConcatenate("", strMovingAverage), Track.MovingAverage));
 
-   //Parameters  LotSize=0.1; ProfitTarget=40; StartConditions="@trend(ALMA:3xD1)";
 
-   // Anzeigeoptionen
+   // (2) Anzeigeoptionen
    SetIndexLabel(0, NULL);
 
    return(catch("onInit(12)"));
@@ -165,8 +163,8 @@ int onTick() {
       return(SetLastError(ERR_NO_CONNECTION));
 
    // aktuelle Accountdaten holen und alte Ticks abfangen: sämtliche Events werden nur nach neuen Ticks überprüft
-   static int loginData[3];                                    // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
-   EventListener.AccountChange(loginData, 0);                  // Der Eventlistener schreibt unabhängig vom Egebnis immer die aktuellen Accountdaten ins Array.
+   static int loginData[3];                                          // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
+   EventListener.AccountChange(loginData, 0);                        // Der Eventlistener schreibt unabhängig vom Egebnis immer die aktuellen Accountdaten ins Array.
    if (TimeCurrent() < loginData[2]) {
       //debug("onTick()   old tick=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\"   login=\""+ TimeToStr(loginData[2], TIME_FULL) +"\"");
       return(catch("onTick()"));
@@ -174,14 +172,14 @@ int onTick() {
    */
 
 
-   // (1) Positionen
-   if (Track.Positions) {                                      // nur pending Orders des aktuellen Instruments tracken (manuelle nicht)
+   // (1) Track.Positions
+   if (Track.Positions) {                                            // nur Pending-Orders des aktuellen Instruments tracken (manuelle jedoch nicht)
       HandleEvent(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
       HandleEvent(EVENT_POSITION_OPEN,  OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
    }
 
 
-   // (2) Moving Average                                       // Prüfung nur bei onBarOpen, nicht bei jedem Tick
+   // (2) Track.MovingAverage                                        // Prüfung nur bei onBarOpen, nicht bei jedem Tick
    if (Track.MovingAverage) {
       int iNull[];
       if (EventListener.BarOpen(iNull, movingAverage.TimeframeFlag)) {
@@ -207,7 +205,7 @@ int onTick() {
    }
 
 
-   // (3) BollingerBands
+   // (3) Track.BollingerBands
    if (Track.BollingerBands) {
       if (!CheckBollingerBands())
          return(last_error);
@@ -253,7 +251,7 @@ int onPositionOpen(int tickets[]) {
 
    // ggf. Sound abspielen
    if (Sound.Alerts)
-      PlaySound(Sound.PositionOpen);
+      PlaySound(Positions.SoundOnOpen);
    return(catch("onPositionOpen(2)"));
 }
 
@@ -295,7 +293,7 @@ int onPositionClose(int tickets[]) {
 
    // ggf. Sound abspielen
    if (Sound.Alerts)
-      PlaySound(Sound.PositionClose);
+      PlaySound(Positions.SoundOnClose);
    return(catch("onPositionClose(2)"));
 }
 
@@ -340,9 +338,9 @@ bool CheckBollingerBands() {
 
 /**
  *
- *
-int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lpEndBar) {
-   if (symbol == "0")                                                   // NULL ist Integer (0)
+ */
+int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar) {
+   if (symbol == "0")                                                   // (string) NULL
       symbol = Symbol();
    int period = PERIOD_H1;
 
@@ -351,7 +349,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
    if (GetLastError() == ERS_HISTORY_UPDATE)
       return(SetLastError(ERS_HISTORY_UPDATE));
 
-   startTime = GetServerSessionStartTime_old(startTime);
+   startTime = GetServerSessionStartTime(startTime);
    if (startTime == -1)                                                 // Wochenend-Candles
       startTime = GetServerPrevSessionEndTime(iTime(symbol, period, 0));
 
@@ -367,7 +365,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
          return(ERR_NO_RESULT);
       }
 
-      startTime = GetServerSessionStartTime_old(iTime(symbol, period, endBar));
+      startTime = GetServerSessionStartTime(iTime(symbol, period, endBar));
       while (startTime == -1) {                                         // Endbar kann theoretisch wieder eine Wochenend-Candle sein
          startBar = iBarShiftNext(symbol, period, GetServerPrevSessionEndTime(iTime(symbol, period, endBar)));
          if (startBar == -1)
@@ -378,7 +376,7 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
             catch("GetDailyStartEndBars(4)");
             return(ERR_NO_RESULT);
          }
-         startTime = GetServerSessionStartTime_old(iTime(symbol, period, endBar));
+         startTime = GetServerSessionStartTime(iTime(symbol, period, endBar));
       }
 
       startBar = iBarShiftNext(symbol, period, startTime);
@@ -391,7 +389,6 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
 
    return(catch("GetDailyStartEndBars(6)"));
 }
- */
 
 
 /**
@@ -408,16 +405,16 @@ int GetDailyStartEndBars(string symbol/*=NULL, int bar, int &lpStartBar, int &lp
  *
  *
  * NOTE: Diese Funktion wertet die in der History gespeicherten Bars unabhängig davon aus, ob diese Bars realen Bars entsprechen.
- *       @see iOHLCTime(destination, symbol, timeframe, time, exact=TRUE)
- *
-int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double &results[]) {
+ *       @see iOHLCTime(symbol, timeframe, time, results)
+ */
+int iOHLCBarRange(string symbol, int period, int from, int to, double &results[]) {
    // TODO: um ERS_HISTORY_UPDATE zu vermeiden, möglichst die aktuelle Periode benutzen
 
-   if (symbol == "0")                           // NULL ist Integer (0)
+   if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCBarRange(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCBarRange(2)   invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCBarRange(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to   < 0) return(catch("iOHLCBarRange(2)   invalid parameter to = "+ to, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (from < to) {
       int tmp = from;
@@ -427,14 +424,14 @@ int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double
 
    int bars = iBars(symbol, period);
 
-   int error = GetLastError();                  // ERS_HISTORY_UPDATE ???
+   int error = GetLastError();                                       // ERS_HISTORY_UPDATE ???
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          catch("iOHLCBarRange(3)", error);
       return(error);
    }
 
-   if (bars-1 < to) {                           // History enthält zu wenig Daten in dieser Periode
+   if (bars-1 < to) {                                                // History enthält zu wenig Daten in dieser Periode
       results[MODE_OPEN ] = 0;
       results[MODE_HIGH ] = 0;
       results[MODE_LOW  ] = 0;
@@ -459,38 +456,37 @@ int iOHLCBarRange(string symbol/*=NULL, int period/*=0, int from, int to, double
 
    return(catch("iOHLCBarRange(5)"));
 }
-*/
 
 
 /**
  * Ermittelt die OHLC-Werte eines Instruments für einen Zeitpunkt einer Periode und schreibt sie in das angegebene Ergebnisarray.
- * Ergebnis sind die Werte der Bar, die diesen Zeitpunkt abdeckt.
+ * Ergebnisse sind die Werte derjenigen Bar, die den angegebenen Zeitpunkt abdeckt.
  *
- * @param  double   results[] - Ergebnisarray {Open, Low, High, Close}
- * @param  string   symbol    - Symbol des Instruments (default: NULL = aktuelles Symbol)
- * @param  int      timeframe - Periode (default: 0 = aktuelle Periode)
+ * @param  string   symbol    - Symbol des Instruments (default: aktuelles Symbol)
+ * @param  int      timeframe - Chartperiode           (default: aktuelle Periode)
  * @param  datetime time      - Zeitpunkt
+ * @param  double   results[] - Array zur Aufnahme der Ergebnisse = {Open, Low, High, Close}
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn für den Zeitpunkt keine Kurse existieren,
  *                             ggf. ERS_HISTORY_UPDATE
- *
-int iOHLCTime(double &results[], string symbol/*=NULL, int timeframe/*=0, datetime time) {
+ */
+int iOHLCTime(string symbol, int timeframe, datetime time, double &results[]) {
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERS_HISTORY_UPDATE zu vermeiden
 
-   if (symbol == "0")                           // NULL ist Integer (0)
+   if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
    int bar = iBarShift(symbol, timeframe, time, true);
 
-   int error = GetLastError();                  // ERS_HISTORY_UPDATE ???
+   int error = GetLastError();                                       // ERS_HISTORY_UPDATE ???
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE) catch("iOHLCTime(1)", error);
       return(error);
    }
 
-   if (bar == -1) {                             // keine Kurse für diesen Zeitpunkt
+   if (bar == -1) {                                                  // keine Kurse für diesen Zeitpunkt
       results[MODE_OPEN ] = 0;
       results[MODE_HIGH ] = 0;
       results[MODE_LOW  ] = 0;
@@ -498,32 +494,31 @@ int iOHLCTime(double &results[], string symbol/*=NULL, int timeframe/*=0, dateti
       return(SetLastError(ERR_NO_RESULT));
    }
 
-   error = iOHLCBar(results, symbol, timeframe, bar);
+   error = iOHLCBar(symbol, timeframe, bar, results);
    if (error == ERR_NO_RESULT)
       catch("iOHLCTime(2)", error);
    return(error);
 }
- */
 
 
 /**
  * Ermittelt die OHLC-Werte eines Instruments für einen Zeitraum und schreibt sie in das angegebene Ergebnisarray.
  * Existieren in diesem Zeitraum keine Kurse, werden die Werte 0 und der Fehlerstatus ERR_NO_RESULT zurückgegeben.
  *
- * @param  double   results[] - Ergebnisarray {Open, Low, High, Close}
  * @param  string   symbol    - Symbol des Instruments (default: NULL = aktuelles Symbol)
  * @param  datetime from      - Beginn des Zeitraumes
  * @param  datetime to        - Ende des Zeitraumes
+ * @param  double   results[] - Array zur Aufnahme der Ergebnisse = {Open, Low, High, Close}
  *
  * @return int - Fehlerstatus: ERR_NO_RESULT, wenn im Zeitraum keine Kurse existieren,
  *                             ggf. ERS_HISTORY_UPDATE
- *
-int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datetime to) {
+ */
+int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[]) {
 
    // TODO: Parameter bool exact=TRUE implementieren
    // TODO: möglichst aktuellen Chart benutzen, um ERS_HISTORY_UPDATE zu vermeiden
 
-   if (symbol == "0")                           // NULL ist Integer (0)
+   if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
    if (from < 0) return(catch("iOHLCTimeRange(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -539,7 +534,7 @@ int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datet
    int pMinutes[60] = { PERIOD_H1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M30, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M15, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M5, PERIOD_M1, PERIOD_M1, PERIOD_M1, PERIOD_M1 };
    int pHours  [24] = { PERIOD_D1, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1, PERIOD_H4, PERIOD_H1, PERIOD_H1, PERIOD_H1 };
 
-   int tSec = TimeSeconds(to);                  // 'to' wird zur nächsten Minute aufgerundet
+   int tSec = TimeSeconds(to);                                       // 'to' wird zur nächsten Minute aufgerundet
    if (tSec > 0)
       to += 60 - tSec;
 
@@ -548,19 +543,19 @@ int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datet
    if (period == PERIOD_H1) {
       period = Min(pHours[TimeHour(from)], pHours[TimeHour(to)]);
 
-      if (period==PERIOD_D1) if (TimeDayOfWeek(from)==MONDAY) if (TimeDayOfWeek(to)==SATURDAY)
+      if (period==PERIOD_D1) /*&&*/ if (TimeDayOfWeek(from)==MONDAY) /*&&*/ if (TimeDayOfWeek(to)==SATURDAY)
          period = PERIOD_W1;
       // die weitere Prüfung auf PERIOD_MN1 ist wenig sinnvoll
    }
 
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
    int fromBar = iBarShiftNext(symbol, period, from);
-   if (fromBar == EMPTY_VALUE)                  // ERS_HISTORY_UPDATE ???
+   if (fromBar == EMPTY_VALUE)                                       // ERS_HISTORY_UPDATE ???
       return(stdlib_GetLastError());
 
    int toBar = iBarShiftPrevious(symbol, period, to-1);
 
-   if (fromBar==-1 || toBar==-1) {              // Zeitraum ist zu alt oder zu jung für den Chart
+   if (fromBar==-1 || toBar==-1) {                                   // Zeitraum ist zu alt oder zu jung für den Chart
       results[MODE_OPEN ] = 0;
       results[MODE_HIGH ] = 0;
       results[MODE_LOW  ] = 0;
@@ -583,25 +578,24 @@ int iOHLCTimeRange(double &results[], string symbol/*=NULL, datetime from, datet
 
    return(catch("iOHLCTimeRange(3)"));
 }
-*/
 
 
 /**
  * Ermittelt die OHLC-Werte eines Symbols für eine einzelne Bar einer Periode. Im Unterschied zu den eingebauten Funktionen iHigh(), iLow() etc.
- * ermittelt diese Funktion alle 4 Werte mit einem einzigen Funktionsaufruf.
+ * ermittelt diese Funktion alle vier Werte mit einem einzigen Funktionsaufruf.
  *
- * @param  string symbol     - Symbol  (default: aktuelles Symbol)
- * @param  int    period     - Periode (default: aktuelle Periode)
- * @param  int    bar        - Bar-Offset
- * @param  double results[4] - Ergebnisarray {Open, Low, High, Close}
+ * @param  string symbol    - Symbol  (default: aktuelles Symbol)
+ * @param  int    period    - Periode (default: aktuelle Periode)
+ * @param  int    bar       - Bar-Offset
+ * @param  double results[] - Array zur Aufnahme der Ergebnisse = {Open, Low, High, Close}
  *
  * @return int - Fehlerstatus; ERR_NO_RESULT, wenn die angegebene Bar nicht existiert (ggf. ERS_HISTORY_UPDATE)
- *
-int iOHLC(string symbol, int period, int bar, double &results[]) {
-   if (symbol == "0")                     // NULL ist Integer (0)
+ */
+int iOHLCBar(string symbol, int period, int bar, double &results[]) {
+   if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLC(1)   invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLCBar(1)   invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 
@@ -617,7 +611,7 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
    int error = GetLastError();
 
    if (!error) {
-      if (EQ(results[MODE_CLOSE], 0))
+      if (!results[MODE_CLOSE])
          error = ERR_NO_RESULT;
    }
    else if (error != ERS_HISTORY_UPDATE) {
@@ -625,11 +619,10 @@ int iOHLC(string symbol, int period, int bar, double &results[]) {
    }
    return(error);
 }
- */
 
 
 /**
- * String-Repräsentation der Input-Parameter fürs Logging.
+ * String-Repräsentation der Input-Parameter fürs Logging bei Aufruf durch iCustom().
  *
  * @return string
  */
@@ -637,12 +630,15 @@ string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
                             "Sound.Alerts=",                BoolToStr(Sound.Alerts)                     , "; ",
+
                             "SMS.Alerts=",                  BoolToStr(SMS.Alerts)                       , "; ",
-                            "SMS.Receiver=\"",              SMS.Receiver                                , "\"; ",
+                    ifString(SMS.Alerts,
+          StringConcatenate("SMS.Receiver=\"",              SMS.Receiver                                , "\"; "), ""),
 
                             "Track.Positions=",             BoolToStr(Track.Positions)                  , "; ",
-                            "Sound.PositionOpen=\"",        Sound.PositionOpen                          , "\"; ",
-                            "Sound.PositionClose=\"",       Sound.PositionClose                         , "\"; ",
+                    ifString(Track.Positions,
+          StringConcatenate("Positions.SoundOnOpen=\"",     Positions.SoundOnOpen                       , "\"; ",
+                            "Positions.SoundOnClose=\"",    Positions.SoundOnClose                      , "\"; "), ""),
 
                             "Track.MovingAverage=",         BoolToStr(Track.MovingAverage)              , "; ",
                     ifString(Track.MovingAverage,
@@ -657,4 +653,17 @@ string InputsToStr() {
                             "BollingerBands.MA.Method=",    BollingerBands.MA.Method                    , "; ",
                             "BollingerBands.Deviation=",    NumberToStr(BollingerBands.Deviation, ".1+"), "; "), ""))
    );
+}
+
+
+/**
+ * Unterdrückt unnütze Compilerwarnungen.
+ */
+void DummyCalls() {
+   int    iNull;
+   double dNulls[];
+   GetDailyStartEndBars(NULL, NULL, iNull, iNull);
+   iOHLCBarRange(NULL, NULL, NULL, NULL, dNulls);
+   iOHLCTime(NULL, NULL, NULL, dNulls);
+   iOHLCTimeRange(NULL, NULL, NULL, dNulls);
 }
