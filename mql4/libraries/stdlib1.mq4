@@ -382,7 +382,7 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
 
       else return(_false(catch("GetServerTimezoneTransitions(3)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
-      i--;        // letzter Wechsel war früher
+      i--;                                                           // letzter Wechsel war früher
    }
 
 
@@ -440,7 +440,7 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
 
       else return(_false(catch("GetServerTimezoneTransitions(4)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
-      i++;        // nächster Wechsel ist später
+      i++;                                                           // nächster Wechsel ist später
    }
 
    return(true);
