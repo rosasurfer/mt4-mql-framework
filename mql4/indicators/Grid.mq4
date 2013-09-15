@@ -225,7 +225,7 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
 
    int dow = TimeDayOfWeek(firstDayOfMonth);
 
-   if (dow == SATURDAY) return(firstDayOfMonth += 2*DAYS);
-   if (dow == SUNDAY  ) return(firstDayOfMonth += 1*DAY);
-                        return(firstDayOfMonth);
+   if (dow == SATURDAY) return(firstDayOfMonth + 2*DAYS);
+   if (dow == SUNDAY  ) return(firstDayOfMonth + 1*DAY );
+                        return(firstDayOfMonth         );
 }

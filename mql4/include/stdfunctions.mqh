@@ -61,7 +61,7 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Mathematische Konstanten
-#define Math.PI                     3.1415926535897932384626433832795028841971693993751      // intern 3.141592653589793 (15 korrekte Dezimalstellen)
+#define Math.PI                     3.1415926535897932384   // intern nur 15 korrekte Dezimalstellen
 
 
 // Zeitkonstanten
