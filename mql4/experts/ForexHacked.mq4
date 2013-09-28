@@ -1,22 +1,19 @@
-//==================================================================================================
-// 2012-07-15 by Capella at http://www.worldwide-invest.org
-// - Removed protection
-// - Cleaned code
-// - Renamed functions ot their ori8ginal names
-// - Added news-filter - requires indicator FFCal
-//==================================================================================================
-
-#property copyright "ForexHacked 2.5"
-#property link      "http://www.forexhacked.com"
-
-extern string _________        = "Magic Number Must be UNIQUE for each chart!";
+/**
+ * 2012-07-15 by Capella at http://www.worldwide-invest.org/
+ *
+ * - added news-filter (requires FFCal)
+ *
+ * @version 2.5
+ * @link    http://www.forexhacked.com/
+ */
 extern int    MagicNumber      = 133714;
+extern string ________________ = "MagicNumber must be unique for each chart!";
 extern double Lots             = 0.01;
 extern double TakeProfit       = 45;
 extern double Booster          = 1.7;
 extern int    MaxBuyOrders     = 9;
 extern int    MaxSellOrders    = 9;
-extern bool   AllowiStopLoss   = false;
+extern bool   AllowStopLoss    = false;
 extern int    iStopLoss        = 300;
 extern int    StartHour        = 0;
 extern int    StartMinute      = 0;
@@ -37,7 +34,6 @@ extern bool   SupportECN       = true;
 extern bool   MassHedge        = false;
 extern double MassHedgeBooster = 1.01;
 extern int    TradesDeep       = 5;
-extern string EA_Name          = "ForexHacked 2.5";
 extern int    PipStarter       = 31;
 
 extern bool   UseNewsFilter    = false;
@@ -61,13 +57,13 @@ int    imamamethod     = MODE_LWMA;
 int    imaappliedprice = PRICE_WEIGHTED;
 
 int    previoustime;
-double point;
+double pip;
 int    lotround;
 bool   gb_384;
 bool   gb_388;
 bool   gb_392;
 bool   gb_396;
-int    ticket;
+int    lastTicket;
 int    command;
 string hedgetext       = "hedged";
 int    hFile;
@@ -80,17 +76,17 @@ int init() {
    if (Digits == 3) {
       priceadd = 10 * TakeProfit;
       stoploss = 10 * iStopLoss;
-      point    = 0.01;
+      pip      = 0.01;
    }
    else if (Digits == 5) {
       priceadd = 10 * TakeProfit;
       stoploss = 10 * iStopLoss;
-      point    = 0.0001;
+      pip      = 0.0001;
    }
    else {
       priceadd = TakeProfit;
       stoploss = iStopLoss;
-      point    = Point;
+      pip      = Point;
    }
 
    if (Digits == 3 || Digits == 5) {
@@ -99,16 +95,15 @@ int init() {
       trendStoploss = 10 * trendStoploss;
    }
 
-   lotround = MathRound((-MathLog(MarketInfo(Symbol(), MODE_LOTSTEP))) / 2.302585093);
-   gb_384 = false;
-   gb_388 = false;
-   gb_392 = false;
-   gb_396 = false;
-   ticket = -1;
-   gb_260 = false;
-
-   hFile   = FileOpen(WindowExpertName() +"_"+ Symbol() +"_"+ MagicNumber +".log", FILE_WRITE);
-   command = -1;
+   lotround   = MathRound((-MathLog(MarketInfo(Symbol(), MODE_LOTSTEP))) / 2.302585093);    // 0.1 => 0, 0.01 => 1
+   gb_384     = false;
+   gb_388     = false;
+   gb_392     = false;
+   gb_396     = false;
+   lastTicket = -1;
+   gb_260     = false;
+   hFile      = FileOpen(WindowExpertName() +"_"+ Symbol() +"_"+ MagicNumber +".log", FILE_WRITE);
+   command    = -1;
 
    return(0);
 }
@@ -210,7 +205,7 @@ int start() {
 
    if (SupportECN) {
       order_takeprofit_20 = 0;
-      if (OrderSelect(ticket, SELECT_BY_TICKET))
+      if (OrderSelect(lastTicket, SELECT_BY_TICKET))
          order_takeprofit_20 = OrderTakeProfit();
 
       for (pos_0=0; pos_0 < OrdersTotal(); pos_0++) {
@@ -335,7 +330,7 @@ double Drawdown() {
  *
  */
 bool OpenBuy(bool ab_0 = false) {
-   int    ticket_4;
+   int    ticket;
    double lots_40;
    double price_8;
    double price_16;
@@ -349,7 +344,7 @@ bool OpenBuy(bool ab_0 = false) {
 
    if (!SupportECN) {
       if (ab_0) {
-         if (OrderSelect(ticket, SELECT_BY_TICKET))
+         if (OrderSelect(lastTicket, SELECT_BY_TICKET))
             price_16 = OrderTakeProfit() - MarketInfo(Symbol(), MODE_SPREAD) * Point;
       }
       else {
@@ -360,30 +355,30 @@ bool OpenBuy(bool ab_0 = false) {
    if (ab_0)
       ls_24 = hedgetext;
 
-   if (AllowiStopLoss)
+   if (AllowStopLoss)
       price_16 = Ask - stoploss * Point;
 
    if (ab_0) lots_40 = NormalizeDouble(GetLastLotSize(1) * MassHedgeBooster, 2);
    else      lots_40 = CalcLots(gd_244);
 
    if (!SupportECN) {
-      ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Green);
+      ticket = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, price_16, price_8, WindowExpertName() + ls_24, MagicNumber, 0, Green);
    }
    else {
-      ticket_4 = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Green);
+      ticket = OrderSend(Symbol(), OP_BUY, lots_40, Ask, slippage, 0, 0, WindowExpertName() + ls_24, MagicNumber, 0, Green);
       Sleep(1000);
-      OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
+      OrderModify(ticket, OrderOpenPrice(), price_16, price_8, 0, Black);
    }
 
    previoustime = TimeCurrent();
 
-   if (ticket_4 != -1) {
+   if (ticket != -1) {
       if (!ab_0) {
-         ticket = ticket_4;
+         lastTicket = ticket;
          Log("BUY hedgedTicket=" + ticket);
       }
       else {
-         Log("BUY Hacked_ticket=" + ticket_4);
+         Log("BUY Hacked_ticket=" + ticket);
          command = 0;
       }
    }
@@ -399,7 +394,7 @@ bool OpenBuy(bool ab_0 = false) {
  *
  */
 bool OpenSell(bool ab_0 = false) {
-   int    ticket_4;
+   int    ticket;
    double lots_36;
    double price_8;
    double price_16;
@@ -413,7 +408,7 @@ bool OpenSell(bool ab_0 = false) {
 
    if (!SupportECN) {
       if (ab_0) {
-         if (OrderSelect(ticket, SELECT_BY_TICKET))
+         if (OrderSelect(lastTicket, SELECT_BY_TICKET))
             price_16 = OrderTakeProfit() + MarketInfo(Symbol(), MODE_SPREAD) * Point;
       }
       else {
@@ -424,30 +419,30 @@ bool OpenSell(bool ab_0 = false) {
    if (ab_0)
       ls_24 = hedgetext;
 
-   if (AllowiStopLoss)
+   if (AllowStopLoss)
       price_16 = Bid + stoploss * Point;
 
    if (ab_0) lots_36 = NormalizeDouble(GetLastLotSize(0) * MassHedgeBooster, 2);
    else      lots_36 = CalcLots(gd_244);
 
    if (!SupportECN) {
-      ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, price_16, price_8, EA_Name + ls_24, MagicNumber, 0, Pink);
+      ticket = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, price_16, price_8, WindowExpertName() + ls_24, MagicNumber, 0, Pink);
    }
    else {
-      ticket_4 = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, 0, 0, EA_Name + ls_24, MagicNumber, 0, Pink);
+      ticket = OrderSend(Symbol(), OP_SELL, lots_36, Bid, slippage, 0, 0, WindowExpertName() + ls_24, MagicNumber, 0, Pink);
       Sleep(1000);
-      OrderModify(ticket_4, OrderOpenPrice(), price_16, price_8, 0, Black);
+      OrderModify(ticket, OrderOpenPrice(), price_16, price_8, 0, Black);
    }
 
    previoustime = TimeCurrent();
 
-   if (ticket_4 != -1) {
+   if (ticket != -1) {
       if (!ab_0) {
-         ticket = ticket_4;
+         lastTicket = ticket;
          Log("SELL hedgedTicket=" + ticket);
       }
       else {
-         Log("SELL Hacked_ticket=" + ticket_4);
+         Log("SELL Hacked_ticket=" + ticket);
          command = 1;
       }
    }
@@ -499,7 +494,7 @@ void ManageBuy() {
          if (MassHedge)
             gb_384 = true;
    }
-   else if (order_open_price_4-Ask > PipStarter*point && order_open_price_4 > 0 && count_40 < MaxBuyOrders) {
+   else if (order_open_price_4-Ask > PipStarter*pip && order_open_price_4 > 0 && count_40 < MaxBuyOrders) {
       if (!OpenBuy())
          return;
       if (!MassHedge)
@@ -559,7 +554,7 @@ void ManageSell() {
          if (MassHedge)
             gb_388 = true;
    }
-   else if (Bid-order_open_price_4 > PipStarter*point && order_open_price_4 > 0 && count_40 < MaxSellOrders) {
+   else if (Bid-order_open_price_4 > PipStarter*pip && order_open_price_4 > 0 && count_40 < MaxSellOrders) {
       if (!OpenSell())
          return;
       if (!MassHedge)
