@@ -304,8 +304,8 @@ double GetCommission() {
  *  transition[I_TRANSITION_DST   ] - ob nach dem Wechsel DST gilt oder nicht
  */
 bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], int &nextTransition[]) {
-   if (serverTime < 0)              return(_false(catch("GetServerTimezoneTransitions(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (serverTime >= D'2038.01.01') return(_false(catch("GetServerTimezoneTransitions(2)   too large parameter serverTime = '"+ DateToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (serverTime < 0)              return(!catch("GetServerTimezoneTransitions(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (serverTime >= D'2038.01.01') return(!catch("GetServerTimezoneTransitions(2)   too large parameter serverTime = '"+ DateToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_FUNCTION_PARAMVALUE));
    string timezone = GetServerTimezone();
    if (!StringLen(timezone))        return(false);
    /**
@@ -380,7 +380,7 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
          if (serverTime >= toDST) /*&&*/ if (toDST != -1) { lastTransition[I_TRANSITION_TIME] = toDST; lastTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; lastTransition[I_TRANSITION_DST] = true;  break; }
       }
 
-      else return(_false(catch("GetServerTimezoneTransitions(3)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+      else return(!catch("GetServerTimezoneTransitions(3)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
       i--;                                                           // letzter Wechsel war früher
    }
@@ -438,7 +438,7 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
          if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
       }
 
-      else return(_false(catch("GetServerTimezoneTransitions(4)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+      else return(!catch("GetServerTimezoneTransitions(4)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
       i++;                                                           // nächster Wechsel ist später
    }
@@ -713,7 +713,7 @@ void CopyMemory(int destination, int source, int bytes) {
  */
 bool Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Indicator.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
+      return(!catch("Indicator.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
 
    static bool static.resolved, static.result;                       // static: EA ok, Indikator ok
    if (static.resolved)
@@ -729,10 +729,10 @@ bool Indicator.IsTesting() {
       else if (__WHEREAMI__ != FUNC_START) {                         // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
          int hChart = WindowHandle(Symbol(), NULL);
          if (!hChart)
-            return(_false(catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
+            return(!catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
          string title = GetWindowText(GetParent(hChart));
          if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
-            return(_false(catch("Indicator.IsTesting(3)   undefined result in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR)));
+            return(!catch("Indicator.IsTesting(3)   undefined result in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
          static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert)
       }
       else {
@@ -752,7 +752,7 @@ bool Indicator.IsTesting() {
  */
 bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_false(catch("Script.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
+      return(!catch("Script.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
 
    static bool static.resolved, static.result;                       // static: EA ok, Indikator ok
    if (static.resolved)
@@ -767,7 +767,7 @@ bool Script.IsTesting() {
             case FUNC_START : function = "start()";  break;
             case FUNC_DEINIT: function = "deinit()"; break;
          }
-         return(_false(catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR)));
+         return(!catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR));
       }                                                              // "(visual)" ist nicht internationalisiert
       static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");
    }
@@ -821,7 +821,7 @@ int    lock.counters[];                                              // Anzahl d
  */
 bool AquireLock(string mutexName) {
    if (StringLen(mutexName) == 0)
-      return(_false(catch("AquireLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("AquireLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
 
    // (1) check, if we already own that lock
@@ -855,12 +855,12 @@ bool AquireLock(string mutexName) {
       if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {
          if (!GlobalVariableSet(globalVarName, 0)) {
             error = GetLastError();
-            return(_false(catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error))));
+            return(!catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
          continue;
       }
       else if (IsError(error)) {
-         return(_false(catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error)));
+         return(!catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error));
       }
 
       if (IsStopped())
@@ -870,7 +870,7 @@ bool AquireLock(string mutexName) {
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(_false(catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR)));
+            return(!catch("AquireLock(5)   failed to get lock for mutex \""+ mutexName +"\" after "+ DoubleToStr(duration/1000.0, 3) +" sec., giving up", ERR_RUNTIME_ERROR));
          warn(StringConcatenate("AquireLock(6)   couldn't get lock for mutex \"", mutexName, "\" after ", DoubleToStr(duration/1000.0, 3), " sec., retrying..."));
          seconds++;
       }
@@ -916,7 +916,7 @@ bool ReleaseLock(string mutexName) {
 
       if (!GlobalVariableSet(globalVarName, 0)) {
          int error = GetLastError();
-         return(_false(catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error))));
+         return(!catch("ReleaseLock(3)   failed to reset mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
       }
    }
    return(true);
@@ -972,7 +972,7 @@ int Chart.Expert.Properties() {
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(_false(catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED)));
+   if (!This.IsTesting()) return(!catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    bool testerStopped;
    int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
@@ -1042,7 +1042,7 @@ int Tester.Stop() {
  * @return bool
  */
 bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(_false(catch("Tester.IsStopped()   Tester only function", ERR_FUNC_NOT_ALLOWED)));
+   if (!This.IsTesting()) return(!catch("Tester.IsStopped()   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
@@ -2137,11 +2137,10 @@ int ArrayPushString(string &array[], string value) {
  * @return bool - das entfernte Element oder FALSE, falls ein Fehler auftrat
  */
 bool ArrayPopBool(bool array[]) {
-   if (ArrayDimension(array) > 1) return(_false(catch("ArrayPopBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(!catch("ArrayPopBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(_false(catch("ArrayPopBool(2)   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+   if (size == 0)                 return(!catch("ArrayPopBool(2)   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR));
 
    bool popped = array[size-1];
    ArrayResize(array, size-1);
@@ -2293,11 +2292,10 @@ int ArrayUnshiftString(string array[], string value) {
  * @return bool - das entfernte Element oder FALSE, falls ein Fehler auftrat
  */
 bool ArrayShiftBool(bool array[]) {
-   if (ArrayDimension(array) > 1) return(_false(catch("ArrayShiftBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(!catch("ArrayShiftBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
 
    int size = ArraySize(array);
-   if (size == 0)
-      return(_false(catch("ArrayShiftBool(2)   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+   if (size == 0)                 return(!catch("ArrayShiftBool(2)   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR));
 
    bool shifted = array[0];
 
@@ -2933,7 +2931,7 @@ int ArrayInsertStrings(string array[], int offset, string values[]) {
  * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
  */
 bool BoolInArray(bool haystack[], bool needle) {
-   if (ArrayDimension(haystack) > 1) return(_false(catch("BoolInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(!catch("BoolInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS));
    return(SearchBoolArray(haystack, needle) > -1);
 }
 
@@ -2947,7 +2945,7 @@ bool BoolInArray(bool haystack[], bool needle) {
  * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
  */
 bool IntInArray(int haystack[], int needle) {
-   if (ArrayDimension(haystack) > 1) return(_false(catch("IntInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(!catch("IntInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS));
    return(SearchIntArray(haystack, needle) > -1);
 }
 
@@ -2961,7 +2959,7 @@ bool IntInArray(int haystack[], int needle) {
  * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
  */
 bool DoubleInArray(double haystack[], double needle) {
-   if (ArrayDimension(haystack) > 1) return(_false(catch("DoubleInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(!catch("DoubleInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS));
    return(SearchDoubleArray(haystack, needle) > -1);
 }
 
@@ -2975,7 +2973,7 @@ bool DoubleInArray(double haystack[], double needle) {
  * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
  */
 bool StringInArray(string haystack[], string needle) {
-   if (ArrayDimension(haystack) > 1) return(_false(catch("StringInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(!catch("StringInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS));
    return(SearchStringArray(haystack, needle) > -1);
 }
 
@@ -2989,7 +2987,7 @@ bool StringInArray(string haystack[], string needle) {
  * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
  */
 bool StringInArrayI(string haystack[], string needle) {
-   if (ArrayDimension(haystack) > 1) return(_false(catch("StringInArrayI()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(haystack) > 1) return(!catch("StringInArrayI()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS));
    return(SearchStringArrayI(haystack, needle) > -1);
 }
 
@@ -5246,7 +5244,7 @@ double MathModFix(double a, double b) {
  */
 bool StringStartsWith(string object, string prefix) {
    if (StringLen(prefix) == 0)
-      return(_false(catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(object, prefix) == 0);
 }
 
@@ -5261,7 +5259,7 @@ bool StringStartsWith(string object, string prefix) {
  */
 bool StringIStartsWith(string object, string prefix) {
    if (StringLen(prefix) == 0)
-      return(_false(catch("StringIStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("StringIStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
 
@@ -5279,7 +5277,7 @@ bool StringEndsWith(string object, string postfix) {
    int lenPostfix = StringLen(postfix);
 
    if (lenPostfix == 0)
-      return(_false(catch("StringEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("StringEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (lenObject < lenPostfix)
       return(false);
@@ -5305,7 +5303,7 @@ bool StringIEndsWith(string object, string postfix) {
    int lenPostfix = StringLen(postfix);
 
    if (lenPostfix == 0)
-      return(_false(catch("StringIEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("StringIEndsWith()   empty postfix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (lenObject < lenPostfix)
       return(false);
@@ -6152,7 +6150,7 @@ datetime FXTToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (Indicator.IsTesting()) /*&&*/ if (!Indicator.IsSuperContext())   // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
-      return(_false(catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE)));
+      return(!catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)
       ArrayResize(results, 0);
@@ -6252,7 +6250,7 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
    int error = GetLastError();
    if (!error)
       return(eventStatus);
-   return(_false(catch("EventListener.AccountChange()", error)));
+   return(!catch("EventListener.AccountChange()", error));
 }
 
 
@@ -6427,7 +6425,7 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    int error = GetLastError();
    if (!error)
       return(eventStatus && OrderPop("EventListener.PositionOpen(2)"));
-   return(_false(catch("EventListener.PositionOpen(3)", error, O_POP)));
+   return(!catch("EventListener.PositionOpen(3)", error, O_POP));
 }
 
 
@@ -6521,7 +6519,7 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
    int error = GetLastError();
    if (!error)
       return(eventStatus && OrderPop("EventListener.PositionClose(3)"));
-   return(_false(catch("EventListener.PositionClose(4)", error, O_POP)));
+   return(!catch("EventListener.PositionClose(4)", error, O_POP));
 }
 
 
@@ -9245,7 +9243,7 @@ bool ObjectDeleteSilent(string label, string location) {
    if (ObjectDelete(label))
       return(true);
 
-   return(_false(catch("ObjectDeleteSilent()->"+ location)));
+   return(!catch("ObjectDeleteSilent()->"+ location));
 }
 
 
@@ -9358,7 +9356,7 @@ datetime ServerToGMT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFI
  */
 bool StringContains(string object, string substring) {
    if (StringLen(substring) == 0)
-      return(_false(catch("StringContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("StringContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(object, substring) != -1);
 }
 
@@ -9373,7 +9371,7 @@ bool StringContains(string object, string substring) {
  */
 bool StringIContains(string object, string substring) {
    if (StringLen(substring) == 0)
-      return(_false(catch("StringIContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("StringIContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
 }
 
@@ -11341,7 +11339,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          break;
       warn(StringConcatenate("OrderModifyEx(16)   ", Order.TempErrorMsg(oe)), error);
    }
-   return(_false(catch(StringConcatenate("OrderModifyEx(17)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP)));
+   return(!catch(StringConcatenate("OrderModifyEx(17)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
 }
 
 

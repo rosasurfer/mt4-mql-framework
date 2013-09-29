@@ -481,7 +481,7 @@ bool StopSequence() {
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
-         return(_false(SetLastError(stdlib_GetLastError())));
+         return(!SetLastError(stdlib_GetLastError()));
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -1078,13 +1078,13 @@ bool EventListener.ChartCommand(string commands[], int flags=NULL) {
 
    if (ObjectFind(label) == 0) {
       if (!AquireLock(mutex))
-         return(_false(SetLastError(stdlib_GetLastError())));
+         return(!SetLastError(stdlib_GetLastError()));
 
       ArrayPushString(commands, ObjectDescription(label));
       ObjectDelete(label);
 
       if (!ReleaseLock(mutex))
-         return(_false(SetLastError(stdlib_GetLastError())));
+         return(!SetLastError(stdlib_GetLastError()));
 
       return(true);
    }
@@ -1521,7 +1521,7 @@ bool ProcessClientStops(int stops[]) {
          color  markerColor = CLR_NONE;
          int    oeFlags     = NULL;
          if (!OrderCloseEx(orders.ticket[i], lots, price, slippage, markerColor, oeFlags, oe))
-            return(_false(SetLastError(oe.Error(oe))));
+            return(!SetLastError(oe.Error(oe)));
 
          orders.closedBySL[i] = true;
       }
@@ -2031,7 +2031,7 @@ bool Grid.TrailPendingOrder(int i) {
    else {                                                            // server-seitige Orders
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
-         return(_false(SetLastError(oe.Error(oe))));
+         return(!SetLastError(oe.Error(oe)));
       ArrayResize(oe, 0);
    }
 
@@ -2066,7 +2066,7 @@ bool Grid.DeleteOrder(int i) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
       if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe))
-         return(_false(SetLastError(oe.Error(oe))));
+         return(!SetLastError(oe.Error(oe)));
       ArrayResize(oe, 0);
    }
 
@@ -3393,7 +3393,7 @@ bool ResolveStatusLocation() {
       directory = StringConcatenate(directory, StdSymbol(), "\\");
       int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY);
       if (size == -1)
-         return(_false(SetLastError(stdlib_GetLastError())));
+         return(!SetLastError(stdlib_GetLastError()));
       //debug("ResolveStatusLocation()   subdirs="+ StringsToStr(subdirs, NULL));
 
       for (int i=0; i < size; i++) {
@@ -3446,7 +3446,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
    int size = FindFileNames(filePattern, files, FF_FILESONLY);                   // Dateien suchen, die den Sequenznamen enthalten und mit "set" enden
    if (size == -1)
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
 
    //debug("ResolveStatusLocation.FindFile()   "+ size +" results for \""+ filePattern +"\"");
 
@@ -3774,7 +3774,7 @@ bool RestoreStatus() {
 
       int error = WinExecAndWait(cmd, SW_HIDE);                         // SW_SHOWNORMAL|SW_HIDE
       if (IsError(error))
-         return(_false(SetLastError(error)));
+         return(!SetLastError(error));
 
       debug("RestoreStatus()   status file for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" successfully downloaded");
       FileDelete(subDir + fileName +".log");
@@ -3788,7 +3788,7 @@ bool RestoreStatus() {
    string lines[];
    int size = FileReadLines(fileName, lines, true);
    if (size < 0)
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    if (size == 0) {
       FileDelete(fileName);
       return(_false(catch("RestoreStatus(4)   no status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));
@@ -5058,7 +5058,7 @@ bool ChartMarker.OrderSent(int i) {
    }
 
    if (!ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment))
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    return(true);
 }
 
@@ -5085,7 +5085,7 @@ bool ChartMarker.OrderFilled(int i) {
       markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
 
    if (!ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], comment))
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    return(true);
 }
 
@@ -5113,7 +5113,7 @@ bool ChartMarker.PositionClosed(int i) {
    }
 
    if (!ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]))
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    return(true);
 }
 

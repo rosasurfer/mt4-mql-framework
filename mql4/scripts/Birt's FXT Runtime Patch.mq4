@@ -658,7 +658,7 @@ bool PatchProcess(int address, int bytes[]) {
    for (int i=0; i < size; i++) {
       buffer[0] = bytes[i];
       if (!WriteProcessMemory(hProcess, address+i, buffer, 1, iNull))
-         return(_false(catch("PatchProcess()->kernel32::WriteProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR)));
+         return(!catch("PatchProcess()->kernel32::WriteProcessMemory()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    }
    return(true);
 }

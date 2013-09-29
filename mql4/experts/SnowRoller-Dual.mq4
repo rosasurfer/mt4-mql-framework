@@ -651,9 +651,9 @@ int AddStartEvent(int hSeq, datetime time, double price, double profit) {
  * @return bool - Erfolgsstatus
  */
 bool InitSequence(int hSeq) {
-   if (__STATUS_ERROR)                                return( false);
-   if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(_false(catch("InitSequence(1)   cannot initialize "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!ResetSequence(hSeq))                          return( false);
+   if (__STATUS_ERROR)                                return(false);
+   if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(!catch("InitSequence(1)   cannot initialize "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (!ResetSequence(hSeq))                          return(false);
 
    sequence.id       [hSeq] = CreateSequenceId();
    sequence.isTest   [hSeq] = IsTest(); SS.Sequence.Id(hSeq);
@@ -859,12 +859,12 @@ bool ResetSequence(int hSeq) {
  * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
  */
 bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
-   if (__STATUS_ERROR)                    return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("StopSequence(1)", ERR_ILLEGAL_STATE)));
+   if (__STATUS_ERROR)                    return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)         // ggf. wird nach Testende nur aufgeräumt
-         return(_false(catch("StopSequence(2)   cannot stop "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+         return(!catch("StopSequence(2)   cannot stop "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StopSequence()", "Do you really want to stop the sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -920,7 +920,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
-         return(_false(SetLastError(stdlib_GetLastError())));
+         return(!SetLastError(stdlib_GetLastError()));
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -1001,9 +1001,9 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
  * @return bool - Erfolgsstatus
  */
 bool StopSequence.LimitStopPrice(int hSeq) {
-   if (__STATUS_ERROR)                                                                           return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(_false(catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(_false(catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                                                                           return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(!catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(!catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    double nextTrigger;
    int i = sequence.ss.events[hSeq][I_TO];
@@ -1031,9 +1031,9 @@ bool StopSequence.LimitStopPrice(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool ResumeSequence(int hSeq) {
-   if (__STATUS_ERROR)                                                                           return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(_false(catch("ResumeSequence(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)   cannot resume "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                                                                           return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(!catch("ResumeSequence(2)   cannot resume "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ResumeSequence()", "Do you really want to resume the sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1134,9 +1134,9 @@ bool ResumeSequence(int hSeq) {
  * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
-   if (__STATUS_ERROR)                           return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())        return(_false(catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_STARTING) return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                           return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int i, level;
    datetime openTime;
@@ -1198,10 +1198,10 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.AddPosition(int hSeq, int type, int level) {
-   if (__STATUS_ERROR)                           return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())        return(_false(catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_STARTING) return(_false(catch("Grid.AddPosition(2)   cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (!level)                                   return(_false(catch("Grid.AddPosition(3)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (__STATUS_ERROR)                           return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("Grid.AddPosition(2)   cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (!level)                                   return(!catch("Grid.AddPosition(3)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1216,9 +1216,9 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
 
    if (ticket <= 0) {
       // ab dem letzten Level ggf. client-seitige Stop-Verwaltung
-      if (level != sequence.level[hSeq])    return( false);
-      if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
-      if (ticket==0 || ticket < -2)         return(_false(catch("Grid.AddPosition(4)", oe.Error(oe))));
+      if (level != sequence.level[hSeq])    return(false);
+      if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
+      if (ticket==0 || ticket < -2)         return(!catch("Grid.AddPosition(4)", oe.Error(oe)));
 
       // (2) Spread violated
       if (ticket == -1) {
@@ -1513,7 +1513,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("UpdateStatus(2)   closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+            return(!catch("UpdateStatus(2)   closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -1757,8 +1757,8 @@ string UpdateStatus.PositionCloseMsg(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatusLocation(int hSeq) {
-   if (__STATUS_ERROR)     return( false);
-   if (!sequence.id[hSeq]) return(_false(catch("UpdateStatusLocation(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)     return(false);
+   if (!sequence.id[hSeq]) return(!catch("UpdateStatusLocation(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
    // TODO: Prüfen, ob status.file existiert und ggf. aktualisieren
 
@@ -1796,8 +1796,8 @@ bool IsOrderClosedBySL() {
          // StopLoss aus Orderdaten verwenden (ist bei client-seitiger Verwaltung nur dort gespeichert)
          int i = SearchIntArray(orders.ticket, OrderTicket());
 
-         if (i == -1)                   return(_false(catch("IsOrderClosedBySL(1)   #"+ OrderTicket() +" not found in order arrays", ERR_RUNTIME_ERROR)));
-         if (EQ(orders.stopLoss[i], 0)) return(_false(catch("IsOrderClosedBySL(2)   #"+ OrderTicket() +" no stop-loss found in order arrays", ERR_RUNTIME_ERROR)));
+         if (i == -1)                   return(!catch("IsOrderClosedBySL(1)   #"+ OrderTicket() +" not found in order arrays", ERR_RUNTIME_ERROR));
+         if (EQ(orders.stopLoss[i], 0)) return(!catch("IsOrderClosedBySL(2)   #"+ OrderTicket() +" no stop-loss found in order arrays", ERR_RUNTIME_ERROR));
 
          if      (orders.closedBySL[i]  ) closedBySL = true;
          else if (OrderType() == OP_BUY ) closedBySL = LE(OrderClosePrice(), orders.stopLoss[i]);
@@ -1838,7 +1838,7 @@ bool ChartMarker.OrderSent(int hSeq, int i) {
    }
 
    if (!ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment))
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    return(true);
 }
 
@@ -1866,7 +1866,7 @@ bool ChartMarker.OrderFilled(int hSeq, int i) {
       markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
 
    if (!ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], comment))
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    return(true);
 }
 
@@ -1894,7 +1894,7 @@ bool ChartMarker.PositionClosed(int i) {
    }
 
    if (!ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]))
-      return(_false(SetLastError(stdlib_GetLastError())));
+      return(!SetLastError(stdlib_GetLastError()));
    return(true);
 }
 
@@ -1909,9 +1909,9 @@ bool ChartMarker.PositionClosed(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ProcessClientStops(int hSeq, int stops[]) {
-   if (__STATUS_ERROR)                              return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("ProcessClientStops(2)   cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                              return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("ProcessClientStops(2)   cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int sizeOfStops = ArraySize(stops);
    if (sizeOfStops == 0)
@@ -1928,12 +1928,12 @@ bool ProcessClientStops(int hSeq, int stops[]) {
    // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
-      if (i < ticketsFrom || i > ticketsTo)  return(_false(catch("ProcessClientStops(3)   illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (i < ticketsFrom || i > ticketsTo)  return(!catch("ProcessClientStops(3)   illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_FUNCTION_PARAMVALUE));
 
 
       // (2) getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP)
       if (orders.ticket[i] == -1) {
-         if (orders.type[i] != OP_UNDEFINED) return(_false(catch("ProcessClientStops(4)   client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE)));
+         if (orders.type[i] != OP_UNDEFINED) return(!catch("ProcessClientStops(4)   client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order at index "+ i +" already marked as open", ERR_ILLEGAL_STATE));
 
          if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ProcessClientStops()", "Do you really want to execute a triggered client-side "+ OperationTypeDescription(orders.pendingType[i]) +" order now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1948,15 +1948,15 @@ bool ProcessClientStops(int hSeq, int stops[]) {
          orders.clientSL[i] = (ticket <= 0);
 
          if (ticket <= 0) {
-            if (level != sequence.level[hSeq])    return( false);
-            if (oe.Error(oe) != ERR_INVALID_STOP) return( false);
-            if (ticket==0 || ticket < -2)         return(_false(catch("ProcessClientStops(5)", oe.Error(oe))));
+            if (level != sequence.level[hSeq])    return(false);
+            if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
+            if (ticket==0 || ticket < -2)         return(!catch("ProcessClientStops(5)", oe.Error(oe)));
 
             double stopLoss = oe.StopLoss(oe);
 
             // (2.2) Spread violated
             if (ticket == -1) {
-               return(_false(catch("ProcessClientStops(6)   spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe))));
+               return(!catch("ProcessClientStops(6)   spread violated ("+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +") by "+ OperationTypeDescription(type) +" at "+ NumberToStr(oe.OpenPrice(oe), PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +")", oe.Error(oe)));
             }
 
             // (2.3) StopDistance violated
@@ -1975,9 +1975,9 @@ bool ProcessClientStops(int hSeq, int stops[]) {
 
       // (3) getriggerter StopLoss
       if (orders.clientSL[i]) {
-         if (orders.ticket[i] == -2)         return(_false(catch("ProcessClientStops(7)   cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
-         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessClientStops(8)   #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
-         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessClientStops(9)   #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
+         if (orders.ticket[i] == -2)         return(!catch("ProcessClientStops(7)   cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
+         if (orders.type[i] == OP_UNDEFINED) return(!catch("ProcessClientStops(8)   #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE));
+         if (orders.closeTime[i] != 0)       return(!catch("ProcessClientStops(9)   #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE));
 
          if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ProcessClientStops()", "Do you really want to execute a triggered client-side stop-loss now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1988,7 +1988,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
          color  markerColor = CLR_NONE;
          int    oeFlags     = NULL;
          if (!OrderCloseEx(orders.ticket[i], lots, price, slippage, markerColor, oeFlags, oe))
-            return(_false(SetLastError(oe.Error(oe))));
+            return(!SetLastError(oe.Error(oe)));
 
          orders.closedBySL[i] = true;
       }
@@ -2014,9 +2014,9 @@ bool ProcessClientStops(int hSeq, int stops[]) {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePendingOrders(int hSeq) {
-   if (__STATUS_ERROR)                              return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                              return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
    int from = orders[hSeq][I_FROM];
    int size = orders[hSeq][I_SIZE];
@@ -2063,11 +2063,11 @@ bool UpdatePendingOrders(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.TrailPendingOrder(int hSeq, int i) {
-   if (__STATUS_ERROR)                              return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (orders.type[i] != OP_UNDEFINED)              return(_false(catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
-   if (orders.closeTime[i] != 0)                    return(_false(catch("Grid.TrailPendingOrder(4)   cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                              return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (orders.type[i] != OP_UNDEFINED)              return(!catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
+   if (orders.closeTime[i] != 0)                    return(!catch("Grid.TrailPendingOrder(4)   cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -2078,7 +2078,7 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
    int    oeFlags     = NULL;
 
    if (EQ(orders.pendingPrice[i], stopPrice)) /*&&*/ if (EQ(orders.stopLoss[i], stopLoss))
-      return(_false(catch("Grid.TrailPendingOrder(5)   nothing to modify for #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+      return(!catch("Grid.TrailPendingOrder(5)   nothing to modify for #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
 
    if (orders.ticket[i] < 0) {                                       // client-seitige Orders
       // TODO: ChartMarker nachziehen
@@ -2086,7 +2086,7 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
    else {                                                            // server-seitige Orders
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderModifyEx(orders.ticket[i], stopPrice, stopLoss, NULL, NULL, markerColor, oeFlags, oe))
-         return(_false(SetLastError(oe.Error(oe))));
+         return(!SetLastError(oe.Error(oe)));
       ArrayResize(oe, 0);
    }
 
@@ -2108,13 +2108,13 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.DeleteOrder(int hSeq, int i) {
-   if (__STATUS_ERROR)                              return( false);
-   if (IsTest()) /*&&*/ if (!IsTesting())           return(_false(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE)));
+   if (__STATUS_ERROR)                              return(false);
+   if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) /*&&*/
       if (sequence.status[hSeq] != STATUS_STOPPING) /*&&*/
          if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || sequence.status[hSeq]!=STATUS_STOPPED)
-                                                    return(_false(catch("Grid.DeleteOrder(2)   cannot delete order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (orders.type[i] != OP_UNDEFINED)              return(_false(catch("Grid.DeleteOrder(3)   cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR)));
+                                                    return(!catch("Grid.DeleteOrder(2)   cannot delete order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (orders.type[i] != OP_UNDEFINED)              return(!catch("Grid.DeleteOrder(3)   cannot delete "+ ifString(orders.closeTime[i]==0, "open", "closed") +" "+ OperationTypeDescription(orders.type[i]) +" position", ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -2124,7 +2124,7 @@ bool Grid.DeleteOrder(int hSeq, int i) {
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
 
       if (!OrderDeleteEx(orders.ticket[i], CLR_NONE, oeFlags, oe))
-         return(_false(SetLastError(oe.Error(oe))));
+         return(!SetLastError(oe.Error(oe)));
       ArrayResize(oe, 0);
    }
 
@@ -2274,7 +2274,7 @@ bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pending
  */
 bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
    if (offset < -1)
-      return(_false(catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    int from = orders[hSeq][I_FROM];
    int to   = orders[hSeq][I_TO  ];
@@ -2361,7 +2361,7 @@ bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, 
 bool Grid.InsertElement(int offset) {
    int sizeOfTickets = ArraySize(orders.ticket);
 
-   if (offset < 0 || offset > sizeOfTickets) return(_false(catch("Grid.InsertElement(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0 || offset > sizeOfTickets) return(!catch("Grid.InsertElement(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    ArrayInsertInt   (orders.ticket,       offset, 0    );
    ArrayInsertInt   (orders.level,        offset, 0    );
@@ -2398,7 +2398,7 @@ bool Grid.InsertElement(int offset) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.DropData(int i) {
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(_false(catch("Grid.DropData(1)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (i < 0 || i >= ArraySize(orders.ticket)) return(!catch("Grid.DropData(1)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // Einträge entfernen
    ArraySpliceInts   (orders.ticket,       i, 1);
@@ -2541,8 +2541,8 @@ int CreateMagicNumber(int hSeq, int level) {
  * @return bool - Erfolgsstatus
  */
 bool SaveStatus(int hSeq) {
-   if (__STATUS_ERROR)                    return( false);
-   if (!sequence.id[hSeq])                return(_false(catch("SaveStatus(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                    return(false);
+   if (!sequence.id[hSeq])                return(!catch("SaveStatus(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
    // Im Tester wird der Status zur Performancesteigerung nur beim ersten und letzten Aufruf gespeichert, es sei denn,
@@ -2709,7 +2709,7 @@ bool SaveStatus(int hSeq) {
    // (2) Daten speichern
    int hFile = FileOpen(GetMqlStatusFileName(hSeq), FILE_CSV|FILE_WRITE);
    if (hFile < 0)
-      return(_false(catch("SaveStatus(2)->FileOpen(\""+ GetMqlStatusFileName(hSeq) +"\")")));
+      return(!catch("SaveStatus(2)->FileOpen(\""+ GetMqlStatusFileName(hSeq) +"\")"));
 
    for (i=0; i < ArraySize(lines); i++) {
       if (FileWrite(hFile, lines[i]) < 0) {
@@ -3048,10 +3048,10 @@ bool RestoreStickyStatus() {
          instance.isTest = true;
       }
       if (!StringIsDigit(strValue))
-         return(_false(catch("RestoreStickyStatus(1)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         return(!catch("RestoreStickyStatus(1)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       int iValue = StrToInteger(strValue);
       if (iValue <= 0)
-         return(_false(catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+         return(!catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       instance.id = iValue; SS.Instance.Id();
       idFound     = true;
       SetCustomLog(instance.id, NULL);
@@ -3060,10 +3060,10 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsInteger(strValue))
-            return(_false(catch("RestoreStickyStatus(3)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(3)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (!IntInArray(startStopDisplayModes, iValue))
-            return(_false(catch("RestoreStickyStatus(4)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(4)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          startStopDisplayMode = iValue;
       }
 
@@ -3071,10 +3071,10 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsInteger(strValue))
-            return(_false(catch("RestoreStickyStatus(5)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(5)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (!IntInArray(orderDisplayModes, iValue))
-            return(_false(catch("RestoreStickyStatus(6)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(6)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          orderDisplayMode = iValue;
       }
 
@@ -3082,7 +3082,7 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(7)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(7)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -3090,7 +3090,7 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(8)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(8)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }

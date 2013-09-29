@@ -152,9 +152,9 @@ int Strategy.CreateSequence(int direction) {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence(int hSeq) {
-   if (__STATUS_ERROR)                             return( false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_false(catch("StartSequence(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (sequence.status[hSeq] != STATUS_WAITING)    return(_false(catch("StartSequence(2)   cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (__STATUS_ERROR)                             return(false);
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (sequence.status[hSeq] != STATUS_WAITING)    return(!catch("StartSequence(2)   cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -199,7 +199,7 @@ bool StartSequence(int hSeq) {
       int iNull;
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
-      return(_false(catch("StartSequence(3.1)", ERR_NOT_IMPLEMENTED)));
+      return(!catch("StartSequence(3.1)", ERR_NOT_IMPLEMENTED));
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
@@ -331,12 +331,12 @@ double GridBase.Reset(int hSeq, datetime time, double value) {
  * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
-   if (__STATUS_ERROR)                               return( false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(_false(catch("UpdateOpenPositions(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (sequence.status[hSeq] != STATUS_STARTING)     return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE)));
+   if (__STATUS_ERROR)                               return(false);
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdateOpenPositions(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (sequence.status[hSeq] != STATUS_STARTING)     return(!catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE));
 
-   return(_false(catch("UpdateOpenPositions(4)", ERR_NOT_IMPLEMENTED)));
+   return(!catch("UpdateOpenPositions(4)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -348,12 +348,12 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePendingOrders(int hSeq) {
-   if (__STATUS_ERROR)                               return( false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(_false(catch("UpdatePendingOrders(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
-   if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(_false(catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE)));
+   if (__STATUS_ERROR)                               return(false);
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdatePendingOrders(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(!catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE));
 
-   return(_false(catch("UpdatePendingOrders(4)", ERR_NOT_IMPLEMENTED)));
+   return(!catch("UpdatePendingOrders(4)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -365,8 +365,8 @@ bool UpdatePendingOrders(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool InitStatusLocation(int hSeq) {
-   if (__STATUS_ERROR)                             return( false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_false(catch("InitStatusLocation(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (__STATUS_ERROR)                             return(false);
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("InitStatusLocation(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if      (IsTesting())         sequence.statusFile[hSeq][0] = "presets\\";
    else if (sequence.test[hSeq]) sequence.statusFile[hSeq][0] = "presets\\tester\\";
@@ -709,7 +709,7 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(1)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(1)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -717,7 +717,7 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(_false(catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+            return(!catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
