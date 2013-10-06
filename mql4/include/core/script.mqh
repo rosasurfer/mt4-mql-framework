@@ -323,7 +323,7 @@ bool Script.IsTesting() {
          case FUNC_START : function = "start()";  break;
          case FUNC_DEINIT: function = "deinit()"; break;
       }
-      return(_false(catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR)));
+      return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR));
    }
 
    static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");  // "(visual)" ist nicht internationalisiert

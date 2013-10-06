@@ -16,7 +16,7 @@ extern int    iParameter = 12345;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <iCustom/icEventTracker.mqh>
+//#include <iCustom/icEventTracker.mqh>
 #include <timezones.mqh>
 
 
@@ -44,13 +44,22 @@ int onInit() {
 }
 
 
+#include <iCustom/icChartInfos.mqh>
+
+
 /**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onTick() {
-   icEventTracker(PERIOD_H1);
+   //icEventTracker(PERIOD_H1);
+
+
+   // im Tester bei VisualMode=On ChartInfos anzeigen
+   if (IsVisualMode())
+      icChartInfos(PERIOD_H1);
+
    return(last_error);
 }
 
@@ -67,7 +76,7 @@ int ShowStatus(int error=NO_ERROR) {
       return(error);
 
    // 3 Zeilen Abstand nach oben für Instrumentanzeige und ggf. vorhandene Legende
-   Comment(NL+NL+NL+ __NAME__ + ifString(!error, "", "  ["+ ErrorDescription(last_error) +"]"));
+   Comment(NL+NL+ __NAME__ + ifString(!error, "", "  ["+ ErrorDescription(last_error) +"]"));
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
 
