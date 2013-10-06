@@ -1203,7 +1203,7 @@ int HandleEvent(int event, int criteria=NULL) {
       case EVENT_EXTERNAL_CMD   : if (EventListener.ExternalCommand(sResults, criteria)) { status = true; onExternalCommand(sResults); } break;
 
       default:
-         return(_false(catch("HandleEvent(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE)));
+         return(!catch("HandleEvent(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
    }
    return(status);                                                   // (int) bool
 }
@@ -1261,7 +1261,7 @@ bool SelectTicket(int ticket, string location, bool storeSelection=false, bool o
       OrderPop(location);
 
    int error = GetLastError();
-   return(_false(catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(!error, ERR_INVALID_TICKET, error))));
+   return(!catch(location +"->SelectTicket()   ticket="+ ticket, ifInt(!error, ERR_INVALID_TICKET, error)));
 }
 
 
@@ -1329,7 +1329,7 @@ bool OrderPop(string location) {
  */
 bool WaitForTicket(int ticket, bool orderKeep=true) {
    if (ticket <= 0)
-      return(_false(catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (orderKeep) {
       if (!OrderPush("WaitForTicket(2)"))
@@ -1406,7 +1406,7 @@ bool IsLogging() {
    string name = __NAME__;
    if (IsLibrary()) {
       if (StringLen(__NAME__) == 0)
-         return(_false(catch("IsLogging()   function must not be called before library initialization", ERR_RUNTIME_ERROR)));
+         return(!catch("IsLogging()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 
@@ -1522,7 +1522,7 @@ bool LE(double double1, double double2, int digits=8) {
  */
 bool EQ(double double1, double double2, int digits=8) {
    if (digits < 0 || digits > 8)
-      return(_false(catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(!catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)
@@ -1549,7 +1549,7 @@ bool EQ(double double1, double double2, int digits=8) {
       case 15: return(diff <= 0.000000000000001 );
       case 16: return(diff <= 0.0000000000000001);
    }
-   return(_false(catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(!catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
    */
 }
 
