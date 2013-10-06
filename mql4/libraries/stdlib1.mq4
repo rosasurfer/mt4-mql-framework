@@ -8055,6 +8055,8 @@ string AppliedPriceToStr(int appliedPrice) {
       case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // Median price:         (High+Low)/2
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
+      case PRICE_BID     : return("PRICE_BID"     );     // Bid price
+      case PRICE_ASK     : return("PRICE_ASK"     );     // Ask price
    }
    return(_empty(catch("AppliedPriceToStr()   invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -8076,6 +8078,8 @@ string AppliedPriceDescription(int appliedPrice) {
       case PRICE_MEDIAN  : return("Median"  );     // Median price:         (High+Low)/2
       case PRICE_TYPICAL : return("Typical" );     // Typical price:        (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
+      case PRICE_BID     : return("Bid"     );     // Bid price
+      case PRICE_ASK     : return("Ask"     );     // Ask price
    }
    return(_empty(catch("AppliedPriceDescription()   invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }

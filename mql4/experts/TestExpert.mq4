@@ -44,9 +44,6 @@ int onInit() {
 }
 
 
-#include <iCustom/icChartInfos.mqh>
-
-
 /**
  * Main-Funktion
  *
@@ -54,12 +51,6 @@ int onInit() {
  */
 int onTick() {
    //icEventTracker(PERIOD_H1);
-
-
-   // im Tester bei VisualMode=On ChartInfos anzeigen
-   if (IsVisualMode())
-      icChartInfos(PERIOD_H1);
-
    return(last_error);
 }
 

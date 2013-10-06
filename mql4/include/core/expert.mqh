@@ -3,10 +3,10 @@
 #define __lpSuperContext NULL
 
 #include <history.mqh>
-#include <ChartInfos/functions.mqh>
+#include <iCustom/icChartInfos.mqh>
 
 
-// Teststatistiken
+// Variablen für Teststatistiken
 datetime Test.fromDate,    Test.toDate;
 int      Test.startMillis, Test.stopMillis;                          // in Millisekunden
 
@@ -74,7 +74,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
 
 
-   // (5)  EA's ggf. aktivieren
+   // (5) ggf. EA's aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
@@ -83,24 +83,13 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }
 
 
-   // (6) nach Neuladen Orderkontext explizit zurücksetzen (siehe MQL.doc)
+   // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
-
-   // (7) im Tester ChartInfo-Anzeige konfigurieren
-   if (IsVisualMode()) {
-      ci.appliedPrice = PRICE_BID;                                            // PRICE_BID ist in EA's ausreichend und schneller (@see ChartInfos-Indikator)
-      ci.leverage     = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
-      if (LT(ci.leverage, 1))
-         return(catch("init(3)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(ci.leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-      if (IsError(CI.CreateLabels()))
-         return(last_error);
-   }
-
                                                                               // User-Routinen *können*, müssen aber nicht implementiert werden.
-   // (8) user-spezifische init()-Routinen aufrufen                           //
+   // (7) user-spezifische init()-Routinen aufrufen                           //
    onInit();                                                                  // Preprocessing-Hook
                                                                               //
    if (!__STATUS_ERROR) {                                                     //
@@ -116,13 +105,13 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    }                                                                          //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook wird immer ausgeführt (auch bei __STATUS_ERROR)
-   ShowStatus(NO_ERROR);                                                              //
+   ShowStatus(NO_ERROR);
 
    if (__STATUS_ERROR)
       return(last_error);
 
 
-   // (9) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken.
+   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken.
    if (IsTesting()) {
       Test.fromDate    = TimeCurrent();
       Test.startMillis = GetTickCount();
@@ -132,7 +121,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       if (IsError(error))
          SetLastError(error);
    }
-   return(last_error|catch("init(4)"));
+   return(last_error|catch("init(3)"));
 }
 
 
@@ -205,20 +194,7 @@ int start() {
       return(ShowStatus(SetLastError(stdlib_GetLastError())));
 
 
-   // (5) im Tester ChartInfos-Anzeige (@see ChartInfos-Indikator)
-   if (IsVisualMode()) {
-      // TODO: ChartInfos-Indikator per iCustom() aufrufen
-      ci.positionsAnalyzed = false;
-      if (!CI.UpdatePrice()       ) return(ShowStatus(last_error));
-      if (!CI.UpdateSpread()      ) return(ShowStatus(last_error));
-      if (!CI.UpdateUnitSize()    ) return(ShowStatus(last_error));
-      if (!CI.UpdatePosition()    ) return(ShowStatus(last_error));
-      if (!CI.UpdateMarginLevels()) return(ShowStatus(last_error));
-      if (!CI.UpdateTime()        ) return(ShowStatus(last_error));
-   }
-
-
-   // (6) Main-Funktion aufrufen und auswerten
+   // (5) Main-Funktion aufrufen und auswerten
    onTick();
 
    int error = GetLastError();
@@ -226,13 +202,21 @@ int start() {
       catch("start(2)", error);
 
 
-   // (7) Tester nach Fehler anhalten
-   if (last_error!=NO_ERROR) /*&&*/ if (IsTesting())
-      Tester.Stop();
+   // (6) im Tester
+   if (IsTesting()) {
+      if (IsVisualMode()) {                                                // bei VisualMode=On ChartInfos anzeigen
+         if (__STATUS_ERROR || !icChartInfos(PERIOD_H1))                   // nach Fehler anhalten
+            Tester.Stop();
+      }
+      else {
+         if (__STATUS_ERROR)                                               // nach Fehler anhalten
+            Tester.Stop();
+         return(last_error);                                               // kein ShowStatus()
+      }
+   }
 
 
-   if (IsTesting()) /*&&*/ if (!IsVisualMode())
-      return(last_error);
+   // (7) Statusanzeige
    return(ShowStatus(last_error));
 }
 
