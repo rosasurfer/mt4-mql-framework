@@ -35,6 +35,7 @@ stops_color=17919
 
 <window>
 height=100
+
 <indicator>
 name=main
 <object>
