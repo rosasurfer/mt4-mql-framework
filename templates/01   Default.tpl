@@ -8776,5 +8776,6 @@ Periods=200
 period_flags=0
 show_data=0
 </indicator>
+
 </window>
 </chart>
