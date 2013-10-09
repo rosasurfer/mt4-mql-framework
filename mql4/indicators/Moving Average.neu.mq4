@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
 extern string MA.Periods       = "200";
-extern string MA.Timeframe     = "";                                 // Timeframe: [M1|M5|M15|...], default = aktueller Timeframe
+extern string MA.Timeframe     = "";                                 // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.Method        = "SMA | EMA | SMMA | LWMA | ALMA*";
 extern string MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
 
