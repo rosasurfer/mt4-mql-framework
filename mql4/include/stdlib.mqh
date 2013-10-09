@@ -414,16 +414,16 @@
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
 
-   string   StdSymbol();                                                 // Alias für GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                            // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   StdSymbol();                                                               // Alias für GetStandardSymbol(Symbol())
+   string   GetStandardSymbol(string symbol);                                          // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
-   string   GetSymbolName(string symbol);                                // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                                              // Alias für GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
 
-   string   GetLongSymbolName(string symbol);                            // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                                          // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
 
@@ -432,7 +432,7 @@
 
    int      MovingAverageMethodToId(string method);
    int      PeriodFlag(int period);
-   int      PeriodToId(string description);
+   int      PeriodToId(string description);  int TimeframeToId(string description);    // Alias
 
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
@@ -442,8 +442,8 @@
 
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
-   int      iBarShiftNext(string symbol, int period, datetime time);     // throws ERS_HISTORY_UPDATE
-   int      iBarShiftPrevious(string symbol, int period, datetime time); // throws ERS_HISTORY_UPDATE
+   int      iBarShiftNext(string symbol, int period, datetime time);                   // throws ERS_HISTORY_UPDATE
+   int      iBarShiftPrevious(string symbol, int period, datetime time);               // throws ERS_HISTORY_UPDATE
 
    int      ForceMessageBox(string caption, string message, int flags);
    int      ForceSound(string soundfile);
@@ -492,8 +492,8 @@
    string   OperationTypeToStr      (int type);
    string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false);
    string   PeriodFlagToStr(int flag);
-   string   PeriodDescription(int period);
-   string   PeriodToStr      (int period);
+   string   PeriodDescription(int period);      string TimeframeDescription(int timeframe);     // Alias
+   string   PeriodToStr      (int period);      string TimeframeToStr      (int timeframe);     // Alias
    string   ShellExecuteErrorToStr(int error);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);
