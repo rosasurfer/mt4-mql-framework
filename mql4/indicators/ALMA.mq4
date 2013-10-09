@@ -26,8 +26,8 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string MA.Periods        = "200";                             // averaging period
-extern string MA.Timeframe      = "";                                // averaging timeframe [M1 | M5 | M15] etc.: "" = aktueller Timeframe
+extern string MA.Periods        = "200";                             // averaging periods
+extern string MA.Timeframe      = "";                                // averaging timeframe [M1|M5|M15|...], "" = aktueller Timeframe
 extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
