@@ -5899,9 +5899,9 @@ datetime GetFXTNextSessionEndTime(datetime fxtTime) {
 
 
 /**
- * Korrekter Vergleich zweier Doubles.
+ * MetaQuotes-Alias
  *
- * MetaQuotes-Alias für EQ()
+ * Korrekter Vergleich zweier Doubles.
  */
 bool CompareDoubles(double double1, double double2) {
    return(EQ(double1, double2));                                     // Die MetaQuotes-Funktion ist fehlerhaft.
@@ -8114,6 +8114,20 @@ int PeriodToId(string timeframe) {
 
 
 /**
+ * Alias
+ *
+ * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
+ *
+ * @param  string timeframe - M1, M5, M15, M30 etc.
+ *
+ * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
+ */
+int TimeframeToId(string timeframe) {
+   return(PeriodToId(timeframe));
+}
+
+
+/**
  * Gibt die lesbare Konstante einer Timeframe-ID zurück.
  *
  * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
@@ -8140,6 +8154,20 @@ string PeriodToStr(int period=NULL) {
 
 
 /**
+ * Alias
+ *
+ * Gibt die lesbare Konstante einer Timeframe-ID zurück.
+ *
+ * @param  int timeframe - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktueller Timeframe)
+ *
+ * @return string
+ */
+string TimeframeToStr(int timeframe=NULL) {
+   return(PeriodToStr(timeframe));
+}
+
+
+/**
  * Gibt die Beschreibung eines Timeframe-Codes zurück.
  *
  * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
@@ -8162,6 +8190,20 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_MN1: return("MN1");     // 43200  monthly
    }
    return(_empty(catch("PeriodDescription()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Alias
+ *
+ * Gibt die Beschreibung eines Timeframe-Codes zurück.
+ *
+ * @param  int timeframe - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktueller Timeframe)
+ *
+ * @return string
+ */
+string TimeframeDescription(int timeframe=NULL) {
+   return(PeriodDescription(timeframe));
 }
 
 
