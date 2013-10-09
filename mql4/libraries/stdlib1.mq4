@@ -8088,27 +8088,36 @@ string AppliedPriceDescription(int appliedPrice) {
 /**
  * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
  *
- * @param  string timeframe - M1, M5, M15, M30 etc.
+ * @param  string sValue - M1, M5, M15, M30 etc.
  *
  * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
  */
-int PeriodToId(string timeframe) {
-   timeframe = StringToUpper(timeframe);
+int PeriodToId(string sValue) {
+   sValue = StringToUpper(sValue);
 
-   if (StringStartsWith(timeframe, "PERIOD_"))
-      timeframe = StringRight(timeframe, -7);
+   if (StringStartsWith(sValue, "PERIOD_"))
+      sValue = StringRight(sValue, -7);
 
-   if (timeframe == "M1" ) return(PERIOD_M1 );     //     1  1 minute
-   if (timeframe == "M5" ) return(PERIOD_M5 );     //     5  5 minutes
-   if (timeframe == "M15") return(PERIOD_M15);     //    15  15 minutes
-   if (timeframe == "M30") return(PERIOD_M30);     //    30  30 minutes
-   if (timeframe == "H1" ) return(PERIOD_H1 );     //    60  1 hour
-   if (timeframe == "H4" ) return(PERIOD_H4 );     //   240  4 hour
-   if (timeframe == "D1" ) return(PERIOD_D1 );     //  1440  daily
-   if (timeframe == "W1" ) return(PERIOD_W1 );     // 10080  weekly
-   if (timeframe == "MN1") return(PERIOD_MN1);     // 43200  monthly
+   if (sValue ==           "M1" ) return(PERIOD_M1 );    // 1 minute
+   if (sValue == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
+   if (sValue ==           "M5" ) return(PERIOD_M5 );    // 5 minutes
+   if (sValue == ""+ PERIOD_M5  ) return(PERIOD_M5 );    //
+   if (sValue ==           "M15") return(PERIOD_M15);    // 15 minutes
+   if (sValue == ""+ PERIOD_M15 ) return(PERIOD_M15);    //
+   if (sValue ==           "M30") return(PERIOD_M30);    // 30 minutes
+   if (sValue == ""+ PERIOD_M30 ) return(PERIOD_M30);    //
+   if (sValue ==           "H1" ) return(PERIOD_H1 );    // 1 hour
+   if (sValue == ""+ PERIOD_H1  ) return(PERIOD_H1 );    //
+   if (sValue ==           "H4" ) return(PERIOD_H4 );    // 4 hour
+   if (sValue == ""+ PERIOD_H4  ) return(PERIOD_H4 );    //
+   if (sValue ==           "D1" ) return(PERIOD_D1 );    // 1 day
+   if (sValue == ""+ PERIOD_D1  ) return(PERIOD_D1 );    //
+   if (sValue ==           "W1" ) return(PERIOD_W1 );    // 1 week
+   if (sValue == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
+   if (sValue ==           "MN1") return(PERIOD_MN1);    // 1 month
+   if (sValue == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
 
-   if (__LOG) log("PeriodToId()   invalid parameter timeframe = \""+ timeframe +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("PeriodToId()   invalid parameter sValue = \""+ sValue +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
