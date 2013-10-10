@@ -8,17 +8,18 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string MA.Periods       = "200";
-extern string MA.Timeframe     = "";                                 // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method        = "SMA | EMA | SMMA | LWMA | ALMA*";
-extern string MA.AppliedPrice  = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.Periods            = "200";                         // bei einigen Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
+extern string MA.Timeframe          = "";                            // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.Method             = "SMA | EMA | SMMA | LWMA | ALMA*";
+extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern color  Color.UpTrend    = DodgerBlue;                         // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend  = Orange;
+extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend       = Orange;
 
-extern int    Shift.Horizontal = 0;                                  // horizontale Shift in Bars
-extern int    Shift.Vertical   = 0;                                  // vertikale Shift in Pips
-extern int    Max.Values       = 2000;                               // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+
+extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
+extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -95,7 +96,7 @@ int onInit() {
    ma.periods = MathRound(dValue);
    if (ma.periods < 2)                 return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
-      double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl Bars = Range in Minuten
+      double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl_Bars = Range_in_Minuten
       ma.periods = MathRound(minutes/Period());
    }
    MA.Periods = strValue;
@@ -173,20 +174,20 @@ int onInit() {
    IndicatorDigits(SubPipDigits);
 
    // (2.3) Zeichenoptionen
-   int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values));
+   int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
    SetIndexDrawBegin(MovingAverage.MODE_MA,        startDraw);
    SetIndexDrawBegin(MovingAverage.MODE_TREND,     startDraw);
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND,   startDraw);
    SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw);
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw);
 
-   SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal);
-   SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal);
-   SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal);
-   SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal);
-   SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal);
+   SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal.Bars);
+   SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal.Bars);
+   SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal.Bars);
+   SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal.Bars);
+   SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal.Bars);
 
-   shift.vertical = Shift.Vertical * Pip;                            // TODO: Digits/Point-Fehler abfangen
+   shift.vertical = Shift.Vertical.Pips * Pip;                       // TODO: Digits/Point-Fehler abfangen
 
 
    // (2.4) Styles
@@ -369,16 +370,16 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "MA.Periods=\"",      MA.Periods                 , "\"; ",
-                            "MA.Timeframe=\"",    MA.Timeframe               , "\"; ",
-                            "MA.Method=\"",       MA.Method                  , "\"; ",
-                            "MA.AppliedPrice=\"", MA.AppliedPrice            , "\"; ",
+                            "MA.Periods=\"",          MA.Periods                 , "\"; ",
+                            "MA.Timeframe=\"",        MA.Timeframe               , "\"; ",
+                            "MA.Method=\"",           MA.Method                  , "\"; ",
+                            "MA.AppliedPrice=\"",     MA.AppliedPrice            , "\"; ",
 
-                            "Color.UpTrend=",     ColorToStr(Color.UpTrend)  , "; ",
-                            "Color.DownTrend=",   ColorToStr(Color.DownTrend), "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)  , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",
 
-                            "Shift.Horizontal=",  Shift.Horizontal           , "; ",
-                            "Shift.Vertical=",    Shift.Vertical             , "; ",
-                            "Max.Values=",        Max.Values                 , "; ")
+                            "Max.Values=",            Max.Values                 , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars      , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips        , "; ")
    );
 }
