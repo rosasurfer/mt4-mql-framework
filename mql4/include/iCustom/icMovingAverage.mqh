@@ -36,9 +36,9 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
                           maAppliedPrice,                                  // AppliedPrice
                           ForestGreen,                                     // Color.UpTrend
                           Red,                                             // Color.DownTrend
-                          0,                                               // Shift.Horizontal
-                          0,                                               // Shift.Vertical
                           maMaxValues,                                     // Max.Values
+                          0,                                               // Shift.Horizontal.Bars
+                          0,                                               // Shift.Vertical.Pips
                           "",                                              // ________________
                           lpLocalContext,                                  // __SuperContext__
                           iBuffer, iBar);                                  // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
