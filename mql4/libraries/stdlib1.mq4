@@ -8992,7 +8992,7 @@ string RatesToStr(double values[], string separator=", ") {
       return(_empty(catch("RatesToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
-   if (ArraySize(values) == 0)
+   if (size == 0)
       return("{}");
 
    if (separator == "0")   // NULL
