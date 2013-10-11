@@ -452,14 +452,14 @@
 
    // toString-Funktionen
    string   BoolToStr(bool value);
-   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);  // MetaQuotes-Alias
+   string   DoubleToStrEx(double value, int digits);  string DoubleToStrMorePrecision(double value, int precision);     // MetaQuotes-Alias
 
    string   IntegerToBinaryStr(int integer);
 
    string   IntegerToHexStr(int integer);
-   string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                 // Alias
+   string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                    // Alias
    string   WordToHexStr(int word);
-   string   DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);       // Alias + MetaQuotes-Alias
+   string   DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);          // Alias + MetaQuotes-Alias
    string   StringToHexStr(string value);
 
    string   BoolsToStr        (bool array[], string separator);
@@ -469,7 +469,7 @@
    string   TimesToStr    (datetime array[], string separator);
    string   DoublesToStr    (double array[], string separator);
    string   MoneysToStr     (double array[], string separator);
-   string   RatesToStr      (double array[], string separator);
+   string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
    string   StringsToStr    (string array[], string separator);
 
    string   AppliedPriceDescription(int appliedPrice);

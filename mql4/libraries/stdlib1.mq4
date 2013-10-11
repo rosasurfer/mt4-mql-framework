@@ -8980,7 +8980,7 @@ private*/string __DoublesToStr(double values2[][], double values3[][][], string 
 
 
 /**
- * Konvertiert ein Array mit Kursen in einen lesbaren String.
+ * Konvertiert ein Array mit Kursen in einen mit dem aktuellen PriceFormat formatierten String.
  *
  * @param  double values[]
  * @param  string separator - Separator (default: ", ")
@@ -9002,7 +9002,9 @@ string RatesToStr(double values[], string separator=", ") {
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      strings[i] = NumberToStr(values[i], PriceFormat);
+      if (!values[i]) strings[i] = "0";
+      else            strings[i] = NumberToStr(values[i], PriceFormat);
+
       if (StringLen(strings[i]) == 0)
          return("");
    }
@@ -9011,6 +9013,21 @@ string RatesToStr(double values[], string separator=", ") {
    if (StringLen(joined) == 0)
       return("");
    return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Alias
+ *
+ * Konvertiert ein Array mit Kursen in einen mit dem aktuellen PriceFormat formatierten String.
+ *
+ * @param  double values[]
+ * @param  string separator - Separator (default: ", ")
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string PricesToStr(double values[], string separator=", ") {
+   return(RatesToStr(values, separator));
 }
 
 
