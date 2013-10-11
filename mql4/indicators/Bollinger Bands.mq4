@@ -214,7 +214,7 @@ int onInit() {
          double wSum;
          for (int i=0; i < MA.Periods; i++) {
             wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
-            wSum += wALMA[i];
+            wSum    += wALMA[i];
          }
          for (i=0; i < MA.Periods; i++) {
             wALMA[i] /= wSum;                                        // Gewichtungen der einzelnen Bars (Summe = 1)
