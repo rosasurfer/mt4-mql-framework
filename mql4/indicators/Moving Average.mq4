@@ -45,7 +45,7 @@ double bufferMA       [];                       // vollst. Indikator: unsichtbar
 double bufferTrend    [];                       // Trend: +/-         unsichtbar
 double bufferUpTrend  [];                       // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
-double bufferUpTrend_2[];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
+double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
 
 int    ma.periods;
 int    ma.method;
@@ -158,7 +158,7 @@ int onInit() {
    SetIndexBuffer(MovingAverage.MODE_TREND,     bufferTrend    );       // Trend: +/-         unsichtbar
    SetIndexBuffer(MovingAverage.MODE_UPTREND,   bufferUpTrend  );       // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MovingAverage.MODE_DOWNTREND, bufferDownTrend);       // DownTrend-Linie:   sichtbar
-   SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend_2);       // UpTrend-Linie 2:   sichtbar
+   SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend2 );       // UpTrend-Linie 2:   sichtbar
 
    // (2.2) Anzeigeoptionen
    string strTimeframe, strAppliedPrice;
@@ -176,20 +176,13 @@ int onInit() {
 
    // (2.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(MovingAverage.MODE_MA,        startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_TREND,     startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_UPTREND,   startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw);
-   SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw);
-
-   SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal.Bars);
-   SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal.Bars);
-   SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal.Bars);
-   SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_MA,        startDraw); SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_TREND,     startDraw); SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_UPTREND,   startDraw); SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw); SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw); SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal.Bars);
 
    shift.vertical = Shift.Vertical.Pips * Pip;                          // TODO: Digits/Point-Fehler abfangen
-
 
    // (2.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
@@ -248,7 +241,7 @@ int onTick() {
       ArrayInitialize(bufferTrend,               0);
       ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
-      ArrayInitialize(bufferUpTrend_2, EMPTY_VALUE);
+      ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -294,8 +287,8 @@ int onTick() {
       curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
       prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
-      if      (curValue > prevValue) bufferTrend[bar] = MathRound(MathMax(bufferTrend[bar+1], 0) + 1);
-      else if (curValue < prevValue) bufferTrend[bar] = MathRound(MathMin(bufferTrend[bar+1], 0) - 1);
+      if      (curValue > prevValue) bufferTrend[bar] = Max(bufferTrend[bar+1], 0) + 1;
+      else if (curValue < prevValue) bufferTrend[bar] = Min(bufferTrend[bar+1], 0) - 1;
       else                           bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
 
 
@@ -314,8 +307,8 @@ int onTick() {
          if (bufferTrend[bar+1] > 0) {                                  // Wenn vorher Up-Trend...
             bufferDownTrend[bar+1] = bufferMA[bar+1];
             if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {      // ...und Up-Trend nur eine Bar lang war, ...
-               bufferUpTrend_2[bar+2] = bufferMA[bar+2];
-               bufferUpTrend_2[bar+1] = bufferMA[bar+1];                // ... dann Down-Trend mit Up-Trend 2 überlagern.
+               bufferUpTrend2[bar+2] = bufferMA[bar+2];
+               bufferUpTrend2[bar+1] = bufferMA[bar+1];                 // ... dann Down-Trend mit Up-Trend 2 überlagern.
             }
          }
          else {
