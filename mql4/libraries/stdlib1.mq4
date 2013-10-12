@@ -9065,6 +9065,43 @@ string PricesToStr(double values[], string separator=", ") {
 
 
 /**
+ * Konvertiert einen Indikatorbuffer in einen lesbaren String. Ganzzahlige Werte werden als Integer, gebrochene Werte
+ * mit dem aktuellen PriceFormat formatiert.
+ *
+ * @param  double values[]
+ * @param  string separator - Separator (default: ", ")
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string iBufferToStr(double values[], string separator=", ") {
+   if (ArrayDimension(values) > 1)
+      return(_empty(catch("iBufferToStr()   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (size == 0)
+      return("{}");
+
+   if (separator == "0")   // NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      if (!MathModFix(values[i], 1)) strings[i] = DoubleToStr(values[i], 0);
+      else                           strings[i] = NumberToStr(values[i], PriceFormat);
+      if (StringLen(strings[i]) == 0)
+         return("");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (StringLen(joined) == 0)
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
  * Konvertiert ein Array mit Geldbeträgen in einen lesbaren String.
  *
  * @param  double values[]
