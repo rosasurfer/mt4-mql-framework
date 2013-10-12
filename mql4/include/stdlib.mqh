@@ -430,9 +430,9 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
-   int      MovingAverageMethodToId(string method);
-   int      PeriodFlag(int period);
-   int      PeriodToId(string description);  int TimeframeToId(string description);    // Alias
+   int      StrToMovAvgMethod(string method);
+   int      PeriodFlag(int peiod);
+   int      StrToPeriod(string value);  int StrToTimeframe(string value);              // Alias
 
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
@@ -485,15 +485,15 @@
    string   MessageBoxCmdToStr(int cmd);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr      (int type);
-   string   MovingAverageMethodDescription(int method);
-   string   MovingAverageMethodToStr      (int method);
+   string   MovAvgMethodDescription(int method);   string MovingAverageMethodDescription(int method); // Alias
+   string   MovAvgMethodToStr      (int method);   string MovingAverageMethodToStr      (int method); // Alias
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr      (int type);
    string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false);
    string   PeriodFlagToStr(int flag);
-   string   PeriodDescription(int period);      string TimeframeDescription(int timeframe);     // Alias
-   string   PeriodToStr      (int period);      string TimeframeToStr      (int timeframe);     // Alias
+   string   PeriodDescription(int period);         string TimeframeDescription(int timeframe);        // Alias
+   string   PeriodToStr      (int period);         string TimeframeToStr      (int timeframe);        // Alias
    string   ShellExecuteErrorToStr(int error);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);

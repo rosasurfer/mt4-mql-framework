@@ -2840,7 +2840,7 @@ bool ValidateConfiguration(bool interactive) {
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(28)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[1]              = StringTrim(elems[1]);
-            start.trend.timeframe = PeriodToId(elems[1]);
+            start.trend.timeframe = StrToPeriod(elems[1]);
             if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(29)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(30)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2961,7 +2961,7 @@ bool ValidateConfiguration(bool interactive) {
             // value="7XD1"
             if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(56)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             elems[1]             = StringTrim(elems[1]);
-            stop.trend.timeframe = PeriodToId(elems[1]);
+            stop.trend.timeframe = StrToPeriod(elems[1]);
             if (stop.trend.timeframe == -1)            return(_false(ValidateConfig.HandleError("ValidateConfiguration(57)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(58)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));

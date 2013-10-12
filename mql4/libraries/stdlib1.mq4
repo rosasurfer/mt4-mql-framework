@@ -7794,7 +7794,7 @@ int GetLocalToGMTOffset() {
  *
  * @return string
  */
-string MovingAverageMethodToStr(int method) {
+string MovAvgMethodToStr(int method) {
    switch (method) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_EMA : return("MODE_EMA" );
@@ -7802,7 +7802,21 @@ string MovingAverageMethodToStr(int method) {
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   return(_empty(catch("MovingAverageMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("MovAvgMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Alias
+ *
+ * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
+ *
+ * @param  int type - MA-Methode
+ *
+ * @return string
+ */
+string MovingAverageMethodToStr(int method) {
+   return(MovAvgMethodToStr(method));
 }
 
 
@@ -7813,7 +7827,7 @@ string MovingAverageMethodToStr(int method) {
  *
  * @return string
  */
-string MovingAverageMethodDescription(int method) {
+string MovAvgMethodDescription(int method) {
    switch (method) {
       case MODE_SMA : return("SMA" );
       case MODE_EMA : return("EMA" );
@@ -7821,30 +7835,49 @@ string MovingAverageMethodDescription(int method) {
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
    }
-   return(_empty(catch("MovingAverageMethodDescription()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("MovAvgMethodDescription()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Alias
+ *
+ * Gibt die lesbare Beschreibung einer MovingAverage-Methode zurück.
+ *
+ * @param  int type - MA-Methode
+ *
+ * @return string
+ */
+string MovingAverageMethodDescription(int method) {
+   return(MovAvgMethodDescription(method));
 }
 
 
 /**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string method - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA|ALMA]
+ * @param  string value - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA|ALMA]
  *
  * @return int - MA-Konstante oder -1, wenn der Methodenbezeichner unbekannt ist
  */
-int MovingAverageMethodToId(string method) {
-   string value = StringToUpper(method);
+int StrToMovAvgMethod(string value) {
+   string str = StringToUpper(value);
 
-   if (StringStartsWith(value, "MODE_"))
-      value = StringRight(value, -5);
+   if (StringStartsWith(str, "MODE_"))
+      str = StringRight(str, -5);
 
-   if (value == "SMA" ) return(MODE_SMA );
-   if (value == "EMA" ) return(MODE_EMA );
-   if (value == "SMMA") return(MODE_SMMA);
-   if (value == "LWMA") return(MODE_LWMA);
-   if (value == "ALMA") return(MODE_ALMA);
+   if (str ==         "SMA" ) return(MODE_SMA );
+   if (str == ""+ MODE_SMA  ) return(MODE_SMA );
+   if (str ==         "EMA" ) return(MODE_EMA );
+   if (str == ""+ MODE_EMA  ) return(MODE_EMA );
+   if (str ==         "SMMA") return(MODE_SMMA);
+   if (str == ""+ MODE_SMMA ) return(MODE_SMMA);
+   if (str ==         "LWMA") return(MODE_LWMA);
+   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
+   if (str ==         "ALMA") return(MODE_ALMA);
+   if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
-   if (__LOG) log("MovingAverageMethodToId()   invalid parameter method = \""+ method +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("StrToMovAvgMethod()   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -8088,36 +8121,36 @@ string AppliedPriceDescription(int appliedPrice) {
 /**
  * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
  *
- * @param  string sValue - M1, M5, M15, M30 etc.
+ * @param  string value - M1, M5, M15, M30 etc.
  *
  * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
  */
-int PeriodToId(string sValue) {
-   sValue = StringToUpper(sValue);
+int StrToPeriod(string value) {
+   string str = StringToUpper(value);
 
-   if (StringStartsWith(sValue, "PERIOD_"))
-      sValue = StringRight(sValue, -7);
+   if (StringStartsWith(str, "PERIOD_"))
+      str = StringRight(str, -7);
 
-   if (sValue ==           "M1" ) return(PERIOD_M1 );    // 1 minute
-   if (sValue == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
-   if (sValue ==           "M5" ) return(PERIOD_M5 );    // 5 minutes
-   if (sValue == ""+ PERIOD_M5  ) return(PERIOD_M5 );    //
-   if (sValue ==           "M15") return(PERIOD_M15);    // 15 minutes
-   if (sValue == ""+ PERIOD_M15 ) return(PERIOD_M15);    //
-   if (sValue ==           "M30") return(PERIOD_M30);    // 30 minutes
-   if (sValue == ""+ PERIOD_M30 ) return(PERIOD_M30);    //
-   if (sValue ==           "H1" ) return(PERIOD_H1 );    // 1 hour
-   if (sValue == ""+ PERIOD_H1  ) return(PERIOD_H1 );    //
-   if (sValue ==           "H4" ) return(PERIOD_H4 );    // 4 hour
-   if (sValue == ""+ PERIOD_H4  ) return(PERIOD_H4 );    //
-   if (sValue ==           "D1" ) return(PERIOD_D1 );    // 1 day
-   if (sValue == ""+ PERIOD_D1  ) return(PERIOD_D1 );    //
-   if (sValue ==           "W1" ) return(PERIOD_W1 );    // 1 week
-   if (sValue == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
-   if (sValue ==           "MN1") return(PERIOD_MN1);    // 1 month
-   if (sValue == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
+   if (str ==           "M1" ) return(PERIOD_M1 );    // 1 minute
+   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );    //
+   if (str ==           "M5" ) return(PERIOD_M5 );    // 5 minutes
+   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );    //
+   if (str ==           "M15") return(PERIOD_M15);    // 15 minutes
+   if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);    //
+   if (str ==           "M30") return(PERIOD_M30);    // 30 minutes
+   if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);    //
+   if (str ==           "H1" ) return(PERIOD_H1 );    // 1 hour
+   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );    //
+   if (str ==           "H4" ) return(PERIOD_H4 );    // 4 hour
+   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );    //
+   if (str ==           "D1" ) return(PERIOD_D1 );    // 1 day
+   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );    //
+   if (str ==           "W1" ) return(PERIOD_W1 );    // 1 week
+   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
+   if (str ==           "MN1") return(PERIOD_MN1);    // 1 month
+   if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
 
-   if (__LOG) log("PeriodToId()   invalid parameter sValue = \""+ sValue +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("StrToPeriod()   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
@@ -8131,8 +8164,8 @@ int PeriodToId(string sValue) {
  *
  * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
  */
-int TimeframeToId(string timeframe) {
-   return(PeriodToId(timeframe));
+int StrToTimeframe(string timeframe) {
+   return(StrToPeriod(timeframe));
 }
 
 

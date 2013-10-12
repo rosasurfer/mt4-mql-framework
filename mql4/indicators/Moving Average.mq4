@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Multi-Timeframe Moving Averages
+ * Multi-Color/Multi-Timeframe Moving Average
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
 extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe          = "";                            // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.Method             = "SMA | EMA | SMMA | LWMA | ALMA*";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
@@ -64,8 +64,9 @@ int onInit() {
    // (1) Validierung
    // MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "") int ma.timeframe = Period();
-   else                        ma.timeframe = PeriodToId(MA.Timeframe);
+   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
+   if (MA.Timeframe == ""       ) int ma.timeframe = Period();
+   else                               ma.timeframe = StrToPeriod(MA.Timeframe);
    if (ma.timeframe == -1)             return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // MA.Periods

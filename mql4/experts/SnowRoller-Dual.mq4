@@ -2898,7 +2898,7 @@ bool ValidateConfiguration(bool interactive) {
       // value="7XD1"
       if (Explode(value, "X", elems, NULL) != 2) return(_false(ValidateConfig.HandleError("ValidateConfiguration(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       elems[1]              = StringTrim(elems[1]);
-      start.trend.timeframe = PeriodToId(elems[1]);
+      start.trend.timeframe = StrToPeriod(elems[1]);
       if (start.trend.timeframe == -1)           return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       value = StringTrim(elems[0]);
       if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(21)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
