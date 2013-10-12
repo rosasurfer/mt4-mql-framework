@@ -468,6 +468,7 @@
    string   OperationTypesToStr(int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
    string   DoublesToStr    (double array[], string separator);
+   string   iBufferToStr    (double array[], string separator);
    string   MoneysToStr     (double array[], string separator);
    string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
    string   StringsToStr    (string array[], string separator);
