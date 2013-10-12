@@ -27,7 +27,7 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
 extern string MA.Periods        = "200";                             // averaging periods
-extern string MA.Timeframe      = "";                                // averaging timeframe [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.Timeframe      = "current";                         // averaging timeframe [M1|M5|M15|...], "" = aktueller Timeframe
 extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
@@ -74,8 +74,9 @@ int onInit() {
    // (1) Validierung
    // MA.Timeframe (zuerst, da Gültigkeit von MA.Periods davon abhängt)
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "") int ma.timeframe = Period();
-   else                        ma.timeframe = PeriodToId(MA.Timeframe);
+   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
+   if (MA.Timeframe == ""       ) int ma.timeframe = Period();
+   else                               ma.timeframe = StrToPeriod(MA.Timeframe);
    if (ma.timeframe == -1)             return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // MA.Periods

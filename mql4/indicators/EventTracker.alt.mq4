@@ -69,7 +69,7 @@ int onInit() {
    if (Track.MovingAverage) {
       // MovingAverage.Timeframe zuerst, da Gültigkeit von Periods davon abhängt
       string strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Timeframe", MovingAverage.Timeframe);
-      MovingAverage.Timeframe = PeriodToId(strValue);
+      MovingAverage.Timeframe = StrToPeriod(strValue);
       if (MovingAverage.Timeframe == -1)               Track.MovingAverage = _false(catch("onInit(2)   invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
@@ -78,7 +78,7 @@ int onInit() {
    if (Track.MovingAverage) {
       // MovingAverage.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Method", MovingAverageMethodDescription(MovingAverage.Method));
-      MovingAverage.Method = MovingAverageMethodToId(strValue);
+      MovingAverage.Method = StrToMovAvgMethod(strValue);
       if (MovingAverage.Method == -1)                  Track.MovingAverage = _false(catch("onInit(4)   invalid config value [EventTracker."+ StdSymbol() +"] MovingAverage.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
@@ -117,14 +117,14 @@ int onInit() {
    if (Track.BollingerBands) {
       // BollingerBands.MA.Timeframe
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
-      BollingerBands.MA.Timeframe = PeriodToId(strValue);
+      BollingerBands.MA.Timeframe = StrToPeriod(strValue);
       if (BollingerBands.MA.Timeframe == -1)           Track.BollingerBands = _false(catch("onInit(8)   invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       if (BollingerBands.MA.Timeframe == PERIOD_MN1)   Track.BollingerBands = _false(catch("onInit(9)   unsupported config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
-      BollingerBands.MA.Method = MovingAverageMethodToId(strValue);
+      BollingerBands.MA.Method = StrToMovAvgMethod(strValue);
       if (BollingerBands.MA.Method == -1)              Track.BollingerBands = _false(catch("onInit(10)   invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {

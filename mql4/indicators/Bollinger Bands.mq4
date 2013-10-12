@@ -1,23 +1,14 @@
 /**
  * Bollinger-Bands-Indikator
  *
- * Es können zwei MA-Methoden und zwei Multiplikatoren für die Standardabweichung angegeben werden (mit Komma getrennt). Die resultierenden vier Bänder
- * werden als zwei Histogramme gezeichnet.
- *
- * Im Falle einer Normalverteilung können folgenden Daumenregeln angewendet werden:
- *
- * (MA ± 1 * StdDev) enthält ungefähr 70% aller Beobachtungen
- * (MA ± 2 * StdDev) enthält ungefähr 95% aller Beobachtungen
- * (MA ± 3 * StdDev) enthält mehr als 99% aller Beobachtungen
- *
- * @see http://www.statistics4u.info/fundstat_germ/cc_standarddev.html
+ * Es können ein oder zwei MA-Methoden mit jeweils eigenem Multiplikator für die Standardabweichung angegeben werden. Im Falle von 2 MA-Methoden werden die
+ * resultierenden vier Bänder als Histogramme gezeichnet.
  *
  *
- * Zu den verschiedenen Berechnungsmethoden:
- * -----------------------------------------
- * - Default ist PRICE_CLOSE. Die Ergebnisse von stdDev(PRICE_CLOSE) und stdDev(PRICE_MEDIAN) stimmen nahezu 100%ig überein.
- * - stdDev(PRICE_HIGH|PRICE_LOW) wäre die technisch exakter Methode, müßte aber für jede Bar manuell implementiert werden und ist am langsamsten.
- * - Es gilt: 1.65 * stdDev(PRICE_CLOSE) entspricht ca. 1.4 * stdDev(PRICE_HIGH|PRICE_LOW) (Übereinstimmung von 90-95%)
+ * Zum verwendeten Preis:
+ * ----------------------
+ *  - Default ist StdDev(PRICE_CLOSE). Technisch exakter wäre StdDev(PRICE_HIGH|PRICE_LOW), die Berechnung müßte jedoch manuell durchgeführt werden und ist langsam.
+ *  - 1.65 * StdDev(PRICE_CLOSE) entspricht ca. 1.4 * StdDev(PRICE_HIGH|PRICE_LOW) mit einer Übereinstimmung von 90-95%
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -27,12 +18,12 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
 extern int    MA.Periods        = 200;                               // Anzahl der zu verwendenden Perioden
-extern string MA.Timeframe      = "";                                // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
-extern string MA.Methods        = "SMA";                             // ein oder zwei MA-Methoden
+extern string MA.Timeframe      = "current";                         // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
+extern string MA.Methods        = "SMA";                             // ein/zwei MA-Methoden (komma-getrennt)
 extern string MA.Methods.Help   = "SMA | EMA | SMMA | LWMA | ALMA";
-extern string AppliedPrice      = "Close";                           // price used for MA calculation: Median=(H+L)/2, Typical=(H+L+C)/3, Weighted=(H+L+C+C)/4
+extern string AppliedPrice      = "Close";                           // Preis zur MA- und StdDev-Berechnung
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
-extern string Deviations        = "2.0";                             // ein oder zwei Multiplikatoren für die Std.-Abweichung
+extern string Deviations        = "2.0";                             // ein/zwei Multiplikatoren für die Std.-Abweichung (komma-getrennt)
 extern int    Max.Values        = 4000;                              // Anzahl der maximal anzuzeigenden Werte: -1 = alle
 extern color  Color.Bands       = RoyalBlue;                         // Farbe hier konfigurieren, damit Code zur Laufzeit Zugriff hat
 
@@ -67,8 +58,9 @@ int onInit() {
 
    // MA.Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
-   if (MA.Timeframe == "") int maTimeframe = Period();
-   else                        maTimeframe = PeriodToId(MA.Timeframe);
+   if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
+   if (MA.Timeframe == ""       ) int maTimeframe = Period();
+   else                               maTimeframe = StrToPeriod(MA.Timeframe);
    if (maTimeframe == -1)             return(catch("onInit(2)   Invalid config/input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA.Methods
