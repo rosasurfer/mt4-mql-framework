@@ -318,8 +318,8 @@ int      last_error;                                        // der letzte Fehler
 #define BUFFER_7          BUFFER_INDEX_6
 #define BUFFER_8          BUFFER_INDEX_7
 
-#define MovingAverage.MODE_MA          0        // Wert
-#define MovingAverage.MODE_TREND       1        // Trend
+#define MovingAverage.MODE_MA          0        // Wert des MA's
+#define MovingAverage.MODE_TREND       1        // Trend des MA's
 
 
 // EXECUTION_CONTEXT element identifiers
