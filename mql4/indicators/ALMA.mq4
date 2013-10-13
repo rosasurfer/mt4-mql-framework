@@ -130,18 +130,15 @@ int onInit() {
    }
    else strValue = StringTrim(MA.AppliedPrice);
 
-   if (StringLen(strValue) >= 0) {
-      string char = StringToUpper(StringLeft(strValue, 1));
-      if      (char == "O") ma.appliedPrice = PRICE_OPEN;
-      else if (char == "H") ma.appliedPrice = PRICE_HIGH;
-      else if (char == "L") ma.appliedPrice = PRICE_LOW;
-      else if (char == "C") ma.appliedPrice = PRICE_CLOSE;
-      else if (char == "M") ma.appliedPrice = PRICE_MEDIAN;
-      else if (char == "T") ma.appliedPrice = PRICE_TYPICAL;
-      else if (char == "W") ma.appliedPrice = PRICE_WEIGHTED;
-      else return(catch("onInit(7)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   }
-   else ma.appliedPrice = PRICE_CLOSE;                                  // Default bei fehlendem Parameter
+   string char = StringToUpper(StringLeft(strValue, 1));
+   if      (char == "O") ma.appliedPrice = PRICE_OPEN;
+   else if (char == "H") ma.appliedPrice = PRICE_HIGH;
+   else if (char == "L") ma.appliedPrice = PRICE_LOW;
+   else if (char == "C") ma.appliedPrice = PRICE_CLOSE;
+   else if (char == "M") ma.appliedPrice = PRICE_MEDIAN;
+   else if (char == "T") ma.appliedPrice = PRICE_TYPICAL;
+   else if (char == "W") ma.appliedPrice = PRICE_WEIGHTED;
+   else                                return(catch("onInit(7)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = AppliedPriceDescription(ma.appliedPrice);
 
    // Max.Values
