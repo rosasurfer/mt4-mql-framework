@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 
 extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method             = "SMA | EMA | SMMA | LWMA | ALMA*";
+extern string MA.Method             = "ALMA* | SMA | EMA | SMMA | LWMA | TMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
@@ -30,29 +30,37 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 #define MovingAverage.MODE_UPTREND     2        // Bei Unterbrechung eines Down-Trends um eine einzige Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
 #define MovingAverage.MODE_DOWNTREND   3        // verdeckt. Um solche kurzfristigen Up-Trends sichtbar zu machen, werden sie im Buffer MODE_UPTREND2 gespeichert, der
 #define MovingAverage.MODE_UPTREND2    4        // MODE_DOWNTREND überlagert.
+#define MovingAverage.MODE_TMASMA      5        // TMA-Hilfsbuffer zum Speichern von Zwischenergebnissen
 
 #property indicator_chart_window
 
-#property indicator_buffers 5
+#property indicator_buffers 6
 
 #property indicator_width1  0
 #property indicator_width2  0
 #property indicator_width3  2
 #property indicator_width4  2
 #property indicator_width5  2
+#property indicator_width6  0
 
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
 double bufferTrend    [];                       // Trend: +/-         unsichtbar
 double bufferUpTrend  [];                       // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
 double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
+double bufferTmaSma   [];                       // TMA-Hilfsbuffer:   unsichtbar
 
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
-double wALMA[];                                 // Gewichtungen der einzelnen Bars eines ALMA
+
+double alma.weights[];                          // Gewichtungen der einzelnen Bars eines ALMA
+
+int    tma.sma1.periods;                        // Periode des ersten SMA eines TMA
+int    tma.sma2.periods;                        // Periode des zweiten SMA eines TMA
+
 double shift.vertical;
-string legendLabel, indicatorDescription;
+string legendLabel, iDescription;
 
 
 /**
@@ -62,14 +70,14 @@ string legendLabel, indicatorDescription;
  */
 int onInit() {
    // (1) Validierung
-   // MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
+   // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int ma.timeframe = Period();
    else                               ma.timeframe = StrToPeriod(MA.Timeframe);
    if (ma.timeframe == -1)             return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
-   // MA.Periods
+   // (1.2) MA.Periods
    string strValue = StringTrim(MA.Periods);
    if (!StringIsNumeric(strValue))     return(catch("onInit(2)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    double dValue = StrToDouble(strValue);
@@ -102,33 +110,18 @@ int onInit() {
    }
    MA.Periods = strValue;
 
-   // MA.Method
+   // (1.3) MA.Method
    string elems[];
    if (Explode(MA.Method, "*", elems, 2) > 1) {
       int size = Explode(elems[0], "|", elems, NULL);
       strValue = elems[size-1];
    }
    else strValue = MA.Method;
-   strValue = StringToUpper(StringTrim(strValue));
-   if      (strValue==        "SMA"
-         || strValue==   "MODE_SMA"
-         || strValue==""+ MODE_SMA)  ma.method = MODE_SMA;              // Es werden jeweils kurzer Name, langer Name oder numerische Darstellung akzeptiert.
-   else if (strValue==        "EMA"
-         || strValue==   "MODE_EMA"
-         || strValue==""+ MODE_EMA)  ma.method = MODE_EMA;
-   else if (strValue==        "SMMA"
-         || strValue==   "MODE_SMMA"
-         || strValue==""+ MODE_SMMA) ma.method = MODE_SMMA;
-   else if (strValue==        "LWMA"
-         || strValue==   "MODE_LWMA"
-         || strValue==""+ MODE_LWMA) ma.method = MODE_LWMA;
-   else if (strValue==        "ALMA"
-         || strValue==   "MODE_ALMA"
-         || strValue==""+ MODE_ALMA) ma.method = MODE_ALMA;
-   else                                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   MA.Method = MovingAverageMethodDescription(ma.method);
+   ma.method = StrToMovAvgMethod(strValue);
+   if (ma.method == -1)                return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   MA.Method = MovAvgMethodDescription(ma.method);
 
-   // MA.AppliedPrice
+   // (1.4) MA.AppliedPrice
    if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
       size     = Explode(elems[0], "|", elems, NULL);
       strValue = StringTrim(elems[size-1]);
@@ -146,65 +139,74 @@ int onInit() {
    else                                return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = AppliedPriceDescription(ma.appliedPrice);
 
-   // Max.Values
+   // (1.5) Max.Values
    if (Max.Values < -1)                return(catch("onInit(9)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
 
-   // (2.1) Bufferverwaltung
+   // (2) Chart-Legende erzeugen
+   string strTimeframe, strAppliedPrice;
+   if (MA.Timeframe != "")             strTimeframe    = StringConcatenate("x", MA.Timeframe);
+   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(ma.appliedPrice));
+   iDescription = StringConcatenate(MA.Method, "(", MA.Periods, strTimeframe, strAppliedPrice, ")");
+   legendLabel  = CreateLegendLabel(iDescription);
+   PushObject(legendLabel);
+
+
+   // (3) ALMA-Gewichtungen berechnen
+   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {               // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+      ArrayResize(alma.weights, ma.periods);
+      double wSum, gaussianOffset=0.85, sigma=6.0;
+      double m = MathRound(gaussianOffset * (ma.periods-1));
+      double s = ma.periods/sigma;
+      for (int i=0; i < ma.periods; i++) {
+         alma.weights[i] = MathExp(-(i-m)*(i-m)/(2*s*s));
+         wSum           += alma.weights[i];
+      }
+      for (i=0; i < ma.periods; i++) {
+         alma.weights[i] /= wSum;                                       // Summe aller Bars = 1 (100%)
+      }
+      ReverseDoubleArray(alma.weights);                                 // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
+   }
+
+
+   // (4) TMA-Subperioden berechnen
+   if (ma.method==MODE_TMA) {
+      tma.sma1.periods = ma.periods/2;                                  // (int)
+      tma.sma2.periods = ma.periods - tma.sma1.periods;
+   }
+
+
+   // (5.1) Bufferverwaltung
    SetIndexBuffer(MovingAverage.MODE_MA,        bufferMA       );       // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
    SetIndexBuffer(MovingAverage.MODE_TREND,     bufferTrend    );       // Trend: +/-         unsichtbar
    SetIndexBuffer(MovingAverage.MODE_UPTREND,   bufferUpTrend  );       // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MovingAverage.MODE_DOWNTREND, bufferDownTrend);       // DownTrend-Linie:   sichtbar
    SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend2 );       // UpTrend-Linie 2:   sichtbar
+   SetIndexBuffer(MovingAverage.MODE_TMASMA,    bufferTmaSma   );       // TMA-Hilfsbuffer:   unsichtbar
 
-   // (2.2) Anzeigeoptionen
-   string strTimeframe, strAppliedPrice;
-   if (MA.Timeframe != "")             strTimeframe    = StringConcatenate("x", MA.Timeframe);
-   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", AppliedPriceDescription(ma.appliedPrice));
-   indicatorDescription = StringConcatenate(MA.Method, "(", MA.Periods, strTimeframe, strAppliedPrice, ")");
-
-   IndicatorShortName(indicatorDescription);
-   SetIndexLabel(MovingAverage.MODE_MA,        indicatorDescription);   // Anzeige im "Data Window"
+   // (5.2) Anzeigeoptionen
+   IndicatorShortName(iDescription);
+   SetIndexLabel(MovingAverage.MODE_MA,        iDescription);           // Anzeige im "Data Window"
    SetIndexLabel(MovingAverage.MODE_TREND,     NULL);
    SetIndexLabel(MovingAverage.MODE_UPTREND,   NULL);
    SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL);
    SetIndexLabel(MovingAverage.MODE_UPTREND2,  NULL);
+   SetIndexLabel(MovingAverage.MODE_TMASMA,    NULL);
    IndicatorDigits(SubPipDigits);
 
-   // (2.3) Zeichenoptionen
+   // (5.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(MovingAverage.MODE_MA,        startDraw); SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MovingAverage.MODE_TREND,     startDraw); SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_MA,        0        ); SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_TREND,     0        ); SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal.Bars);
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND,   startDraw); SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal.Bars);
    SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw); SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal.Bars);
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw); SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MovingAverage.MODE_TMASMA,    0        ); SetIndexShift(MovingAverage.MODE_TMASMA,    Shift.Horizontal.Bars);
 
    shift.vertical = Shift.Vertical.Pips * Pip;                          // TODO: Digits/Point-Fehler abfangen
 
-   // (2.4) Styles
+   // (5.4) Styles
    SetIndicatorStyles();                                                // Workaround um diverse Terminalbugs (siehe dort)
-
-
-   // (3) Chart-Legende erzeugen
-   legendLabel = CreateLegendLabel(indicatorDescription);
-   PushObject(legendLabel);
-
-
-   // (4) ALMA-Gewichtungen berechnen
-   if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {               // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      ArrayResize(wALMA, ma.periods);
-      double wSum, gaussianOffset=0.85, sigma=6.0;
-      double m = MathRound(gaussianOffset * (ma.periods-1));
-      double s = ma.periods/sigma;
-      for (int i=0; i < ma.periods; i++) {
-         wALMA[i] = MathExp(-(i-m)*(i-m)/(2*s*s));
-         wSum += wALMA[i];
-      }
-      for (i=0; i < ma.periods; i++) {
-         wALMA[i] /= wSum;                                              // Summe aller Bars = 1 (100%)
-      }
-      ReverseDoubleArray(wALMA);                                        // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
-   }
 
    return(catch("onInit(10)"));
 }
@@ -239,6 +241,7 @@ int onTick() {
       ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
+      ArrayInitialize(bufferTmaSma,    EMPTY_VALUE);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -250,7 +253,6 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
-
    if (startBar < 0) {
       if (Indicator.IsSuperContext())
          return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
@@ -258,29 +260,39 @@ int onTick() {
    }
 
 
-   double curValue, prevValue;
-
+   double curValue, prevValue;                                          // 2 Schleifen, damit iMAOnArray() nicht bei jedem Durchlauf auf das geänderte
+                                                                        // Ausgangsarray mit einer kompletten Neuberechnung des MA's reagiert.
 
    // (2) ungültige Bars neuberechnen
-   for (int i, bar=startBar; bar >= 0; bar--) {
-      // (2.1) der eigentliche Moving Average
-      if (ma.method != MODE_ALMA) {
-         bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
+   if (ma.method == MODE_TMA) {
+      // (2.1) TMA: erster SMA
+      int smaStartBar = Min(ChangedBars-1, Bars-tma.sma1.periods);
+      for (int bar=smaStartBar; bar >= 0; bar--) {
+         bufferTmaSma[bar] = iMA(NULL, NULL, tma.sma1.periods, 0, MODE_SMA, ma.appliedPrice, bar);
       }
-      else {
+   }
+   for (bar=startBar; bar >= 0; bar--) {
+      // (2.2) der eigentliche Moving Average
+      if (ma.method == MODE_ALMA) {
          bufferMA[bar] = 0;                                             // ALMA
          switch (ma.appliedPrice) {                                     // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
-            case PRICE_CLOSE: for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            Close[bar+i]; break;
-            case PRICE_OPEN : for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            Open [bar+i]; break;
-            case PRICE_HIGH : for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            High [bar+i]; break;
-            case PRICE_LOW  : for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] *                                            Low  [bar+i]; break;
-            default:          for (i=0; i < ma.periods; i++) bufferMA[bar] += wALMA[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
+            case PRICE_CLOSE: for (int i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Close[bar+i]; break;
+            case PRICE_OPEN : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Open [bar+i]; break;
+            case PRICE_HIGH : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            High [bar+i]; break;
+            case PRICE_LOW  : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Low  [bar+i]; break;
+            default:          for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
+      }
+      else if (ma.method == MODE_TMA) {                                 // TMA
+         bufferMA[bar] = iMAOnArray(bufferTmaSma, WHOLE_ARRAY, tma.sma2.periods, 0, MODE_SMA, bar);
+      }
+      else {                                                            // alle übrigen MA-Types
+         bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
       }
       bufferMA[bar] += shift.vertical;
 
 
-      // (2.2) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
+      // (2.3) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
       curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
       prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
@@ -289,7 +301,7 @@ int onTick() {
       else                           bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
 
 
-      // (2.3) Trend coloring
+      // (2.4) Trend coloring
       if (bufferTrend[bar] > 0) {
          bufferUpTrend  [bar] = bufferMA[bar];
          bufferDownTrend[bar] = EMPTY_VALUE;
@@ -331,7 +343,7 @@ int onTick() {
    // (3.2) Legende: bei Wertänderung Wert aktualisieren
    if (NE(curValue, lastValue)) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(indicatorDescription, "    ", NumberToStr(curValue, SubPipPriceFormat)),
+                    StringConcatenate(iDescription, "    ", NumberToStr(curValue, SubPipPriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
    lastValue = curValue;
@@ -350,6 +362,7 @@ void SetIndicatorStyles() {
    SetIndexStyle(MovingAverage.MODE_UPTREND,   DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(MovingAverage.MODE_DOWNTREND, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
    SetIndexStyle(MovingAverage.MODE_UPTREND2,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MovingAverage.MODE_TMASMA,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
 }
 
 
