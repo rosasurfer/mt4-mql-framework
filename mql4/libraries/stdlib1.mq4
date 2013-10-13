@@ -7801,6 +7801,7 @@ string MovAvgMethodToStr(int method) {
       case MODE_SMMA: return("MODE_SMMA");
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
+      case MODE_TMA : return("MODE_TMA" );
    }
    return(_empty(catch("MovAvgMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -7834,6 +7835,7 @@ string MovAvgMethodDescription(int method) {
       case MODE_SMMA: return("SMMA");
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
+      case MODE_TMA : return("TMA" );
    }
    return(_empty(catch("MovAvgMethodDescription()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -7856,12 +7858,12 @@ string MovingAverageMethodDescription(int method) {
 /**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string value - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA|ALMA]
+ * @param  string value - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA|ALMA|TMA]
  *
  * @return int - MA-Konstante oder -1, wenn der Methodenbezeichner unbekannt ist
  */
 int StrToMovAvgMethod(string value) {
-   string str = StringToUpper(value);
+   string str = StringToUpper(StringTrim(value));
 
    if (StringStartsWith(str, "MODE_"))
       str = StringRight(str, -5);
@@ -7876,6 +7878,8 @@ int StrToMovAvgMethod(string value) {
    if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
+   if (str ==         "TMA" ) return(MODE_TMA );
+   if (str == ""+ MODE_TMA  ) return(MODE_TMA );
 
    if (__LOG) log("StrToMovAvgMethod()   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
@@ -8126,7 +8130,7 @@ string AppliedPriceDescription(int appliedPrice) {
  * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
  */
 int StrToPeriod(string value) {
-   string str = StringToUpper(value);
+   string str = StringToUpper(StringTrim(value));
 
    if (StringStartsWith(str, "PERIOD_"))
       str = StringRight(str, -7);

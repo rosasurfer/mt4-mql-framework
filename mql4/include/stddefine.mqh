@@ -279,6 +279,7 @@ int      last_error;                                        // der letzte Fehler
 #define MODE_SMMA                      2        // smoothed moving average
 #define MODE_LWMA                      3        // linear weighted moving average
 #define MODE_ALMA                      4        // Arnaud Legoux moving average
+#define MODE_TMA                       5        // triangular moving average
 
 
 // Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
