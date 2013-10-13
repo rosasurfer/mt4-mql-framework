@@ -26,15 +26,15 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string MA.Periods        = "200";                             // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern string MA.Timeframe      = "current";                         // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
+extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
+extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern double GaussianOffset    = 0.85;                              // Gaussian distribution offset (0..1)
-extern double Sigma             = 6.0;                               // Sigma parameter
+extern double GaussianOffset        = 0.85;                          // Gaussian distribution offset (0..1)
+extern double Sigma                 = 6.0;                           // Sigma parameter
 
-extern color  Color.UpTrend     = DodgerBlue;                        // Farbverwaltung hier, damit Code Zugriff hat
-extern color  Color.DownTrend   = Orange;
+extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
+extern color  Color.DownTrend       = Orange;
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 
