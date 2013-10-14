@@ -10,13 +10,13 @@ int __DEINIT_FLAGS__[];
 
 extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method             = "ALMA* | SMA | EMA | SMMA | LWMA | TMA";
+extern string MA.Method             = "ALMA | SMA | EMA | SMMA | LWMA | TMA*";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Orange;
 
-extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
+extern int    Max.Values            = 500;                          // 2000 Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
 
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
@@ -57,6 +57,7 @@ int    ma.appliedPrice;
 double alma.weights[];                          // Gewichtungen der einzelnen Bars eines ALMA
 
 int    tma.sma1.periods;                        // Periode des ersten SMA eines TMA
+int    tma.sma1.maxValues;
 int    tma.sma2.periods;                        // Periode des zweiten SMA eines TMA
 
 double shift.vertical;
@@ -152,7 +153,7 @@ int onInit() {
    PushObject(legendLabel);
 
 
-   // (3) ALMA-Gewichtungen berechnen
+   // (3) ggf. ALMA-Gewichtungen berechnen
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {               // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(alma.weights, ma.periods);
       double wSum, gaussianOffset=0.85, sigma=6.0;
@@ -169,10 +170,11 @@ int onInit() {
    }
 
 
-   // (4) TMA-Subperioden berechnen
+   // (4) ggf. TMA-Subperioden berechnen
    if (ma.method==MODE_TMA) {
-      tma.sma1.periods = ma.periods/2;                                  // (int)
-      tma.sma2.periods = ma.periods - tma.sma1.periods;
+      tma.sma1.periods   = ma.periods/2;                                // (int)
+      tma.sma1.maxValues = Max.Values + tma.sma1.periods;
+      tma.sma2.periods   = ma.periods - tma.sma1.periods;
    }
 
 
@@ -250,10 +252,11 @@ int onTick() {
 
 
    // (1) Startbar der Berechnung ermitteln
-   if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
-      ChangedBars = Max.Values;
-   int startBar = Min(ChangedBars-1, Bars-ma.periods);
-   if (startBar < 0) {
+   int ma.ChangedBars = ChangedBars;
+   if (ma.ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
+      ma.ChangedBars = Max.Values;
+   int ma.startBar = Min(ma.ChangedBars-1, Bars-ma.periods);
+   if (ma.startBar < 0) {
       if (Indicator.IsSuperContext())
          return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
@@ -266,12 +269,16 @@ int onTick() {
    // (2) ungültige Bars neuberechnen
    if (ma.method == MODE_TMA) {
       // (2.1) TMA: erster SMA
-      int smaStartBar = Min(ChangedBars-1, Bars-tma.sma1.periods);
-      for (int bar=smaStartBar; bar >= 0; bar--) {
+      int sma.ChangedBars = ChangedBars;
+      if (sma.ChangedBars > tma.sma1.maxValues) /*&&*/ if (Max.Values >= 0)
+         sma.ChangedBars = tma.sma1.maxValues;
+      int sma.startBar = Min(sma.ChangedBars-1, Bars-tma.sma1.periods);
+
+      for (int bar=sma.startBar; bar >= 0; bar--) {
          bufferTmaSma[bar] = iMA(NULL, NULL, tma.sma1.periods, 0, MODE_SMA, ma.appliedPrice, bar);
       }
    }
-   for (bar=startBar; bar >= 0; bar--) {
+   for (bar=ma.startBar; bar >= 0; bar--) {
       // (2.2) der eigentliche Moving Average
       if (ma.method == MODE_ALMA) {                                     // ALMA
          bufferMA[bar] = 0;
