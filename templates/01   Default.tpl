@@ -8773,7 +8773,7 @@ window_num=0
 Periods=200
 </inputs>
 </expert>
-period_flags=0
+period_flags=31
 show_data=0
 </indicator>
 
