@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Multi-Timeframe Moving Average
+ * Multi-Color/Timeframe Moving Average
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -273,20 +273,16 @@ int onTick() {
    }
    for (bar=startBar; bar >= 0; bar--) {
       // (2.2) der eigentliche Moving Average
-      if (ma.method == MODE_ALMA) {
-         bufferMA[bar] = 0;                                             // ALMA
-         switch (ma.appliedPrice) {                                     // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
-            case PRICE_CLOSE: for (int i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Close[bar+i]; break;
-            case PRICE_OPEN : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Open [bar+i]; break;
-            case PRICE_HIGH : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            High [bar+i]; break;
-            case PRICE_LOW  : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Low  [bar+i]; break;
-            default:          for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
+      if (ma.method == MODE_ALMA) {                                     // ALMA
+         bufferMA[bar] = 0;
+         for (int i=0; i < ma.periods; i++) {
+            bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
          }
       }
       else if (ma.method == MODE_TMA) {                                 // TMA
          bufferMA[bar] = iMAOnArray(bufferTmaSma, WHOLE_ARRAY, tma.sma2.periods, 0, MODE_SMA, bar);
       }
-      else {                                                            // alle übrigen MA-Types
+      else {                                                            // alle übrigen MA's
          bufferMA[bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar);
       }
       bufferMA[bar] += shift.vertical;

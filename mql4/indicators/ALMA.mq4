@@ -269,15 +269,10 @@ int onTick() {
    // (2) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
       // (2.1) der eigentliche Moving Average
-      bufferMA[bar] = 0;
-      switch (ma.appliedPrice) {                                        // der am häufigsten verwendete Fall (Close) wird zuerst geprüft
-         case PRICE_CLOSE: for (int i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Close[bar+i]; break;
-         case PRICE_OPEN : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Open [bar+i]; break;
-         case PRICE_HIGH : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            High [bar+i]; break;
-         case PRICE_LOW  : for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] *                                            Low  [bar+i]; break;
-         default:          for (    i=0; i < ma.periods; i++) bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
+      bufferMA[bar] = shift.vertical;
+      for (int i=0; i < ma.periods; i++) {
+         bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
       }
-      bufferMA[bar] += shift.vertical;
 
 
       // (2.2) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
