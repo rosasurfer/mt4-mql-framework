@@ -236,32 +236,32 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Operation-Types, siehe OrderType()
-#define OP_UNDEFINED               -1           // custom: Default-Wert für nicht initialisierte Variable
-#define OP_BUY                      0           // long position
-#define OP_LONG                OP_BUY
-#define OP_SELL                     1           // short position
-#define OP_SHORT              OP_SELL
-#define OP_BUYLIMIT                 2           // buy limit order
-#define OP_SELLLIMIT                3           // sell limit order
-#define OP_BUYSTOP                  4           // stop buy order
-#define OP_SELLSTOP                 5           // stop sell order
-#define OP_BALANCE                  6           // account debit or credit transaction
-#define OP_CREDIT                   7           // margin credit facility (no transaction)
-#define OP_TRANSFER                 8           // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
-#define OP_VENDOR                   9           // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
+#define OP_UNDEFINED                  -1        // custom: Default-Wert für nicht initialisierte Variable
+#define OP_BUY                         0        // long position
+#define OP_LONG                   OP_BUY
+#define OP_SELL                        1        // short position
+#define OP_SHORT                 OP_SELL
+#define OP_BUYLIMIT                    2        // buy limit order
+#define OP_SELLLIMIT                   3        // sell limit order
+#define OP_BUYSTOP                     4        // stop buy order
+#define OP_SELLSTOP                    5        // stop sell order
+#define OP_BALANCE                     6        // account debit or credit transaction
+#define OP_CREDIT                      7        // margin credit facility (no transaction)
+#define OP_TRANSFER                    8        // custom: OP_BALANCE initiiert durch Kunden (Ein-/Auszahlung)
+#define OP_VENDOR                      9        // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
 
 
 // Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
-#define OFLAG_CURRENTSYMBOL         1           // order of current symbol (active chart)
-#define OFLAG_BUY                   2           // long order
-#define OFLAG_SELL                  4           // short order
-#define OFLAG_MARKETORDER           8           // market order
-#define OFLAG_PENDINGORDER         16           // pending order (Limit- oder Stop-Order)
+#define OFLAG_CURRENTSYMBOL            1        // order of current symbol (active chart)
+#define OFLAG_BUY                      2        // long order
+#define OFLAG_SELL                     4        // short order
+#define OFLAG_MARKETORDER              8        // market order
+#define OFLAG_PENDINGORDER            16        // pending order (Limit- oder Stop-Order)
 
 
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop() etc.
-#define O_PUSH                      1
-#define O_POP                       2
+#define O_PUSH                         1
+#define O_POP                          2
 
 
 // Series array identifier, siehe ArrayCopySeries(), iLowest(), iHighest()
@@ -327,6 +327,10 @@ int      last_error;                                        // der letzte Fehler
 
 #define MovingAverage.MODE_MA          0        // Wert des MA's
 #define MovingAverage.MODE_TREND       1        // Trend des MA's
+
+#define Bands.MODE_MAIN       MODE_MAIN         // base indicator line (i.d.R. Moving Average)
+#define Bands.MODE_UPPER      MODE_UPPER        // oberes Band
+#define Bands.MODE_LOWER      MODE_LOWER        // unteres Band
 
 
 // EXECUTION_CONTEXT element identifiers
