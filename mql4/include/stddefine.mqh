@@ -282,6 +282,12 @@ int      last_error;                                        // der letzte Fehler
 #define MODE_TMA                       5        // triangular moving average
 
 
+// Band method identifiers, siehe Bands.mq4
+#define MODE_STDDEV                    0        // standard deviation
+#define MODE_ENV                       1        // envelopes
+#define MODE_ATR                       2        // average true range
+
+
 // Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
 #define MODE_MAIN                      0        // base indicator line
 #define MODE_SIGNAL                    1        // signal line
@@ -385,15 +391,15 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Price identifiers, siehe iMA() etc.
-#define PRICE_CLOSE                    0        // close price:          C
-#define PRICE_OPEN                     1        // open price:           O
-#define PRICE_HIGH                     2        // high price:           H
-#define PRICE_LOW                      3        // low price:            L
-#define PRICE_MEDIAN                   4        // median price:         (H+L)/2
-#define PRICE_TYPICAL                  5        // typical price:        (H+L+C)/3
-#define PRICE_WEIGHTED                 6        // weighted close price: (H+L+C+C)/4
-#define PRICE_BID                      7        // bid price:            Bid
-#define PRICE_ASK                      8        // ask price:            Ask
+#define PRICE_CLOSE                    0        // C
+#define PRICE_OPEN                     1        // O
+#define PRICE_HIGH                     2        // H
+#define PRICE_LOW                      3        // L
+#define PRICE_MEDIAN                   4        // (H+L)/2
+#define PRICE_TYPICAL                  5        // (H+L+C)/3
+#define PRICE_WEIGHTED                 6        // (H+L+C+C)/4
+#define PRICE_BID                      7        // Bid
+#define PRICE_ASK                      8        // Ask
 
 
 // Rates array identifier, siehe ArrayCopyRates()

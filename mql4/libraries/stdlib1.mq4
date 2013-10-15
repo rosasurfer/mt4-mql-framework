@@ -8077,48 +8077,98 @@ string OperationTypeDescription(int type) {
 
 
 /**
+ * Gibt den Integer-Wert eines PriceType-Bezeichners zurück.
+ *
+ * @param  string value
+ *
+ * @return int - PriceType-Code oder -1, wenn der Bezeichner ungültig ist
+ */
+int StrToPriceType(string value) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringLen(str) == 1) {
+      if (str == "O"               ) return(PRICE_OPEN    );
+      if (str == ""+ PRICE_OPEN    ) return(PRICE_OPEN    );
+      if (str == "H"               ) return(PRICE_HIGH    );
+      if (str == ""+ PRICE_HIGH    ) return(PRICE_HIGH    );
+      if (str == "L"               ) return(PRICE_LOW     );
+      if (str == ""+ PRICE_LOW     ) return(PRICE_LOW     );
+      if (str == "C"               ) return(PRICE_CLOSE   );
+      if (str == ""+ PRICE_CLOSE   ) return(PRICE_CLOSE   );
+      if (str == "M"               ) return(PRICE_MEDIAN  );
+      if (str == ""+ PRICE_MEDIAN  ) return(PRICE_MEDIAN  );
+      if (str == "T"               ) return(PRICE_TYPICAL );
+      if (str == ""+ PRICE_TYPICAL ) return(PRICE_TYPICAL );
+      if (str == "W"               ) return(PRICE_WEIGHTED);
+      if (str == ""+ PRICE_WEIGHTED) return(PRICE_WEIGHTED);
+      if (str == "B"               ) return(PRICE_BID     );
+      if (str == ""+ PRICE_BID     ) return(PRICE_BID     );
+      if (str == "A"               ) return(PRICE_ASK     );
+      if (str == ""+ PRICE_ASK     ) return(PRICE_ASK     );
+   }
+   else {
+      if (StringStartsWith(str, "PRICE_"))
+         str = StringRight(str, -6);
+
+      if (str == "OPEN"            ) return(PRICE_OPEN    );
+      if (str == "HIGH"            ) return(PRICE_HIGH    );
+      if (str == "LOW"             ) return(PRICE_LOW     );
+      if (str == "CLOSE"           ) return(PRICE_CLOSE   );
+      if (str == "MEDIAN"          ) return(PRICE_MEDIAN  );
+      if (str == "TYPICAL"         ) return(PRICE_TYPICAL );
+      if (str == "WEIGHTED"        ) return(PRICE_WEIGHTED);
+      if (str == "BID"             ) return(PRICE_BID     );
+      if (str == "ASK"             ) return(PRICE_ASK     );
+   }
+
+   if (__LOG) log("StrToPriceType()   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(-1);
+}
+
+
+/**
  * Gibt die lesbare Konstante eines Price-Identifiers zurück.
  *
- * @param  int appliedPrice - Price-Typ, siehe: iMA(symbol, timeframe, period, ma_shift, ma_method, int *APPLIED_PRICE*, bar)
+ * @param  int type - Price-Type
  *
  * @return string
  */
-string AppliedPriceToStr(int appliedPrice) {
-   switch (appliedPrice) {
-      case PRICE_CLOSE   : return("PRICE_CLOSE"   );     // Close price
-      case PRICE_OPEN    : return("PRICE_OPEN"    );     // Open price
-      case PRICE_HIGH    : return("PRICE_HIGH"    );     // High price
-      case PRICE_LOW     : return("PRICE_LOW"     );     // Low price
-      case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // Median price:         (High+Low)/2
-      case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // Typical price:        (High+Low+Close)/3
-      case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // Weighted close price: (High+Low+Close+Close)/4
-      case PRICE_BID     : return("PRICE_BID"     );     // Bid price
-      case PRICE_ASK     : return("PRICE_ASK"     );     // Ask price
+string PriceTypeToStr(int type) {
+   switch (type) {
+      case PRICE_CLOSE   : return("PRICE_CLOSE"   );
+      case PRICE_OPEN    : return("PRICE_OPEN"    );
+      case PRICE_HIGH    : return("PRICE_HIGH"    );
+      case PRICE_LOW     : return("PRICE_LOW"     );
+      case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
+      case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
+      case PRICE_BID     : return("PRICE_BID"     );
+      case PRICE_ASK     : return("PRICE_ASK"     );
    }
-   return(_empty(catch("AppliedPriceToStr()   invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("PriceTypeToStr()   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
 /**
  * Gibt die lesbare Version eines Price-Identifiers zurück.
  *
- * @param  int appliedPrice - Price-Typ, siehe: iMA(symbol, timeframe, period, ma_shift, ma_method, int *APPLIED_PRICE*, bar)
+ * @param  int type - Price-Type
  *
  * @return string
  */
-string AppliedPriceDescription(int appliedPrice) {
-   switch (appliedPrice) {
-      case PRICE_CLOSE   : return("Close"   );     // Close price
-      case PRICE_OPEN    : return("Open"    );     // Open price
-      case PRICE_HIGH    : return("High"    );     // High price
-      case PRICE_LOW     : return("Low"     );     // Low price
-      case PRICE_MEDIAN  : return("Median"  );     // Median price:         (High+Low)/2
-      case PRICE_TYPICAL : return("Typical" );     // Typical price:        (High+Low+Close)/3
-      case PRICE_WEIGHTED: return("Weighted");     // Weighted close price: (High+Low+Close+Close)/4
-      case PRICE_BID     : return("Bid"     );     // Bid price
-      case PRICE_ASK     : return("Ask"     );     // Ask price
+string PriceTypeDescription(int type) {
+   switch (type) {
+      case PRICE_CLOSE   : return("Close"   );
+      case PRICE_OPEN    : return("Open"    );
+      case PRICE_HIGH    : return("High"    );
+      case PRICE_LOW     : return("Low"     );
+      case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
+      case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
+      case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
+      case PRICE_BID     : return("Bid"     );
+      case PRICE_ASK     : return("Ask"     );
    }
-   return(_empty(catch("AppliedPriceDescription()   invalid parameter appliedPrice = "+ appliedPrice, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("PriceTypeDescription()   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
