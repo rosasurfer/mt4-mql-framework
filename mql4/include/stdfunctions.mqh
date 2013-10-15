@@ -307,6 +307,23 @@ int      last_error;                                        // der letzte Fehler
 #define B_UPPER                        1        // custom
 
 
+// Indicator drawing shapes
+#define DRAW_LINE                      0        // drawing line
+#define DRAW_SECTION                   1        // drawing sections
+#define DRAW_HISTOGRAM                 2        // drawing histogram
+#define DRAW_ARROW                     3        // drawing arrows (symbols)
+#define DRAW_ZIGZAG                    4        // drawing sections between even and odd indicator buffers
+#define DRAW_NONE                     12        // no drawing
+
+
+// Indicator line styles
+#define STYLE_SOLID                    0        // pen is solid
+#define STYLE_DASH                     1        // pen is dashed
+#define STYLE_DOT                      2        // pen is dotted
+#define STYLE_DASHDOT                  3        // pen has alternating dashes and dots
+#define STYLE_DASHDOTDOT               4        // pen has alternating dashes and double dots
+
+
 // Indicator buffer identifiers zur Verwendung mit iCustom()
 #define BUFFER_INDEX_0                 0        // allgemein gültige ID's
 #define BUFFER_INDEX_1                 1
