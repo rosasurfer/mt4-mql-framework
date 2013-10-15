@@ -1375,7 +1375,7 @@ bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ti
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "appliedPrice=", AppliedPriceToStr(appliedPrice), "; ",
-                            "leverage=",     DoubleToStr(leverage, 1)       , "; ")
+                            "appliedPrice=", PriceTypeToStr(appliedPrice), "; ",
+                            "leverage=",     DoubleToStr(leverage, 1)    , "; ")
    );
 }

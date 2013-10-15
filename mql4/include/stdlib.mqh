@@ -431,8 +431,9 @@
    int      DecreasePeriod(int period);
 
    int      StrToMovAvgMethod(string method);
-   int      PeriodFlag(int peiod);
    int      StrToPeriod(string value);  int StrToTimeframe(string value);              // Alias
+   int      PeriodFlag(int peiod);
+   int      StrToPriceType(string value);
 
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
@@ -473,8 +474,6 @@
    string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
    string   StringsToStr    (string array[], string separator);
 
-   string   AppliedPriceDescription(int appliedPrice);
-   string   AppliedPriceToStr      (int appliedPrice);
    string   ChartPropertiesToStr(int flags);
    string   InitFlagsToStr  (int flags);
    string   DateToStr(datetime time, string mask);
@@ -495,6 +494,8 @@
    string   PeriodFlagToStr(int flag);
    string   PeriodDescription(int period);         string TimeframeDescription(int timeframe);        // Alias
    string   PeriodToStr      (int period);         string TimeframeToStr      (int timeframe);        // Alias
+   string   PriceTypeDescription(int type);
+   string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorToStr(int error);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);

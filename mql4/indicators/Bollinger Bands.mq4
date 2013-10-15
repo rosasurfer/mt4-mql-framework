@@ -1,8 +1,8 @@
 /**
  * Bollinger-Bands-Indikator
  *
- * Es können ein oder zwei MA-Methoden mit jeweils eigenem Multiplikator für die Standardabweichung angegeben werden. Im Falle von 2 MA-Methoden werden die
- * resultierenden vier Bänder als Histogramme gezeichnet.
+ * Es können ein oder zwei MA-Methoden mit jeweils eigenem Multiplikator für die Standardabweichung angegeben werden. Im Falle von zwei MA-Methoden
+ * werden die resultierenden vier Bänder als Histogramme gezeichnet.
  *
  *
  * Zum verwendeten Preis:
@@ -142,7 +142,7 @@ int onInit() {
    if (maMethod2 != -1)
       indicatorLongName = indicatorLongName +","+ MovingAverageMethodDescription(maMethod2);
    if (appliedPrice != PRICE_CLOSE)                                     // AppliedPrice nur anzeigen, wenn != PRICE_CLOSE
-      indicatorLongName = indicatorLongName +" / "+ AppliedPriceDescription(appliedPrice);
+      indicatorLongName = indicatorLongName +" / "+ PriceTypeDescription(appliedPrice);
    if (EQ(deviation1, 2)) {                                             // Deviations nur anzeigen, wenn != 2.0
       if (maMethod2!=-1) /*&&*/ if (NE(deviation2, 2))
          indicatorLongName = indicatorLongName +" / "+ NumberToStr(deviation1, ".1+") +","+ NumberToStr(deviation2, ".1+");
