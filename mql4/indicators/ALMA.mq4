@@ -137,6 +137,10 @@ int onInit() {
    // (1.4) Max.Values
    if (Max.Values < -1)              return(catch("onInit(8)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
+   // (1.5) Colors
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // können vom Terminal falsch gesetzt worden sein
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+
 
    // (2) Chart-Legende erzeugen
    string strTimeframe, strAppliedPrice;
