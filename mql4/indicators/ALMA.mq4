@@ -143,7 +143,7 @@ int onInit() {
 
 
    // (2) Chart-Legende erzeugen
-   string strTimeframe, strAppliedPrice;
+   string strTimeframe="", strAppliedPrice="";
    if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    iDescription = "ALMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
