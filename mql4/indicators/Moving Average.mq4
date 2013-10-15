@@ -139,9 +139,9 @@ int onInit() {
 
    // (2) Chart-Legende erzeugen
    string strTimeframe, strAppliedPrice;
-   if (MA.Timeframe != "")             strTimeframe    = StringConcatenate("x", MA.Timeframe);
-   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = StringConcatenate(" / ", PriceTypeDescription(ma.appliedPrice));
-   iDescription = StringConcatenate(MA.Method, "(", MA.Periods, strTimeframe, strAppliedPrice, ")");
+   if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
+   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
+   iDescription = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
    legendLabel  = CreateLegendLabel(iDescription);
    PushObject(legendLabel);
 
@@ -180,8 +180,8 @@ int onInit() {
    SetIndexBuffer(MovingAverage.MODE_TMASMA,    bufferTmaSma   );       // TMA-Hilfsbuffer:   unsichtbar
 
    // (5.2) Anzeigeoptionen
-   IndicatorShortName(iDescription);
-   SetIndexLabel(MovingAverage.MODE_MA,        iDescription);           // Anzeige im "Data Window"
+   IndicatorShortName(iDescription);                                    // Context Menu
+   SetIndexLabel(MovingAverage.MODE_MA,        iDescription);           // Tooltip und "Data Window"
    SetIndexLabel(MovingAverage.MODE_TREND,     NULL);
    SetIndexLabel(MovingAverage.MODE_UPTREND,   NULL);
    SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL);
