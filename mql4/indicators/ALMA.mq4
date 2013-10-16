@@ -2,8 +2,8 @@
  * ALMA: Arnaud Legoux Moving Average  (einzeln implementiert, um die ALMA-spezifischen Parameter anpassen zu können)
  *
  *
- * From the author:
- * ----------------
+ *  From the author:
+ *  ----------------
  *  In an attempt to create a new kind of moving average with some friends/colleagues (because I was tired of the classical set
  *  of MA's everybody used for the last 10 years) we've created this new one.
  *
