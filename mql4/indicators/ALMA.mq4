@@ -241,7 +241,6 @@ int onTick() {
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
       ChangedBars = Max.Values;
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
-
    if (startBar < 0) {
       if (Indicator.IsSuperContext())
          return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
