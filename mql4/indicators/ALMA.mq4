@@ -307,7 +307,7 @@ int onTick() {
    }
 
 
-   static double lastTrend, lastValue;                                  // Trend und Value des letzten Ticks
+   static double lastTrend, lastValue;                                  // Trend und Value des vorherigen Ticks
 
 
    // (3.1) Legende: bei Trendwechsel Farbe aktualisieren
