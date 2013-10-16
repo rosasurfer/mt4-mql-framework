@@ -30,25 +30,25 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 #define MovingAverage.MODE_UPTREND     2        // Bei Unterbrechung eines Down-Trends um eine einzige Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
 #define MovingAverage.MODE_DOWNTREND   3        // verdeckt. Um solche kurzfristigen Up-Trends sichtbar zu machen, werden sie im Buffer MODE_UPTREND2 gespeichert, der
 #define MovingAverage.MODE_UPTREND2    4        // MODE_DOWNTREND überlagert.
-#define MovingAverage.MODE_TMASMA      5        // TMA-Hilfsbuffer zum Speichern von Zwischenergebnissen
+#define MovingAverage.MODE_TMASMA      5        //
 
 #property indicator_chart_window
 
-#property indicator_buffers 6
+#property indicator_buffers 5
 
 #property indicator_width1  0
 #property indicator_width2  0
 #property indicator_width3  2
 #property indicator_width4  2
 #property indicator_width5  2
-#property indicator_width6  0
 
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
 double bufferTrend    [];                       // Trend: +/-         unsichtbar
 double bufferUpTrend  [];                       // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
 double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
-double bufferTmaSma   [];                       // TMA-Hilfsbuffer:   unsichtbar
+
+double bufferTmaSma   [];                       // TMA-Hilfsbuffer
 
 int    ma.periods;
 int    ma.method;
@@ -176,12 +176,13 @@ int onInit() {
 
 
    // (5.1) Bufferverwaltung
+   IndicatorBuffers(6);
    SetIndexBuffer(MovingAverage.MODE_MA,        bufferMA       );       // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
    SetIndexBuffer(MovingAverage.MODE_TREND,     bufferTrend    );       // Trend: +/-         unsichtbar
    SetIndexBuffer(MovingAverage.MODE_UPTREND,   bufferUpTrend  );       // UpTrend-Linie 1:   sichtbar
    SetIndexBuffer(MovingAverage.MODE_DOWNTREND, bufferDownTrend);       // DownTrend-Linie:   sichtbar
    SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend2 );       // UpTrend-Linie 2:   sichtbar
-   SetIndexBuffer(MovingAverage.MODE_TMASMA,    bufferTmaSma   );       // TMA-Hilfsbuffer:   unsichtbar
+   SetIndexBuffer(MovingAverage.MODE_TMASMA,    bufferTmaSma   );       // TMA-Hilfsbuffer
 
    // (5.2) Anzeigeoptionen
    IndicatorShortName(iDescription);                                    // Context Menu
@@ -190,7 +191,6 @@ int onInit() {
    SetIndexLabel(MovingAverage.MODE_UPTREND,   NULL);
    SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL);
    SetIndexLabel(MovingAverage.MODE_UPTREND2,  NULL);
-   SetIndexLabel(MovingAverage.MODE_TMASMA,    NULL);
    IndicatorDigits(SubPipDigits);
 
    // (5.3) Zeichenoptionen
@@ -200,7 +200,6 @@ int onInit() {
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND,   startDraw); SetIndexShift(MovingAverage.MODE_UPTREND,   Shift.Horizontal.Bars);
    SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw); SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal.Bars);
    SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw); SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MovingAverage.MODE_TMASMA,    0        ); SetIndexShift(MovingAverage.MODE_TMASMA,    Shift.Horizontal.Bars);
 
    shift.vertical = Shift.Vertical.Pips * Pip;                          // TODO: Digits/Point-Fehler abfangen
 
@@ -240,7 +239,7 @@ int onTick() {
       ArrayInitialize(bufferUpTrend,   EMPTY_VALUE);
       ArrayInitialize(bufferDownTrend, EMPTY_VALUE);
       ArrayInitialize(bufferUpTrend2,  EMPTY_VALUE);
-      ArrayInitialize(bufferTmaSma,    EMPTY_VALUE);
+      ArrayInitialize(bufferTmaSma,              0);
       SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -362,7 +361,6 @@ void SetIndicatorStyles() {
    SetIndexStyle(MovingAverage.MODE_UPTREND,   DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
    SetIndexStyle(MovingAverage.MODE_DOWNTREND, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
    SetIndexStyle(MovingAverage.MODE_UPTREND2,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(MovingAverage.MODE_TMASMA,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
 }
 
 
