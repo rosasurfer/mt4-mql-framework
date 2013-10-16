@@ -282,7 +282,7 @@ int      last_error;                                        // der letzte Fehler
 #define MODE_TMA                       5        // triangular moving average
 
 
-// Band method identifiers, siehe Bands.mq4
+// Band type identifiers, siehe Bands.mq4
 #define MODE_STDDEV                    0        // standard deviation
 #define MODE_ENV                       1        // envelopes
 #define MODE_ATR                       2        // average true range
