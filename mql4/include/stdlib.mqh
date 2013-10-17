@@ -58,33 +58,33 @@
 
 
    // Arrays
-   int      ArraySetIntArray(int array[][], int i, int values[]);
+   int      ArraySetIntArray    (int array[][], int i, int values[]);
 
-   int      ArrayPushBool    (bool   array[],   bool   value   );
-   int      ArrayPushInt     (int    array[],   int    value   );
-   int      ArrayPushIntArray(int    array[][], int    values[]);
-   int      ArrayPushDouble  (double array[],   double value   );
-   int      ArrayPushString  (string array[],   string value   );
+   int      ArrayPushBool       (bool   array[],   bool   value   );
+   int      ArrayPushInt        (int    array[],   int    value   );
+   int      ArrayPushIntArray   (int    array[][], int    values[]);
+   int      ArrayPushDouble     (double array[],   double value   );
+   int      ArrayPushString     (string array[],   string value   );
 
-   bool     ArrayPopBool  (bool   array[]);
-   int      ArrayPopInt   (int    array[]);
-   double   ArrayPopDouble(double array[]);
-   string   ArrayPopString(string array[]);
+   bool     ArrayPopBool        (bool   array[]);
+   int      ArrayPopInt         (int    array[]);
+   double   ArrayPopDouble      (double array[]);
+   string   ArrayPopString      (string array[]);
 
-   int      ArrayUnshiftBool  (bool   array[], bool   value);
-   int      ArrayUnshiftInt   (int    array[], int    value);
-   int      ArrayUnshiftDouble(double array[], double value);
-   int      ArrayUnshiftString(string array[], string value);
+   int      ArrayUnshiftBool    (bool   array[], bool   value);
+   int      ArrayUnshiftInt     (int    array[], int    value);
+   int      ArrayUnshiftDouble  (double array[], double value);
+   int      ArrayUnshiftString  (string array[], string value);
 
-   bool     ArrayShiftBool  (bool   array[]);
-   int      ArrayShiftInt   (int    array[]);
-   double   ArrayShiftDouble(double array[]);
-   string   ArrayShiftString(string array[]);
+   bool     ArrayShiftBool      (bool   array[]);
+   int      ArrayShiftInt       (int    array[]);
+   double   ArrayShiftDouble    (double array[]);
+   string   ArrayShiftString    (string array[]);
 
-   int      ArrayDropBool  (bool   array[], bool   value);
-   int      ArrayDropInt   (int    array[], int    value);
-   int      ArrayDropDouble(double array[], double value);
-   int      ArrayDropString(string array[], string value);
+   int      ArrayDropBool       (bool   array[], bool   value);
+   int      ArrayDropInt        (int    array[], int    value);
+   int      ArrayDropDouble     (double array[], double value);
+   int      ArrayDropString     (string array[], string value);
 
    int      ArraySpliceBools    (bool   array[],   int offset, int length);
    int      ArraySpliceInts     (int    array[],   int offset, int length);
@@ -92,14 +92,14 @@
    int      ArraySpliceDoubles  (double array[],   int offset, int length);
    int      ArraySpliceStrings  (string array[],   int offset, int length);
 
-   int      ArrayInsertBool   (bool   array[], int offset, bool   values  );
-   int      ArrayInsertBools  (bool   array[], int offset, bool   values[]);
-   int      ArrayInsertDouble (double array[], int offset, double values  );
-   int      ArrayInsertDoubles(double array[], int offset, double values[]);
-   int      ArrayInsertInt    (int    array[], int offset, int    values  );
-   int      ArrayInsertInts   (int    array[], int offset, int    values[]);
-   int      ArrayInsertString (string array[], int offset, string values  );
-   int      ArrayInsertStrings(string array[], int offset, string values[]);
+   int      ArrayInsertBool     (bool   array[], int offset, bool   values  );
+   int      ArrayInsertBools    (bool   array[], int offset, bool   values[]);
+   int      ArrayInsertDouble   (double array[], int offset, double values  );
+   int      ArrayInsertDoubles  (double array[], int offset, double values[]);
+   int      ArrayInsertInt      (int    array[], int offset, int    values  );
+   int      ArrayInsertInts     (int    array[], int offset, int    values[]);
+   int      ArrayInsertString   (string array[], int offset, string values  );
+   int      ArrayInsertStrings  (string array[], int offset, string values[]);
 
    bool     BoolInArray   (bool   haystack[], bool   needle);
    bool     IntInArray    (int    haystack[], int    needle);
@@ -132,7 +132,6 @@
    string   JoinInts   (int    array[], string separator);
    string   JoinDoubles(double array[], string separator);
    string   JoinStrings(string array[], string separator);
-   int      DoubleQuoteStrings(string array[]);
 
    int      SumInts   (int    array[]);
    double   SumDoubles(double array[]);
@@ -463,6 +462,7 @@
    string   DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);          // Alias + MetaQuotes-Alias
    string   StringToHexStr(string value);
 
+#import "stdlib2.ex4"
    string   BoolsToStr        (bool array[], string separator);
    string   IntsToStr          (int array[], string separator);
    string   CharsToStr         (int array[], string separator);
@@ -474,6 +474,7 @@
    string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
    string   StringsToStr    (string array[], string separator);
 
+#import "stdlib.ex4"
    string   ChartPropertiesToStr(int flags);
    string   InitFlagsToStr  (int flags);
    string   DateToStr(datetime time, string mask);
