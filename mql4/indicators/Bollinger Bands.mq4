@@ -1,14 +1,8 @@
 /**
- * Bollinger-Bands-Indikator
+ * Multi-Timeframe Bollinger Bands
  *
- * Es können ein oder zwei MA-Methoden mit jeweils eigenem Multiplikator für die Standardabweichung angegeben werden. Im Falle von zwei MA-Methoden
- * werden die resultierenden vier Bänder als Histogramme gezeichnet.
- *
- *
- * Zum verwendeten Preis:
- * ----------------------
- *  - Default ist StdDev(PRICE_CLOSE). Technisch exakter wäre StdDev(PRICE_HIGH|PRICE_LOW), die Berechnung müßte jedoch manuell durchgeführt werden und ist langsam.
- *  - 1.65 * StdDev(PRICE_CLOSE) entspricht ca. 1.4 * StdDev(PRICE_HIGH|PRICE_LOW) mit einer Übereinstimmung von 90-95%
+ * Es können ein oder zwei Moving Averages über dieselbe Periode mit jeweils eigenem Multiplikator für die Standardabweichung angegeben werden.
+ * Bei zwei Moving Averages werden die resultierenden vier Bänder als Histogramme gezeichnet.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -35,9 +29,9 @@ extern color  Color.Bands       = RoyalBlue;                         // Farbe hi
 
 #property indicator_buffers 7
 
-double iUpperBand1  [], iLowerBand1  [];                             // sichtbare Indikatorbuffer: erstes Band
-double iUpperBand2  [], iLowerBand2  [];                             //                            zweites Band als Histogramm
-double iUpperBand2_1[], iLowerBand2_1[];                             //                            zweites Band als Linie
+double iUpperBand1  [], iLowerBand1  [];                             // erstes Band
+double iUpperBand2  [], iLowerBand2  [];                             // zweites Band als Histogramm
+double iUpperBand2_1[], iLowerBand2_1[];                             // zweites Band als Linie
 double iMovAvg[];
 
 int    maMethod1=-1, maMethod2=-1;
