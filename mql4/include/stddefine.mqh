@@ -345,9 +345,9 @@ int      last_error;                                        // der letzte Fehler
 #define MovingAverage.MODE_MA          0        // Wert des MA's
 #define MovingAverage.MODE_TREND       1        // Trend des MA's
 
-#define Bands.MODE_MAIN       MODE_MAIN         // base indicator line (i.d.R. Moving Average)
-#define Bands.MODE_UPPER      MODE_UPPER        // oberes Band
-#define Bands.MODE_LOWER      MODE_LOWER        // unteres Band
+#define BollingerBands.MODE_UPPER      0        // oberes Band
+#define BollingerBands.MODE_MA         1        // Moving Average
+#define BollingerBands.MODE_LOWER      2        // unteres Band
 
 
 // EXECUTION_CONTEXT element identifiers
