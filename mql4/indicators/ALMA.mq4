@@ -305,26 +305,34 @@ int onTick() {
    }
 
 
-   static double lastTrend, lastValue;                                  // Trend und Value des vorherigen Ticks
+   static int      lastTrend;                                           // Trend des vorherigen Ticks
+   static double   lastValue;                                           // Value des vorherigen Ticks
+   static bool     intrabarChange;                                      // vorläufiger Trendwechsel innerhalb der aktuellen Bar
+   static datetime lastBarOpenTime;
 
 
    // (3.1) Legende: bei Trendwechsel Farbe aktualisieren
-   if (bufferTrend[0] * lastTrend <= 0) {                               // bei erstem Aufruf und unterschiedlichen Vorzeichen
+   if (Sign(bufferTrend[0]) != Sign(lastTrend)) {
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("onTick(2)", error));
+      if (lastTrend != 0)
+         intrabarChange = !intrabarChange;
    }
-   lastTrend = bufferTrend[0];
+   if (Time[0] > lastBarOpenTime) /*&&*/ if (Abs(bufferTrend[0])==2)    // onBarOpen Anzeige eines vorläufigen Trendwechsels der vorherigen Bar deaktivieren
+      intrabarChange = false;
 
 
    // (3.2) Legende: bei Wertänderung Wert aktualisieren
-   if (curValue != lastValue) {
+   if (curValue!=lastValue || Time[0] > lastBarOpenTime) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(iDescription, "    ", NumberToStr(curValue, SubPipPriceFormat)),
+                    StringConcatenate(iDescription, ifString(intrabarChange, "_i", ""), "    ", NumberToStr(curValue, SubPipPriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
-   lastValue = curValue;
+   lastTrend       = bufferTrend[0];
+   lastValue       = curValue;
+   lastBarOpenTime = Time[0];
 
    return(last_error);
 }
