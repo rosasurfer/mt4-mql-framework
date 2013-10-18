@@ -1,7 +1,7 @@
 /**
- * NOTE: Headerdatei und Library sind kompatibel zu den Original-MetaQuotes-Versionen.
+ * NOTE: kompatibel zur Original-MetaQuotes-Version
  */
-#import "stdlib.ex4"
+#import "stdlib1.ex4"
 
    // MQL-Status- und Laufzeitumgebungs-Informationen
    bool     IsExpert();
@@ -474,7 +474,7 @@
    string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
    string   StringsToStr    (string array[], string separator);
 
-#import "stdlib.ex4"
+#import "stdlib1.ex4"
    string   ChartPropertiesToStr(int flags);
    string   InitFlagsToStr  (int flags);
    string   DateToStr(datetime time, string mask);
