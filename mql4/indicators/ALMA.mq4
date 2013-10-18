@@ -309,7 +309,7 @@ int onTick() {
 
 
    // (3.1) Legende: bei Trendwechsel Farbe aktualisieren
-   if (bufferTrend[0] * lastTrend <= 0) {                               // bei unterschiedlichen Vorzeichen
+   if (bufferTrend[0] * lastTrend <= 0) {                               // bei erstem Aufruf und unterschiedlichen Vorzeichen
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
