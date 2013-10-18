@@ -307,7 +307,7 @@ int onTick() {
 
    static int      lastTrend;                                           // Trend des vorherigen Ticks
    static double   lastValue;                                           // Value des vorherigen Ticks
-   static bool     intrabarChange;                                      // vorläufiger Trendwechsel innerhalb der aktuellen Bar
+   static bool     intrabarTrendChange;                                 // vorläufiger Trendwechsel innerhalb der aktuellen Bar
    static datetime lastBarOpenTime;
 
 
@@ -318,16 +318,16 @@ int onTick() {
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
          return(catch("onTick(2)", error));
       if (lastTrend != 0)
-         intrabarChange = !intrabarChange;
+         intrabarTrendChange = !intrabarTrendChange;
    }
-   if (Time[0] > lastBarOpenTime) /*&&*/ if (Abs(bufferTrend[0])==2)    // onBarOpen Anzeige eines vorläufigen Trendwechsels der vorherigen Bar deaktivieren
-      intrabarChange = false;
+   if (Time[0] > lastBarOpenTime) /*&&*/ if (Abs(bufferTrend[0])==2)    // onBarOpen vorläufigen Trendwechsel der vorherigen Bar deaktivieren
+      intrabarTrendChange = false;
 
 
    // (3.2) Legende: bei Wertänderung Wert aktualisieren
    if (curValue!=lastValue || Time[0] > lastBarOpenTime) {
       ObjectSetText(legendLabel,
-                    StringConcatenate(iDescription, ifString(intrabarChange, "_i", ""), "    ", NumberToStr(curValue, SubPipPriceFormat)),
+                    StringConcatenate(iDescription, ifString(intrabarTrendChange, "_i", ""), "    ", NumberToStr(curValue, SubPipPriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
    }
    lastTrend       = bufferTrend[0];
