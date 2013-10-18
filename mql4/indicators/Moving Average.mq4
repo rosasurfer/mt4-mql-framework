@@ -17,7 +17,6 @@ extern color  Color.UpTrend         = DodgerBlue;                    // Farbverw
 extern color  Color.DownTrend       = Orange;
 
 extern int    Max.Values            = 2000;                          // Höchstanzahl darzustellender Werte: -1 = keine Begrenzung
-
 extern int    Shift.Horizontal.Bars = 0;                             // horizontale Shift in Bars
 extern int    Shift.Vertical.Pips   = 0;                             // vertikale Shift in Pips
 
@@ -137,7 +136,7 @@ int onInit() {
    if (Max.Values < -1)              return(catch("onInit(9)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.6) Colors
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // können vom Terminal falsch gesetzt worden sein
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;       // können vom Terminal falsch gesetzt worden sein
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
 
 
@@ -156,14 +155,14 @@ int onInit() {
       double wSum, gaussianOffset=0.85, sigma=6.0;
       double m = MathRound(gaussianOffset * (ma.periods-1));
       double s = ma.periods/sigma;
-      for (int i=0; i < ma.periods; i++) {
-         alma.weights[i] = MathExp(-(i-m)*(i-m)/(2*s*s));
-         wSum           += alma.weights[i];
+      for (int j, i=0; i < ma.periods; i++) {
+         j = ma.periods-1-i;
+         alma.weights[j] = MathExp(-(i-m)*(i-m)/(2*s*s));
+         wSum           += alma.weights[j];
       }
       for (i=0; i < ma.periods; i++) {
          alma.weights[i] /= wSum;                                       // Summe aller Bars = 1 (100%)
       }
-      ReverseDoubleArray(alma.weights);                                 // Reihenfolge umkehren, um in onTick() Zugriff zu beschleunigen
    }
 
 
@@ -295,8 +294,8 @@ int onTick() {
       curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
       prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
 
-      if      (curValue > prevValue) bufferTrend[bar] = Max(bufferTrend[bar+1], 0) + 1;
-      else if (curValue < prevValue) bufferTrend[bar] = Min(bufferTrend[bar+1], 0) - 1;
+      if      (curValue > prevValue) bufferTrend[bar] =       Max(bufferTrend[bar+1], 0) + 1;
+      else if (curValue < prevValue) bufferTrend[bar] =       Min(bufferTrend[bar+1], 0) - 1;
       else                           bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
 
 
@@ -330,7 +329,7 @@ int onTick() {
 
 
    // (3.1) Legende: bei Trendwechsel Farbe aktualisieren
-   if (Sign(bufferTrend[0]) != Sign(lastTrend)) {
+   if (bufferTrend[0] * lastTrend <= 0) {                                // bei unterschiedlichen Vorzeichen
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -340,7 +339,7 @@ int onTick() {
 
 
    // (3.2) Legende: bei Wertänderung Wert aktualisieren
-   if (NE(curValue, lastValue)) {
+   if (curValue != lastValue) {
       ObjectSetText(legendLabel,
                     StringConcatenate(iDescription, "    ", NumberToStr(curValue, SubPipPriceFormat)),
                     ObjectGet(legendLabel, OBJPROP_FONTSIZE));
@@ -381,7 +380,6 @@ string InputsToStr() {
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",
 
                             "Max.Values=",            Max.Values                 , "; ",
-
                             "Shift.Horizontal.Bars=", Shift.Horizontal.Bars      , "; ",
                             "Shift.Vertical.Pips=",   Shift.Vertical.Pips        , "; ")
    );
