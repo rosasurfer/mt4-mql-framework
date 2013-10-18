@@ -456,7 +456,7 @@ bool This.IsTesting() {
  * @return bool - ob mindestens ein BarOpen-Event aufgetreten ist
  *
  *
- * NOTE: Diese Implementierung stimmt mit der Implementierung in ""libraries\stdlib.mq4"" für Indikatoren überein.
+ * NOTE: Diese Implementierung stimmt mit der Implementierung in ""libraries\stdlib1.mq4"" für Indikatoren überein.
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (ArraySize(results) != 0)
