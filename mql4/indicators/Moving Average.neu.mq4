@@ -29,7 +29,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 #define MovingAverage.MODE_UPTREND     2        // Bei Unterbrechung eines Down-Trends um eine einzige Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
 #define MovingAverage.MODE_DOWNTREND   3        // verdeckt. Um solche kurzfristigen Up-Trends sichtbar zu machen, werden sie im Buffer MODE_UPTREND2 gespeichert, der
 #define MovingAverage.MODE_UPTREND2    4        // MODE_DOWNTREND überlagert.
-#define MovingAverage.MODE_TMASMA      5        //
+#define MovingAverage.MODE_TMASMA      5
 
 #property indicator_chart_window
 
@@ -46,18 +46,16 @@ double bufferTrend    [];                       // Trend: +/-         unsichtbar
 double bufferUpTrend  [];                       // UpTrend-Linie 1:   sichtbar
 double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
 double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
-
 double bufferTmaSma   [];                       // TMA-Hilfsbuffer
 
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
 
-double alma.weights[];                          // Gewichtungen der einzelnen Bars eines ALMA
-
 int    tma.sma1.periods;                        // Periode des ersten SMA eines TMA
-int    tma.sma1.maxValues;
 int    tma.sma2.periods;                        // Periode des zweiten SMA eines TMA
+
+double alma.weights[];                          // Gewichtungen der einzelnen Bars eines ALMA
 
 double shift.vertical;
 string legendLabel, iDescription;
@@ -149,7 +147,14 @@ int onInit() {
    PushObject(legendLabel);
 
 
-   // (3) ggf. ALMA-Gewichtungen berechnen
+   // (3) ggf. TMA-Subperioden berechnen
+   if (ma.method==MODE_TMA) {
+      tma.sma1.periods = ma.periods/2;                                  // (int)
+      tma.sma2.periods = ma.periods - tma.sma1.periods;
+   }
+
+
+   // (4) ggf. ALMA-Gewichtungen berechnen
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1) {               // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
       ArrayResize(alma.weights, ma.periods);
       double wSum, gaussianOffset=0.85, sigma=6.0;
@@ -163,14 +168,6 @@ int onInit() {
       for (i=0; i < ma.periods; i++) {
          alma.weights[i] /= wSum;                                       // Summe aller Bars = 1 (100%)
       }
-   }
-
-
-   // (4) ggf. TMA-Subperioden berechnen
-   if (ma.method==MODE_TMA) {
-      tma.sma1.periods   = ma.periods/2;                                // (int)
-      tma.sma1.maxValues = Max.Values + tma.sma1.periods;
-      tma.sma2.periods   = ma.periods - tma.sma1.periods;
    }
 
 
@@ -265,8 +262,8 @@ int onTick() {
    if (ma.method == MODE_TMA) {
       // (2.1) TMA: erster SMA
       int sma.ChangedBars = ChangedBars;
-      if (sma.ChangedBars > tma.sma1.maxValues) /*&&*/ if (Max.Values >= 0)
-         sma.ChangedBars = tma.sma1.maxValues;
+      if (sma.ChangedBars > Max.Values+tma.sma1.periods) /*&&*/ if (Max.Values >= 0)
+         sma.ChangedBars = Max.Values+tma.sma1.periods;
       int sma.startBar = Min(sma.ChangedBars-1, Bars-tma.sma1.periods);
 
       for (int bar=sma.startBar; bar >= 0; bar--) {
