@@ -3,8 +3,8 @@
  *
  * @param  double weights[]      - Array zur Aufnahme der Gewichtungen
  * @param  int    periods        - Anzahl der Perioden des ALMA
- * @param  double gaussianOffset - ALMA-Parameter (default: 0.85, see excel spread sheet)
- * @param  double sigma          - ALMA-Parameter (default: 6.0,  see excel spread sheet)
+ * @param  double gaussianOffset - default: 0.85, Gauss'scher Verteilungsoffset, siehe Excel-Tabelle
+ * @param  double sigma          - default: 6.0, siehe Excel-Tabelle
  *
  *
  * @see    "experts/indicators/etc/arnaudlegoux.com/Weighted Distribution.xls"
