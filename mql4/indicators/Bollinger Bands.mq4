@@ -1,8 +1,8 @@
 /**
  * Multi-Timeframe Bollinger Bands
  *
- * Es können ein oder zwei Moving Averages über dieselbe Periode mit jeweils eigenem Multiplikator für die Standardabweichung angegeben werden.
- * Bei zwei Moving Averages werden die resultierenden vier Bänder als Histogramme gezeichnet.
+ * Zum Vergleich ist es möglich, das BollingerBand mit einem weiteren eines anderen MovingAverage-Typs (mit eigenem Multiplikator der StdDev) zu überlagern.
+ * Die resultierenden vier Bänder werden dann als Histogramme gezeichnet.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -24,6 +24,7 @@ extern color  Color.Bands       = RoyalBlue;                         // Farbe hi
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
+#include <indicators/iALMA.mqh>
 
 #property indicator_chart_window
 
@@ -38,7 +39,7 @@ int    maMethod1=-1, maMethod2=-1;
 int    appliedPrice;
 double deviation1, deviation2;
 bool   ALMA = false;
-double wALMA[], ALMA.GaussianOffset=0.85, ALMA.Sigma=6.0;            // ALMA-Parameter: Gewichtungen der einzelnen Bars etc.
+double wALMA[];                                                      // ALMA-Gewichtungen
 
 
 /**
@@ -192,22 +193,8 @@ int onInit() {
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
 
    // ALMA-Gewichtungen berechnen
-   if (MA.Periods > 1) {                                             // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      if (ALMA) {
-         ArrayResize(wALMA, MA.Periods);
-         int    m = MathRound(ALMA.GaussianOffset * (MA.Periods-1));
-         double s = MA.Periods / ALMA.Sigma;
-         double wSum;
-         for (int i=0; i < MA.Periods; i++) {
-            wALMA[i] = MathExp(-((i-m)*(i-m)) / (2*s*s));
-            wSum    += wALMA[i];
-         }
-         for (i=0; i < MA.Periods; i++) {
-            wALMA[i] /= wSum;                                        // Gewichtungen der einzelnen Bars (Summe = 1)
-         }
-         ReverseDoubleArray(wALMA);                                  // Reihenfolge umkehren, um in start() Zugriff zu beschleunigen
-      }
-   }
+   if (ALMA) /*&&*/ if (MA.Periods > 1)                              // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+      iALMA.CalculateWeights(wALMA, MA.Periods);
 
    return(catch("onInit(13)"));
 }
