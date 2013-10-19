@@ -1,5 +1,5 @@
 /**
- * ALMA: Arnaud Legoux Moving Average  (einzeln implementiert, um die ALMA-spezifischen Parameter anpassen zu können)
+ *  Arnaud Legoux Moving Average
  *
  *
  *  From the author:

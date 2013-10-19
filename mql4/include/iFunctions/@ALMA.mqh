@@ -1,19 +1,19 @@
 /**
  * Berechnet die Gewichtungen eines ALMAs.
  *
- * @param  double weights[]      - Array zur Aufnahme der Gewichtungen
- * @param  int    periods        - Anzahl der Perioden des ALMA
- * @param  double gaussianOffset - default: 0.85, Gauss'scher Verteilungsoffset, siehe Excel-Tabelle
- * @param  double sigma          - default: 6.0, siehe Excel-Tabelle
+ * @param  double weights[] - Array zur Aufnahme der Gewichtungen
+ * @param  int    periods   - Anzahl der Perioden des ALMA
+ * @param  double offset    - Verteilungsoffset der Gauss'schen Kurve (default: 0.85)
+ * @param  double sigma     - Steilheit der Gauss'schen Kurve (default: 6.0)
  *
  *
  *
  */
-void iALMA.CalculateWeights(double &weights[], int periods, double gaussianOffset=0.85, double sigma=6.0) {
+void iALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0) {
    if (ArraySize(weights) != periods)
       ArrayResize(weights, periods);
 
-   double m = MathRound(gaussianOffset * (periods-1));
+   double m = MathRound(offset * (periods-1));
    double s = periods / sigma;
    double wSum;
 

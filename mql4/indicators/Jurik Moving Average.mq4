@@ -398,6 +398,14 @@ int onTick() {
       if (shift > 0)
          AccountedBars++;
    }
-   return(last_error);
+
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERR_ARRAY_INDEX_OUT_OF_RANGE)
+         return(catch("onTick(1)", error));
+      log("onTick(2)", SetLastError(error));
+   }
+   return(error);
 }
 
