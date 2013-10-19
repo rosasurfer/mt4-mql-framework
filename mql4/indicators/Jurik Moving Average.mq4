@@ -33,6 +33,7 @@ double bufferJMA[];
 int onInit() {
    SetIndexBuffer(0, bufferJMA);
    SetIndexStyle (0, DRAW_LINE);
+   IndicatorDigits(SubPipDigits);
    return(catch("onInit()"));
 }
 
