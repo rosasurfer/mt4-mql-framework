@@ -43,6 +43,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
+#include <indicators/iALMA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
@@ -151,20 +152,8 @@ int onInit() {
 
 
    // (3) ALMA-Gewichtungen berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
-   if (ma.periods > 1) {                                                // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      ArrayResize(alma.weights, ma.periods);
-      double m = MathRound(GaussianOffset * (ma.periods-1));
-      double s = ma.periods / Sigma;
-      double wSum;
-      for (int j, i=0; i < ma.periods; i++) {
-         j = ma.periods-1-1;
-         alma.weights[j] = MathExp(-(i-m)*(i-m)/(2*s*s));
-         wSum           += alma.weights[j];
-      }
-      for (i=0; i < ma.periods; i++) {
-         alma.weights[i] /= wSum;                                       // Summe aller Bars = 1 (100%)
-      }
-   }
+   if (ma.periods > 1)                                                  // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
+      iALMA.CalculateWeights(alma.weights, ma.periods, GaussianOffset, Sigma);
 
 
    // (4.1) Bufferverwaltung
