@@ -18,6 +18,9 @@
  *
  *  Arnaud Legoux
  *  http://www.arnaudlegoux.com/
+ *
+ *
+ *
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -30,8 +33,8 @@ extern string MA.Periods            = "200";                         // für eini
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern double GaussianOffset        = 0.85;                          // Gaussian distribution offset (0..1)
-extern double Sigma                 = 6.0;                           // Sigma parameter
+extern double GaussianOffset        = 0.85;                          // Gaussian distribution offset: 0..1 (see excel spread sheet)
+extern double Sigma                 = 6.0;                           // Sigma parameter (see excel spread sheet)
 
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Orange;
