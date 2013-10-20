@@ -12,7 +12,7 @@ int __DEINIT_FLAGS__[];
 
 extern int Len      =  14;
 extern int phase    =   0;
-extern int BarCount =  31;        // ab 30 ERR_ARRAY_INDEX_OUT_OF_RANGE
+extern int BarCount = 300;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -61,8 +61,8 @@ int onTick() {
    int i14 = 63;
    int i15 = 64;
 
-   for (int i=i15; i < 127; i++) {
-      list127[i] = +1000000;
+   for (int i=i14; i < 127; i++) {
+      list127[i] = 1000000;
    }
 
    if      (phase < -100) d11 = 0.5;
@@ -77,7 +77,7 @@ int onTick() {
       price = Close[bar];
       if (i11 < 61) {
          i11++;
-         buffer61[i11] = price;
+         buffer61[i11-1] = price;
       }
 
       if (i11 > 30) {
@@ -104,11 +104,11 @@ int onTick() {
             i01 = 0;
             i12 = 0;
             d16 = price;
-            for (i=1; i <= 29; i++) {
-               if (buffer61[i+1] != buffer61[i]) {     // double comparison error
+            for (i=0; i < 30; i++) {
+               if (buffer61[i] != buffer61[i+1]) {    // double comparison error
                   i01 = 1;
                   i12 = 29;
-                  d16 = buffer61[1];
+                  d16 = buffer61[0];
                   break;
                }
             }
@@ -120,7 +120,7 @@ int onTick() {
 
          for (i=i12; i >= 0; i--) {
             if (i == 0) d10 = price;
-            else        d10 = buffer61[31-i];
+            else        d10 = buffer61[30-i];
 
             d14 = d10 - d12;
             d18 = d10 - d16;
@@ -136,24 +136,23 @@ int onTick() {
             if (i10 < 128)
                i10++;
 
-            d06        += d01 - ring10[i06];
-            ring10[i06] = d01;
-            //if (IsError(catch("onTick(0.1)   bar="+ bar +"  ring10["+ i06 +"]"))) return(last_error);
+            d06        += d01 - ring10[i06-1];
+            ring10[i06-1] = d01;
 
             if (i10 > 10) d09 = d06/10;
             else          d09 = d06/i10;
 
             if (i10 > 127) {
-               d07          = ring127[i05];
-               ring127[i05] = d09;
+               d07            = ring127[i05-1];
+               ring127[i05-1] = d09;
                i09 = 64;
                i07 = i09;
                while (i09 > 1) {
-                  if (list127[i07] < d07) {
+                  if (list127[i07-1] < d07) {
                      i09 >>= 1;
                      i07  += i09;
                   }
-                  else if (list127[i07] > d07) {
+                  else if (list127[i07-1] > d07) {
                      i09 >>= 1;
                      i07  -= i09;
                   }
@@ -163,7 +162,7 @@ int onTick() {
                }
             }
             else {
-               ring127[i05] = d09;
+               ring127[i05-1] = d09;
                if (i14 + i15 > 127) {
                   i15--;
                   i07 = i15;
@@ -182,48 +181,48 @@ int onTick() {
             i08 = i09;
 
             while (i09 > 1) {
-               if (list127[i08] < d09) {
+               if (list127[i08-1] < d09) {
                   i09 >>= 1;
                   i08  += i09;
                }
-               else if (list127[i08-1] > d09) {
+               else if (list127[i08-2] > d09) {
                   i09 >>= 1;
                   i08  -= i09;
                }
                else {
                   i09 = 1;
                }
-               if (i08 == 127) /*&&*/ if (d09 > list127[127])
+               if (i08 == 127) /*&&*/ if (d09 > list127[126])
                   i08 = 128;
             }
 
             if (i10 > 127) {
                if (i07 >= i08) {
                   if      (i03+1 > i08 && i04-1 < i08) d08 += d09;
-                  else if (i04   > i08 && i04-1 < i07) d08 += list127[i04-1];
+                  else if (i04   > i08 && i04-1 < i07) d08 += list127[i04-2];
                }
                else if (i04 >= i08) {
-                  if      (i03+1 < i08 && i03+1 > i07) d08 += list127[i03+1];
+                  if      (i03+1 < i08 && i03+1 > i07) d08 += list127[i03];
                }
                else if    (i03+2 > i08               ) d08 += d09;
-               else if    (i03+1 < i08 && i03+1 > i07) d08 += list127[i03+1];
+               else if    (i03+1 < i08 && i03+1 > i07) d08 += list127[i03];
 
                if (i07 > i08) {
-                  if      (i04-1 < i07 && i03+1 > i07) d08 -= list127[i07];
-                  else if (i03   < i07 && i03+1 > i08) d08 -= list127[i03];
+                  if      (i04-1 < i07 && i03+1 > i07) d08 -= list127[i07-1];
+                  else if (i03   < i07 && i03+1 > i08) d08 -= list127[i03-1];
                }
-               else if    (i03+1 > i07 && i04-1 < i07) d08 -= list127[i07];
-               else if    (i04   > i07 && i04   < i08) d08 -= list127[i04];
+               else if    (i03+1 > i07 && i04-1 < i07) d08 -= list127[i07-1];
+               else if    (i04   > i07 && i04   < i08) d08 -= list127[i04-1];
             }
 
-            if      (i07 > i08) { for (j=i07-1; j >= i08;   j--) list127[j+1] = list127[j]; list127[i08  ] = d09; }
-            else if (i07 < i08) { for (j=i07+1; j <= i08-1; j++) list127[j-1] = list127[j]; list127[i08-1] = d09; }
-            else                {                                                           list127[i08  ] = d09; }
+            if      (i07 > i08) { for (j=i07-1; j >= i08;   j--) list127[j  ] = list127[j-1]; list127[i08-1] = d09; }
+            else if (i07 < i08) { for (j=i07+1; j <= i08-1; j++) list127[j-2] = list127[j-1]; list127[i08-2] = d09; }
+            else                {                                                             list127[i08-1] = d09; }
 
             if (i10 <= 127) {
                d08 = 0;
                for (j=i04; j <= i03; j++) {
-                  d08 += list127[j];
+                  d08 += list127[j-1];
                }
             }
             d21 = d08/(i03 - i04 + 1);
@@ -261,7 +260,7 @@ int onTick() {
                   if (d37 <= 29) i02 = d37;
                   else           i02 = 29;
 
-                  d30 = (price-buffer61[i11-i01]) * (1-d22)/d36 + (price-buffer61[i11-i02]) * d22/d37;
+                  d30 = (price-buffer61[i11-i01-1]) * (1-d22)/d36 + (price-buffer61[i11-i02-1]) * d22/d37;
                }
             }
             else {
@@ -303,16 +302,7 @@ int onTick() {
          jma = 0;
 
       bufferJMA[bar] = jma;
-      //debug("onTick()   jma("+ bar +")="+ NumberToStr(jma, SubPipPriceFormat));
    }
 
-
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error != ERR_ARRAY_INDEX_OUT_OF_RANGE)
-         return(catch("onTick(1)", error));
-      log("onTick(2)", SetLastError(error));
-   }
-   return(error);
+   return(last_error);
 }
-
