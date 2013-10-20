@@ -207,6 +207,9 @@ int onTick() {
    if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
+   if (ChangedBars < 3) // vorübergehender Workaround
+      return(NO_ERROR);
+
 
    // (1) Startbar der Berechnung ermitteln
    if (ChangedBars > Max.Values) /*&&*/ if (Max.Values >= 0)
