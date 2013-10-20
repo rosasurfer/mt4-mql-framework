@@ -33,7 +33,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
-#define MovingAverage.MODE_UPTREND     2        // Bei Unterbrechung eines Down-Trends um eine einzige Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
+#define MovingAverage.MODE_UPTREND     2        // Bei Unterbrechung eines Down-Trends um nur eine  Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
 #define MovingAverage.MODE_DOWNTREND   3        // verdeckt. Um solche kurzfristigen Up-Trends sichtbar zu machen, werden sie im Buffer MODE_UPTREND2 gespeichert, der
 #define MovingAverage.MODE_UPTREND2    4        // MODE_DOWNTREND überlagert.
 
@@ -50,13 +50,15 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 double bufferMA       [];                       // vollst. Indikator: unsichtbar (Anzeige im "Data Window")
 double bufferTrend    [];                       // Trend: +/-         unsichtbar
 double bufferUpTrend  [];                       // UpTrend-Linie 1:   sichtbar
-double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend 1)
-double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend, macht im DownTrend UpTrends mit Länge 1 sichtbar)
+double bufferDownTrend[];                       // DownTrend-Linie:   sichtbar (überlagert UpTrend-Linie 1)
+double bufferUpTrend2 [];                       // UpTrend-Linie 2:   sichtbar (überlagert DownTrend-Linie)
 
 int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
+
 double alma.weights[];                          // Gewichtungen der einzelnen Bars des ALMA's
+
 double shift.vertical;
 string legendLabel, iDescription;
 
