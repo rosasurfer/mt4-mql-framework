@@ -1,5 +1,7 @@
 /**
- * Jurik Moving Average
+ * Multi-Color/Timeframe Jurik Moving Average
+ *
+ *
  *
  * @link  http://www.jurikres.com/catalog/ms_ama.htm
  */

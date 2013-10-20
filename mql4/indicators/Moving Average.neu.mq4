@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Timeframe Moving Average
+ * Multi-Color/Timeframe Moving Averages
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -23,7 +23,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/iALMA.mqh>
+#include <indicators/ALMA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1

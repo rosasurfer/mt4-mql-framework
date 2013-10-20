@@ -1,26 +1,9 @@
 /**
- *  Arnaud Legoux Moving Average
- *
- *
- *  From the author:
- *  ----------------
- *  In an attempt to create a new kind of moving average with some friends/colleagues (because I was tired of the classical set
- *  of MA's everybody used for the last 10 years) we've created this new one.
- *
- *  It removes small price fluctuations and enhances the trend by applying a moving average twice, one from left to right and
- *  one from right to left. At the end of this process the phase shift (price lag) commonly associated with moving averages is
- *  significantly reduced.
- *
- *  Zero-phase digital filtering reduces noise in the signal. Conventional filtering reduces noise in the signal but adds delay.
- *
- *  The ALMA can give some excellent results if you take the time to tweak the parameters (no need to explain this part, it will
- *  be easy for you to find the right settings in less than an hour).
- *
- *  Arnaud Legoux
- *  http://www.arnaudlegoux.com/
+ * Multi-Color/Timeframe Arnaud Legoux Moving Average
  *
  *
  *
+ * @link  http://www.arnaudlegoux.com/
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -33,8 +16,8 @@ extern string MA.Periods            = "200";                         // für eini
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern double GaussianOffset        = 0.85;                          // Gaussian distribution offset: 0..1 (see excel spread sheet)
-extern double Sigma                 = 6.0;                           // Sigma parameter (see excel spread sheet)
+extern double Distribution.Offset   = 0.85;                          // Gauss'scher Verteilungsoffset: 0..1
+extern double Distribution.Sigma    = 6.0;                           // Gauss'sches Verteilungs-Sigma (Kurvenhöhe)
 
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Orange;
@@ -46,7 +29,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/iALMA.mqh>
+#include <indicators/ALMA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
@@ -156,7 +139,7 @@ int onInit() {
 
    // (3) ALMA-Gewichtungen berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
    if (ma.periods > 1)                                                  // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      iALMA.CalculateWeights(alma.weights, ma.periods, GaussianOffset, Sigma);
+      iALMA.CalculateWeights(alma.weights, ma.periods, Distribution.Offset, Distribution.Sigma);
 
 
    // (4.1) Bufferverwaltung
@@ -351,18 +334,18 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                        , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe                      , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice                   , "\"; ",
+                            "MA.Periods=\"",          MA.Periods                             , "\"; ",
+                            "MA.Timeframe=\"",        MA.Timeframe                           , "\"; ",
+                            "MA.AppliedPrice=\"",     MA.AppliedPrice                        , "\"; ",
 
-                            "GaussianOffset=",        NumberToStr(GaussianOffset, ".1+"), "; ",
-                            "Sigma=",                 NumberToStr(Sigma, ".1+")         , "; ",
+                            "Distribution.Offset=",   NumberToStr(Distribution.Offset, ".1+"), "; ",
+                            "Distribution.Sigma=",    NumberToStr(Distribution.Sigma, ".1+") , "; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)         , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)       , "; ",
+                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)              , "; ",
+                            "Color.DownTrend=",       ColorToStr(Color.DownTrend)            , "; ",
 
-                            "Max.Values=",            Max.Values                        , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars             , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips               , "; ")
+                            "Max.Values=",            Max.Values                             , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                  , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                    , "; ")
    );
 }
