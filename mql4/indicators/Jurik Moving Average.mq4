@@ -1,6 +1,8 @@
 /**
- * Jurik Moving Average
+ * Multi-Color/Timeframe Jurik Moving Average
  *
+ *
+ * @see   experts/indicators/etc/arnaud-legoux-ma/
  * @link  http://www.jurikres.com/catalog/ms_ama.htm
  */
 #include <stddefine.mqh>
