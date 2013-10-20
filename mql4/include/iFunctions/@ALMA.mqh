@@ -4,7 +4,7 @@
  * @param  double weights[] - Array zur Aufnahme der Gewichtungen
  * @param  int    periods   - Anzahl der Perioden des ALMA
  * @param  double offset    - Verteilungsoffset der Gauss'schen Kurve (default: 0.85)
- * @param  double sigma     - Steilheit der Gauss'schen Kurve (default: 6.0)
+ * @param  double sigma     - Verteilungs-Höhe der Gauss'schen Kurve (default: 6.0)
  *
  *
  *
