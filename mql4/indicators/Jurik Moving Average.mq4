@@ -31,8 +31,10 @@ double bufferJMA[];
  *
  */
 int onInit() {
-   SetIndexBuffer(0, bufferJMA);
-   SetIndexStyle (0, DRAW_LINE);
+   SetIndexBuffer    (0, bufferJMA);
+   SetIndexEmptyValue(0, 0        );
+   SetIndexStyle     (0, DRAW_LINE);
+
    IndicatorDigits(SubPipDigits);
    return(catch("onInit()"));
 }
@@ -43,7 +45,7 @@ int onInit() {
  */
 int onTick() {
    int    i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, i11, i12, i13, j;
-   double d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35, d36, d37;
+   double d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35;
 
    double price;
    double jma;
@@ -70,7 +72,7 @@ int onTick() {
    else                   d11 = phase/100. + 1.5;
 
 
-   bool bStatus = true;
+   bool bInit = true;
 
 
    for (int bar=BarCount; bar >= 0; bar--) {
@@ -99,13 +101,13 @@ int onTick() {
          d25 *= 0.9;
          d19  = d25/(d25 + 2);
 
-         if (bStatus) {
-            bStatus = false;
+         if (bInit) {
+            bInit = false;
             i01 = 0;
             i12 = 0;
             d16 = price;
             for (i=0; i < 30; i++) {
-               if (buffer61[i] != buffer61[i+1]) {    // double comparison error
+               if (NE(buffer61[i], buffer61[i+1], Digits)) {
                   i01 = 1;
                   i12 = 29;
                   d16 = buffer61[0];
@@ -242,25 +244,18 @@ int onTick() {
                   d33 = price;
                   if (d24 > 0)  d05 = MathCeil(d24);
                   else          d05 = 1;
-                  d37 = d05;
-
                   if (d24 >= 1) d03 = MathFloor(d24);
                   else          d03 = 1;
-                  d36 = d03;
 
-                  if (d37 == d36) {                // double comparison error
-                     d22 = 1;
-                  }
-                  else {
-                     d05 =  d37 - d36;
-                     d22 = (d24 - d36)/d05;
-                  }
-                  if (d36 <= 29) i01 = d36;
+                  if (d03 == d05) d22 = 1;
+                  else            d22 = (d24-d03) / (d05-d03);
+
+                  if (d03 <= 29) i01 = d03;
                   else           i01 = 29;
-                  if (d37 <= 29) i02 = d37;
+                  if (d05 <= 29) i02 = d05;
                   else           i02 = 29;
 
-                  d30 = (price-buffer61[i11-i01-1]) * (1-d22)/d36 + (price-buffer61[i11-i02-1]) * d22/d37;
+                  d30 = (price-buffer61[i11-i01-1]) * (1-d22)/d03 + (price-buffer61[i11-i02-1]) * d22/d05;
                }
             }
             else {
