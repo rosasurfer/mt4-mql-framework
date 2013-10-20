@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Timeframe Jurik Moving Average
+ * Multi-Color/Timeframe Jurik Moving Average (adaptiv)
  *
  *
  *
@@ -251,8 +251,8 @@ int onTick() {
       // (3.1) der eigentliche Moving Average
       price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar);
       if (i11 < 61) {
+         prices61[i11] = price;
          i11++;
-         prices61[i11-1] = price;
       }
 
       if (i11 > 30) {
