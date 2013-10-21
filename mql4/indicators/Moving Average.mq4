@@ -23,6 +23,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
+#include <indicators/MA.mqh>
 #include <indicators/ALMA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
@@ -239,28 +240,25 @@ int onTick() {
    int ma.startBar = Min(ma.ChangedBars-1, Bars-ma.periods);
    if (ma.startBar < 0) {
       if (Indicator.IsSuperContext())
-         return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
+         return(catch("onTick()", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }
 
 
-   double curValue, prevValue;                                          // 2 Schleifen, damit iMAOnArray() nicht bei jedem Durchlauf auf das geänderte
-                                                                        // Ausgangsarray mit einer kompletten Neuberechnung des MA's reagiert.
-
    // (2) ungültige Bars neuberechnen
    if (ma.method == MODE_TMA) {
-      // (2.1) TMA: erster SMA
+      // TMA: erster SMA
       int sma.ChangedBars = ChangedBars;
       if (sma.ChangedBars > Max.Values+tma.sma1.periods) /*&&*/ if (Max.Values >= 0)
          sma.ChangedBars = Max.Values+tma.sma1.periods;
       int sma.startBar = Min(sma.ChangedBars-1, Bars-tma.sma1.periods);
 
-      for (int bar=sma.startBar; bar >= 0; bar--) {
+      for (int bar=sma.startBar; bar >= 0; bar--) {                     // eigene Schleife (darf nicht innerhalb der 2. Schleife erfolgen)
          bufferTmaSma[bar] = iMA(NULL, NULL, tma.sma1.periods, 0, MODE_SMA, ma.appliedPrice, bar);
       }
    }
    for (bar=ma.startBar; bar >= 0; bar--) {
-      // (2.2) der eigentliche Moving Average
+      // der eigentliche Moving Average
       if (ma.method == MODE_ALMA) {                                     // ALMA
          bufferMA[bar] = 0;
          for (int i=0; i < ma.periods; i++) {
@@ -275,71 +273,13 @@ int onTick() {
       }
       bufferMA[bar] += shift.vertical;
 
-
-      // (2.3) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
-      curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
-      prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
-
-      if      (curValue > prevValue) bufferTrend[bar] =       Max(bufferTrend[bar+1], 0) + 1;
-      else if (curValue < prevValue) bufferTrend[bar] =       Min(bufferTrend[bar+1], 0) - 1;
-      else                           bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
-
-
-      // (2.4) Trend coloring
-      if (bufferTrend[bar] > 0) {
-         bufferUpTrend  [bar] = bufferMA[bar];
-         bufferDownTrend[bar] = EMPTY_VALUE;
-
-         if (bufferTrend[bar+1] < 0) bufferUpTrend  [bar+1] = bufferMA[bar+1];
-         else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
-      }
-      else /*(bufferTrend[bar] < 0)*/ {
-         bufferUpTrend  [bar] = EMPTY_VALUE;
-         bufferDownTrend[bar] = bufferMA[bar];
-
-         if (bufferTrend[bar+1] > 0) {                                  // Wenn vorher Up-Trend...
-            bufferDownTrend[bar+1] = bufferMA[bar+1];
-            if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {      // ...und Up-Trend nur eine Bar lang war, ...
-               bufferUpTrend2[bar+2] = bufferMA[bar+2];
-               bufferUpTrend2[bar+1] = bufferMA[bar+1];                 // ... dann Down-Trend mit Up-Trend 2 überlagern.
-            }
-         }
-         else {
-            bufferUpTrend[bar+1] = EMPTY_VALUE;
-         }
-      }
+      // Trend aktualisieren
+      iMA.UpdateTrend(bufferMA, bufferTrend, bufferUpTrend, bufferDownTrend, bufferUpTrend2, bar);
    }
 
 
-   static int      lastTrend;                                           // Trend des vorherigen Ticks
-   static double   lastValue;                                           // Value des vorherigen Ticks
-   static bool     intrabarTrendChange;                                 // vorläufiger Trendwechsel innerhalb der aktuellen Bar
-   static datetime lastBarOpenTime;
-
-
-   // (3.1) Legende: Farbe bei Trendwechsel aktualisieren
-   if (Sign(bufferTrend[0]) != Sign(lastTrend)) {
-      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
-      int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("onTick(2)", error));
-      if (lastTrend != 0)
-         intrabarTrendChange = !intrabarTrendChange;
-   }
-   if (Time[0] > lastBarOpenTime) /*&&*/ if (Abs(bufferTrend[0])==2)    // onBarOpen vorläufigen Trendwechsel der vorherigen Bar deaktivieren
-      intrabarTrendChange = false;
-
-
-   // (3.2) Legende: Wert bei Änderung aktualisieren
-   if (curValue!=lastValue || Time[0] > lastBarOpenTime) {
-      ObjectSetText(legendLabel,
-                    StringConcatenate(iDescription, ifString(intrabarTrendChange, "_i", ""), "    ", NumberToStr(curValue, SubPipPriceFormat)),
-                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
-   }
-   lastTrend       = bufferTrend[0];
-   lastValue       = curValue;
-   lastBarOpenTime = Time[0];
-
+   // (3) Legende aktualisieren
+   iMA.UpdateLegend(legendLabel, iDescription, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
 

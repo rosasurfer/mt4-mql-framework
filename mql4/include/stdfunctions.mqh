@@ -282,12 +282,6 @@ int      last_error;                                        // der letzte Fehler
 #define MODE_TMA                       5        // triangular moving average
 
 
-// Band type identifiers, siehe Bands.mq4
-#define MODE_STDDEV                    0        // standard deviation
-#define MODE_ENV                       1        // envelopes
-#define MODE_ATR                       2        // average true range
-
-
 // Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
 #define MODE_MAIN                      0        // base indicator line
 #define MODE_SIGNAL                    1        // signal line
@@ -345,8 +339,10 @@ int      last_error;                                        // der letzte Fehler
 #define MovingAverage.MODE_MA          0        // Wert des MA's
 #define MovingAverage.MODE_TREND       1        // Trend des MA's
 
-#define BollingerBands.MODE_UPPER      0        // oberes Band
-#define BollingerBands.MODE_LOWER      1        // unteres Band
+#define Bands.MODE_UPPER               0        // oberes Band
+#define Bands.MODE_MAIN                1        // Basislinie
+#define Bands.MODE_MA    Bands.MODE_MAIN        //
+#define Bands.MODE_LOWER               2        // unteres Band
 
 
 // EXECUTION_CONTEXT element identifiers

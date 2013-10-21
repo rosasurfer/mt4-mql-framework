@@ -1,8 +1,8 @@
 /**
  * Multi-Timeframe Bollinger Bands
  *
- * Zum Vergleich ist es möglich, das BollingerBand mit einem weiteren eines anderen MovingAverage-Typs (mit eigenem Multiplikator der StdDev) zu überlagern.
- * Die resultierenden vier Bänder werden dann als Histogramme gezeichnet.
+ * Zum Vergleich ist es möglich, zwei Bollinger Bänder gleichzeitig anzuzeigen. Die resultierenden vier Bänder werden dann
+ * als Histogramme gezeichnet.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
