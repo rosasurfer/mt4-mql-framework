@@ -207,8 +207,10 @@ int onTick() {
    if (ma.periods < 2)                                                  // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
       return(NO_ERROR);
 
-   if (ChangedBars < 3) // vorübergehender Workaround
+   if (ChangedBars < 2)       // !!! Bug: vorübergehender Workaround bei Realtime-Update
       return(NO_ERROR);
+   if (ChangedBars == 2)
+      ChangedBars = Bars;
 
 
    // (1) Startbar der Berechnung ermitteln
