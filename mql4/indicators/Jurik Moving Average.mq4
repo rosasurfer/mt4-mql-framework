@@ -16,7 +16,7 @@ extern string MA.Periods            = "14";                          // für eini
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
-extern int    PhaseShift            = 0;                             // Phasenverschiebung: -100..+100
+extern int    Phase                 = 0;                             // -100..+100
 
 extern color  Color.UpTrend         = DodgerBlue;                    // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend       = Orange;
@@ -28,6 +28,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
+#include <indicators/MA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
@@ -118,9 +119,9 @@ int onInit() {
                                      return(catch("onInit(7)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.4) PhaseShift
-   if (PhaseShift < -100)            return(catch("onInit(8)   Invalid input parameter PhaseShift = "+ PhaseShift, ERR_INVALID_INPUT_PARAMVALUE));
-   if (PhaseShift > +100)            return(catch("onInit(9)   Invalid input parameter PhaseShift = "+ PhaseShift, ERR_INVALID_INPUT_PARAMVALUE));
+   // (1.4) Phase
+   if (Phase < -100)                 return(catch("onInit(8)   Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMVALUE));
+   if (Phase > +100)                 return(catch("onInit(9)   Invalid input parameter Phase = "+ Phase, ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.5) Max.Values
    if (Max.Values < -1)              return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
@@ -219,7 +220,7 @@ int onTick() {
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
    if (startBar < 0) {
       if (Indicator.IsSuperContext())
-         return(catch("onTick(1)", ERR_HISTORY_INSUFFICIENT));
+         return(catch("onTick()", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }
 
@@ -227,7 +228,7 @@ int onTick() {
    // (2) JMA-Initialisierung
    int    i01, i02, i03, i04, i05, i06, i07, i08, i09, i10, i11, i12, i13, j;
    double d01, d02, d03, d04, d05, d06, d07, d08, d09, d10, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d26, d27, d28, d29, d30, d31, d32, d33, d34, d35;
-   double jma, curValue, prevValue, price;
+   double jma, price;
 
    double list127 [127];
    double ring127 [127];
@@ -247,13 +248,13 @@ int onTick() {
    }
 
    double d25 = (ma.periods-1) / 2.0;
-   double d11 = PhaseShift/100. + 1.5;
+   double d11 = Phase/100. + 1.5;
    bool bInit = true;
 
 
    // (3) ungültige Bars neuberechnen
    for (int bar=startBar; bar >= 0; bar--) {
-      // (3.1) der eigentliche Moving Average
+      // der eigentliche Moving Average
       price = iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar);
       if (i11 < 61) {
          prices61[i11] = price;
@@ -472,71 +473,13 @@ int onTick() {
       }
       bufferMA[bar] = jma;
 
-
-      // (3.2) Trend: minimale Reversal-Glättung um 0.1 pip durch Normalisierung
-      curValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
-      prevValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
-
-      if      (curValue > prevValue) bufferTrend[bar] =       Max(bufferTrend[bar+1], 0) + 1;
-      else if (curValue < prevValue) bufferTrend[bar] =       Min(bufferTrend[bar+1], 0) - 1;
-      else                           bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
-
-
-      // (3.3) Trend coloring
-      if (bufferTrend[bar] > 0) {
-         bufferUpTrend  [bar] = bufferMA[bar];
-         bufferDownTrend[bar] = EMPTY_VALUE;
-
-         if (bufferTrend[bar+1] < 0) bufferUpTrend  [bar+1] = bufferMA[bar+1];
-         else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
-      }
-      else /*(bufferTrend[bar] < 0)*/ {
-         bufferUpTrend  [bar] = EMPTY_VALUE;
-         bufferDownTrend[bar] = bufferMA[bar];
-
-         if (bufferTrend[bar+1] > 0) {                                  // Wenn vorher Up-Trend...
-            bufferDownTrend[bar+1] = bufferMA[bar+1];
-            if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {      // ...und Up-Trend nur eine Bar lang war, ...
-               bufferUpTrend[bar+2] = bufferMA[bar+2];
-               bufferUpTrend[bar+1] = bufferMA[bar+1];                  // ... dann Down-Trend mit Up-Trend 2 überlagern.
-            }
-         }
-         else {
-            bufferUpTrend[bar+1] = EMPTY_VALUE;
-         }
-      }
+      // Trend aktualisieren
+      iMA.UpdateTrend(bufferMA, bufferTrend, bufferUpTrend, bufferDownTrend, bufferUpTrend2, bar);
    }
 
 
-   static int      lastTrend;                                           // Trend des vorherigen Ticks
-   static double   lastValue;                                           // Value des vorherigen Ticks
-   static bool     intrabarTrendChange;                                 // vorläufiger Trendwechsel innerhalb der aktuellen Bar
-   static datetime lastBarOpenTime;
-
-
-   // (4.1) Legende: bei Trendwechsel Farbe aktualisieren
-   if (Sign(bufferTrend[0]) != Sign(lastTrend)) {
-      ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(bufferTrend[0]>0, Color.UpTrend, Color.DownTrend));
-      int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("onTick(2)", error));
-      if (lastTrend != 0)
-         intrabarTrendChange = !intrabarTrendChange;
-   }
-   if (Time[0] > lastBarOpenTime) /*&&*/ if (Abs(bufferTrend[0])==2)    // onBarOpen vorläufigen Trendwechsel der vorherigen Bar deaktivieren
-      intrabarTrendChange = false;
-
-
-   // (4.2) Legende: bei Wertänderung Wert aktualisieren
-   if (curValue!=lastValue || Time[0] > lastBarOpenTime) {
-      ObjectSetText(legendLabel,
-                    StringConcatenate(iDescription, ifString(intrabarTrendChange, "_i", ""), "    ", NumberToStr(curValue, SubPipPriceFormat)),
-                    ObjectGet(legendLabel, OBJPROP_FONTSIZE));
-   }
-   lastTrend       = bufferTrend[0];
-   lastValue       = curValue;
-   lastBarOpenTime = Time[0];
-
+   // (4) Legende aktualisieren
+   iMA.UpdateLegend(legendLabel, iDescription, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
 
@@ -566,7 +509,7 @@ string InputsToStr() {
                             "MA.Timeframe=\"",        MA.Timeframe               , "\"; ",
                             "MA.AppliedPrice=\"",     MA.AppliedPrice            , "\"; ",
 
-                            "PhaseShift=",            PhaseShift                 , "; ",
+                            "Phase=",                 Phase                      , "; ",
 
                             "Color.UpTrend=",         ColorToStr(Color.UpTrend)  , "; ",
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",
