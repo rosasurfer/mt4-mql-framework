@@ -3,7 +3,13 @@
  *
  *
  * @see   experts/indicators/etc/jurik-ma
+ *
  * @link  http://www.jurikres.com/catalog/ms_ama.htm
+ * @link  http://www.forex-tsd.com/digital-filters/198-jurik.html
+ * @link  http://articles.mql4.com/310
+ *
+ *
+ * onTick bar[0] recalculation: http://articles.mql4.com/202
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
