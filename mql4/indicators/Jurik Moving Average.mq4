@@ -28,7 +28,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/MA.mqh>
+#include <indicators/iMA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
@@ -57,7 +57,7 @@ int    ma.method;
 int    ma.appliedPrice;
 
 double shift.vertical;
-string legendLabel, iDescription;
+string legendLabel, legendName;
 
 
 /**
@@ -135,8 +135,8 @@ int onInit() {
    string strTimeframe="", strAppliedPrice="";
    if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   iDescription = "JMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
-   legendLabel  = CreateLegendLabel(iDescription);
+   legendName  = "JMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
+   legendLabel = CreateLegendLabel(legendName);
    PushObject(legendLabel);
 
 
@@ -148,8 +148,9 @@ int onInit() {
    SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend2 );       // UpTrend-Linie 2:   sichtbar
 
    // (3.2) Anzeigeoptionen
-   IndicatorShortName(iDescription);                                    // Context Menu
-   SetIndexLabel(MovingAverage.MODE_MA,        iDescription);           // Tooltip und "Data Window"
+   IndicatorShortName(legendName);                                      // Context Menu
+   string dataName  = "JMA("+ MA.Periods + strTimeframe +")";
+   SetIndexLabel(MovingAverage.MODE_MA,        dataName);               // Tooltip und "Data Window"
    SetIndexLabel(MovingAverage.MODE_TREND,     NULL);
    SetIndexLabel(MovingAverage.MODE_UPTREND,   NULL);
    SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL);
@@ -479,7 +480,7 @@ int onTick() {
 
 
    // (4) Legende aktualisieren
-   iMA.UpdateLegend(legendLabel, iDescription, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   iMA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
 
