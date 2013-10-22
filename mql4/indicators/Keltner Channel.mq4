@@ -13,6 +13,7 @@ extern string MA.Timeframe          = "current";                     // Timefram
 extern string MA.Method             = "SMA* | EMA | SMMA | LWMA | TMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
+extern int    ATR.Periods           = 100;
 extern double ATR.Factor            = 1;
 
 extern color  Color.Bands           = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
@@ -25,8 +26,8 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/Bands.mqh>
-#include <indicators/ALMA.mqh>
+#include <indicators/iBands.mqh>
+#include <indicators/iALMA.mqh>
 
 #define Bands.MODE_UPPER      0                                      // oberes Band
 #define Bands.MODE_MA         1                                      // MA
@@ -232,7 +233,7 @@ int onTick() {
       double atr;
       for (int bar=startBar; bar >= 0; bar--) {
          bufferMA       [bar] =  iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
-         atr                  = iATR(NULL, NULL, ma.periods, bar) * ATR.Factor;
+         atr                  = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Factor;
          bufferUpperBand[bar] = bufferMA[bar] + atr;
          bufferLowerBand[bar] = bufferMA[bar] - atr;
       }
