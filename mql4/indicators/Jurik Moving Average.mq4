@@ -2,7 +2,7 @@
  * Multi-Color/Timeframe Jurik Moving Average (adaptiv)
  *
  *
- * @see   experts/indicators/etc/jurik-ma
+ * @see   experts/indicators/etc/jurik
  *
  * @link  http://www.jurikres.com/catalog/ms_ama.htm
  * @link  http://www.forex-tsd.com/digital-filters/198-jurik.html
