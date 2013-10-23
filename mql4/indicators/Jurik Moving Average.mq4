@@ -8,8 +8,7 @@
  * @link  http://www.forex-tsd.com/digital-filters/198-jurik.html
  * @link  http://articles.mql4.com/310
  *
- *
- * onTick bar[0] recalculation: http://articles.mql4.com/202
+ * @link  onTick bar[0] recalculation: http://articles.mql4.com/202
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
