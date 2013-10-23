@@ -6,7 +6,6 @@
  *
  * @link  http://www.jurikres.com/catalog/ms_ama.htm
  * @link  http://www.forex-tsd.com/digital-filters/198-jurik.html
- * @link  http://articles.mql4.com/310
  *
  * @link  onTick bar[0] recalculation: http://articles.mql4.com/202
  */
