@@ -4283,7 +4283,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "axitraderusa-"      )) return("AxiTrader"       );
    else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
    else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
-   else if (StringStartsWith(server, "cmap-"              )) return("IC Markets"      );
+   else if (StringStartsWith(server, "cmap-"              )) return("IC Markets"      );     // demo
    else if (StringStartsWith(server, "collectivefx-"      )) return("CollectiveFX"    );
    else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
    else if (StringStartsWith(server, "easyforex-"         )) return("EasyForex"       );
@@ -4299,6 +4299,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "globalprime-"       )) return("Global Prime"    );
    else if (StringStartsWith(server, "icmarkets-"         )) return("IC Markets"      );
    else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
+   else if (StringStartsWith(server, "integral-"          )) return("Global Prime"    );     // demo
    else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
    else if (StringStartsWith(server, "liteforex-"         )) return("LiteForex"       );
    else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
@@ -8384,7 +8385,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "cmap-"              )) timezone = "Europe/London";        // IC Markets
+   else if (StringStartsWith(directory, "cmap-"              )) timezone = "Europe/London";        // IC Markets demo
    else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
@@ -8397,8 +8398,9 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
    else if (StringStartsWith(directory, "globalprime-"       )) timezone = "GMT";
-   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "Europe/Kiev";          // oder FXT ???
+   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
    else if (StringStartsWith(directory, "liteforex-"         )) timezone = "Europe/Minsk";
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
