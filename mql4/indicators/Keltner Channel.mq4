@@ -14,7 +14,8 @@ extern string MA.Method             = "SMA* | EMA | SMMA | LWMA | TMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    ATR.Periods           = 100;
-extern double ATR.Factor            = 1;
+extern string ATR.Timeframe         = "MA";                          // Timeframe: [M1|M5|M15|...], "MA" = wie MA
+extern double ATR.Multiplicator     = 1;
 
 extern color  Color.Bands           = Blue;                          // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.MA              = CLR_NONE;
@@ -127,8 +128,8 @@ int onInit() {
                                      return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.5) ATR.Factor
-   if (ATR.Factor < 0)               return(catch("onInit(9)   Invalid input parameter ATR.Factor = "+ NumberToStr(ATR.Factor, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   // (1.5) ATR.Multiplicator
+   if (ATR.Multiplicator < 0)        return(catch("onInit(9)   Invalid input parameter ATR.Multiplicator = "+ NumberToStr(ATR.Multiplicator, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.6) Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // kann vom Terminal falsch gesetzt worden sein
@@ -232,23 +233,73 @@ int onTick() {
    if (ma.method <= MODE_LWMA) {
       double atr;
       for (int bar=startBar; bar >= 0; bar--) {
-         bufferMA       [bar] =  iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
-         atr                  = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Factor;
+         bufferMA       [bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
+         atr                  = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplicator;
          bufferUpperBand[bar] = bufferMA[bar] + atr;
          bufferLowerBand[bar] = bufferMA[bar] - atr;
       }
    }
    else if (ma.method == MODE_TMA) {
-      //RecalcTMABands(startBar);
+      RecalcTMAChannel(startBar);
    }
    else if (ma.method == MODE_ALMA) {
-      //RecalcALMABands(startBar);
+      RecalcALMAChannel(startBar);
    }
 
 
    // (3) Legende aktualisieren
    iBands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
    return(last_error);
+}
+
+
+/**
+ * Berechnet die ungültigen Bars eines TMA-basierten Keltner Channels neu.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RecalcTMAChannel(int startBar) {
+   double atr;
+
+   int sma1.periods  = ma.periods/2;                                 // Periode des ersten SMA eines TMA
+   int sma2.periods  = ma.periods - sma1.periods;                    // Periode des zweiten SMA eines TMA
+   int sma1.startBar = Min(Bars-sma1.periods, startBar+sma1.periods);
+
+   // erster SMA
+   for (int i, j, bar=sma1.startBar; bar >= 0; bar--) {
+      bufferTmaSma[bar] = iMA(NULL, NULL, sma1.periods, 0, MODE_SMA, ma.appliedPrice, bar);
+   }
+
+   for (bar=startBar; bar >= 0; bar--) {
+      // zweiter SMA
+      bufferMA       [bar] = iMAOnArray(bufferTmaSma, WHOLE_ARRAY, sma2.periods, 0, MODE_SMA, bar) + shift.vertical;
+      atr                  = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplicator;
+      bufferUpperBand[bar] = bufferMA[bar] + atr;
+      bufferLowerBand[bar] = bufferMA[bar] - atr;
+   }
+   return(!catch("RecalcTMAChannel()"));
+}
+
+
+/**
+ * Berechnet die ungültigen Bars eines ALMA-basierten Keltner Channels neu.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RecalcALMAChannel(int startBar) {
+   double atr;
+
+   for (int i, j, bar=startBar; bar >= 0; bar--) {
+      bufferMA[bar] = 0;
+      for (i=0; i < ma.periods; i++) {
+         bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
+      }
+      bufferMA       [bar] += shift.vertical;
+      atr                   = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplicator;
+      bufferUpperBand[bar]  = bufferMA[bar] + atr;
+      bufferLowerBand[bar]  = bufferMA[bar] - atr;
+   }
+   return(!catch("RecalcALMAChannel()"));
 }
 
 
@@ -260,18 +311,18 @@ int onTick() {
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                    , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe                  , "\"; ",
-                            "MA.Method=\"",           MA.Method                     , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice               , "\"; ",
+                            "MA.Periods=\"",          MA.Periods                           , "\"; ",
+                            "MA.Timeframe=\"",        MA.Timeframe                         , "\"; ",
+                            "MA.Method=\"",           MA.Method                            , "\"; ",
+                            "MA.AppliedPrice=\"",     MA.AppliedPrice                      , "\"; ",
 
-                            "ATR.Factor=",            NumberToStr(ATR.Factor, ".1+"), "\"; ",
+                            "ATR.Multiplicator=",     NumberToStr(ATR.Multiplicator, ".1+"), "\"; ",
 
-                            "Color.Bands=",           ColorToStr(Color.Bands)       , "; ",
-                            "Color.MA=",              ColorToStr(Color.MA)          , "; ",
+                            "Color.Bands=",           ColorToStr(Color.Bands)              , "; ",
+                            "Color.MA=",              ColorToStr(Color.MA)                 , "; ",
 
-                            "Max.Values=",            Max.Values                    , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars         , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips           , "; ")
+                            "Max.Values=",            Max.Values                           , "; ",
+                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars                , "; ",
+                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips                  , "; ")
    );
 }
