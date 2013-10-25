@@ -95,9 +95,9 @@ int onInit() {
 
 
    // Leverage-Konfiguration einlesen
-   leverage = GetGlobalConfigDouble("Leverage", "CurrencyBasket", 0);
+   leverage = GetGlobalConfigDouble("Leverage", "Basket", 0);
    if (LT(leverage, 1))
-      return(catch("onInit(6)   Invalid configuration value [Leverage] CurrencyBasket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+      return(catch("onInit(6)   Invalid configuration value [Leverage] Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    return(catch("onInit(7)"));
 }
