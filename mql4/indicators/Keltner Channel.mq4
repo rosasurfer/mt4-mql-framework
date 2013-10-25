@@ -53,6 +53,8 @@ int    ma.periods;
 int    ma.method;
 int    ma.appliedPrice;
 
+int    atr.timeframe;
+
 double alma.weights[];                                               // Gewichtungen der einzelnen Bars eines ALMA
 
 double shift.vertical;
@@ -128,22 +130,33 @@ int onInit() {
                                      return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
-   // (1.5) ATR.Multiplicator
-   if (ATR.Multiplicator < 0)        return(catch("onInit(9)   Invalid input parameter ATR.Multiplicator = "+ NumberToStr(ATR.Multiplicator, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   // (1.5) ATR.Periods
+   if (ATR.Periods < 1)              return(catch("onInit(9)   Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMVALUE));
 
-   // (1.6) Colors
+   // (1.6) ATR.Timeframe
+   ATR.Timeframe = StringToUpper(StringTrim(ATR.Timeframe));
+   if (ATR.Timeframe == "MA"     ) ATR.Timeframe = StringToUpper(MA.Timeframe);
+   if (ATR.Timeframe == "CURRENT") ATR.Timeframe = "";
+   if (ATR.Timeframe == ""       ) atr.timeframe = Period();
+   else                            atr.timeframe = StrToPeriod(ATR.Timeframe);
+   if (atr.timeframe == -1)          return(catch("onInit(10)   Invalid input parameter ATR.Timeframe = \""+ ATR.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+
+   // (1.7) ATR.Multiplicator
+   if (ATR.Multiplicator < 0)        return(catch("onInit(11)   Invalid input parameter ATR.Multiplicator = "+ NumberToStr(ATR.Multiplicator, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+
+   // (1.8) Colors
    if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // kann vom Terminal falsch gesetzt worden sein
    if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;
 
-   // (1.7) Max.Values
-   if (Max.Values < -1)              return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
+   // (1.9) Max.Values
+   if (Max.Values < -1)              return(catch("onInit(12)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
 
    // (2) Chart-Legende erzeugen
-   string strTimeframe="", strAppliedPrice="";
-   if (MA.Timeframe    != ""         ) strTimeframe    = "x"+ MA.Timeframe;
-   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   iDescription = "Keltner Channel("+ MA.Periods + strTimeframe +", "+ MA.Method + strAppliedPrice +")";
+   string strMaTimeframe="", strAtrTimeframe="";
+   if (MA.Timeframe  != "") strMaTimeframe  = "x"+ MA.Timeframe;
+   if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
+   iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplicator, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +strMaTimeframe +")";
    legendLabel  = CreateLegendLabel(iDescription);
    PushObject(legendLabel);
 
@@ -161,11 +174,12 @@ int onInit() {
    SetIndexBuffer(Bands.MODE_TMASMA, bufferTmaSma   );               // unsichtbarer Hilfsbuffer
 
    // (4.2) Anzeigeoptionen
-   IndicatorShortName("Keltner Channel("+ MA.Periods + strTimeframe + ")");            // Context Menu
-   SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper("+ MA.Periods + strTimeframe + ")"); // Tooltip und "Data Window"
-   SetIndexLabel(Bands.MODE_LOWER, "Keltner Lower("+ MA.Periods + strTimeframe + ")");
+   string atrDescription = NumberToStr(ATR.Multiplicator, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
+   IndicatorShortName("Keltner Channel "+ atrDescription);              // Context Menu
+   SetIndexLabel(Bands.MODE_UPPER, "Keltner Upper "+ atrDescription);   // Tooltip und "Data Window"
+   SetIndexLabel(Bands.MODE_LOWER, "Keltner Lower "+ atrDescription);
    if (Color.MA == CLR_NONE) SetIndexLabel(Bands.MODE_MA, NULL);
-   else                      SetIndexLabel(Bands.MODE_MA, "Keltner "+ MA.Method +"("+ MA.Periods + strTimeframe + ")");
+   else                      SetIndexLabel(Bands.MODE_MA, "Keltner Channel "+ MA.Method +"("+ MA.Periods + strMaTimeframe + ")");
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
@@ -179,7 +193,7 @@ int onInit() {
    // (4.4) Styles
    iBands.SetIndicatorStyles(Color.MA, Color.Bands);                 // Workaround um diverse Terminalbugs (siehe dort)
 
-   return(catch("onInit(11)"));
+   return(catch("onInit(13)"));
 }
 
 
@@ -234,7 +248,7 @@ int onTick() {
       double atr;
       for (int bar=startBar; bar >= 0; bar--) {
          bufferMA       [bar] = iMA(NULL, NULL, ma.periods, 0, ma.method, ma.appliedPrice, bar) + shift.vertical;
-         atr                  = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplicator;
+         atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
          bufferUpperBand[bar] = bufferMA[bar] + atr;
          bufferLowerBand[bar] = bufferMA[bar] - atr;
       }
@@ -273,7 +287,7 @@ bool RecalcTMAChannel(int startBar) {
    for (bar=startBar; bar >= 0; bar--) {
       // zweiter SMA
       bufferMA       [bar] = iMAOnArray(bufferTmaSma, WHOLE_ARRAY, sma2.periods, 0, MODE_SMA, bar) + shift.vertical;
-      atr                  = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplicator;
+      atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
       bufferUpperBand[bar] = bufferMA[bar] + atr;
       bufferLowerBand[bar] = bufferMA[bar] - atr;
    }
@@ -290,14 +304,13 @@ bool RecalcALMAChannel(int startBar) {
    double atr;
 
    for (int i, j, bar=startBar; bar >= 0; bar--) {
-      bufferMA[bar] = 0;
+      bufferMA[bar] = shift.vertical;
       for (i=0; i < ma.periods; i++) {
          bufferMA[bar] += alma.weights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, ma.appliedPrice, bar+i);
       }
-      bufferMA       [bar] += shift.vertical;
-      atr                   = iATR(NULL, NULL, ATR.Periods, bar) * ATR.Multiplicator;
-      bufferUpperBand[bar]  = bufferMA[bar] + atr;
-      bufferLowerBand[bar]  = bufferMA[bar] - atr;
+      atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
+      bufferUpperBand[bar] = bufferMA[bar] + atr;
+      bufferLowerBand[bar] = bufferMA[bar] - atr;
    }
    return(!catch("RecalcALMAChannel()"));
 }
@@ -316,6 +329,8 @@ string InputsToStr() {
                             "MA.Method=\"",           MA.Method                            , "\"; ",
                             "MA.AppliedPrice=\"",     MA.AppliedPrice                      , "\"; ",
 
+                            "ATR.Periods=",           ATR.Periods                          , "; ",
+                            "ATR.Timeframe=\"",       ATR.Timeframe                        , "\"; ",
                             "ATR.Multiplicator=",     NumberToStr(ATR.Multiplicator, ".1+"), "\"; ",
 
                             "Color.Bands=",           ColorToStr(Color.Bands)              , "; ",

@@ -67,9 +67,9 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   leverage = GetGlobalConfigDouble("Leverage", "CurrencyPair", 1);
+   leverage = GetGlobalConfigDouble("Leverage", "Pair", 1);
    if (leverage < 1)
-      return(catch("onInit(2)   invalid configuration value [Leverage] CurrencyPair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(2)   invalid configuration value [Leverage] Pair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Label erzeugen
    CreateLabels();
