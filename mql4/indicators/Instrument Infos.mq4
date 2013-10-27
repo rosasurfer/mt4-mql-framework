@@ -191,8 +191,8 @@ int UpdateInfos() {
    double swapShort         = MarketInfo(symbol, MODE_SWAPSHORT     );
       double swapLongD, swapShortD, swapLongY, swapShortY;
       if (swapType == SCM_POINTS) {
-         swapLongD  = swapLong *Point/Pip;       swapLongY  = swapLongD *Pip*360*100/Close[0];
-         swapShortD = swapShort*Point/Pip;       swapShortY = swapShortD*Pip*360*100/Close[0];
+         swapLongD  = swapLong *Point/Pip;            swapLongY  = swapLongD *Pip*360*100/Close[0];
+         swapShortD = swapShort*Point/Pip;            swapShortY = swapShortD*Pip*360*100/Close[0];
       }
       else if (swapType == SCM_INTEREST) {
          swapLongD  = swapLong *Close[0]/100/360/Pip; swapLongY  = swapLong;

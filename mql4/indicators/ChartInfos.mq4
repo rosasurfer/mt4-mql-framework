@@ -17,8 +17,8 @@ string label.spread       = "Spread";
 string label.unitSize     = "UnitSize";
 string label.position     = "Position";
 string label.time         = "Time";
-string label.freezeLevel  = "MarginFreezeLevel";
-string label.stopoutLevel = "MarginStopoutLevel";
+string label.freezeLevel  = "FreezeLevel";
+string label.stopoutLevel = "StopoutLevel";
 
 int    appliedPrice = PRICE_MEDIAN;                         // Bid | Ask | Median (default)
 double leverage;                                            // Hebel zur UnitSize-Berechnung
@@ -67,14 +67,10 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   leverage = GetGlobalConfigDouble("Leverage", "Pair", 1);
-   if (leverage < 1)
-      return(catch("onInit(2)   invalid configuration value [Leverage] Pair = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
-
    // Label erzeugen
    CreateLabels();
 
-   return(catch("onInit(3)"));
+   return(catch("onInit(2)"));
 }
 
 
@@ -270,59 +266,111 @@ bool UpdateSpread() {
  *
  * @return bool - Erfolgsstatus
  */
-int UpdateUnitSize() {
+bool UpdateUnitSize() {
    if (IsTesting())                                                           // Unit-Anzeige wird im Tester nicht benötigt
       return(true);
 
-   bool   tradeAllowed = MarketInfo(Symbol(), MODE_TRADEALLOWED);
-   double tickSize     = MarketInfo(Symbol(), MODE_TICKSIZE    );
-   double tickValue    = MarketInfo(Symbol(), MODE_TICKVALUE   );
+   // (1) Konfiguration einlesen
+   static double leverage;
+   static int    soDistance;
 
-   int error = GetLastError();
-   if (IsError(error)) {
-      if (error == ERR_UNKNOWN_SYMBOL)
-         return(true);
-      return(!catch("UpdateUnitSize(1)", error));
+   if (!leverage) /*&&*/ if (!soDistance) {
+      string sValue, confValue, iniSection="Leverage", iniKey="Pair";
+      if (IsGlobalConfigKey(iniSection, iniKey)) {
+         confValue = GetGlobalConfigString(iniSection, iniKey, "");
+         int n = StringFind(confValue, ";");
+         if (n != -1) sValue = StringTrimRight(StringSubstrFix(confValue, 0, n));
+         else         sValue = confValue;
+
+         if (StringIsNumeric(sValue)) {
+            // (1.1) numerischer Wert des Hebels
+            double dValue = StrToDouble(sValue);
+            if (dValue < 1)                      return(!catch("UpdateUnitSize(1)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
+            leverage = dValue;
+         }
+         else {
+            // (1.2) nicht-numerisch, Stopout-Distanz parsen
+            sValue = StringToLower(sValue);
+            if (!StringStartsWith(sValue, "so")) return(!catch("UpdateUnitSize(2)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            sValue = StringTrimLeft(StringRight(sValue, -2));
+            if (!StringStartsWith(sValue, ":"))  return(!catch("UpdateUnitSize(3)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            sValue = StringTrimLeft(StringRight(sValue, -1));
+            if (!StringEndsWith(sValue, "p"))    return(!catch("UpdateUnitSize(4)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            sValue = StringTrimRight(StringLeft(sValue, -1));
+            if (!StringIsInteger(sValue))        return(!catch("UpdateUnitSize(5)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            int iValue = StrToInteger(sValue);
+            if (iValue >= 0)                     return(!catch("UpdateUnitSize(6)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            soDistance = -iValue;
+         }
+      }
+      else {
+         leverage = -1;
+      }
    }
 
 
-   if (tradeAllowed) {
-      if (tickSize != 0) /*&&*/ if (tickValue != 0) {                         // bei Start oder Accountwechsel können Werte noch nicht gesetzt sein
+   // (2) Anzeige berechnen
+   string strUnitSize = "UnitSize:  -";
 
-         double price, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-         if (!Bid) price = Close[0];                                          // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-         else      price = Bid;
+   if (leverage > 0 || soDistance) {
+      bool   tradeAllowed   = MarketInfo(Symbol(), MODE_TRADEALLOWED  );
+      double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
+      double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
+      double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
 
-         if (equity > 0.00000001) {
-            double lotValue =  price / tickSize * tickValue;                  // Lotvalue in Account-Currency
-            double unitSize = equity / lotValue * leverage;                   // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
-                                                                              // das Ergebnis wird immer ab-, niemals aufgerundet
+      int error = GetLastError();
+      if (IsError(error)) {
+         if (error == ERR_UNKNOWN_SYMBOL)
+            return(true);
+         return(!catch("UpdateUnitSize(7)", error));
+      }
+
+      if (tradeAllowed) {                                                     // bei Start oder Accountwechsel können Werte noch ungesetzt sein
+         double unitSize, equity=MathMax(AccountBalance(), AccountEquity()-AccountCredit());
+
+         if (tickSize && tickValue && marginRequired && equity > 0) {
+            if (leverage > 0) {
+               // (2.1) Hebel angegeben
+               double lotValue = Close[0]/tickSize * tickValue;               // Lotvalue eines Lots in Account-Currency
+               unitSize = equity / lotValue * leverage;                       // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
+            }
+            else if (soDistance > 0) {
+               // (2.2) Stopout-Distanz in Pip angegeben
+               double pointValue = tickValue/(tickSize/Point);
+               double pipValue   = PipPoints * pointValue;                    // Pipvalue eines Lots in Account-Currency
+               unitSize = equity / (marginRequired + soDistance*pipValue);
+            }
+
+            // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                        Abstufung immer max. 6.7%
             if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
-            else if (unitSize <=    0.05) unitSize = NormalizeDouble(MathFloor(unitSize/  0.002) *   0.002, 3);   //  0.03-0.05: Vielfaches von   0.002
-            else if (unitSize <=    0.12) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   //  0.05-0.12: Vielfaches von   0.005
+            else if (unitSize <=   0.075) unitSize = NormalizeDouble(MathFloor(unitSize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
+            else if (unitSize <=    0.12) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   // 0.075-0.12: Vielfaches von   0.005
             else if (unitSize <=    0.3 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.01 ) *   0.01 , 2);   //   0.12-0.3: Vielfaches von   0.01
-            else if (unitSize <=    0.5 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.02 ) *   0.02 , 2);   //    0.3-0.5: Vielfaches von   0.02
-            else if (unitSize <=    1.2 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.05 ) *   0.05 , 2);   //    0.5-1.2: Vielfaches von   0.05
+            else if (unitSize <=    0.75) unitSize = NormalizeDouble(MathFloor(unitSize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
+            else if (unitSize <=    1.2 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
             else if (unitSize <=    3.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
-            else if (unitSize <=    5.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.2  ) *   0.2  , 1);   //        3-5: Vielfaches von   0.2
-            else if (unitSize <=   12.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.5  ) *   0.5  , 1);   //       5-12: Vielfaches von   0.5
+            else if (unitSize <=    7.5 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
+            else if (unitSize <=   12.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
             else if (unitSize <=   30.  ) unitSize = MathRound      (MathFloor(unitSize/  1    ) *   1       );   //      12-30: Vielfaches von   1
-            else if (unitSize <=   50.  ) unitSize = MathRound      (MathFloor(unitSize/  2    ) *   2       );   //      30-50: Vielfaches von   2
-            else if (unitSize <=  120.  ) unitSize = MathRound      (MathFloor(unitSize/  5    ) *   5       );   //     50-120: Vielfaches von   5
+            else if (unitSize <=   75.  ) unitSize = MathRound      (MathFloor(unitSize/  2    ) *   2       );   //      30-75: Vielfaches von   2
+            else if (unitSize <=  120.  ) unitSize = MathRound      (MathFloor(unitSize/  5    ) *   5       );   //     75-120: Vielfaches von   5
             else if (unitSize <=  300.  ) unitSize = MathRound      (MathFloor(unitSize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
-            else if (unitSize <=  500.  ) unitSize = MathRound      (MathFloor(unitSize/ 20    ) *  20       );   //    300-500: Vielfaches von  20
-            else if (unitSize <= 1200.  ) unitSize = MathRound      (MathFloor(unitSize/ 50    ) *  50       );   //   500-1200: Vielfaches von  50
+            else if (unitSize <=  750.  ) unitSize = MathRound      (MathFloor(unitSize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
+            else if (unitSize <= 1200.  ) unitSize = MathRound      (MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
             else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-            string strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
-            ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
-
-            error = GetLastError();
-            if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-               return(!catch("UpdateUnitSize(2)", error));
+            strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
          }
       }
    }
+
+
+   // (3) Anzeige setzen
+   ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
+
+   error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateUnitSize(8)", error));
    return(true);
 }
 
@@ -439,82 +487,83 @@ bool UpdateMarginLevels() {
       if (!AnalyzePositions())
          return(false);
 
-   if (!totalPosition) {                                                   // keine Position im Markt: ggf. vorhandene Marker löschen
+   if (!totalPosition) {                                                         // keine Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.freezeLevel);
       ObjectDelete(label.stopoutLevel);
-   }
-   else {
-      // Kurslevel für Margin-Freeze/-Stopout berechnen und anzeigen
-      double equity         = AccountEquity();
-      double usedMargin     = AccountMargin();
-      int    stopoutMode    = AccountStopoutMode();
-      int    stopoutLevel   = AccountStopoutLevel();
-      double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED);
-      double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
-      double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
-      double marginLeverage = Bid / tickSize * tickValue / marginRequired;    // Hebel der real zur Verfügung gestellten Kreditlinie für das Symbol
-             tickValue      = tickValue * MathAbs(totalPosition);             // TickValue der gesamten Position
-
       int error = GetLastError();
-      if (!tickSize || !tickValue)                                            // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-         return(SetLastError(ERR_UNKNOWN_SYMBOL));
-
-      bool showFreezeLevel = true;
-
-      if (stopoutMode == ASM_ABSOLUTE) { double equityStopoutLevel = stopoutLevel;                        }
-      else if (stopoutLevel == 100)    {        equityStopoutLevel = usedMargin; showFreezeLevel = false; } // Freeze- und StopoutLevel sind identisch, nur StopOut anzeigen
-      else                             {        equityStopoutLevel = stopoutLevel / 100.0 * usedMargin;   }
-
-      double quoteFreezeDiff  = (equity - usedMargin        ) / tickValue * tickSize;
-      double quoteStopoutDiff = (equity - equityStopoutLevel) / tickValue * tickSize;
-
-      double quoteFreezeLevel, quoteStopoutLevel;
-
-      if (totalPosition > 0.00000001) {                                    // long position
-         quoteFreezeLevel  = NormalizeDouble(Bid - quoteFreezeDiff, Digits);
-         quoteStopoutLevel = NormalizeDouble(Bid - quoteStopoutDiff, Digits);
-      }
-      else {                                                                  // short position
-         quoteFreezeLevel  = NormalizeDouble(Ask + quoteFreezeDiff, Digits);
-         quoteStopoutLevel = NormalizeDouble(Ask + quoteStopoutDiff, Digits);
-      }
-      /*
-      debug("UpdateMarginLevels()  equity="      + NumberToStr(equity, ", .2")
-                              +"   equity(100%)="+ NumberToStr(usedMargin, ", .2") +" ("+ NumberToStr(equity-usedMargin, "+, .2") +" => "+ NumberToStr(quoteFreezeLevel, PriceFormat) +")"
-                              +"   equity(so:"+ ifString(stopoutMode==ASM_ABSOLUTE, "abs", stopoutLevel+"%") +")="+ NumberToStr(equityStopoutLevel, ", .2") +" ("+ NumberToStr(equity-equityStopoutLevel, "+, .2") +" => "+ NumberToStr(quoteStopoutLevel, PriceFormat) +")"
-      );
-      */
-
-      // FreezeLevel anzeigen
-      if (showFreezeLevel) {
-         if (ObjectFind(label.freezeLevel) == -1) {
-            ObjectCreate (label.freezeLevel, OBJ_HLINE, 0, 0, 0);
-            ObjectSet    (label.freezeLevel, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet    (label.freezeLevel, OBJPROP_COLOR, C'0,201,206');
-            ObjectSet    (label.freezeLevel, OBJPROP_BACK , true);
-            ObjectSetText(label.freezeLevel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
-            PushObject   (label.freezeLevel);
-         }
-         ObjectSet(label.freezeLevel, OBJPROP_PRICE1, quoteFreezeLevel);
-      }
-
-      // StopoutLevel anzeigen
-      if (ObjectFind(label.stopoutLevel) == -1) {
-         ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
-         ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed);
-         ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true);
-            if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", DoubleToStr(marginLeverage, 0));
-            else                                   description = StringConcatenate("Stopout  ", NumberToStr(stopoutLevel, ", ."), AccountCurrency());
-         ObjectSetText(label.stopoutLevel, description);
-         PushObject   (label.stopoutLevel);
-      }
-      ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, quoteStopoutLevel);
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
+         return(!catch("UpdateMarginLevels(1)", error));
+      return(NO_ERROR);
    }
+
+
+   // (1) Kurslevel für Freeze und Stopout berechnen
+   double equity         = AccountEquity();
+   double usedMargin     = AccountMargin();
+   int    stopoutMode    = AccountStopoutMode();
+   double stopoutLevel   = AccountStopoutLevel();
+   double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
+   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
+   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );         // TickValue per Lot
 
    error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateMarginLevels()", error));
+   if (!tickSize || !tickValue || !marginRequired)                            // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+      return(SetLastError(ERR_UNKNOWN_SYMBOL));
+
+   double marginLeverage = Bid/tickSize * tickValue / marginRequired;         // Hebel des Symbols (kann vom Wert des Accounts abweichen)
+          tickValue     *= MathAbs(totalPosition);                            // TickValue der gesamten aktuellen Position
+
+   bool showFreezeLevel = true;
+   if (stopoutMode != ASM_ABSOLUTE) {
+      showFreezeLevel = ifBool(stopoutLevel==100, false, showFreezeLevel);    // sind Freeze- (immer 100) und StopoutLevel gleich, nur Stopout anzeigen
+      stopoutLevel    = stopoutLevel/100. * usedMargin;
+   }
+
+   double freeze.diff  = (equity - usedMargin  )/tickValue * tickSize;
+   double stopout.diff = (equity - stopoutLevel)/tickValue * tickSize;
+
+   double freeze.price, stopout.price;
+   if (totalPosition > 0) {                                                   // long position
+      freeze.price  = NormalizeDouble(Bid - freeze.diff,  Digits);
+      stopout.price = NormalizeDouble(Bid - stopout.diff, Digits);
+   }
+   else {                                                                     // short position
+      freeze.price  = NormalizeDouble(Ask + freeze.diff,  Digits);
+      stopout.price = NormalizeDouble(Ask + stopout.diff, Digits);
+   }
+
+
+   // (2) FreezeLevel anzeigen
+   if (showFreezeLevel) {
+      if (ObjectFind(label.freezeLevel) == -1) {
+         ObjectCreate (label.freezeLevel, OBJ_HLINE, 0, 0, 0);
+         ObjectSet    (label.freezeLevel, OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSet    (label.freezeLevel, OBJPROP_COLOR, C'0,201,206');
+         ObjectSet    (label.freezeLevel, OBJPROP_BACK , true);
+         ObjectSetText(label.freezeLevel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
+         PushObject   (label.freezeLevel);
+      }
+      ObjectSet(label.freezeLevel, OBJPROP_PRICE1, freeze.price);
+   }
+
+
+   // (3) StopoutLevel anzeigen
+   if (ObjectFind(label.stopoutLevel) == -1) {
+      ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
+      ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed);
+      ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true);
+         if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", Round(marginLeverage));
+         else                                   description = StringConcatenate("Stopout  ", DoubleToStr(stopoutLevel, 2), AccountCurrency());
+      ObjectSetText(label.stopoutLevel, description);
+      PushObject   (label.stopoutLevel);
+   }
+   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, stopout.price);
+
+
+   error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateMarginLevels(2)", error));
    return(true);
 }
 
