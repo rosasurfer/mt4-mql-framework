@@ -326,7 +326,7 @@ bool UpdateUnitSize() {
       }
 
       if (tradeAllowed) {                                                     // bei Start oder Accountwechsel können Werte noch ungesetzt sein
-         double unitSize, equity=MathMax(AccountBalance(), AccountEquity()-AccountCredit());
+         double unitSize, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
 
          if (tickSize && tickValue && marginRequired && equity > 0) {
             if (leverage > 0) {
