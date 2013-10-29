@@ -25,15 +25,14 @@
  */
 
 // Spaltenindizes der Transition-Arrays
-//dow                            0
+//                               0        // Wochentag
 #define TR_TO_DST.gmt            1        // Umschaltzeit zu DST in GMT
-//dow                            2
+//                               2        // Wochentag
 #define TR_TO_DST.local          3        // Umschaltzeit zu DST in lokaler Zeit
 #define DST_OFFSET               4
-
-//dow                            5
+//                               5        // Wochentag
 #define TR_TO_STD.gmt            6        // Umschaltzeit zu Normalzeit in GMT
-//dow                            7
+//                               7        // Wochentag
 #define TR_TO_STD.local          8        // Umschaltzeit zu Normalzeit in lokaler Zeit
 #define STD_OFFSET               9
 
