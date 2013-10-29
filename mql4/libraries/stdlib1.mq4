@@ -1203,6 +1203,10 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
       if (serverTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
       else                                     timezone = "Europe/Kiev";
    }
+   else if (timezone == "ICMarkets.demo") {
+      if (serverTime < D'2013.10.27 00:00:00') timezone = "Europe/London";
+      else                                     timezone = "Europe/Berlin";
+   }
 
    int offset, year=TimeYear(serverTime)-1970;
 
@@ -7165,6 +7169,10 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       if (gmtTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
       else                                  timezone = "Europe/Kiev";
    }
+   else if (timezone == "ICMarkets.demo") {
+      if (gmtTime < D'2013.10.27 00:00:00') timezone = "Europe/London";
+      else                                  timezone = "Europe/Berlin";
+   }
 
    int offset, year=TimeYear(gmtTime)-1970;
 
@@ -8373,8 +8381,8 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
 
    if (StringLen(directory) == 0)
       return("");
-   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 01.04.2012 "Europe/Berlin"
-   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //          ab 02.04.2012 "Europe/Kiev"
+   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin"
+   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //          ab 01.04.2012 "Europe/Kiev"
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";               //
    else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";               // (History wurde nicht aktualisiert)
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
@@ -8385,10 +8393,10 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "cmap-"              )) timezone = "Europe/London";        // IC Markets demo
-   else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
-   else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
+   else if (StringStartsWith(directory, "cmap-"              )) timezone = "ICMarkets.demo";       // IC Markets demo: bis 26.10.2013 "Europe/London"
+   else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";        //                  ab  27.10.2013 "Europe/Berlin"
+   else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";          //
+   else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";                  // (History wurde nicht aktualisiert)
    else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // oder FXT ???
@@ -8398,7 +8406,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
    else if (StringStartsWith(directory, "globalprime-"       )) timezone = "GMT";
-   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FXT";
+   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FXT";                  // IC Markets live
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
