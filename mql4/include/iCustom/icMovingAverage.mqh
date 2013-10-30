@@ -1,7 +1,7 @@
 /**
- * In Headerdatei implementiert, um direkt in EA's inkludiert werden zu können.  Dies ist notwendig, wenn die Indikatorausgabe
- * im Tester nach Testende bei VisualMode=On gezeichnet werden soll.  Der Tester zeichnet den Inhalt der Buffer nur dann, wenn
- * der iCustom()-Aufruf direkt im EA erfolgt (nicht bei Aufruf in einer Library).
+ * In Headerdatei implementiert, um direkt inkludiert werden zu können.  Dies ist notwendig, wenn die Indikatorausgabe
+ * im Tester nach Testende bei VisualMode=On gezeichnet werden soll.  Der Tester zeichnet den Inhalt der Buffer nur dann,
+ * wenn der iCustom()-Aufruf direkt im EA erfolgt (nicht bei Aufruf in einer Library).
  */
 
 #import "structs1.ex4"
