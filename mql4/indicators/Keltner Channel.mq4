@@ -270,6 +270,8 @@ int onTick() {
 /**
  * Berechnet die ungültigen Bars eines TMA-basierten Keltner Channels neu.
  *
+ * @param  int startBar
+ *
  * @return bool - Erfolgsstatus
  */
 bool RecalcTMAChannel(int startBar) {
@@ -284,8 +286,8 @@ bool RecalcTMAChannel(int startBar) {
       bufferTmaSma[bar] = iMA(NULL, NULL, sma1.periods, 0, MODE_SMA, ma.appliedPrice, bar);
    }
 
+   // zweiter SMA
    for (bar=startBar; bar >= 0; bar--) {
-      // zweiter SMA
       bufferMA       [bar] = iMAOnArray(bufferTmaSma, WHOLE_ARRAY, sma2.periods, 0, MODE_SMA, bar) + shift.vertical;
       atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
       bufferUpperBand[bar] = bufferMA[bar] + atr;
@@ -297,6 +299,8 @@ bool RecalcTMAChannel(int startBar) {
 
 /**
  * Berechnet die ungültigen Bars eines ALMA-basierten Keltner Channels neu.
+ *
+ * @param  int startBar
  *
  * @return bool - Erfolgsstatus
  */
