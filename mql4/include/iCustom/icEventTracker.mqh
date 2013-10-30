@@ -1,5 +1,5 @@
 /**
- * In Headerdatei implementiert, um direkt in EA's inkludiert werden zu können.
+ * In Headerdatei implementiert, um direkt inkludiert werden zu können.
  */
 
 #import "structs1.ex4"
