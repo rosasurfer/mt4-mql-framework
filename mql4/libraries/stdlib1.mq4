@@ -8825,8 +8825,8 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
       }
    }
 
-   if (IsError(error)) {
-      last_error = error;
+   if (error != NO_ERROR) {
+      SetLastError(error);
       if (error != ERS_HISTORY_UPDATE)
          catch("iBarShiftPrevious(2)", error);
       return(EMPTY_VALUE);
@@ -8874,8 +8874,8 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // 
       }
    }
 
-   if (IsError(error)) {
-      last_error = error;
+   if (error != NO_ERROR) {
+      SetLastError(error);
       if (error != ERS_HISTORY_UPDATE)
          catch("iBarShiftNext(2)", error);
       return(EMPTY_VALUE);
