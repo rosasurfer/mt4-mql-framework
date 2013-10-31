@@ -9981,14 +9981,14 @@ string NumberToStr(double number, string mask) {
  *   W      = full weekday name, e.g. Tuesday
  *   h      = 1-2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
  *   H      = 2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
- *   a      = 12-hour format and append lowercase am/pm
- *   A      = 12-hour format and append uppercase AM/PM
+ *   a      = lowercase am/pm and 12-hour format
+ *   A      = uppercase AM/PM and 12-hour format
  *   i      = 1-2 digit minutes in the hour
  *   I      = 2 digit minutes in the hour
  *   s      = 1-2 digit seconds in the minute
  *   S      = 2 digit seconds in the minute
  *
- *   All other characters in the mask are output 'as is'.  You can output reserved characters by  preceding
+ *   All other characters in the mask are output 'as is'.  You can output reserved characters by preceding
  *   them with an exclamation mark:
  *
  *      e.g. DateToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
@@ -9999,14 +9999,13 @@ string NumberToStr(double number, string mask) {
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
 string DateToStr(datetime time, string mask) {
-   if (time < 0)
-      return(_empty(catch("DateToStr()   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (time < 0) return(_empty(catch("DateToStr()   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    if (StringLen(mask) == 0)
-      mask = "Y.M.D H:I:S";
+      return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
 
-   string months[12] = { "","January","February","March","April","May","June","July","August","September","October","November","December" };
-   string wdays [ 7] = { "Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday" };
+   string months[12] = {"","January","February","March","April","May","June","July","August","September","October","November","December"};
+   string wdays [ 7] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
    int dd  = TimeDay      (time);
    int mm  = TimeMonth    (time);
