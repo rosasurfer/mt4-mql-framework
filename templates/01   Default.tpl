@@ -8766,11 +8766,11 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=HigherTimeframes
+name=SuperBars
 flags=339
 window_num=0
 <inputs>
-Periods=200
+SuperBars=200
 </inputs>
 </expert>
 period_flags=31
