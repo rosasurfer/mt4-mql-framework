@@ -313,10 +313,10 @@ bool UpdateUnitSize() {
    string strUnitSize = "UnitSize:  -";
 
    if (leverage > 0 || soDistance) {
-      bool   tradeAllowed   = MarketInfo(Symbol(), MODE_TRADEALLOWED  );
-      double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
-      double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
-      double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
+      bool   tradeAllowed   = _bool(MarketInfo(Symbol(), MODE_TRADEALLOWED ));
+      double tickSize       =       MarketInfo(Symbol(), MODE_TICKSIZE      );
+      double tickValue      =       MarketInfo(Symbol(), MODE_TICKVALUE     );
+      double marginRequired =       MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
 
       int error = GetLastError();
       if (IsError(error)) {
@@ -341,7 +341,7 @@ bool UpdateUnitSize() {
                unitSize = equity / (marginRequired + soDistance*pipValue);
             }
 
-            // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                        Abstufung immer max. 6.7%
+            // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
             if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
             else if (unitSize <=   0.075) unitSize = NormalizeDouble(MathFloor(unitSize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
             else if (unitSize <=    0.12) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   // 0.075-0.12: Vielfaches von   0.005
