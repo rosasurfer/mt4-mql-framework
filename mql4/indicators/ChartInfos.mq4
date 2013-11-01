@@ -313,7 +313,7 @@ bool UpdateUnitSize() {
    string strUnitSize = "UnitSize:  -";
 
    if (leverage > 0 || soDistance) {
-      bool   tradeAllowed   = _bool(MarketInfo(Symbol(), MODE_TRADEALLOWED ));
+      bool   tradeAllowed   = _bool(MarketInfo(Symbol(), MODE_TRADEALLOWED  ));
       double tickSize       =       MarketInfo(Symbol(), MODE_TICKSIZE      );
       double tickValue      =       MarketInfo(Symbol(), MODE_TICKVALUE     );
       double marginRequired =       MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
