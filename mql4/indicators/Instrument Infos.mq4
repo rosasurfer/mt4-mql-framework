@@ -76,9 +76,6 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (IsError(prev_error))
-      return(SetLastError(prev_error));
-
    UpdateInfos();
    return(last_error);
 }
@@ -90,7 +87,7 @@ int onTick() {
 int CreateLabels() {
    int x =  3;                   // X-Ausgangskoordinate
    int y = 73;                   // Y-Ausgangskoordinate
-   int n = 10;                   // Counter für eindeutige Labels
+   int n = 10;                   // Counter für eindeutige Labels (mind. zweistellig)
 
    // Background
    string label = StringConcatenate(__NAME__, ".", n, ".Background");
@@ -151,10 +148,10 @@ int CreateLabels() {
 int UpdateInfos() {
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
-   int    tradeAllowed    = MarketInfo(symbol, MODE_TRADEALLOWED);
+   bool   tradeAllowed    = _bool(MarketInfo(symbol, MODE_TRADEALLOWED));
    color  fg.fontColor    = ifInt(tradeAllowed, fg.fontColor.Enabled, fg.fontColor.Disabled);
 
-                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ ifString(tradeAllowed, "no", "yes"),                 fg.fontSize, fg.fontName, fg.fontColor);
+                                                                        ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ ifString(tradeAllowed, "yes", "no"),                 fg.fontSize, fg.fontName, fg.fontColor);
                                                                         ObjectSetText(labels[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat),                     fg.fontSize, fg.fontName, fg.fontColor);
    double tickSize     = MarketInfo(symbol, MODE_TICKSIZE);             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat),                  fg.fontSize, fg.fontName, fg.fontColor);
 
