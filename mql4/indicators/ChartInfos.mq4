@@ -12,6 +12,7 @@ int __DEINIT_FLAGS__[];
 
 
 string label.instrument   = "Instrument";                   // Label der einzelnen Anzeigen
+string label.ohlc         = "OHLC";
 string label.price        = "Price";
 string label.spread       = "Spread";
 string label.unitSize     = "UnitSize";
@@ -98,6 +99,7 @@ int onTick() {
    if (!UpdateUnitSize()    ) return(last_error);
    if (!UpdatePosition()    ) return(last_error);
    if (!UpdateMarginLevels()) return(last_error);
+   if (!UpdateOHLC()        ) return(last_error);
    if (!UpdateTime()        ) return(last_error);
 
    return(last_error);
@@ -112,6 +114,7 @@ int onTick() {
 int CreateLabels() {
    // Label definieren
    label.instrument   = __NAME__ +"."+ label.instrument;
+   label.ohlc         = __NAME__ +"."+ label.ohlc;
    label.price        = __NAME__ +"."+ label.price;
    label.spread       = __NAME__ +"."+ label.spread;
    label.unitSize     = __NAME__ +"."+ label.unitSize;
@@ -137,6 +140,19 @@ int CreateLabels() {
       if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
       else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
+
+
+   // OHLC-Label
+   if (ObjectFind(label.ohlc) == 0)
+      ObjectDelete(label.ohlc);
+   if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 110);
+      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
+      ObjectSetText(label.ohlc, " ", 1);
+      PushObject   (label.ohlc);
+   }
+   else GetLastError();
 
 
    // Price-Label
@@ -493,7 +509,7 @@ bool UpdateMarginLevels() {
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
          return(!catch("UpdateMarginLevels(1)", error));
-      return(NO_ERROR);
+      return(true);
    }
 
 
@@ -508,7 +524,7 @@ bool UpdateMarginLevels() {
 
    error = GetLastError();
    if (!tickSize || !tickValue || !marginRequired)                            // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      return(SetLastError(ERR_UNKNOWN_SYMBOL));
+      return(!SetLastError(ERR_UNKNOWN_SYMBOL));
 
    double marginLeverage = Bid/tickSize * tickValue / marginRequired;         // Hebel des Symbols (kann vom Wert des Accounts abweichen)
           tickValue     *= MathAbs(totalPosition);                            // TickValue der gesamten aktuellen Position
@@ -564,6 +580,61 @@ bool UpdateMarginLevels() {
    error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
       return(!catch("UpdateMarginLevels(2)", error));
+   return(true);
+}
+
+
+/**
+ * Aktualisiert die OHLC-Anzeige (trotz des 'C' im Funktionsnamen wird der Close-Preis nicht ein weiteres mal angezeigt).
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateOHLC() {
+   return(true);
+
+   // (1) Zeit des letzten Ticks holen
+   datetime lastTickTime = MarketInfo(Symbol(), MODE_TIME);
+   if (!lastTickTime) {                                                          // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+      if (!SetLastError(GetLastError()))
+         SetLastError(ERR_UNKNOWN_SYMBOL);
+      return(false);
+   }
+
+
+   // (2) Beginn und Ende der aktuellen oder letzten Session ermitteln
+   datetime sessionStart = GetServerSessionStartTime(lastTickTime);              // throws ERR_MARKET_CLOSED
+   if (sessionStart == -1) {
+      if (SetLastError(stdlib_GetLastError()) != ERR_MARKET_CLOSED)
+         return(false);
+      sessionStart = GetServerPrevSessionStartTime(lastTickTime);
+   }
+   datetime sessionEnd = sessionStart + 1*DAY;
+
+
+   // (3) Baroffsets von Sessionbeginn und -ende ermitteln
+   int openBar = iBarShiftNext(NULL, NULL, sessionStart);
+      if (openBar == EMPTY_VALUE) return(!SetLastError(stdlib_GetLastError()));  // Fehler
+      if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart (nur theoretisch möglich)
+   int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
+      if (closeBar == EMPTY_VALUE) return(!SetLastError(stdlib_GetLastError())); // Fehler
+      if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart (nur theoretisch möglich)
+   if (openBar < closeBar)
+      return(!catch("UpdateOHLC(1)   illegal open/close bar offsets for session from="+ DateToStr(sessionStart, "w D.M.Y H:I") +" (bar="+ openBar +")  to="+ DateToStr(sessionEnd, "w D.M.Y H:I") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
+
+
+   // (4) Baroffsets von Session-High und -Low ermitteln
+   int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
+   int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
+
+
+   // (5) Anzeige aktualisieren
+   string strOHLC = "O="+ NumberToStr(Open[openBar], PriceFormat) +"   H="+ NumberToStr(High[highBar], PriceFormat) +"   L="+ NumberToStr(Low[lowBar], PriceFormat);
+   ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
+
+
+   int error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateOHLC(2)", error));
    return(true);
 }
 

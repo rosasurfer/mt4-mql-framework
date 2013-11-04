@@ -140,8 +140,8 @@ int DrawGrid() {
             chartTime -= 2*DAYS;                                     // bei zukünftigen Separatoren Wochenenden von Hand "kollabieren" TODO: Bug bei Periode > H4
       }
       else {                                                         // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
-         bar = iBarShiftNext(NULL, 0, separatorTime);                // ERS_HISTORY_UPDATE ???
-         if (bar == EMPTY_VALUE) {
+         bar = iBarShiftNext(NULL, NULL, separatorTime);
+         if (bar == EMPTY_VALUE) {                                   // ERS_HISTORY_UPDATE ???
             if (SetLastError(stdlib_GetLastError()) != ERS_HISTORY_UPDATE)
                catch("DrawGrid(1)", last_error);
             return(last_error);

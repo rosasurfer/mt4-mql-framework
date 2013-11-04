@@ -8762,7 +8762,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
    // Balancewerte für Bars des aktuellen Charts ermitteln und ins Ergebnisarray schreiben
    for (int i=0; i < historySize; i++) {
       // Barindex des Zeitpunkts berechnen
-      bar = iBarShiftNext(NULL, 0, times[i]);
+      bar = iBarShiftNext(NULL, NULL, times[i]);
       if (bar == EMPTY_VALUE)                                        // ERS_HISTORY_UPDATE ?
          return(last_error);
       if (bar == -1)                                                 // dieser und alle folgenden Werte sind zu neu für den Chart
