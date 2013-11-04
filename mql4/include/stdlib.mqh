@@ -231,7 +231,7 @@
    string   GetDayOfWeek(datetime time, bool longFormat);
    datetime GetLocalTimeEx();
    datetime GetSystemTimeEx(); datetime TimeGMT();                                                          // Alias
-   bool     GetServerTimezoneTransitions(datetime serverTime, int lastTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
+   bool     GetServerTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
    // Event-Listener: *können* bei Verwendung im Programm durch alternative/effizientere Versionen überschrieben werden
@@ -607,17 +607,17 @@
    int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
-#import "sample1.ex4"
+#import "mq-sample1.ex4"
    int      GetBoolsAddress  (bool   array[]);
-#import "sample2.ex4"
+#import "mq-sample2.ex4"
    int      GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
-#import "sample3.ex4"
+#import "mq-sample3.ex4"
    int      GetDoublesAddress(double array[]);
-#import "sample4.ex4"
+#import "mq-sample4.ex4"
    int      GetStringsAddress(string array[]);
-#import "sample5.ex4"
+#import "mq-sample5.ex4"
    int      GetStringAddress (string value);
-#import "sample.dll"
+#import "mq-sample.dll"
    string   GetStringValue(int address);
 #import "structs1.ex4"
    string   EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
