@@ -601,10 +601,10 @@ bool UpdateOHLC() {
    }
 
 
-   // (2) Beginn und Ende der aktuellen oder letzten Session ermitteln
+   // (2) Beginn und Ende der aktuellen Session ermitteln
    datetime sessionStart = GetServerSessionStartTime(lastTickTime);              // throws ERR_MARKET_CLOSED
    if (sessionStart == -1) {
-      if (SetLastError(stdlib_GetLastError()) != ERR_MARKET_CLOSED)
+      if (SetLastError(stdlib_GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
          return(false);
       sessionStart = GetServerPrevSessionStartTime(lastTickTime);
    }
@@ -614,10 +614,10 @@ bool UpdateOHLC() {
    // (3) Baroffsets von Sessionbeginn und -ende ermitteln
    int openBar = iBarShiftNext(NULL, NULL, sessionStart);
       if (openBar == EMPTY_VALUE) return(!SetLastError(stdlib_GetLastError()));  // Fehler
-      if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart (nur theoretisch möglich)
+      if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart
    int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
       if (closeBar == EMPTY_VALUE) return(!SetLastError(stdlib_GetLastError())); // Fehler
-      if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart (nur theoretisch möglich)
+      if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart
    if (openBar < closeBar)
       return(!catch("UpdateOHLC(1)   illegal open/close bar offsets for session from="+ DateToStr(sessionStart, "w D.M.Y H:I") +" (bar="+ openBar +")  to="+ DateToStr(sessionEnd, "w D.M.Y H:I") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
 

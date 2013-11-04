@@ -42,7 +42,7 @@
    // Account-Informationen
    int      GetAccountNumber();
    string   ShortAccountCompany();
-   string   GetServerTimezone();                                     // throws ERR_INVALID_TIMEZONE_CONFIG
+   string   GetServerTimezone(); // throws ERR_INVALID_TIMEZONE_CONFIG
    double   GetCommission();
    int      DebugMarketInfo(string location);
 
