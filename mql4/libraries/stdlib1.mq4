@@ -1203,10 +1203,6 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
       if (serverTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
       else                                     timezone = "Europe/Kiev";
    }
-   else if (timezone == "ICMarkets.demo") {
-      if (serverTime < D'2013.10.27 00:00:00') timezone = "Europe/London";
-      else                                     timezone = "Europe/Berlin";
-   }
 
    int offset, year=TimeYear(serverTime)-1970;
 
@@ -1239,6 +1235,12 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
       if      (serverTime < transitions.FXT             [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET];
       else if (serverTime < transitions.FXT             [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET];
       else                                                                       offset = transitions.FXT             [year][STD_OFFSET];
+   }
+   else if (timezone == "FXT-0200") {
+      datetime fxtTime = serverTime + PLUS_2_H;
+      if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
+      else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2_H;
+      else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
    }
    else if (timezone == "GMT")                                                   offset = 0;
    else
@@ -7169,10 +7171,6 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       if (gmtTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
       else                                  timezone = "Europe/Kiev";
    }
-   else if (timezone == "ICMarkets.demo") {
-      if (gmtTime < D'2013.10.27 00:00:00') timezone = "Europe/London";
-      else                                  timezone = "Europe/Berlin";
-   }
 
    int offset, year=TimeYear(gmtTime)-1970;
 
@@ -7205,6 +7203,11 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET];
       else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET];
       else                                                                  offset = -transitions.FXT             [year][STD_OFFSET];
+   }
+   else if (timezone == "FXT-0200") {
+      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
+      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2_H;
+      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
    }
    else if (timezone == "GMT")                                              offset =  0;
    else
@@ -8393,10 +8396,10 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "cmap-"              )) timezone = "ICMarkets.demo";       // IC Markets demo: bis 26.10.2013 "Europe/London"
-   else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";        //                  ab  27.10.2013 "Europe/Berlin"
-   else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";          //
-   else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";                  // (History wurde nicht aktualisiert)
+   else if (StringStartsWith(directory, "cmap-"              )) timezone = "FXT-0200";             // GMT+0000/+0100 (Europe/London) mit DST-Wechseln von America/New_York
+   else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
+   else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
    else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // oder FXT ???
