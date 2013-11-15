@@ -329,7 +329,7 @@ bool UpdateUnitSize() {
    string strUnitSize = "UnitSize:  -";
 
    if (leverage > 0 || soDistance) {
-      bool   tradeAllowed   = _bool(MarketInfo(Symbol(), MODE_TRADEALLOWED  ));
+      bool   tradeAllowed   = _bool(MarketInfo(Symbol(), MODE_TRADEALLOWED ));
       double tickSize       =       MarketInfo(Symbol(), MODE_TICKSIZE      );
       double tickValue      =       MarketInfo(Symbol(), MODE_TICKVALUE     );
       double marginRequired =       MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
@@ -360,8 +360,8 @@ bool UpdateUnitSize() {
             // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
             if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
             else if (unitSize <=   0.075) unitSize = NormalizeDouble(MathFloor(unitSize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
-            else if (unitSize <=    0.12) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   // 0.075-0.12: Vielfaches von   0.005
-            else if (unitSize <=    0.3 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.01 ) *   0.01 , 2);   //   0.12-0.3: Vielfaches von   0.01
+            else if (unitSize <=    0.1 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   //  0.075-0.1: Vielfaches von   0.005
+            else if (unitSize <=    0.3 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: Vielfaches von   0.01
             else if (unitSize <=    0.75) unitSize = NormalizeDouble(MathFloor(unitSize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
             else if (unitSize <=    1.2 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
             else if (unitSize <=    3.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
