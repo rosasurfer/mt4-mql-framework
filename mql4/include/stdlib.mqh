@@ -234,7 +234,7 @@
    bool     GetServerTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
-   // Event-Listener: *können* bei Verwendung im Programm durch alternative/effizientere Versionen überschrieben werden
+   // Event-Listener: allgemeine Library-Versionen können durch spezielle lokale Versionen überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
