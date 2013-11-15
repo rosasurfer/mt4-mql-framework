@@ -73,63 +73,63 @@ int DrawGrid() {
 
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime fromFXT = GetFXTNextSessionStartTime(ServerToFXT(Time[Bars-1]) - 1*SECOND);
-   datetime toFXT   = GetFXTNextSessionStartTime(ServerToFXT(TimeCurrent()));
+   datetime fromFST = GetFSTNextSessionStartTime(ServerToFST(Time[Bars-1]) - 1*SECOND);
+   datetime toFST   = GetFSTNextSessionStartTime(ServerToFST(TimeCurrent()));
 
    // Tagesseparatoren
-   if (Period() < PERIOD_H4) {                                       // fromFXT bleibt unverändert
-      toFXT += (8-TimeDayOfWeek(toFXT))%7 * DAYS;                    // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
+   if (Period() < PERIOD_H4) {                                       // fromFST bleibt unverändert
+      toFST += (8-TimeDayOfWeek(toFST))%7 * DAYS;                    // toFST ist der nächste Montag (die restliche Woche wird komplett dargestellt)
    }
 
    // Wochenseparatoren
    else if (Period() == PERIOD_H4) {
-      fromFXT += (8-TimeDayOfWeek(fromFXT))%7 * DAYS;                // fromFXT ist der erste Montag
-      toFXT   += (8-TimeDayOfWeek(toFXT))%7 * DAYS;                  // toFXT ist der nächste Montag
+      fromFST += (8-TimeDayOfWeek(fromFST))%7 * DAYS;                // fromFST ist der erste Montag
+      toFST   += (8-TimeDayOfWeek(toFST))%7 * DAYS;                  // toFST ist der nächste Montag
    }
 
    // Monatsseparatoren
    else if (Period() == PERIOD_D1) {
-      yyyy = TimeYear(fromFXT);                                      // fromFXT ist der erste Wochentag des ersten vollen Monats
-      mm   = TimeMonth(fromFXT);
+      yyyy = TimeYear(fromFST);                                      // fromFST ist der erste Wochentag des ersten vollen Monats
+      mm   = TimeMonth(fromFST);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
-      if (firstWeekDay < fromFXT) {
+      if (firstWeekDay < fromFST) {
          if (mm == 12) { yyyy++; mm = 0; }
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm+1);
       }
-      fromFXT = firstWeekDay;
+      fromFST = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYear(toFXT);                                        // toFXT ist der erste Wochentag des nächsten Monats
-      mm   = TimeMonth(toFXT);
+      yyyy = TimeYear(toFST);                                        // toFST ist der erste Wochentag des nächsten Monats
+      mm   = TimeMonth(toFST);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
-      if (firstWeekDay < toFXT) {
+      if (firstWeekDay < toFST) {
          if (mm == 12) { yyyy++; mm = 0; }
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm+1);
       }
-      toFXT = firstWeekDay;
+      toFST = firstWeekDay;
    }
 
    // Jahresseparatoren
    else if (Period() > PERIOD_D1) {
-      yyyy = TimeYear(fromFXT);                                      // fromFXT ist der erste Wochentag des ersten vollen Jahres
+      yyyy = TimeYear(fromFST);                                      // fromFST ist der erste Wochentag des ersten vollen Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
-      if (firstWeekDay < fromFXT)
+      if (firstWeekDay < fromFST)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
-      fromFXT = firstWeekDay;
+      fromFST = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYear(toFXT);                                        // toFXT ist der erste Wochentag des nächsten Jahres
+      yyyy = TimeYear(toFST);                                        // toFST ist der erste Wochentag des nächsten Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
-      if (firstWeekDay < toFXT)
+      if (firstWeekDay < toFST)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
-      toFXT = firstWeekDay;
+      toFST = firstWeekDay;
    }
-   //debug("DrawGrid()   from \""+ GetDayOfWeek(fromFXT, false) +" "+ TimeToStr(fromFXT) +"\" to \""+ GetDayOfWeek(toFXT, false) +" "+ TimeToStr(toFXT) +"\"");
+   //debug("DrawGrid()   from \""+ GetDayOfWeek(fromFST, false) +" "+ TimeToStr(fromFST) +"\" to \""+ GetDayOfWeek(toFST, false) +" "+ TimeToStr(toFST) +"\"");
 
 
    // (2) Separatoren zeichnen
-   for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
-      separatorTime = FXTToServerTime(time);                         // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
+   for (datetime time=fromFST; time <= toFST; time+=1*DAY) {
+      separatorTime = FSTToServerTime(time);                         // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
       dow           = TimeDayOfWeek(time);
 
       // Bar und Chart-Time des Separators ermitteln

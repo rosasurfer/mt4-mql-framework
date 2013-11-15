@@ -304,7 +304,7 @@ void UpdateWeekendResumeTime(int hSeq) {
    if (sequence.status[hSeq] != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume time of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!sequence.weStop.active[hSeq])           return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
-   datetime monday, stop=ServerToFXT(sequence.stop.time[sequence.ss.events[hSeq][I_TO]]);
+   datetime monday, stop=ServerToFST(sequence.stop.time[sequence.ss.events[hSeq][I_TO]]);
 
    switch (TimeDayOfWeek(stop)) {
       case SUNDAY   : monday = stop + 1*DAYS; break;
@@ -315,7 +315,7 @@ void UpdateWeekendResumeTime(int hSeq) {
       case FRIDAY   : monday = stop + 3*DAYS; break;
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
-   sequence.weResumeTime[hSeq] = FXTToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
+   sequence.weResumeTime[hSeq] = FSTToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
 }
 
 
@@ -486,7 +486,7 @@ void RedrawStartStop(int hSeq) {
  * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
  */
 void UpdateWeekendStop() {
-   datetime friday, now=ServerToFXT(TimeCurrent());
+   datetime friday, now=ServerToFST(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -497,7 +497,7 @@ void UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = FXTToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
+   weekend.stop.time = FSTToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
 }
 
 
