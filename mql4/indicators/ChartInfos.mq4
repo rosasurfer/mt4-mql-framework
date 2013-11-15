@@ -420,8 +420,8 @@ bool UpdatePosition() {
    string fontName.bold    = "Arial Fett";
    color  fontColors[]     = {Blue, DeepPink, Green};                // ={COLOR_DEFAULT, COLOR_CUSTOM, COLOR_VIRTUAL}
 
-   // Spalten:      Direction:, LotSize, BE:, BePrice, SL:, SlPrice, Profit:, ProfitAmount
-   int xShifts[] = {20,         59,      135, 160,     231, 252,     323,     355};
+   // Spalten:      Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount
+   int xShifts[] = {20,         59,      135, 160,     236,     268         };
    int positions=ArrayRange(customPositions.types, 0), cols=ArraySize(xShifts), yDist=3;
 
    // (2.1) ggf. weitere Zeilen hinzufügen
@@ -450,7 +450,7 @@ bool UpdatePosition() {
       lines--;
    }
 
-   // (2.3) Zeilen von unten nach oben schreiben:   "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}"
+   // (2.3) Zeilen von unten nach oben schreiben:   "{Type}: {LotSize}   BE|Dist: {BePrice}   Profit: {ProfitAmount}"
    string strLotSize, strTypes[]={"", "Long:", "Short:", "", "Hedge:"};
 
    for (int line, i=positions-1; i >= 0; i--) {
@@ -463,13 +463,11 @@ bool UpdatePosition() {
          ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
             else
          ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(customPositions.data[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", " ",                                                                                                       fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", " ",                                                                                                       fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                                 fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                 fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
             if (!customPositions.data[i][I_PROFIT])
-         ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", "...",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
             else
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(customPositions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(customPositions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
       }
       else {
          ObjectSetText(label.position +".line"+ line +"_col0",             strTypes[customPositions.types[i][1]],                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
@@ -483,10 +481,8 @@ bool UpdatePosition() {
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil(customPositions.data[i][I_BREAKEVEN], Digits), PriceFormat),                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
             else
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(customPositions.data[i][I_BREAKEVEN], Digits), PriceFormat),                        fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(0, PriceFormat),                                                                               fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                                 fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(customPositions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                 fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(customPositions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
       }
    }
    return(!catch("UpdatePosition(2)"));
