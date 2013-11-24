@@ -341,12 +341,13 @@ bool UpdateUnitSize() {
 
       if (tradeAllowed) {                                                     // bei Start oder Accountwechsel können Werte noch ungesetzt sein
          double unitSize, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-         int    iLeverage;
 
          if (tickSize && tickValue && marginRequired && equity > 0) {
+            double lotValue = Close[0]/tickSize * tickValue;                  // Lotvalue eines Lots in Account-Currency
+            int iLeverage;
+
             if (leverage > 0) {
                // (2.1) Hebel angegeben
-               double lotValue = Close[0]/tickSize * tickValue;               // Lotvalue eines Lots in Account-Currency
                unitSize  = equity / lotValue * leverage;                      // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
                iLeverage = MathRound(leverage);
             }
@@ -355,7 +356,7 @@ bool UpdateUnitSize() {
                double pointValue = tickValue/(tickSize/Point);
                double pipValue   = PipPoints * pointValue;                    // Pipvalue eines Lots in Account-Currency
                unitSize  = equity / (marginRequired + soDistance*pipValue);
-               iLeverage = MathRound(soDistance);
+               iLeverage = MathRound(unitSize * lotValue / equity);           // effektiver Hebel dieser UnitSize
             }
 
             // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
@@ -378,7 +379,7 @@ bool UpdateUnitSize() {
 
             strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
 
-            bool showLeverage = false;
+            bool showLeverage = true;
             if (showLeverage) {
                strUnitSize = StringConcatenate("Leverage:  1:"+ iLeverage +"              ", strUnitSize);
             }
