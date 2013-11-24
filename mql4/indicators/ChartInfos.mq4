@@ -378,11 +378,7 @@ bool UpdateUnitSize() {
             else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
             strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
-
-            bool showLeverage = true;
-            if (showLeverage) {
-               strUnitSize = StringConcatenate("Leverage:  1:"+ iLeverage +"              ", strUnitSize);
-            }
+            strUnitSize = StringConcatenate("Leverage:  1:", iLeverage, "              ", strUnitSize);
          }
       }
    }
