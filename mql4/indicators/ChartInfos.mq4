@@ -18,7 +18,6 @@ string label.spread       = "Spread";
 string label.unitSize     = "UnitSize";
 string label.position     = "Position";
 string label.time         = "Time";
-string label.freezeLevel  = "FreezeLevel";
 string label.stopoutLevel = "StopoutLevel";
 
 int    appliedPrice = PRICE_MEDIAN;                         // Bid | Ask | Median (default)
@@ -120,7 +119,6 @@ int CreateLabels() {
    label.unitSize     = __NAME__ +"."+ label.unitSize;
    label.position     = __NAME__ +"."+ label.position;
    label.time         = __NAME__ +"."+ label.time;
-   label.freezeLevel  = __NAME__ +"."+ label.freezeLevel;
    label.stopoutLevel = __NAME__ +"."+ label.stopoutLevel;
 
 
@@ -343,18 +341,21 @@ bool UpdateUnitSize() {
 
       if (tradeAllowed) {                                                     // bei Start oder Accountwechsel können Werte noch ungesetzt sein
          double unitSize, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+         int    iLeverage;
 
          if (tickSize && tickValue && marginRequired && equity > 0) {
             if (leverage > 0) {
                // (2.1) Hebel angegeben
                double lotValue = Close[0]/tickSize * tickValue;               // Lotvalue eines Lots in Account-Currency
-               unitSize = equity / lotValue * leverage;                       // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
+               unitSize  = equity / lotValue * leverage;                      // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
+               iLeverage = MathRound(leverage);
             }
-            else if (soDistance > 0) {
+            else /*(soDistance > 0)*/ {
                // (2.2) Stopout-Distanz in Pip angegeben
                double pointValue = tickValue/(tickSize/Point);
                double pipValue   = PipPoints * pointValue;                    // Pipvalue eines Lots in Account-Currency
-               unitSize = equity / (marginRequired + soDistance*pipValue);
+               unitSize  = equity / (marginRequired + soDistance*pipValue);
+               iLeverage = MathRound(soDistance);
             }
 
             // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
@@ -376,6 +377,11 @@ bool UpdateUnitSize() {
             else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
             strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
+
+            bool showLeverage = false;
+            if (showLeverage) {
+               strUnitSize = StringConcatenate("Leverage:  1:"+ iLeverage +"              ", strUnitSize);
+            }
          }
       }
    }
@@ -490,7 +496,7 @@ bool UpdatePosition() {
 
 
 /**
- * Aktualisiert die Anzeige der aktuellen Freeze- und Stopoutlevel.
+ * Aktualisiert die Anzeige des aktuellen Stopout-Levels.
  *
  * @return bool - Erfolgsstatus
  */
@@ -500,7 +506,6 @@ bool UpdateMarginLevels() {
          return(false);
 
    if (!totalPosition) {                                                         // keine Position im Markt: vorhandene Marker löschen
-      ObjectDelete(label.freezeLevel);
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
@@ -509,11 +514,11 @@ bool UpdateMarginLevels() {
    }
 
 
-   // (1) Kurslevel für Freeze und Stopout berechnen
+   // (1) Kurslevel für Stopout berechnen
    double equity         = AccountEquity();
    double usedMargin     = AccountMargin();
    int    stopoutMode    = AccountStopoutMode();
-   double stopoutLevel   = AccountStopoutLevel();
+   double stopoutLevel   = AccountStopoutLevel();                     if (stopoutMode    != ASM_ABSOLUTE       ) stopoutLevel  /= 100 * usedMargin;
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
    double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );         // TickValue per Lot
@@ -524,42 +529,13 @@ bool UpdateMarginLevels() {
 
    double marginLeverage = Bid/tickSize * tickValue / marginRequired;         // Hebel des Symbols (kann vom Wert des Accounts abweichen)
           tickValue     *= MathAbs(totalPosition);                            // TickValue der gesamten aktuellen Position
-
-   bool showFreezeLevel = true;
-   if (stopoutMode != ASM_ABSOLUTE) {
-      showFreezeLevel = ifBool(stopoutLevel==100, false, showFreezeLevel);    // sind Freeze- (immer 100) und StopoutLevel gleich, nur Stopout anzeigen
-      stopoutLevel    = stopoutLevel/100. * usedMargin;
-   }
-
-   double freeze.diff  = (equity - usedMargin  )/tickValue * tickSize;
-   double stopout.diff = (equity - stopoutLevel)/tickValue * tickSize;
-
-   double freeze.price, stopout.price;
-   if (totalPosition > 0) {                                                   // long position
-      freeze.price  = NormalizeDouble(Bid - freeze.diff,  Digits);
-      stopout.price = NormalizeDouble(Bid - stopout.diff, Digits);
-   }
-   else {                                                                     // short position
-      freeze.price  = NormalizeDouble(Ask + freeze.diff,  Digits);
-      stopout.price = NormalizeDouble(Ask + stopout.diff, Digits);
-   }
+   double stopout.diff   = (equity - stopoutLevel)/tickValue * tickSize;
+   double stopout.price;
+   if (totalPosition > 0) stopout.price = NormalizeDouble(Bid - stopout.diff, Digits);    // long position
+   else                   stopout.price = NormalizeDouble(Ask + stopout.diff, Digits);    // short position
 
 
-   // (2) FreezeLevel anzeigen
-   if (showFreezeLevel) {
-      if (ObjectFind(label.freezeLevel) == -1) {
-         ObjectCreate (label.freezeLevel, OBJ_HLINE, 0, 0, 0);
-         ObjectSet    (label.freezeLevel, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet    (label.freezeLevel, OBJPROP_COLOR, C'0,201,206');
-         ObjectSet    (label.freezeLevel, OBJPROP_BACK , true);
-         ObjectSetText(label.freezeLevel, StringConcatenate("Freeze   1:", DoubleToStr(marginLeverage, 0)));
-         PushObject   (label.freezeLevel);
-      }
-      ObjectSet(label.freezeLevel, OBJPROP_PRICE1, freeze.price);
-   }
-
-
-   // (3) StopoutLevel anzeigen
+   // (2) Stopout-Level anzeigen
    if (ObjectFind(label.stopoutLevel) == -1) {
       ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
       ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
@@ -574,7 +550,7 @@ bool UpdateMarginLevels() {
 
 
    error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
       return(!catch("UpdateMarginLevels(2)", error));
    return(true);
 }
