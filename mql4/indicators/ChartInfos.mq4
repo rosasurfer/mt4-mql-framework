@@ -97,7 +97,7 @@ int onTick() {
    if (!UpdateSpread()      ) return(last_error);
    if (!UpdateUnitSize()    ) return(last_error);
    if (!UpdatePosition()    ) return(last_error);
-   if (!UpdateMarginLevels()) return(last_error);
+   if (!UpdateStopoutLevel()) return(last_error);
    if (!UpdateOHLC()        ) return(last_error);
    if (!UpdateTime()        ) return(last_error);
 
@@ -497,58 +497,52 @@ bool UpdatePosition() {
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateMarginLevels() {
+bool UpdateStopoutLevel() {
    if (!positionsAnalyzed)
       if (!AnalyzePositions())
          return(false);
 
-   if (!totalPosition) {                                                         // keine Position im Markt: vorhandene Marker löschen
+   if (!totalPosition) {                                                               // keine Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-         return(!catch("UpdateMarginLevels(1)", error));
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // bei offenem Properties-Dialog oder Object::onDrag()
+         return(!catch("UpdateStopoutLevel(1)", error));
       return(true);
    }
 
 
-   // (1) Kurslevel für Stopout berechnen
-   double equity         = AccountEquity();
-   double usedMargin     = AccountMargin();
-   int    stopoutMode    = AccountStopoutMode();
-   double stopoutLevel   = AccountStopoutLevel();                     if (stopoutMode    != ASM_ABSOLUTE       ) stopoutLevel  /= 100 * usedMargin;
-   double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
-   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
-   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );         // TickValue per Lot
-
-   error = GetLastError();
-   if (!tickSize || !tickValue || !marginRequired)                            // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      return(!SetLastError(ERR_UNKNOWN_SYMBOL));
-
-   double marginLeverage = Bid/tickSize * tickValue / marginRequired;         // Hebel des Symbols (kann vom Wert des Accounts abweichen)
-          tickValue     *= MathAbs(totalPosition);                            // TickValue der gesamten aktuellen Position
-   double stopout.diff   = (equity - stopoutLevel)/tickValue * tickSize;
-   double stopout.price;
-   if (totalPosition > 0) stopout.price = NormalizeDouble(Bid - stopout.diff, Digits);    // long position
-   else                   stopout.price = NormalizeDouble(Ask + stopout.diff, Digits);    // short position
+   // (1) Stopout-Preis berechnen
+   double equity     = AccountEquity();
+   double usedMargin = AccountMargin();
+   int    soMode     = AccountStopoutMode();
+   double soEquity   = AccountStopoutLevel(); if (soMode != ASM_ABSOLUTE) soEquity /= (100/usedMargin);
+   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
+   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
+      if (!tickSize || !tickValue)
+         return(!SetLastError(ERR_UNKNOWN_SYMBOL));                                    // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+   double soDistance = (equity - soEquity)/tickValue * tickSize;
+   double soPrice;
+   if (totalPosition > 0) soPrice = NormalizeDouble(Bid - soDistance, Digits);
+   else                   soPrice = NormalizeDouble(Ask + soDistance, Digits);
 
 
-   // (2) Stopout-Level anzeigen
+   // (2) Stopout-Preis anzeigen
    if (ObjectFind(label.stopoutLevel) == -1) {
       ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
       ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed);
       ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true);
-         if (stopoutMode == ASM_PERCENT) string description = StringConcatenate("Stopout  1:", Round(marginLeverage));
-         else                                   description = StringConcatenate("Stopout  ", DoubleToStr(stopoutLevel, 2), AccountCurrency());
+         if (soMode == ASM_PERCENT) string description = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
+         else                              description = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
       ObjectSetText(label.stopoutLevel, description);
       PushObject   (label.stopoutLevel);
    }
-   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, stopout.price);
+   ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
 
 
    error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateMarginLevels(2)", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                    // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateStopoutLevel(2)", error));
    return(true);
 }
 
