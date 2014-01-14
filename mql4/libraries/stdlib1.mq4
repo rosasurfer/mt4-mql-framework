@@ -6885,11 +6885,11 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    int bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
-   // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
+   // zuerst globale, dann lokale Config auslesen                    // zu kleiner Buffer ist hier nicht möglich
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
    GetPrivateProfileStringA(section, key, buffer[0],                    buffer[0], bufferSize, GetLocalConfigPath());
 
-   double result = StrToDouble(buffer[0]);
+   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
 
    if (!catch("GetConfigDouble()"))
       return(result);
@@ -7109,7 +7109,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
 
-   double result = StrToDouble(buffer[0]);
+   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
 
    if (!catch("GetGlobalConfigDouble()"))
       return(result);
@@ -7293,7 +7293,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetLocalConfigPath());
 
-   double result = StrToDouble(buffer[0]);
+   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
 
    if (!catch("GetLocalConfigDouble()"))
       return(result);
