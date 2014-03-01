@@ -21,7 +21,7 @@ string currency;                                                     // LFX-Währ
 int onInit() {
    if (!StringContains(Symbol(), "LFX")) {
       PlaySound("notify.wav");
-      MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not a LFX instrument", __NAME__ +" - init()", MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("Cannot display LFX positions:\n"+ GetSymbolName(Symbol()) +" is not an LFX instrument", __NAME__ +" - init()", MB_ICONEXCLAMATION|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
 
@@ -191,15 +191,15 @@ int SaveAccountId(string id) {
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
-   if (id == "") {                                             // wenn id == "", wird das Label gelöscht
+   if (id == "") {                                             		// wenn id == "", wird das Label gelöscht
       ObjectDelete(label) ;
-      return(catch("SaveAccount(1)"));
    }
+	else {
+		ObjectSet(label, OBJPROP_XDISTANCE, -1000);                 	// Label in nicht sichtbaren Bereich setzen
+		ObjectSetText(label, id, 0);
+	}
 
-   ObjectSet(label, OBJPROP_XDISTANCE, -1000);                 // Label in nicht sichtbaren Bereich setzen
-   ObjectSetText(label, id, 0);
-
-   return(catch("SaveAccount(2)"));
+   return(catch("SaveAccount()"));
 }
 
 
