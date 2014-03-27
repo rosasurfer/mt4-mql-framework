@@ -455,8 +455,8 @@ int transitions.America_New_York[68][6] = {
 };
 
 
-// FST: GMT+0200/+0300 mit Umschaltzeiten von America/New_York = Forex Standard Time
-int transitions.FST[68][6] = {
+// FXT: GMT+0200/+0300 mit Umschaltzeiten von America/New_York = Forex Time
+int transitions.FXT[68][6] = {
    // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
    /*Sun*/ D'1970.04.26 07:00:00', /*Sun*/ D'1970.04.26 10:00:00', PLUS_3_H,    /*Sun*/ D'1970.10.25 06:00:00', /*Sun*/ D'1970.10.25 08:00:00', PLUS_2_H,
    /*Sun*/ D'1971.04.25 07:00:00', /*Sun*/ D'1971.04.25 10:00:00', PLUS_3_H,    /*Sun*/ D'1971.10.31 06:00:00', /*Sun*/ D'1971.10.31 08:00:00', PLUS_2_H,

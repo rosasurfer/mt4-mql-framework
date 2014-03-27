@@ -213,11 +213,11 @@ int UpdateInfos() {
       if (StringLen(serverTimezone) > 0) {
          datetime lastTime = MarketInfo(symbol, MODE_TIME);
          if (lastTime > 0) {
-            int tzOffset = GetServerToFSTOffset(lastTime);
+            int tzOffset = GetServerToFXTOffset(lastTime);
             if (tzOffset != EMPTY_VALUE)
                strOffset = ifString(tzOffset>= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
          }
-         serverTimezone = serverTimezone + ifString(StringStartsWith(serverTimezone, "FST"), "", " (FST"+ strOffset +")");
+         serverTimezone = serverTimezone + ifString(StringStartsWith(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
       }
                                                                         ObjectSetText(labels[I_SERVER_TIMEZONE ], "Server timezone:  "    + serverTimezone, fg.fontSize, fg.fontName, ifInt(!StringLen(serverTimezone), fg.fontColor.Disabled, fg.fontColor));
 
