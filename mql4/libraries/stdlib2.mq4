@@ -57,7 +57,7 @@ int GetPrivateProfileKeys.2(string fileName, string section, string keys[]) {
  * Konvertiert ein String-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  string values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -70,7 +70,7 @@ string StringsToStr(string values[][], string separator=", ") {
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
 private*/string __StringsToStr(string values2[][], string values3[][][], string separator) {
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
@@ -160,7 +160,7 @@ int DoubleQuoteStrings(string &values[]) {
  * Konvertiert ein Array mit Kursen in einen mit dem aktuellen PriceFormat formatierten String.
  *
  * @param  double values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -172,7 +172,7 @@ string RatesToStr(double values[], string separator=", ") {
    if (size == 0)
       return("{}");
 
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    string strings[];
@@ -212,7 +212,7 @@ string PricesToStr(double values[], string separator=", ") {
  * Konvertiert ein Array mit Geldbeträgen in einen lesbaren String.
  *
  * @param  double values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String mit 2 Nachkommastellen je Wert oder Leerstring, falls ein Fehler auftrat
  */
@@ -224,7 +224,7 @@ string MoneysToStr(double values[], string separator=", ") {
    if (ArraySize(values) == 0)
       return("{}");
 
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    string strings[];
@@ -248,7 +248,7 @@ string MoneysToStr(double values[], string separator=", ") {
  * mit dem aktuellen PriceFormat formatiert.
  *
  * @param  double values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -260,7 +260,7 @@ string iBufferToStr(double values[], string separator=", ") {
    if (size == 0)
       return("{}");
 
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    string strings[];
@@ -284,7 +284,7 @@ string iBufferToStr(double values[], string separator=", ") {
  * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  double values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -297,7 +297,7 @@ string DoublesToStr(double values[][], string separator=", ") {
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
 private*/string __DoublesToStr(double values2[][], double values3[][][], string separator) {
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
@@ -353,7 +353,7 @@ private*/string __DoublesToStr(double values2[][], double values3[][][], string 
  * Konvertiert ein DateTime-Array in einen lesbaren String.
  *
  * @param  datetime values[]
- * @param  string   separator - Separator (default: ", ")
+ * @param  string   separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -365,7 +365,7 @@ string TimesToStr(datetime values[], string separator=", ") {
    if (ArraySize(values) == 0)
       return("{}");
 
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    string strings[];
@@ -388,7 +388,7 @@ string TimesToStr(datetime values[], string separator=", ") {
  * Konvertiert ein OperationType-Array in einen lesbaren String.
  *
  * @param  int    values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -400,7 +400,7 @@ string OperationTypesToStr(int values[], string separator=", ") {
    if (ArraySize(values) == 0)
       return("{}");
 
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    string strings[]; ArrayResize(strings, size);
@@ -422,7 +422,7 @@ string OperationTypesToStr(int values[], string separator=", ") {
  * Konvertiert ein Char-Array in einen lesbaren String.
  *
  * @param  int    values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -434,7 +434,7 @@ string CharsToStr(int values[], string separator=", ") {
    if (ArraySize(values) == 0)
       return("{}");
 
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    string strings[];
@@ -455,7 +455,7 @@ string CharsToStr(int values[], string separator=", ") {
  * Konvertiert ein Integer-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  int    values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -468,7 +468,7 @@ string IntsToStr(int values[][], string separator=", ") {
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
 private*/string __IntsToStr(int values2[][], int values3[][][], string separator) {
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
@@ -526,7 +526,7 @@ private*/string __IntsToStr(int values2[][], int values3[][][], string separator
  * Konvertiert ein Boolean-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  bool   values[]
- * @param  string separator - Separator (default: ", ")
+ * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
@@ -539,7 +539,7 @@ string BoolsToStr(bool values[][], string separator=", ") {
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
 private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
-   if (separator == "0")   // NULL
+   if (separator == "0")      // (string) NULL
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;

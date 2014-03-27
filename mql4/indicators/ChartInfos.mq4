@@ -281,7 +281,7 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                                           // Unit-Anzeige wird im Tester nicht benötigt
+   if (IsTesting())                                                           // Anzeige wird im Tester nicht benötigt
       return(true);
 
    // (1) Konfiguration einlesen
