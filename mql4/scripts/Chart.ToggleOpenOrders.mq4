@@ -191,13 +191,13 @@ int SaveAccountId(string id) {
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
-   if (id == "") {                                             		// wenn id == "", wird das Label gelöscht
+   if (id == "") {                                                   // wenn id == "", wird das Label gelöscht
       ObjectDelete(label) ;
    }
-	else {
-		ObjectSet(label, OBJPROP_XDISTANCE, -1000);                 	// Label in nicht sichtbaren Bereich setzen
-		ObjectSetText(label, id, 0);
-	}
+   else {
+      ObjectSet(label, OBJPROP_XDISTANCE, -1000);                    // Label in nicht sichtbaren Bereich setzen
+      ObjectSetText(label, id, 0);
+   }
 
    return(catch("SaveAccount()"));
 }
@@ -237,7 +237,7 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
       ObjectSet(name, OBJPROP_BACK , true);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  (", NumberToStr(lots, ".1+"), ")  ", NumberToStr(NormalizeDouble(openPrice, SubPipDigits), SubPipPriceFormat)));
+      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(lots, ".+"), " x ", NumberToStr(NormalizeDouble(openPrice, SubPipDigits), SubPipPriceFormat)));
    }
    else GetLastError();
 
