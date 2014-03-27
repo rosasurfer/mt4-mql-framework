@@ -1271,7 +1271,7 @@ void UpdateWeekendResumeTime() {
 
    weekend.resume.triggered = false;
 
-   datetime monday, stop=ServerToFST(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
+   datetime monday, stop=ServerToFXT(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
 
    switch (TimeDayOfWeek(stop)) {
       case SUNDAY   : monday = stop + 1*DAYS; break;
@@ -1282,7 +1282,7 @@ void UpdateWeekendResumeTime() {
       case FRIDAY   : monday = stop + 3*DAYS; break;
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
-   weekend.resume.time = FSTToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
+   weekend.resume.time = FXTToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
 }
 
 
@@ -1420,7 +1420,7 @@ bool IsWeekendStopSignal() {
 void UpdateWeekendStop() {
    weekend.stop.active = false;
 
-   datetime friday, now=ServerToFST(TimeCurrent());
+   datetime friday, now=ServerToFXT(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -1434,7 +1434,7 @@ void UpdateWeekendStop() {
    weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAY;
    if (weekend.stop.time < now)
       weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAY;    // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
-   weekend.stop.time = FSTToServerTime(weekend.stop.time);
+   weekend.stop.time = FXTToServerTime(weekend.stop.time);
 }
 
 

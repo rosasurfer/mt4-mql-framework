@@ -373,11 +373,11 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
          if (serverTime >= toDST) /*&&*/ if (toDST != -1) { lastTransition[I_TRANSITION_TIME] = toDST; lastTransition[I_TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; lastTransition[I_TRANSITION_DST] = true;  break; }
       }
 
-      else if (timezone == "FST") {
-         toDST = transitions.FST             [i][TR_TO_DST.local];
-         toSTD = transitions.FST             [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { lastTransition[I_TRANSITION_TIME] = toSTD; lastTransition[I_TRANSITION_OFFSET] = transitions.FST             [i][STD_OFFSET]; lastTransition[I_TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { lastTransition[I_TRANSITION_TIME] = toDST; lastTransition[I_TRANSITION_OFFSET] = transitions.FST             [i][DST_OFFSET]; lastTransition[I_TRANSITION_DST] = true;  break; }
+      else if (timezone == "FXT") {
+         toDST = transitions.FXT             [i][TR_TO_DST.local];
+         toSTD = transitions.FXT             [i][TR_TO_STD.local];
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { lastTransition[I_TRANSITION_TIME] = toSTD; lastTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; lastTransition[I_TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { lastTransition[I_TRANSITION_TIME] = toDST; lastTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; lastTransition[I_TRANSITION_DST] = true;  break; }
       }
 
       else return(!catch("GetServerTimezoneTransitions(3)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
@@ -431,11 +431,11 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
          if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
       }
 
-      else if (timezone == "FST") {
-         toDST = transitions.FST             [i][TR_TO_DST.local];
-         toSTD = transitions.FST             [i][TR_TO_STD.local];
-         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.FST             [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
-         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.FST             [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
+      else if (timezone == "FXT") {
+         toDST = transitions.FXT             [i][TR_TO_DST.local];
+         toSTD = transitions.FXT             [i][TR_TO_STD.local];
+         if (serverTime < toDST)                            { nextTransition[I_TRANSITION_TIME] = toDST; nextTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; nextTransition[I_TRANSITION_DST] = true;  break; }
+         if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
       }
 
       else return(!catch("GetServerTimezoneTransitions(4)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
@@ -1127,44 +1127,44 @@ int LoadCursorByName(int hInstance, string cursorName) {
 
 
 /**
- * Gibt den Offset der angegebenen GMT-Zeit zu FST (Forex Standard Time) zurück (entgegengesetzter Wert des Offsets von FST zu GMT).
+ * Gibt den Offset der angegebenen GMT-Zeit zu FXT (Forex Time) zurück (entgegengesetzter Wert des Offsets von FXT zu GMT).
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetGMTToFSTOffset(datetime gmtTime) {
+int GetGMTToFXTOffset(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(EMPTY_VALUE, catch("GetGMTToFSTOffset()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(EMPTY_VALUE, catch("GetGMTToFXTOffset()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset, year=TimeYear(gmtTime)-1970;
 
-   // FST
-   if      (gmtTime < transitions.FST[year][TR_TO_DST.gmt]) offset = -transitions.FST[year][STD_OFFSET];
-   else if (gmtTime < transitions.FST[year][TR_TO_STD.gmt]) offset = -transitions.FST[year][DST_OFFSET];
-   else                                                     offset = -transitions.FST[year][STD_OFFSET];
+   // FXT
+   if      (gmtTime < transitions.FXT[year][TR_TO_DST.gmt]) offset = -transitions.FXT[year][STD_OFFSET];
+   else if (gmtTime < transitions.FXT[year][TR_TO_STD.gmt]) offset = -transitions.FXT[year][DST_OFFSET];
+   else                                                     offset = -transitions.FXT[year][STD_OFFSET];
 
    return(offset);
 }
 
 
 /**
- * Gibt den Offset der angegebenen Serverzeit zu FST (Forex Standard Time) zurück (positive Werte für östlich von FST liegende Zeitzonen).
+ * Gibt den Offset der angegebenen Serverzeit zu FXT (Forex Time) zurück (positive Werte für östlich von FXT liegende Zeitzonen).
  *
  * @param  datetime serverTime - Server-Zeit
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetServerToFSTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+int GetServerToFXTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(EMPTY_VALUE, catch("GetServerToFSTOffset()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(EMPTY_VALUE, catch("GetServerToFXTOffset()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
       return(EMPTY_VALUE);
 
-   // schnelle Rückkehr, wenn der Server unter FST läuft
-   if (zone == "FST")
+   // schnelle Rückkehr, wenn der Server unter FXT läuft
+   if (zone == "FXT")
       return(0);
 
    // Offset Server zu GMT
@@ -1175,8 +1175,8 @@ int GetServerToFSTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
          return(EMPTY_VALUE);
    }
 
-   // Offset GMT zu FST
-   int offset2 = GetGMTToFSTOffset(serverTime - offset1);
+   // Offset GMT zu FXT
+   int offset2 = GetGMTToFXTOffset(serverTime - offset1);
    if (offset2 == EMPTY_VALUE)
       return(EMPTY_VALUE);
 
@@ -1231,16 +1231,16 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
       else if (serverTime < transitions.Europe_Minsk    [year][TR_TO_STD.local]) offset = transitions.Europe_Minsk    [year][DST_OFFSET];
       else                                                                       offset = transitions.Europe_Minsk    [year][STD_OFFSET];
    }
-   else if (timezone == "FST") {
-      if      (serverTime < transitions.FST             [year][TR_TO_DST.local]) offset = transitions.FST             [year][STD_OFFSET];
-      else if (serverTime < transitions.FST             [year][TR_TO_STD.local]) offset = transitions.FST             [year][DST_OFFSET];
-      else                                                                       offset = transitions.FST             [year][STD_OFFSET];
+   else if (timezone == "FXT") {
+      if      (serverTime < transitions.FXT             [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET];
+      else if (serverTime < transitions.FXT             [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET];
+      else                                                                       offset = transitions.FXT             [year][STD_OFFSET];
    }
-   else if (timezone == "FST-0200") {
-      datetime fstTime = serverTime + PLUS_2_H;
-      if      (fstTime < transitions.FST                [year][TR_TO_DST.local]) offset = transitions.FST             [year][STD_OFFSET] + MINUS_2_H;
-      else if (fstTime < transitions.FST                [year][TR_TO_STD.local]) offset = transitions.FST             [year][DST_OFFSET] + MINUS_2_H;
-      else                                                                       offset = transitions.FST             [year][STD_OFFSET] + MINUS_2_H;
+   else if (timezone == "FXT-0200") {
+      datetime fxtTime = serverTime + PLUS_2_H;
+      if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
+      else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2_H;
+      else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
    }
    else if (timezone == "GMT")                                                   offset = 0;
    else
@@ -5427,15 +5427,15 @@ datetime GetServerPrevSessionStartTime(datetime serverTime) { // throws ERR_INVA
    if (serverTime < 0)
       return(_int(-1, catch("GetServerPrevSessionStartTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime fstTime = ServerToFST(serverTime);
-   if (fstTime == -1)
+   datetime fxtTime = ServerToFXT(serverTime);
+   if (fxtTime == -1)
       return(-1);
 
-   datetime startTime = GetFSTPrevSessionStartTime(fstTime);
+   datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
-   return(FSTToServerTime(startTime));
+   return(FXTToServerTime(startTime));
 }
 
 
@@ -5469,21 +5469,21 @@ datetime GetServerSessionStartTime(datetime serverTime) { // throws ERR_INVALID_
    if (serverTime < 0)
       return(_int(-1, catch("GetServerSessionStartTime(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int offset = GetServerToFSTOffset(datetime serverTime);
+   int offset = GetServerToFXTOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime fstTime = serverTime - offset;
-   if (fstTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(2)   illegal datetime result: "+ fstTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+   datetime fxtTime = serverTime - offset;
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetServerSessionStartTime(2)   illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
-   int dayOfWeek = TimeDayOfWeek(fstTime);
+   int dayOfWeek = TimeDayOfWeek(fxtTime);
 
    if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
       return(_int(-1, SetLastError(ERR_MARKET_CLOSED)));
 
-   fstTime   -= TimeHour(fstTime)*HOURS + TimeMinute(fstTime)*MINUTES + TimeSeconds(fstTime)*SECONDS;
-   serverTime = fstTime + offset;
+   fxtTime   -= TimeHour(fxtTime)*HOURS + TimeMinute(fxtTime)*MINUTES + TimeSeconds(fxtTime)*SECONDS;
+   serverTime = fxtTime + offset;
 
    if (serverTime < 0)
       return(_int(-1, catch("GetServerSessionStartTime(3)   illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -5521,15 +5521,15 @@ datetime GetServerNextSessionStartTime(datetime serverTime) { // throws ERR_INVA
    if (serverTime < 0)
       return(_int(-1, catch("GetServerNextSessionStartTime()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime fstTime = ServerToFST(serverTime);
-   if (fstTime == -1)
+   datetime fxtTime = ServerToFXT(serverTime);
+   if (fxtTime == -1)
       return(-1);
 
-   datetime startTime = GetFSTNextSessionStartTime(fstTime);
+   datetime startTime = GetFXTNextSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
-   return(FSTToServerTime(startTime));
+   return(FXTToServerTime(startTime));
 }
 
 
@@ -5563,15 +5563,15 @@ datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTPrevSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime fstTime = GMTToFST(gmtTime);
-   if (fstTime == -1)
+   datetime fxtTime = GMTToFXT(gmtTime);
+   if (fxtTime == -1)
       return(-1);
 
-   datetime startTime = GetFSTPrevSessionStartTime(fstTime);
+   datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
-   return(FSTToGMT(startTime));
+   return(FXTToGMT(startTime));
 }
 
 
@@ -5605,15 +5605,15 @@ datetime GetGMTSessionStartTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime fstTime = GMTToFST(gmtTime);
-   if (fstTime == -1)
+   datetime fxtTime = GMTToFXT(gmtTime);
+   if (fxtTime == -1)
       return(-1);
 
-   datetime startTime = GetFSTSessionStartTime(fstTime);
+   datetime startTime = GetFXTSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
-   return(FSTToGMT(startTime));
+   return(FXTToGMT(startTime));
 }
 
 
@@ -5647,15 +5647,15 @@ datetime GetGMTNextSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
       return(_int(-1, catch("GetGMTNextSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime fstTime = GMTToFST(gmtTime);
-   if (fstTime == -1)
+   datetime fxtTime = GMTToFXT(gmtTime);
+   if (fxtTime == -1)
       return(-1);
 
-   datetime startTime = GetFSTNextSessionStartTime(fstTime);
+   datetime startTime = GetFXTNextSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
-   return(FSTToGMT(startTime));
+   return(FXTToGMT(startTime));
 }
 
 
@@ -5679,19 +5679,19 @@ datetime GetGMTNextSessionEndTime(datetime gmtTime) {
 
 
 /**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebe FST-Zeit (Forex Standard Time) zurück.
+ * Gibt die Startzeit der vorherigen Handelssession für die angegebe FXT-Zeit (Forex Time) zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GetFSTPrevSessionStartTime(datetime fstTime) {
-   if (fstTime < 0)
-      return(_int(-1, catch("GetFSTPrevSessionStartTime(1)   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime startTime = fstTime - TimeHour(fstTime)*HOURS - TimeMinute(fstTime)*MINUTES - TimeSeconds(fstTime) - 1*DAY;
+   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
    if (startTime < 0)
-      return(_int(-1, catch("GetFSTPrevSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5699,24 +5699,24 @@ datetime GetFSTPrevSessionStartTime(datetime fstTime) {
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
    if (startTime < 0)
-      return(_int(-1, catch("GetFSTPrevSessionStartTime(3)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(3)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    return(startTime);
 }
 
 
 /**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene FST-Zeit (Forex Standard Time) zurück.
+ * Gibt die Endzeit der vorherigen Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GetFSTPrevSessionEndTime(datetime fstTime) {
-   if (fstTime < 0)
-      return(_int(-1, catch("GetFSTPrevSessionEndTime()   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime GetFXTPrevSessionEndTime(datetime fxtTime) {
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTPrevSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime startTime = GetFSTPrevSessionStartTime(fstTime);
+   datetime startTime = GetFXTPrevSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
@@ -5725,19 +5725,19 @@ datetime GetFSTPrevSessionEndTime(datetime fstTime) {
 
 
 /**
- * Gibt die Startzeit der Handelssession für die angegebene FST-Zeit (Forex Standard Time) zurück.
+ * Gibt die Startzeit der Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GetFSTSessionStartTime(datetime fstTime) { // throws ERR_MARKET_CLOSED
-   if (fstTime < 0)
-      return(_int(-1, catch("GetFSTSessionStartTime(1)   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime GetFXTSessionStartTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTSessionStartTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime startTime = fstTime - TimeHour(fstTime)*HOURS - TimeMinute(fstTime)*MINUTES - TimeSeconds(fstTime);
+   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
    if (startTime < 0)
-      return(_int(-1, catch("GetFSTSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5749,17 +5749,17 @@ datetime GetFSTSessionStartTime(datetime fstTime) { // throws ERR_MARKET_CLOSED
 
 
 /**
- * Gibt die Endzeit der Handelssession für die angegebene FST-Zeit (Forex Standard Time) zurück.
+ * Gibt die Endzeit der Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GetFSTSessionEndTime(datetime fstTime) { // throws ERR_MARKET_CLOSED
-   if (fstTime < 0)
-      return(_int(-1, catch("GetFSTSessionEndTime()   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime GetFXTSessionEndTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime startTime = GetFSTSessionStartTime(fstTime);
+   datetime startTime = GetFXTSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
@@ -5768,17 +5768,17 @@ datetime GetFSTSessionEndTime(datetime fstTime) { // throws ERR_MARKET_CLOSED
 
 
 /**
- * Gibt die Startzeit der nächsten Handelssession für die angegebene FST-Zeit (Forex Standard Time) zurück.
+ * Gibt die Startzeit der nächsten Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GetFSTNextSessionStartTime(datetime fstTime) {
-   if (fstTime < 0)
-      return(_int(-1, catch("GetFSTNextSessionStartTime()   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime GetFXTNextSessionStartTime(datetime fxtTime) {
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTNextSessionStartTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime startTime = fstTime - TimeHour(fstTime)*HOURS - TimeMinute(fstTime)*MINUTES - TimeSeconds(fstTime) + 1*DAY;
+   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5790,17 +5790,17 @@ datetime GetFSTNextSessionStartTime(datetime fstTime) {
 
 
 /**
- * Gibt die Endzeit der nächsten Handelssession für die angegebene FST-Zeit (Forex Standard Time) zurück.
+ * Gibt die Endzeit der nächsten Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GetFSTNextSessionEndTime(datetime fstTime) {
-   if (fstTime < 0)
-      return(_int(-1, catch("GetFSTNextSessionEndTime()   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime GetFXTNextSessionEndTime(datetime fxtTime) {
+   if (fxtTime < 0)
+      return(_int(-1, catch("GetFXTNextSessionEndTime()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime startTime = GetFSTNextSessionStartTime(fstTime);
+   datetime startTime = GetFXTNextSessionStartTime(fxtTime);
    if (startTime == -1)
       return(-1);
 
@@ -6001,46 +6001,46 @@ string DoubleToStrTrim(double value) {
 
 
 /**
- * Konvertiert die angegebene FST-Zeit (Forex Standard Time) nach GMT.
+ * Konvertiert die angegebene FXT-Zeit (Forex Time) nach GMT.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
  * @return datetime - GMT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime FSTToGMT(datetime fstTime) {
-   if (fstTime < 0)
-      return(_int(-1, catch("FSTToGMT(1)   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime FXTToGMT(datetime fxtTime) {
+   if (fxtTime < 0)
+      return(_int(-1, catch("FXTToGMT(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int offset = GetFSTToGMTOffset(fstTime);
+   int offset = GetFXTToGMTOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime result = fstTime - offset;
+   datetime result = fxtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("FSTToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("FXTToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
 
 
 /**
- * Konvertiert die angegebene FST-Zeit (Forex Standard Time) nach Server-Zeit.
+ * Konvertiert die angegebene FXT-Zeit (Forex Time) nach Server-Zeit.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
  * @return datetime - Server-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime FSTToServerTime(datetime fstTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   if (fstTime < 0)
-      return(_int(-1, catch("FSTToServerTime(1)   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+datetime FXTToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+   if (fxtTime < 0)
+      return(_int(-1, catch("FXTToServerTime(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int offset = GetFSTToServerTimeOffset(fstTime);
+   int offset = GetFXTToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
-   datetime result = fstTime - offset;
+   datetime result = fxtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("FSTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("FXTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -7016,45 +7016,45 @@ bool IsConfigKey(string section, string key) {
 
 
 /**
- * Gibt den Offset der angegebenen FST-Zeit (Forex Standard Time) zu GMT zurück.
+ * Gibt den Offset der angegebenen FXT-Zeit (Forex Time) zu GMT zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetFSTToGMTOffset(datetime fstTime) {
-   if (fstTime < 0)
-      return(_int(EMPTY_VALUE, catch("GetFSTToGMTOffset()   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+int GetFXTToGMTOffset(datetime fxtTime) {
+   if (fxtTime < 0)
+      return(_int(EMPTY_VALUE, catch("GetFXTToGMTOffset()   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int offset, year=TimeYear(fstTime)-1970;
+   int offset, year=TimeYear(fxtTime)-1970;
 
-   // FST
-   if      (fstTime < transitions.FST[year][TR_TO_DST.local]) offset = transitions.FST[year][STD_OFFSET];
-   else if (fstTime < transitions.FST[year][TR_TO_STD.local]) offset = transitions.FST[year][DST_OFFSET];
-   else                                                       offset = transitions.FST[year][STD_OFFSET];
+   // FXT
+   if      (fxtTime < transitions.FXT[year][TR_TO_DST.local]) offset = transitions.FXT[year][STD_OFFSET];
+   else if (fxtTime < transitions.FXT[year][TR_TO_STD.local]) offset = transitions.FXT[year][DST_OFFSET];
+   else                                                       offset = transitions.FXT[year][STD_OFFSET];
 
    return(offset);
 }
 
 
 /**
- * Gibt den Offset der angegebenen FST-Zeit (Forex Standard Time) zu Server-Zeit zurück.
+ * Gibt den Offset der angegebenen FXT-Zeit (Forex Time) zu Server-Zeit zurück.
  *
- * @param  datetime fstTime - FST-Zeit
+ * @param  datetime fxtTime - FXT-Zeit
  *
  * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
  */
-int GetFSTToServerTimeOffset(datetime fstTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   if (fstTime < 0)
-      return(_int(EMPTY_VALUE, catch("GetFSTToServerTimeOffset(1)   invalid parameter fstTime = "+ fstTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+int GetFXTToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+   if (fxtTime < 0)
+      return(_int(EMPTY_VALUE, catch("GetFXTToServerTimeOffset(1)   invalid parameter fxtTime = "+ fxtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   // Offset FST zu GMT
-   int offset1 = GetFSTToGMTOffset(fstTime);
+   // Offset FXT zu GMT
+   int offset1 = GetFXTToGMTOffset(fxtTime);
    if (offset1 == EMPTY_VALUE)
       return(EMPTY_VALUE);
 
    // Offset GMT zu Server
-   int offset2 = GetGMTToServerTimeOffset(fstTime - offset1);
+   int offset2 = GetGMTToServerTimeOffset(fxtTime - offset1);
    if (offset2 == EMPTY_VALUE)
       return(EMPTY_VALUE);
 
@@ -7199,15 +7199,15 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       else if (gmtTime < transitions.Europe_Minsk    [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Minsk    [year][DST_OFFSET];
       else                                                                  offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
    }
-   else if (timezone == "FST") {
-      if      (gmtTime < transitions.FST             [year][TR_TO_DST.gmt]) offset = -transitions.FST             [year][STD_OFFSET];
-      else if (gmtTime < transitions.FST             [year][TR_TO_STD.gmt]) offset = -transitions.FST             [year][DST_OFFSET];
-      else                                                                  offset = -transitions.FST             [year][STD_OFFSET];
+   else if (timezone == "FXT") {
+      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET];
+      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET];
+      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET];
    }
-   else if (timezone == "FST-0200") {
-      if      (gmtTime < transitions.FST             [year][TR_TO_DST.gmt]) offset = -transitions.FST             [year][STD_OFFSET] + PLUS_2_H;
-      else if (gmtTime < transitions.FST             [year][TR_TO_STD.gmt]) offset = -transitions.FST             [year][DST_OFFSET] + PLUS_2_H;
-      else                                                                  offset = -transitions.FST             [year][STD_OFFSET] + PLUS_2_H;
+   else if (timezone == "FXT-0200") {
+      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
+      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2_H;
+      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
    }
    else if (timezone == "GMT")                                              offset =  0;
    else
@@ -8389,27 +8389,27 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";               //
    else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";               // (History wurde nicht aktualisiert)
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FST";
+   else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "FST";
-   else if (StringStartsWith(directory, "axitrader-"         )) timezone = "Europe/Kiev";          // oder FST ???
-   else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FST ???
+   else if (StringStartsWith(directory, "atcbrokersliq1-"    )) timezone = "FXT";
+   else if (StringStartsWith(directory, "axitrader-"         )) timezone = "Europe/Kiev";          // oder FXT ???
+   else if (StringStartsWith(directory, "axitraderusa-"      )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "broco-"             )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "brocoinvestments-"  )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "cmap-"              )) timezone = "FST-0200";             // GMT+0000/+0100 (Europe/London) mit DST-Wechseln von America/New_York
+   else if (StringStartsWith(directory, "cmap-"              )) timezone = "FXT-0200";             // GMT+0000/+0100 (Europe/London) mit DST-Wechseln von America/New_York
    else if (StringStartsWith(directory, "collectivefx-"      )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "dukascopy-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "easyforex-"         )) timezone = "GMT";
    else if (StringStartsWith(directory, "finfx-"             )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "forex-"             )) timezone = "GMT";
-   else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // oder FST ???
+   else if (StringStartsWith(directory, "fxopen-"            )) timezone = "Europe/Kiev";          // oder FXT ???
    else if (StringStartsWith(directory, "fxprimus-"          )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxpro.com-"         )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "fxdd-"              )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
-   else if (StringStartsWith(directory, "globalprime-"       )) timezone = "FST";
-   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FST";                  // IC Markets live
+   else if (StringStartsWith(directory, "globalprime-"       )) timezone = "FXT";
+   else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FXT";
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
@@ -8420,7 +8420,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "metaquotes-"        )) timezone = "GMT";                  // Dummy-Wert
    else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
-   else if (StringStartsWith(directory, "pepperstone-"       )) timezone = "FST";
+   else if (StringStartsWith(directory, "pepperstone-"       )) timezone = "FXT";
    else if (StringStartsWith(directory, "primexm-"           )) timezone = "GMT";
    else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Minsk";
    else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
@@ -8666,23 +8666,23 @@ string GetClassName(int hWnd) {
 
 
 /**
- * Konvertiert die angegebene GMT-Zeit nach FST-Zeit (Forex Standard Time).
+ * Konvertiert die angegebene GMT-Zeit nach FXT-Zeit (Forex Time).
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime GMTToFST(datetime gmtTime) {
+datetime GMTToFXT(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GMTToFST(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GMTToFXT(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   int offset = GetGMTToFSTOffset(gmtTime);
+   int offset = GetGMTToFXTOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(-1);
 
    datetime result = gmtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("GMTToFST(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GMTToFXT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -9007,29 +9007,29 @@ int SendSMS(string receiver, string message) {
 
 
 /**
- * Konvertiert die angegebene Server-Zeit nach FST (Forex Standard Time).
+ * Konvertiert die angegebene Server-Zeit nach FXT (Forex Time).
  *
  * @param  datetime serverTime - Server-Zeit
  *
- * @return datetime - FST-Zeit oder -1, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder -1, falls ein Fehler auftrat
  */
-datetime ServerToFST(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToFXT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("ServerToFST()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
    if (StringLen(zone) == 0)
       return(-1);
 
-   // schnelle Rückkehr, wenn der Server unter FST läuft
-   if (zone == "FST")
+   // schnelle Rückkehr, wenn der Server unter FXT läuft
+   if (zone == "FXT")
       return(serverTime);
 
    datetime gmtTime = ServerToGMT(serverTime);
    if (gmtTime == -1)
       return(-1);
 
-   return(GMTToFST(gmtTime));
+   return(GMTToFXT(gmtTime));
 }
 
 
