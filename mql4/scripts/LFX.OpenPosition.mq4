@@ -1,24 +1,10 @@
 /**
- * Öffnet eine Position in einer der LiteForex-Indizes.
+ * Öffnet eine LFX-Position.
  *
- *  Regeln:
- *  -------
- *  - automatisierter StopLoss aller Positionen bei 50% von MaxEquity
- *  - maximal 2 offene Positionen
- *  - weitere Positionen im selben Instrument werden erst nach Tagesende eröffnet
- *  - Positionsgrößen: 0.7 - 1.0 - 1.3
- *  - nach Gewinnen ist ein MA(Equity) Ausgangsbasis für neue Positionen
- *  - zu jeder Position wird eine TakeProfit-Order in den Markt gelegt
- *  - Positionen möglichst am Bollinger-Band eingehen
- *  - 25% aller Gewinne werden sofort aus dem Markt genommen (Reserve für Stop-Out-Fall)
  *
  *  TODO:
  *  -----
- *  - Fehler im Counter, wenn 2 Positionen gleichzeitig eröffnet werden (2 x CHF.3)
- *  - Anzeige des Stoploss-Levels und des Stop-Out-Levels des Brokers
- *  - Buy-/Sell-Limits implementieren
- *  - TakeProfit-Limits implementieren
- *  - Breakeven-Orders implementieren
+ *  - Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
  *
  *
  *  Format von MagicNumber:
@@ -39,26 +25,26 @@ int __DEINIT_FLAGS__[];
 
 #property show_inputs
 
+//////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
+extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
+extern string Direction    = "long | short";                         // (B)uy | (S)ell | (L)ong | (S)hort
+extern double Units        = 1.0;                                    // halbe (0.5) oder ganze (1.0) Unit
 
-extern string Currency  = "";             // AUD | CAD | CHF | EUR | GBP | JPY | USD
-extern string Direction = "long";         // buy | sell | long | short
-extern double Units     = 1.0;            // Vielfaches von 0.1 im Bereich 0.1-1.5
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-int Strategy.Id = 102;                    // eindeutige ID der Strategie (Bereich 101-1023)
-
-int    iDirection;
+string currency;
+int    direction;
 double leverage;
 
-int    positions.magic   [];              // Daten der aktuell offenen Positionen dieser Strategie
+int    positions.magic   [];                                         // Daten der aktuell offenen Positionen dieser Strategie
 string positions.currency[];
 double positions.units   [];
 int    positions.instance[];
 int    positions.counter [];
+
+
+int    Strategy.Id = 102;                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
 
 /**
@@ -67,37 +53,37 @@ int    positions.counter [];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // -- Beginn - Parametervalidierung
-   // Currency
-   string value = StringToUpper(StringTrim(Currency));
-   string currencies[] = { "AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "USD" };
+   // (1) Parametervalidierung
+   // (1.1) LFX.Currency
+   string value = StringToUpper(StringTrim(LFX.Currency));
+   string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
    if (!StringInArray(currencies, value))
-      return(catch("onInit(1)   Invalid input parameter Currency = \""+ Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   Currency = value;
-   // Direction
+      return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   currency = value;
+
+   // (1.2) Direction
    value = StringToUpper(StringTrim(Direction));
-   if (value == "")
-      return(catch("onInit(2)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   switch (StringGetChar(value, 0)) {
-      case 'B':
-      case 'L': Direction = "long";  iDirection = OP_BUY;  break;
-      case 'S': Direction = "short"; iDirection = OP_SELL; break;
-      default:
-         return(catch("onInit(3)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   }
-   // Units
-   if (LT(Units, 0.1) || GT(Units, 1.5))
-      return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be between 0.1 and 1.5)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (MathModFix(Units, 0.1) != 0)
-      return(catch("onInit(5)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
+   else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
+   else return(catch("onInit(2)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+
+   // (1.3) Units
+   if (NE(Units, 0.5)) /*&&*/ if (NE(Units, 1))
+      return(catch("onInit(3)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be 0.5 or 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
-   // -- Ende - Parametervalidierung
 
 
-   // Leverage-Konfiguration einlesen
-   leverage = GetGlobalConfigDouble("Leverage", "Basket", 0);
-   if (LT(leverage, 1))
-      return(catch("onInit(6)   Invalid configuration value [Leverage] Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
+   // (2) Leverage-Konfiguration einlesen und validieren
+   if (!IsGlobalConfigKey("Leverage", "Basket"))
+      return(catch("onInit(4)   Missing global MetaTrader configuration value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
+
+   value = GetGlobalConfigString("Leverage", "Basket", "");
+   int n = StringFind(value, ";");                                   // ggf. vorhandenen Kommentar entfernen
+   if (n > -1) value = StringTrimRight(StringLeft(value, n));
+   if (!StringIsNumeric(value))
+      return(catch("onInit(5)   Invalid MetaTrader configuration value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   leverage = StrToDouble(value);
+   if (leverage < 1) return(catch("onInit(6)   Invalid MetaTrader configuration value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
    return(catch("onInit(7)"));
 }
@@ -109,86 +95,119 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string symbols   [6];
-   double lots      [6];
-   int    directions[6];
-   int    tickets   [6];
+   string symbols    [6];
+   double perfectLots[6], roundedLots[6];
+   int    directions [6];
+   int    tickets    [6];
 
 
-   // (1) Pairs bestimmen
-   if      (Currency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
-   else if (Currency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
-   else if (Currency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
-   else if (Currency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
-   else if (Currency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
-   else if (Currency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
-   else if (Currency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
+   // (1) zu handelnde Pairs bestimmen
+   //     Todo: Brokerspezifische Symbole ermitteln
+   if      (currency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
+   else if (currency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
+   else if (currency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
+   else if (currency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
+   else if (currency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
+   else if (currency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
+   else if (currency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "NZDCAD"; symbols[3] = "GBPNZD"; symbols[4] = "NZDUSD"; symbols[5] = "NZDJPY"; }
+   else if (currency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
 
 
    // (2) Lotsizes berechnen
-   double equity = AccountEquity() - AccountCredit();
+   double equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   int    button;
+   string errorMsg, overLeverageMsg;
 
    for (int retry, i=0; i < 6; i++) {
-      double bid       = MarketInfo(symbols[i], MODE_BID      );
-      double tickSize  = MarketInfo(symbols[i], MODE_TICKSIZE );
-      double tickValue = MarketInfo(symbols[i], MODE_TICKVALUE);
-      double minLot    = MarketInfo(symbols[i], MODE_MINLOT   );
-      double maxLot    = MarketInfo(symbols[i], MODE_MAXLOT   );
-      double lotStep   = MarketInfo(symbols[i], MODE_LOTSTEP  );
-
-      int error = GetLastError();                     // auf ERR_UNKNOWN_SYMBOL prüfen
-      if (error != NO_ERROR)
+      // (2.1) notwendige Daten ermitteln
+      double bid           = MarketInfo(symbols[i], MODE_BID      );
+      double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
+      double tickValue     = MarketInfo(symbols[i], MODE_TICKVALUE);
+      double minLot        = MarketInfo(symbols[i], MODE_MINLOT   );
+      double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
+      double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
+      int    lotStepDigits = CountDecimals(lotStep);
+      int error = GetLastError();
+      if (error != NO_ERROR)                                                           // Todo: auf ERR_UNKNOWN_SYMBOL prüfen
          return(catch("onStart(1)   \""+ symbols[i] +"\"", error));
 
-      // auf ERR_INVALID_MARKET_DATA prüfen
-      string errorMsg = "";
-      if      (LT(bid, 0.5)          || GT(bid, 150)      ) errorMsg = StringConcatenate("Bid(\""      , symbols[i], "\") = ", NumberToStr(bid      , ".+"));
+      // (2.2) auf ERR_INVALID_MARKET_DATA prüfen
+      errorMsg = "";
+      if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = StringConcatenate("Bid(\""      , symbols[i], "\") = ", NumberToStr(bid      , ".+"));
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = StringConcatenate("TickSize(\"" , symbols[i], "\") = ", NumberToStr(tickSize , ".+"));
       else if (LT(tickValue, 0.5)    || GT(tickValue, 20) ) errorMsg = StringConcatenate("TickValue(\"", symbols[i], "\") = ", NumberToStr(tickValue, ".+"));
       else if (LT(minLot, 0.01)      || GT(minLot, 0.1)   ) errorMsg = StringConcatenate("MinLot(\""   , symbols[i], "\") = ", NumberToStr(minLot   , ".+"));
       else if (LT(maxLot, 50)                             ) errorMsg = StringConcatenate("MaxLot(\""   , symbols[i], "\") = ", NumberToStr(maxLot   , ".+"));
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = StringConcatenate("LotStep(\""  , symbols[i], "\") = ", NumberToStr(lotStep  , ".+"));
 
-      // ERR_INVALID_MARKET_DATA behandeln
+      // (2.3) ERR_INVALID_MARKET_DATA behandeln
       if (StringLen(errorMsg) > 0) {
-         if (retry < 3) {                                                                       // 3 stille Versuche, korrekte Werte zu lesen
-            Sleep(200);
+         if (retry < 3) {                                                              // 3 stille Versuche, korrekte Werte zu lesen
+            Sleep(200);                                                                // bei Mißerfolg jeweils xxx Millisekunden warten
             i = -1;
             retry++;
             continue;
          }
-         PlaySound("notify.wav");                                                               // danach Bestätigung per Dialog
-         int button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __NAME__, MB_ICONINFORMATION|MB_RETRYCANCEL);
+         PlaySound("notify.wav");                                                      // bei weiterem Mißerfolg Bestätigung für Fortsetzung einholen
+         button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __NAME__, MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
-            continue;
+            continue;                                                                  // Datenerhebung wiederholen...
          }
-         return(catch("onStart(2)"));
+         return(catch("onStart(2)"));                                                  // ...oder abbrechen
       }
 
-      double lotValue = bid / tickSize * tickValue;                                             // Lotvalue in Account-Currency
-      double unitSize = equity / lotValue * leverage;                                           // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
-      lots[i] = Units * unitSize;
-      lots[i] = NormalizeDouble(MathRound(lots[i]/lotStep) * lotStep, CountDecimals(lotStep));  // auf Vielfaches von MODE_LOTSTEP runden
+      // (2.4) Lotsize berechnen (dabei immer abrunden)
+      double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
+      double unitSize = equity / lotValue * leverage / 6;                              // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
+      perfectLots[i] = Units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
+      roundedLots[i] = NormalizeDouble(MathFloor(perfectLots[i]/lotStep) * lotStep, lotStepDigits);
 
-      if (LT(lots[i], minLot))
-         return(catch("onStart(3)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (minLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
-      if (GT(lots[i], maxLot))
-         return(catch("onStart(4)   Invalid trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(lots[i], ".+") +"  (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
+      if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung max. 6.7% je Schritt
+      else if (roundedLots[i] <=    0.75) { if (lotStep <   0.02) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.02) *   0.02, 2); }   // 0.3-0.75: Vielfaches von   0.02
+      else if (roundedLots[i] <=    1.2 ) { if (lotStep <   0.05) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.05) *   0.05, 2); }   // 0.75-1.2: Vielfaches von   0.05
+      else if (roundedLots[i] <=    3.  ) { if (lotStep <   0.1 ) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.1 ) *   0.1 , 1); }   //    1.2-3: Vielfaches von   0.1
+      else if (roundedLots[i] <=    7.5 ) { if (lotStep <   0.2 ) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.2 ) *   0.2 , 1); }   //    3-7.5: Vielfaches von   0.2
+      else if (roundedLots[i] <=   12.  ) { if (lotStep <   0.5 ) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.5 ) *   0.5 , 1); }   //   7.5-12: Vielfaches von   0.5
+      else if (roundedLots[i] <=   30.  ) { if (lotStep <   1.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/  1   ) *   1      ); }   //    12-30: Vielfaches von   1
+      else if (roundedLots[i] <=   75.  ) { if (lotStep <   2.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/  2   ) *   2      ); }   //    30-75: Vielfaches von   2
+      else if (roundedLots[i] <=  120.  ) { if (lotStep <   5.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/  5   ) *   5      ); }   //   75-120: Vielfaches von   5
+      else if (roundedLots[i] <=  300.  ) { if (lotStep <  10.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/ 10   ) *  10      ); }   //  120-300: Vielfaches von  10
+      else if (roundedLots[i] <=  750.  ) { if (lotStep <  20.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/ 20   ) *  20      ); }   //  300-750: Vielfaches von  20
+      else if (roundedLots[i] <= 1200.  ) { if (lotStep <  50.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/ 50   ) *  50      ); }   // 750-1200: Vielfaches von  50
+      else                                { if (lotStep < 100.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
+
+      // (2.5) Lotsize validieren
+      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)   Too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+
+      // (2.6) bei zu geringer Equity Leverage erhöhen und Daten für spätere Bestätigung hinterlegen
+      if (LT(roundedLots[i], minLot)) {
+         roundedLots[i]  = minLot;
+         overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", perfectLots[i], " lot");
+      }
+   }
+
+   // (2.7) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
+   if (StringLen(overLeverageMsg) > 0) {
+      PlaySound("notify.wav");
+      button = MessageBox("Not enough money.\nThe following positions will over-leverage:\n"+ overLeverageMsg +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
+      if (button != IDOK)
+         return(catch("onStart(4)"));
    }
 
 
-   // (3) Directions bestimmen
+   // (3) Directions der einzelnen Positionen bestimmen
    for (i=0; i < 6; i++) {
-      if (StringStartsWith(symbols[i], Currency)) directions[i]  = iDirection;
-      else                                        directions[i]  = iDirection ^ 1;              // 0=>1, 1=>0
-      if (Currency == "JPY")                      directions[i] ^= 1;                           // JPY ist invers notiert
+      if (StringStartsWith(symbols[i], currency)) directions[i]  = direction;
+      else                                        directions[i]  = direction ^ 1;      // 0=>1, 1=>0
+      if (currency == "JPY")                      directions[i] ^= 1;                  // JPY ist invers notiert
    }
 
 
-   // (4) Sicherheitsabfrage
+   // (4) finale Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(iDirection)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + Currency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + currency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
 
@@ -199,8 +218,9 @@ int onStart() {
 
 
    // (6) neue Position öffnen
+   //     TODO: Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
    int    counter     = GetPositionCounter() + 1;
-   string comment     = StringConcatenate(Currency, ".", counter, "/", DoubleToStr(Units, 1));
+   string comment     = StringConcatenate(currency, ".", counter, "/", DoubleToStr(Units, 1));
    int    magicNumber = CreateMagicNumber(counter);
 
    for (i=0; i < 6; i++) {
@@ -212,42 +232,41 @@ int onStart() {
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
 
-      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError()));    // vor Orderaufgabe alle aufgetretenen Fehler abfangen
+      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError()));    // vor Orderaufgabe alle evt. Fehler abfangen
       if (IsError(catch("onStart(6)")))   return(last_error);
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
-      tickets[i] = OrderSendEx(symbols[i], directions[i], lots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
+      tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
          return(SetLastError(stdlib_GetLastError()));
    }
 
 
-   // (7) OpenPrice der neuen Position berechnen
+   // (7) Gesamt-OpenPrice der neuen Position berechnen
    double openPrice = 1.0;
-
    for (i=0; i < 6; i++) {
       if (!SelectTicket(tickets[i], "onStart(7)"))
          return(last_error);
-      if (StringStartsWith(OrderSymbol(), Currency)) openPrice *= OrderOpenPrice();
+      if (StringStartsWith(OrderSymbol(), currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
    }
    openPrice = MathPow(openPrice, 1.0/7);
-   if (Currency == "JPY")
+   if (currency == "JPY")
       openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
 
    // (8) Logmessage ausgeben
-   int    lfxDigits = ifInt(Currency=="JPY", 3, 5);
-   string lfxFormat = ifString(Currency=="JPY", ".2'", ".4'");
+   int    lfxDigits = ifInt(currency=="JPY", 3, 5);
+   string lfxFormat = ifString(currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   if (__LOG) log("onStart()   "+ comment +" "+ ifString(iDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   if (__LOG) log("onStart()   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) Position in ".\experts\files\SIG\remote_positions.ini" eintragen
-   string file    = TerminalPath() +"\\experts\\files\\SIG\\remote_positions.ini";
+   // (9) Position in ".\experts\files\LiteForex\remote_positions.ini" eintragen
+   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
-   string key     = Currency +"."+ counter;
-   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(iDirection==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
+   string key     = currency +"."+ counter;
+   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
@@ -311,18 +330,18 @@ int CreateMagicNumber(int counter) {
       catch("CreateMagicNumber(1)   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
       return(-1);
    }
-   int strategy = Strategy.Id & 0x3FF << 22;                         // 10 bit (Bits 23-32)
-   int currency = GetCurrencyId(Currency) & 0xF << 18;               //  4 bit (Bits 19-22)
-   int units    = Round(Units * 10) & 0x1F << 13;                    //  5 bit (Bits 14-18)
-   int instance = GetInstance() & 0x1FF << 4;                        //  9 bit (Bits  5-13)
-   int pCounter = counter & 0xF;                                     //  4 bit (Bits  1-4 )
+   int iStrategy = Strategy.Id & 0x3FF << 22;                        // 10 bit (Bits 23-32)
+   int iCurrency = GetCurrencyId(currency) & 0xF << 18;              //  4 bit (Bits 19-22)
+   int iUnits    = Round(Units * 10) & 0x1F << 13;                   //  5 bit (Bits 14-18)
+   int iInstance = GetInstance() & 0x1FF << 4;                       //  9 bit (Bits  5-13)
+   int pCounter  = counter & 0xF;                                    //  4 bit (Bits  1-4 )
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       catch("CreateMagicNumber(2)", error);
       return(-1);
    }
-   return(strategy + currency + units + instance + pCounter);
+   return(iStrategy + iCurrency + iUnits + iInstance + pCounter);
 }
 
 
@@ -335,7 +354,7 @@ int GetPositionCounter() {
    int counter, size=ArraySize(positions.currency);
 
    for (int i=0; i < size; i++) {
-      if (positions.currency[i] == Currency) {
+      if (positions.currency[i] == currency) {
          if (positions.counter[i] > counter)
             counter = positions.counter[i];
       }

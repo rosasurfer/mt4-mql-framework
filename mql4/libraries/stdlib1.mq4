@@ -790,7 +790,7 @@ string costum.log.file = "";        // static: EA ok, Indikator ?
  * @return int - dieselbe ID (for chaining)
  */
 int SetCustomLog(int id, string file) {
-   if (file == "0")                       // NULL
+   if (file == "0")        // (string) NULL
       file = "";
    costum.log.id   = id;
    costum.log.file = file;
@@ -8806,7 +8806,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // throws ERS_HISTORY_UPDATE
-   if (symbol == "0")                                       // NULL ist Integer (0)
+   if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
 
    if (time < 0)
@@ -8849,7 +8849,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // throws ERS_HISTORY_UPDATE
-   if (symbol == "0")                                       // NULL ist Integer (0)
+   if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
 
    if (time < 0)
@@ -10509,7 +10509,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    // -- Beginn Parametervalidierung --
    // symbol
-   if (symbol == "0")      // = NULL
+   if (symbol == "0")      // (string) NULL
       symbol = Symbol();
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
@@ -10545,7 +10545,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    if (NE(takeProfit, 0))                                      return(_int(-1, oe.setError(oe, catch("OrderSendEx(10)   submission of take-profit orders not yet implemented", ERR_INVALID_FUNCTION_PARAMVALUE))));
    takeProfit = NormalizeDouble(takeProfit, digits);           // StopDistance-Validierung erfolgt später
    // comment
-   if (comment == "0")     // = NULL
+   if (comment == "0")     // (string) NULL
       comment = "";
    else if (StringLen(comment) > 27)                           return(_int(-1, oe.setError(oe, catch("OrderSendEx(11)   illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_FUNCTION_PARAMVALUE))));
    // expires
