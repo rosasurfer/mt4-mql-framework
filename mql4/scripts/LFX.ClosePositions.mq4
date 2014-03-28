@@ -5,8 +5,10 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
 #include <core/script.mqh>
+
+#include <LFXPosition/define.mqh>
+#include <LFXPosition/functions.mqh>
 
 #property show_inputs
 
@@ -17,8 +19,6 @@ extern string LFX.Labels = "";                           // Label-1 [, Label-n [
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-int Strategy.Id = 102;                                   // eindeutige ID der Strategie (Bereich 101-1023)
 
 string labels[];
 int    sizeOfLabels;
@@ -67,7 +67,7 @@ int onStart() {
 
          for (int n=0; n < sizeOfLabels; n++) {
             if (StringIStartsWith(OrderComment(), labels[n])) {
-               string label = LFX.Currency(OrderMagicNumber()) +"."+ LFX.Counter(OrderMagicNumber());
+               string label = GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())) +"."+ LFX.GetCounter(OrderMagicNumber());
                if (!StringInArray(positions, label))
                   ArrayPushString(positions, label);
                if (!IntInArray(tickets, OrderTicket()))
@@ -93,8 +93,8 @@ int onStart() {
 
          // TODO: erzielten ClosePrice() berechnen und ausgeben
 
-         // (3) Positionen aus ".\experts\files\SIG\remote_positions.ini" löschen
-         string file    = TerminalPath() +"\\experts\\files\\SIG\\remote_positions.ini";
+         // (3) Positionen aus ".\experts\files\LiteForex\remote_positions.ini" löschen
+         string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
          string section = ShortAccountCompany() +"."+ AccountNumber();
          for (i=0; i < sizeOfPositions; i++) {
             int error = DeletePrivateProfileKey(file, section, positions[i]);
@@ -109,14 +109,4 @@ int onStart() {
    }
 
    return(last_error);
-}
-
-
-/**
- * Ob die aktuell selektierte Order zu dieser Strategie gehört.
- *
- * @return bool
- */
-bool IsMyOrder() {
-   return(StrategyId(OrderMagicNumber()) == Strategy.Id);
 }

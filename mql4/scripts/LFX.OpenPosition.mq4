@@ -5,25 +5,19 @@
  *  TODO:
  *  -----
  *  - Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
- *
- *
- *  Format von MagicNumber:
- *  -----------------------
- *  Strategy-Id:   10 bit (Bit 23-32) => Bereich 0-1023 (immer größer 100)
- *  Currency-Id:    4 bit (Bit 19-22) => Bereich 0-15
- *  Units:          5 bit (Bit 14-18) => Bereich 0-31   (Vielfaches von 0.1 zwischen 0.1 und 1.5)
- *  Instance-ID:    9 bit (Bit  5-13) => Bereich 0-511  (immer größer 0)
- *  Counter:        4 bit (Bit  1-4 ) => Bereich 0-15   (immer größer 0)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <win32api.mqh>
-
 #include <core/script.mqh>
 
+#include <LFXPosition/define.mqh>
+#include <LFXPosition/functions.mqh>
+
 #property show_inputs
+
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
@@ -33,18 +27,18 @@ extern double Units        = 1.0;                                    // halbe (0
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 string currency;
 int    direction;
 double leverage;
 
-int    positions.magic   [];                                         // Daten der aktuell offenen Positionen dieser Strategie
-string positions.currency[];
-double positions.units   [];
-int    positions.instance[];
-int    positions.counter [];
+int    openPositions.magicNo [];                                     // Daten der aktuell offenen Positionen aller Symbole dieser Strategie
+string openPositions.currency[];
+double openPositions.units   [];
+int    openPositions.instance[];
+int    openPositions.counter [];
 
-
-int    Strategy.Id = 102;                                            // eindeutige ID der Strategie (Bereich 101-1023)
+bool   openPositions.updated = false;                                // Flag zur Signalisierung, ob die offenen Positionen bereits eingelesen wurden
 
 
 /**
@@ -181,7 +175,7 @@ int onStart() {
       // (2.5) Lotsize validieren
       if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)   Too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (2.6) bei zu geringer Equity Leverage erhöhen und Daten für spätere Bestätigung hinterlegen
+      // (2.6) bei zu geringer Equity Leverage erhöhen und Daten für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", perfectLots[i], " lot");
@@ -197,7 +191,7 @@ int onStart() {
    }
 
 
-   // (3) Directions der einzelnen Positionen bestimmen
+   // (3) Directions der Teilpositionen bestimmen
    for (i=0; i < 6; i++) {
       if (StringStartsWith(symbols[i], currency)) directions[i]  = direction;
       else                                        directions[i]  = direction ^ 1;      // 0=>1, 1=>0
@@ -212,16 +206,13 @@ int onStart() {
       return(catch("onStart(5)"));
 
 
-   // (5) Daten bereits offener Positionen einlesen
-   if (!ReadOpenPositions())
-      return(last_error);
-
-
-   // (6) neue Position öffnen
+   // (5) neue Position öffnen
    //     TODO: Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
    int    counter     = GetPositionCounter() + 1;
-   string comment     = StringConcatenate(currency, ".", counter, "/", DoubleToStr(Units, 1));
+      if (!counter)     return(catch("onStart(6)"));                                   // Abbruch, falls GetPositionCounter() Fehler zurückgab
+   string comment     = currency +"."+ counter +"/"+ NumberToStr(Units, ".+");
    int    magicNumber = CreateMagicNumber(counter);
+      if (!magicNumber) return(catch("onStart(7)"));                                   // Abbruch, falls CreateMagicNumber() Fehler zurückgab
 
    for (i=0; i < 6; i++) {
       double   price       = NULL;
@@ -232,8 +223,8 @@ int onStart() {
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
 
-      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError()));    // vor Orderaufgabe alle evt. Fehler abfangen
-      if (IsError(catch("onStart(6)")))   return(last_error);
+      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError())); // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
+      if (IsError(catch("onStart(8)")))   return(last_error);
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
@@ -242,17 +233,25 @@ int onStart() {
    }
 
 
-   // (7) Gesamt-OpenPrice der neuen Position berechnen
+   // (6) Daten in openPositions.* aktualisieren
+   ArrayPushInt   (openPositions.magicNo , magicNumber                   );
+   ArrayPushString(openPositions.currency, currency                      );
+   ArrayPushDouble(openPositions.units   , Units                         );
+   ArrayPushInt   (openPositions.instance, LFX.GetInstanceId(magicNumber));
+   ArrayPushInt   (openPositions.counter , counter                       );
+
+
+   // (7) OpenPrice der Gesamtposition berechnen
    double openPrice = 1.0;
    for (i=0; i < 6; i++) {
-      if (!SelectTicket(tickets[i], "onStart(7)"))
+      if (!SelectTicket(tickets[i], "onStart(9)"))
          return(last_error);
       if (StringStartsWith(OrderSymbol(), currency)) openPrice *= OrderOpenPrice();
       else                                           openPrice /= OrderOpenPrice();
    }
    openPrice = MathPow(openPrice, 1.0/7);
    if (currency == "JPY")
-      openPrice = 1/openPrice;                                       // JPY ist invers notiert
+      openPrice = 1/openPrice;            // JPY ist invers notiert
 
 
    // (8) Logmessage ausgeben
@@ -269,52 +268,47 @@ int onStart() {
    string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("onStart(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(10)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(last_error);
 }
 
 
 /**
- * Liest die Daten der offenen Positionen dieser Strategie ein.
+ * Liest die Daten der offenen Positionen aller Symbole dieser Strategie ein.
  *
  * @return bool - Erfolgsstatus
  */
 bool ReadOpenPositions() {
-   ArrayResize(positions.magic   , 0);
-   ArrayResize(positions.currency, 0);
-   ArrayResize(positions.units   , 0);
-   ArrayResize(positions.instance, 0);
-   ArrayResize(positions.counter , 0);
+   if (openPositions.updated)                                        // Rückkehr, falls Positionen bereits eingelesen wurden
+      return(true);
+
+   ArrayResize(openPositions.magicNo , 0);
+   ArrayResize(openPositions.currency, 0);
+   ArrayResize(openPositions.units   , 0);
+   ArrayResize(openPositions.instance, 0);
+   ArrayResize(openPositions.counter , 0);
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
          continue;
 
-      // alle offenen Positionen dieser Strategie finden und Daten einlesen
+      // offenen Positionen dieser Strategie finden und Daten einlesen
       if (IsMyOrder()) {
-         if (OrderType() > OP_SELL)
+         if (OrderType() > OP_SELL)                                  // keine offene Position
             continue;
-         if (IntInArray(positions.magic, OrderMagicNumber()))
+         if (IntInArray(openPositions.magicNo, OrderMagicNumber()))  // Position wurde bereits erfaßt
             continue;
-         ArrayPushInt   (positions.magic   ,              OrderMagicNumber() );
-         ArrayPushString(positions.currency, LFX.Currency(OrderMagicNumber()));
-         ArrayPushDouble(positions.units   , LFX.Units   (OrderMagicNumber()));
-         ArrayPushInt   (positions.instance, LFX.Instance(OrderMagicNumber()));
-         ArrayPushInt   (positions.counter , LFX.Counter (OrderMagicNumber()));
+         ArrayPushInt   (openPositions.magicNo ,                               OrderMagicNumber()  );
+         ArrayPushString(openPositions.currency, GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())));
+         ArrayPushDouble(openPositions.units   ,             LFX.GetUnits     (OrderMagicNumber()) );
+         ArrayPushInt   (openPositions.instance,             LFX.GetInstanceId(OrderMagicNumber()) );
+         ArrayPushInt   (openPositions.counter ,             LFX.GetCounter   (OrderMagicNumber()) );
       }
    }
+   openPositions.updated = true;                                     // Update-Flag setzen
+
    return(!catch("ReadOpenPositions()"));
-}
-
-
-/**
- * Ob die aktuell selektierte Order zu dieser Strategie gehört.
- *
- * @return bool
- */
-bool IsMyOrder() {
-   return(StrategyId(OrderMagicNumber()) == Strategy.Id);
 }
 
 
@@ -326,21 +320,17 @@ bool IsMyOrder() {
  * @return int - MagicNumber oder -1, falls ein Fehler auftrat
  */
 int CreateMagicNumber(int counter) {
-   if (counter < 1) {
-      catch("CreateMagicNumber(1)   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE);
-      return(-1);
-   }
-   int iStrategy = Strategy.Id & 0x3FF << 22;                        // 10 bit (Bits 23-32)
+   if (counter < 1)
+      return(_NULL(catch("CreateMagicNumber()   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
    int iCurrency = GetCurrencyId(currency) & 0xF << 18;              //  4 bit (Bits 19-22)
-   int iUnits    = Round(Units * 10) & 0x1F << 13;                   //  5 bit (Bits 14-18)
-   int iInstance = GetInstance() & 0x1FF << 4;                       //  9 bit (Bits  5-13)
+   int iUnits    = Round(Units * 10) & 0xF << 14;                    //  4 bit (Bits 15-18)
+   int iInstance = GetCreateInstanceId() & 0x3FF << 4;               // 10 bit (Bits  5-14)
    int pCounter  = counter & 0xF;                                    //  4 bit (Bits  1-4 )
 
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      catch("CreateMagicNumber(2)", error);
-      return(-1);
-   }
+   if (!iInstance)
+      return(NULL);
    return(iStrategy + iCurrency + iUnits + iInstance + pCounter);
 }
 
@@ -348,15 +338,20 @@ int CreateMagicNumber(int counter) {
 /**
  * Gibt den Positionszähler der letzten offenen Position im aktuellen Instrument zurück.
  *
- * @return int - Anzahl
+ * @return int - Zähler oder -1, falls ein Fehler auftrat
  */
 int GetPositionCounter() {
-   int counter, size=ArraySize(positions.currency);
+   // Sicherstellen, daß die offenen Positionen eingelesen wurden
+   if (!openPositions.updated)
+      if (!ReadOpenPositions())
+         return(-1);
+
+   int counter, size=ArraySize(openPositions.currency);
 
    for (int i=0; i < size; i++) {
-      if (positions.currency[i] == currency) {
-         if (positions.counter[i] > counter)
-            counter = positions.counter[i];
+      if (openPositions.currency[i] == currency) {
+         if (openPositions.counter[i] > counter)
+            counter = openPositions.counter[i];
       }
    }
    return(counter);
@@ -366,19 +361,24 @@ int GetPositionCounter() {
 /**
  * Gibt die aktuelle Instanz-ID zurück. Existiert noch keine, wird eine neue erzeugt.
  *
- * @return int - Instanz-ID im Bereich 1-511 (9 bit)
+ * @return int - Instanz-ID im Bereich 1-1023 (10 bit) oder NULL, falls ein Fehler auftrat
  */
-int GetInstance() {
+int GetCreateInstanceId() {
    static int id;
 
    if (!id) {
+      // Sicherstellen, daß die offenen Positionen eingelesen wurden
+      if (!openPositions.updated)
+         if (!ReadOpenPositions())
+            return(NULL);
+
       MathSrand(GetTickCount());
       while (!id) {
          id = MathRand();
-         while (id > 511) {
+         while (id > 1023) {
             id >>= 1;
          }
-         if (IntInArray(positions.instance, id))                     // sicherstellen, daß die Instanz-ID's aller im Moment offenen Positionen eindeutig sind
+         if (IntInArray(openPositions.instance, id))                 // sicherstellen, daß alle aktuell benutzten Instanz-ID's eindeutig sind
             id = 0;
       }
    }
