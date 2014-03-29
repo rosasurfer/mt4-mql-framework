@@ -209,7 +209,7 @@ int UpdateInfos() {
 
    string serverName      = GetServerDirectory();                       ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+ serverName, fg.fontSize, fg.fontName, ifInt(!StringLen(serverName), fg.fontColor.Disabled, fg.fontColor));
    string serverTimezone  = GetServerTimezone();
-      string strOffset;
+      string strOffset = "";
       if (StringLen(serverTimezone) > 0) {
          datetime lastTime = MarketInfo(symbol, MODE_TIME);
          if (lastTime > 0) {
