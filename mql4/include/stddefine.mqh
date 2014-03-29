@@ -527,20 +527,20 @@ int      last_error;                                        // der letzte Fehler
 #define CID_EUR                        4
 #define CID_GBP                        5
 #define CID_JPY                        6
-#define CID_USD                        7        // zuerst die ID's der Majors, dadurch "passen" diese in 3 Bits (für LFX etc.)
+#define CID_NZD                        7
+#define CID_USD                        8        // zuerst die ID's der LFX-Indizes, dadurch "passen" diese in 3 Bits (für LFX-Basket)
 
-#define CID_CNY                        8
-#define CID_CZK                        9
-#define CID_DKK                       10
-#define CID_HKD                       11
-#define CID_HRK                       12
-#define CID_HUF                       13
-#define CID_INR                       14
-#define CID_LTL                       15
-#define CID_LVL                       16
-#define CID_MXN                       17
-#define CID_NOK                       18
-#define CID_NZD                       19
+#define CID_CNY                        9
+#define CID_CZK                       10
+#define CID_DKK                       11
+#define CID_HKD                       12
+#define CID_HRK                       13
+#define CID_HUF                       14
+#define CID_INR                       15
+#define CID_LTL                       16
+#define CID_LVL                       17
+#define CID_MXN                       18
+#define CID_NOK                       19
 #define CID_PLN                       20
 #define CID_RUB                       21
 #define CID_SAR                       22
@@ -550,7 +550,7 @@ int      last_error;                                        // der letzte Fehler
 #define CID_TRY                       26
 #define CID_TWD                       27
 #define CID_ZAR                       28
-
+                                      28
 
 // Currency-Kürzel
 #define C_AUD                   "AUD"
