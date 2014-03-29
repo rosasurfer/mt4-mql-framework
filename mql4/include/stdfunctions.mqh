@@ -550,7 +550,7 @@ int      last_error;                                        // der letzte Fehler
 #define CID_TRY                       26
 #define CID_TWD                       27
 #define CID_ZAR                       28
-                                      28
+
 
 // Currency-Kürzel
 #define C_AUD                   "AUD"
