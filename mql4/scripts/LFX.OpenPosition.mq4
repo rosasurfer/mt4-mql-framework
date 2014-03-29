@@ -32,11 +32,11 @@ string currency;
 int    direction;
 double leverage;
 
-int    openPositions.magicNo [];                                     // Daten der aktuell offenen Positionen aller Symbole dieser Strategie
-string openPositions.currency[];
-double openPositions.units   [];
-int    openPositions.instance[];
-int    openPositions.counter [];
+int    openPositions.magicNo   [];                                   // Daten der aktuell offenen Positionen aller Symbole dieser Strategie
+string openPositions.currency  [];
+double openPositions.units     [];
+int    openPositions.instanceId[];
+int    openPositions.counter   [];
 
 bool   openPositions.updated = false;                                // Flag zur Signalisierung, ob die offenen Positionen bereits eingelesen wurden
 
@@ -234,11 +234,11 @@ int onStart() {
 
 
    // (6) Daten in openPositions.* aktualisieren
-   ArrayPushInt   (openPositions.magicNo , magicNumber                   );
-   ArrayPushString(openPositions.currency, currency                      );
-   ArrayPushDouble(openPositions.units   , Units                         );
-   ArrayPushInt   (openPositions.instance, LFX.GetInstanceId(magicNumber));
-   ArrayPushInt   (openPositions.counter , counter                       );
+   ArrayPushInt   (openPositions.magicNo   , magicNumber                   );
+   ArrayPushString(openPositions.currency  , currency                      );
+   ArrayPushDouble(openPositions.units     , Units                         );
+   ArrayPushInt   (openPositions.instanceId, LFX.GetInstanceId(magicNumber));
+   ArrayPushInt   (openPositions.counter   , counter                       );
 
 
    // (7) OpenPrice der Gesamtposition berechnen
@@ -283,11 +283,11 @@ bool ReadOpenPositions() {
    if (openPositions.updated)                                        // R¸ckkehr, falls Positionen bereits eingelesen wurden
       return(true);
 
-   ArrayResize(openPositions.magicNo , 0);
-   ArrayResize(openPositions.currency, 0);
-   ArrayResize(openPositions.units   , 0);
-   ArrayResize(openPositions.instance, 0);
-   ArrayResize(openPositions.counter , 0);
+   ArrayResize(openPositions.magicNo   , 0);
+   ArrayResize(openPositions.currency  , 0);
+   ArrayResize(openPositions.units     , 0);
+   ArrayResize(openPositions.instanceId, 0);
+   ArrayResize(openPositions.counter   , 0);
 
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: w‰hrend des Auslesens wurde in einem anderen Thread eine offene Order entfernt
@@ -299,11 +299,11 @@ bool ReadOpenPositions() {
             continue;
          if (IntInArray(openPositions.magicNo, OrderMagicNumber()))  // Position wurde bereits erfaﬂt
             continue;
-         ArrayPushInt   (openPositions.magicNo ,                               OrderMagicNumber()  );
-         ArrayPushString(openPositions.currency, GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())));
-         ArrayPushDouble(openPositions.units   ,             LFX.GetUnits     (OrderMagicNumber()) );
-         ArrayPushInt   (openPositions.instance,             LFX.GetInstanceId(OrderMagicNumber()) );
-         ArrayPushInt   (openPositions.counter ,             LFX.GetCounter   (OrderMagicNumber()) );
+         ArrayPushInt   (openPositions.magicNo   ,                               OrderMagicNumber()  );
+         ArrayPushString(openPositions.currency  , GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())));
+         ArrayPushDouble(openPositions.units     ,             LFX.GetUnits     (OrderMagicNumber()) );
+         ArrayPushInt   (openPositions.instanceId,             LFX.GetInstanceId(OrderMagicNumber()) );
+         ArrayPushInt   (openPositions.counter   ,             LFX.GetCounter   (OrderMagicNumber()) );
       }
    }
    openPositions.updated = true;                                     // Update-Flag setzen
@@ -378,7 +378,7 @@ int GetCreateInstanceId() {
          while (id > 1023) {
             id >>= 1;
          }
-         if (IntInArray(openPositions.instance, id))                 // sicherstellen, daﬂ alle aktuell benutzten Instanz-ID's eindeutig sind
+         if (IntInArray(openPositions.instanceId, id))               // sicherstellen, daﬂ alle aktuell benutzten Instanz-ID's eindeutig sind
             id = 0;
       }
    }

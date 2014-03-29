@@ -1,11 +1,11 @@
 /**
  *  Format von MagicNumber:
  *  -----------------------
- *  Strategy-Id:   10 bit (Bit 23-32) => Bereich 100-1023
- *  Currency-Id:    4 bit (Bit 19-22) => Bereich   0-15
- *  Units:          4 bit (Bit 15-18) => Bereich   0-15   (Vielfaches von 0.1 von 1 bis 10)
- *  Instance-ID:   10 bit (Bit  5-14) => Bereich   0-1023 (immer größer 0)
- *  Counter:        4 bit (Bit  1-4 ) => Bereich   0-15   (immer größer 0)
+ *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 100-1023
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   0-15
+ *  Units:         4 bit (Bit 15-18) => Bereich   0-15   (Vielfaches von 0.1 von 1 bis 10)
+ *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
+ *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15
  */
 
 
