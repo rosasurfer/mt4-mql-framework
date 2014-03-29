@@ -598,17 +598,17 @@
    int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
-#import "mq-sample1.ex4"
+#import "metaquotes-sample1.ex4"
    int      GetBoolsAddress  (bool   array[]);
-#import "mq-sample2.ex4"
+#import "metaquotes-sample2.ex4"
    int      GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
-#import "mq-sample3.ex4"
+#import "metaquotes-sample3.ex4"
    int      GetDoublesAddress(double array[]);
-#import "mq-sample4.ex4"
+#import "metaquotes-sample4.ex4"
    int      GetStringsAddress(string array[]);
-#import "mq-sample5.ex4"
+#import "metaquotes-sample5.ex4"
    int      GetStringAddress (string value);
-#import "mq-sample.dll"
+#import "MetaQuotesSample.dll"
    string   GetStringValue(int address);
 #import "structs1.ex4"
    string   EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
