@@ -91,8 +91,10 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS)
+   if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS) {
+      //debug("init()   calling Chart.SendTick()");
       Chart.SendTick(false);                                               // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
+   }
 
    catch("init(3)");
    return(last_error);
