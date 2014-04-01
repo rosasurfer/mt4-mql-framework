@@ -62,7 +62,7 @@ int LFX.GetCounter(int magicNumber) {
  *
  * @return bool
  */
-bool IsMyOrder() {
+bool LFX.IsMyOrder() {
    return(OrderMagicNumber() >> 22 == STRATEGY_ID);                  // 10 bit (Bit 23-32) => Bereich 101-1023
 }
 
@@ -71,7 +71,7 @@ bool IsMyOrder() {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   IsMyOrder();
+   LFX.IsMyOrder();
    LFX.GetCounter(NULL);
    LFX.GetCurrencyId(NULL);
    LFX.GetInstanceId(NULL);
