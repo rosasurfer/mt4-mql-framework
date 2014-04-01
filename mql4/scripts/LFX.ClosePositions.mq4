@@ -61,7 +61,7 @@ int onStart() {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
 
-      if (IsMyOrder()) {
+      if (LFX.IsMyOrder()) {
          if (OrderType() > OP_SELL)
             continue;
 

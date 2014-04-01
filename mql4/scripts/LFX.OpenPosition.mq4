@@ -294,7 +294,7 @@ bool ReadOpenPositions() {
          continue;
 
       // offenen Positionen dieser Strategie finden und Daten einlesen
-      if (IsMyOrder()) {
+      if (LFX.IsMyOrder()) {
          if (OrderType() > OP_SELL)                                  // keine offene Position
             continue;
          if (IntInArray(openPositions.magicNo, OrderMagicNumber()))  // Position wurde bereits erfaﬂt
