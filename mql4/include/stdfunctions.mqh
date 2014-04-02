@@ -1968,10 +1968,35 @@ bool StringIsNull(string value) {
 
 
 /**
+ * Fügt ein Element am Beginn eines String-Arrays an.
+ *
+ * @param  string array[] - String-Array
+ * @param  string value   - hinzuzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ *
+ *
+ * NOTE: Muß global definiert werden. Die benutzte Funktion ReverseStringArray() ruft intern ArraySetAsSeries() auf, dessen Verhalten mit einem String-Parameter
+ *       fehlerhaft ist. Unter ungeklärten Umständen wird das übergebene Array zerschossen, es enthält dann Zeiger auf andere im Programm existierende Strings.
+ *       Dieser Fehler wurde in Indikatoren beobachtet, wenn ArrayUnshiftString() in der stdlib1 eingebettet war, nicht jedoch bei globaler Definition. Der Effekt
+ *       tritt erst bei Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiten.
+ */
+int ArrayUnshiftString(string array[], string value) {
+   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+
+   ReverseStringArray(array);
+   int size = ArrayPushString(array, value);
+   ReverseStringArray(array);
+   return(size);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
-   int iNull, iNulls[];
+   int    iNull, iNulls[];
+   string sNulls[];
    _bool(NULL);
    _double(NULL);
    _empty();
@@ -1984,6 +2009,7 @@ void __DummyCalls() {
    _true();
    _ZERO();
    Abs(NULL);
+   ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    debug(NULL);

@@ -92,13 +92,13 @@
    int      ArraySpliceDoubles  (double array[],   int offset, int length);
    int      ArraySpliceStrings  (string array[],   int offset, int length);
 
-   int      ArrayInsertBool     (bool   array[], int offset, bool   values  );
+   int      ArrayInsertBool     (bool   array[], int offset, bool   value   );
    int      ArrayInsertBools    (bool   array[], int offset, bool   values[]);
-   int      ArrayInsertDouble   (double array[], int offset, double values  );
+   int      ArrayInsertDouble   (double array[], int offset, double value   );
    int      ArrayInsertDoubles  (double array[], int offset, double values[]);
-   int      ArrayInsertInt      (int    array[], int offset, int    values  );
+   int      ArrayInsertInt      (int    array[], int offset, int    value   );
    int      ArrayInsertInts     (int    array[], int offset, int    values[]);
-   int      ArrayInsertString   (string array[], int offset, string values  );
+   int      ArrayInsertString   (string array[], int offset, string value   );
    int      ArrayInsertStrings  (string array[], int offset, string values[]);
 
    bool     BoolInArray   (bool   haystack[], bool   needle);
