@@ -2201,24 +2201,6 @@ int ArrayUnshiftDouble(double array[], double value) {
 
 
 /**
- * Fügt ein Element am Beginn eines String-Arrays an.
- *
- * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
- *
- * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
- */
-int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-
-   ReverseStringArray(array);
-   int size = ArrayPushString(array, value);
-   ReverseStringArray(array);
-   return(size);
-}
-
-
-/**
  * Entfernt ein Element vom Beginn eines Boolean-Arrays und gibt es zurück.
  *
  * @param  bool array[] - Boolean-Array
