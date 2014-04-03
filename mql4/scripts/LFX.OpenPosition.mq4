@@ -13,8 +13,8 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 #include <core/script.mqh>
 
-#include <LFXPosition/define.mqh>
-#include <LFXPosition/functions.mqh>
+#include <LFXBasket/define.mqh>
+#include <LFXBasket/functions.mqh>
 
 #property show_inputs
 
