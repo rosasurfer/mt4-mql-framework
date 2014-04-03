@@ -5,11 +5,13 @@
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
 #include <core/indicator.mqh>
 
 #include <LFX/define.mqh>
 #include <LFX/functions.mqh>
+
+#include <win32api.mqh>
+#include <MT4iQuickChannel.mqh>
 
 #property indicator_chart_window
 
@@ -36,6 +38,8 @@ double totalPosition;
 double positions.custom[][2];                               // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
 int    positions.types [][2];                               // Positionsdetails:           = {PositionType, DirectionType}
 double positions.data  [][4];                               //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
+
+int    hLfxChannels[9];                                     // Größe entsprechend der größten LFX-Currency-ID, @see LFX/define.mqh
 
 
 #define TYPE_DEFAULT       0                                // PositionTypes
@@ -84,6 +88,15 @@ int onInit() {
  */
 int onDeinit() {
    RemoveChartObjects();
+
+   // QuickChannel-Handles schließen
+   for (int i=ArraySize(hLfxChannels)-1; i >= 0; i--) {
+      if (hLfxChannels[i] != NULL) {
+         if (!QC_ReleaseSender(hLfxChannels[i]))
+            catch("onDeinit()->MT4iQuickChannel::QC_ReleaseSender(hChannel=0x"+ IntToHexStr(hLfxChannels[i]) +")   error closing QuickChannel sender: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+         hLfxChannels[i] = NULL;
+      }
+   }
    return(catch("onDeinit()"));
 }
 
@@ -648,20 +661,31 @@ bool AnalyzePositions() {
    totalPosition = 0;
 
    int orders = OrdersTotal();
-   int sortKeys[][2];                                                // ={OpenTime, Ticket}
+   int sortKeys[][2];                                                // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
    ArrayResize(sortKeys, orders);
 
+   int pos, lfxMagics []={0}; ArrayResize(lfxMagics , 1);            // Die Arrays für die P/L-daten detektierter LFX-Positionen werden mit Größe 1 initialisiert.
+   double   lfxProfits[]={0}; ArrayResize(lfxProfits, 1);            // So sparen wir den ständigen Test auf einen ungültigen Index (Arraygröße 0).
 
-   // (1) Gesamtposition ermitteln (dabei Daten detektierter LFX-Positionen per QuickChannel weiterleiten)
+
+   // (1) Gesamtposition ermitteln
    for (int n, i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
+      if (OrderType() > OP_SELL) continue;
+      if (LFX.IsMyOrder()) {                                         // dabei P/L-Daten detektierter LFX-Positionen aufaddieren
+         if (lfxMagics[pos] != OrderMagicNumber()) {
+            pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
+            if (pos == -1)
+               pos = ArrayResize(lfxProfits, ArrayPushInt(lfxMagics, OrderMagicNumber()))-1;
+         }
+         lfxProfits[pos] += OrderCommission() + OrderSwap() + OrderProfit();
+      }
       if (OrderSymbol() != Symbol()) continue;
-      if (OrderType() > OP_SELL)     continue;
 
-      if (OrderType() == OP_BUY) longPosition  += OrderLots();
+      if (OrderType() == OP_BUY) longPosition  += OrderLots();       // Gesamtposition aufaddieren
       else                       shortPosition += OrderLots();
 
-      sortKeys[n][0] = OrderOpenTime();                              // dabei Sortierschlüssel der Tickets auslesen
+      sortKeys[n][0] = OrderOpenTime();                              // Sortierschlüssel der Tickets auslesen
       sortKeys[n][1] = OrderTicket();
       n++;
    }
@@ -672,20 +696,34 @@ bool AnalyzePositions() {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = (longPosition || shortPosition);
 
+
+   // (2) P/L detektierter LFX-Positonen per QuickChannel an zugehöriges LFX-Terminal schicken
+   for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
+      int cid = LFX.GetCurrencyId(lfxMagics[i]);
+      if (!hLfxChannels[cid]) /*&&*/ if (!StartQCSender(cid))
+         return(false);
+      string message = DoubleToStr(lfxProfits[i], 2);
+      bool   result  = QC_SendMessage(hLfxChannels[cid], message, QC_FLAG_SEND_MSG_IF_RECEIVER|QC_FLAG_SEND_MSG_REPLACE);
+      if      (result == QC_SEND_MSG_ERROR  )   return(!catch("AnalyzePositions(1)->QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+      if      (result == QC_SEND_MSG_ADDED  ) { Comment(NL, __NAME__, ":  message \"", message, "\" sent");    }
+      else if (result == QC_SEND_MSG_IGNORED) { Comment(NL, __NAME__, ":  message \"", message, "\" ignored"); }
+      else                                      return(!catch("AnalyzePositions(2)->QC_SendMessage() returned unexpected result = "+ result, ERR_WIN32_ERROR));
+   }
+
    if (ArrayRange(positions.types, 0) > 0) {
       ArrayResize(positions.types, 0);
       ArrayResize(positions.data,  0);
    }
 
 
-   // (2) Positionsdetails analysieren und speichern
+   // (3) Positionsdetails analysieren und speichern
    if (isPosition) {
-      // (2.1) individuelle Konfiguration einlesen
+      // (3.1) individuelle Konfiguration einlesen
       if (ArrayRange(positions.custom, 0) == 0)
          if (!ReadCustomPositionConfig())
             if (IsLastError()) return(false);
 
-      // (2.2) offene Tickets sortieren und einlesen
+      // (3.2) offene Tickets sortieren und einlesen
       if (orders > 1)
          if (!SortTickets(sortKeys))
             return(false);
@@ -713,7 +751,7 @@ bool AnalyzePositions() {
       bool   isVirtual;
 
 
-      // (2.3) individuell konfigurierte Position extrahieren
+      // (3.3) individuell konfigurierte Position extrahieren
       int cpSize = ArrayRange(positions.custom, 0);
 
       for (i=0; i < cpSize; i++) {
@@ -721,7 +759,7 @@ bool AnalyzePositions() {
          ticket  = positions.custom[i][1];
 
          if (!i || !ticket) {
-            // (2.4) individuell konfigurierte Position speichern
+            // (3.4) individuell konfigurierte Position speichern
             if (ArraySize(customTickets) > 0)
                if (!StorePosition.Consolidate(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits))
                   return(false);
@@ -744,14 +782,33 @@ bool AnalyzePositions() {
             return(false);
       }
 
-      // (2.5) verbleibende Position speichern
+      // (3.5) verbleibende Position speichern
       if (!StorePosition.Separate(local.longPosition, local.shortPosition, local.totalPosition, tickets, types, lotSizes, openPrices, commissions, swaps, profits))
          return(false);
    }
 
    if (cpSize > 0)
       positionsAnalyzed = true;
-   return(!catch("AnalyzePositions(2)"));
+   return(!catch("AnalyzePositions(3)"));
+}
+
+
+/**
+ * Durchsucht das übergebene Integer-Array nach der angegebenen MagicNumber. Schneller Ersatz für int SearchIntArray(int haystack[], int needle),
+ * kein Library-Aufruf.
+ *
+ * @param  int array[] - zu durchsuchendes Array
+ * @param  int magic   - zu suchende MagicNumber
+ *
+ * @return int - Index der MagicNumber oder -1, wenn der Wert nicht im Array enthalten ist
+ */
+int SearchMagicNumber(int array[], int magic) {
+   int size = ArraySize(array);
+   for (int i=1; i < size; i++) {                                    // Index 0 ist unbenutzt
+      if (array[i] == magic)
+         return(i);
+   }
+   return(-1);
 }
 
 
@@ -1450,6 +1507,26 @@ bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ti
       data[i][1] = ticket;                                           // Originaldaten mit den sortierten Werten überschreiben
    }
    return(!catch("SortSameOpens()"));
+}
+
+
+/**
+ * Startet für die LFX-Währung mit der angegebenen Currency-ID einen QuickChannel-Sender.
+ *
+ * @param  int cid - Currency-ID
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StartQCSender(int cid) {
+   if (cid < 1 || cid >= ArraySize(hLfxChannels))
+      return(!catch("StartQCSender(1)   illegal parameter cid = "+ cid, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   if (!hLfxChannels[cid]) {
+      hLfxChannels[cid] = QC_StartSender(channels_lfx_profit[cid]);
+      if (!hLfxChannels[cid])
+         return(!catch("StartQCSender(2)->MT4iQuickChannel::QC_StartSender(channelName=\""+ channels_lfx_profit[cid] +"\")   error starting QuickChannel sender ="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   }
+   return(true);
 }
 
 
