@@ -47,7 +47,7 @@ int onStart() {
    if (account != "") {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
-         if (StringStartsWith(name, "LFXPosition."))
+         if (StringStartsWith(name, "LFXBasket."))
             ObjectDelete(name);
       }
    }
@@ -229,7 +229,7 @@ string ReadAccountId() {
  */
 int SetPositionMarker(string label, datetime openTime, int type, double lots, double openPrice) {
    // Trendline
-   string name = StringConcatenate("LFXPosition.", label, ".Line");
+   string name = StringConcatenate("LFXBasket.", label, ".Line");
    if (ObjectFind(name) > -1)
       ObjectDelete(name);
    if (ObjectCreate(name, OBJ_TREND, 0, D'1970.01.01 00:01', openPrice, openTime, openPrice)) {
