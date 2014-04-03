@@ -7,8 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
 
-#include <LFXBasket/define.mqh>
-#include <LFXBasket/functions.mqh>
+#include <LFX/define.mqh>
+#include <LFX/functions.mqh>
 
 #property show_inputs
 

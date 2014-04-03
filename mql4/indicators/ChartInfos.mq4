@@ -8,6 +8,9 @@ int __DEINIT_FLAGS__[];
 
 #include <core/indicator.mqh>
 
+#include <LFX/define.mqh>
+#include <LFX/functions.mqh>
+
 #property indicator_chart_window
 
 
@@ -30,9 +33,9 @@ double longPosition;                                        // Gesamtposition
 double shortPosition;
 double totalPosition;
 
-double customPositions.conf [][2];                          // individuelle Positionskonfiguration: = {LotSize, Ticket/ID}
-int    customPositions.types[][2];                          // Positionsdetails: = {PositionType, DirectionType}
-double customPositions.data [][4];                          //                   = {DirectionalLotSize, HedgedLotSize, BreakevenPrice/Pips, Profit}
+double positions.custom[][2];                               // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
+int    positions.types [][2];                               // Positionsdetails:           = {PositionType, DirectionType}
+double positions.data  [][4];                               //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
 
 #define TYPE_DEFAULT       0                                // PositionTypes
@@ -43,7 +46,7 @@ double customPositions.data [][4];                          //                  
 #define TYPE_SHORT         2
 #define TYPE_HEDGE         4
 
-#define I_DIRECTLOTSIZE    0                                // Arrayindizes von customPositions.data[]
+#define I_DIRECTLOTSIZE    0                                // Arrayindizes von positions.data[]
 #define I_HEDGEDLOTSIZE    1
 #define I_BREAKEVEN        2
 #define I_PROFIT           3
@@ -96,7 +99,7 @@ int onTick() {
    if (!UpdatePrice()       ) return(last_error);
    if (!UpdateSpread()      ) return(last_error);
    if (!UpdateUnitSize()    ) return(last_error);
-   if (!UpdatePosition()    ) return(last_error);
+   if (!UpdatePositions()   ) return(last_error);
    if (!UpdateStopoutLevel()) return(last_error);
    if (!UpdateOHLC()        ) return(last_error);
    if (!UpdateTime()        ) return(last_error);
@@ -395,11 +398,11 @@ bool UpdateUnitSize() {
 
 
 /**
- * Aktualisiert die Positionsanzeige.
+ * Aktualisiert die Positionsanzeigen: Gesamtposition unten rechts,Einzelpositionen unten links.
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdatePosition() {
+bool UpdatePositions() {
    if (!positionsAnalyzed)
       if (!AnalyzePositions())
          return(false);
@@ -414,18 +417,18 @@ bool UpdatePosition() {
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdatePosition(1)", error));
+      return(!catch("UpdatePositions(1)", error));
 
 
-   // (2) detaillierte Positionsanzeige unten links
+   // (2) Einzelpositionsanzeige unten links: ggf. mit Breakeven und Profit/Loss
    int    fontSize         = 8;
    string fontName.regular = "MS Sans Serif";
    string fontName.bold    = "Arial Fett";
-   color  fontColors[]     = {Blue, DeepPink, Green};                // ={COLOR_DEFAULT, COLOR_CUSTOM, COLOR_VIRTUAL}
+   color  fontColors[]     = {Blue, DeepPink, Green};                // {COLOR_DEFAULT, COLOR_CUSTOM, COLOR_VIRTUAL}
 
-   // Spalten:      Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount
-   int xShifts[] = {20,         59,      135, 160,     236,     268         };
-   int positions=ArrayRange(customPositions.types, 0), cols=ArraySize(xShifts), yDist=3;
+   // Spalten:          Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount
+   int col.xShifts[] = {20,         59,      135, 160,     236,     268         };
+   int positions=ArrayRange(positions.types, 0), cols=ArraySize(col.xShifts), yDist=3;
 
    // (2.1) ggf. weitere Zeilen hinzufügen
    static int lines;
@@ -435,7 +438,7 @@ bool UpdatePosition() {
          string label = label.position +".line"+ lines +"_col"+ col;
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
-            ObjectSet    (label, OBJPROP_XDISTANCE, xShifts[col]                  );
+            ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
             ObjectSet    (label, OBJPROP_YDISTANCE, yDist + (lines-1)*(fontSize+8));
             ObjectSetText(label, " ", 1);
             PushObject   (label);
@@ -453,42 +456,42 @@ bool UpdatePosition() {
       lines--;
    }
 
-   // (2.3) Zeilen von unten nach oben schreiben:   "{Type}: {LotSize}   BE|Dist: {BePrice}   Profit: {ProfitAmount}"
+   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   Profit: {ProfitAmount}"
    string strLotSize, strTypes[]={"", "Long:", "Short:", "", "Hedge:"};
 
    for (int line, i=positions-1; i >= 0; i--) {
       line++;
-      if (customPositions.types[i][1] == TYPE_HEDGE) {
-         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[customPositions.types[i][1]],                                                                  fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(customPositions.data [i][I_HEDGEDLOTSIZE], ".+") +" lot",                                      fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                                   fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-            if (!customPositions.data[i][I_BREAKEVEN])
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+      if (positions.types[i][1] == TYPE_HEDGE) {
+         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[positions.types[i][1]],                                                                  fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(positions.data [i][I_HEDGEDLOTSIZE], ".+") +" lot",                                      fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                             fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+            if (!positions.data[i][I_BREAKEVEN])
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                               fontSize, fontName.regular, fontColors[positions.types[i][0]]);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(customPositions.data[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                 fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-            if (!customPositions.data[i][I_PROFIT])
-         ObjectSetText(label.position +".line"+ line +"_col5", "...",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(positions.data[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                           fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+            if (!positions.data[i][I_PROFIT])
+         ObjectSetText(label.position +".line"+ line +"_col5", "...",                                                                                               fontSize, fontName.regular, fontColors[positions.types[i][0]]);
             else
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(customPositions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(positions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[positions.types[i][0]]);
       }
       else {
-         ObjectSetText(label.position +".line"+ line +"_col0",             strTypes[customPositions.types[i][1]],                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-            if (!customPositions.data[i][I_HEDGEDLOTSIZE]) strLotSize = NumberToStr(customPositions.data [i][I_DIRECTLOTSIZE], ".+");
-            else                                           strLotSize = NumberToStr(customPositions.data [i][I_DIRECTLOTSIZE], ".+") +" ±"+ NumberToStr(customPositions.data[i][I_HEDGEDLOTSIZE], ".+");
-         ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                        fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-            if (!customPositions.data[i][I_BREAKEVEN])
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                     fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-            else if (customPositions.types[i][1] == TYPE_LONG)
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil(customPositions.data[i][I_BREAKEVEN], Digits), PriceFormat),                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col0",       strTypes[positions.types[i][1]],                                                               fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+            if (!positions.data[i][I_HEDGEDLOTSIZE]) strLotSize = NumberToStr(positions.data [i][I_DIRECTLOTSIZE], ".+");
+            else                                     strLotSize = NumberToStr(positions.data [i][I_DIRECTLOTSIZE], ".+") +" ±"+ NumberToStr(positions.data[i][I_HEDGEDLOTSIZE], ".+");
+         ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                  fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                               fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+            if (!positions.data[i][I_BREAKEVEN])
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                               fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+            else if (positions.types[i][1] == TYPE_LONG)
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil(positions.data[i][I_BREAKEVEN], Digits), PriceFormat),                         fontSize, fontName.regular, fontColors[positions.types[i][0]]);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(customPositions.data[i][I_BREAKEVEN], Digits), PriceFormat),                        fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                 fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(customPositions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[customPositions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(positions.data[i][I_BREAKEVEN], Digits), PriceFormat),                        fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                           fontSize, fontName.regular, fontColors[positions.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(positions.data[i][I_PROFIT], 2),                                                         fontSize, fontName.regular, fontColors[positions.types[i][0]]);
       }
    }
-   return(!catch("UpdatePosition(2)"));
+   return(!catch("UpdatePositions(2)"));
 }
 
 
@@ -649,7 +652,7 @@ bool AnalyzePositions() {
    ArrayResize(sortKeys, orders);
 
 
-   // (1) Gesamtposition ermitteln
+   // (1) Gesamtposition ermitteln (dabei Daten detektierter LFX-Positionen per QuickChannel weiterleiten)
    for (int n, i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
       if (OrderSymbol() != Symbol()) continue;
@@ -669,17 +672,17 @@ bool AnalyzePositions() {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = (longPosition || shortPosition);
 
-   if (ArrayRange(customPositions.types, 0) > 0) {
-      ArrayResize(customPositions.types, 0);
-      ArrayResize(customPositions.data,  0);
+   if (ArrayRange(positions.types, 0) > 0) {
+      ArrayResize(positions.types, 0);
+      ArrayResize(positions.data,  0);
    }
 
 
-   // (2) Positionsdetails analysieren
+   // (2) Positionsdetails analysieren und speichern
    if (isPosition) {
       // (2.1) individuelle Konfiguration einlesen
-      if (ArrayRange(customPositions.conf, 0) == 0)
-         if (!ReadCustomPositions())
+      if (ArrayRange(positions.custom, 0) == 0)
+         if (!ReadCustomPositionConfig())
             if (IsLastError()) return(false);
 
       // (2.2) offene Tickets sortieren und einlesen
@@ -711,11 +714,11 @@ bool AnalyzePositions() {
 
 
       // (2.3) individuell konfigurierte Position extrahieren
-      int cpSize = ArrayRange(customPositions.conf, 0);
+      int cpSize = ArrayRange(positions.custom, 0);
 
       for (i=0; i < cpSize; i++) {
-         lotSize = customPositions.conf[i][0];
-         ticket  = customPositions.conf[i][1];
+         lotSize = positions.custom[i][0];
+         ticket  = positions.custom[i][1];
 
          if (!i || !ticket) {
             // (2.4) individuell konfigurierte Position speichern
@@ -753,13 +756,13 @@ bool AnalyzePositions() {
 
 
 /**
- * Liest die individuell konfigurierten Positionen neu ein.
+ * Liest die individuell konfigurierten Positionsdaten neu ein.
  *
  * @return bool - Erfolgsstatus
  */
-bool ReadCustomPositions() {
-   if (ArrayRange(customPositions.conf, 0) > 0)
-      ArrayResize(customPositions.conf, 0);
+bool ReadCustomPositionConfig() {
+   if (ArrayRange(positions.custom, 0) > 0)
+      ArrayResize(positions.custom, 0);
 
    string keys[], values[], value, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", stdSymbol=StdSymbol();
    double lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
@@ -789,7 +792,7 @@ bool ReadCustomPositions() {
                      details[0] = "";
                      details[1] = values[n];
                   }
-                  else return(!catch("ReadCustomPositions(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  else return(!catch("ReadCustomPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
                details[0] =               StringTrim(details[0]);  strLotSize = details[0];
                details[1] = StringToUpper(StringTrim(details[1])); strTicket  = details[1];
@@ -797,41 +800,41 @@ bool ReadCustomPositions() {
                // Lotsize validieren
                lotSize = 0;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadCustomPositions(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadCustomPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
-                  if (LT(lotSize, minLotSize))           return(!catch("ReadCustomPositions(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadCustomPositions(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (LT(lotSize, minLotSize))           return(!catch("ReadCustomPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadCustomPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
                // Ticket validieren
                if (StringIsDigit(strTicket)) ticket = StrToInteger(strTicket);
                else if (strTicket == "L")    ticket = TYPE_LONG;
                else if (strTicket == "S")    ticket = TYPE_SHORT;
-               else return(!catch("ReadCustomPositions(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else return(!catch("ReadCustomPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Virtuelle Positionen müssen an erster Stelle notiert sein
-               if (m && lotSize && ticket<=TYPE_SHORT) return(!catch("ReadCustomPositions(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (m && lotSize && ticket<=TYPE_SHORT) return(!catch("ReadCustomPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-               cpSize = ArrayRange(customPositions.conf, 0);
-               ArrayResize(customPositions.conf, cpSize+1);
-               customPositions.conf[cpSize][0] = lotSize;
-               customPositions.conf[cpSize][1] = ticket;
+               cpSize = ArrayRange(positions.custom, 0);
+               ArrayResize(positions.custom, cpSize+1);
+               positions.custom[cpSize][0] = lotSize;
+               positions.custom[cpSize][1] = ticket;
                m++;
             }
             if (m > 0) {
-               cpSize = ArrayRange(customPositions.conf, 0);
-               ArrayResize(customPositions.conf, cpSize+1);
-               customPositions.conf[cpSize][0] = NULL;
-               customPositions.conf[cpSize][1] = NULL;
+               cpSize = ArrayRange(positions.custom, 0);
+               ArrayResize(positions.custom, cpSize+1);
+               positions.custom[cpSize][0] = NULL;
+               positions.custom[cpSize][1] = NULL;
             }
          }
       }
    }
-   cpSize = ArrayRange(customPositions.conf, 0);
+   cpSize = ArrayRange(positions.custom, 0);
    if (!cpSize) {
-      ArrayResize(customPositions.conf, cpSize+1);
-      customPositions.conf[cpSize][0] = NULL;
-      customPositions.conf[cpSize][1] = NULL;
+      ArrayResize(positions.custom, cpSize+1);
+      positions.custom[cpSize][0] = NULL;
+      positions.custom[cpSize][1] = NULL;
    }
    return(true);
 }
@@ -1083,16 +1086,16 @@ bool StorePosition.Consolidate(bool isVirtual, double longPosition, double short
 
       // (1.1) Kein direktionaler Anteil: Position speichern und Rückkehr
       if (!totalPosition) {
-         size = ArrayRange(customPositions.types, 0);
-         ArrayResize(customPositions.types, size+1);
-         ArrayResize(customPositions.data,  size+1);
+         size = ArrayRange(positions.types, 0);
+         ArrayResize(positions.types, size+1);
+         ArrayResize(positions.data,  size+1);
 
-         customPositions.types[size][0]               = TYPE_CUSTOM + isVirtual;
-         customPositions.types[size][1]               = TYPE_HEDGE;
-         customPositions.data [size][I_DIRECTLOTSIZE] = 0;
-         customPositions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
-         customPositions.data [size][I_BREAKEVEN    ] = pipDistance;
-         customPositions.data [size][I_PROFIT       ] = hedgedProfit;
+         positions.types[size][0]               = TYPE_CUSTOM + isVirtual;
+         positions.types[size][1]               = TYPE_HEDGE;
+         positions.data [size][I_DIRECTLOTSIZE] = 0;
+         positions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
+         positions.data [size][I_BREAKEVEN    ] = pipDistance;
+         positions.data [size][I_PROFIT       ] = hedgedProfit;
          return(!catch("StorePosition.Consolidate(3)"));
       }
    }
@@ -1136,18 +1139,18 @@ bool StorePosition.Consolidate(bool isVirtual, double longPosition, double short
       if (remainingLong != 0) return(!catch("StorePosition.Consolidate(4)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of custom long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(customPositions.types, 0);
-      ArrayResize(customPositions.types, size+1);
-      ArrayResize(customPositions.data,  size+1);
+      size = ArrayRange(positions.types, 0);
+      ArrayResize(positions.types, size+1);
+      ArrayResize(positions.data,  size+1);
 
-      customPositions.types[size][0]               = TYPE_CUSTOM + isVirtual;
-      customPositions.types[size][1]               = TYPE_LONG;
-      customPositions.data [size][I_DIRECTLOTSIZE] = totalPosition;
-      customPositions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
+      positions.types[size][0]               = TYPE_CUSTOM + isVirtual;
+      positions.types[size][1]               = TYPE_LONG;
+      positions.data [size][I_DIRECTLOTSIZE] = totalPosition;
+      positions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      customPositions.data [size][I_BREAKEVEN    ] = openPrice/totalPosition - (hedgedProfit + commission + swap)/pipValue*Pips;
-      customPositions.data [size][I_PROFIT       ] = hedgedProfit + commission + swap + profit;
+      positions.data [size][I_BREAKEVEN    ] = openPrice/totalPosition - (hedgedProfit + commission + swap)/pipValue*Pips;
+      positions.data [size][I_PROFIT       ] = hedgedProfit + commission + swap + profit;
    }
 
 
@@ -1188,18 +1191,18 @@ bool StorePosition.Consolidate(bool isVirtual, double longPosition, double short
       if (remainingShort != 0) return(!catch("StorePosition.Consolidate(5)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of custom short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(customPositions.types, 0);
-      ArrayResize(customPositions.types, size+1);
-      ArrayResize(customPositions.data,  size+1);
+      size = ArrayRange(positions.types, 0);
+      ArrayResize(positions.types, size+1);
+      ArrayResize(positions.data,  size+1);
 
-      customPositions.types[size][0]               = TYPE_CUSTOM + isVirtual;
-      customPositions.types[size][1]               = TYPE_SHORT;
-      customPositions.data [size][I_DIRECTLOTSIZE] = -totalPosition;
-      customPositions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
+      positions.types[size][0]               = TYPE_CUSTOM + isVirtual;
+      positions.types[size][1]               = TYPE_SHORT;
+      positions.data [size][I_DIRECTLOTSIZE] = -totalPosition;
+      positions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
          pipValue = PipValue(-totalPosition, true);                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      customPositions.data [size][I_BREAKEVEN    ] = (hedgedProfit + commission + swap)/pipValue*Pips - openPrice/totalPosition;
-      customPositions.data [size][I_PROFIT       ] =  hedgedProfit + commission + swap + profit;
+      positions.data [size][I_BREAKEVEN    ] = (hedgedProfit + commission + swap)/pipValue*Pips - openPrice/totalPosition;
+      positions.data [size][I_PROFIT       ] =  hedgedProfit + commission + swap + profit;
    }
 
    return(!catch("StorePosition.Consolidate(6)"));
@@ -1252,18 +1255,18 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
       if (remainingLong != 0) return(!catch("StorePosition.Separate(1)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of effective long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      int size = ArrayRange(customPositions.types, 0);
-      ArrayResize(customPositions.types, size+1);
-      ArrayResize(customPositions.data,  size+1);
+      int size = ArrayRange(positions.types, 0);
+      ArrayResize(positions.types, size+1);
+      ArrayResize(positions.data,  size+1);
 
-      customPositions.types[size][0]               = TYPE_DEFAULT;
-      customPositions.types[size][1]               = TYPE_LONG;
-      customPositions.data [size][I_DIRECTLOTSIZE] = totalPosition;
-      customPositions.data [size][I_HEDGEDLOTSIZE] = 0;
+      positions.types[size][0]               = TYPE_DEFAULT;
+      positions.types[size][1]               = TYPE_LONG;
+      positions.data [size][I_DIRECTLOTSIZE] = totalPosition;
+      positions.data [size][I_HEDGEDLOTSIZE] = 0;
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      customPositions.data [size][I_BREAKEVEN    ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
-      customPositions.data [size][I_PROFIT       ] = commission + swap + profit;
+      positions.data [size][I_BREAKEVEN    ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
+      positions.data [size][I_PROFIT       ] = commission + swap + profit;
    }
 
 
@@ -1304,18 +1307,18 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
       if (remainingShort != 0) return(!catch("StorePosition.Separate(2)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of effective short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(customPositions.types, 0);
-      ArrayResize(customPositions.types, size+1);
-      ArrayResize(customPositions.data,  size+1);
+      size = ArrayRange(positions.types, 0);
+      ArrayResize(positions.types, size+1);
+      ArrayResize(positions.data,  size+1);
 
-      customPositions.types[size][0]               = TYPE_DEFAULT;
-      customPositions.types[size][1]               = TYPE_SHORT;
-      customPositions.data [size][I_DIRECTLOTSIZE] = -totalPosition;
-      customPositions.data [size][I_HEDGEDLOTSIZE] = 0;
+      positions.types[size][0]               = TYPE_DEFAULT;
+      positions.types[size][1]               = TYPE_SHORT;
+      positions.data [size][I_DIRECTLOTSIZE] = -totalPosition;
+      positions.data [size][I_HEDGEDLOTSIZE] = 0;
          pipValue = PipValue(-totalPosition, true);                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      customPositions.data [size][I_BREAKEVEN    ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
-      customPositions.data [size][I_PROFIT       ] = commission + swap + profit;
+      positions.data [size][I_BREAKEVEN    ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
+      positions.data [size][I_PROFIT       ] = commission + swap + profit;
    }
 
 
@@ -1356,18 +1359,18 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
       }
 
       // Position speichern
-      size = ArrayRange(customPositions.types, 0);
-      ArrayResize(customPositions.types, size+1);
-      ArrayResize(customPositions.data,  size+1);
+      size = ArrayRange(positions.types, 0);
+      ArrayResize(positions.types, size+1);
+      ArrayResize(positions.data,  size+1);
 
-      customPositions.types[size][0]               = TYPE_DEFAULT;
-      customPositions.types[size][1]               = TYPE_HEDGE;
-      customPositions.data [size][I_DIRECTLOTSIZE] = 0;
-      customPositions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
+      positions.types[size][0]               = TYPE_DEFAULT;
+      positions.types[size][1]               = TYPE_HEDGE;
+      positions.data [size][I_DIRECTLOTSIZE] = 0;
+      positions.data [size][I_HEDGEDLOTSIZE] = hedgedLotSize;
          pipValue = PipValue(hedgedLotSize, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      customPositions.data [size][I_BREAKEVEN    ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
-      customPositions.data [size][I_PROFIT       ] = customPositions.data[size][I_BREAKEVEN] * pipValue;
+      positions.data [size][I_BREAKEVEN    ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
+      positions.data [size][I_PROFIT       ] = positions.data[size][I_BREAKEVEN] * pipValue;
    }
 
    return(!catch("StorePosition.Separate(5)"));
