@@ -702,7 +702,7 @@ bool AnalyzePositions() {
    int    error;
 
 
-   // (2) P/L detektierter LFX-Positonen per QuickChannel an zugehöriges LFX-Terminal schicken, wenn sich der Wert seit der letzten Message geändert hat
+   // (2) P/L detektierter LFX-Positionen per QuickChannel an zugehöriges LFX-Terminal schicken (nur, wenn sich der Wert seit der letzten Message geändert hat)
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // (2.1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
       globalLfxVarName = "LFX.Profit."+ lfxMagics[i];
@@ -720,7 +720,7 @@ bool AnalyzePositions() {
       if (!hLfxChannels[cid]) /*&&*/ if (!StartQCSender(cid))
          return(false);
       string message = DoubleToStr(lfxProfits[i], 2);
-      bool   result  = QC_SendMessage(hLfxChannels[cid], message, QC_FLAG_SEND_MSG_IF_RECEIVER|QC_FLAG_SEND_MSG_REPLACE);
+      bool   result  = QC_SendMessage(hLfxChannels[cid], message, QC_FLAG_SEND_MSG_IF_RECEIVER);
       if      (result == QC_SEND_MSG_ERROR  )   return(!catch("AnalyzePositions(2)->QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       if      (result == QC_SEND_MSG_ADDED  ) { Comment(NL, __NAME__, ":  message \"", message, "\" sent");    }
       else if (result == QC_SEND_MSG_IGNORED) { Comment(NL, __NAME__, ":  message \"", message, "\" ignored"); }
