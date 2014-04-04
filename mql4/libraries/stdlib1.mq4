@@ -6434,7 +6434,7 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
             results[size] = "";
          }
          else {
-            results[size] = StringSubstrFix(_input, i, pos-i);
+            results[size] = StringSubstr(_input, i, pos-i);
          }
          size++;
          i = pos + lenSeparator;
