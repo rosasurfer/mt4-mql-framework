@@ -697,17 +697,40 @@ bool AnalyzePositions() {
    isPosition    = (longPosition || shortPosition);
 
 
-   // (2) P/L detektierter LFX-Positonen per QuickChannel an zugehöriges LFX-Terminal schicken
+   string globalLfxVarName;
+   double lastLfxProfit;
+   int    error;
+
+
+   // (2) P/L detektierter LFX-Positonen per QuickChannel an zugehöriges LFX-Terminal schicken, wenn er sich seit der letzten Message geändert hat
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
+      // (2.1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
+      globalLfxVarName = "LFX.Profit."+ lfxMagics[i];
+      lastLfxProfit    = GlobalVariableGet(globalLfxVarName);
+      if (!lastLfxProfit) {                                          // 0 oder Fehler
+         error = GetLastError();
+         if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
+            return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
+      }
+      if (EQ(lfxProfits[i], lastLfxProfit))
+         continue;
+
+      // (2.2) neuen, geänderten Wert per QuickChannel verschicken
       int cid = LFX.GetCurrencyId(lfxMagics[i]);
       if (!hLfxChannels[cid]) /*&&*/ if (!StartQCSender(cid))
          return(false);
       string message = DoubleToStr(lfxProfits[i], 2);
       bool   result  = QC_SendMessage(hLfxChannels[cid], message, QC_FLAG_SEND_MSG_IF_RECEIVER/*|QC_FLAG_SEND_MSG_REPLACE*/);
-      if      (result == QC_SEND_MSG_ERROR  )   return(!catch("AnalyzePositions(1)->QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+      if      (result == QC_SEND_MSG_ERROR  )   return(!catch("AnalyzePositions(2)->QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       if      (result == QC_SEND_MSG_ADDED  ) { Comment(NL, __NAME__, ":  message \"", message, "\" sent");    }
       else if (result == QC_SEND_MSG_IGNORED) { Comment(NL, __NAME__, ":  message \"", message, "\" ignored"); }
-      else                                      return(!catch("AnalyzePositions(2)->QC_SendMessage() returned unexpected result = "+ result, ERR_WIN32_ERROR));
+      else                                      return(!catch("AnalyzePositions(3)->QC_SendMessage() = unexpected return value: "+ result, ERR_WIN32_ERROR));
+
+      // (2.3) neuen, geänderten Wert in globaler Variable speichern
+      if (!GlobalVariableSet(globalLfxVarName, lfxProfits[i])) {
+         error = GetLastError();
+         return(!catch("AnalyzePositions(4)->GlobalVariableSet(name=\""+ globalLfxVarName +"\", value="+ lfxProfits[i] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+      }
    }
 
    if (ArrayRange(positions.types, 0) > 0) {
@@ -736,7 +759,7 @@ bool AnalyzePositions() {
       double profits    [], customProfits    []; ArrayResize(profits    , orders);
 
       for (i=0; i < orders; i++) {
-         if (!SelectTicket(sortKeys[i][1], "AnalyzePositions(1)"))
+         if (!SelectTicket(sortKeys[i][1], "AnalyzePositions(5)"))
             return(false);
          tickets    [i] = OrderTicket();
          types      [i] = OrderType();
@@ -789,7 +812,7 @@ bool AnalyzePositions() {
 
    if (cpSize > 0)
       positionsAnalyzed = true;
-   return(!catch("AnalyzePositions(3)"));
+   return(!catch("AnalyzePositions(6)"));
 }
 
 
