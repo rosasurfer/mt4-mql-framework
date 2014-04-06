@@ -208,11 +208,9 @@ int onStart() {
 
    // (5) neue Position öffnen
    //     TODO: Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
-   int    counter     = GetPositionCounter() + 1;
-      if (!counter)     return(catch("onStart(6)"));                                   // Abbruch, falls GetPositionCounter() Fehler zurückgab
-   string comment     = currency +"."+ counter +"/"+ NumberToStr(Units, ".+");
-   int    magicNumber = CreateMagicNumber(counter);
-      if (!magicNumber) return(catch("onStart(7)"));                                   // Abbruch, falls CreateMagicNumber() Fehler zurückgab
+   int counter     = GetPositionCounter() + 1;   if (!counter)     return(catch("onStart(6)"));    // Abbruch, falls GetPositionCounter() oder
+   int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
+   string comment  = currency +"."+ counter +"/"+ NumberToStr(Units, ".+");
 
    for (i=0; i < 6; i++) {
       double   price       = NULL;
@@ -241,7 +239,7 @@ int onStart() {
    ArrayPushInt   (openPositions.counter   , counter                       );
 
 
-   // (7) OpenPrice der Gesamtposition berechnen
+   // (7) Gesamt-OpenPrice berechnen (entspricht LFX-Price)
    double openPrice = 1.0;
    for (i=0; i < 6; i++) {
       if (!SelectTicket(tickets[i], "onStart(9)"))
@@ -261,11 +259,11 @@ int onStart() {
    if (__LOG) log("onStart()   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) Position in ".\experts\files\LiteForex\remote_positions.ini" eintragen
+   // (9) Position in ".\experts\files\LiteForex\remote_positions.ini" speichern
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = currency +"."+ counter;
-   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ DoubleToStr(Units, 1) +" | "+ DoubleToStr(openPrice, lfxDigits);
+   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".+") +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(10)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));

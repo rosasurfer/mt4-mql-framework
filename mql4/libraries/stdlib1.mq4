@@ -1258,7 +1258,7 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
  *
  * @return int - Anzahl der gefundenen Abschnitte oder -1, falls ein Fehler auftrat
  */
-int GetPrivateProfileSectionNames(string fileName, string names[]) {
+int GetIniSectionNames(string fileName, string names[]) {
    int bufferSize = 200;
    int buffer[]; InitializeByteBuffer(buffer, bufferSize);
 
@@ -1275,7 +1275,7 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
    if (!chars) length = ArrayResize(names, 0);                       // keine Sections gefunden (File nicht gefunden oder leer)
    else        length = ExplodeStrings(buffer, names);
 
-   if (!catch("GetPrivateProfileSectionNames"))
+   if (!catch("GetIniSectionNames"))
       return(length);
    return(-1);
 }
@@ -1290,8 +1290,8 @@ int GetPrivateProfileSectionNames(string fileName, string names[]) {
  *
  * @return int - Anzahl der gefundenen Schlüssel oder -1, falls ein Fehler auftrat
  */
-int GetPrivateProfileKeys(string fileName, string section, string keys[]) {
-   return(GetPrivateProfileKeys.2(fileName, section, keys));
+int GetIniKeys(string fileName, string section, string keys[]) {
+   return(GetIniKeys.2(fileName, section, keys));
 }
 
 
@@ -1304,10 +1304,10 @@ int GetPrivateProfileKeys(string fileName, string section, string keys[]) {
  *
  * @return int - Fehlerstatus
  */
-int DeletePrivateProfileKey(string fileName, string section, string key) {
+int DeleteIniKey(string fileName, string section, string key) {
    string sNull;
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(catch("DeletePrivateProfileKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("DeleteIniKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    return(NO_ERROR);
 }
 
@@ -6840,8 +6840,8 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  */
 string GetConfigString(string section, string key, string defaultValue="") {
    // zuerst globale, dann lokale Config auslesen
-   string value = GetPrivateProfileString(GetGlobalConfigPath(), section, key, defaultValue);
-          value = GetPrivateProfileString(GetLocalConfigPath() , section, key, value       );
+   string value = GetIniString(GetGlobalConfigPath(), section, key, defaultValue);
+          value = GetIniString(GetLocalConfigPath() , section, key, value       );
    return(value);
 }
 
@@ -6856,7 +6856,7 @@ string GetConfigString(string section, string key, string defaultValue="") {
  */
 bool IsLocalConfigKey(string section, string key) {
    string keys[];
-   GetPrivateProfileKeys(GetLocalConfigPath(), section, keys);
+   GetIniKeys(GetLocalConfigPath(), section, keys);
 
    bool result;
    int size = ArraySize(keys);
@@ -6888,7 +6888,7 @@ bool IsLocalConfigKey(string section, string key) {
  */
 bool IsGlobalConfigKey(string section, string key) {
    string keys[];
-   GetPrivateProfileKeys(GetGlobalConfigPath(), section, keys);
+   GetIniKeys(GetGlobalConfigPath(), section, keys);
 
    bool result;
    int size = ArraySize(keys);
@@ -7055,7 +7055,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   return(GetPrivateProfileString(GetGlobalConfigPath(), section, key, defaultValue));
+   return(GetIniString(GetGlobalConfigPath(), section, key, defaultValue));
 }
 
 
@@ -7137,7 +7137,7 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
  *
  * @return string
  */
-string GetPrivateProfileString(string fileName, string section, string key, string defaultValue="") {
+string GetIniString(string fileName, string section, string key, string defaultValue="") {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
@@ -7150,7 +7150,7 @@ string GetPrivateProfileString(string fileName, string section, string key, stri
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
-   if (!catch("GetPrivateProfileString()"))
+   if (!catch("GetIniString()"))
       return(buffer[0]);
    return("");
 }
@@ -7239,7 +7239,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetLocalConfigString(string section, string key, string defaultValue="") {
-   return(GetPrivateProfileString(GetLocalConfigPath(), section, key, defaultValue));
+   return(GetIniString(GetLocalConfigPath(), section, key, defaultValue));
 }
 
 
@@ -12758,7 +12758,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 #import "stdlib2.ex4"
    string IntsToStr   (int    array[], string separator);
    string DoublesToStr(double array[], string separator);
-   int    GetPrivateProfileKeys.2(string fileName, string section, string keys[]);
+   int    GetIniKeys.2(string fileName, string section, string keys[]);
 #import "metaquotes-sample1.ex4"
    int    GetBoolsAddress  (bool   array[]);
 #import "metaquotes-sample2.ex4"
