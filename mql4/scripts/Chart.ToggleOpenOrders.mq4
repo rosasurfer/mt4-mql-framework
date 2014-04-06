@@ -59,9 +59,9 @@ int onStart() {
    int pos  = SearchStringArray(sections, account);
    int next = pos + 1;                                               // Zeiger auf den jeweils nächsten Abschnitt setzen
 
-   if (account!="") /*&&*/ if (pos==-1)                              // Ist der AccountKey gesetzt (=Status ON), existiert in der .ini-Datei aber nicht (mehr),
+   if (account!="") /*&&*/ if (pos==-1)                              // Ist der AccountKey gesetzt (Status=ON), existiert in der .ini-Datei aber nicht (mehr),
       next = sectionsSize;                                           // Zeiger hinter den letzten Abschnitt setzen, um als nächstes Status=OFF zu aktivieren.
-   sectionsSize = ArrayPushString(sections, "");                     // Leerstring (Status OFF) als letzten Pseudo-Abschnitt hinzufügen
+   sectionsSize = ArrayPushString(sections, "");                     // Leerstring (Status=OFF) als letzten Pseudo-Abschnitt hinzufügen
 
    // über verbleibende Abschnitte iterieren, nächsten Abschnitt mit Schlüssel der aktuellen LFX-Währung finden und Positionen auslesen
    string prefix = StringConcatenate(currency, ".");
