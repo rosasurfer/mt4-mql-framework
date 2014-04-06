@@ -210,7 +210,7 @@ int onStart() {
    //     TODO: Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
    int counter     = GetPositionCounter() + 1;   if (!counter)     return(catch("onStart(6)"));    // Abbruch, falls GetPositionCounter() oder
    int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
-   string comment  = currency +"."+ counter +"/"+ NumberToStr(Units, ".+");
+   string comment  = currency +"."+ counter;
 
    for (i=0; i < 6; i++) {
       double   price       = NULL;
