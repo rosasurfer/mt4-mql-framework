@@ -37,12 +37,13 @@ double totalPosition;                                       // Gesamtposition to
 double longPosition;                                        //                long
 double shortPosition;                                       //                short
 
-double local.position.conf  [][2];                          // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
-int    local.position.types [][2];                          // Positionsdetails:           = {PositionType, DirectionType}
-double local.position.data  [][4];                          //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
+double local.position.conf    [][2];                        // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
+int    local.position.types   [][2];                        // Positionsdetails:           = {PositionType, DirectionType}
+double local.position.data    [][4];                        //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
-int    remote.position.types[][2];                          // Lokale Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen/berechnet.
-double remote.position.data [][4];                          // Remote-Positionsdaten sind statisch.
+int    remote.position.tickets[];                           // Remote-Positionsdaten sind im Gegensatz zu lokalen Positionsdaten statisch. Die lokalen Positionsdaten
+int    remote.position.types  [][2];                        // werden bei jedem Tick zurückgesetzt und neu eingelesen.
+double remote.position.data   [][4];
 
 #define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (lokal oder remote)
 #define TYPE_CUSTOM        1                                //                individuell konfigurierte reale Position
@@ -517,7 +518,7 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(local.position.data[i][I_PROFIT], 2),                                                         positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
       }
       else {
-         ObjectSetText(label.position +".line"+ line +"_col0",       strTypes[local.position.types[i][1]],                                                               positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col0",            strTypes[local.position.types[i][1]],                                                          positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             if (!local.position.data[i][I_HEDGEDLOTSIZE]) strLotSize = NumberToStr(local.position.data [i][I_DIRECTLOTSIZE], ".+");
             else                                          strLotSize = NumberToStr(local.position.data [i][I_DIRECTLOTSIZE], ".+") +" ±"+ NumberToStr(local.position.data[i][I_HEDGEDLOTSIZE], ".+");
          ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
@@ -529,7 +530,7 @@ bool UpdatePositions() {
             else
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(local.position.data[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(local.position.data[i][I_PROFIT], 2),                                                         positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5",            DoubleToStr(local.position.data[i][I_PROFIT], 2),                                              positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
       }
    }
 
@@ -540,10 +541,10 @@ bool UpdatePositions() {
       else {
          ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[remote.position.types[i][1]],                                                                 positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data [i][I_DIRECTLOTSIZE], ".+") +" units",                                   positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", " "/*BE:*/,                                                                                               positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col3", " "/*...*/,                                                                                               positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                        positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5",  DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                       positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
       }
    }
    return(!catch("UpdatePositions(2)"));
@@ -708,7 +709,7 @@ bool AnalyzePositions() {
    ArrayResize(sortKeys, orders);
 
    int pos, lfxMagics []={0}; ArrayResize(lfxMagics , 1);            // Die Arrays für die P/L-daten detektierter LFX-Positionen werden mit Größe 1 initialisiert.
-   double   lfxProfits[]={0}; ArrayResize(lfxProfits, 1);            // So sparen wir den ständigen Test auf einen ungültigen Index (Arraygröße 0).
+   double   lfxProfits[]={0}; ArrayResize(lfxProfits, 1);            // So sparen wir den ständigen Test auf einen ungültigen Index bei Arraygröße 0.
 
 
    // (1) Gesamtposition ermitteln
@@ -761,7 +762,7 @@ bool AnalyzePositions() {
       int cid = LFX.GetCurrencyId(lfxMagics[i]);
       if (!hLfxSenderChannels[cid]) /*&&*/ if (!StartQCSender(cid))
          return(false);
-      string message = StringConcatenate(/*AccountNumber(), ",", */lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
+      string message = StringConcatenate(AccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
       bool   result  = QC_SendMessage(hLfxSenderChannels[cid], message, QC_FLAG_SEND_MSG_IF_RECEIVER);
       if      (result == QC_SEND_MSG_ERROR  )   return(!catch("AnalyzePositions(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       if      (result == QC_SEND_MSG_ADDED  ) { Comment(NL, __NAME__, ":  message \"", message, "\" sent");    }
@@ -779,7 +780,7 @@ bool AnalyzePositions() {
 
    // (3) Positionsdetails analysieren und in *.position.types[] und *.position.data[] speichern
    if (ArrayRange(local.position.types, 0) > 0) {
-      ArrayResize(local.position.types, 0);
+      ArrayResize(local.position.types, 0);                          // lokale Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen
       ArrayResize(local.position.data,  0);
    }
 
@@ -854,8 +855,9 @@ bool AnalyzePositions() {
          return(false);
    }
 
-   // (3.6) keine offenen Terminalpositionen, per QuickChannel eingehende Remote-LFX-Positionen auswerten
+   // (3.6) keine lokalen Positionen
    else if (isLfxChart) {
+      // per QuickChannel eingehende Remote-Positionsdetails auswerten
       if (!hLfxReceiverChannel) /*&&*/ if (!StartQCReceiver())
          return(false);
 
@@ -913,18 +915,18 @@ bool AnalyzePositions() {
 
 
 /**
- * Durchsucht das übergebene Integer-Array nach der angegebenen MagicNumber. Schneller Ersatz für int SearchIntArray(int haystack[], int needle),
- * kein Library-Aufruf.
+ * Durchsucht das übergebene Integer-Array nach der angegebenen MagicNumber. Schnellerer Ersatz für SearchIntArray(int haystack[], int needle),
+ * da kein Library-Aufruf.
  *
  * @param  int array[] - zu durchsuchendes Array
- * @param  int magic   - zu suchende MagicNumber
+ * @param  int number  - zu suchende MagicNumber
  *
  * @return int - Index der MagicNumber oder -1, wenn der Wert nicht im Array enthalten ist
  */
-int SearchMagicNumber(int array[], int magic) {
+int SearchMagicNumber(int array[], int number) {
    int size = ArraySize(array);
-   for (int i=1; i < size; i++) {                                    // Index 0 ist unbenutzt
-      if (array[i] == magic)
+   for (int i=0; i < size; i++) {
+      if (array[i] == number)
          return(i);
    }
    return(-1);
@@ -946,7 +948,7 @@ bool ReadLocalPositionConfig() {
    if (!minLotSize) return(false);                                   // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
-   int keysSize = GetPrivateProfileKeys(GetLocalConfigPath(), section, keys);
+   int keysSize = GetIniKeys(GetLocalConfigPath(), section, keys);
 
    for (int i=0; i < keysSize; i++) {
       if (StringIStartsWith(keys[i], stdSymbol)) {
@@ -1556,34 +1558,45 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
 /**
  * Speichert die in der übergebenen QuickChannel-Message enthaltenen Positionsdetails in den globalen Variablen remote.position.types[] und remote.position.data[].
  *
- * @param  string message - QuickChannel-Message
+ * @param  string message - QuickChannel-Message, Format: "iAccountNumber,iMagicNumber,dProfit"
  *
  * @return bool - Erfolgsstatus
  */
 bool StorePosition.QC_Message(string message) {
-   int pos = StringFind(message, ",");
-   if (pos <= 0) return(!catch("StorePosition.QC_Message(1)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   // NOTE: Anstatt die Message mit Explode() zu zerlegen, wird sie zur Beschleunigung manuell geparst.
 
-   // Die MagicNumber (erster Teil der Message) übernimmt die Funktion eines eindeutigen Ticktes für die gesamte Basket-Position.
-   string strTicket = StringSubstr(message, 0, pos);
-   string strProfit = StringSubstr(message, pos+1 );
+   // AccountNumber
+   int from=0, to=StringFind(message, ",");                         if (to <= from)   return(!catch("StorePosition.QC_Message(1)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(!catch("StorePosition.QC_Message(2)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   int    ticket = StrToInteger(strTicket);
-   double profit = StrToDouble (strProfit);
+   // MagicNumber, übernimmt die Funktion eines eindeutigen Tickets für die gesamte Position
+   from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(!catch("StorePosition.QC_Message(3)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(!catch("StorePosition.QC_Message(4)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   if (ticket <= 0) return(!catch("StorePosition.QC_Message(2)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   // aktueller P/L-Value
+   from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(!catch("StorePosition.QC_Message(5)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   double profit = StrToDouble(StringSubstr(message, from));
 
-   int size = ArrayRange(remote.position.types, 0);
-   ArrayResize(remote.position.types, size+1);
-   ArrayResize(remote.position.data,  size+1);
+   // Ticket in vorhandenen Remote-Positions suchen und bei Mißerfolg hinzufügen
+   int pos = SearchMagicNumber(remote.position.tickets, ticket);
+   if (pos == -1) {
+      // Positionsdetails aus "remote_positions.ini" auslesen
 
-   remote.position.types[size][0]               = TYPE_DEFAULT;
-   remote.position.types[size][1]               = TYPE_LONG;
+      // Details zu remote.position.* hinzufügen
+      pos = ArraySize(remote.position.tickets);
+      ArrayResize(remote.position.tickets, pos+1);
+      ArrayResize(remote.position.types,   pos+1);
+      ArrayResize(remote.position.data,    pos+1);
 
-   remote.position.data [size][I_DIRECTLOTSIZE] = LFX.GetUnits(ticket);
-   remote.position.data [size][I_HEDGEDLOTSIZE] = 0;
-   remote.position.data [size][I_BREAKEVEN    ] = 0;
-   remote.position.data [size][I_PROFIT       ] = profit;
+      remote.position.tickets[pos]                  = ticket;
+      remote.position.types  [pos][0]               = TYPE_DEFAULT;
+      remote.position.types  [pos][1]               = TYPE_LONG;
+      remote.position.data   [pos][I_DIRECTLOTSIZE] = LFX.GetUnits(ticket);
+      remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
+      remote.position.data   [pos][I_BREAKEVEN    ] = 0;
+   }
+   // P/L aktualisieren
+   remote.position.data      [pos][I_PROFIT       ] = profit;
 
    return(true);
 }

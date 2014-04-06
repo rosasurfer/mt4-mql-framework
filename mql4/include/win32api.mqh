@@ -28,7 +28,7 @@
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetModuleHandleA(string lpModuleName);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  stdlib::GetPrivateProfileSectionNames()
+   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  stdlib::GetIniSectionNames()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    int  GetProcAddress(int hModule, string lpProcedureName);
    void GetStartupInfoA(int lpStartupInfo[]);
@@ -48,9 +48,9 @@
    int  SleepEx(int milliseconds, bool alertable);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
-   int  WinExec(string lpCmdLine, int cmdShow);                                                                      //         +-- stdlib::DeletePrivateProfileSection()
-   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);               // @see  --+-- stdlib::DeletePrivateProfileKey()
-   bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib::FlushPrivateProfileCache()
+   int  WinExec(string lpCmdLine, int cmdShow);                                                                      //         +-- stdlib::DeleteIniSection()
+   bool WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);               // @see  --+-- stdlib::DeleteIniKey()
+   bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib::FlushIniCache()
 
 #import "ntdll.dll"
 

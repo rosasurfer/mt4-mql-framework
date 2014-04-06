@@ -97,7 +97,7 @@ int onStart() {
          string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
          string section = ShortAccountCompany() +"."+ AccountNumber();
          for (i=0; i < sizeOfPositions; i++) {
-            int error = DeletePrivateProfileKey(file, section, positions[i]);
+            int error = DeleteIniKey(file, section, positions[i]);
             if (IsError(error))
                return(SetLastError(error));
          }

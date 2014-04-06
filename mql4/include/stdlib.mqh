@@ -286,10 +286,10 @@
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
-   int      GetPrivateProfileSectionNames(string fileName, string names[]);
-   int      GetPrivateProfileKeys(string fileName, string section, string keys[]);
-   string   GetPrivateProfileString(string fileName, string section, string key, string defaultValue);
-   int      DeletePrivateProfileKey(string fileName, string section, string key);
+   int      GetIniSectionNames(string fileName, string names[]);
+   int      GetIniKeys(string fileName, string section, string keys[]);
+   string   GetIniString(string fileName, string section, string key, string defaultValue);
+   int      DeleteIniKey(string fileName, string section, string key);
 
 
    // Locks

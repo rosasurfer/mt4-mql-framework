@@ -13,14 +13,14 @@ int __DEINIT_FLAGS__[];
 
 
 #import "kernel32.dll"
-   // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist etwas niedriger, da wir
-   // den Buffer selbst parsen müssen. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
+   // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist geringer, da der Buffer
+   // selbst geparst werden muß. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
 #import
 
 
 /**
- * Gibt die Namen aller Einträge eines Abschnitts einer ini-Datei zurück.
+ * Gibt die Namen aller Einträge eines Abschnitts einer .ini-Datei zurück.
  *
  * @param  string fileName - Name der ini-Datei
  * @param  string section  - Name des Abschnitts
@@ -28,7 +28,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Anzahl der gefundenen Schlüssel oder -1, falls ein Fehler auftrat
  */
-int GetPrivateProfileKeys.2(string fileName, string section, string keys[]) {
+int GetIniKeys.2(string fileName, string section, string keys[]) {
    string sNull;
    int bufferSize = 200;
    int buffer[]; InitializeByteBuffer(buffer, bufferSize);
@@ -47,7 +47,7 @@ int GetPrivateProfileKeys.2(string fileName, string section, string keys[]) {
    if (!chars) length = ArrayResize(keys, 0);                        // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
    else        length = ExplodeStrings(buffer, keys);
 
-   if (catch("GetPrivateProfileKeys.2()") != NO_ERROR)
+   if (catch("GetIniKeys.2()") != NO_ERROR)
       return(-1);
    return(length);
 }
