@@ -256,7 +256,7 @@ int onStart() {
    int    lfxDigits = ifInt(currency=="JPY", 3, 5);
    string lfxFormat = ifString(currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   if (__LOG) log("onStart()   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   if (__LOG) log("onStart(10)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
    // (9) Position in ".\experts\files\LiteForex\remote_positions.ini" speichern
@@ -266,7 +266,7 @@ int onStart() {
    string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".+") +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
-      return(catch("onStart(10)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(last_error);
 }
