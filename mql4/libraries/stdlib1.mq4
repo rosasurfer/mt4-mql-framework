@@ -1437,7 +1437,7 @@ int InitializeByteBuffer(int buffer[], int length) {
    }
 
    ArrayInitialize(buffer, 0);
-   return(catch("InitializeByteBuffer(3)"));
+   return(catch("InitializeByteBuffer(4)"));
 }
 
 
