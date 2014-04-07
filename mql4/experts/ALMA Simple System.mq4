@@ -46,7 +46,7 @@ int onTick() {
 
       int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
       if (trend==1 || trend==-1) {
-         if (__LOG) log(StringConcatenate("onTick()   trend change ", ifString(trend > 0, "up  ", "down"), " ", TimeToStr(Tick.Time, TIME_FULL)));
+         if (__LOG) log(StringConcatenate("onTick(1)   trend change ", ifString(trend > 0, "up  ", "down"), " ", TimeToStr(Tick.Time, TIME_FULL)));
       }
    }
    /*

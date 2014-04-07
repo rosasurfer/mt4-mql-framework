@@ -155,7 +155,7 @@ int CreateHistory(string symbol, string description, int digits) {
    for (int i=0; i < sizeOfPeriods; i++) {
       int hFile = HistoryFile.Open(symbol, description, digits, h.periods[i], FILE_READ|FILE_WRITE);
       if (hFile <= 0)
-         return(_ZERO(h.ResizeArrays(size)));                        // interne Arrays auf Ausgangsgröße zurücksetzen
+         return(_NULL(h.ResizeArrays(size)));                        // interne Arrays auf Ausgangsgröße zurücksetzen
       h.hFile[size][i] = hFile;
    }
 
@@ -751,16 +751,16 @@ bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
  *       gleichzeitig offen gehalten werden.
  */
 int HistoryFile.Open(string symbol, string description, int digits, int timeframe, int mode) {
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                      return(_ZERO(catch("HistoryFile.Open(1)   illegal parameter symbol = "+ symbol +" (length="+ StringLen(symbol) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (digits <  0)                                                return(_ZERO(catch("HistoryFile.Open(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (timeframe <= 0)                                             return(_ZERO(catch("HistoryFile.Open(3)   illegal parameter timeframe = "+ timeframe, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (_bool(mode & FILE_CSV) || !(mode & (FILE_READ|FILE_WRITE))) return(_ZERO(catch("HistoryFile.Open(4)   illegal history file access mode "+ FileAccessModeToStr(mode), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                      return(_NULL(catch("HistoryFile.Open(1)   illegal parameter symbol = "+ symbol +" (length="+ StringLen(symbol) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (digits <  0)                                                return(_NULL(catch("HistoryFile.Open(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (timeframe <= 0)                                             return(_NULL(catch("HistoryFile.Open(3)   illegal parameter timeframe = "+ timeframe, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (_bool(mode & FILE_CSV) || !(mode & (FILE_READ|FILE_WRITE))) return(_NULL(catch("HistoryFile.Open(4)   illegal history file access mode "+ FileAccessModeToStr(mode), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string fileName = StringConcatenate(symbol, timeframe, ".hst");
    mode |= FILE_BIN;
    int hFile = FileOpenHistory(fileName, mode);
    if (hFile < 0)
-      return(_ZERO(catch("HistoryFile.Open(5)->FileOpenHistory(\""+ fileName +"\")")));
+      return(_NULL(catch("HistoryFile.Open(5)->FileOpenHistory(\""+ fileName +"\")")));
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
 
@@ -769,7 +769,7 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
    if (fileSize < HISTORY_HEADER.size) {
       if (!(mode & FILE_WRITE)) {                                    // read-only mode
          FileClose(hFile);
-         return(_ZERO(catch("HistoryFile.Open(6)   corrupted history file \""+ fileName +"\" (size = "+ fileSize +")", ERR_RUNTIME_ERROR)));
+         return(_NULL(catch("HistoryFile.Open(6)   corrupted history file \""+ fileName +"\" (size = "+ fileSize +")", ERR_RUNTIME_ERROR)));
       }
       // neuen HISTORY_HEADER schreiben
       datetime now = TimeCurrent();                                  // TODO: ServerTime() implementieren (TimeCurrent() ist Zeit des letzten Ticks)

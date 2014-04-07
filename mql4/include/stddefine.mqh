@@ -830,8 +830,9 @@ int debug(string message, int error=NO_ERROR) {
 
 
 /**
- * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird in der globalen Variable last_error gespeichert.
- * Der mit der MQL-Funktion GetLastError() auslesbare letzte Fehler ist nach Aufruf dieser Funktion immer zurückgesetzt.
+ * Prüft, ob ein Fehler aufgetreten ist und zeigt diesen optisch und akustisch an. Der Fehler wird an die Debug-Ausgabe geschickt und in der
+ * globalen Variable last_error gespeichert. Der mit der MQL-Funktion GetLastError() auslesbare letzte Fehler ist nach Aufruf dieser Funktion
+ * immer zurückgesetzt.
  *
  * @param  string location - Ortsbezeichner des Fehlers, kann zusätzlich eine anzuzeigende Nachricht enthalten
  * @param  int    error    - manuelles Forcieren eines bestimmten Fehlers
@@ -855,36 +856,39 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
    if (error != NO_ERROR) {
-      string name, name_wId;
+      // (1) Fehler an Debug-Ausgabe schicken
+      debug(location, error);
+
+
+      // (2) Programmnamen um Instanz-ID erweitern
+      string name, nameInstanceId;
       if (StringLen(__NAME__) > 0) name = __NAME__;
       else                         name = WindowExpertName();        // falls __NAME__ noch nicht definiert ist
 
+      int logId = GetCustomLogID();
+      if (!logId)       nameInstanceId = name;
+      else {
+         int pos = StringFind(name, "::");
+         if (pos == -1) nameInstanceId = StringConcatenate(           name,       "(", logId, ")");
+         else           nameInstanceId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      }
+
+
+      // (3) Fehler loggen
       string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
 
-
-      // (1) Programmnamen um Instanz-ID erweitern
-      int logId = GetCustomLogID();
-      if (logId != 0) {
-         int pos = StringFind(name, "::");
-         if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
-         else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
-      }
-      else name_wId = name;
-
-
-      // (2) Fehler loggen
       bool logged, alerted;
       if (__LOG_CUSTOM)
-         logged = logged || log.custom(StringConcatenate("ERROR: ", name, "::", message));            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+         logged = logged || log.custom(StringConcatenate("ERROR: ", name, "::", message));                  // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
       if (!logged) {
-         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);   // global Log: ggf. mit Instanz-ID
+         Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", nameInstanceId, "::", message);   // global Log: ggf. mit Instanz-ID
          logged  = true;
          alerted = alerted || !IsExpert() || !IsTesting();
       }
-      message = StringConcatenate(name_wId, "::", message);
+      message = StringConcatenate(nameInstanceId, "::", message);
 
 
-      // (3) Fehler anzeigen
+      // (4) Fehler anzeigen
       if (IsTesting()) {
          // weder Alert() noch MessageBox() können verwendet werden
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
@@ -903,6 +907,9 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", message);
          alerted = true;
       }
+
+
+      // (5) last_error setzen
       SetLastError(error, NULL);                                                                // je nach Programmtyp unterschiedlich Implementierung
    }
 
@@ -1301,13 +1308,13 @@ bool SelectTicket(int ticket, string location, bool storeSelection=false, bool o
 int OrderPush(string location) {
    int error = GetLastError();
    if (IsError(error))
-      return(_ZERO(catch(location +"->OrderPush(1)", error)));
+      return(_NULL(catch(location +"->OrderPush(1)", error)));
 
    int ticket = OrderTicket();
 
    error = GetLastError();
    if (IsError(error)) /*&&*/ if (error != ERR_NO_ORDER_SELECTED)
-      return(_ZERO(catch(location +"->OrderPush(2)", error)));
+      return(_NULL(catch(location +"->OrderPush(2)", error)));
 
    ArrayPushInt(stack.orderSelections, ticket);
    return(ticket);
@@ -1651,7 +1658,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 /**
  * Pseudo-Funktion, die nichts weiter tut, als NULL = 0 (int) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
+ * und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1664,7 +1671,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
 
 /**
  * Pseudo-Funktion, die nichts weiter tut, als den Fehlerstatus NO_ERROR zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden. Ist funktional identisch zu _ZERO().
+ * und Lesbarkeit verwendet werden. Ist funktional identisch zu _NULL().
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
@@ -1685,19 +1692,6 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
  */
 int _last_error(int param1=NULL, int param2=NULL, int param3=NULL) {
    return(last_error);
-}
-
-
-/**
- * Pseudo-Funktion, die nichts weiter tut, als (int) 0 zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
- *
- * @param  beliebige Parameter (werden ignoriert)
- *
- * @return int - 0
- */
-int _ZERO(int param1=NULL, int param2=NULL, int param3=NULL) {
-   return(0);
 }
 
 
@@ -2007,7 +2001,6 @@ void __DummyCalls() {
    _NULL();
    _string(NULL);
    _true();
-   _ZERO();
    Abs(NULL);
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
