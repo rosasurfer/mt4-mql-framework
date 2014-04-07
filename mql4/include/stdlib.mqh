@@ -598,15 +598,15 @@
    int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
-#import "metaquotes-sample1.ex4"
+#import "MetaQuotesSample1.ex4"
    int      GetBoolsAddress  (bool   array[]);
-#import "metaquotes-sample2.ex4"
+#import "MetaQuotesSample2.ex4"
    int      GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
-#import "metaquotes-sample3.ex4"
+#import "MetaQuotesSample3.ex4"
    int      GetDoublesAddress(double array[]);
-#import "metaquotes-sample4.ex4"
+#import "MetaQuotesSample4.ex4"
    int      GetStringsAddress(string array[]);
-#import "metaquotes-sample5.ex4"
+#import "MetaQuotesSample5.ex4"
    int      GetStringAddress (string value);
 #import "MetaQuotesSample.dll"
    string   GetStringValue(int address);
