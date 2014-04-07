@@ -97,9 +97,7 @@ int onInit() {
    CreateLabels();
 
    // Prüfen, ob wir auf einem LFX-Chart laufen
-   if      (StringLeft (Symbol(), 3) == "LFX") isLfxChart = true;
-   else if (StringRight(Symbol(), 3) == "LFX") isLfxChart = true;
-   else                                        isLfxChart = false;
+   isLfxChart = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
 
    return(catch("onInit(2)"));
 }
@@ -885,10 +883,6 @@ bool AnalyzePositions() {
          int lenValues = StringLen(values);
          i = 0; pos = 0;
 
-         if (Symbol() == "AUDLFX") {
-            debug("AnalyzePositions()  Tick="+ Tick +"  message=\""+ values +"\"");
-         }
-
          while (i < lenValues) {
             pos = StringFind(values, TAB, i);
             if (pos == -1) {                                         // kein weiterer Separator
@@ -909,11 +903,6 @@ bool AnalyzePositions() {
          if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("AnalyzePositions(8)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") = QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
          if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("AnalyzePositions(9)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") doesn't exist",                       ERR_WIN32_ERROR));
                                                return(!catch("AnalyzePositions(10)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
-      }
-      else {
-         if (Symbol() == "AUDLFX") {
-            debug("AnalyzePositions()  Tick="+ Tick +"  channel empty");
-         }
       }
 
       if (ArraySize(lines) > 40)

@@ -15,13 +15,12 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string LFX.Labels = "";                           // Label-1 [, Label-n [, ...]]      (Prüfung per OrderComment().StringIStartsWith(value))
+extern string LFX.Labels = "";                           // Label_1 [, Label_n [, ...]]: Prüfung per OrderComment().StringIStartsWith(value)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string labels[];
-int    sizeOfLabels;
+string inputLabels[];
 
 
 /**
@@ -32,15 +31,16 @@ int    sizeOfLabels;
 int onInit() {
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);
-   if (StringLen(LFX.Labels) == 0)
+   if (!StringLen(LFX.Labels))
       return(catch("onInit(1)   Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
-   // Parameter splitten und die einzelnen Label trimmen
-   sizeOfLabels = Explode(LFX.Labels, ",", labels, NULL);
+   // Labels splitten und trimmen
+   int size = Explode(LFX.Labels, ",", inputLabels, NULL);
 
-   for (int i=0; i < sizeOfLabels; i++) {
-      labels[i] = StringTrim(labels[i]);
+   for (int i=0; i < size; i++) {
+      inputLabels[i] = StringTrim(inputLabels[i]);
    }
+
    return(catch("onInit(2)"));
 }
 
@@ -51,9 +51,10 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int    orders = OrdersTotal();
-   string positions[]; ArrayResize(positions, 0);
-   int    tickets  []; ArrayResize(tickets, 0);
+   int inputSize=ArraySize(inputLabels), orders=OrdersTotal();
+
+   string foundLabels []; ArrayResize(foundLabels,  0);
+   int    foundTickets[]; ArrayResize(foundTickets, 0);
 
 
    // (1) zu schließende Positionen selektieren
@@ -65,13 +66,13 @@ int onStart() {
          if (OrderType() > OP_SELL)
             continue;
 
-         for (int n=0; n < sizeOfLabels; n++) {
-            if (StringIStartsWith(OrderComment(), labels[n])) {
+         for (int n=0; n < inputSize; n++) {
+            if (StringIStartsWith(OrderComment(), inputLabels[n])) {
                string label = GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())) +"."+ LFX.GetCounter(OrderMagicNumber());
-               if (!StringInArray(positions, label))
-                  ArrayPushString(positions, label);
-               if (!IntInArray(tickets, OrderTicket()))
-                  ArrayPushInt(tickets, OrderTicket());
+               if (!StringInArray(foundLabels, label))
+                  ArrayPushString(foundLabels, label);
+               if (!IntInArray(foundTickets, OrderTicket()))
+                  ArrayPushInt(foundTickets, OrderTicket());
                break;
             }
          }
@@ -80,24 +81,24 @@ int onStart() {
 
 
    // (2) Positionen schließen
-   int sizeOfPositions = ArraySize(positions);
-   if (sizeOfPositions > 0) {
+   int foundSize = ArraySize(foundLabels);
+   if (foundSize > 0) {
       PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(sizeOfPositions==1, "", sizeOfPositions +" ") +"position"+ ifString(sizeOfPositions==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(foundSize==1, "", foundSize +" ") +"LFX position"+ ifString(foundSize==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
-         /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(tickets)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-         if (!OrderMultiClose(tickets, 0.1, Orange, oeFlags, oes))
+         /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(foundTickets)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+         if (!OrderMultiClose(foundTickets, 0.1, Orange, oeFlags, oes))
             return(SetLastError(stdlib_GetLastError()));
          ArrayResize(oes, 0);
 
          // TODO: erzielten ClosePrice() berechnen und ausgeben
 
-         // (3) Positionen aus ".\experts\files\LiteForex\remote_positions.ini" löschen
+         // (3) Tickets aus ".\experts\files\LiteForex\remote_positions.ini" löschen
          string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
          string section = ShortAccountCompany() +"."+ AccountNumber();
-         for (i=0; i < sizeOfPositions; i++) {
-            int error = DeleteIniKey(file, section, positions[i]);
+         for (i=0; i < foundSize; i++) {
+            int error = DeleteIniKey(file, section, foundLabels[i]);
             if (IsError(error))
                return(SetLastError(error));
          }
@@ -105,7 +106,7 @@ int onStart() {
    }
    else {
       PlaySound("notify.wav");
-      MessageBox("No matching positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching LFX positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 
    return(last_error);
