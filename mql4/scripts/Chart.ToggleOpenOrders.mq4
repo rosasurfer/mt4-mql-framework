@@ -230,7 +230,7 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
       ObjectSet(name, OBJPROP_RAY  , false);
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
-      ObjectSet(name, OBJPROP_BACK , true);
+      ObjectSet(name, OBJPROP_BACK , false);
       ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(lots, ".+"), " x ", NumberToStr(NormalizeDouble(openPrice, SubPipDigits), SubPipPriceFormat)));
    }
    else GetLastError();
