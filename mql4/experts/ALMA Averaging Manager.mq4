@@ -114,8 +114,8 @@ bool IsStartSignal() {
       else                                    signal = (trend== 1 || trend==-1);
 
       if (signal) {
-         if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
-                  debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+         if (__LOG) log(StringConcatenate("IsStartSignal(1)   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+                  debug(StringConcatenate("IsStartSignal(2)   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
          return(true);
       }
    }

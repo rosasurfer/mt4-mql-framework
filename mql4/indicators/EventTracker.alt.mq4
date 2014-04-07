@@ -266,17 +266,17 @@ int onPositionOpen(int tickets[]) {
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(SetLastError(error));
-         if (__LOG) log(StringConcatenate("onPositionOpen()   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (__LOG) log(StringConcatenate("onPositionOpen(2)   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         if (__LOG) log(StringConcatenate("onPositionOpen()   ", message));
+         if (__LOG) log(StringConcatenate("onPositionOpen(3)   ", message));
       }
    }
 
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Positions.SoundOnOpen);
-   return(catch("onPositionOpen(2)"));
+   return(catch("onPositionOpen(4)"));
 }
 
 
@@ -308,17 +308,17 @@ int onPositionClose(int tickets[]) {
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(SetLastError(error));
-         if (__LOG) log(StringConcatenate("onPositionClose()   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (__LOG) log(StringConcatenate("onPositionClose(2)   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         if (__LOG) log(StringConcatenate("onPositionClose()   ", message));
+         if (__LOG) log(StringConcatenate("onPositionClose(3)   ", message));
       }
    }
 
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Positions.SoundOnClose);
-   return(catch("onPositionClose(2)"));
+   return(catch("onPositionClose(4)"));
 }
 
 
@@ -337,7 +337,7 @@ bool CheckBollingerBands() {
    if (EventListener.BandsCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, event, DeepSkyBlue)) {
       int    crossing = MathRound(event[CROSSING_TYPE]);
       double value    = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
-      debug("CheckBollingerBands()   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_FULL) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+      debug("CheckBollingerBands(0.1)   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_FULL) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
@@ -345,10 +345,10 @@ bool CheckBollingerBands() {
          int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
          if (IsError(error))
             return(!SetLastError(error));
-         if (__LOG) log(StringConcatenate("CheckBollingerBands()   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (__LOG) log(StringConcatenate("CheckBollingerBands(1)   SMS sent to ", SMS.Receiver, ":  ", message));
       }
       else {
-         if (__LOG) log(StringConcatenate("CheckBollingerBands()   ", message));
+         if (__LOG) log(StringConcatenate("CheckBollingerBands(2)   ", message));
       }
 
       // ggf. Sound abspielen
@@ -356,7 +356,7 @@ bool CheckBollingerBands() {
          PlaySound("Close order.wav");
    }
 
-   return(!catch("CheckBollingerBands()"));
+   return(!catch("CheckBollingerBands(3)"));
 }
 
 

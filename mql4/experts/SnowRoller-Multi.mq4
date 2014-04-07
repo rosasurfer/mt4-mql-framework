@@ -97,7 +97,7 @@ int onTick() {
    int signal;
 
    if (IsStartSignal(signal)) {
-      //debug("IsStartSignal()   "+ TimeToStr(TimeCurrent()) +"   signal "+ ifString(signal>0, "up", "down"));
+      //debug("IsStartSignal(0.1)   "+ TimeToStr(TimeCurrent()) +"   signal "+ ifString(signal>0, "up", "down"));
       Strategy.CreateSequence(ifInt(signal>0, D_LONG, D_SHORT));
    }
    return(last_error);
@@ -160,9 +160,9 @@ bool StartSequence(int hSeq) {
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   if (__LOG) log("StartSequence()   starting sequence "+ sequence.id[hSeq]);
+   if (__LOG) log("StartSequence(3)   starting sequence "+ sequence.id[hSeq]);
    SetCustomLog(sequence.id[hSeq], NULL);                            // TODO: statt Sequenz-ID Log-Handle verwenden
-   if (__LOG) log("StartSequence()   starting sequence");
+   if (__LOG) log("StartSequence(4)   starting sequence");
 
 
    sequence.status[hSeq] = STATUS_STARTING;
@@ -200,7 +200,7 @@ bool StartSequence(int hSeq) {
       int iNull;
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
-      return(!catch("StartSequence(3.1)", ERR_NOT_IMPLEMENTED));
+      return(!catch("StartSequence(5)", ERR_NOT_IMPLEMENTED));
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
@@ -219,8 +219,8 @@ bool StartSequence(int hSeq) {
 
 
    RedrawStartStop(hSeq);
-   if (__LOG) log(StringConcatenate("StartSequence()   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
-   return(!last_error|catch("StartSequence(3)"));
+   if (__LOG) log(StringConcatenate("StartSequence(6)   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
+   return(!last_error|catch("StartSequence(7)"));
 }
 
 
@@ -313,9 +313,9 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
  */
 double GridBase.Reset(int hSeq, datetime time, double value) {
    if (__STATUS_ERROR)                             return(0);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_ZERO(catch("GridBase.Reset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("GridBase.Reset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   return(_ZERO(catch("GridBase.Reset(2)", ERR_NOT_IMPLEMENTED)));
+   return(_NULL(catch("GridBase.Reset(2)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -442,8 +442,8 @@ bool IsStartSignal(int &lpSignal) {
 
          if (trend==1 || trend==-1) {
             lpSignal = trend;
-            if (__LOG) log(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
-                     debug(StringConcatenate("IsStartSignal()   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+            if (__LOG) log(StringConcatenate("IsStartSignal(1)   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+                     debug(StringConcatenate("IsStartSignal(2)   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
             return(true);
          }
       }

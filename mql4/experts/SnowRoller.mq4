@@ -352,7 +352,7 @@ bool StartSequence() {
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    status = STATUS_STARTING;
-   if (__LOG) log("StartSequence()   starting sequence");
+   if (__LOG) log("StartSequence(2)   starting sequence");
 
 
    // (1) Startvariablen setzen
@@ -404,8 +404,8 @@ bool StartSequence() {
    RedrawStartStop();
 
 
-   if (__LOG) log("StartSequence()   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
-   return(!last_error|catch("StartSequence(2)"));
+   if (__LOG) log("StartSequence(3)   sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level, " and level "+ sequence.level, ""));
+   return(!last_error|catch("StartSequence(4)"));
 }
 
 
@@ -436,7 +436,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPING;
-      if (__LOG) log(StringConcatenate("StopSequence()   stopping sequence at level ", sequence.level));
+      if (__LOG) log(StringConcatenate("StopSequence(4)   stopping sequence at level ", sequence.level));
    }
 
 
@@ -453,7 +453,7 @@ bool StopSequence() {
             sizeOfTickets--;
             continue;
          }
-         if (!SelectTicket(orders.ticket[i], "StopSequence(4)"))
+         if (!SelectTicket(orders.ticket[i], "StopSequence(5)"))
             return(false);
          if (!OrderCloseTime()) {                                                                     // offene Tickets je nach Typ zwischenspeichern
             if (IsPendingTradeOperation(OrderType())) ArrayPushInt(pendings,                i);       // Grid.DeleteOrder() erwartet den Array-Index
@@ -527,7 +527,7 @@ bool StopSequence() {
 
    if (status != STATUS_STOPPED) {
       status = STATUS_STOPPED;
-      if (__LOG) log(StringConcatenate("StopSequence()   sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
+      if (__LOG) log(StringConcatenate("StopSequence(6)   sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level));
    }
 
 
@@ -555,7 +555,7 @@ bool StopSequence() {
       if      (        IsVisualMode()) Tester.Pause();
       else if (!IsWeekendStopSignal()) Tester.Stop();
    }
-   return(!last_error|catch("StopSequence(5)"));
+   return(!last_error|catch("StopSequence(7)"));
 }
 
 
@@ -602,7 +602,7 @@ bool ResumeSequence() {
 
 
    status = STATUS_STARTING;
-   if (__LOG) log(StringConcatenate("ResumeSequence()   resuming sequence at level ", sequence.level));
+   if (__LOG) log(StringConcatenate("ResumeSequence(3)   resuming sequence at level ", sequence.level));
 
    datetime startTime;
    double   startPrice, lastStopPrice, gridBase;
@@ -690,8 +690,8 @@ bool ResumeSequence() {
    // (8) Anzeige aktualisieren
    RedrawStartStop();
 
-   if (__LOG) log(StringConcatenate("ResumeSequence()   sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
-   return(!last_error|catch("ResumeSequence(3)"));
+   if (__LOG) log(StringConcatenate("ResumeSequence(4)   sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level));
+   return(!last_error|catch("ResumeSequence(5)"));
 }
 
 
@@ -745,7 +745,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
          }
 
          // (1.3) reguläre server-seitige Tickets
-         if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)"))
+         if (!SelectTicket(orders.ticket[i], "UpdateStatus(1)"))
             return(false);
 
          if (wasPending) {
@@ -829,7 +829,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(_false(catch("UpdateStatus(3)   closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
+            return(_false(catch("UpdateStatus(2)   closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR)));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -856,7 +856,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             return(false);
 
          status = STATUS_STOPPED;
-         if (__LOG) log("UpdateStatus()   STATUS_STOPPED");
+         if (__LOG) log("UpdateStatus(3)   STATUS_STOPPED");
          RedrawStartStop();
       }
    }
@@ -1151,7 +1151,7 @@ bool IsStartSignal() {
                return(false);
             }
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.trend.condition.txt, "\" met"));
+               if (__LOG) log(StringConcatenate("IsStartSignal(1)   start condition \"", start.trend.condition.txt, "\" met"));
                return(true);
             }
          }
@@ -1181,21 +1181,21 @@ bool IsStartSignal() {
          lastPrice = price;
          if (!result)
             return(false);
-         if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.price.condition.txt, "\" met"));
+         if (__LOG) log(StringConcatenate("IsStartSignal(2)   start condition \"", start.price.condition.txt, "\" met"));
       }
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
       if (start.time.condition) {
          if (TimeCurrent() < start.time.value)
             return(false);
-         if (__LOG) log(StringConcatenate("IsStartSignal()   start condition \"", start.time.condition.txt, "\" met"));
+         if (__LOG) log(StringConcatenate("IsStartSignal(3)   start condition \"", start.time.condition.txt, "\" met"));
       }
 
       // -- alle Bedingungen sind erfüllt (AND-Verknüpfung) -------------------------------------------------------------
    }
    else {
       // Keine Startbedingungen sind ebenfalls gültiges Startsignal
-      if (__LOG) log("IsStartSignal()   no start conditions defined");
+      if (__LOG) log("IsStartSignal(4)   no start conditions defined");
    }
 
    return(true);
@@ -1247,14 +1247,14 @@ bool IsWeekendResumeSignal() {
    else                              result = (Bid >= stopPrice);
    if (result) {
       weekend.resume.triggered = true;
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal()   weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(1)   weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (weekend.resume.time <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal()   resume condition '", GetDayOfWeek(weekend.resume.time, false), ", ", TimeToStr(weekend.resume.time, TIME_FULL), "' met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)   resume condition '", GetDayOfWeek(weekend.resume.time, false), ", ", TimeToStr(weekend.resume.time, TIME_FULL), "' met"));
       return(true);
    }
    return(false);
@@ -1315,7 +1315,7 @@ bool IsStopSignal() {
                return(false);
             }
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-               if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.trend.condition.txt, "\" met"));
+               if (__LOG) log(StringConcatenate("IsStopSignal(1)   stop condition \"", stop.trend.condition.txt, "\" met"));
                return(true);
             }
          }
@@ -1343,7 +1343,7 @@ bool IsStopSignal() {
 
          lastPrice = price;
          if (result) {
-            if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.price.condition.txt, "\" met"));
+            if (__LOG) log(StringConcatenate("IsStopSignal(2)   stop condition \"", stop.price.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1351,7 +1351,7 @@ bool IsStopSignal() {
       // -- stop.level: erfüllt, wenn der angegebene Level erreicht ist -------------------------------------------------
       if (stop.level.condition) {
          if (stop.level.value == sequence.level) {
-            if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.level.condition.txt, "\" met"));
+            if (__LOG) log(StringConcatenate("IsStopSignal(3)   stop condition \"", stop.level.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1359,7 +1359,7 @@ bool IsStopSignal() {
       // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt ----------------------------------------------------
       if (stop.time.condition) {
          if (stop.time.value <= TimeCurrent()) {
-            if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.time.condition.txt, "\" met"));
+            if (__LOG) log(StringConcatenate("IsStopSignal(4)   stop condition \"", stop.time.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1367,7 +1367,7 @@ bool IsStopSignal() {
       // -- stop.profitAbs: ---------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (GE(sequence.totalPL, stop.profitAbs.value)) {
-            if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitAbs.condition.txt, "\" met"));
+            if (__LOG) log(StringConcatenate("IsStopSignal(5)   stop condition \"", stop.profitAbs.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1375,7 +1375,7 @@ bool IsStopSignal() {
       // -- stop.profitPct: ---------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (GE(sequence.totalPL, stop.profitPct.value/100 * sequence.startEquity)) {
-            if (__LOG) log(StringConcatenate("IsStopSignal()   stop condition \"", stop.profitPct.condition.txt, "\" met"));
+            if (__LOG) log(StringConcatenate("IsStopSignal(6)   stop condition \"", stop.profitPct.condition.txt, "\" met"));
             return(true);
          }
       }
@@ -1406,7 +1406,7 @@ bool IsWeekendStopSignal() {
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
          weekend.stop.active = true;
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal()   stop condition '", GetDayOfWeek(weekend.stop.time, false), ", ", TimeToStr(weekend.stop.time, TIME_FULL), "' met"));
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)   stop condition '", GetDayOfWeek(weekend.stop.time, false), ", ", TimeToStr(weekend.stop.time, TIME_FULL), "' met"));
          return(true);
       }
    }
@@ -1499,7 +1499,7 @@ bool ProcessClientStops(int stops[]) {
                ticket   = SubmitMarketOrder(type, level, clientSL, oe);       // danach client-seitige Stop-Verwaltung (ab dem letzten Level)
                if (ticket <= 0)
                   return(false);
-               if (__LOG) log(StringConcatenate("ProcessClientStops()   #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+               if (__LOG) log(StringConcatenate("ProcessClientStops(7)   #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
             }
          }
          orders.ticket[i] = ticket;
@@ -1509,9 +1509,9 @@ bool ProcessClientStops(int stops[]) {
 
       // (3) getriggerter StopLoss
       if (orders.clientSL[i]) {
-         if (orders.ticket[i] == -2)         return(_false(catch("ProcessClientStops(7)   cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
-         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessClientStops(8)   #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
-         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessClientStops(9)   #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
+         if (orders.ticket[i] == -2)         return(_false(catch("ProcessClientStops(8)   cannot process client-side stoploss of pseudo ticket #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
+         if (orders.type[i] == OP_UNDEFINED) return(_false(catch("ProcessClientStops(9)   #"+ orders.ticket[i] +" with client-side stop-loss still marked as pending", ERR_ILLEGAL_STATE)));
+         if (orders.closeTime[i] != 0)       return(_false(catch("ProcessClientStops(10)   #"+ orders.ticket[i] +" with client-side stop-loss already marked as closed", ERR_ILLEGAL_STATE)));
 
          if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("ProcessClientStops()", "Do you really want to execute a triggered client-side stop-loss now?"))
             return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1536,7 +1536,7 @@ bool ProcessClientStops(int stops[]) {
    if (!UpdateStatus(bNull, iNull)) return(false);
    if (  !SaveStatus())             return(false);
 
-   return(!last_error|catch("ProcessClientStops(10)"));
+   return(!last_error|catch("ProcessClientStops(11)"));
 }
 
 
@@ -1745,7 +1745,7 @@ bool Grid.AddOrder(int type, int level) {
       // (3) StopDistance violated => client-seitige Stop-Verwaltung
       else if (ticket == -2) {
          ticket = -1;
-         if (__LOG) log(StringConcatenate("Grid.AddOrder()   client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG) log(StringConcatenate("Grid.AddOrder(5)   client-side ", OperationTypeDescription(type), " at ", NumberToStr(pendingPrice, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -1777,7 +1777,7 @@ bool Grid.AddOrder(int type, int level) {
 
    if (!Grid.PushData(ticket, level, grid.base, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
       return(false);
-   return(!last_error|catch("Grid.AddOrder(5)"));
+   return(!last_error|catch("Grid.AddOrder(6)"));
 }
 
 
@@ -1798,16 +1798,16 @@ bool Grid.AddOrder(int type, int level) {
  */
 int SubmitStopOrder(int type, int level, int oe[]) {
    if (__STATUS_ERROR)                                                 return(0);
-   if (IsTest()) /*&&*/ if (!IsTesting())                              return(_ZERO(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
-   if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STARTING) return(_ZERO(catch("SubmitStopOrder(2)   cannot submit stop order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (IsTest()) /*&&*/ if (!IsTesting())                              return(_NULL(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
+   if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STARTING) return(_NULL(catch("SubmitStopOrder(2)   cannot submit stop order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUYSTOP) {
-      if (level <= 0) return(_ZERO(catch("SubmitStopOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level <= 0) return(_NULL(catch("SubmitStopOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
    else if (type == OP_SELLSTOP) {
-      if (level >= 0) return(_ZERO(catch("SubmitStopOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level >= 0) return(_NULL(catch("SubmitStopOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
-   else               return(_ZERO(catch("SubmitStopOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   else               return(_NULL(catch("SubmitStopOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double   stopPrice   = grid.base + level*GridSize*Pips;
    double   slippage    = NULL;
@@ -1844,7 +1844,7 @@ int SubmitStopOrder(int type, int level, int oe[]) {
       return(-2);
    }
 
-   return(_ZERO(SetLastError(error)));
+   return(_NULL(SetLastError(error)));
 }
 
 
@@ -1884,7 +1884,7 @@ bool Grid.AddPosition(int type, int level) {
          ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
          clientSL = true;
          oe.setOpenTime(oe, TimeCurrent());
-         if (__LOG) log(StringConcatenate("Grid.AddPosition()   pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
+         if (__LOG) log(StringConcatenate("Grid.AddPosition(5)   pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
       }
 
       // (3) StopDistance violated
@@ -1893,7 +1893,7 @@ bool Grid.AddPosition(int type, int level) {
          ticket   = SubmitMarketOrder(type, level, clientSL, oe);    // danach client-seitige Stop-Verwaltung
          if (ticket <= 0)
             return(false);
-         if (__LOG) log(StringConcatenate("Grid.AddPosition()   #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
+         if (__LOG) log(StringConcatenate("Grid.AddPosition(6)   #", ticket, " client-side stop-loss at ", NumberToStr(stopLoss, PriceFormat), " installed (level ", level, ")"));
       }
    }
 
@@ -1925,7 +1925,7 @@ bool Grid.AddPosition(int type, int level) {
       return(false);
 
    ArrayResize(oe, 0);
-   return(!last_error|catch("Grid.AddPosition(5)"));
+   return(!last_error|catch("Grid.AddPosition(7)"));
 }
 
 
@@ -1947,16 +1947,16 @@ bool Grid.AddPosition(int type, int level) {
  */
 int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
    if (__STATUS_ERROR)                                                 return(0);
-   if (IsTest()) /*&&*/ if (!IsTesting())                              return(_ZERO(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
-   if (status!=STATUS_STARTING) /*&&*/ if (status!=STATUS_PROGRESSING) return(_ZERO(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
+   if (IsTest()) /*&&*/ if (!IsTesting())                              return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
+   if (status!=STATUS_STARTING) /*&&*/ if (status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUY) {
-      if (level <= 0) return(_ZERO(catch("SubmitMarketOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level <= 0) return(_NULL(catch("SubmitMarketOrder(3)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
    else if (type == OP_SELL) {
-      if (level >= 0) return(_ZERO(catch("SubmitMarketOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level >= 0) return(_NULL(catch("SubmitMarketOrder(4)   illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
    }
-   else               return(_ZERO(catch("SubmitMarketOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   else               return(_NULL(catch("SubmitMarketOrder(5)   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double   price       = NULL;
    double   slippage    = 0.1;
@@ -1997,7 +1997,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
       }
    }
 
-   return(_ZERO(SetLastError(error)));
+   return(_NULL(SetLastError(error)));
 }
 
 
