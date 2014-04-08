@@ -537,12 +537,12 @@ bool UpdatePositions() {
       if (remote.position.types[i][1] == TYPE_HEDGE) {
       }
       else {
-         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[remote.position.types[i][1]],                                                                 positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data [i][I_DIRECTLOTSIZE], ".+") +" units",                                   positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col0",   strTypes[remote.position.types[i][1]],                                                                  positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data[i][I_DIRECTLOTSIZE], ".+") +" units",                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(remote.position.data[i][I_BREAKEVEN], 2),                                                     positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5",  DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                       positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                        positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
       }
    }
    return(!catch("UpdatePositions(2)"));
@@ -1583,10 +1583,10 @@ bool StorePosition.QC_Message(string message) {
    if (pos == -1) {
       // bei Mißerfolg Positionsdetails aus "remote_positions.ini" auslesen
       int    orderType, iNull;
-      double orderUnits, dNull;
+      double orderUnits, openPrice, dNull;
       string sNull = "";
 
-      if (!ReadLfxRemotePosition(account, ticket, iNull, orderType, dNull, orderUnits, dNull, dNull, sNull))
+      if (!ReadLfxRemotePosition(account, ticket, iNull, orderType, dNull, orderUnits, openPrice, dNull, sNull))
          return(false);
 
       // Positionsdetails zu Remote-Positionen hinzufügen
@@ -1600,7 +1600,7 @@ bool StorePosition.QC_Message(string message) {
       remote.position.types  [pos][1]               = orderType;
       remote.position.data   [pos][I_DIRECTLOTSIZE] = LFX.GetUnits(ticket);
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = 0;
+      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice;
    }
    // P/L aktualisieren
    remote.position.data      [pos][I_PROFIT       ] = profit;
