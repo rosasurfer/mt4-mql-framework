@@ -7,9 +7,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/indicator.mqh>
 
-#include <LFX/define.mqh>
 #include <LFX/functions.mqh>
-
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 

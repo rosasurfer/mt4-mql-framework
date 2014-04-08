@@ -10,11 +10,10 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <win32api.mqh>
 #include <core/script.mqh>
 
-#include <LFX/define.mqh>
 #include <LFX/functions.mqh>
+#include <win32api.mqh>
 
 #property show_inputs
 
