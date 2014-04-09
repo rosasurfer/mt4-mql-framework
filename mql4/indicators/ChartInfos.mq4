@@ -886,13 +886,13 @@ bool AnalyzePositions() {
             if (pos == -1) {                                         // kein weiterer Separator
                if (!StorePosition.QC_Message(StringSubstr(values, i)))
                   return(false);
-               ArrayUnshiftString(lines, StringSubstr(values, i));
+               //ArrayUnshiftString(lines, StringSubstr(values, i));
                break;
             }
             else if (pos != i) {                                     // Separator-Value-Separator
                if (!StorePosition.QC_Message(StringSubstr(values, i, pos-i)))
                   return(false);
-               ArrayUnshiftString(lines, StringSubstr(values, i, pos-i));
+               //ArrayUnshiftString(lines, StringSubstr(values, i, pos-i));
             }
             i = pos + 1;
          }                                                           // aufeinanderfolgende (pos == i) und abschließende Separatoren (i == lenValues) werden ignoriert
@@ -902,10 +902,11 @@ bool AnalyzePositions() {
          if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("AnalyzePositions(9)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") doesn't exist",                       ERR_WIN32_ERROR));
                                                return(!catch("AnalyzePositions(10)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
       }
-
+      /*
       if (ArraySize(lines) > 40)
          ArrayResize(lines, 40);
       Comment(NL, __NAME__, ":  \"", lfxReceiverChannelName, "\"", NL, NL, JoinStrings(lines, NL));
+      */
    }
 
    positionsAnalyzed = true;
