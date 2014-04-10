@@ -518,7 +518,8 @@ int onInit() {
 
 
 /**
- * nur extern: erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
+ * auﬂerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
+ * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
  *
@@ -528,7 +529,8 @@ int onInitParameterChange() {
 
 
 /**
- * nur extern: Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+ * auﬂerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+ * innerhalb iCustom(): ?
  *
  * @return int - Fehlerstatus
  *
@@ -540,8 +542,8 @@ int onInitChartChange() {
 /**
  * Kein UninitializeReason gesetzt.
  *
- * extern: wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
- * intern: in allen init()-F‰llen,                                                                   kein Input-Dialog
+ * auﬂerhalb iCustom(): wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * innerhalb iCustom(): in allen init()-F‰llen, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  *
@@ -551,7 +553,8 @@ int onInitUndefined() {
 
 
 /**
- * intern: im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
+ * auﬂerhalb iCustom(): ?
+ * innerhalb iCustom(): im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  *
@@ -561,7 +564,8 @@ int onInitRemove() {
 
 
 /**
- * nur extern: vorhandener Indikator, kein Input-Dialog
+ * auﬂerhalb iCustom(): nach Recompile und Reload, vorhandener Indikator, kein Input-Dialog
+ * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
  *
@@ -594,7 +598,8 @@ int onDeinit() {
 
 
 /**
- * nur extern: Parameter‰nderung
+ * auﬂerhalb iCustom(): vor Parameter‰nderung
+ * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
  *
@@ -604,7 +609,8 @@ int onDeinitParameterChange() {
 
 
 /**
- * nur extern: Symbol- oder Timeframewechsel
+ * auﬂerhalb iCustom(): vor Symbol- oder Timeframewechsel
+ * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
  *
@@ -614,8 +620,8 @@ int onDeinitChartChange() {
 
 
 /**
- * extern: Indikator von Hand entfernt oder Chart geschlossen
- * intern: in allen deinit()-F‰llen
+ * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen
+ * innerhalb iCustom(): in allen deinit()-F‰llen
  *
  * @return int - Fehlerstatus
  *
@@ -625,7 +631,8 @@ int onDeinitRemove() {
 
 
 /**
- * nur extern: Recompilation
+ * auﬂerhalb iCustom(): nach Recompilation, vor Reload
+ * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
  *
