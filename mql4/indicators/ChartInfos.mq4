@@ -69,64 +69,8 @@ string lfxReceiverChannelName;                              // QuickChannel-Rece
 string lfxReceiverChannelBuffer[];                          // QuickChannel-Receiver Channel-Buffer
 
 
-// Debugging (temporär)
-string lines[];
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   // Datenanzeige ausschalten
-   SetIndexLabel(0, NULL);
-
-   // Konfiguration auswerten
-   string price = "bid";
-   if (!IsVisualMode())                                              // im Tester wird immer PRICE_BID verwendet (ist ausreichend und schneller)
-      price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
-   if      (price == "bid"   ) appliedPrice = PRICE_BID;
-   else if (price == "ask"   ) appliedPrice = PRICE_ASK;
-   else if (price == "median") appliedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-   // Label erzeugen
-   CreateLabels();
-
-   // Prüfen, ob wir auf einem LFX-Chart laufen
-   isLfxChart = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
-
-   return(catch("onInit(2)"));
-}
-
-
-/**
- * Deinitialisierung
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   RemoveChartObjects();
-
-   // QuickChannel-Sender-Handles schließen
-   for (int i=ArraySize(hLfxSenderChannels)-1; i >= 0; i--) {
-      if (hLfxSenderChannels[i] != NULL) {
-         if (!QC_ReleaseSender(hLfxSenderChannels[i]))
-            catch("onDeinit(1)->MT4iQuickChannel::QC_ReleaseSender(hChannel=0x"+ IntToHexStr(hLfxSenderChannels[i]) +")   error closing QuickChannel sender: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-         hLfxSenderChannels[i] = NULL;
-      }
-   }
-
-   // QuickChannel-Receiver-Handle schließen
-   if (hLfxReceiverChannel != NULL) {
-      if (!QC_ReleaseReceiver(hLfxReceiverChannel))
-         catch("onDeinit(2)->MT4iQuickChannel::QC_ReleaseReceiver(hChannel=0x"+ IntToHexStr(hLfxReceiverChannel) +")   error releasing QuickChannel receiver: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
-      hLfxReceiverChannel = NULL;
-   }
-
-   return(catch("onDeinit(3)"));
-}
+#include <ChartInfos/init.mqh>
+#include <ChartInfos/deinit.mqh>
 
 
 /**
@@ -865,6 +809,9 @@ bool AnalyzePositions() {
 
    // (3.6) keine lokalen Positionen
    else if (isLfxChart) {
+      // Debugging (temporär)
+      //string lines[];
+
       // per QuickChannel eingehende Remote-Positionsdetails auswerten
       if (!hLfxReceiverChannel) /*&&*/ if (!StartQCReceiver())
          return(false);
