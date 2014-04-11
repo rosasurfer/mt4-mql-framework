@@ -599,9 +599,9 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
  * @param  int    types  []
  * @param  double data   []
  *
- * @return bool - Erfolgsstatus
+ * @return int - Fehlerstatus
  */
-bool ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], double data[][]) {
+int ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], double data[][]) {
    static int    static.tickets[];
    static int    static.types  [][2];
    static double static.data   [][4];
@@ -627,7 +627,7 @@ bool ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], do
          //debug("ChartInfos.CopyRemotePositions()   "+ ArrayRange(static.tickets, 0) +" positions restored");
       }
    }
-   return(!catch("ChartInfos.CopyRemotePositions(1)"));
+   return(catch("ChartInfos.CopyRemotePositions(1)"));
 }
 
 

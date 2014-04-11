@@ -22,7 +22,7 @@ int onDeinit() {
       hLfxReceiverChannel = NULL;
    }
 
-   return(catch("onDeinit(3)"));
+   return(last_error);
 }
 
 
@@ -34,8 +34,9 @@ int onDeinit() {
  */
 int onDeinitParameterChange() {
    // vorhandene Remote-Positionsdaten in Library speichern
-   if (!ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data))
-      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   int error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
+   if (IsError(error))
+      return(SetLastError(error));
    return(NO_ERROR);
 }
 
@@ -48,8 +49,9 @@ int onDeinitParameterChange() {
  */
 int onDeinitChartChange() {
    // vorhandene Remote-Positionsdaten in Library speichern
-   if (!ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data))
-      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   int error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
+   if (IsError(error))
+      return(SetLastError(error));
    return(NO_ERROR);
 }
 
@@ -72,7 +74,7 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // vorhandene Remote-Positionsdaten im Chart speichern
+   // Remote-Positionsdaten in "remote_positions.ini" speichern
    return(NO_ERROR);
 }
 
