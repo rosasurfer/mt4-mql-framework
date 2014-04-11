@@ -35,8 +35,9 @@ int onInit() {
  */
 int onInitParameterChange() {
    // in Library gespeicherte Remote-Positionsdaten restaurieren
-   if (!ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data))
-      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
+   if (IsError(error))
+      return(SetLastError(error));
    return(NO_ERROR);
 }
 
@@ -49,8 +50,10 @@ int onInitParameterChange() {
  *
  */
 int onInitChartChange() {
-   if (!ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data))
-      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   // in Library gespeicherte Remote-Positionsdaten restaurieren
+   int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
+   if (IsError(error))
+      return(SetLastError(error));
    return(NO_ERROR);
 }
 
@@ -87,7 +90,7 @@ int onInitRemove() {
  *
  */
 int onInitRecompile() {
-   // im Chart gespeicherte Remote-Positionsdaten restaurieren
+   // in "remote_positions.ini" gespeicherte Positionsdaten restaurieren
    return(NO_ERROR);
 }
 
