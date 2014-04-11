@@ -72,6 +72,10 @@ string lfxReceiverChannelBuffer[];                          // QuickChannel-Rece
 #include <ChartInfos/init.mqh>
 #include <ChartInfos/deinit.mqh>
 
+#import "stdlib2.ex4"
+   bool ChartInfos.CopyRemotePositions(bool direction, int tickets[], int types[][], double data[][]);
+#import
+
 
 /**
  * Main-Funktion

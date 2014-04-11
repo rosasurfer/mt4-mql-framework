@@ -24,3 +24,65 @@ int onDeinit() {
 
    return(catch("onDeinit(3)"));
 }
+
+
+/**
+ * auﬂerhalb iCustom(): vor Parameter‰nderung
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitParameterChange() {
+   // vorhandene Remote-Positionsdaten in Library speichern
+   if (!ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data))
+      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): vor Symbol- oder Timeframewechsel
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitChartChange() {
+   // vorhandene Remote-Positionsdaten in Library speichern
+   if (!ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data))
+      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen
+ * innerhalb iCustom(): in allen deinit()-F‰llen
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): nach Recompilation, vor Re-Initialisierung
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRecompile() {
+   // vorhandene Remote-Positionsdaten im Chart speichern
+   return(NO_ERROR);
+}
+
+
+/**
+ * Deinitialisierung Postprocessing
+ *
+ * @return int - Fehlerstatus
+ *
+int afterDeinit() {
+   return(NO_ERROR);
+}
+*/
