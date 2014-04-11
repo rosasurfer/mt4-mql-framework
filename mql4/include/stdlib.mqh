@@ -16,7 +16,7 @@
    bool     Script.IsTesting();
 
    bool     IsLibrary();
-   bool     This.IsTesting();                                        // Shortkey für: Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting()
+   bool     This.IsTesting();                                        // Short für (Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting())
 
    bool     IsLogging();
    int      SetCustomLog(int id, string file);
@@ -467,7 +467,7 @@
 
 #import "stdlib1.ex4"
    string   ChartPropertiesToStr(int flags);
-   string   InitFlagsToStr  (int flags);
+   string   InitFlagsToStr(int flags);
    string   DateToStr(datetime time, string mask);
    string   DeinitFlagsToStr(int flags);
    string   ErrorDescription(int error);
