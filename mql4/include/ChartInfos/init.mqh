@@ -26,248 +26,78 @@ int onInit() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/**
+ * auﬂerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ *
+ */
+int onInitParameterChange() {
+   // in Library gespeicherte Remote-Positionsdaten restaurieren
+   if (!ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data))
+      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+ * innerhalb iCustom(): ?
+ *
+ * @return int - Fehlerstatus
+ *
+ */
+int onInitChartChange() {
+   if (!ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data))
+      return(SetLastError(ERR_RUNTIME_ERROR));                       // Funktion liegt in stdlib2; Fehler kann dort nicht ausgelesen werden
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt.
+ *
+ * auﬂerhalb iCustom(): wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * innerhalb iCustom(): in allen init()-F‰llen, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): ?
+ * innerhalb iCustom(): im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInitRemove() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): nach Recompile, vorhandener Indikator, kein Input-Dialog
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ *
+ */
+int onInitRecompile() {
+   // im Chart gespeicherte Remote-Positionsdaten restaurieren
+   return(NO_ERROR);
+}
+
+
+/**
+ * Initialisierung Postprocessing
+ *
+ * @return int - Fehlerstatus
+ *
+int afterInit() {
+   return(NO_ERROR);
+}
+*/

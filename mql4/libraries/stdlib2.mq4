@@ -592,6 +592,46 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
 
 
 /**
+ * Speichert vorhandene Remote-Positionsdaten in der Library oder restauriert sie daraus.
+ *
+ * @param  bool   store     - Richtung: TRUE=Kopiert aus den Parametern in die Library; FALSE=Kopiert aus der Library in die Parameter.
+ * @param  int    tickets[]
+ * @param  int    types  []
+ * @param  double data   []
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], double data[][]) {
+   static int    static.tickets[];
+   static int    static.types  [][2];
+   static double static.data   [][4];
+
+   if (store) {
+      ArrayResize(static.tickets, 0);
+      ArrayResize(static.types,   0);
+      ArrayResize(static.data,    0);
+      if (ArrayRange(tickets, 0) > 0) {
+         ArrayCopy(static.tickets, tickets);
+         ArrayCopy(static.types,   types  );
+         ArrayCopy(static.data,    data   );
+      }
+   }
+   else {
+      ArrayResize(tickets, 0);
+      ArrayResize(types,   0);
+      ArrayResize(data,    0);
+      if (ArrayRange(static.tickets, 0) > 0) {
+         ArrayCopy(tickets, static.tickets);
+         ArrayCopy(types,   static.types  );
+         ArrayCopy(data,    static.data   );
+         //debug("ChartInfos.CopyRemotePositions()   "+ ArrayRange(static.tickets, 0) +" positions restored");
+      }
+   }
+   return(!catch("ChartInfos.CopyRemotePositions(1)"));
+}
+
+
+/**
  * Setzt die globalen Arrays zurück. Wird nur im Tester und in library::init() aufgerufen.
  */
 void Tester.ResetGlobalArrays() {
