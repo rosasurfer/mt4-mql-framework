@@ -1532,7 +1532,7 @@ bool StorePosition.QC_Message(string message) {
       double orderUnits, openPrice, dNull;
       string sNull = "";
 
-      if (!ReadLfxRemotePosition(account, ticket, iNull, orderType, dNull, orderUnits, openPrice, dNull, sNull))
+      if (!ReadLfxRemotePosition(account, ticket, iNull, orderType, dNull, orderUnits, openPrice, dNull, dNull, iNull, dNull, sNull))
          return(false);
 
       // Positionsdetails zu Remote-Positionen hinzufügen
@@ -1564,13 +1564,16 @@ bool StorePosition.QC_Message(string message) {
  * @param  int      &orderType   - Variable zur Aufnahme des OrderTypes
  * @param  double   &orderLots   - Variable zur Aufnahme der OrderLotsize
  * @param  double   &orderUnits  - Variable zur Aufnahme der OrderUnits
- * @param  double   &openPrice   - Variable zur Aufnahme des OrderOpenPrice
+ * @param  double   &openPrice   - Variable zur Aufnahme des OpenPrice
+ * @param  double   &stopLoss    - Variable zur Aufnahme des StopLoss
+ * @param  double   &takeProfit  - Variable zur Aufnahme des TakeProfit
+ * @param  datetime &closeTime   - Variable zur Aufnahme der OrderCloseTime
  * @param  double   &orderProfit - Variable zur Aufnahme des OrderProfits
  * @param  string   &comment     - Variable zur Aufnahme des OrderComments
  *
  * @return bool - Erfolgsstatus
  */
-bool ReadLfxRemotePosition(int account, int magicNumber, datetime &openTime, int &orderType, double &orderLots, double &orderUnits, double &openPrice, double &orderProfit, string &comment) {
+bool ReadLfxRemotePosition(int account, int magicNumber, datetime &openTime, int &orderType, double &orderLots, double &orderUnits, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &orderProfit, string &comment) {
    return(true);
 }
 
