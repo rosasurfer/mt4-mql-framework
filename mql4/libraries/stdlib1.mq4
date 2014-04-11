@@ -9114,7 +9114,7 @@ int StringFindR(string object, string search) {
 
 
 /**
- * Konvertiert einen String in Kleinschreibweise.
+ * Konvertiert die Großbuchstaben eines String zu Kleinbuchstaben (cp: ANSI westlich).
  *
  * @param  string value
  *
@@ -9127,18 +9127,30 @@ string StringToLower(string value) {
    for (int i=0; i < len; i++) {
       char = StringGetChar(value, i);
       //logische Version
-      //if      (64 < char && char < 91)              result = StringSetChar(result, i, char+32);
-      //else if (char==138 || char==140 || char==142) result = StringSetChar(result, i, char+16);
-      //else if (char==159)                           result = StringSetChar(result, i,     255);  // Ÿ -> ÿ
-      //else if (191 < char && char < 223)            result = StringSetChar(result, i, char+32);
+      //if      ( 65 <= char && char <=  90) result = StringSetChar(result, i, char+32);  // A-Z->a-z
+      //else if (192 <= char && char <= 214) result = StringSetChar(result, i, char+32);  // À-Ö->à-ö
+      //else if (216 <= char && char <= 222) result = StringSetChar(result, i, char+32);  // Ø-Þ->ø-þ
+      //else if (char == 138)                result = StringSetChar(result, i, 154);      // Š->š
+      //else if (char == 140)                result = StringSetChar(result, i, 156);      // Œ->œ
+      //else if (char == 142)                result = StringSetChar(result, i, 158);      // Ž->ž
+      //else if (char == 159)                result = StringSetChar(result, i, 255);      // Ÿ->ÿ
 
       // für MQL optimierte Version
-      if      (char == 138)                 result = StringSetChar(result, i, char+16);
-      else if (char == 140)                 result = StringSetChar(result, i, char+16);
-      else if (char == 142)                 result = StringSetChar(result, i, char+16);
-      else if (char == 159)                 result = StringSetChar(result, i,     255);   // Ÿ -> ÿ
-      else if (char < 91) { if (char >  64) result = StringSetChar(result, i, char+32); }
-      else if (191 < char)  if (char < 223) result = StringSetChar(result, i, char+32);
+      if (char > 64) {
+         if (char < 91) {
+            result = StringSetChar(result, i, char+32);                 // A-Z->a-z
+         }
+         else if (char > 191) {
+            if (char < 223) {
+               if (char != 215)
+                  result = StringSetChar(result, i, char+32);           // À-Ö->à-ö, Ø-Þ->ø-þ
+            }
+         }
+         else if (char == 138) result = StringSetChar(result, i, 154);  // Š->š
+         else if (char == 140) result = StringSetChar(result, i, 156);  // Œ->œ
+         else if (char == 142) result = StringSetChar(result, i, 158);  // Ž->ž
+         else if (char == 159) result = StringSetChar(result, i, 255);  // Ÿ->ÿ
+      }
    }
    return(result);
 }

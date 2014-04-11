@@ -809,7 +809,7 @@ bool AnalyzePositions() {
 
    // (3.6) keine lokalen Positionen
    else if (isLfxChart) {
-      // Debugging (temporär)
+      // Debugging: Comment-Anzeige aller Messages
       //string lines[];
 
       // per QuickChannel eingehende Remote-Positionsdetails auswerten
