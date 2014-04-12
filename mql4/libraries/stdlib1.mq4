@@ -1251,9 +1251,9 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Gibt die Namen aller Abschnitte einer ini-Datei zurück.
+ * Gibt die Namen aller Abschnitte einer .ini-Datei zurück.
  *
- * @param  string fileName - Name der ini-Datei (wenn NULL, wird WIN.INI durchsucht)
+ * @param  string fileName - Name der .ini-Datei (wenn NULL, wird WIN.INI durchsucht)
  * @param  string names[]  - Array zur Aufnahme der gefundenen Abschnittsnamen
  *
  * @return int - Anzahl der gefundenen Abschnitte oder -1, falls ein Fehler auftrat
@@ -1282,9 +1282,9 @@ int GetIniSectionNames(string fileName, string names[]) {
 
 
 /**
- * Gibt die Namen aller Einträge eines Abschnitts einer ini-Datei zurück.
+ * Gibt alle Schlüssel eines Abschnitts einer .ini-Datei zurück.
  *
- * @param  string fileName - Name der ini-Datei
+ * @param  string fileName - Name der .ini-Datei
  * @param  string section  - Name des Abschnitts
  * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüsselnamen
  *
@@ -1296,9 +1296,9 @@ int GetIniKeys(string fileName, string section, string keys[]) {
 
 
 /**
- * Löscht einen einzelnen Eintrag einer ini-Datei.
+ * Löscht einen einzelnen Eintrag einer .ini-Datei.
  *
- * @param  string fileName - Name der ini-Datei
+ * @param  string fileName - Name der .ini-Datei
  * @param  string section  - Abschnitt des Eintrags
  * @param  string key      - Name des zu löschenden Eintrags
  *
@@ -7128,16 +7128,38 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt einen Wert des angegebenen Abschnitts einer .ini-Datei als String zurück.
+ * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei ohne eventuell vorhandenen Kommentar zurück.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
  * @param  string key          - Schlüsselname
  * @param  string defaultValue - Rückgabewert, falls kein Wert gefunden wurde
  *
- * @return string
+ * @return string - Wert des Schlüssels oder Leerstring, falls ein Fehler auftrat
  */
 string GetIniString(string fileName, string section, string key, string defaultValue="") {
+   string value = GetRawIniString(fileName, section, key, defaultValue);
+
+   // evt. vorhandenen Kommentar entfernen
+   int pos = StringFind(value, ";");
+   if (pos >= 0)
+      value = StringTrimRight(StringSubstrFix(value, 0, pos));
+
+   return(value);
+}
+
+
+/**
+ * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei unverändert (mit eventuell vorhandenen Kommentar) zurück.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  string defaultValue - Rückgabewert, falls kein Wert gefunden wurde
+ *
+ * @return string - Wert des Schlüssels oder Leerstring, falls ein Fehler auftrat
+ */
+string GetRawIniString(string fileName, string section, string key, string defaultValue="") {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
@@ -7150,7 +7172,7 @@ string GetIniString(string fileName, string section, string key, string defaultV
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
 
-   if (!catch("GetIniString()"))
+   if (!catch("GetRawIniString(1)"))
       return(buffer[0]);
    return("");
 }

@@ -289,6 +289,7 @@
    int      GetIniSectionNames(string fileName, string names[]);
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetIniString(string fileName, string section, string key, string defaultValue);
+   string   GetRawIniString(string fileName, string section, string key, string defaultValue);
    int      DeleteIniKey(string fileName, string section, string key);
 
 
