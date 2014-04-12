@@ -99,19 +99,20 @@ int LFX.GetCounter(int magicNumber) {
  * @param  datetime &closeTime   - Variable zur Aufnahme der CloseTime
  * @param  double   &closePrice  - Variable zur Aufnahme des ClosePrice
  * @param  double   &orderProfit - Variable zur Aufnahme des OrderProfits
+ * @param  datetime &lastUpdate  - Variable zur Aufnahme des Zeitpunkts des letzten Updates
  * @param  string   &comment     - Variable zur Aufnahme des OrderComments
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.ReadRemotePosition(int account, int magicNumber, int &orderType, double &orderUnits, string &orderSymbol, datetime &openTime, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &closePrice, double &orderProfit, string &comment) {
+bool LFX.ReadRemotePosition(int account, int magicNumber, int &orderType, double &orderUnits, string &orderSymbol, datetime &openTime, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &closePrice, double &orderProfit, datetime &lastUpdate, string &comment) {
    string file  = StringConcatenate(TerminalPath(), "\\experts\\files\\", ShortAccountCompany(), "\\remote_positions.ini");
    string value = GetIniString(file, account, magicNumber, "");
 
-   //Ticket = Symbol, OrderType, OrderUnits, OpenTime_GMT, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, Comment
+   //Ticket = Symbol, OrderType, OrderUnits, OpenTime_GMT, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT, Comment
 
    // (1) .ini-Eintrag auslesen und validieren
    string sValue, values[];
-   if (Explode(value, ",", values, 11) != 11)                   return(!catch("LFX.ReadRemotePosition(1)   invalid .ini value ["+ account +"]->"+ magicNumber +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (Explode(value, ",", values, 12) != 12)                   return(!catch("LFX.ReadRemotePosition(1)   invalid .ini value ["+ account +"]->"+ magicNumber +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Symbol
    sValue = StringTrim(values[0]);
@@ -179,11 +180,19 @@ bool LFX.ReadRemotePosition(int account, int magicNumber, int &orderType, double
    if (!StringIsNumeric(sValue))                                return(!catch("LFX.ReadRemotePosition(20)   invalid order profit \""+ sValue +"\" in .ini value ["+ account +"]->"+ magicNumber +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    double _orderProfit = StrToDouble(sValue);
 
+   // LastUpdate_GMT
+   sValue = StringTrim(values[10]);
+   if (StringIsDigit(sValue)) datetime _lastUpdate = StrToInteger(sValue);
+   else                                _lastUpdate =    StrToTime(sValue);
+   if (_lastUpdate <= 0)                                        return(!catch("LFX.ReadRemotePosition(21)   invalid last update time \""+ sValue +"\" in .ini value ["+ account +"]->"+ magicNumber +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   _lastUpdate = GMTToServerTime(_lastUpdate);
+   if (_lastUpdate > TimeCurrent())                             return(!catch("LFX.ReadRemotePosition(22)   invalid last update time \""+ TimeToStr(_lastUpdate, TIME_FULL) +"\" in .ini value ["+ account +"]->"+ magicNumber +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
    // Comment
-   string _comment = StringTrim(values[10]);
+   string _comment = StringTrim(values[11]);
 
 
-   // (2) ausgelesene Daten in übergebene Variablen schreiben
+   // (2) übergebene Variablen erst nach vollständiger Validierung mit ausgelesenen Daten beschreiben
    orderType   = _orderType;
    orderUnits  = _orderUnits;
    orderSymbol = _orderSymbol;
@@ -194,6 +203,7 @@ bool LFX.ReadRemotePosition(int account, int magicNumber, int &orderType, double
    closeTime   = _closeTime;
    closePrice  = _closePrice;
    orderProfit = _orderProfit;
+   lastUpdate  = _lastUpdate;
    comment     = _comment;
 
    return(true);
@@ -212,5 +222,5 @@ void DummyCalls() {
    LFX.GetCurrencyId(NULL);
    LFX.GetInstanceId(NULL);
    LFX.GetUnits(NULL);
-   LFX.ReadRemotePosition(NULL, NULL, iNull, dNull, sNull, iNull, dNull, dNull, dNull, iNull, dNull, dNull, sNull);
+   LFX.ReadRemotePosition(NULL, NULL, iNull, dNull, sNull, iNull, dNull, dNull, dNull, iNull, dNull, dNull, iNull, sNull);
 }

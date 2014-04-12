@@ -1543,8 +1543,9 @@ bool StorePosition.QC_Message(string message) {
       datetime closeTime;
       double   closePrice;
       //double profit;
+      datetime lastUpdate;
       string   comment = "";
-      if (!LFX.ReadRemotePosition(account, ticket, orderType, units, symbol, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, comment))
+      if (!LFX.ReadRemotePosition(account, ticket, orderType, units, symbol, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate, comment))
          return(false);
 
       // Positionsdetails zu Remote-Positionen hinzufügen
