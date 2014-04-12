@@ -38,7 +38,7 @@ int onInit() {
  */
 int onStart() {
    // (1) aktuellen Status aus dem Chart auslesen: accountKey  = "" -> Status OFF (momentan keine Anzeige)
-   string account = ReadAccountKey();        // accountKey != "" -> Status ON  (momentan Anzeige des angegebenen Accounts)
+   string account = ReadAccountKey();           // accountKey != "" -> Status ON  (momentan Anzeige des angegebenen Accounts)
 
 
    // (2) existierende Chart-Marker löschen
@@ -101,7 +101,13 @@ int onStart() {
          catch("onStart(2)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
-      datetime openTime = StrToTime(value);
+
+      if     (!StringIsDigit(value)) datetime openTime = StrToTime(value);
+      else if (!StrToInteger(value))          openTime = 0;
+      else {
+         catch("onStart(3)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
+         continue;
+      }
       if (openTime <= 0) {
          catch("onStart(3)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;

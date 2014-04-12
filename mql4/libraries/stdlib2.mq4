@@ -20,9 +20,9 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Gibt die Namen aller Einträge eines Abschnitts einer .ini-Datei zurück.
+ * Gibt alle Schlüssel eines Abschnitts einer .ini-Datei zurück.
  *
- * @param  string fileName - Name der ini-Datei
+ * @param  string fileName - Name der .ini-Datei
  * @param  string section  - Name des Abschnitts
  * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüsselnamen
  *

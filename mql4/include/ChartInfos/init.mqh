@@ -31,7 +31,6 @@ int onInit() {
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
- *
  */
 int onInitParameterChange() {
    // in Library gespeicherte Remote-Positionsdaten restaurieren
@@ -47,7 +46,6 @@ int onInitParameterChange() {
  * innerhalb iCustom(): ?
  *
  * @return int - Fehlerstatus
- *
  */
 int onInitChartChange() {
    // in Library gespeicherte Remote-Positionsdaten restaurieren
@@ -87,7 +85,6 @@ int onInitRemove() {
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
- *
  */
 int onInitRecompile() {
    // in "remote_positions.ini" gespeicherte Positionsdaten restaurieren

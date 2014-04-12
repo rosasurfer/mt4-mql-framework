@@ -28,12 +28,11 @@ double leverage;                                            // Hebel zur UnitSiz
 
 
 // Positionsanzeige
-bool   isPosition;
-bool   positionsAnalyzed;
+double totalPosition;                                       // lokale Gesamtposition total
+double longPosition;                                        //                       long
+double shortPosition;                                       //                       short
 
-double totalPosition;                                       // Gesamtposition total
-double longPosition;                                        //                long
-double shortPosition;                                       //                short
+bool   isLocalPosition;
 
 double local.position.conf    [][2];                        // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
 int    local.position.types   [][2];                        // Positionsdetails:           = {PositionType, DirectionType}
@@ -59,6 +58,8 @@ double remote.position.data   [][4];
 string positions.fontName     = "MS Sans Serif";
 int    positions.fontSize     = 8;
 color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
+
+bool   positionsAnalyzed;
 
 
 // QuickChannel
@@ -398,9 +399,9 @@ bool UpdatePositions() {
 
    // (1) Gesamtpositionsanzeige unten rechts
    string strPosition;
-   if      (!isPosition   ) strPosition = " ";
-   else if (!totalPosition) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
-   else                     strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " lot");
+   if      (!isLocalPosition) strPosition = " ";
+   else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   else                       strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " lot");
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -486,7 +487,7 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col0",   strTypes[remote.position.types[i][1]],                                                                  positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data[i][I_DIRECTLOTSIZE], ".+") +" units",                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(remote.position.data[i][I_BREAKEVEN], 2),                                                     positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(remote.position.data[i][I_BREAKEVEN], SubPipPriceFormat),                                           positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
          ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                        positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
       }
@@ -681,8 +682,8 @@ bool AnalyzePositions() {
       ArrayResize(sortKeys, n);
       orders = n;
    }
-   totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
-   isPosition    = (longPosition || shortPosition);
+   totalPosition   = NormalizeDouble(longPosition - shortPosition, 2);
+   isLocalPosition = (longPosition || shortPosition);
 
 
    // (2) P/L detektierter LFX-Positionen per QuickChannel an LFX-Terminal schicken (nur, wenn sich der Wert seit der letzten Message geändert hat)
@@ -701,8 +702,8 @@ bool AnalyzePositions() {
             return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
       }
       if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
-         lfxMagics[i] = NULL;                                        // MagicNo zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
-         continue;
+         //lfxMagics[i] = NULL;                                        // MagicNo zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
+         //continue;
       }
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
@@ -721,7 +722,7 @@ bool AnalyzePositions() {
       }
    }
 
-   // (2.4) alle verschickten Werte in globaler Variable speichern
+   // (2.4) verschickte Werte in globaler Variable speichern
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // Marker aus (2.1) verwenden: MagicNumbers unveränderter Werte wurden zurückgesetzt
       if (lfxMagics[i] != 0) {
@@ -740,7 +741,7 @@ bool AnalyzePositions() {
       ArrayResize(local.position.data,  0);
    }
 
-   if (isPosition) {
+   if (isLocalPosition) {
       // (3.1) offene lokale Position, individuelle Konfiguration einlesen (Remote-Positionen werden ignoriert)
       if (ArrayRange(local.position.conf, 0)==0) /*&&*/ if (!ReadLocalPositionConfig()) {
          positionsAnalyzed = !last_error;                            // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
@@ -834,13 +835,13 @@ bool AnalyzePositions() {
 
          while (i < lenValues) {
             pos = StringFind(values, TAB, i);
-            if (pos == -1) {                                         // kein weiterer Separator
+            if (pos == -1) {                                         // kein weiterer Message-Separator
                if (!StorePosition.QC_Message(StringSubstr(values, i)))
                   return(false);
                //ArrayUnshiftString(lines, StringSubstr(values, i));
                break;
             }
-            else if (pos != i) {                                     // Separator-Value-Separator
+            else if (pos != i) {                                     // Separator-Message-Separator
                if (!StorePosition.QC_Message(StringSubstr(values, i, pos-i)))
                   return(false);
                //ArrayUnshiftString(lines, StringSubstr(values, i, pos-i));
@@ -1520,7 +1521,7 @@ bool StorePosition.QC_Message(string message) {
    int from=0, to=StringFind(message, ",");                         if (to <= from)   return(!catch("StorePosition.QC_Message(1)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(!catch("StorePosition.QC_Message(2)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   // MagicNumber, übernimmt die Funktion eines eindeutigen Tickets für die gesamte Position
+   // MagicNumber, übernimmt die Funktion eines eindeutigen Tickets für die Gesamtposition
    from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(!catch("StorePosition.QC_Message(3)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(!catch("StorePosition.QC_Message(4)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -1532,11 +1533,18 @@ bool StorePosition.QC_Message(string message) {
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
       // bei Mißerfolg Positionsdetails aus "remote_positions.ini" auslesen
-      int    orderType, iNull;
-      double orderUnits, openPrice, dNull;
-      string sNull = "";
-
-      if (!ReadLfxRemotePosition(account, ticket, iNull, orderType, dNull, orderUnits, openPrice, dNull, dNull, iNull, dNull, sNull))
+      int      orderType;
+      double   units;
+      string   symbol = "";
+      datetime openTime;
+      double   openPrice;
+      double   stopLoss;
+      double   takeProfit;
+      datetime closeTime;
+      double   closePrice;
+      //double profit;
+      string   comment = "";
+      if (!LFX.ReadRemotePosition(account, ticket, orderType, units, symbol, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, comment))
          return(false);
 
       // Positionsdetails zu Remote-Positionen hinzufügen
@@ -1548,36 +1556,13 @@ bool StorePosition.QC_Message(string message) {
       remote.position.tickets[pos]                  = ticket;
       remote.position.types  [pos][0]               = TYPE_DEFAULT;
       remote.position.types  [pos][1]               = orderType;
-      remote.position.data   [pos][I_DIRECTLOTSIZE] = LFX.GetUnits(ticket);
+      remote.position.data   [pos][I_DIRECTLOTSIZE] = units;
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
       remote.position.data   [pos][I_BREAKEVEN    ] = openPrice;
    }
    // P/L aktualisieren
    remote.position.data      [pos][I_PROFIT       ] = profit;
 
-   return(true);
-}
-
-
-/**
- * Liest die Orderdetails der angegebenen LFX-Remote-Position in die übergebenen Variablen ein.
- *
- * @param  int       account     - AccountNumber der einzulesenden Position
- * @param  int       magicNumber - MagicNumber der einzulesenden Position
- * @param  datetime &openTime    - Variable zur Aufnahme der OrderOpenTime
- * @param  int      &orderType   - Variable zur Aufnahme des OrderTypes
- * @param  double   &orderLots   - Variable zur Aufnahme der OrderLotsize
- * @param  double   &orderUnits  - Variable zur Aufnahme der OrderUnits
- * @param  double   &openPrice   - Variable zur Aufnahme des OpenPrice
- * @param  double   &stopLoss    - Variable zur Aufnahme des StopLoss
- * @param  double   &takeProfit  - Variable zur Aufnahme des TakeProfit
- * @param  datetime &closeTime   - Variable zur Aufnahme der OrderCloseTime
- * @param  double   &orderProfit - Variable zur Aufnahme des OrderProfits
- * @param  string   &comment     - Variable zur Aufnahme des OrderComments
- *
- * @return bool - Erfolgsstatus
- */
-bool ReadLfxRemotePosition(int account, int magicNumber, datetime &openTime, int &orderType, double &orderLots, double &orderUnits, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &orderProfit, string &comment) {
    return(true);
 }
 
