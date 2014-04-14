@@ -286,10 +286,12 @@
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
-   int      GetIniSectionNames(string fileName, string names[]);
-   int      GetIniKeys(string fileName, string section, string keys[]);
+   int      GetIniSections(string fileName, string names[]);
+   bool     IsIniSection(string fileName, string section);
+   int      GetIniKeys(string fileName, string section, string names[]);
    string   GetIniString(string fileName, string section, string key, string defaultValue);
    string   GetRawIniString(string fileName, string section, string key, string defaultValue);
+   bool     IsIniKey(string fileName, string section, string key);
    int      DeleteIniKey(string fileName, string section, string key);
 
 
