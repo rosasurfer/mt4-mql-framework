@@ -42,7 +42,7 @@ int    remote.position.tickets[];                           // Remote-Positionsd
 int    remote.position.types  [][2];                        // werden bei jedem Tick zurückgesetzt und neu eingelesen.
 double remote.position.data   [][4];
 
-#define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (lokal oder remote)
+#define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (local oder remote)
 #define TYPE_CUSTOM        1                                //                individuell konfigurierte reale Position
 #define TYPE_VIRTUAL       2                                //                individuell konfigurierte virtuelle Position (existiert nicht)
 
@@ -50,7 +50,7 @@ double remote.position.data   [][4];
 #define TYPE_SHORT         2
 #define TYPE_HEDGE         3
 
-#define I_DIRECTLOTSIZE    0                                // Arrayindizes von positions.data[]
+#define I_DIRECTLOTSIZE    0                                // Arrayindizes von position.data[]
 #define I_HEDGEDLOTSIZE    1
 #define I_BREAKEVEN        2
 #define I_PROFIT           3
@@ -481,16 +481,12 @@ bool UpdatePositions() {
 
    for (i=remotePositions-1; i >= 0; i--) {
       line++;
-      if (remote.position.types[i][1] == TYPE_HEDGE) {
-      }
-      else {
-         ObjectSetText(label.position +".line"+ line +"_col0",   strTypes[remote.position.types[i][1]],                                                                  positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data[i][I_DIRECTLOTSIZE], ".+") +" units",                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(remote.position.data[i][I_BREAKEVEN], SubPipPriceFormat),                                           positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                        positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-      }
+      ObjectSetText(label.position +".line"+ line +"_col0",   strTypes[remote.position.types[i][1]],                                                                     positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+      ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data[i][I_DIRECTLOTSIZE], ".+") +" units",                                       positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+      ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                       positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+      ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(remote.position.data[i][I_BREAKEVEN], SubPipPriceFormat),                                        positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+      ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                   positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
+      ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                           positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
    }
    return(!catch("UpdatePositions(2)"));
 }
@@ -814,9 +810,6 @@ bool AnalyzePositions() {
 
    // (3.6) keine lokalen Positionen
    else if (isLfxChart) {
-      // Debugging: Comment-Anzeige aller Messages
-      //string lines[];
-
       // per QuickChannel eingehende Remote-Positionsdetails auswerten
       if (!hLfxReceiverChannel) /*&&*/ if (!StartQCReceiver())
          return(false);
@@ -838,13 +831,11 @@ bool AnalyzePositions() {
             if (pos == -1) {                                         // kein weiterer Message-Separator
                if (!StorePosition.QC_Message(StringSubstr(values, i)))
                   return(false);
-               //ArrayUnshiftString(lines, StringSubstr(values, i));
                break;
             }
             else if (pos != i) {                                     // Separator-Message-Separator
                if (!StorePosition.QC_Message(StringSubstr(values, i, pos-i)))
                   return(false);
-               //ArrayUnshiftString(lines, StringSubstr(values, i, pos-i));
             }
             i = pos + 1;
          }                                                           // aufeinanderfolgende (pos == i) und abschließende Separatoren (i == lenValues) werden ignoriert
@@ -854,11 +845,6 @@ bool AnalyzePositions() {
          if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("AnalyzePositions(9)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") doesn't exist",                       ERR_WIN32_ERROR));
                                                return(!catch("AnalyzePositions(10)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
       }
-      /*
-      if (ArraySize(lines) > 40)
-         ArrayResize(lines, 40);
-      Comment(NL, __NAME__, ":  \"", lfxReceiverChannelName, "\"", NL, NL, JoinStrings(lines, NL));
-      */
    }
 
    positionsAnalyzed = true;

@@ -81,7 +81,7 @@ int onInitRemove() {
 
 
 /**
- * auﬂerhalb iCustom(): nach Recompile, vorhandener Indikator, kein Input-Dialog
+ * auﬂerhalb iCustom(): nach Recompilation, vorhandener Indikator, kein Input-Dialog
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
