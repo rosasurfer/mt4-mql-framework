@@ -54,7 +54,7 @@ int onStart() {
    // (3) .ini-Abschnitt des nächsten anzuzeigenden Accounts suchen
    string file = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\remote_positions.ini";
    string sections[];
-   int sectionsSize = GetIniSectionNames(file, sections);
+   int sectionsSize = GetIniSections(file, sections);
 
    int pos  = SearchStringArray(sections, account);
    int next = pos + 1;                                               // Zeiger auf den jeweils nächsten Abschnitt setzen
