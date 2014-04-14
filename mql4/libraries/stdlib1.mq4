@@ -1258,7 +1258,7 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
  *
  * @return int - Anzahl der gefundenen Abschnitte oder -1, falls ein Fehler auftrat
  */
-int GetIniSectionNames(string fileName, string names[]) {
+int GetIniSections(string fileName, string names[]) {
    int bufferSize = 200;
    int buffer[]; InitializeByteBuffer(buffer, bufferSize);
 
@@ -1275,7 +1275,7 @@ int GetIniSectionNames(string fileName, string names[]) {
    if (!chars) length = ArrayResize(names, 0);                       // keine Sections gefunden (File nicht gefunden oder leer)
    else        length = ExplodeStrings(buffer, names);
 
-   if (!catch("GetIniSectionNames"))
+   if (!catch("GetIniSections(1)"))
       return(length);
    return(-1);
 }
@@ -1292,6 +1292,39 @@ int GetIniSectionNames(string fileName, string names[]) {
  */
 int GetIniKeys(string fileName, string section, string keys[]) {
    return(GetIniKeys.2(fileName, section, keys));
+}
+
+
+/**
+ * Ob ein Abschnitt in einer .ini-Datei existiert. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string fileName - Name der .ini-Datei
+ * @param  string section  - Name des Abschnitts
+ *
+ * @return bool
+ */
+bool IsIniSection(string fileName, string section) {
+   string names[];
+   if (GetIniSections(fileName, names) > 0)
+      return(StringInArrayI(names, section));
+   return(false);
+}
+
+
+/**
+ * Ob ein Schlüssel in einer .ini-Datei existiert. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string fileName - Name der .ini-Datei
+ * @param  string section  - Abschnitt des Eintrags
+ * @param  string key      - Name des Schlüssels
+ *
+ * @return bool
+ */
+bool IsIniKey(string fileName, string section, string key) {
+   string keys[];
+   if (GetIniKeys.2(fileName, section, keys) > 0)
+      return(StringInArrayI(keys, key));
+   return(false);
 }
 
 
@@ -2881,7 +2914,7 @@ bool DoubleInArray(double haystack[], double needle) {
 
 
 /**
- * Prüft, ob ein String in einem Array enthalten ist (Groß-/Kleinschreibung wird beachtet).
+ * Prüft, ob ein String in einem Array enthalten ist. Groß-/Kleinschreibung wird beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -2895,7 +2928,7 @@ bool StringInArray(string haystack[], string needle) {
 
 
 /**
- * Prüft, ob ein String in einem Array enthalten ist (Groß-/Kleinschreibung wird nicht beachtet).
+ * Prüft, ob ein String in einem Array enthalten ist. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -2969,7 +3002,7 @@ int SearchDoubleArray(double haystack[], double needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück (Groß-/Kleinschreibung wird beachtet).
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück. Groß-/Kleinschreibung wird beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -2989,7 +3022,7 @@ int SearchStringArray(string haystack[], string needle) {
 
 
 /**
- * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück (Groß-/Kleinschreibung wird nicht beachtet).
+ * Durchsucht ein String-Array nach einem Wert und gibt dessen Index zurück. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string haystack[] - zu durchsuchendes Array
  * @param  string needle     - zu suchender Wert
@@ -8997,7 +9030,7 @@ datetime ServerToGMT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFI
 
 
 /**
- * Prüft, ob ein String einen Substring enthält.  Groß-/Kleinschreibung wird beachtet.
+ * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird beachtet.
  *
  * @param  string object    - zu durchsuchender String
  * @param  string substring - zu suchender Substring
@@ -9012,7 +9045,7 @@ bool StringContains(string object, string substring) {
 
 
 /**
- * Prüft, ob ein String einen Substring enthält.  Groß-/Kleinschreibung wird nicht beachtet.
+ * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string object    - zu durchsuchender String
  * @param  string substring - zu suchender Substring
@@ -9027,7 +9060,7 @@ bool StringIContains(string object, string substring) {
 
 
 /**
- * Vergleicht zwei Strings ohne Berücksichtigung der Groß-/Kleinschreibung.
+ * Vergleicht zwei Strings ohne Berücksichtigung von Groß-/Kleinschreibung.
  *
  * @param  string string1
  * @param  string string2

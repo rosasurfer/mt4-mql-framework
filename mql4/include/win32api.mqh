@@ -28,7 +28,7 @@
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetModuleHandleA(string lpModuleName);
    int  GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
-   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  stdlib::GetIniSectionNames()
+   int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  stdlib::GetIniSections()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    int  GetProcAddress(int hModule, string lpProcedureName);
    void GetStartupInfoA(int lpStartupInfo[]);
