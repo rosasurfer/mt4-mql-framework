@@ -27,7 +27,7 @@ int onDeinit() {
 
 
 /**
- * auﬂerhalb iCustom(): vor Parameter‰nderung
+ * auﬂerhalb iCustom(): bei Parameter‰nderung
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
@@ -42,7 +42,7 @@ int onDeinitParameterChange() {
 
 
 /**
- * auﬂerhalb iCustom(): vor Symbol- oder Timeframewechsel
+ * auﬂerhalb iCustom(): bei Symbol- oder Timeframewechsel
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
@@ -68,7 +68,7 @@ int onDeinitRemove() {
 
 
 /**
- * auﬂerhalb iCustom(): nach Recompilation, vor Re-Initialisierung
+ * auﬂerhalb iCustom(): bei Recompilation
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
