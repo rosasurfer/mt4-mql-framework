@@ -37,7 +37,7 @@ double openPositions.units     [];
 int    openPositions.instanceId[];
 int    openPositions.counter   [];
 
-bool   openPositions.updated = false;                                // Flag zur Signalisierung, ob die offenen Positionen bereits eingelesen wurden
+bool   openPositions.updated = false;                                // Flag, das signalisiert, ob die vorhandenen offenen Positionen bereits eingelesen wurden
 
 
 /**
@@ -68,15 +68,15 @@ int onInit() {
 
    // (2) Leverage-Konfiguration einlesen und validieren
    if (!IsGlobalConfigKey("Leverage", "Basket"))
-      return(catch("onInit(4)   Missing global MetaTrader configuration value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(4)   Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
 
    value = GetGlobalConfigString("Leverage", "Basket", "");
    int n = StringFind(value, ";");                                   // ggf. vorhandenen Kommentar entfernen
    if (n > -1) value = StringTrimRight(StringLeft(value, n));
    if (!StringIsNumeric(value))
-      return(catch("onInit(5)   Invalid MetaTrader configuration value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      return(catch("onInit(5)   Invalid MetaTrader config value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1) return(catch("onInit(6)   Invalid MetaTrader configuration value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1) return(catch("onInit(6)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
    return(catch("onInit(7)"));
 }
@@ -89,7 +89,7 @@ int onInit() {
  */
 int onStart() {
    string symbols    [6];
-   double perfectLots[6], roundedLots[6];
+   double preciseLots[6], roundedLots[6];
    int    directions [6];
    int    tickets    [6];
 
@@ -153,8 +153,8 @@ int onStart() {
       // (2.4) Lotsize berechnen (dabei immer abrunden)
       double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / 6;                              // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
-      perfectLots[i] = Units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
-      roundedLots[i] = NormalizeDouble(MathFloor(perfectLots[i]/lotStep) * lotStep, lotStepDigits);
+      preciseLots[i] = Units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
+      roundedLots[i] = NormalizeDouble(MathFloor(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
 
       // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
       if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung max. 6.7% je Schritt
@@ -177,7 +177,7 @@ int onStart() {
       // (2.6) bei zu geringer Equity Leverage erhöhen und Daten für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
-         overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", perfectLots[i], " lot");
+         overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
    }
 
@@ -258,14 +258,34 @@ int onStart() {
    if (__LOG) log("onStart(10)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) Position in ".\experts\files\LiteForex\remote_positions.ini" speichern
+   // (9) Position im alten Format in "experts\files\LiteForex\remote_positions.ini" speichern
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = currency +"."+ counter;
-   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".+") +" | "+ DoubleToStr(openPrice, lfxDigits);
+   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".1+") +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
+
+   // (10) Position im neuen Format in "experts\files\LiteForex\remote_positions.ini" speichern
+   //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
+   string sLabel       = currency +"."+ counter;
+   string sOrderType   = ifString(direction==OP_BUY, "L", "S");
+   string sOrderUnits  = NumberToStr(Units, ".1+");
+   string sOpenTime    = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL);
+   string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);
+   string sStopLoss    = "0";
+   string sTakeProfit  = "0";
+   string sCloseTime   = "0";
+   string sClosePrice  = "0";
+   string sOrderProfit = "0";
+   string sLastUpdate  = sOpenTime;
+   key   = magicNumber;
+   value = sLabel +","+ sOrderType +","+ sOrderUnits +","+ sOpenTime +","+ sOpenPrice +","+ sStopLoss +","+ sTakeProfit +","+ sCloseTime +","+ sClosePrice +","+ sOrderProfit +","+ sLastUpdate;
+
+   if (!WritePrivateProfileStringA(section, key, value, file))
+      return(catch("onStart(12)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(last_error);
 }
@@ -338,7 +358,7 @@ int CreateMagicNumber(int counter) {
  * @return int - Zähler oder -1, falls ein Fehler auftrat
  */
 int GetPositionCounter() {
-   // Sicherstellen, daß die offenen Positionen eingelesen wurden
+   // Sicherstellen, daß die vorhandenen offenen Positionen eingelesen wurden
    if (!openPositions.updated)
       if (!ReadOpenPositions())
          return(-1);
