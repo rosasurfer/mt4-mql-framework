@@ -85,7 +85,7 @@ int LFX.GetCounter(int magicNumber) {
 
 
 /**
- * Liest die Orderdetails der angegebenen LFX-Remote-Position in die übergebenen Variablen ein.
+ * Ermittelt die Orderdetails der angegebenen LFX-Remote-Position.
  *
  * @param  int       account     - AccountNumber der einzulesenden Position
  * @param  int       ticket      - Ticket der LFX-Position (entspricht der MagicNumber der einzelnen Teilpositionen)
@@ -101,9 +101,11 @@ int LFX.GetCounter(int magicNumber) {
  * @param  double   &orderProfit - Variable zur Aufnahme des OrderProfits
  * @param  datetime &lastUpdate  - Variable zur Aufnahme des Zeitpunkts des letzten Updates
  *
- * @return bool - Erfolgsstatus
+ * @return int - Erfolgsstatus: +1, wenn die Positionsdaten erfolgreich ermittelt wurden
+ *                              -1, wenn keine entsprechende Position gefunden wurde
+ *                               0, falls ein Fehler auftrat
  */
-bool LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderType, double &orderUnits, datetime &openTime, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &closePrice, double &orderProfit, datetime &lastUpdate) {
+int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderType, double &orderUnits, datetime &openTime, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &closePrice, double &orderProfit, datetime &lastUpdate) {
    string sections[], section, file=StringConcatenate(TerminalPath(), "\\experts\\files\\", ShortAccountCompany(), "\\remote_positions.ini");
    for (int i=GetIniSections(file, sections)-1; i >= 0; i--) {
       if (StringEndsWith(sections[i], "."+ account)) {
@@ -111,19 +113,22 @@ bool LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTy
          break;
       }
    }
-   if (!StringLen(section))                     return(!catch("LFX.ReadRemotePosition(1)   missing config value [*."+ account +"]->"+ ticket +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringLen(section)) {
+      return(_int(-1, debug("LFX.ReadRemotePosition(0.1)   missing config value [*."+ account +"]->"+ ticket +" in \""+ file +"\"")));
+   }
 
    string value = GetIniString(file, section, ticket, "");
    if (!StringLen(value)) {
-      if (IsIniKey(file, section, ticket))      return(!catch("LFX.ReadRemotePosition(2)   invalid config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                                                return(!catch("LFX.ReadRemotePosition(3)   missing config value ["+ section +"]->"+ ticket +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (IsIniKey(file, section, ticket))      return(_NULL(catch("LFX.ReadRemotePosition(1)   invalid config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+
+      return(_int(-1, debug("LFX.ReadRemotePosition(0.2)   missing config value ["+ section +"]->"+ ticket +" in \""+ file +"\"")));
    }
 
    //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
 
    // (1) .ini-Eintrag auslesen und validieren
    string sValue, values[];
-   if (Explode(value, ",", values, NULL) != 11) return(!catch("LFX.ReadRemotePosition(4)   invalid config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (Explode(value, ",", values, NULL) != 11) return(_NULL(catch("LFX.ReadRemotePosition(2)   invalid config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // Label
    sValue = StringTrim(values[0]);
@@ -133,70 +138,73 @@ bool LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTy
    sValue = StringToUpper(StringTrim(values[1]));
    if      (sValue == "L") int _orderType = OP_LONG;
    else if (sValue == "S")     _orderType = OP_SELL;
-   else                                         return(!catch("LFX.ReadRemotePosition(5)   invalid order type \""+ StringTrim(values[1]) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else                                         return(_NULL(catch("LFX.ReadRemotePosition(3)   invalid order type \""+ StringTrim(values[1]) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // OrderUnits
    sValue = StringTrim(values[2]);
-   if (!StringIsNumeric(sValue))                return(!catch("LFX.ReadRemotePosition(6)   invalid unit size \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadRemotePosition(4)   invalid unit size \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _orderUnits = StrToDouble(sValue);
-   if (LE(_orderUnits, 0))                      return(!catch("LFX.ReadRemotePosition(7)   invalid unit size \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (LE(_orderUnits, 0))                      return(_NULL(catch("LFX.ReadRemotePosition(5)   invalid unit size \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // OpenTime_GMT
    sValue = StringTrim(values[3]);
    if (StringIsDigit(sValue)) datetime _openTime = StrToInteger(sValue);
    else                                _openTime =    StrToTime(sValue);
-   if (_openTime <= 0)                          return(!catch("LFX.ReadRemotePosition(8)   invalid open time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (_openTime <= 0)                          return(_NULL(catch("LFX.ReadRemotePosition(6)   invalid open time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    _openTime = GMTToServerTime(_openTime);
-   if (_openTime > TimeCurrent())               return(!catch("LFX.ReadRemotePosition(9)   invalid open time \""+ TimeToStr(_openTime, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (_openTime > TimeCurrent())               return(_NULL(catch("LFX.ReadRemotePosition(7)   invalid open time \""+ TimeToStr(_openTime, TIME_FULL) +"\" (TimeCurrent=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+
+   // ERROR: LFXJPY,M5  ChartInfos::LFX.ReadRemotePosition(7)   invalid open time "2014.04.16 00:20:38" (TimeCurrent="2014.04.16 00:20:37") in config value [IC Markets.{account-no}]->429568354 = "JPY.2,L,1.0,2014.04.15 21:20:38,59.045,0,0,0,0,0,2014.04.15 21:20:38" in "E:\Trading\MetaTrader\A2\experts\files\LiteForex\remote_positions.ini"  [5003 - invalid configuration value]
+
 
    // OpenPrice
    sValue = StringTrim(values[4]);
-   if (!StringIsNumeric(sValue))                return(!catch("LFX.ReadRemotePosition(10)   invalid open price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadRemotePosition(8)   invalid open price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _openPrice = StrToDouble(sValue);
-   if (LE(_openPrice, 0))                       return(!catch("LFX.ReadRemotePosition(11)   invalid open price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (LE(_openPrice, 0))                       return(_NULL(catch("LFX.ReadRemotePosition(9)   invalid open price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // StopLoss
    sValue = StringTrim(values[5]);
-   if (!StringIsNumeric(sValue))                return(!catch("LFX.ReadRemotePosition(12)   invalid stoploss \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadRemotePosition(10)   invalid stoploss \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _stopLoss = StrToDouble(sValue);
-   if (LT(_stopLoss, 0))                        return(!catch("LFX.ReadRemotePosition(13)   invalid stoploss \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (LT(_stopLoss, 0))                        return(_NULL(catch("LFX.ReadRemotePosition(11)   invalid stoploss \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // TakeProfit
    sValue = StringTrim(values[6]);
-   if (!StringIsNumeric(sValue))                return(!catch("LFX.ReadRemotePosition(14)   invalid takeprofit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadRemotePosition(12)   invalid takeprofit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _takeProfit = StrToDouble(sValue);
-   if (LT(_takeProfit, 0))                      return(!catch("LFX.ReadRemotePosition(15)   invalid takeprofit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (LT(_takeProfit, 0))                      return(_NULL(catch("LFX.ReadRemotePosition(13)   invalid takeprofit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // CloseTime_GMT
    sValue = StringTrim(values[7]);
    if (StringIsDigit(sValue)) datetime _closeTime = StrToInteger(sValue);
    else                                _closeTime =    StrToTime(sValue);
-   if      (_closeTime < 0)                     return(!catch("LFX.ReadRemotePosition(16)   invalid close time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if      (_closeTime < 0)                     return(_NULL(catch("LFX.ReadRemotePosition(14)   invalid close time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    else if (_closeTime > 0) {
       _closeTime = GMTToServerTime(_closeTime);
-      if (_closeTime > TimeCurrent())           return(!catch("LFX.ReadRemotePosition(17)   invalid close time \""+ TimeToStr(_closeTime, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (_closeTime > TimeCurrent())           return(_NULL(catch("LFX.ReadRemotePosition(15)   invalid close time \""+ TimeToStr(_closeTime, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    }
 
    // ClosePrice
    sValue = StringTrim(values[8]);
-   if (!StringIsNumeric(sValue))                return(!catch("LFX.ReadRemotePosition(18)   invalid close price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadRemotePosition(16)   invalid close price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _closePrice = StrToDouble(sValue);
-   if (LT(_closePrice, 0))                      return(!catch("LFX.ReadRemotePosition(19)   invalid close price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-   if (_closeTime==0 && NE(_closePrice, 0))     return(!catch("LFX.ReadRemotePosition(20)   close time/price mis-match 0/"+ NumberToStr(_closePrice, ".+") +" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-   if (_closeTime!=0 && EQ(_closePrice, 0))     return(!catch("LFX.ReadRemotePosition(21)   close time/price mis-match "+ TimeToStr(_closeTime, TIME_FULL) +"/0 in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (LT(_closePrice, 0))                      return(_NULL(catch("LFX.ReadRemotePosition(17)   invalid close price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_closeTime==0 && NE(_closePrice, 0))     return(_NULL(catch("LFX.ReadRemotePosition(18)   close time/price mis-match 0/"+ NumberToStr(_closePrice, ".+") +" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_closeTime!=0 && EQ(_closePrice, 0))     return(_NULL(catch("LFX.ReadRemotePosition(19)   close time/price mis-match "+ TimeToStr(_closeTime, TIME_FULL) +"/0 in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // Profit
    sValue = StringTrim(values[9]);
-   if (!StringIsNumeric(sValue))                return(!catch("LFX.ReadRemotePosition(22)   invalid order profit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadRemotePosition(20)   invalid order profit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _orderProfit = StrToDouble(sValue);
 
    // LastUpdate_GMT
    sValue = StringTrim(values[10]);
    if (StringIsDigit(sValue)) datetime _lastUpdate = StrToInteger(sValue);
    else                                _lastUpdate =    StrToTime(sValue);
-   if (_lastUpdate <= 0)                        return(!catch("LFX.ReadRemotePosition(23)   invalid last update time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (_lastUpdate <= 0)                        return(_NULL(catch("LFX.ReadRemotePosition(21)   invalid last update time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    _lastUpdate = GMTToServerTime(_lastUpdate);
-   if (_lastUpdate > TimeCurrent())             return(!catch("LFX.ReadRemotePosition(24)   invalid last update time \""+ TimeToStr(_lastUpdate, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (_lastUpdate > TimeCurrent())             return(_NULL(catch("LFX.ReadRemotePosition(22)   invalid last update time \""+ TimeToStr(_lastUpdate, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
 
    // (2) übergebene Variablen erst nach vollständiger Validierung mit ausgelesenen Daten beschreiben
@@ -212,9 +220,8 @@ bool LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTy
    orderProfit = _orderProfit;
    lastUpdate  = _lastUpdate;
 
-   debug("LFX.ReadRemotePosition()   ticket="+ ticket +" gelesen");
-
-   return(true);
+   debug("LFX.ReadRemotePosition(0.3)   ticket="+ ticket +" gelesen");
+   return(1);
 }
 
 
