@@ -829,12 +829,12 @@ bool AnalyzePositions() {
          while (i < lenValues) {
             pos = StringFind(values, TAB, i);
             if (pos == -1) {                                         // kein weiterer Message-Separator
-               if (!StorePosition.QC_Message(StringSubstr(values, i)))
+               if (!ProcessQCMessage(StringSubstr(values, i)))
                   return(false);
                break;
             }
             else if (pos != i) {                                     // Separator-Message-Separator
-               if (!StorePosition.QC_Message(StringSubstr(values, i, pos-i)))
+               if (!ProcessQCMessage(StringSubstr(values, i, pos-i)))
                   return(false);
             }
             i = pos + 1;
@@ -1494,44 +1494,73 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
 
 
 /**
- * Speichert die in der übergebenen QuickChannel-Message enthaltenen Positionsdetails in den globalen Variablen remote.position.types[] und remote.position.data[].
+ * Verarbeitet die übergebene QuickChannel-Message.
  *
  * @param  string message - QuickChannel-Message, Format: "iAccountNumber,iMagicNumber,dProfit"
  *
- * @return bool - Erfolgsstatus
+ * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Wird keine zur Message passende Remote-Position gefunden, wird die Message ignoriert.
+ *                               Auch dies ist eine erfolgreiche Verarbeitung.
  */
-bool StorePosition.QC_Message(string message) {
+bool ProcessQCMessage(string message) {
    // NOTE: Anstatt die Message mit Explode() zu zerlegen, wird sie zur Beschleunigung manuell geparst.
-
    // AccountNumber
-   int from=0, to=StringFind(message, ",");                         if (to <= from)   return(!catch("StorePosition.QC_Message(1)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
-   int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(!catch("StorePosition.QC_Message(2)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   int from=0, to=StringFind(message, ",");                         if (to <= from)   return(!catch("ProcessQCMessage(1)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(!catch("ProcessQCMessage(2)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // MagicNumber, übernimmt die Funktion eines eindeutigen Tickets für die Gesamtposition
-   from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(!catch("StorePosition.QC_Message(3)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(!catch("StorePosition.QC_Message(4)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(!catch("ProcessQCMessage(3)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(!catch("ProcessQCMessage(4)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // aktueller P/L-Value
-   from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(!catch("StorePosition.QC_Message(5)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(!catch("ProcessQCMessage(5)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    double profit = StrToDouble(StringSubstr(message, from));
 
    // Ticket in vorhandenen Remote-Positionen suchen
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
-      // bei Mißerfolg Positionsdetails aus "remote_positions.ini" auslesen
-      string   label = "";
-      int      orderType;
-      double   units;
-      datetime openTime;
-      double   openPrice;
-      double   stopLoss;
-      double   takeProfit;
-      datetime closeTime;
-      double   closePrice;
-      //double profit;
-      datetime lastUpdate;
-      if (!LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate))
-         return(false);
+      // bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
+      int ignoredTickets[][3], timeToIgnore=10;                      // Ignorier-Zeitdauer in Sekunden
+      #define I_ACCOUNT 0
+      #define I_TICKET  1
+      #define I_TIME    2
+
+      int ignoredSize = ArrayRange(ignoredTickets, 0);
+      for (int i=0; i < ignoredSize; i++) {
+         if (ignoredTickets[i][I_TICKET] == ticket) {
+            if (ignoredTickets[i][I_ACCOUNT] == account) {
+               if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal()) {
+                  debug("ProcessQCMessage(0.1)   ticket "+ ticket +" wird ignoriert");
+                  return(true);                                      // Ticket wurde und wird weiterhin ignoriert
+               }
+               debug("ProcessQCMessage(0.2)   ticket "+ ticket +" wurde ignoriert, Zeitdauer abgelaufen");
+               break;                                                // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
+            }
+         }
+      }
+      if (i < ignoredSize) {                                         // break wurde getriggert, Ticket aus den zu ignorierenden Tickets löschen
+         for (int n=i+1; n < ignoredSize; n++) {
+            ignoredTickets[n-1][I_ACCOUNT] = ignoredTickets[n][I_ACCOUNT];
+            ignoredTickets[n-1][I_TICKET ] = ignoredTickets[n][I_TICKET ];
+            ignoredTickets[n-1][I_TIME   ] = ignoredTickets[n][I_TIME   ];
+         }
+         ArrayResize(ignoredTickets, ignoredSize-1);
+         ignoredSize--;
+      }
+
+      // Ticket in "remote_positions.ini" suchen und Details auslesen
+      string label=""; int orderType; double units; datetime openTime; double openPrice; double stopLoss; double takeProfit; datetime closeTime; double closePrice; datetime lastUpdate;
+      int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+      if (result == 0)
+         return(false);                                                 // Fehler
+
+      if (result < 0) {                                                 // Ticket nicht gefunden (-1): Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
+         ArrayResize(ignoredTickets, ignoredSize+1);
+         ignoredTickets[ignoredSize][I_ACCOUNT] = account;
+         ignoredTickets[ignoredSize][I_TICKET ] = ticket;
+         ignoredTickets[ignoredSize][I_TIME   ] = TimeLocal();
+         debug("ProcessQCMessage(0.3)   ticket "+ ticket +" wird zukünftig ignoriert");
+         return(true);
+      }
 
       // Positionsdetails zu Remote-Positionen hinzufügen
       pos = ArraySize(remote.position.tickets);
@@ -1541,8 +1570,8 @@ bool StorePosition.QC_Message(string message) {
 
       remote.position.tickets[pos]                  = ticket;
       remote.position.types  [pos][0]               = TYPE_DEFAULT;
-      remote.position.types  [pos][1]               = orderType + 1; // OP_LONG=0, OP_SHORT=1, TYPE_LONG=1, TYPE_SHORT=2
-      remote.position.data   [pos][I_DIRECTLOTSIZE] = units;
+      remote.position.types  [pos][1]               = orderType + 1;    // OP_LONG =0, TYPE_LONG =1
+      remote.position.data   [pos][I_DIRECTLOTSIZE] = units;            // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
       remote.position.data   [pos][I_BREAKEVEN    ] = openPrice;
    }
