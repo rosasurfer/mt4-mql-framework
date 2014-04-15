@@ -60,7 +60,6 @@ int onStart() {
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))      // FALSE: während des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
          break;
-
       if (LFX.IsMyOrder()) {
          if (OrderType() > OP_SELL)
             continue;
@@ -91,15 +90,17 @@ int onStart() {
             return(SetLastError(stdlib_GetLastError()));
          ArrayResize(oes, 0);
 
-         // TODO: erzielten ClosePrice() berechnen und ausgeben
+         // TODO: ClosePrice() berechnen und ausgeben
 
          // (3) Tickets aus ".\experts\files\LiteForex\remote_positions.ini" löschen
          string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
          string section = ShortAccountCompany() +"."+ AccountNumber();
          for (i=0; i < foundSize; i++) {
+            /*
             int error = DeleteIniKey(file, section, foundLabels[i]);
             if (IsError(error))
                return(SetLastError(error));
+            */
          }
       }
    }

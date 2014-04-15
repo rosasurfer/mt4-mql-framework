@@ -1519,9 +1519,9 @@ bool StorePosition.QC_Message(string message) {
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
       // bei Mißerfolg Positionsdetails aus "remote_positions.ini" auslesen
+      string   label = "";
       int      orderType;
       double   units;
-      string   symbol = "";
       datetime openTime;
       double   openPrice;
       double   stopLoss;
@@ -1530,8 +1530,7 @@ bool StorePosition.QC_Message(string message) {
       double   closePrice;
       //double profit;
       datetime lastUpdate;
-      string   comment = "";
-      if (!LFX.ReadRemotePosition(account, ticket, orderType, units, symbol, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate, comment))
+      if (!LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate))
          return(false);
 
       // Positionsdetails zu Remote-Positionen hinzufügen
@@ -1542,7 +1541,7 @@ bool StorePosition.QC_Message(string message) {
 
       remote.position.tickets[pos]                  = ticket;
       remote.position.types  [pos][0]               = TYPE_DEFAULT;
-      remote.position.types  [pos][1]               = orderType;
+      remote.position.types  [pos][1]               = orderType + 1; // OP_LONG=0, OP_SHORT=1, TYPE_LONG=1, TYPE_SHORT=2
       remote.position.data   [pos][I_DIRECTLOTSIZE] = units;
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
       remote.position.data   [pos][I_BREAKEVEN    ] = openPrice;
