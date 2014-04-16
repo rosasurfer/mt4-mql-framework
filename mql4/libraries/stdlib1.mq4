@@ -12207,6 +12207,27 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    }
 
 
+   /*
+   JPY.1, JPY.2, JPY.3
+   06:29:53 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose(13)   closing 18 mixed positions {13198193, 13199686, 13202127, 13198194, 13199687, 13202128, 13198196, 13199688, 13202129, 13198197, 13199689, 13202130, 13198199, 13199690, 13202131, 13198200, 13199691, 13202132}
+   06:29:53 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 AUDJPY positions {13198193, 13199686, 13202127}
+   06:29:54 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderCloseEx(24)   closed #13198193 Buy 0.12 AUDJPY at 95.61'4 "JPY.1" after 0.733 s
+   06:29:54 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 CADJPY positions {13198194, 13199687, 13202128}
+   06:29:54 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderCloseEx(24)   closed #13199687 Buy 0.12 CADJPY at 93.00'5 (instead of 93.00'7) "JPY.2" after 0.546 s (0.2 pip slippage)
+   06:29:54 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 CHFJPY positions {13198196, 13199688, 13202129}
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderCloseEx(24)   closed #13198196 Buy 0.1 CHFJPY at 116.06'2 "JPY.1" after 0.281 s
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 EURJPY positions {13198197, 13199689, 13202130}
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderCloseEx(24)   closed #13198197 Buy 0.08 EURJPY at 141.18'7 "JPY.1" after 0.296 s
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 GBPJPY positions {13198199, 13199690, 13202131}
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderCloseEx(24)   closed #13199690 Buy 0.06 GBPJPY at 170.91'0 "JPY.2" after 0.234 s
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 USDJPY positions {13198200, 13199691, 13202132}
+   06:29:55 stdlib1 CADJPY,M30: LFX.ClosePositions::stdlib1::OrderCloseEx(24)   closed #13198200 Buy 0.11 USDJPY at 102.19'0 "JPY.1" after 0.219 s
+   06:29:55 stdlib1 CADJPY,M30: ArrayInitialize function internal error
+   06:29:55 stdlib1 CADJPY,M30: ERROR:  LFX.ClosePositions::stdlib1::InitializeByteBuffer(4)  [4053 - undefined array error]
+   06:29:55 stdlib1 CADJPY,M30: ERROR:  LFX.ClosePositions::stdlib1::OrderMultiClose.Flattened(1)   invalid parameter tickets, size = 0  [4051 - invalid function parameter value]
+   */
+
+
    // (8) verbliebene Teilpositionen der glattgestellten Gruppen schließen
    int sizeOfFlats = ArraySize(flatSymbols);
    for (i=0; i < sizeOfFlats; i++) {
@@ -12332,6 +12353,15 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    }
    if (newTicket != 0)
       sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);               // neues Ticket hinzufügen
+
+
+   /*
+   3 mal comment="Test"
+   2014.04.16 06:48:43  GBPUSD,M30: ClosePositions::stdlib1::OrderMultiClose.OneSymbol(2)   closing 3 GBPUSD positions {13212491, 13212492, 13212495}
+   2014.04.16 06:48:43  GBPUSD,M30: ClosePositions::stdlib1::OrderMultiClose.Flatten(8)   flattening 3 GBPUSD positions {13212491, 13212492, 13212495}
+   2014.04.16 06:48:44  GBPUSD,M30: ClosePositions::stdlib1::OrderCloseEx(24)   closed #13212495 Buy 0.08 GBPUSD at 1.6723'7 "Test" after 0.686 s
+   2014.04.16 06:48:44  GBPUSD,M30: ERROR: ClosePositions::stdlib1::OrderMultiClose.Flattened(3)->SelectTicket()   ticket=-1  [4108 - invalid ticket]
+   */
 
 
    // (5) Teilpositionen auflösen
