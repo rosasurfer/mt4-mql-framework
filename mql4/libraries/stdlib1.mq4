@@ -12072,7 +12072,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    // (1) Beginn Parametervalidierung --
    // tickets
    int sizeOfTickets = ArraySize(tickets);
-   if (sizeOfTickets == 0)                                     return(_false(oes.setError(oes, -1, catch("OrderMultiClose(1)   invalid size of parameter tickets = "+ IntsToStr(tickets, NULL), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
+   if (sizeOfTickets == 0)                                     return(_false(oes.setError(oes, -1, catch("OrderMultiClose(1)   invalid size "+ sizeOfTickets +" of parameter tickets = "+ TicketsToStr(tickets, NULL), ERR_INVALID_FUNCTION_PARAMVALUE, O_POP))));
    OrderPush("OrderMultiClose(2)");
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrderMultiClose(3)", NULL, O_POP))
@@ -12131,7 +12131,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (5) Tickets gehören zu mehreren Symbolen
-   if (__LOG) log(StringConcatenate("OrderMultiClose(13)   closing ", sizeOfTickets, " mixed positions ", IntsToStr(tickets, NULL)));
+   if (__LOG) log(StringConcatenate("OrderMultiClose(13)   closing ", sizeOfTickets, " mixed positions ", TicketsToStr(tickets, NULL)));
 
    // (5.1) oes[] vorbelegen
    for (i=0; i < sizeOfTickets; i++) {
@@ -12292,7 +12292,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       ArrayResize(oe, 0);
       return(true);
    }
-   if (__LOG) log(StringConcatenate("OrderMultiClose.OneSymbol(2)   closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", IntsToStr(tickets, NULL)));
+   if (__LOG) log(StringConcatenate("OrderMultiClose.OneSymbol(2)   closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsLotsToStr(tickets, NULL)));
 
 
    // (2) oes[] vorbelegen
@@ -12448,7 +12448,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    // (2) wenn Gesamtposition bereits ausgeglichen ist
    if (EQ(totalLots, 0)) {
-      if (__LOG) log(StringConcatenate("OrderMultiClose.Flatten(4)   ", sizeOfTickets, " ", symbol, " positions ", IntsToStr(tickets, NULL), " are already flat"));
+      if (__LOG) log(StringConcatenate("OrderMultiClose.Flatten(4)   ", sizeOfTickets, " ", symbol, " positions ", TicketsLotsToStr(tickets, NULL), " are already flat"));
 
       int tickets.copy[]; ArrayResize(tickets.copy, 0);                                // zuletzt geöffnetes Ticket ermitteln
       ArrayCopy(tickets.copy, tickets);
@@ -12468,7 +12468,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    else {
       if (!OrderPop("OrderMultiClose.Flatten(7)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
-      if (__LOG) log(StringConcatenate("OrderMultiClose.Flatten(8)   flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), IntsToStr(tickets, NULL)));
+      if (__LOG) log(StringConcatenate("OrderMultiClose.Flatten(8)   flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsLotsToStr(tickets, NULL)));
 
 
       // (3) Gesamtposition ist unausgeglichen
@@ -12598,7 +12598,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
    // (2) Logging
-   if (__LOG) log(StringConcatenate("OrderMultiClose.Flattened(4)   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", IntsToStr(tickets, NULL)));
+   if (__LOG) log(StringConcatenate("OrderMultiClose.Flattened(4)   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsLotsToStr(tickets, NULL)));
 
 
    // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
@@ -12854,13 +12854,14 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
 
 #import "stdlib2.ex4"
-   string IntsToStr   (int    array[], string separator);
-   string DoublesToStr(double array[], string separator);
+   string TicketsToStr    (int array[], string separator);
+   string TicketsLotsToStr(int array[], string separator);
+   string DoublesToStr (double array[], string separator);
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 #import "MetaQuotesSample1.ex4"
-   int    GetBoolsAddress  (bool   array[]);
+   int    GetBoolsAddress(bool array[]);
 #import "MetaQuotesSample2.ex4"
-   int    GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
+   int    GetIntsAddress(int array[]);       int GetBufferAddress(int buffer[]); // Alias
 #import "MetaQuotesSample3.ex4"
    int    GetDoublesAddress(double array[]);
 #import "MetaQuotesSample4.ex4"

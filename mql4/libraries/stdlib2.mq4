@@ -523,6 +523,75 @@ private*/string __IntsToStr(int values2[][], int values3[][][], string separator
 
 
 /**
+ * Konvertiert ein Array mit Ordertickets in einen lesbaren String.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - Separator (default: NULL = ", ")
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string TicketsToStr(int tickets[], string separator=", ") {
+   if (ArrayDimension(tickets) != 1)
+      return(_empty(catch("TicketsToStr(1)   illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   if (ArraySize(tickets) == 0)
+      return("{}");
+
+   if (separator == "0")      // (string) NULL
+      separator = ", ";
+
+   return(StringConcatenate("{#", JoinInts(tickets, separator +"#"), "}"));
+}
+
+
+/**
+ * Konvertiert ein Array mit Ordertickets in einen lesbaren String, der zusätzlich die Lotsize des jeweiligen Tickets enthält.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - Separator (default: NULL = ", ")
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string TicketsLotsToStr(int tickets[], string separator=", ") {
+   if (ArrayDimension(tickets) != 1)
+      return(_empty(catch("TicketsLotsToStr(1)   illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int ticketsSize = ArraySize(tickets);
+   if (!ticketsSize)
+      return("{}");
+
+   if (separator == "0")      // (string) NULL
+      separator = ", ";
+
+   string strings[]; ArrayResize(strings, ticketsSize);
+
+   OrderPush("TicketsLotsToStr(2)");
+
+   for (int i=0; i < ticketsSize; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if (IsLongTradeOperation(OrderType())) {
+               strings[i] = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
+               continue;
+            }
+            if (IsShortTradeOperation(OrderType())) {
+               strings[i] = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
+               continue;
+            }
+         }
+      }
+      strings[i] = StringConcatenate("#", tickets[i], ":error");
+   }
+
+   GetLastError(); OrderPop("TicketsLotsToStr(3)");
+
+   string result = StringConcatenate("{", JoinStrings(strings, separator), "}");
+   ArrayResize(strings, 0);
+   return(result);
+}
+
+
+/**
  * Konvertiert ein Boolean-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  bool   values[]

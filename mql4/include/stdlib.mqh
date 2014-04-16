@@ -460,6 +460,8 @@
    string   BoolsToStr        (bool array[], string separator);
    string   IntsToStr          (int array[], string separator);
    string   CharsToStr         (int array[], string separator);
+   string   TicketsToStr       (int array[], string separator);
+   string   TicketsLotsToStr   (int array[], string separator);
    string   OperationTypesToStr(int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
    string   DoublesToStr    (double array[], string separator);
