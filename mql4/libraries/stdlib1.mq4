@@ -12858,17 +12858,17 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
    string TicketsLotsToStr(int array[], string separator);
    string DoublesToStr (double array[], string separator);
    int    GetIniKeys.2(string fileName, string section, string keys[]);
-#import "MetaQuotesSample1.ex4"
+#import "MetaQuotes1.ex4"
    int    GetBoolsAddress(bool array[]);
-#import "MetaQuotesSample2.ex4"
+#import "MetaQuotes2.ex4"
    int    GetIntsAddress(int array[]);       int GetBufferAddress(int buffer[]); // Alias
-#import "MetaQuotesSample3.ex4"
+#import "MetaQuotes3.ex4"
    int    GetDoublesAddress(double array[]);
-#import "MetaQuotesSample4.ex4"
+#import "MetaQuotes4.ex4"
    int    GetStringsAddress(string array[]);
-#import "MetaQuotesSample5.ex4"
+#import "MetaQuotes5.ex4"
    int    GetStringAddress (string value);
-#import "MetaQuotesSample.dll"
+#import "MetaQuotes.dll"
    string GetStringValue(int address);
 #import "structs1.ex4"
    int    ec.Signature               (/*EXECUTION_CONTEXT*/int ec[]                        );
