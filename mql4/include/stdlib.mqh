@@ -603,17 +603,17 @@
    int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
-#import "MetaQuotesSample1.ex4"
+#import "MetaQuotes1.ex4"
    int      GetBoolsAddress  (bool   array[]);
-#import "MetaQuotesSample2.ex4"
+#import "MetaQuotes2.ex4"
    int      GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
-#import "MetaQuotesSample3.ex4"
+#import "MetaQuotes3.ex4"
    int      GetDoublesAddress(double array[]);
-#import "MetaQuotesSample4.ex4"
+#import "MetaQuotes4.ex4"
    int      GetStringsAddress(string array[]);
-#import "MetaQuotesSample5.ex4"
+#import "MetaQuotes5.ex4"
    int      GetStringAddress (string value);
-#import "MetaQuotesSample.dll"
+#import "MetaQuotes.dll"
    string   GetStringValue(int address);
 #import "structs1.ex4"
    string   EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
