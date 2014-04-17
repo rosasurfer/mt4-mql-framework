@@ -10718,7 +10718,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * @return string
  */
 /*private*/ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // opened #1 Buy 0.5 GBPUSD at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0, comment="SR.1234.+1" after 0.345 s and 1 requote (2.8 pip slippage)
+   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -10726,6 +10726,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string strSlippage = "";
       double slippage = oe.Slippage(oe);
@@ -10733,11 +10735,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          if (slippage > 0)   strSlippage = StringConcatenate(" (", DoubleToStr( slippage, digits<<31>>31), " pip slippage)");
          else                strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits<<31>>31), " pip positive slippage)");
       }
-   string message = StringConcatenate("opened #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice);
+   string message = StringConcatenate("opened #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment , " at ", strPrice);
    if (NE(oe.StopLoss  (oe), 0)) message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    if (NE(oe.TakeProfit(oe), 0)) message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
-   string comment = oe.Comment(oe);
-   if (StringLen(comment) > 0)   message = StringConcatenate(message, ", comment=\"", comment, "\"");
                                  message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
@@ -10757,7 +10757,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * @return string
  */
 /*private*/ string OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to Buy 0.5 GBPUSD at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0, comment="SR.1234.+1" after 0.345 s and 1 requote
+   // permanent error while trying to Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -10765,19 +10765,18 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots     (oe), ".+"       );
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string strBid      = NumberToStr(oe.Bid      (oe), priceFormat);
    string strAsk      = NumberToStr(oe.Ask      (oe), priceFormat);
 
-   string message = StringConcatenate("permanent error while trying to ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, " (market ", strBid, "/", strAsk, ")");
+   string message = StringConcatenate("permanent error while trying to ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, " (market ", strBid, "/", strAsk, ")");
 
    if (NE(oe.StopLoss  (oe), 0))         message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
    if (NE(oe.TakeProfit(oe), 0))         message = StringConcatenate(message, ", tp=", NumberToStr(oe.TakeProfit(oe), priceFormat));
-   string comment = oe.Comment(oe);
-   if (StringLen(comment) > 0)           message = StringConcatenate(message, ", comment=\"", comment, "\"");
    if (oe.Error(oe) == ERR_INVALID_STOP) message = StringConcatenate(message, ", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
-
-   message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
+                                         message = StringConcatenate(message, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
 
    int requotes = oe.Requotes(oe);
    if (requotes > 0) {
@@ -11048,13 +11047,15 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  * @return string
  */
 /*private*/ string OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
-   // modified #1 Stop Buy 0.1 GBPUSD at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] ("SR.12345.+2") after 0.345 s
+   // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
 
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
@@ -11063,10 +11064,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    string strSL; if (NE(stopLoss,   origStopLoss)  ) strSL    = StringConcatenate(", sl: ", NumberToStr(origStopLoss,   priceFormat), " =>", NumberToStr(stopLoss,   priceFormat));
    string strTP; if (NE(takeProfit, origTakeProfit)) strTP    = StringConcatenate(", tp: ", NumberToStr(origTakeProfit, priceFormat), " =>", NumberToStr(takeProfit, priceFormat));
 
-   string comment = oe.Comment(oe);
-      if (StringLen(comment) > 0) comment = StringConcatenate(" (\"", comment, "\")");
-
-   return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, comment, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
+   return(StringConcatenate("modified #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
@@ -11081,13 +11079,15 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  * @return string
  */
 /*private*/ string OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
-   // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD at 1.5524'8[ =>1.5520'0][ (market Bid/Ask)][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0][, stop distance=5 pip] ("SR.12345.+2") after 0.345 s
+   // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ =>1.5520'0][ (market Bid/Ask)][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0][, stop distance=5 pip] after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots     (oe), ".+");
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
 
    double openPrice=oe.OpenPrice(oe), stopLoss=oe.StopLoss(oe), takeProfit=oe.TakeProfit(oe);
 
@@ -11100,9 +11100,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
       strPrice = StringConcatenate(strPrice, " (market "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) +")");
    }
-   string comment = oe.Comment(oe); if (StringLen(comment) > 0) comment = StringConcatenate(" (\"", comment, "\")");
 
-   return(StringConcatenate("permanent error while trying to modify #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, strSD, comment, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
+   return(StringConcatenate("permanent error while trying to modify #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
@@ -11708,7 +11707,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  * @return string
  */
 /*private*/ string OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // closed #1 Buy 0.6 GBPUSD (partially) at 1.5534'4 ("SR.1234.+2"), remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
+   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4, remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -11728,7 +11727,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          else              strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits<<31>>31), " pip positive slippage)");
       }
    int  remainder = oe.RemainingTicket(oe);
-   string message = StringConcatenate("closed #", oe.Ticket(oe), " ", strType, " ", strLots, " ", strSymbol, ifString(!remainder, "", " partially"), " at ", strPrice, strComment);
+   string message = StringConcatenate("closed #", oe.Ticket(oe), " ", strType, " ", strLots, " ", strSymbol, strComment, ifString(!remainder, "", " partially"), " at ", strPrice);
 
    if (remainder != 0)
       message = StringConcatenate(message, ", remainder: #", remainder, " ", strType, " ", NumberToStr(oe.RemainingLots(oe), ".+"), " ", strSymbol);
@@ -11753,13 +11752,15 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  * @return string
  */
 /*private*/ string OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to close #1 Buy 0.5 GBPUSD at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 ("SR.1234.+1") after 0.345 s
+   // permanent error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
 
    string strPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string strSL; if (NE(oe.StopLoss  (oe), 0)) strSL = StringConcatenate(", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
@@ -11768,10 +11769,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
       strPrice = StringConcatenate(strPrice, " (market ", NumberToStr(oe.Bid(oe), priceFormat), "/", NumberToStr(oe.Ask(oe), priceFormat), ")");
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
    }
-   string comment = oe.Comment(oe);
-      if (StringLen(comment) > 0) comment = StringConcatenate(" (\"", comment, "\")");
-
-   return(StringConcatenate("permanent error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, strSD, comment, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
+   return(StringConcatenate("permanent error while trying to close #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
@@ -12171,7 +12169,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
       int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
-      if (!newTicket)                                                            //  0: Fehler
+      if (IsLastError())                                                         //  0: Fehler oder Gesamtposition war bereits flat
          return(_false(oes.setError(oes, -1, last_error)));                      // >0: neues Ticket
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -12185,25 +12183,26 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
          oes.setRequotes  (oes, pos, oes.Requotes  (oes2, i));
          oes.setSlippage  (oes, pos, oes.Slippage  (oes2, i));
       }
-      for (i=0; i < sizeOfGroup; i++) {
-         if (oes.RemainingTicket(oes2, i) == newTicket)                          // -1 = kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
-            break;                                                               // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
-      }
-      if (i < sizeOfGroup) {                                                     // break getriggert => partiell oder komplett geschlossenes Ticket gefunden
-         pos = SearchIntArray(tickets, group[i]);
-         oes.setSwap      (oes, pos, oes.Swap      (oes2, i));
-         oes.setCommission(oes, pos, oes.Commission(oes2, i));
-         oes.setProfit    (oes, pos, oes.Profit    (oes2, i));
+      if (newTicket != 0) {                                                      // -1 = kein neues Ticket: ein Ticket wurde komplett geschlossen
+         for (i=0; i < sizeOfGroup; i++) {                                       // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+            if (oes.RemainingTicket(oes2, i) == newTicket) {                     // partiell oder komplett geschlossenes Ticket gefunden
+               pos = SearchIntArray(tickets, group[i]);
+               oes.setSwap      (oes, pos, oes.Swap      (oes2, i));
+               oes.setCommission(oes, pos, oes.Commission(oes2, i));
+               oes.setProfit    (oes, pos, oes.Profit    (oes2, i));
 
-         pos = SearchIntArray(tickets.copy, group[i]);
-         sizeOfCopy -= ArraySpliceInts(tickets.copy,   pos, 1);                  // partiell oder komplett geschlossenes Ticket löschen
-                       ArraySpliceInts(tickets.symbol, pos, 1);
-         sizeOfGroup--;
-      }
-      if (newTicket > 0) {
-         sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);                     // neues Ticket hinzufügen
-                      ArrayPushInt(tickets.symbol,      si);
-         sizeOfGroup++;
+               pos = SearchIntArray(tickets.copy, group[i]);
+               sizeOfCopy -= ArraySpliceInts(tickets.copy,   pos, 1);            // geschlossenes Ticket löschen
+                             ArraySpliceInts(tickets.symbol, pos, 1);
+               sizeOfGroup--;
+               break;
+            }
+         }
+         if (newTicket > 0) {
+            sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);                  // neues Ticket hinzufügen
+                         ArrayPushInt(tickets.symbol,      si);
+            sizeOfGroup++;
+         }
       }
 
       if (sizeOfGroup > 0)
@@ -12308,7 +12307,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
    int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                 // -1: kein neues Ticket
-   if (!newTicket)                                                                                 //  0: Fehler
+   if (IsLastError())                                                                              //  0: Fehler oder Gesamtposition war bereits flat
       return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(5)"))); // >0: neues Ticket
 
    for (i=0; i < sizeOfTickets; i++) {
@@ -12320,18 +12319,19 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       oes.setRequotes  (oes, i, oes.Requotes  (oes2, i));
       oes.setSlippage  (oes, i, oes.Slippage  (oes2, i));
    }
-   for (i=0; i < sizeOfTickets; i++) {
-      if (oes.RemainingTicket(oes2, i) == newTicket)                    // -1 = kein neues Ticket: Positionen waren schon ausgeglichen oder ein Ticket wurde komplett geschlossen
-         break;                                                         // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+   if (newTicket != 0) {                                                // -1 = kein neues Ticket: ein Ticket wurde komplett geschlossen
+      for (i=0; i < sizeOfTickets; i++) {                               // >0 = neues Ticket:      unabhängige neue Position oder ein Ticket wurde partiell geschlossen
+         if (oes.RemainingTicket(oes2, i) == newTicket) {               // partiell oder komplett geschlossenes Ticket gefunden
+            oes.setSwap      (oes, i, oes.Swap      (oes2, i));
+            oes.setCommission(oes, i, oes.Commission(oes2, i));
+            oes.setProfit    (oes, i, oes.Profit    (oes2, i));
+            sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);          // geschlossenes Ticket löschen
+            break;
+         }
+      }
+      if (newTicket > 0)
+         sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);            // neues Ticket hinzufügen
    }
-   if (i < sizeOfTickets) {                                             // break getriggert => partiell oder komplett geschlossenes Ticket gefunden
-      oes.setSwap      (oes, i, oes.Swap      (oes2, i));
-      oes.setCommission(oes, i, oes.Commission(oes2, i));
-      oes.setProfit    (oes, i, oes.Profit    (oes2, i));
-      sizeOfCopy -= ArraySpliceInts(tickets.copy, i, 1);                // geschlossenes Ticket löschen
-   }
-   if (newTicket > 0)
-      sizeOfCopy = ArrayPushInt(tickets.copy, newTicket);               // neues Ticket hinzufügen
 
 
    // (5) Teilpositionen auflösen
@@ -12738,11 +12738,11 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string comment     = oe.Comment(oe);
-      if (StringLen(comment) > 0) comment = StringConcatenate(" (\"", comment, "\")");
 
-   return(StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, comment, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
+   return(StringConcatenate("deleted #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
@@ -12754,13 +12754,15 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
  * @return string
  */
 /*private*/ string OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // permanent error while trying to delete #1 Stop Buy 0.5 GBPUSD at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 ("SR.1234.+1") after 0.345 s
+   // permanent error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
    string strType     = OperationTypeDescription(oe.Type(oe));
    string strLots     = NumberToStr(oe.Lots(oe), ".+");
+   string strComment  = oe.Comment(oe);
+      if (StringLen(strComment) > 0) strComment = StringConcatenate(" \"", strComment, "\"");
 
    string strPrice = NumberToStr(oe.OpenPrice(oe), priceFormat);
    string strSL; if (NE(oe.StopLoss  (oe), 0)) strSL = StringConcatenate(", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
@@ -12769,10 +12771,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
       strPrice = StringConcatenate(strPrice, " (market ", NumberToStr(oe.Bid(oe), priceFormat), "/", NumberToStr(oe.Ask(oe), priceFormat), ")");
       strSD    = StringConcatenate(", stop distance=", NumberToStr(oe.StopDistance(oe), ".+"), " pip");
    }
-   string comment = oe.Comment(oe);
-      if (StringLen(comment) > 0) comment = StringConcatenate(" (\"", comment, "\")");
-
-   return(StringConcatenate("permanent error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), " at ", strPrice, strSL, strTP, strSD, comment, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
+   return(StringConcatenate("permanent error while trying to delete #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment, " at ", strPrice, strSL, strTP, strSD, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
 }
 
 
