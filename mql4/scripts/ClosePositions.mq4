@@ -13,17 +13,20 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
 
-extern string Close.Symbols      = "";    // <leer> | Symbols                    (kommagetrennt)
-extern string Close.Direction    = "";    // <leer> | buy | long | sell | short
-extern string Close.Tickets      = "";    // <leer> | Tickets                    (kommagetrennt)
-extern string Close.MagicNumbers = "";    // <leer> | MagicNumbers               (kommagetrennt)
-extern string Close.Comment      = "";    // <leer> | Kommentar                  (Prüfung per OrderComment().StringIStartsWith(value))
+extern string Close.Symbols      = "";    // Symbole:                      kommagetrennt
+extern string Close.Direction    = "";    // (B)uy|(L)ong|(S)ell|(S)hort
+extern string Close.Tickets      = "";    // Tickets:                      kommagetrennt
+extern string Close.MagicNumbers = "";    // MagicNumbers:                 kommagetrennt
+extern string Close.Comment      = "";    // Kommentar:                    Prüfung per OrderComment().StringIStartsWith(value)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string orderSymbols[], orderComment;
-int    orderTickets[], orderMagics[], orderType=OP_UNDEFINED;
+string orderSymbols [];
+int    orderType = OP_UNDEFINED;
+int    orderTickets [];
+int    orderMagics  [];
+string orderComment;
 
 
 /**
@@ -34,12 +37,12 @@ int    orderTickets[], orderMagics[], orderType=OP_UNDEFINED;
 int onInit() {
    // Parametervalidierung
    // Close.Symbols
-   string values[];
+   string values[], sValue;
    int size = Explode(StringToUpper(Close.Symbols), ",", values, NULL);
    for (int i=0; i < size; i++) {
-      string strValue = StringTrim(values[i]);
-      if (StringLen(strValue) > 0)
-         ArrayPushString(orderSymbols, strValue);
+      sValue = StringTrim(values[i]);
+      if (StringLen(sValue) > 0)
+         ArrayPushString(orderSymbols, sValue);
    }
 
    // Close.Direction
@@ -57,11 +60,11 @@ int onInit() {
    // Close.Tickets
    size = Explode(Close.Tickets, ",", values, NULL);
    for (i=0; i < size; i++) {
-      strValue = StringTrim(values[i]);
-      if (StringLen(strValue) > 0) {
-         if (!StringIsDigit(strValue))
+      sValue = StringTrim(values[i]);
+      if (StringLen(sValue) > 0) {
+         if (!StringIsDigit(sValue))
             return(catch("onInit(2)   Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         int iValue = StrToInteger(strValue);
+         int iValue = StrToInteger(sValue);
          if (iValue <= 0)
             return(catch("onInit(3)   Invalid input parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          ArrayPushInt(orderTickets, iValue);
@@ -71,11 +74,11 @@ int onInit() {
    // Close.MagicNumbers
    size = Explode(Close.MagicNumbers, ",", values, NULL);
    for (i=0; i < size; i++) {
-      strValue = StringTrim(values[i]);
-      if (StringLen(strValue) > 0) {
-         if (!StringIsDigit(strValue))
+      sValue = StringTrim(values[i]);
+      if (StringLen(sValue) > 0) {
+         if (!StringIsDigit(sValue))
             return(catch("onInit(4)   Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         iValue = StrToInteger(strValue);
+         iValue = StrToInteger(sValue);
          if (iValue <= 0)
             return(catch("onInit(5)   Invalid input parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          ArrayPushInt(orderMagics, iValue);
@@ -120,7 +123,7 @@ int onStart() {
    }
 
 
-   bool isInput = !(ArraySize(orderSymbols)+ArraySize(orderTickets)+ArraySize(orderMagics)+orderType==-1 && orderComment=="");
+   bool isInput = !(ArraySize(orderSymbols) + ArraySize(orderTickets) + ArraySize(orderMagics) + orderType==-1 && orderComment=="");
 
 
    // Positionen schließen
