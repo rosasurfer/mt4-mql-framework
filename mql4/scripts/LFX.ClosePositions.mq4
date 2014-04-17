@@ -88,7 +88,7 @@ int onStart() {
          int magicsSize = ArraySize(foundMagics);
          for (i=0; i < magicsSize; i++) {
             // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
-            //if (!AquireLock("mutex.LFX.#"+ foundMagics[i]))
+            //if (!AquireLock("mutex.LFX.#"+ foundMagics[i], true))
             //   return(SetLastError(stdlib_GetLastError()));
          }
 

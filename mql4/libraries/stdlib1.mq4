@@ -813,25 +813,23 @@ int    lock.counters[];                                              // Anzahl d
 
 
 /**
- * Wartet solange, bis das Terminal-Lock mit dem angegebenen Namen erworben wurde.
+ * Versucht, das Terminal-Lock mit dem angegebenen Namen zu erwerben.
  *
  * @param  string mutexName - Namensbezeichner des Mutexes
+ * @param  bool   wait      - ob auf das Lock gewartet (TRUE) oder sofort zurückgekehrt (FALSE) werden soll
  *
  * @return bool - Erfolgsstatus
  */
-bool AquireLock(string mutexName) {
-   if (StringLen(mutexName) == 0)
-      return(!catch("AquireLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+bool AquireLock(string mutexName, bool wait) {
+   if (!StringLen(mutexName)) return(!catch("AquireLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-
-   // (1) check, if we already own that lock
+   // (1) check if we already own that lock
    int i = SearchStringArray(lock.names, mutexName);
    if (i > -1) {
-      //debug("AquireLock()   already own lock for mutex \""+ mutexName +"\"");
+      // yes
       lock.counters[i]++;
       return(true);
    }
-
 
    datetime now, startTime=GetTickCount();
    int      error, duration, seconds=1;
@@ -839,34 +837,28 @@ bool AquireLock(string mutexName) {
    if (This.IsTesting())
       globalVarName = StringConcatenate("tester.", mutexName);
 
-
-   // (2) no, run until the lock is aquired
+   // (2) no, run until lock is aquired
    while (true) {
-      // try to get it
-      if (GlobalVariableSetOnCondition(globalVarName, 1, 0)) {
-         //debug("AquireLock()   got the lock");
-         ArrayPushString(lock.names, mutexName);
+      if (GlobalVariableSetOnCondition(globalVarName, 1, 0)) {       // try to get it
+         ArrayPushString(lock.names, mutexName);                     // got it
          ArrayPushInt   (lock.counters,      1);
          return(true);
       }
       error = GetLastError();
 
-      // create the mutex if it doesn't exist
-      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {
+      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {                  // create mutex if it doesn't yet exist
          if (!GlobalVariableSet(globalVarName, 0)) {
             error = GetLastError();
             return(!catch("AquireLock(2)   failed to create mutex \""+ mutexName +"\"", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
-         continue;
+         continue;                                                   // retry
       }
-      else if (IsError(error)) {
-         return(!catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error));
-      }
+      if (IsError(error)) return(!catch("AquireLock(3)   failed to get lock for mutex \""+ mutexName +"\"", error));
+      if (IsStopped())    return(_false(warn(StringConcatenate("AquireLock(4)   couldn't get lock for mutex \"", mutexName, "\", stopping..."))));
+      if (!wait)
+         return(false);
 
-      if (IsStopped())
-         return(_false(warn(StringConcatenate("AquireLock(4)   couldn't get lock for mutex \"", mutexName, "\", stopping..."))));
-
-      // warn every single second and cancel after 10 seconds
+      // (2.1) warn every single second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
@@ -875,13 +867,12 @@ bool AquireLock(string mutexName) {
          seconds++;
       }
 
-      //debug("AquireLock()   couldn't get lock for mutex \""+ mutexName +"\", retrying...");
-
+      // Sleep and retry...
       if (IsTesting() || IsIndicator()) SleepEx(100, true);          // Expert oder Indicator im Tester
       else                              Sleep(100);
    }
 
-   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));
+   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));                  // unreachable
 }
 
 
