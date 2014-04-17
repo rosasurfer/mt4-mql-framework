@@ -54,6 +54,7 @@ int onStart() {
 
    string foundLabels []; ArrayResize(foundLabels,  0);
    int    foundTickets[]; ArrayResize(foundTickets, 0);
+   int    foundMagics []; ArrayResize(foundMagics,  0);
 
 
    // (1) zu schließende Positionen selektieren
@@ -63,14 +64,12 @@ int onStart() {
       if (LFX.IsMyOrder()) {
          if (OrderType() > OP_SELL)
             continue;
-
          for (int n=0; n < inputSize; n++) {
             if (StringIStartsWith(OrderComment(), inputLabels[n])) {
                string label = GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())) +"."+ LFX.GetCounter(OrderMagicNumber());
-               if (!StringInArray(foundLabels, label))
-                  ArrayPushString(foundLabels, label);
-               if (!IntInArray(foundTickets, OrderTicket()))
-                  ArrayPushInt(foundTickets, OrderTicket());
+               if (!StringInArray(foundLabels,  label             )) ArrayPushString(foundLabels,  label             );
+               if (   !IntInArray(foundTickets, OrderTicket()     )) ArrayPushInt   (foundTickets, OrderTicket()     );
+               if (   !IntInArray(foundMagics,  OrderMagicNumber())) ArrayPushInt   (foundMagics,  OrderMagicNumber());
                break;
             }
          }
@@ -84,6 +83,16 @@ int onStart() {
       PlaySound("notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(foundSize==1, "", foundSize +" ") +"LFX position"+ ifString(foundSize==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
+
+         // (3) Alle selektierten LFX-Positionen sperren, damit andere Indikatoren/Charts keine temporären Teilpositionen verarbeiten.
+         int magicsSize = ArraySize(foundMagics);
+         for (i=0; i < magicsSize; i++) {
+            // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
+            //if (!AquireLock("mutex.LFX.#"+ foundMagics[i]))
+            //   return(SetLastError(stdlib_GetLastError()));
+         }
+
+         // (4) Orderausführung
          int oeFlags = NULL;
          /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(foundTickets)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
          if (!OrderMultiClose(foundTickets, 0.1, Orange, oeFlags, oes))
@@ -92,7 +101,7 @@ int onStart() {
 
          // TODO: ClosePrice() berechnen und ausgeben
 
-         // (3) Tickets aus ".\experts\files\LiteForex\remote_positions.ini" löschen
+         // (5) Tickets aus ".\experts\files\LiteForex\remote_positions.ini" löschen
          string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
          string section = ShortAccountCompany() +"."+ AccountNumber();
          for (i=0; i < foundSize; i++) {
@@ -101,6 +110,12 @@ int onStart() {
             if (IsError(error))
                return(SetLastError(error));
             */
+         }
+
+         // (6) Alle Sperren wieder aufheben.
+         for (i=0; i < magicsSize; i++) {
+            //if (!ReleaseLock("mutex.LFX.#"+ foundMagics[i]))
+            //   return(SetLastError(stdlib_GetLastError()));
          }
       }
    }

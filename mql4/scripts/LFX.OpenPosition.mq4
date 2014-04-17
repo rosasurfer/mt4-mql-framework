@@ -4,7 +4,7 @@
  *
  *  TODO:
  *  -----
- *  - Fehler in Counter und damit MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
+ *  - Fehler in Counter und damit in MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -205,12 +205,14 @@ int onStart() {
       return(catch("onStart(5)"));
 
 
-   // (5) Lock auf MagicNumber (und neue Position) setzen, damit andere Indikatoren/Charts nicht Teilpositionen vor Abchluß der Öffnung der Gesamtposition verarbeiten
-   //     TODO: Fehler in Counter und damit MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
+   // (5) Lock auf die neue Position (MagicNumber) setzen, damit andere Indikatoren/Charts nicht schon vor Ende von LFX.OpenPosition Teilpositionen verarbeiten
+   //     TODO: Fehler in Counter und damit in MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
    int counter     = GetPositionCounter() + 1;   if (!counter)     return(catch("onStart(6)"));    // Abbruch, falls GetPositionCounter() oder
    int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
    string comment  = currency +"."+ counter;
-
+   string mutex    = "mutex.LFX.#"+ magicNumber;
+   if (!AquireLock(mutex))
+      return(SetLastError(stdlib_GetLastError()));
 
 
    // (6) neue Position öffnen
@@ -291,7 +293,9 @@ int onStart() {
       return(catch("onStart(12)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 
-   // (12) Lock auf MagicNumber und damit die neue Position freigeben (Gesamtposition ist eröffnet)
+   // (12) Lock auf die neue Position wieder freigeben
+   if (!ReleaseLock(mutex))
+      return(SetLastError(stdlib_GetLastError()));
 
    return(last_error);
 }
