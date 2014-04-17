@@ -1519,7 +1519,7 @@ bool ProcessQCMessage(string message) {
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
       // bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
-      int ignoredTickets[][3], timeToIgnore=10;                      // Ignorier-Zeitdauer in Sekunden
+      int ignoredTickets[][3], timeToIgnore=5;                       // Ignorier-Zeitdauer in Sekunden
       #define I_ACCOUNT 0
       #define I_TICKET  1
       #define I_TIME    2
@@ -1528,37 +1528,32 @@ bool ProcessQCMessage(string message) {
       for (int i=0; i < ignoredSize; i++) {
          if (ignoredTickets[i][I_TICKET] == ticket) {
             if (ignoredTickets[i][I_ACCOUNT] == account) {
-               if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal()) {
-                  debug("ProcessQCMessage(0.1)   ticket "+ ticket +" wird ignoriert");
+               if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal())
                   return(true);                                      // Ticket wurde und wird weiterhin ignoriert
+
+               for (int n=i+1; n < ignoredSize; n++) {               // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
+                  ignoredTickets[n-1][I_ACCOUNT] = ignoredTickets[n][I_ACCOUNT];
+                  ignoredTickets[n-1][I_TICKET ] = ignoredTickets[n][I_TICKET ];
+                  ignoredTickets[n-1][I_TIME   ] = ignoredTickets[n][I_TIME   ];
                }
-               debug("ProcessQCMessage(0.2)   ticket "+ ticket +" wurde ignoriert, Zeitdauer abgelaufen");
-               break;                                                // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
+               ArrayResize(ignoredTickets, ignoredSize-1);           // Ticket aus zu ignorierenden Tickets löschen
+               ignoredSize--;
+               break;
             }
          }
-      }
-      if (i < ignoredSize) {                                         // break wurde getriggert, Ticket aus den zu ignorierenden Tickets löschen
-         for (int n=i+1; n < ignoredSize; n++) {
-            ignoredTickets[n-1][I_ACCOUNT] = ignoredTickets[n][I_ACCOUNT];
-            ignoredTickets[n-1][I_TICKET ] = ignoredTickets[n][I_TICKET ];
-            ignoredTickets[n-1][I_TIME   ] = ignoredTickets[n][I_TIME   ];
-         }
-         ArrayResize(ignoredTickets, ignoredSize-1);
-         ignoredSize--;
       }
 
       // Ticket in "remote_positions.ini" suchen und Details auslesen
       string label=""; int orderType; double units; datetime openTime; double openPrice; double stopLoss; double takeProfit; datetime closeTime; double closePrice; datetime lastUpdate;
       int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
-      if (result == 0)
-         return(false);                                                 // Fehler
+      if (!result)
+         return(false);                                              //  0: Fehler
 
-      if (result < 0) {                                                 // Ticket nicht gefunden (-1): Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
+      if (result < 0) {                                              // -1: Ticket nicht gefunden, Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
          ArrayResize(ignoredTickets, ignoredSize+1);
          ignoredTickets[ignoredSize][I_ACCOUNT] = account;
          ignoredTickets[ignoredSize][I_TICKET ] = ticket;
          ignoredTickets[ignoredSize][I_TIME   ] = TimeLocal();
-         debug("ProcessQCMessage(0.3)   ticket "+ ticket +" wird zukünftig ignoriert");
          return(true);
       }
 
@@ -1570,8 +1565,8 @@ bool ProcessQCMessage(string message) {
 
       remote.position.tickets[pos]                  = ticket;
       remote.position.types  [pos][0]               = TYPE_DEFAULT;
-      remote.position.types  [pos][1]               = orderType + 1;    // OP_LONG =0, TYPE_LONG =1
-      remote.position.data   [pos][I_DIRECTLOTSIZE] = units;            // OP_SHORT=1, TYPE_SHORT=2
+      remote.position.types  [pos][1]               = orderType + 1; // OP_LONG =0, TYPE_LONG =1
+      remote.position.data   [pos][I_DIRECTLOTSIZE] = units;         // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
       remote.position.data   [pos][I_BREAKEVEN    ] = openPrice;
    }
@@ -1694,7 +1689,7 @@ bool StartQCReceiver() {
 
    int hChartWnd = WindowHandle(Symbol(), NULL);
    if (!hChartWnd)
-      return(_false(debug("StartQCReceiver(1)->WindowHandle() = 0   _whereami="+ __whereamiToStr(__WHEREAMI__))));
+      return(false);
 
    hLfxReceiverChannel = QC_StartReceiver(lfxReceiverChannelName, hChartWnd);
    if (!hLfxReceiverChannel)

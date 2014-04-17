@@ -4,7 +4,7 @@
  *
  *  TODO:
  *  -----
- *  - Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
+ *  - Fehler in Counter und damit MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -95,7 +95,7 @@ int onStart() {
 
 
    // (1) zu handelnde Pairs bestimmen
-   //     Todo: Brokerspezifische Symbole ermitteln
+   //     TODO: Brokerspezifische Symbole ermitteln
    if      (currency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
    else if (currency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
    else if (currency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
@@ -205,12 +205,15 @@ int onStart() {
       return(catch("onStart(5)"));
 
 
-   // (5) neue Position öffnen
-   //     TODO: Fehler in Counter und MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
+   // (5) Lock auf MagicNumber (und neue Position) setzen, damit andere Indikatoren/Charts nicht Teilpositionen vor Abchluß der Öffnung der Gesamtposition verarbeiten
+   //     TODO: Fehler in Counter und damit MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
    int counter     = GetPositionCounter() + 1;   if (!counter)     return(catch("onStart(6)"));    // Abbruch, falls GetPositionCounter() oder
    int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
    string comment  = currency +"."+ counter;
 
+
+
+   // (6) neue Position öffnen
    for (i=0; i < 6; i++) {
       double   price       = NULL;
       double   slippage    = 0.1;
@@ -230,7 +233,7 @@ int onStart() {
    }
 
 
-   // (6) Daten in openPositions.* aktualisieren
+   // (7) Daten in openPositions.* aktualisieren
    ArrayPushInt   (openPositions.magicNo   , magicNumber                   );
    ArrayPushString(openPositions.currency  , currency                      );
    ArrayPushDouble(openPositions.units     , Units                         );
@@ -238,7 +241,7 @@ int onStart() {
    ArrayPushInt   (openPositions.counter   , counter                       );
 
 
-   // (7) Gesamt-OpenPrice berechnen (entspricht LFX-Price)
+   // (8) Gesamt-OpenPrice berechnen (entspricht LFX-Price)
    double openPrice = 1.0;
    for (i=0; i < 6; i++) {
       if (!SelectTicket(tickets[i], "onStart(9)"))
@@ -251,29 +254,29 @@ int onStart() {
       openPrice = 1/openPrice;            // JPY ist invers notiert
 
 
-   // (8) Logmessage ausgeben
+   // (9) Logmessage ausgeben
    int    lfxDigits = ifInt(currency=="JPY", 3, 5);
    string lfxFormat = ifString(currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
    if (__LOG) log("onStart(10)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) Position im alten Format in "experts\files\LiteForex\remote_positions.ini" speichern
+   // (10) Position im alten Format in "experts\files\LiteForex\remote_positions.ini" speichern
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = currency +"."+ counter;
-   string value   = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".1+") +" | "+ DoubleToStr(openPrice, lfxDigits);
+   string value   = TimeToStr(TimeGMT(), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".1+") +" | "+ DoubleToStr(openPrice, lfxDigits);
 
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 
-   // (10) Position im neuen Format in "experts\files\LiteForex\remote_positions.ini" speichern
+   // (11) Position im neuen Format in "experts\files\LiteForex\remote_positions.ini" speichern
    //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
    string sLabel       = currency +"."+ counter;
    string sOrderType   = ifString(direction==OP_BUY, "L", "S");
    string sOrderUnits  = NumberToStr(Units, ".1+");
-   string sOpenTime    = TimeToStr(ServerToGMT(OrderOpenTime()), TIME_FULL);
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);
    string sStopLoss    = "0";
    string sTakeProfit  = "0";
@@ -286,6 +289,9 @@ int onStart() {
 
    if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(12)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
+
+   // (12) Lock auf MagicNumber und damit die neue Position freigeben (Gesamtposition ist eröffnet)
 
    return(last_error);
 }

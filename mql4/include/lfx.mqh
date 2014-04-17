@@ -151,11 +151,8 @@ int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTyp
    if (StringIsDigit(sValue)) datetime _openTime = StrToInteger(sValue);
    else                                _openTime =    StrToTime(sValue);
    if (_openTime <= 0)                          return(_NULL(catch("LFX.ReadRemotePosition(6)   invalid open time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_openTime > TimeGMT())                   return(_NULL(catch("LFX.ReadRemotePosition(7)   invalid open time_gmt \""+ TimeToStr(_openTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(TimeGMT(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    _openTime = GMTToServerTime(_openTime);
-   if (_openTime > TimeCurrent())               return(_NULL(catch("LFX.ReadRemotePosition(7)   invalid open time \""+ TimeToStr(_openTime, TIME_FULL) +"\" (TimeCurrent=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-
-   // ERROR: LFXJPY,M5  ChartInfos::LFX.ReadRemotePosition(7)   invalid open time "2014.04.16 00:20:38" (TimeCurrent="2014.04.16 00:20:37") in config value [IC Markets.{account-no}]->429568354 = "JPY.2,L,1.0,2014.04.15 21:20:38,59.045,0,0,0,0,0,2014.04.15 21:20:38" in "E:\Trading\MetaTrader\A2\experts\files\LiteForex\remote_positions.ini"  [5003 - invalid configuration value]
-
 
    // OpenPrice
    sValue = StringTrim(values[4]);
@@ -181,8 +178,8 @@ int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTyp
    else                                _closeTime =    StrToTime(sValue);
    if      (_closeTime < 0)                     return(_NULL(catch("LFX.ReadRemotePosition(14)   invalid close time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    else if (_closeTime > 0) {
+      if (_closeTime > TimeGMT())               return(_NULL(catch("LFX.ReadRemotePosition(15)   invalid close time_gmt \""+ TimeToStr(_closeTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(TimeGMT(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
       _closeTime = GMTToServerTime(_closeTime);
-      if (_closeTime > TimeCurrent())           return(_NULL(catch("LFX.ReadRemotePosition(15)   invalid close time \""+ TimeToStr(_closeTime, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    }
 
    // ClosePrice
@@ -203,8 +200,8 @@ int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTyp
    if (StringIsDigit(sValue)) datetime _lastUpdate = StrToInteger(sValue);
    else                                _lastUpdate =    StrToTime(sValue);
    if (_lastUpdate <= 0)                        return(_NULL(catch("LFX.ReadRemotePosition(21)   invalid last update time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_lastUpdate > TimeGMT())                 return(_NULL(catch("LFX.ReadRemotePosition(22)   invalid last update time_gmt \""+ TimeToStr(_lastUpdate, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(TimeGMT(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    _lastUpdate = GMTToServerTime(_lastUpdate);
-   if (_lastUpdate > TimeCurrent())             return(_NULL(catch("LFX.ReadRemotePosition(22)   invalid last update time \""+ TimeToStr(_lastUpdate, TIME_FULL) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
 
    // (2) übergebene Variablen erst nach vollständiger Validierung mit ausgelesenen Daten beschreiben
@@ -219,8 +216,6 @@ int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTyp
    closePrice  = _closePrice;
    orderProfit = _orderProfit;
    lastUpdate  = _lastUpdate;
-
-   debug("LFX.ReadRemotePosition(0.3)   ticket="+ ticket +" gelesen");
    return(1);
 }
 
