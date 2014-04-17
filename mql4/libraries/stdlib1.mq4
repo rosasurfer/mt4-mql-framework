@@ -813,7 +813,7 @@ int    lock.counters[];                                              // Anzahl d
 
 
 /**
- * Wartet solange, bis das Lock mit dem angegebenen Namen erworben wurde.
+ * Wartet solange, bis das Terminal-Lock mit dem angegebenen Namen erworben wurde.
  *
  * @param  string mutexName - Namensbezeichner des Mutexes
  *
@@ -866,7 +866,7 @@ bool AquireLock(string mutexName) {
       if (IsStopped())
          return(_false(warn(StringConcatenate("AquireLock(4)   couldn't get lock for mutex \"", mutexName, "\", stopping..."))));
 
-      // warn every second and cancel after 10 seconds
+      // warn every single second and cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
@@ -887,7 +887,7 @@ bool AquireLock(string mutexName) {
 
 
 /**
- * Gibt das gehaltene Lock mit dem angegebenen Namen wieder frei.
+ * Gibt das Terminal-Lock mit dem angegebenen Namen wieder frei.
  *
  * @param  string mutexName - Namensbezeichner des Mutexes
  *
@@ -924,7 +924,7 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Gibt alle noch gehaltenen Locks frei (wird bei Programmende automatisch aufgerufen).
+ * Gibt alle noch gehaltenen Terminal-Locks frei (wird bei Programmende automatisch aufgerufen).
  *
  * @param  bool warn - ob für noch gehaltene Locks eine Warnung ausgegeben werden soll (default: nein)
  *

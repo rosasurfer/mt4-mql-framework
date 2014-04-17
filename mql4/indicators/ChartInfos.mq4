@@ -690,7 +690,7 @@ bool AnalyzePositions() {
 
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // (2.1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
-      globalLfxVarName = "LFX.Profit."+ lfxMagics[i];
+      globalLfxVarName = "LFX.#"+ lfxMagics[i] +".profit";
       lastLfxProfit    = GlobalVariableGet(globalLfxVarName);
       if (!lastLfxProfit) {                                          // 0 oder Fehler
          error = GetLastError();
@@ -722,7 +722,7 @@ bool AnalyzePositions() {
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // Marker aus (2.1) verwenden: MagicNumbers unveränderter Werte wurden zurückgesetzt
       if (lfxMagics[i] != 0) {
-         globalLfxVarName = "LFX.Profit."+ lfxMagics[i];
+         globalLfxVarName = "LFX.#"+ lfxMagics[i] +".profit";
          if (!GlobalVariableSet(globalLfxVarName, lfxProfits[i])) {
             error = GetLastError();
             return(!catch("AnalyzePositions(3)->GlobalVariableSet(name=\""+ globalLfxVarName +"\", value="+ lfxProfits[i] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
