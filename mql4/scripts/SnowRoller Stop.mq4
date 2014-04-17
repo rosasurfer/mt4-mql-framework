@@ -57,7 +57,7 @@ int onStart() {
 
          // (4) Command setzen
          string mutex = "mutex.ChartCommand";
-         if (!AquireLock(mutex))
+         if (!AquireLock(mutex, true))
             return(SetLastError(stdlib_GetLastError()));
 
          string label = StringConcatenate("SnowRoller.", ids[i], ".command");    // TODO: Commands zu bereits existierenden Commands hinzufügen

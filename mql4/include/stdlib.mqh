@@ -296,7 +296,7 @@
 
 
    // Locks
-   bool     AquireLock(string mutexName);
+   bool     AquireLock(string mutexName, bool wait);
    bool     ReleaseLock(string mutexName);
    bool     ReleaseLocks(bool warn);
 

@@ -1078,7 +1078,7 @@ bool EventListener.ChartCommand(string commands[], int flags=NULL) {
    }
 
    if (ObjectFind(label) == 0) {
-      if (!AquireLock(mutex))
+      if (!AquireLock(mutex, true))
          return(!SetLastError(stdlib_GetLastError()));
 
       ArrayPushString(commands, ObjectDescription(label));

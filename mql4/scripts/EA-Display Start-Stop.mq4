@@ -47,7 +47,7 @@ int onStart() {
 
 
       // (3) Command setzen
-      if (!AquireLock(mutex))
+      if (!AquireLock(mutex, true))
          return(SetLastError(stdlib_GetLastError()));
 
       for (i=0; i < sizeOfIds; i++) {

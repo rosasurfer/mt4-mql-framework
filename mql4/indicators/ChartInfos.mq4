@@ -685,22 +685,32 @@ bool AnalyzePositions() {
    // (2) P/L detektierter LFX-Positionen per QuickChannel an LFX-Terminal schicken (nur, wenn sich der Wert seit der letzten Message geändert hat)
    double lastLfxProfit;
    string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hLfxSenderChannels));    // 2 x ArrayResize() = ArrayInitialize(string array)
-   string globalLfxVarName;
+   string globalVarLfxProfit;
    int    error;
 
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // (2.1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
-      globalLfxVarName = "LFX.#"+ lfxMagics[i] +".profit";
-      lastLfxProfit    = GlobalVariableGet(globalLfxVarName);
+      globalVarLfxProfit = StringConcatenate("LFX.#", lfxMagics[i], ".profit");
+      lastLfxProfit      = GlobalVariableGet(globalVarLfxProfit);
       if (!lastLfxProfit) {                                          // 0 oder Fehler
          error = GetLastError();
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
             return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
       }
       if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
-         //lfxMagics[i] = NULL;                                        // MagicNo zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
-         //continue;
+         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
+         continue;
       }
+      string mutex = "mutex.LFX.#"+ lfxMagics[i];                    // Wert hat sich geändert, prüfen, ob die Position gesperrt werden kann (also verfügbar ist)
+      if (!AquireLock(mutex, false)) {                               // FALSE = nicht auf Lock warten, sondern sofort zurückkehren
+         if (IsError(stdlib_GetLastError()))
+            return(SetLastError(stdlib_GetLastError()));
+         // kein Fehler = Mutex war gesperrt, Position also nicht verfügbar
+         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
+         continue;
+      }
+      if (!ReleaseLock(mutex))                                       // Mutex und Position sind verfügbar, das Lock wird nicht mehr benötigt
+         return(SetLastError(stdlib_GetLastError()));
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
       int cid = LFX.GetCurrencyId(lfxMagics[i]);
@@ -722,10 +732,10 @@ bool AnalyzePositions() {
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // Marker aus (2.1) verwenden: MagicNumbers unveränderter Werte wurden zurückgesetzt
       if (lfxMagics[i] != 0) {
-         globalLfxVarName = "LFX.#"+ lfxMagics[i] +".profit";
-         if (!GlobalVariableSet(globalLfxVarName, lfxProfits[i])) {
+         globalVarLfxProfit = StringConcatenate("LFX.#", lfxMagics[i], ".profit");
+         if (!GlobalVariableSet(globalVarLfxProfit, lfxProfits[i])) {
             error = GetLastError();
-            return(!catch("AnalyzePositions(3)->GlobalVariableSet(name=\""+ globalLfxVarName +"\", value="+ lfxProfits[i] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("AnalyzePositions(3)->GlobalVariableSet(name=\""+ globalVarLfxProfit +"\", value="+ lfxProfits[i] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
       }
    }

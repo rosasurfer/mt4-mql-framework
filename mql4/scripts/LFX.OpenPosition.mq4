@@ -211,7 +211,7 @@ int onStart() {
    int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
    string comment  = currency +"."+ counter;
    string mutex    = "mutex.LFX.#"+ magicNumber;
-   if (!AquireLock(mutex))
+   if (!AquireLock(mutex, true))
       return(SetLastError(stdlib_GetLastError()));
 
 
