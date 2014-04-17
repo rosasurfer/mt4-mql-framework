@@ -552,9 +552,9 @@ string TicketsToStr(int tickets[], string separator=", ") {
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string TicketsLotsToStr(int tickets[], string separator=", ") {
+string TicketsToStr.Lots(int tickets[], string separator=", ") {
    if (ArrayDimension(tickets) != 1)
-      return(_empty(catch("TicketsLotsToStr(1)   illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_empty(catch("TicketsToStr.Lots(1)   illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
    int ticketsSize = ArraySize(tickets);
    if (!ticketsSize)
@@ -565,7 +565,7 @@ string TicketsLotsToStr(int tickets[], string separator=", ") {
 
    string strings[]; ArrayResize(strings, ticketsSize);
 
-   OrderPush("TicketsLotsToStr(2)");
+   OrderPush("TicketsToStr.Lots(2)");
 
    for (int i=0; i < ticketsSize; i++) {
       if (tickets[i] > 0) {
@@ -579,11 +579,60 @@ string TicketsLotsToStr(int tickets[], string separator=", ") {
                continue;
             }
          }
+         else GetLastError();
       }
       strings[i] = StringConcatenate("#", tickets[i], ":error");
    }
 
-   GetLastError(); OrderPop("TicketsLotsToStr(3)");
+   OrderPop("TicketsToStr.Lots(3)");
+
+   string result = StringConcatenate("{", JoinStrings(strings, separator), "}");
+   ArrayResize(strings, 0);
+   return(result);
+}
+
+
+/**
+ * Konvertiert ein Array mit Ordertickets in einen lesbaren String, der zusätzlich die Lotsize und das Symbol des jeweiligen Tickets enthält.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - Separator (default: NULL = ", ")
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
+   if (ArrayDimension(tickets) != 1)
+      return(_empty(catch("TicketsToStr.LotsSymbols(1)   illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int ticketsSize = ArraySize(tickets);
+   if (!ticketsSize)
+      return("{}");
+
+   if (separator == "0")      // (string) NULL
+      separator = ", ";
+
+   string strings[]; ArrayResize(strings, ticketsSize);
+
+   OrderPush("TicketsToStr.LotsSymbols(2)");
+
+   for (int i=0; i < ticketsSize; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if (IsLongTradeOperation(OrderType())) {
+               strings[i] = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+               continue;
+            }
+            if (IsShortTradeOperation(OrderType())) {
+               strings[i] = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+               continue;
+            }
+         }
+         else GetLastError();
+      }
+      strings[i] = StringConcatenate("#", tickets[i], ":error");
+   }
+
+   OrderPop("TicketsToStr.LotsSymbols(3)");
 
    string result = StringConcatenate("{", JoinStrings(strings, separator), "}");
    ArrayResize(strings, 0);

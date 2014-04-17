@@ -604,15 +604,15 @@
 
 
 #import "MetaQuotes1.ex4"
-   int      GetBoolsAddress  (bool   array[]);
+   int      GetBoolsAddress(bool array[]);
 #import "MetaQuotes2.ex4"
-   int      GetIntsAddress   (int    array[]);    int GetBufferAddress(int buffer[]); // Alias
+   int      GetIntsAddress(int array[]);     int GetBufferAddress(int buffer[]);    // Alias
 #import "MetaQuotes3.ex4"
    int      GetDoublesAddress(double array[]);
 #import "MetaQuotes4.ex4"
    int      GetStringsAddress(string array[]);
 #import "MetaQuotes5.ex4"
-   int      GetStringAddress (string value);
+   int      GetStringAddress(string value);
 #import "MetaQuotes.dll"
    string   GetStringValue(int address);
 #import "structs1.ex4"
