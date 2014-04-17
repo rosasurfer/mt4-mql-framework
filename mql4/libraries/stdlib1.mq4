@@ -11498,7 +11498,7 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
  * @param  int    ticket      - Ticket der zu schließenden Position
  * @param  double lots        - zu schließendes Volumen in Lots (default: komplette Position)
  * @param  double price       - Preis (wird zur Zeit ignoriert)
- * @param  double slippage    - akzeptable Slippage in Pips
+ * @param  double slippage    - akzeptable Slippage in Pip
  * @param  color  markerColor - Farbe des Chart-Markers
  * @param  int    oeFlags     - die Ausführung steuernde Flags
  * @param  int    oe[]        - Ausführungsdetails (ORDER_EXECUTION)
@@ -12164,7 +12164,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    for (si=0; si < sizeOfSymbols; si++) {
       ArrayResize(group, 0);
       for (i=0; i < sizeOfCopy; i++) {
-         if (si == tickets.symbol[i])                       // tickets.copy[] und tickets.symbol[] sind nicht mehr synchron
+         if (si == tickets.symbol[i])
             ArrayPushInt(group, tickets.copy[i]);
       }
       sizeOfGroup = ArraySize(group);
@@ -12242,10 +12242,10 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
 
 /**
- * Schließt mehrere offene Positionen eines Symbols auf möglichst effektive Art und Weise.
+ * Schließt mehrere offene Positionen eines Symbols auf möglichst schnelle Art und Weise.
  *
  * @param  int    tickets[]   - Tickets der zu schließenden Positionen
- * @param  double slippage    - zu akzeptierende Slippage in Pip
+ * @param  double slippage    - akzeptable Slippage in Pip
  * @param  color  markerColor - Farbe des Chart-Markers
  * @param  int    oeFlags     - die Ausführung steuernde Flags
  * @param  int    oes[]       - Ausführungsdetails (ORDER_EXECUTION[])
