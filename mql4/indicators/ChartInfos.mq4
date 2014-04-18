@@ -1554,8 +1554,8 @@ bool ProcessQCMessage(string message) {
       }
 
       // Ticket in "remote_positions.ini" suchen und Details auslesen
-      string label=""; int orderType; double units; datetime openTime; double openPrice; double stopLoss; double takeProfit; datetime closeTime; double closePrice; datetime lastUpdate;
-      int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+      string label=""; int orderType; double units; datetime openTime; double openEquity; double openPrice; double stopLoss; double takeProfit; datetime closeTime; double closePrice; datetime lastUpdate;
+      int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
       if (!result)
          return(false);                                              //  0: Fehler
 
