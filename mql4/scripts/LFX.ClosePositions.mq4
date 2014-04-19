@@ -39,7 +39,6 @@ int onInit() {
    for (int i=0; i < size; i++) {
       inputLabels[i] = StringTrim(inputLabels[i]);
    }
-
    return(catch("onInit(2)"));
 }
 
@@ -112,7 +111,7 @@ int onStart() {
             */
          }
 
-         // (6) Alle Sperren wieder aufheben.
+         // (6) Locks wieder freigeben
          for (i=0; i < magicsSize; i++) {
             //if (!ReleaseLock("mutex.LFX.#"+ foundMagics[i]))
             //   return(SetLastError(stdlib_GetLastError()));
@@ -123,6 +122,5 @@ int onStart() {
       PlaySound("notify.wav");
       MessageBox("No matching LFX positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
-
    return(last_error);
 }

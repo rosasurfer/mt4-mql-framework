@@ -264,6 +264,7 @@ int onStart() {
 
 
    // (10) Position im alten Format in .ini-Datei speichern
+   //Label = OpenTime_GMT | OrderType | OrderUnits | OpenPrice
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ AccountNumber();
    string key     = currency +".#"+ counter;

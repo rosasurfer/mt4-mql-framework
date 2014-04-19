@@ -7022,7 +7022,7 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
    else if (buffer[0] == "yes" ) result = true;
    else if (buffer[0] == "on"  ) result = true;
 
-   if (!catch("GetGlobalConfigBool()"))
+   if (!catch("GetGlobalConfigBool(1)"))
       return(result);
    return(false);
 }
@@ -7043,9 +7043,9 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
    GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
 
-   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
+   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten nicht-numerischen Zeichen
 
-   if (!catch("GetGlobalConfigDouble()"))
+   if (!catch("GetGlobalConfigDouble(1)"))
       return(result);
    return(0);
 }
@@ -7063,7 +7063,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
    int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
 
-   if (!catch("GetGlobalConfigInt()"))
+   if (!catch("GetGlobalConfigInt(1)"))
       return(result);
    return(0);
 }
