@@ -123,8 +123,6 @@ int onStart() {
  * @return int - Fehlerstatus
  */
 int SaveAccountKey(string key) {
-   debug("SaveAccountKey()   key=\""+ key +"\"");
-
    string label = __NAME__ +".account";
 
    if (ObjectFind(label) == -1)
