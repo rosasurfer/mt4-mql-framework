@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 
 #include <core/script.mqh>
-
+#include <lfx.mqh>
 
 string currency;                                                     // LFX-Währung
 
@@ -38,11 +38,11 @@ int onInit() {
  */
 int onStart() {
    // (1) aktuellen Status aus dem Chart auslesen: accountKey  = "" -> Status OFF (momentan keine Anzeige)
-   string account = ReadAccountKey();           // accountKey != "" -> Status ON  (momentan Anzeige des angegebenen Accounts)
+   string accountKey = ReadAccountKey();        // accountKey != "" -> Status ON  (momentan Anzeige des angegebenen Accounts)
 
 
    // (2) existierende Chart-Marker löschen
-   if (account != "") {
+   if (accountKey != "") {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
          if (StringStartsWith(name, "LFXPosition."))
@@ -56,125 +56,58 @@ int onStart() {
    string sections[];
    int sectionsSize = GetIniSections(file, sections);
 
-   int pos  = SearchStringArray(sections, account);
+   int pos  = SearchStringArray(sections, accountKey);
    int next = pos + 1;                                               // Zeiger auf den jeweils nächsten Abschnitt setzen
 
-   if (account!="") /*&&*/ if (pos==-1)                              // Ist der AccountKey gesetzt (Status=ON), existiert in der .ini-Datei aber nicht (mehr),
+   if (accountKey!="") /*&&*/ if (pos==-1)                           // Ist der AccountKey gesetzt (Status=ON), existiert in der .ini-Datei aber nicht (mehr),
       next = sectionsSize;                                           // Zeiger hinter den letzten Abschnitt setzen, um als nächstes Status=OFF zu aktivieren.
    sectionsSize = ArrayPushString(sections, "");                     // Leerstring (Status=OFF) als letzten Pseudo-Abschnitt hinzufügen
 
-   // über verbleibende Abschnitte iterieren, nächsten Abschnitt mit Schlüssel der aktuellen LFX-Währung finden und Positionen auslesen
-   string prefix = StringConcatenate(currency, ".");
-   string keys[], positions[];
+
+   // (4) nächsten Abschnitt mit aktuellen LFX-Positionen finden und Positionen auslesen
+   string   keys[], values[], lastValue;
+   int      keysSize, accountNumber, ticket, orderType;
+   string   label = "";
+   double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
+   datetime openTime, closeTime, lastUpdate;
+   bool     success;
 
    for (i=next; i < sectionsSize; i++) {
-      account = sections[i];
-      if (account == "")
+      if (sections[i] == "")
          break;
-      ArrayResize(positions, 0);
-      int keysSize = GetIniKeys(file, account, keys);
+      Explode(sections[i], ".", values, NULL);
+      lastValue = ArrayPopString(values);
+      if (!StringIsDigit(lastValue))
+         continue;
+      accountNumber = StrToInteger(lastValue);
+      if (!accountNumber)
+         continue;
+
+      success  = false;
+      keysSize = GetIniKeys(file, sections[i], keys);
 
       for (int j=0; j < keysSize; j++) {
-         if (StringIStartsWith(keys[j], prefix))
-            ArrayPushString(positions, StringConcatenate(keys[j], "|", GetIniString(file, account, keys[j], "")));
+         if (StringIsDigit(keys[j])) {
+            ticket = StrToInteger(keys[j]);
+            if (LFX.GetCurrencyId(ticket) == GetCurrencyId(currency)) {
+               int result = LFX.ReadRemotePosition(accountNumber, ticket, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+               if (result != 1)                                                        // +1, wenn die Positionsdaten erfolgreich ermittelt wurden
+                  return(last_error);                                                  // -1, wenn keine entsprechende Position gefunden wurde
+               if (StringIStartsWith(label, currency +"."))                            //  0, Fehler
+                  label = StringRight(label, -4);
+               openPrice += GetGlobalConfigDouble("LfxChartDeviation", currency, 0);
+               if (SetPositionMarker(label, openTime, orderType, units, openPrice) != NO_ERROR)
+                  break;
+               success = true;
+            }
+         }
       }
-      if (ArraySize(positions) > 0)
+      if (success)
          break;
    }
 
-
-   // 4) Positionsdaten parsen, validieren und Chart-Marker setzen
-   int positionsSize = ArraySize(positions);
-
-   for (i=0; i < positionsSize; i++) {
-      string values[];
-      if (Explode(positions[i], "|", values, NULL) != 5) {
-         catch("onStart(1)   invalid ["+ account +"] entry in \""+ file +"\": "+ positions[i], ERR_RUNTIME_ERROR);
-         continue;
-      }
-      // Label
-      string label = StringTrim(StringRight(values[0], -StringLen(prefix)));
-
-      // OpenTime
-      string value = StringTrim(values[1]);
-      if (StringLen(value) == 0) {
-         catch("onStart(2)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-
-      if     (!StringIsDigit(value)) datetime openTime = StrToTime(value);
-      else if (!StrToInteger(value))          openTime = 0;
-      else {
-         catch("onStart(3)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      if (openTime <= 0) {
-         catch("onStart(3)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      openTime = GMTToServerTime(openTime);
-      if (openTime > TimeCurrent()) {
-         catch("onStart(4)   invalid open time in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-
-      // OperationType
-      value = StringToUpper(StringTrim(values[2]));
-      if (StringLen(value) == 0) {
-         catch("onStart(5)   invalid direction in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      int type;
-      switch (StringGetChar(value, 0)) {
-         case 'B':
-         case 'L': type = OP_BUY;  break;
-         case 'S': type = OP_SELL; break;
-         default:
-            catch("onStart(6)   invalid direction in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-            continue;
-      }
-
-      // Lots
-      value = StringTrim(values[3]);
-      if (StringLen(value) == 0) {
-         catch("onStart(7)   invalid lot size in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      if (!StringIsNumeric(value)) {
-         catch("onStart(8)   invalid lot size in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      double lots = StrToDouble(value);
-      if (LE(lots, 0)) {
-         catch("onStart(9)   invalid lot size in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-
-      // OpenPrice
-      value = StringTrim(values[4]);
-      if (StringLen(value) == 0) {
-         catch("onStart(10)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      if (!StringIsNumeric(value)) {
-         catch("onStart(11)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      double openPrice = StrToDouble(value);
-      if (LE(openPrice, 0)) {
-         catch("onStart(12)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
-         continue;
-      }
-      openPrice += GetGlobalConfigDouble("LfxChartDeviation", currency, 0);
-
-      // Marker setzen
-      if (SetPositionMarker(label, openTime, type, lots, openPrice) != NO_ERROR)
-         break;
-   }
-
-
-   // 5) aktuellen Status im Chart speichern
-   SaveAccountKey(account);
+   // 5) aktuellen AccountKey im Chart speichern
+   SaveAccountKey(accountKey);
 
    return(last_error);
 }
