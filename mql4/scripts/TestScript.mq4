@@ -31,10 +31,16 @@ int onStart() {
 
 
 /**
+ * Schickt dem Fenster mit dem angegebenen Handle eine Nachricht, das angegebene Script zu laden. Die Funktion prüft weder, ob das Script
+ * tatsächlich existiert noch, ob es erfolgreich geladen wurde.
  *
- * @return bool - Erfolgsstatus
+ * @param  int    hWnd       - Fenster-Handle
+ * @param  string scriptName - Name des zu ladenden Scriptes
+ *
+ * @return bool - ob die Nachricht erfolgreich verschickt wurde
  */
 bool LoadScript(int hWnd, string scriptName) {
+   // Vorsicht im Kontext des Aufrufs: der übergebene Pointer muß zur Zeit der Message-Verarbeitung noch gültig sein
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName)))
       return(!catch("LoadScript(1)->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
