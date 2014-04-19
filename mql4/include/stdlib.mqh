@@ -566,7 +566,7 @@
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      WM_MT4();                                                // MetaTrader4_Internal_Message (wird wie Pseudo-Konstante benutzt)
+   int      MT4InternalMsg();    int WM_MT4();  // Alias             // MetaTrader4_Internal_Message (kann wie Pseudo-Konstante benutzt werden)
 
 
    // Default-Implementierungen: müssen bei Verwendung im Programm implementiert werden
