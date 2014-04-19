@@ -165,6 +165,7 @@ int onStart() {
          catch("onStart(12)   invalid open price in ["+ account +"] "+ values[0] +": \""+ GetIniString(file, account, values[0], "") +"\"", ERR_RUNTIME_ERROR);
          continue;
       }
+      openPrice += GetGlobalConfigDouble("LfxChartDeviation", currency, 0);
 
       // Marker setzen
       if (SetPositionMarker(label, openTime, type, lots, openPrice) != NO_ERROR)

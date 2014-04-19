@@ -697,10 +697,14 @@ bool AnalyzePositions() {
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
             return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
       }
+      /*
+      temporär
+
       if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
          lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
          continue;
       }
+      */
       string mutex = "mutex.LFX.#"+ lfxMagics[i];                    // Wert hat sich geändert, prüfen, ob die Position gesperrt werden kann (also verfügbar ist)
       if (!AquireLock(mutex, false)) {                               // FALSE = nicht auf Lock warten, sondern sofort zurückkehren
          if (IsError(stdlib_GetLastError()))
@@ -1525,10 +1529,12 @@ bool ProcessQCMessage(string message) {
    from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(!catch("ProcessQCMessage(5)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    double profit = StrToDouble(StringSubstr(message, from));
 
-   // Ticket in vorhandenen Remote-Positionen suchen
+
+   // (1) Ticket in vorhandenen Remote-Positionen suchen
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
-      // bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
+
+      // (2.1) bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
       int ignoredTickets[][3], timeToIgnore=5;                       // Ignorier-Zeitdauer in Sekunden
       #define I_ACCOUNT 0
       #define I_TICKET  1
@@ -1553,9 +1559,12 @@ bool ProcessQCMessage(string message) {
          }
       }
 
-      // Ticket in "remote_positions.ini" suchen und Details auslesen
-      string label=""; int orderType; double units; datetime openTime; double openEquity; double openPrice; double stopLoss; double takeProfit; datetime closeTime; double closePrice; datetime lastUpdate;
-      int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+      // (2.2) Ticketdetails einlesen
+      string   label = "";
+      int      orderType;
+      double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
+      datetime openTime, closeTime, lastUpdate;                                                                                                                // profit
+      int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
       if (!result)
          return(false);                                              //  0: Fehler
 
@@ -1567,7 +1576,7 @@ bool ProcessQCMessage(string message) {
          return(true);
       }
 
-      // Positionsdetails zu Remote-Positionen hinzufügen
+      // (2.3) Positionsdetails zu Remote-Positionen hinzufügen
       pos = ArraySize(remote.position.tickets);
       ArrayResize(remote.position.tickets, pos+1);
       ArrayResize(remote.position.types,   pos+1);
@@ -1578,9 +1587,10 @@ bool ProcessQCMessage(string message) {
       remote.position.types  [pos][1]               = orderType + 1; // OP_LONG =0, TYPE_LONG =1
       remote.position.data   [pos][I_DIRECTLOTSIZE] = units;         // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice;
+      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice + GetGlobalConfigDouble("LfxChartDeviation", GetCurrency(LFX.GetCurrencyId(ticket)), 0);
    }
-   // P/L aktualisieren
+
+   // (3) P/L aktualisieren
    remote.position.data      [pos][I_PROFIT       ] = profit;
 
    return(true);

@@ -123,9 +123,9 @@ int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTyp
       return(-1);
    }
 
-   //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
 
    // (1) .ini-Eintrag auslesen und validieren
+   //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 12) return(_NULL(catch("LFX.ReadRemotePosition(2)   invalid config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
@@ -222,6 +222,7 @@ int LFX.ReadRemotePosition(int account, int ticket, string &label, int &orderTyp
    closePrice  = _closePrice;
    orderProfit = _orderProfit;
    lastUpdate  = _lastUpdate;
+
    return(1);
 }
 
