@@ -51,7 +51,7 @@ int      last_error;                                        // der letzte Fehler
 #define MAX_SYMBOL_LENGTH          12
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 #define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
-#define NL                          "\n"                    // new line, MQL schreibt 0x0D0A
+#define NL                          "\n"                    // new line (MQL schreibt 0x0D0A)
 #define TAB                         "\t"                    // tab
 
 
@@ -680,6 +680,12 @@ int      last_error;                                        // der letzte Fehler
 
 // MT4 internal messages
 #define MT4_TICK                                2     // künstlicher Tick: Ausführung von start()
+
+#define MT4_LOAD_STANDARD_INDICATOR            13
+#define MT4_LOAD_CUSTOM_INDICATOR              15
+#define MT4_LOAD_EXPERT                        14
+#define MT4_LOAD_SCRIPT                        16
+
 #define MT4_COMPILE_REQUEST                 12345
 #define MT4_COMPILE_PERMISSION              12346
 #define MT4_MQL_REFRESH                     12349     // Rescan und Reload modifizierter .ex4-Files
