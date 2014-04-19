@@ -4059,7 +4059,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
  *
  * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
  */
-int WM_MT4() {
+int MT4InternalMsg() {
    static int static.messageId;                                      // ohne Initializer (@see MQL.doc)
 
    if (!static.messageId) {
@@ -4067,13 +4067,25 @@ int WM_MT4() {
 
       if (!static.messageId) {
          static.messageId = -1;                                      // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
-         catch("WM_MT4()->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
+         catch("MT4InternalMsg(1)->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
       }
    }
 
    if (static.messageId == -1)
       return(0);
    return(static.messageId);
+}
+
+
+/**
+ * Alias
+ *
+ * MetaTrader4_Internal_Message. Pseudo-Konstante, wird beim ersten Zugriff initialisiert.
+ *
+ * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
+ */
+int WM_MT4() {
+   return(MT4InternalMsg());
 }
 
 
@@ -4108,10 +4120,10 @@ int Chart.Refresh(bool sound=false) {
 int Chart.SendTick(bool sound=false) {
    int hWnd = WindowHandle(Symbol(), NULL);
    if (!hWnd)
-      return(catch("Chart.SendTick()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.SendTick()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, 0);
+      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 0);
    }
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_TICK, 0);
@@ -8573,7 +8585,7 @@ string UninitializeReasonToStr(int reason) {
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
  *
  *
- * NOTE: Benutzt SendMessage(), deshalb nicht nach EA-Stop bei VisualMode=On benutzen, da UI-Thread-Deadlock.
+ * NOTE: Ruft intern SendMessage() auf, deshalb nicht nach EA-Stop bei VisualMode=On benutzen, da sonst UI-Thread-Deadlock.
  */
 string GetWindowText(int hWnd) {
    int    bufferSize = 255;
