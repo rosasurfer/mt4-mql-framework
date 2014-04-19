@@ -40,7 +40,7 @@ int onStart() {
  * @return bool - ob die Nachricht erfolgreich verschickt wurde
  */
 bool LoadScript(int hWnd, string scriptName) {
-   // Vorsicht im Kontext des Aufrufs: der übergebene Pointer muß zur Zeit der Message-Verarbeitung noch gültig sein
+   // Vorsicht im Kontext des Aufrufs: der ermittelte Pointer muß zur Zeit der Message-Verarbeitung noch gültig sein
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName)))
       return(!catch("LoadScript(1)->user32::PostMessageA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
