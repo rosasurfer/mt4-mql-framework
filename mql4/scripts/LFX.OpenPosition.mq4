@@ -263,18 +263,7 @@ int onStart() {
    if (__LOG) log("onStart(10)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (10) Position im alten Format in .ini-Datei speichern
-   //Label = OpenTime_GMT | OrderType | OrderUnits | OpenPrice
-   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = ShortAccountCompany() +"."+ AccountNumber();
-   string key     = currency +".#"+ counter;
-   string value   = TimeToStr(TimeGMT(), TIME_FULL) +" | "+ ifString(direction==OP_BUY, "L", "S") +" | "+ NumberToStr(Units, ".1+") +" | "+ DoubleToStr(openPrice, lfxDigits);
-
-   if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-
-
-   // (11) Position im neuen Format in .ini-Datei speichern
+   // (10) Position in .ini-Datei speichern
    //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
    string sLabel       = currency +".#"+ counter;           sLabel      = StringRightPad(sLabel    , 13, " ");
    string sOrderType   = ifString(direction==OP_BUY, "L", "S");
@@ -288,14 +277,17 @@ int onStart() {
    string sClosePrice  = "0";                               sClosePrice = StringLeftPad(sClosePrice,  7, " ");
    string sOrderProfit = "0";
    string sLastUpdate  = sOpenTime;
-   key   = magicNumber;
-   value = sLabel +", "+ sOrderType +", "+ sOrderUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
+
+   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
+   string section = ShortAccountCompany() +"."+ AccountNumber();
+   string key     = magicNumber;
+   string value   = sLabel +", "+ sOrderType +", "+ sOrderUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(catch("onStart(12)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 
-   // (12) Lock auf die neue Position wieder freigeben
+   // (11) Lock auf die neue Position wieder freigeben
    if (!ReleaseLock(mutex))
       return(SetLastError(stdlib_GetLastError()));
 

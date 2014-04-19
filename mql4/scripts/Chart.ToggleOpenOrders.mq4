@@ -73,8 +73,9 @@ int onStart() {
    bool     success;
 
    for (i=next; i < sectionsSize; i++) {
+      accountKey = sections[i];
       if (sections[i] == "")
-         break;
+         continue;                                                   // letzter, oben hinzugefügter Pseudo-Abschnitt
       Explode(sections[i], ".", values, NULL);
       lastValue = ArrayPopString(values);
       if (!StringIsDigit(lastValue))
@@ -96,7 +97,8 @@ int onStart() {
                if (StringIStartsWith(label, currency +"."))                            //  0, Fehler
                   label = StringRight(label, -4);
                openPrice += GetGlobalConfigDouble("LfxChartDeviation", currency, 0);
-               if (SetPositionMarker(label, openTime, orderType, units, openPrice) != NO_ERROR)
+
+               if (!SetPositionMarker(label, openTime, orderType, units, openPrice))
                   break;
                success = true;
             }
@@ -120,20 +122,22 @@ int onStart() {
  *
  * @return int - Fehlerstatus
  */
-int SaveAccountKey(string id) {
+int SaveAccountKey(string key) {
+   debug("SaveAccountKey()   key=\""+ key +"\"");
+
    string label = __NAME__ +".account";
 
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
-   if (id == "") {                                                   // Leerstring: Label wieder löschen
+   if (key == "") {                                                  // Leerstring: Label wieder löschen
       ObjectDelete(label) ;
    }
    else {
       ObjectSet(label, OBJPROP_XDISTANCE, -1000);                    // Label in nicht sichtbaren Bereich setzen
-      ObjectSetText(label, id, 0);
+      ObjectSetText(label, key, 0);
    }
-   return(catch("SaveAccountKey()"));
+   return(catch("SaveAccountKey(1)"));
 }
 
 
@@ -159,7 +163,7 @@ string ReadAccountKey() {
  * @param  double   lots
  * @param  double   openPrice
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
 int SetPositionMarker(string label, datetime openTime, int type, double lots, double openPrice) {
    // Trendline
@@ -175,5 +179,5 @@ int SetPositionMarker(string label, datetime openTime, int type, double lots, do
    }
    else GetLastError();
 
-   return(catch("SetPositionMarker()"));
+   return(!catch("SetPositionMarker(1)"));
 }
