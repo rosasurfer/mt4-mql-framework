@@ -697,15 +697,11 @@ bool AnalyzePositions() {
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
             return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
       }
-      /*
       // TODO: Prüfung auf Wertänderung nur innerhalb der Woche, nicht am Wochenende
-
-      // Prüfung temporär deaktiviert
       if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
          lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
          continue;
       }
-      */
       string mutex = "mutex.LFX.#"+ lfxMagics[i];                    // Wert hat sich geändert, prüfen, ob die Position gesperrt werden kann (also verfügbar ist)
       if (!AquireLock(mutex, false)) {                               // FALSE = nicht auf Lock warten, sondern bei Mißerfolg sofort zurückkehren
          if (IsError(stdlib_GetLastError()))
