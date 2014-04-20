@@ -21,11 +21,6 @@
 #define CID_USD       8
 
 
-// LFX-Currencies und LFX-QuickChannel-Namen: Arrayindizes stimmen mit Currency-ID's überein
-string lfxCurrencies     [] = {"",            "AUD",            "CAD",            "CHF",            "EUR",            "GBP",            "JPY",            "NZD",            "USD"};
-string channels.lfxProfit[] = {"", "LFX.Profit.AUD", "LFX.Profit.CAD", "LFX.Profit.CHF", "LFX.Profit.EUR", "LFX.Profit.GBP", "LFX.Profit.JPY", "LFX.Profit.NZD", "LFX.Profit.USD"};
-
-
 /**
  * Ob die aktuell selektierte Order zu dieser Strategie gehört.
  *
