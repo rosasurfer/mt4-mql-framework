@@ -10,17 +10,6 @@
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
 
-// Currency-ID's (entsprechen den ID's in stddefine.mqh)
-#define CID_AUD       1
-#define CID_CAD       2
-#define CID_CHF       3
-#define CID_EUR       4
-#define CID_GBP       5
-#define CID_JPY       6
-#define CID_NZD       7
-#define CID_USD       8
-
-
 /**
  * Ob die aktuell selektierte Order zu dieser Strategie gehört.
  *
