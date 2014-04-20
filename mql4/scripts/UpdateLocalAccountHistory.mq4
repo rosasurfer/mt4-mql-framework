@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int account = AccountNumber();
+   int account = GetAccountNumber();
    if (!account) {
       PlaySound("notify.wav");
       MessageBox("No trade server connection.", __NAME__, MB_ICONEXCLAMATION|MB_OK);

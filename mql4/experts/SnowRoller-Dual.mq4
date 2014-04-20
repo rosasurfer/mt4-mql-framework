@@ -2723,7 +2723,7 @@ bool SaveStatus(int hSeq) {
 
    /*
    // (3) Datei auf Server laden
-   int error = UploadStatus(ShortAccountCompany(), AccountNumber(), StdSymbol(), fileName);
+   int error = UploadStatus(ShortAccountCompany(), GetAccountNumber(), StdSymbol(), fileName);
    if (IsError(error))
       return(false);
    */

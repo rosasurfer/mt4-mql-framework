@@ -3688,7 +3688,7 @@ bool SaveStatus() {
 
    /*
    // (3) Datei auf Server laden
-   int error = UploadStatus(ShortAccountCompany(), AccountNumber(), StdSymbol(), fileName);
+   int error = UploadStatus(ShortAccountCompany(), GetAccountNumber(), StdSymbol(), fileName);
    if (IsError(error))
       return(false);
    */
@@ -3766,7 +3766,7 @@ bool RestoreStatus() {
       // TODO: Existenz von wget.exe prüfen
 
       // Befehlszeile für Shellaufruf zusammensetzen
-      string url        = "http://sub.domain.tld/downloadSRStatus.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ AccountNumber() +"&symbol="+ UrlEncode(StdSymbol()) +"&sequence="+ sequenceId;
+      string url        = "http://sub.domain.tld/downloadSRStatus.php?company="+ UrlEncode(ShortAccountCompany()) +"&account="+ GetAccountNumber() +"&symbol="+ UrlEncode(StdSymbol()) +"&sequence="+ sequenceId;
       string targetFile = fullFileName;
       string logFile    = fullFileName +".log";
       string cmd        = "wget.exe \""+ url +"\" -O \""+ targetFile +"\" -o \""+ logFile +"\"";
