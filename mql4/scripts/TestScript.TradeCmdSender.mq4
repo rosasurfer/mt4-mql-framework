@@ -36,10 +36,9 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int counter;
 
+   // Trade-Command verschicken
    while (true) {
-      // Trade-Command verschicken
       if (!hTradeCmdChannelSender) /*&&*/ if (!StartQCSender())
          return(false);
 
@@ -51,15 +50,8 @@ int onStart() {
          StopQCSender();
          continue;
       }
-      counter++;
-      debug("onStart()   messages sent: "+ counter);
-      if (counter >= 3)
-         break;
-
-      PlaySound("notify.wav");
-      int button = MessageBox("Continue?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
-      if (button != IDOK)
-         return(catch("onStart(2)"));
+      debug("onStart()   message sent");
+      break;
    }
 
    return(last_error);
