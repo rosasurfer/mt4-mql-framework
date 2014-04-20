@@ -102,7 +102,7 @@ int onStart() {
 
          // (5) Tickets aus ".\experts\files\LiteForex\remote_positions.ini" löschen
          string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-         string section = ShortAccountCompany() +"."+ AccountNumber();
+         string section = ShortAccountCompany() +"."+ GetAccountNumber();
          for (i=0; i < foundSize; i++) {
             /*
             int error = DeleteIniKey(file, section, foundLabels[i]);

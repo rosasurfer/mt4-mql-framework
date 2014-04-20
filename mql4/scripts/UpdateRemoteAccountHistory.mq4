@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int account = AccountNumber();
+   int account = GetAccountNumber();
    if (!account) {
       if (__LOG) log("onStart(1)   no trade server connection");
       PlaySound("notify.wav");
@@ -121,7 +121,7 @@ int onStart() {
       return(last_error);
    }
    string accountCompany = AccountCompany();
-   string accountNumber  = AccountNumber();
+   string accountNumber  = GetAccountNumber();
    string accountBalance = NumberToStr(AccountBalance(), ".2+");
 
    if (FileWrite(hFile, accountCompany,accountNumber,accountBalance) < 0) {

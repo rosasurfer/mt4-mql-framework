@@ -1320,11 +1320,11 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Löscht einen einzelnen Eintrag einer .ini-Datei.
+ * Löscht einen Schlüssel eines Abschnitts einer .ini-Datei.
  *
  * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Abschnitt des Eintrags
- * @param  string key      - Name des zu löschenden Eintrags
+ * @param  string section  - Abschnitt des Schlüssels
+ * @param  string key      - zu löschender Schlüssel
  *
  * @return int - Fehlerstatus
  */
@@ -6629,7 +6629,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() { // throws ERS_TERMINAL_NOT_READY             // evt. während des Terminal-Starts
+int GetAccountNumber() { // throws ERS_TERMINAL_NOT_READY            // evt. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -9172,7 +9172,7 @@ int StringFindR(string object, string search) {
 
 
 /**
- * Konvertiert die Großbuchstaben eines String zu Kleinbuchstaben (cp: ANSI westlich).
+ * Konvertiert die Großbuchstaben eines String zu Kleinbuchstaben (code-page: ANSI westlich).
  *
  * @param  string value
  *

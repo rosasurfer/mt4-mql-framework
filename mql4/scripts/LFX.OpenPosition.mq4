@@ -279,7 +279,7 @@ int onStart() {
    string sLastUpdate  = sOpenTime;
 
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = ShortAccountCompany() +"."+ AccountNumber();
+   string section = ShortAccountCompany() +"."+ GetAccountNumber();
    string key     = magicNumber;
    string value   = sLabel +", "+ sOrderType +", "+ sOrderUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
