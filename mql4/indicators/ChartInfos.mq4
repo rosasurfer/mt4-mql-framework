@@ -64,10 +64,13 @@ bool   positionsAnalyzed;
 
 // QuickChannel
 bool   isLfxChart;
-int    hLfxSenderChannels[9];                               // QuickChannel-Sender-Handles, Größe entspricht der größten LFX-Currency-ID, @see "LFX/define.mqh"
-int    hLfxReceiverChannel;                                 // QuickChannel-Receiver-Handle
-string lfxReceiverChannelName;                              // QuickChannel-Receiver Channel-Name
-string lfxReceiverChannelBuffer[];                          // QuickChannel-Receiver Channel-Buffer
+
+int    hLfxChannelSenders[9];                               // QuickChannel-Sender (einer je Währung)
+string lfxChannelNames   [9];                               // QuickChannel-Namen  (einer je Währung)
+
+int    hLfxChannelReceiver;                                 // QuickChannel-Receiver (nur einer)
+string lfxChannelName;                                      // QuickChannel-Name des Receivers
+string lfxChannelBuffer[];                                  // Channel-Buffer für Receiver
 
 
 #include <ChartInfos/init.mqh>
@@ -684,7 +687,7 @@ bool AnalyzePositions() {
 
    // (2) P/L detektierter LFX-Positionen per QuickChannel an LFX-Terminal schicken (nur, wenn sich der Wert seit der letzten Message geändert hat)
    double lastLfxProfit;
-   string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hLfxSenderChannels));    // 2 x ArrayResize() = ArrayInitialize(string array)
+   string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hLfxChannelSenders));    // 2 x ArrayResize() = ArrayInitialize(string array)
    string globalVarLfxProfit;
    int    error;
 
@@ -722,9 +725,9 @@ bool AnalyzePositions() {
    // (2.3) angesammelte Messages verschicken (Messages je Channel werden gemeinsam, nicht einzeln verschickt)
    for (i=ArraySize(lfxMessages)-1; i > 0; i--) {                    // Index 0 ist unbenutzt
       if (StringLen(lfxMessages[i]) > 0) {
-         if (!hLfxSenderChannels[i]) /*&&*/ if (!StartQCSender(i))
+         if (!hLfxChannelSenders[i]) /*&&*/ if (!StartQCSender(i))
             return(false);
-         if (!QC_SendMessage(hLfxSenderChannels[i], lfxMessages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
+         if (!QC_SendMessage(hLfxChannelSenders[i], lfxMessages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
             return(!catch("AnalyzePositions(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
       }
    }
@@ -822,18 +825,18 @@ bool AnalyzePositions() {
    // (3.6) keine lokalen Positionen
    else if (isLfxChart) {
       // per QuickChannel eingehende Remote-Positionsdetails auswerten
-      if (!hLfxReceiverChannel) /*&&*/ if (!StartQCReceiver())
+      if (!hLfxChannelReceiver) /*&&*/ if (!StartQCReceiver())
          return(false);
 
-      int result = QC_CheckChannel(lfxReceiverChannelName);
+      int result = QC_CheckChannel(lfxChannelName);
       if (result > QC_CHECK_CHANNEL_EMPTY) {
-         result = QC_GetMessages3(hLfxReceiverChannel, lfxReceiverChannelBuffer, QC_MAX_BUFFER_SIZE);
+         result = QC_GetMessages3(hLfxChannelReceiver, lfxChannelBuffer, QC_MAX_BUFFER_SIZE);
          if (result != QC_GET_MSG3_SUCCESS) {
             if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("AnalyzePositions(5)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
             if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("AnalyzePositions(6)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
                                                      return(!catch("AnalyzePositions(7)->MT4iQuickChannel::QC_GetMessages3() = unexpected return value: "+ result,                                      ERR_WIN32_ERROR));
          }
-         string values = lfxReceiverChannelBuffer[0];
+         string values = lfxChannelBuffer[0];
          int lenValues = StringLen(values);
          i = 0; pos = 0;
 
@@ -852,9 +855,9 @@ bool AnalyzePositions() {
          }                                                           // aufeinanderfolgende (pos == i) und abschließende Separatoren (i == lenValues) werden ignoriert
       }
       else if (result < QC_CHECK_CHANNEL_EMPTY) {
-         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("AnalyzePositions(8)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") = QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
-         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("AnalyzePositions(9)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") doesn't exist",                       ERR_WIN32_ERROR));
-                                               return(!catch("AnalyzePositions(10)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxReceiverChannelName +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
+         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("AnalyzePositions(8)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxChannelName +"\") = QC_CHECK_CHANNEL_ERROR",             ERR_WIN32_ERROR));
+         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("AnalyzePositions(9)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxChannelName +"\") doesn't exist",                        ERR_WIN32_ERROR));
+                                               return(!catch("AnalyzePositions(10)->MT4iQuickChannel::QC_CheckChannel(name=\""+ lfxChannelName +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
       }
    }
 
@@ -1670,6 +1673,9 @@ bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ti
 }
 
 
+string qc_key;                                                       // QuickChannel-Schlüssel zur Unterscheidung verschiedener Installationspaare: Trade-Terminal <-> LFX-Terminal
+
+
 /**
  * Startet für die LFX-Währung mit der angegebenen ID einen QuickChannel-Sender.
  *
@@ -1678,13 +1684,20 @@ bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ti
  * @return bool - Erfolgsstatus
  */
 bool StartQCSender(int cid) {
-   if (cid < 1 || cid >= ArraySize(hLfxSenderChannels))
+   if (cid < 1 || cid >= ArraySize(hLfxChannelSenders))
       return(!catch("StartQCSender(1)   illegal parameter cid = "+ cid, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   if (!hLfxSenderChannels[cid]) {
-      hLfxSenderChannels[cid] = QC_StartSender(channels.lfxProfit[cid]);
-      if (!hLfxSenderChannels[cid])
-         return(!catch("StartQCSender(2)->MT4iQuickChannel::QC_StartSender(channelName=\""+ channels.lfxProfit[cid] +"\")   error ="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   if (!hLfxChannelSenders[cid]) {
+      if (!StringLen(qc_key)) {
+         string dirs[];
+         Explode(TerminalPath(), "\\", dirs, NULL);
+         qc_key = StringSubstr(ArrayPopString(dirs), 1);
+      }
+      lfxChannelNames   [cid] = qc_key +":LFX.Profit."+ GetCurrency(cid);     // Channel-Name: "{n}:LFX.Profit.{AUD}"
+      hLfxChannelSenders[cid] = QC_StartSender(lfxChannelNames[cid]);
+      if (!hLfxChannelSenders[cid])
+         return(!catch("StartQCSender(2)->MT4iQuickChannel::QC_StartSender(channelName=\""+ lfxChannelNames[cid] +"\")   error ="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      //debug("StartQCSender()   sender started on \""+ lfxChannelNames[cid] +"\"");
    }
    return(true);
 }
@@ -1696,23 +1709,59 @@ bool StartQCSender(int cid) {
  * @return bool - Erfolgsstatus
  */
 bool StartQCReceiver() {
-   if (hLfxReceiverChannel != NULL) return(true);
+   if (hLfxChannelReceiver != NULL) return(true);
    if (!IsChart)                    return(false);
 
-   // LFX-ChannelName des aktuellen Charts ermitteln
-   if      (StringLeft (Symbol(), 3) == "LFX") lfxReceiverChannelName = channels.lfxProfit[GetCurrencyId(StringRight(Symbol(), -3))];
-   else if (StringRight(Symbol(), 3) == "LFX") lfxReceiverChannelName = channels.lfxProfit[GetCurrencyId(StringLeft (Symbol(), -3))];
+   // LFX-Channel-Namen des aktuellen Charts bestimmen
+   if (!StringLen(qc_key)) {
+      string dirs[];
+      Explode(TerminalPath(), "\\", dirs, NULL);
+      qc_key = StringSubstr(ArrayPopString(dirs), 1);
+   }                                                                 // Channel-Name: "{n}:LFX.Profit.{AUD}"
+   if      (StringLeft (Symbol(), 3) == "LFX") lfxChannelName = qc_key +":LFX.Profit."+ StringRight(Symbol(), -3);
+   else if (StringRight(Symbol(), 3) == "LFX") lfxChannelName = qc_key +":LFX.Profit."+ StringLeft (Symbol(), -3);
    else return(false);                                               // kein LFX-Chart
 
    int hChartWnd = WindowHandle(Symbol(), NULL);
    if (!hChartWnd)
       return(false);
 
-   hLfxReceiverChannel = QC_StartReceiver(lfxReceiverChannelName, hChartWnd);
-   if (!hLfxReceiverChannel)
-      return(!catch("StartQCReceiver(2)->MT4iQuickChannel::QC_StartReceiver(channelName=\""+ lfxReceiverChannelName +"\", hChartWnd=0x"+ IntToHexStr(hChartWnd) +")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   hLfxChannelReceiver = QC_StartReceiver(lfxChannelName, hChartWnd);
+   if (!hLfxChannelReceiver)
+      return(!catch("StartQCReceiver(2)->MT4iQuickChannel::QC_StartReceiver(channelName=\""+ lfxChannelName +"\", hChartWnd=0x"+ IntToHexStr(hChartWnd) +")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   InitializeStringBuffer(lfxChannelBuffer, QC_MAX_BUFFER_SIZE);
+   //debug("StartQCReceiver()   receiver started on \""+ lfxChannelName +"\"");
+   return(true);
+}
 
-   InitializeStringBuffer(lfxReceiverChannelBuffer, QC_MAX_BUFFER_SIZE);
+
+/**
+ * Stoppt alle laufenden QuickChannel-Sender und -Receiver.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StopQuickChannels() {
+   int hTmp;
+
+   // Sender stoppen
+   for (int i=ArraySize(hLfxChannelSenders)-1; i >= 0; i--) {
+      if (hLfxChannelSenders[i] != NULL) {
+         hTmp = hLfxChannelSenders[i];
+         hLfxChannelSenders[i] = NULL;                               // Handle auch bei Fehler zurücksetzen
+         lfxChannelNames   [i] = "";
+         if (!QC_ReleaseSender(hTmp))
+            return(!catch("StopQuickChannels(1)->MT4iQuickChannel::QC_ReleaseSender(hChannel=0x"+ IntToHexStr(hTmp) +")   error stopping QuickChannel sender: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      }
+   }
+
+   // Receiver stoppen
+   if (hLfxChannelReceiver != NULL) {
+      hTmp = hLfxChannelReceiver;
+      hLfxChannelReceiver = NULL;                                    // Handle auch bei Fehler zurücksetzen
+      lfxChannelName      = "";
+      if (!QC_ReleaseReceiver(hTmp))
+         return(!catch("StopQuickChannels(2)->MT4iQuickChannel::QC_ReleaseReceiver(hChannel=0x"+ IntToHexStr(hTmp) +")   error stopping QuickChannel receiver: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   }
    return(true);
 }
 
