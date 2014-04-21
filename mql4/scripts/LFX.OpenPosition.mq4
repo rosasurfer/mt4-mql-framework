@@ -264,26 +264,27 @@ int onStart() {
 
 
    // (10) Position in .ini-Datei speichern
-   //Ticket = Label, OrderType, OrderUnits, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
-   string sLabel       = currency +".#"+ counter;           sLabel      = StringRightPad(sLabel    , 13, " ");
-   string sOrderType   = ifString(direction==OP_BUY, "L", "S");
-   string sOrderUnits  = NumberToStr(Units, ".1+");
+   //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
+   string sSymbol      = currency;                              sSymbol      = StringLeftPad (sSymbol    ,  6, " ");
+   string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
+   string sOrderType   = ifString(direction==OP_BUY, "L", "S"); sOrderType   = StringRightPad(sOrderType ,  9, " ");
+   string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
    string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart()   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
-   string sOpenEquity  = DoubleToStr(equity, 2);            sOpenEquity = StringLeftPad(sOpenEquity,  7, " ");
-   string sOpenPrice   = DoubleToStr(openPrice, lfxDigits); sOpenPrice  = StringLeftPad(sOpenPrice ,  7, " ");
-   string sStopLoss    = "0";                               sStopLoss   = StringLeftPad(sStopLoss  ,  7, " ");
-   string sTakeProfit  = "0";                               sTakeProfit = StringLeftPad(sTakeProfit,  7, " ");
-   string sCloseTime   = "0";                               sCloseTime  = StringLeftPad(sCloseTime , 19, " ");
-   string sClosePrice  = "0";                               sClosePrice = StringLeftPad(sClosePrice,  7, " ");
-   string sOrderProfit = "0";
+   string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
+   string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
+   string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
+   string sTakeProfit  = "0";                                   sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
+   string sCloseTime   = "0";                                   sCloseTime   = StringLeftPad(sCloseTime  , 13, " ");
+   string sClosePrice  = "0";                                   sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
+   string sOrderProfit = "0";                                   sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
    string sLastUpdate  = sOpenTime;
 
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = ShortAccountCompany() +"."+ GetAccountNumber();
    string key     = magicNumber;
-   string value   = sLabel +", "+ sOrderType +", "+ sOrderUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
+   string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
-   if (!WritePrivateProfileStringA(section, key, " "+ value, file))
+   if (!WritePrivateProfileStringA(section, key, value, file))
       return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 

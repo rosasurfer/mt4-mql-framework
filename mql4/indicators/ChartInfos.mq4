@@ -14,14 +14,15 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-string label.instrument   = "Instrument";                   // Label der einzelnen Anzeigen
-string label.ohlc         = "OHLC";
-string label.price        = "Price";
-string label.spread       = "Spread";
-string label.unitSize     = "UnitSize";
-string label.position     = "Position";
-string label.time         = "Time";
-string label.stopoutLevel = "StopoutLevel";
+string label.instrument    = "Instrument";                   // Label der einzelnen Anzeigen
+string label.ohlc          = "OHLC";
+string label.price         = "Price";
+string label.spread        = "Spread";
+string label.unitSize      = "UnitSize";
+string label.position      = "Position";
+string label.time          = "Time";
+string label.remoteAccount = "RemoteAccount";
+string label.stopoutLevel  = "StopoutLevel";
 
 int    appliedPrice = PRICE_MEDIAN;                         // Bid | Ask | Median (default)
 double leverage;                                            // Hebel zur UnitSize-Berechnung
@@ -1560,11 +1561,11 @@ bool ProcessQCMessage(string message) {
       }
 
       // (2.2) Ticketdetails einlesen
-      string   label = "";
+      string   symbol="", label="";
       int      orderType;
       double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
       datetime openTime, closeTime, lastUpdate;                                                                                                                // profit
-      int result = LFX.ReadRemotePosition(account, ticket, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
+      int result = LFX.ReadRemotePosition(account, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
       if (!result)
          return(false);                                              //  0: Fehler
 
