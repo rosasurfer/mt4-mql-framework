@@ -1,5 +1,5 @@
 /**
- * Aktiviert/deaktiviert die Anzeige der in "remote_positions.ini" gespeicherten offenen LFX-Tickets des aktuellen Accounts.
+ * Aktiviert/deaktiviert die Anzeige der in "remote_positions.ini" gespeicherten geschlossenen LFX-Tickets des aktuellen Accounts.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -30,14 +30,14 @@ int onInit() {
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
       PlaySound("notify.wav");
-      MessageBox("Cannot display LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      MessageBox("Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
    lfxCurrencyId     = GetCurrencyId(lfxCurrency);
    lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
 
-   // (2) aktuellen Remote-Account und dessen AccountCompany ermitteln
+   // (2) aktuelle Remote-Account-Details ermitteln
    string section = "LFX";
    string key     = "MRURemoteAccount";
    remoteAccount  = GetLocalConfigInt(section, key, 0);
@@ -78,7 +78,7 @@ int onStart() {
       string keys[];
       int keysSize = GetIniKeys(file, section, keys);
 
-      // (2.2) offene Orders finden und anzeigen
+      // (2.2) geschlossene Orders finden und anzeigen
       string   symbol="", label="";
       int      ticket, orderType;
       double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
@@ -100,10 +100,10 @@ int onStart() {
       }
    }
    else {
-      // (3) Status OFF: alle existierenden Chartobjekte offener Tickets löschen
+      // (3) Status OFF: alle existierenden Chartobjekte geschlossener Tickets löschen
       for (i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
-         if (StringStartsWith(name, "LFX.OpenTicket."))
+         if (StringStartsWith(name, "LFX.ClosedTicket."))
             ObjectDelete(name);
       }
    }
@@ -128,7 +128,7 @@ int onStart() {
  * @return bool - Erfolgsstatus
  */
 int SetPositionMarker(string label, datetime openTime, int type, double lots, double openPrice) {
-   string name = StringConcatenate("LFX.OpenTicket.", label, ".Line");
+   string name = StringConcatenate("LFX.ClosedTicket.", label, ".Line");
    if (ObjectFind(name) > -1)
       ObjectDelete(name);
 
