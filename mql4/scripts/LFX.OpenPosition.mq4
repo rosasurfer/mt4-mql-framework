@@ -268,7 +268,7 @@ int onStart() {
    string sLabel       = currency +".#"+ counter;           sLabel      = StringRightPad(sLabel    , 13, " ");
    string sOrderType   = ifString(direction==OP_BUY, "L", "S");
    string sOrderUnits  = NumberToStr(Units, ".1+");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart()   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
    string sOpenEquity  = DoubleToStr(equity, 2);            sOpenEquity = StringLeftPad(sOpenEquity,  7, " ");
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits); sOpenPrice  = StringLeftPad(sOpenPrice ,  7, " ");
    string sStopLoss    = "0";                               sStopLoss   = StringLeftPad(sStopLoss  ,  7, " ");
