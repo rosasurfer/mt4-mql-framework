@@ -425,7 +425,8 @@
 
    int      StrToMovAvgMethod(string method);
    int      StrToPeriod(string value);  int StrToTimeframe(string value);              // Alias
-   int      PeriodFlag(int peiod);
+   int      PeriodFlag(int period);
+   int      StrToOperationType(string value);
    int      StrToPriceType(string value);
 
    string   CreateLegendLabel(string name);
@@ -461,7 +462,6 @@
    string   IntsToStr          (int array[], string separator);
    string   CharsToStr         (int array[], string separator);
    string   TicketsToStr       (int array[], string separator);
-   string   TicketsLotsToStr   (int array[], string separator);
    string   OperationTypesToStr(int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
    string   DoublesToStr    (double array[], string separator);
