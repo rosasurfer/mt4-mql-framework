@@ -265,9 +265,9 @@ int onStart() {
 
    // (10) Position in .ini-Datei speichern
    //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
-   string sSymbol      = currency;                              sSymbol      = StringLeftPad (sSymbol    ,  6, " ");
+   string sSymbol      = currency;
    string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
-   string sOrderType   = ifString(direction==OP_BUY, "L", "S"); sOrderType   = StringRightPad(sOrderType ,  9, " ");
+   string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
    string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
    string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart()   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
    string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");

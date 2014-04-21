@@ -123,10 +123,8 @@ int LFX.ReadRemotePosition(int account, int ticket, string &symbol, string &labe
    string _label = sValue;
 
    // OrderType
-   sValue = StringToUpper(StringTrim(values[2]));
-   if      (sValue == "L") int _orderType = OP_LONG;
-   else if (sValue == "S")     _orderType = OP_SELL;
-   else                                         return(_NULL(catch("LFX.ReadRemotePosition(3)   invalid order type \""+ StringTrim(values[1]) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   int _orderType = StrToOperationType(values[2]);
+   if (_orderType == OP_UNDEFINED)              return(_NULL(catch("LFX.ReadRemotePosition(3)   invalid order type \""+ StringTrim(values[1]) +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // OrderUnits
    sValue = StringTrim(values[3]);
@@ -198,7 +196,7 @@ int LFX.ReadRemotePosition(int account, int ticket, string &symbol, string &labe
    _lastUpdate = GMTToServerTime(_lastUpdate);
 
 
-   // (2) übergebene Variablen erst nach vollständiger Validierung mit ausgelesenen Daten beschreiben
+   // (2) übergebene Variablen erst nach vollständiger erfolgreicher Validierung modifizieren
    symbol      = _symbol;
    label       = _label;
    orderType   = _orderType;

@@ -91,9 +91,11 @@ int onStart() {
                int result = LFX.ReadRemotePosition(remoteAccount, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
                if (result != 1)                                                        // +1, wenn das Ticket erfolgreich gelesen wurden
                   return(last_error);                                                  // -1, wenn das Ticket nicht gefunden wurde
-               openPrice += lfxChartDeviation;                                         //  0, falls ein Fehler auftrat
+               if (!closeTime)                                                         //  0, falls ein Fehler auftrat
+                  continue;            // keine geschlossene Order
 
-               if (!SetPositionMarker(label, openTime, orderType, units, openPrice))
+               openPrice += lfxChartDeviation;
+               if (!SetPositionMarker(label, orderType, units, openPrice, openTime))
                   break;
             }
          }
@@ -117,17 +119,17 @@ int onStart() {
 
 
 /**
- * Zeichnet für die angegebenen Daten einen Position-Marker in den Chart.
+ * Zeichnet für die angegebenen Daten einen Positions-Marker in den Chart.
  *
  * @param  string   label
- * @param  datetime openTime
  * @param  int      type
  * @param  double   lots
  * @param  double   openPrice
+ * @param  datetime openTime
  *
  * @return bool - Erfolgsstatus
  */
-int SetPositionMarker(string label, datetime openTime, int type, double lots, double openPrice) {
+bool SetPositionMarker(string label, int type, double lots, double openPrice, datetime openTime) {
    string name = StringConcatenate("LFX.ClosedTicket.", label, ".Line");
    if (ObjectFind(name) > -1)
       ObjectDelete(name);

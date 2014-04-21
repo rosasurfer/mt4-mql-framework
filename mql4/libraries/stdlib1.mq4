@@ -7914,6 +7914,51 @@ string ModuleTypeDescription(int type) {
 
 
 /**
+ * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
+ *
+ * @param  string value
+ *
+ * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
+ */
+int StrToOperationType(string value) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringLen(str) == 1) {
+      switch (StrToInteger(str)) {
+         case OP_BUY      :
+            if (str == "0")    return(OP_BUY      ); break;          // OP_BUY = 0: Sonderfall
+         case OP_SELL     :    return(OP_SELL     );
+         case OP_BUYLIMIT :    return(OP_BUYLIMIT );
+         case OP_SELLLIMIT:    return(OP_SELLLIMIT);
+         case OP_BUYSTOP  :    return(OP_BUYSTOP  );
+         case OP_SELLSTOP :    return(OP_SELLSTOP );
+         case OP_BALANCE  :    return(OP_BALANCE  );
+         case OP_CREDIT   :    return(OP_CREDIT   );
+      }
+   }
+   else {
+      if (StringStartsWith(str, "OP_"))
+         str = StringRight(str, -3);
+      if (str == "BUY"       ) return(OP_BUY      );
+      if (str == "SELL"      ) return(OP_SELL     );
+      if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
+      if (str == "BUY LIMIT" ) return(OP_BUYLIMIT );
+      if (str == "SELLLIMIT" ) return(OP_SELLLIMIT);
+      if (str == "SELL LIMIT") return(OP_SELLLIMIT);
+      if (str == "BUYSTOP"   ) return(OP_BUYSTOP  );
+      if (str == "STOP BUY"  ) return(OP_BUYSTOP  );
+      if (str == "SELLSTOP"  ) return(OP_SELLSTOP );
+      if (str == "STOP SELL" ) return(OP_SELLSTOP );
+      if (str == "BALANCE"   ) return(OP_BALANCE  );
+      if (str == "CREDIT"    ) return(OP_CREDIT   );
+   }
+
+   if (__LOG) log("StrToOperationType()   invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_FUNCTION_PARAMVALUE);
+   return(OP_UNDEFINED);
+}
+
+
+/**
  * Gibt die lesbare Konstante eines Operation-Types zurück.
  *
  * @param  int type - Operation-Type
@@ -7932,7 +7977,7 @@ string OperationTypeToStr(int type) {
       case OP_CREDIT   : return("OP_CREDIT"   );
       case OP_UNDEFINED: return("OP_UNDEFINED");
    }
-   return(_empty(catch("OperationTypeToStr()   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("OperationTypeToStr()   invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7941,7 +7986,7 @@ string OperationTypeToStr(int type) {
  *
  * @param  int type - Operation-Type
  *
- * @return string
+ * @return string - Beschreibung oder Leerstring, falls ein Fehler auftrat
  */
 string OperationTypeDescription(int type) {
    switch (type) {
@@ -7955,7 +8000,7 @@ string OperationTypeDescription(int type) {
       case OP_CREDIT   : return("Credit"    );
       case OP_UNDEFINED: return("undefined" );
    }
-   return(_empty(catch("OperationTypeDescription()   invalid parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("OperationTypeDescription()   invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -8004,7 +8049,7 @@ int StrToPriceType(string value) {
       if (str == "ASK"             ) return(PRICE_ASK     );
    }
 
-   if (__LOG) log("StrToPriceType(1)   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
+   if (__LOG) log("StrToPriceType(1)   invalid parameter value = \""+ value +"\" (not a price type)", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
 }
 
