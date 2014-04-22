@@ -92,7 +92,7 @@ int LFX.GetCounter(int magicNumber) {
  *                               0, falls ein Fehler auftrat
  */
 int LFX.ReadRemotePosition(int account, int ticket, string &symbol, string &label, int &orderType, double &orderUnits, datetime &openTime, double &openEquity, double &openPrice, double &stopLoss, double &takeProfit, datetime &closeTime, double &closePrice, double &orderProfit, datetime &lastUpdate) {
-   string sections[], section, file=StringConcatenate(TerminalPath(), "\\experts\\files\\", ShortAccountCompany(), "\\remote_positions.ini");
+   string sections[], section, file=TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    for (int i=GetIniSections(file, sections)-1; i >= 0; i--) {
       if (StringEndsWith(sections[i], "."+ account)) {
          section = sections[i];
