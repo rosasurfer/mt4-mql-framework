@@ -94,8 +94,10 @@ int onStart() {
                if (!closeTime)                                                         //  0, falls ein Fehler auftrat
                   continue;            // keine geschlossene Order
 
-               openPrice += lfxChartDeviation;
-               if (!SetPositionMarker(label, orderType, units, openPrice, openTime))
+               openPrice  += lfxChartDeviation;
+               closePrice += lfxChartDeviation;
+
+               if (!SetClosedTradeMarker(ticket, orderType, units, openTime, openPrice, closeTime, closePrice, profit))
                   break;
             }
          }
@@ -105,7 +107,7 @@ int onStart() {
       // (3) Status OFF: alle existierenden Chartobjekte geschlossener Tickets löschen
       for (i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
-         if (StringStartsWith(name, "LFX.ClosedTicket."))
+         if (StringStartsWith(name, "#"))
             ObjectDelete(name);
       }
    }
@@ -121,27 +123,25 @@ int onStart() {
 /**
  * Zeichnet für die angegebenen Daten einen Positions-Marker in den Chart.
  *
- * @param  string   label
+ * @param  int      ticket
  * @param  int      type
  * @param  double   lots
- * @param  double   openPrice
  * @param  datetime openTime
+ * @param  double   openPrice
+ * @param  datetime closeTime
+ * @param  double   closePrice
+ * @param  double   profit
  *
  * @return bool - Erfolgsstatus
  */
-bool SetPositionMarker(string label, int type, double lots, double openPrice, datetime openTime) {
-   string name = StringConcatenate("LFX.ClosedTicket.", label, ".Line");
-   if (ObjectFind(name) > -1)
-      ObjectDelete(name);
+bool SetClosedTradeMarker(int ticket, int type, double lots, datetime openTime, double openPrice, datetime closeTime, double closePrice, double profit) {
+   color  markerColor = ifInt(type==OP_BUY, Blue, Red);
+   string comment     = "Profit: "+ DoubleToStr(profit, 2);
 
-   if (ObjectCreate(name, OBJ_TREND, 0, D'1970.01.01 00:01', openPrice, openTime, openPrice)) {
-      ObjectSet(name, OBJPROP_RAY  , false);
-      ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
-      ObjectSet(name, OBJPROP_BACK , false);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(lots, ".+"), " x ", NumberToStr(NormalizeDouble(openPrice, SubPipDigits), SubPipPriceFormat)));
-   }
-   else GetLastError();
+   if (!ChartMarker.OrderSent_B(ticket, SubPipDigits, markerColor, type, lots, lfxCurrency, openTime, openPrice, NULL, NULL, comment))
+      return(!SetLastError(stdlib_GetLastError()));
 
-   return(!catch("SetPositionMarker()"));
+   if (!ChartMarker.PositionClosed_B(ticket, SubPipDigits, Orange, type, lots, lfxCurrency, openTime, openPrice, closeTime, closePrice))
+      return(!SetLastError(stdlib_GetLastError()));
+   return(true);
 }
