@@ -27,7 +27,7 @@ bool LFX.IsMyOrder() {
  *
  * @return int - Currency-ID, entsprechend stdlib1::GetCurrencyId()
  */
-int LFX.GetCurrencyId(int magicNumber) {
+int LFX.CurrencyId(int magicNumber) {
    return(magicNumber >> 18 & 0xF);                                  // 4 bit (Bit 19-22) => Bereich 1-15
 }
 
@@ -39,7 +39,7 @@ int LFX.GetCurrencyId(int magicNumber) {
  *
  * @return double - Units
  */
-double LFX.GetUnits(int magicNumber) {
+double LFX.Units(int magicNumber) {
    return(magicNumber >> 14 & 0xF / 10.);                            // 4 bit (Bit 15-18) => Bereich 1-15
 }
 
@@ -51,7 +51,7 @@ double LFX.GetUnits(int magicNumber) {
  *
  * @return int - Instanz-ID
  */
-int LFX.GetInstanceId(int magicNumber) {
+int LFX.InstanceId(int magicNumber) {
    return(magicNumber >> 4 & 0x3FF);                                 // 10 bit (Bit 5-14) => Bereich 1-1023
 }
 
@@ -63,7 +63,7 @@ int LFX.GetInstanceId(int magicNumber) {
  *
  * @return int - Counter
  */
-int LFX.GetCounter(int magicNumber) {
+int LFX.Counter(int magicNumber) {
    return(magicNumber & 0xF);                                        // 4 bit (Bit 1-4 ) => Bereich 1-15
 }
 
@@ -216,6 +216,72 @@ int LFX.ReadRemotePosition(int account, int ticket, string &symbol, string &labe
 
 
 /**
+ * Liest die Instanz-ID's aller offenen LFX-Tickets und den Counter der angegebenen LFX-Währung in die übergebenen Variablen ein.
+ *
+ * @param  int    account          - AccountNumber
+ * @param  string lfxCurrency      - LFX-Währung
+ * @param  int   &allInstanceIds[] - Array zur Aufnahme der Instanz-ID's aller offenen Tickets
+ * @param  int   &currencyCounter  - Variable zur Aufnahme des Counters der angegebenen LFX-Währung
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool LFX.ReadInstanceIdsCounter(int account, string lfxCurrency, int &allInstanceIds[], int &currencyCounter) {
+   static bool done = false;
+   if (done)                                                          // Rückkehr, falls Positionen bereits eingelesen wurden
+      return(true);
+
+   int knownMagics[];
+   ArrayResize(knownMagics,    0);
+   ArrayResize(allInstanceIds, 0);
+   currencyCounter = 0;
+
+
+   // Accountdetails bestimmen
+   string section        = "Accounts";
+   string key            = account +".company";
+   string accountCompany = GetGlobalConfigString(section, key, "");
+   if (!StringLen(accountCompany)) {
+      PlaySound("notify.wav");
+      MessageBox("Missing account company setting for account \""+ account +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      return(!SetLastError(ERR_RUNTIME_ERROR));
+   }
+
+   // alle Tickets des Accounts einlesen
+   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
+          section = accountCompany +"."+ account;
+   string keys[];
+   int keysSize = GetIniKeys(file, section, keys);
+
+   // offene Orders finden und auswerten
+   string   symbol="", label="";
+   int      ticket, orderType, result;
+   double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
+   datetime openTime, closeTime, lastUpdate;
+
+   for (int i=0; i < keysSize; i++) {
+      if (StringIsDigit(keys[i])) {
+         ticket = StrToInteger(keys[i]);
+         result = LFX.ReadRemotePosition(account, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+         if (result != 1)                                            // +1, wenn das Ticket erfolgreich gelesen wurden
+            return(last_error);                                      // -1, wenn das Ticket nicht gefunden wurde; 0, falls ein Fehler auftrat
+         if (closeTime != 0)
+            continue;                                                // keine offene Order
+
+         ArrayPushInt(allInstanceIds, LFX.InstanceId(ticket));
+         if (symbol == lfxCurrency) {
+            if (StringStartsWith(label, "#"))
+               label = StringSubstr(label, 1);
+            currencyCounter = Max(currencyCounter, StrToInteger(label));
+         }
+      }
+   }
+
+   done = true;                                                      // Erledigt-Flag setzen
+   return(!catch("LFX.ReadInstanceIdsCounter()"));
+}
+
+
+/**
  * Liest den im Chart gespeicherten aktuellen Anzeigestatus aus.
  *
  * @return bool - Status: ON/OFF
@@ -252,15 +318,16 @@ int LFX.SaveDisplayStatus(bool status) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   int    iNull;
+   int    iNull, iNulls[];
    double dNull;
    string sNull;
-   LFX.GetCounter(NULL);
-   LFX.GetCurrencyId(NULL);
-   LFX.GetInstanceId(NULL);
-   LFX.GetUnits(NULL);
+   LFX.Counter(NULL);
+   LFX.CurrencyId(NULL);
+   LFX.InstanceId(NULL);
    LFX.IsMyOrder();
    LFX.ReadDisplayStatus();
+   LFX.ReadInstanceIdsCounter(NULL, NULL, iNulls, iNull);
    LFX.ReadRemotePosition(NULL, NULL, sNull, sNull, iNull, dNull, iNull, dNull, dNull, dNull, dNull, iNull, dNull, dNull, iNull);
    LFX.SaveDisplayStatus(NULL);
+   LFX.Units(NULL);
 }
