@@ -22,7 +22,7 @@ int __DEINIT_FLAGS__[];
 
 extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
 extern string Direction    = "long | short";                         // (B)uy | (S)ell | (L)ong | (S)hort
-extern double Units        = 1.0;                                    // Positionsgröße (Vielfaches von 0.1 von 0.1 bis 1.0)
+extern double Units        = 1.0;                                    // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ string lfxCurrency;
 int    direction;
 double leverage;
 
-int    openPositions.magicNo   [];                                   // Daten der aktuell offenen Positionen aller Symbole dieser Strategie
+int    openPositions.magicNo   [];                                   // Daten aller aktuell offenen LFX-Positionen
 string openPositions.currency  [];
 double openPositions.units     [];
 int    openPositions.instanceId[];
@@ -60,7 +60,7 @@ int onInit() {
 
    // (1.3) Units
    if (NE(MathModFix(Units, 0.1), 0))            return(catch("onInit(3)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (Units < 0.1 || Units > 1)                 return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range: 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (Units < 0.1 || Units > 1)                 return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
 
 
