@@ -1,5 +1,5 @@
 /**
- * Erzeugt eine neue LFX-"Buy Limit"-Order, die überwacht und bei Erreichen des Limit-Preises automatisch ausgeführt wird.
+ * Erzeugt eine neue LFX-"Sell Limit"-Order, die überwacht und bei Erreichen des Limit-Preises automatisch ausgeführt wird.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -49,19 +49,18 @@ int onInit() {
    Units = NormalizeDouble(Units, 1);
 
    // LimitPrice
-   if (LimitPrice >= Bid)                        return(catch("onInit(3)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be lower than the current LFX price)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (LimitPrice <= 0)                          return(catch("onInit(4)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (LimitPrice <= Bid)                        return(catch("onInit(3)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be higher than the current LFX price)", ERR_INVALID_INPUT_PARAMVALUE));
 
    // StopLossPrice
-   if (StopLossPrice < 0)                        return(catch("onInit(5)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (StopLossPrice > 0)
-      if (StopLossPrice >= LimitPrice)           return(catch("onInit(6)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (must be lower than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (StopLossPrice != 0)
+      if (StopLossPrice <= LimitPrice)           return(catch("onInit(4)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (must be higher than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
 
    // TakeProfitPrice
-   if (TakeProfitPrice != 0)
-      if (TakeProfitPrice <= LimitPrice)         return(catch("onInit(7)   Illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (must be higher than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (TakeProfitPrice < 0)                      return(catch("onInit(5)   Illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (TakeProfitPrice > 0)
+      if (TakeProfitPrice >= LimitPrice)         return(catch("onInit(6)   Illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (must be lower than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -74,7 +73,7 @@ int onStart() {
    // (1) Sicherheitsabfrage
    PlaySound("notify.wav");
    int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "")
-                         +"Do you really want to place a limit order to Buy "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
+                         +"Do you really want to place a limit order to Sell "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                          +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                          + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
                          + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),

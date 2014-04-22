@@ -28,16 +28,12 @@ extern double Units        = 1.0;                                    // Position
 
 
 string lfxCurrency;
+int    lfxCurrencyId;
 int    direction;
 double leverage;
 
-int    openPositions.magicNo   [];                                   // Daten aller aktuell offenen LFX-Positionen
-string openPositions.currency  [];
-double openPositions.units     [];
-int    openPositions.instanceId[];
-int    openPositions.counter   [];
-
-bool   openPositions.updated = false;                                // Flag, das signalisiert, ob die vorhandenen offenen Positionen bereits eingelesen wurden
+int    openPositions.instanceId[];                                   // Daten der aktuell offenen LFX-Positionen
+int    openPositions.maxCounter;
 
 
 /**
@@ -49,8 +45,9 @@ int onInit() {
    // (1.1) Parametervalidierung: LFX.Currency
    string value = StringToUpper(StringTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
-   if (!StringInArray(currencies, value))        return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   lfxCurrency = value;
+   if (!StringInArray(currencies, value))        return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\" (not a LFX currency)", ERR_INVALID_INPUT_PARAMVALUE));
+   lfxCurrency   = value;
+   lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
    // (1.2) Direction
    value = StringToUpper(StringTrim(Direction));
@@ -237,11 +234,8 @@ int onStart() {
 
 
    // (7) Daten in openPositions.* aktualisieren
-   ArrayPushInt   (openPositions.magicNo   , magicNumber                   );
-   ArrayPushString(openPositions.currency  , lfxCurrency                   );
-   ArrayPushDouble(openPositions.units     , Units                         );
-   ArrayPushInt   (openPositions.instanceId, LFX.GetInstanceId(magicNumber));
-   ArrayPushInt   (openPositions.counter   , counter                       );
+   ArrayPushInt(openPositions.instanceId, LFX.InstanceId(magicNumber));
+   openPositions.maxCounter = counter;
 
 
    // (8) Logmessage ausgeben
@@ -257,7 +251,7 @@ int onStart() {
    string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
    string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
    string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart(10)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sOpenTime, 3) == ":00") warn("onStart(10)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
    string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
    string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
@@ -285,40 +279,15 @@ int onStart() {
 
 
 /**
- * Liest die Daten der offenen Positionen aller Symbole dieser Strategie ein.
+ * Gibt den Positionsz‰hler der letzten offenen Position im aktuellen Instrument zur¸ck.
  *
- * @return bool - Erfolgsstatus
+ * @return int - Z‰hler oder -1, falls ein Fehler auftrat
  */
-bool ReadOpenPositions() {
-   if (openPositions.updated)                                        // R¸ckkehr, falls Positionen bereits eingelesen wurden
-      return(true);
-
-   ArrayResize(openPositions.magicNo   , 0);
-   ArrayResize(openPositions.currency  , 0);
-   ArrayResize(openPositions.units     , 0);
-   ArrayResize(openPositions.instanceId, 0);
-   ArrayResize(openPositions.counter   , 0);
-
-   for (int i=OrdersTotal()-1; i >= 0; i--) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: w‰hrend des Auslesens wurde in einem anderen Thread eine offene Order entfernt
-         continue;
-
-      // offenen Positionen dieser Strategie finden und Daten einlesen
-      if (LFX.IsMyOrder()) {
-         if (OrderType() > OP_SELL)                                  // keine offene Position
-            continue;
-         if (IntInArray(openPositions.magicNo, OrderMagicNumber()))  // Position wurde bereits erfaﬂt
-            continue;
-         ArrayPushInt   (openPositions.magicNo   ,                               OrderMagicNumber()  );
-         ArrayPushString(openPositions.currency  , GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())));
-         ArrayPushDouble(openPositions.units     ,             LFX.GetUnits     (OrderMagicNumber()) );
-         ArrayPushInt   (openPositions.instanceId,             LFX.GetInstanceId(OrderMagicNumber()) );
-         ArrayPushInt   (openPositions.counter   ,             LFX.GetCounter   (OrderMagicNumber()) );
-      }
-   }
-   openPositions.updated = true;                                     // Update-Flag setzen
-
-   return(!catch("ReadOpenPositions()"));
+int GetPositionCounter() {
+   // Sicherstellen, daﬂ die vorhandenen offenen Positionen eingelesen wurden
+   if (!LFX.ReadInstanceIdsCounter(GetAccountNumber(), lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
+      return(-1);
+   return(openPositions.maxCounter);
 }
 
 
@@ -346,29 +315,6 @@ int CreateMagicNumber(int counter) {
 
 
 /**
- * Gibt den Positionsz‰hler der letzten offenen Position im aktuellen Instrument zur¸ck.
- *
- * @return int - Z‰hler oder -1, falls ein Fehler auftrat
- */
-int GetPositionCounter() {
-   // Sicherstellen, daﬂ die vorhandenen offenen Positionen eingelesen wurden
-   if (!openPositions.updated)
-      if (!ReadOpenPositions())
-         return(-1);
-
-   int counter, size=ArraySize(openPositions.currency);
-
-   for (int i=0; i < size; i++) {
-      if (openPositions.currency[i] == lfxCurrency) {
-         if (openPositions.counter[i] > counter)
-            counter = openPositions.counter[i];
-      }
-   }
-   return(counter);
-}
-
-
-/**
  * Gibt die aktuelle Instanz-ID zur¸ck. Existiert noch keine, wird eine neue erzeugt.
  *
  * @return int - Instanz-ID im Bereich 1-1023 (10 bit) oder NULL, falls ein Fehler auftrat
@@ -377,10 +323,9 @@ int GetCreateInstanceId() {
    static int id;
 
    if (!id) {
-      // Sicherstellen, daﬂ die offenen Positionen eingelesen wurden
-      if (!openPositions.updated)
-         if (!ReadOpenPositions())
-            return(NULL);
+      // sicherstellen, daﬂ die offenen Positionen eingelesen wurden
+      if (!LFX.ReadInstanceIdsCounter(GetAccountNumber(), lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
+         return(NULL);
 
       MathSrand(GetTickCount());
       while (!id) {

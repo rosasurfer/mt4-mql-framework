@@ -718,7 +718,7 @@ bool AnalyzePositions() {
          return(SetLastError(stdlib_GetLastError()));
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
-      int cid = LFX.GetCurrencyId(lfxMagics[i]);
+      int cid = LFX.CurrencyId(lfxMagics[i]);
       if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       GetAccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
       else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, GetAccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
    }
@@ -1588,7 +1588,7 @@ bool ProcessQCMessage(string message) {
       remote.position.types  [pos][1]               = orderType + 1; // OP_LONG =0, TYPE_LONG =1
       remote.position.data   [pos][I_DIRECTLOTSIZE] = units;         // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice + GetGlobalConfigDouble("LfxChartDeviation", GetCurrency(LFX.GetCurrencyId(ticket)), 0);
+      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice + GetGlobalConfigDouble("LfxChartDeviation", GetCurrency(LFX.CurrencyId(ticket)), 0);
    }
 
    // (3) P/L aktualisieren

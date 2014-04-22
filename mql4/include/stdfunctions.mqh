@@ -862,8 +862,8 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
    if (error != NO_ERROR) {
-      // (1) Fehler an Debug-Ausgabe schicken
-      debug(location, error);
+      // (1) Fehler zusätzlich an Debug-Ausgabe schicken
+      debug("ERROR: "+ location, error);
 
 
       // (2) Programmnamen um Instanz-ID erweitern
@@ -940,25 +940,28 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
  * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int warn(string message, int error=NO_ERROR) {
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+   // (1) Warnung zusätzlich an Debug-Ausgabe schicken
+   debug("WARN: "+ message, error);
 
+
+   // (2) Programmnamen um Instanz-ID erweitern
    string name, name_wId;
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-
-   // (1) Programmnamen um Instanz-ID erweitern
    int logId = GetCustomLogID();
    if (logId != 0) {
       int pos = StringFind(name, "::");
       if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
       else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
-   else name_wId = name;
+   else              name_wId = name;
+
+   if (IsError(error))
+      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
 
 
-   // (2) Warnung loggen
+   // (3) Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
       logged = logged || log.custom(StringConcatenate("WARN: ", name, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
@@ -970,7 +973,7 @@ int warn(string message, int error=NO_ERROR) {
    message = StringConcatenate(name_wId, "::", message);
 
 
-   // (3) Warnung anzeigen
+   // (4) Warnung anzeigen
    if (IsTesting()) {
       // weder Alert() noch MessageBox() können verwendet werden
       string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));

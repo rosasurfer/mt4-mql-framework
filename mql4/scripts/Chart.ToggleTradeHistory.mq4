@@ -73,7 +73,7 @@ int onStart() {
 
    if (status) {
       // (2.1) Status ON: alle Tickets des Accounts einlesen
-      string file    = TerminalPath() +"\\experts\\files\\"+ ShortAccountCompany() +"\\remote_positions.ini";
+      string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
       string section = remoteAccountCompany +"."+ remoteAccount;
       string keys[];
       int keysSize = GetIniKeys(file, section, keys);
@@ -87,7 +87,7 @@ int onStart() {
       for (int i=0; i < keysSize; i++) {
          if (StringIsDigit(keys[i])) {
             ticket = StrToInteger(keys[i]);
-            if (LFX.GetCurrencyId(ticket) == lfxCurrencyId) {
+            if (LFX.CurrencyId(ticket) == lfxCurrencyId) {
                int result = LFX.ReadRemotePosition(remoteAccount, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
                if (result != 1)                                                        // +1, wenn das Ticket erfolgreich gelesen wurden
                   return(last_error);                                                  // -1, wenn das Ticket nicht gefunden wurde

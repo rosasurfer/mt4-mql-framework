@@ -129,7 +129,7 @@ int onStart() {
 
 
       // (6) Gesamt-ClosePrice und Profit der LFX-Position berechnen
-      string currency = GetCurrency(LFX.GetCurrencyId(magics[i]));
+      string currency = GetCurrency(LFX.CurrencyId(magics[i]));
       double closePrice=1.0, profit=0;
       for (n=0; n < positionSize; n++) {
          if (StringStartsWith(oes.Symbol(oes, n), currency)) closePrice *= oes.ClosePrice(oes, n);
