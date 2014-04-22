@@ -274,7 +274,7 @@ int onStart() {
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
    string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
    string sTakeProfit  = "0";                                   sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
-   string sCloseTime   = "0";                                   sCloseTime   = StringLeftPad(sCloseTime  , 13, " ");
+   string sCloseTime   = "0";                                   sCloseTime   = StringLeftPad(sCloseTime  , 19, " ");
    string sClosePrice  = "0";                                   sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
    string sOrderProfit = "0";                                   sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
    string sLastUpdate  = sOpenTime;
@@ -284,7 +284,7 @@ int onStart() {
    string key     = magicNumber;
    string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
-   if (!WritePrivateProfileStringA(section, key, value, file))
+   if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 

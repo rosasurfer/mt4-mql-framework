@@ -95,7 +95,8 @@ int onStart() {
                   continue;            // keine offene Order
 
                openPrice += lfxChartDeviation;
-               if (!SetPositionMarker(label, orderType, units, openPrice, openTime))
+
+               if (!SetOpenOrderMarker(label, orderType, units, openTime, openPrice))
                   break;
             }
          }
@@ -124,12 +125,12 @@ int onStart() {
  * @param  string   label
  * @param  int      type
  * @param  double   lots
- * @param  double   openPrice
  * @param  datetime openTime
+ * @param  double   openPrice
  *
  * @return bool - Erfolgsstatus
  */
-bool SetPositionMarker(string label, int type, double lots, double openPrice, datetime openTime) {
+bool SetOpenOrderMarker(string label, int type, double lots, datetime openTime, double openPrice) {
    string name = StringConcatenate("LFX.OpenTicket.", label, ".Line");
    if (ObjectFind(name) > -1)
       ObjectDelete(name);
@@ -143,5 +144,5 @@ bool SetPositionMarker(string label, int type, double lots, double openPrice, da
    }
    else GetLastError();
 
-   return(!catch("SetPositionMarker()"));
+   return(!catch("SetOpenOrderMarker()"));
 }
