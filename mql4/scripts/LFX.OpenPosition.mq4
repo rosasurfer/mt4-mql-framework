@@ -27,7 +27,7 @@ extern double Units        = 1.0;                                    // Position
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string currency;
+string lfxCurrency;
 int    direction;
 double leverage;
 
@@ -50,7 +50,7 @@ int onInit() {
    string value = StringToUpper(StringTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
    if (!StringInArray(currencies, value))        return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   currency = value;
+   lfxCurrency = value;
 
    // (1.2) Direction
    value = StringToUpper(StringTrim(Direction));
@@ -89,14 +89,14 @@ int onStart() {
 
    // (1) zu handelnde Pairs bestimmen
    //     TODO: Brokerspezifische Symbole ermitteln
-   if      (currency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
-   else if (currency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
-   else if (currency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
-   else if (currency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
-   else if (currency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
-   else if (currency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
-   else if (currency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "NZDCAD"; symbols[3] = "GBPNZD"; symbols[4] = "NZDUSD"; symbols[5] = "NZDJPY"; }
-   else if (currency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
+   if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
+   else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
+   else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
+   else if (lfxCurrency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
+   else if (lfxCurrency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
+   else if (lfxCurrency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
+   else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "NZDCAD"; symbols[3] = "GBPNZD"; symbols[4] = "NZDUSD"; symbols[5] = "NZDJPY"; }
+   else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
 
 
    // (2) Lotsizes berechnen
@@ -185,15 +185,15 @@ int onStart() {
 
    // (3) Directions der Teilpositionen bestimmen
    for (i=0; i < 6; i++) {
-      if (StringStartsWith(symbols[i], currency)) directions[i]  = direction;
-      else                                        directions[i]  = direction ^ 1;      // 0=>1, 1=>0
-      if (currency == "JPY")                      directions[i] ^= 1;                  // JPY ist invers notiert
+      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = direction;
+      else                                           directions[i]  = direction ^ 1;   // 0=>1, 1=>0
+      if (lfxCurrency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
    }
 
 
    // (4) finale Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + currency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
 
@@ -202,13 +202,15 @@ int onStart() {
    //     TODO: Fehler in Counter und damit in MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
    int counter     = GetPositionCounter() + 1;   if (!counter)     return(catch("onStart(6)"));    // Abbruch, falls GetPositionCounter() oder
    int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
-   string comment  = currency +"."+ counter;
+   string comment  = lfxCurrency +"."+ counter;
    string mutex    = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex, true))
       return(SetLastError(stdlib_GetLastError()));
 
 
-   // (6) neue Position öffnen
+   // (6) Order ausführen und dabei Gesamt-OpenPrice berechnen
+   double openPrice = 1.0;
+
    for (i=0; i < 6; i++) {
       double   price       = NULL;
       double   slippage    = 0.1;
@@ -225,44 +227,37 @@ int onStart() {
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
          return(SetLastError(stdlib_GetLastError()));
+
+      if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
+      else                                           openPrice /= oe.OpenPrice(oe);
    }
+   openPrice = MathPow(openPrice, 1.0/7);
+   if (lfxCurrency == "JPY")
+      openPrice = 1/openPrice;                     // JPY ist invers notiert
 
 
    // (7) Daten in openPositions.* aktualisieren
    ArrayPushInt   (openPositions.magicNo   , magicNumber                   );
-   ArrayPushString(openPositions.currency  , currency                      );
+   ArrayPushString(openPositions.currency  , lfxCurrency                   );
    ArrayPushDouble(openPositions.units     , Units                         );
    ArrayPushInt   (openPositions.instanceId, LFX.GetInstanceId(magicNumber));
    ArrayPushInt   (openPositions.counter   , counter                       );
 
 
-   // (8) Gesamt-OpenPrice der LFX-Position berechnen
-   double openPrice = 1.0;
-   for (i=0; i < 6; i++) {
-      if (!SelectTicket(tickets[i], "onStart(9)"))
-         return(last_error);
-      if (StringStartsWith(OrderSymbol(), currency)) openPrice *= OrderOpenPrice();
-      else                                           openPrice /= OrderOpenPrice();
-   }
-   openPrice = MathPow(openPrice, 1.0/7);
-   if (currency == "JPY")
-      openPrice = 1/openPrice;            // JPY ist invers notiert
-
-
-   // (9) Logmessage ausgeben
-   int    lfxDigits =    ifInt(currency=="JPY",    3,     5 );
-   string lfxFormat = ifString(currency=="JPY", ".2'", ".4'");
+   // (8) Logmessage ausgeben
+   int    lfxDigits =    ifInt(lfxCurrency=="JPY",    3,     5 );
+   string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   if (__LOG) log("onStart(10)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   if (__LOG) log("onStart(9)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (10) LFX-Position in .ini-Datei speichern
+   // (9) LFX-Position in .ini-Datei speichern
    //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
-   string sSymbol      = currency;
+   string sSymbol      = lfxCurrency;
    string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
    string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
    string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart(11)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart(10)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
    string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
    string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
@@ -278,10 +273,10 @@ int onStart() {
    string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(catch("onStart(12)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 
-   // (11) Lock auf die neue Position wieder freigeben
+   // (10) Lock auf die neue Position wieder freigeben
    if (!ReleaseLock(mutex))
       return(SetLastError(stdlib_GetLastError()));
 
@@ -339,7 +334,7 @@ int CreateMagicNumber(int counter) {
       return(_NULL(catch("CreateMagicNumber()   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
-   int iCurrency = GetCurrencyId(currency) & 0xF << 18;              //  4 bit (Bits 19-22)
+   int iCurrency = GetCurrencyId(lfxCurrency) & 0xF << 18;           //  4 bit (Bits 19-22)
    int iUnits    = Round(Units * 10) & 0xF << 14;                    //  4 bit (Bits 15-18)
    int iInstance = GetCreateInstanceId() & 0x3FF << 4;               // 10 bit (Bits  5-14)
    int pCounter  = counter & 0xF;                                    //  4 bit (Bits  1-4 )
@@ -364,7 +359,7 @@ int GetPositionCounter() {
    int counter, size=ArraySize(openPositions.currency);
 
    for (int i=0; i < size; i++) {
-      if (openPositions.currency[i] == currency) {
+      if (openPositions.currency[i] == lfxCurrency) {
          if (openPositions.counter[i] > counter)
             counter = openPositions.counter[i];
       }
