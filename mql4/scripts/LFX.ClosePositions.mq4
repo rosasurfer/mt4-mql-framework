@@ -1,5 +1,9 @@
 /**
  * Schlieﬂt die angegebenen LFX-Positionen.
+ *
+ * NOTE: Zur Zeit kˆnnen die Positionen nur einzeln und nicht gleichzeitig geschlossen werden. Beim gleichzeitigen Schlieﬂen
+ *       kann der ClosePrice der Gesamtposition noch nicht korrekt berechnet werden. Beim einzelnen Schlieﬂen mehrerer Positionen
+ *       werden dadurch Commission und Spread mehrfach berechnet.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -8,6 +12,7 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 
 #include <lfx.mqh>
+#include <win32api.mqh>
 
 #property show_inputs
 
@@ -49,11 +54,11 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int inputSize=ArraySize(inputLabels), orders=OrdersTotal();
+   int magics       []; ArrayResize(magics,        0);      // alle zu schlieﬂenden LFX-'Tickets'
+   int tickets      []; ArrayResize(tickets,       0);      // alle zu schlieﬂenden MT4-Tickets
+   int tickets.magic[]; ArrayResize(tickets.magic, 0);      // MagicNumbers der zu schlieﬂenden MT4-Tickets: size(tickets) == size(tickets.magic)
 
-   string foundLabels []; ArrayResize(foundLabels,  0);
-   int    foundTickets[]; ArrayResize(foundTickets, 0);
-   int    foundMagics []; ArrayResize(foundMagics,  0);
+   int inputSize=ArraySize(inputLabels), orders=OrdersTotal();
 
 
    // (1) zu schlieﬂende Positionen selektieren
@@ -65,62 +70,127 @@ int onStart() {
             continue;
          for (int n=0; n < inputSize; n++) {
             if (StringIStartsWith(OrderComment(), inputLabels[n])) {
-               string label = GetCurrency(LFX.GetCurrencyId(OrderMagicNumber())) +"."+ LFX.GetCounter(OrderMagicNumber());
-               if (!StringInArray(foundLabels,  label             )) ArrayPushString(foundLabels,  label             );
-               if (   !IntInArray(foundTickets, OrderTicket()     )) ArrayPushInt   (foundTickets, OrderTicket()     );
-               if (   !IntInArray(foundMagics,  OrderMagicNumber())) ArrayPushInt   (foundMagics,  OrderMagicNumber());
+               if (!IntInArray(magics, OrderMagicNumber())) {
+                  ArrayPushInt(magics, OrderMagicNumber());
+               }
+               if (!IntInArray(tickets, OrderTicket())) {
+                  ArrayPushInt(tickets,       OrderTicket()     );
+                  ArrayPushInt(tickets.magic, OrderMagicNumber());
+               }
                break;
             }
          }
       }
    }
-
-
-   // (2) Positionen schlieﬂen
-   int foundSize = ArraySize(foundLabels);
-   if (foundSize > 0) {
-      PlaySound("notify.wav");
-      int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(foundSize==1, "", foundSize +" ") +"LFX position"+ ifString(foundSize==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
-      if (button == IDOK) {
-
-         // (3) Alle selektierten LFX-Positionen sperren, damit andere Indikatoren/Charts keine tempor‰ren Teilpositionen verarbeiten.
-         int magicsSize = ArraySize(foundMagics);
-         for (i=0; i < magicsSize; i++) {
-            // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
-            //if (!AquireLock("mutex.LFX.#"+ foundMagics[i], true))
-            //   return(SetLastError(stdlib_GetLastError()));
-         }
-
-         // (4) Orderausf¸hrung
-         int oeFlags = NULL;
-         /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(foundTickets)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-         if (!OrderMultiClose(foundTickets, 0.1, Orange, oeFlags, oes))
-            return(SetLastError(stdlib_GetLastError()));
-         ArrayResize(oes, 0);
-
-         // TODO: ClosePrice() berechnen und ausgeben
-
-         // (5) Tickets aus ".\experts\files\LiteForex\remote_positions.ini" lˆschen
-         string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-         string section = ShortAccountCompany() +"."+ GetAccountNumber();
-         for (i=0; i < foundSize; i++) {
-            /*
-            int error = DeleteIniKey(file, section, foundLabels[i]);
-            if (IsError(error))
-               return(SetLastError(error));
-            */
-         }
-
-         // (6) Locks wieder freigeben
-         for (i=0; i < magicsSize; i++) {
-            //if (!ReleaseLock("mutex.LFX.#"+ foundMagics[i]))
-            //   return(SetLastError(stdlib_GetLastError()));
-         }
-      }
-   }
-   else {
+   int magicsSize = ArraySize(magics);
+   if (!magicsSize) {
       PlaySound("notify.wav");
       MessageBox("No matching LFX positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
+      return(catch("onStart(1)"));
    }
-   return(last_error);
+
+
+   // (2) Sicherheitsabfrage
+   PlaySound("notify.wav");
+   int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ ifString(magicsSize==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   if (button != IDOK)
+      return(catch("onStart(2)"));
+
+
+   // (3) Alle selektierten LFX-Positionen sperren, damit andere Indikatoren/Charts keine tempor‰ren Teilpositionen verarbeiten.
+   for (i=0; i < magicsSize; i++) {
+      // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
+      //if (!AquireLock("mutex.LFX.#"+ magics[i], true))
+      //   return(SetLastError(stdlib_GetLastError()));
+   }
+
+
+   // (4) Positionen nacheinander schlieﬂen
+   int ticketsSize = ArraySize(tickets);
+   for (i=0; i < magicsSize; i++) {
+      int positionSize, position[]; ArrayResize(position, 0);                          // Subset der in (1) gefundenen Tickets, Tickets jeweils einer LFX-Position
+      for (n=0; n < ticketsSize; n++) {
+         if (magics[i] == tickets.magic[n])
+            positionSize = ArrayPushInt(position, tickets[n]);
+      }
+
+
+      // (5) Orderausf¸hrung
+      double slippage    = 0.1;
+      color  markerColor = CLR_NONE;
+      int    oeFlags     = NULL;
+
+      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
+      if (IsError(catch("onStart(3)")))   return(last_error);
+
+      /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(position)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+      if (!OrderMultiClose(position, slippage, markerColor, oeFlags, oes))
+         return(SetLastError(stdlib_GetLastError()));
+
+
+      // (6) Gesamt-ClosePrice und Profit der LFX-Position berechnen
+      string currency = GetCurrency(LFX.GetCurrencyId(magics[i]));
+      double closePrice=1.0, profit=0;
+      for (n=0; n < positionSize; n++) {
+         if (StringStartsWith(oes.Symbol(oes, n), currency)) closePrice *= oes.ClosePrice(oes, n);
+         else                                                closePrice /= oes.ClosePrice(oes, n);
+         profit += oes.Swap(oes, n) + oes.Commission(oes, n) + oes.Profit(oes, n);
+      }
+      closePrice = MathPow(closePrice, 1.0/7);
+      if (currency == "JPY")
+         closePrice = 1/closePrice;             // JPY ist invers notiert
+
+
+      // (7) Logmessage ausgeben
+      int    lfxDigits  =    ifInt(currency=="JPY",    3,     5 );
+      string lfxFormat  = ifString(currency=="JPY", ".2'", ".4'");
+             closePrice = NormalizeDouble(closePrice, lfxDigits);
+      if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(closePrice, lfxFormat) +", profit: "+ DoubleToStr(profit, 2));
+
+
+      // (8) LFX-Position in .ini-Datei aktualisieren
+      int      rAccount=GetAccountNumber(), rTicket=magics[i], rOrderType;
+      string   rSymbol="", rLabel="";
+      double   rUnits, rOpenEquity, rOpenPrice, rStopLoss, rTakeProfit, rClosePrice, rProfit;
+      datetime rOpenTime, rCloseTime, rLastUpdate;
+      int result = LFX.ReadRemotePosition(rAccount, rTicket, rSymbol, rLabel, rOrderType, rUnits, rOpenTime, rOpenEquity, rOpenPrice, rStopLoss, rTakeProfit, rCloseTime, rClosePrice, rProfit, rLastUpdate);
+      if (result == 0) return(last_error);
+      if (result != 1) return(catch("onStart(5)->LFX.ReadRemotePosition(account="+ rAccount +", ticket=#"+ rTicket +")   ticket not found", ERR_RUNTIME_ERROR));
+                                                                     // +1, wenn das Ticket erfolgreich gelesen wurden
+                                                                     // -1, wenn das Ticket nicht gefunden wurde
+                                                                     //  0, falls ein Fehler auftrat
+      //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
+      string sSymbol      = rSymbol;
+      string sLabel       = "";                                                               sLabel       = StringRightPad(sLabel     ,  9, " ");
+      string sOrderType   = OperationTypeDescription(rOrderType);                             sOrderType   = StringRightPad(sOrderType ,  9, " ");
+      string sUnits       = NumberToStr(rUnits, ".+");                                        sUnits       = StringLeftPad (sUnits     ,  5, " ");
+      string sOpenTime    = TimeToStr(ServerToGMT(rOpenTime), TIME_FULL); if (StringRight(sOpenTime, 3) == ":00") warn("onStart(6)   gmtTime=\""+ sOpenTime +"\"  rOpenTime=\""+ TimeToStr(rOpenTime, TIME_FULL) +"\"");
+      string sOpenEquity  = DoubleToStr(rOpenEquity, 2);                                      sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
+      string sOpenPrice   = DoubleToStr(rOpenPrice, lfxDigits);                               sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
+      string sStopLoss    = ifString(!rStopLoss,   "0", DoubleToStr(rStopLoss,   lfxDigits)); sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
+      string sTakeProfit  = ifString(!rTakeProfit, "0", DoubleToStr(rTakeProfit, lfxDigits)); sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
+      string sCloseTime   = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sCloseTime, 3) == ":00") warn("onStart(7)   gmtTime=\""+ sCloseTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+      string sClosePrice  = DoubleToStr(closePrice, lfxDigits);                               sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
+      string sOrderProfit = DoubleToStr(profit, 2);                                           sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
+      string sLastUpdate  = sCloseTime;
+
+      string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
+      string section = ShortAccountCompany() +"."+ rAccount;
+      string key     = magics[i];
+      string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
+
+      if (!WritePrivateProfileStringA(section, key, " "+ value, file))
+         return(catch("onStart(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
+      ArrayResize(oes, 0);
+   }
+
+
+   // (9) Locks wieder freigeben
+   for (i=0; i < magicsSize; i++) {
+      //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
+      //   return(SetLastError(stdlib_GetLastError()));
+   }
+
+   return(catch("onStart(9)"));
 }

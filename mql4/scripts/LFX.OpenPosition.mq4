@@ -22,7 +22,7 @@ int __DEINIT_FLAGS__[];
 
 extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
 extern string Direction    = "long | short";                         // (B)uy | (S)ell | (L)ong | (S)hort
-extern double Units        = 1.0;                                    // halbe (0.5) oder ganze (1.0) Unit
+extern double Units        = 1.0;                                    // Positionsgröße (Vielfaches von 0.1 von 0.1 bis 1.0)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,39 +46,32 @@ bool   openPositions.updated = false;                                // Flag, da
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Parametervalidierung
-   // (1.1) LFX.Currency
+   // (1.1) Parametervalidierung: LFX.Currency
    string value = StringToUpper(StringTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
-   if (!StringInArray(currencies, value))
-      return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   if (!StringInArray(currencies, value))        return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    currency = value;
 
    // (1.2) Direction
    value = StringToUpper(StringTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
-   else return(catch("onInit(2)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   else                                          return(catch("onInit(2)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.3) Units
-   if (NE(Units, 0.5)) /*&&*/ if (NE(Units, 1))
-      return(catch("onInit(3)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (needs to be 0.5 or 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (NE(MathModFix(Units, 0.1), 0))            return(catch("onInit(3)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (Units < 0.1 || Units > 1)                 return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range: 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
 
 
    // (2) Leverage-Konfiguration einlesen und validieren
-   if (!IsGlobalConfigKey("Leverage", "Basket"))
-      return(catch("onInit(4)   Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
-
+   if (!IsGlobalConfigKey("Leverage", "Basket")) return(catch("onInit(5)   Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
    value = GetGlobalConfigString("Leverage", "Basket", "");
-   int n = StringFind(value, ";");                                   // ggf. vorhandenen Kommentar entfernen
-   if (n > -1) value = StringTrimRight(StringLeft(value, n));
-   if (!StringIsNumeric(value))
-      return(catch("onInit(5)   Invalid MetaTrader config value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(value))                  return(catch("onInit(6)   Invalid MetaTrader config value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1) return(catch("onInit(6)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1)                             return(catch("onInit(7)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -174,7 +167,7 @@ int onStart() {
       // (2.5) Lotsize validieren
       if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)   Too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (2.6) bei zu geringer Equity Leverage erhöhen und Daten für spätere Warnung hinterlegen
+      // (2.6) bei zu geringer Equity Leverage erhöhen und Details für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
@@ -200,7 +193,7 @@ int onStart() {
 
    // (4) finale Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(Units, ".+") + ifString(EQ(Units, 1), " unit ", " units ") + currency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + currency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
 
@@ -225,7 +218,7 @@ int onStart() {
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
 
-      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError())); // vor Orderaufgabe alle evt. aufgetretenen Fehler abfangen
+      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
       if (IsError(catch("onStart(8)")))   return(last_error);
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
@@ -243,7 +236,7 @@ int onStart() {
    ArrayPushInt   (openPositions.counter   , counter                       );
 
 
-   // (8) Gesamt-OpenPrice berechnen (entspricht LFX-Price)
+   // (8) Gesamt-OpenPrice der LFX-Position berechnen
    double openPrice = 1.0;
    for (i=0; i < 6; i++) {
       if (!SelectTicket(tickets[i], "onStart(9)"))
@@ -257,19 +250,19 @@ int onStart() {
 
 
    // (9) Logmessage ausgeben
-   int    lfxDigits = ifInt(currency=="JPY", 3, 5);
+   int    lfxDigits =    ifInt(currency=="JPY",    3,     5 );
    string lfxFormat = ifString(currency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
    if (__LOG) log("onStart(10)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (10) Position in .ini-Datei speichern
+   // (10) LFX-Position in .ini-Datei speichern
    //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
    string sSymbol      = currency;
    string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
    string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
    string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart()   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);   if (StringRight(sOpenTime, 3) == ":00") warn("onStart(11)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
    string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
    string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
@@ -285,7 +278,7 @@ int onStart() {
    string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(catch("onStart(12)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
 
    // (11) Lock auf die neue Position wieder freigeben
