@@ -96,6 +96,11 @@ int      last_error;                                        // der letzte Fehler
 #define SAT                  SATURDAY
 
 
+// Account-Types
+#define ACCOUNT_TYPE_DEMO           1
+#define ACCOUNT_TYPE_REAL           2
+
+
 // Time-Flags, siehe TimeToStr()
 #define TIME_DATE                   1
 #define TIME_MINUTES                2

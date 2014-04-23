@@ -5312,15 +5312,9 @@ string StringReplace(string object, string search, string replace) {
  * @return string
  */
 string StringLeftPad(string input, int pad_length, string pad_string=" ") {
-   int length = StringLen(input);
-
-   while (length < pad_length) {
-      input  = StringConcatenate(pad_string, input);
-      length = StringLen(input);
+   while (StringLen(input) < pad_length) {
+      input = StringConcatenate(pad_string, input);
    }
-   if (length > pad_length)
-      input = StringRight(input, pad_length);
-
    return(input);
 }
 
@@ -5335,15 +5329,9 @@ string StringLeftPad(string input, int pad_length, string pad_string=" ") {
  * @return string
  */
 string StringRightPad(string input, int pad_length, string pad_string=" ") {
-   int length = StringLen(input);
-
-   while (length < pad_length) {
-      input  = StringConcatenate(input, pad_string);
-      length = StringLen(input);
+   while (StringLen(input) < pad_length) {
+      input = StringConcatenate(input, pad_string);
    }
-   if (length > pad_length)
-      input = StringLeft(input, pad_length);
-
    return(input);
 }
 

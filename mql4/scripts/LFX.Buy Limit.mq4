@@ -7,8 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
 
-//#include <lfx.mqh>
-//#include <win32api.mqh>
+#include <lfx.mqh>
+#include <win32api.mqh>
 
 #property show_inputs
 
@@ -23,7 +23,15 @@ extern double TakeProfitPrice;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string lfxCurrency;
+int    remoteAccount;                                                // aktueller Remote-Account
+string remoteAccountCompany;
+int    remoteAccountType;
+
+string lfxCurrency;                                                  // aktuelle LFX-Währung
+int    lfxCurrencyId;
+
+int    openPosition.instanceIds[];                                   // Daten der aktuell offenen LFX-Positionen
+int    openPosition.counter;
 
 
 /**
@@ -40,9 +48,45 @@ int onInit() {
       MessageBox("Cannot manage LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
+   lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
-   // (2) Parametervalidierung
+   // (2) Daten des Remote-Account bestimmen
+   string section = "LFX";
+   string key     = "MRURemoteAccount";
+   remoteAccount  = GetLocalConfigInt(section, key, 0);
+   if (remoteAccount <= 0) {
+      PlaySound("notify.wav");
+      string value = GetLocalConfigString(section, key, "");
+      if (!StringLen(value)) MessageBox("Missing remote account setting ["+ section +"]->"+ key                      , __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      else                   MessageBox("Invalid remote account setting ["+ section +"]->"+ key +" = \""+ value +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      return(SetLastError(ERR_RUNTIME_ERROR));
+   }
+   section = "Accounts";
+   key     = remoteAccount +".company";
+   remoteAccountCompany = GetGlobalConfigString(section, key, "");
+   if (!StringLen(remoteAccountCompany)) {
+      PlaySound("notify.wav");
+      MessageBox("Missing account company setting for remote account \""+ remoteAccount +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      return(SetLastError(ERR_RUNTIME_ERROR));
+   }
+   key   = remoteAccount +".type";
+   value = StringToLower(GetGlobalConfigString(section, key, ""));
+   if (!StringLen(value)) {
+      PlaySound("notify.wav");
+      MessageBox("Missing remote account setting ["+ section +"]->"+ key, __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      return(SetLastError(ERR_RUNTIME_ERROR));
+   }
+   if      (value == "demo") remoteAccountType = ACCOUNT_TYPE_DEMO;
+   else if (value == "real") remoteAccountType = ACCOUNT_TYPE_REAL;
+   else {
+      PlaySound("notify.wav");
+      MessageBox("Invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      return(SetLastError(ERR_RUNTIME_ERROR));
+   }
+
+
+   // (3) Parametervalidierung
    // Units
    if (NE(MathModFix(Units, 0.1), 0))    return(catch("onInit(1)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
    if (Units < 0.1 || Units > 1)         return(catch("onInit(2)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
@@ -73,7 +117,7 @@ int onInit() {
 int onStart() {
    // (1) Sicherheitsabfrage
    PlaySound("notify.wav");
-   int button = MessageBox(ifString(!IsDemo(), "- Live Account -\n\n", "")
+   int button = MessageBox(ifString(remoteAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
                          +"Do you really want to place a limit order to Buy "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                          +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                          + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
@@ -83,32 +127,78 @@ int onStart() {
       return(catch("onStart(1)"));
 
 
-   // (2) Order in .ini-Datei speichern
-   //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
-   //  x        x       x        x        x        x                        x          x          x
-   string sSymbol      = lfxCurrency;
-   /*
-   string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
-   string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
-   string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);
-   string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
-   string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
-   string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
-   string sTakeProfit  = "0";                                   sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
-   string sCloseTime   = "0";                                   sCloseTime   = StringLeftPad(sCloseTime  , 19, " ");
-   string sClosePrice  = "0";                                   sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
-   string sOrderProfit = "0";                                   sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
-   string sLastUpdate  = sOpenTime;
+   // (2) Orderdetails definieren
+   int    counter = GetPositionCounter() + 1;   if (!counter) return(catch("onStart(2)"));   // Abbruch, falls GetPositionCounter() oder
+   int    ticket  = CreateMagicNumber(counter); if (!ticket)  return(catch("onStart(3)"));   // CreateMagicNumber() Fehler melden
+   string label   = "#"+ counter;
 
-   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = ShortAccountCompany() +"."+ GetAccountNumber();
-   string key     = magicNumber;
-   string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
 
-   if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
-   */
+   // (3) Order speichern
+   if (!LFX.WriteTicket(remoteAccount, ticket, label, OP_BUYLIMIT, Units, TimeGMT(), NULL, LimitPrice, StopLossPrice, TakeProfitPrice, NULL, NULL, NULL, TimeGMT()))
+      return(last_error);
 
    return(last_error);
+}
+
+
+/**
+ * Gibt den Positionszähler der letzten offenen Position im aktuellen Instrument zurück.
+ *
+ * @return int - Zähler oder -1, falls ein Fehler auftrat
+ */
+int GetPositionCounter() {
+   // Sicherstellen, daß die vorhandenen offenen Positionen eingelesen wurden
+   if (!LFX.ReadInstanceIdsCounter(remoteAccount, lfxCurrency, openPosition.instanceIds, openPosition.counter))
+      return(-1);
+   return(openPosition.counter);
+}
+
+
+/**
+ * Generiert eine neue LFX-Ticket-ID (Wert für OrderMagicNumber().
+ *
+ * @param  int counter - Position-Zähler, für den eine ID erzeugt werden soll
+ *
+ * @return int - LFX-Ticket-ID oder -1, falls ein Fehler auftrat
+ */
+int CreateMagicNumber(int counter) {
+   if (counter < 1)
+      return(_NULL(catch("CreateMagicNumber()   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
+   int iCurrency = lfxCurrencyId & 0xF << 18;                        //  4 bit (Bits 19-22)
+   int iUnits    = Round(Units * 10) & 0xF << 14;                    //  4 bit (Bits 15-18)
+   int iInstance = GetCreateInstanceId() & 0x3FF << 4;               // 10 bit (Bits  5-14)
+   int pCounter  = counter & 0xF;                                    //  4 bit (Bits  1-4 )
+
+   if (!iInstance)
+      return(NULL);
+   return(iStrategy + iCurrency + iUnits + iInstance + pCounter);
+}
+
+
+/**
+ * Gibt die aktuelle Instanz-ID zurück. Existiert noch keine, wird eine neue erzeugt.
+ *
+ * @return int - Instanz-ID im Bereich 1-1023 (10 bit) oder NULL, falls ein Fehler auftrat
+ */
+int GetCreateInstanceId() {
+   static int id;
+
+   if (!id) {
+      // sicherstellen, daß die offenen Positionen eingelesen wurden
+      if (!LFX.ReadInstanceIdsCounter(remoteAccount, lfxCurrency, openPosition.instanceIds, openPosition.counter))
+         return(NULL);
+
+      MathSrand(GetTickCount());
+      while (!id) {
+         id = MathRand();
+         while (id > 1023) {
+            id >>= 1;
+         }
+         if (IntInArray(openPosition.instanceIds, id))               // sicherstellen, daß alle aktuell benutzten Instanz-ID's eindeutig sind
+            id = 0;
+      }
+   }
+   return(id);
 }

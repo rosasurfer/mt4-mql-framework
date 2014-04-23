@@ -221,7 +221,7 @@ datetime GetFirstWeekdayOfMonth(int year, int month) {
    if (year  < 1970 || 2037 < year ) return(_int(-1, catch("GetFirstWeekdayOfMonth(1)   illegal parameter year = "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (month <    1 ||   12 < month) return(_int(-1, catch("GetFirstWeekdayOfMonth(2)   invalid parameter month = "+ month, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", month, ".01 00:00:00"));
+   datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StringRight("0"+month, 2), ".01 00:00:00"));
 
    int dow = TimeDayOfWeek(firstDayOfMonth);
    if (dow == SATURDAY) return(firstDayOfMonth + 2*DAYS);
