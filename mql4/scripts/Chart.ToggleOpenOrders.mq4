@@ -88,12 +88,13 @@ int onStart() {
          if (StringIsDigit(keys[i])) {
             ticket = StrToInteger(keys[i]);
             if (LFX.CurrencyId(ticket) == lfxCurrencyId) {
-               int result = LFX.ReadRemotePosition(remoteAccount, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+               int result = LFX.ReadTicket(remoteAccount, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
                if (result != 1)                                                        // +1, wenn das Ticket erfolgreich gelesen wurden
                   return(last_error);                                                  // -1, wenn das Ticket nicht gefunden wurde
                if (closeTime != 0)                                                     //  0, falls ein Fehler auftrat
                   continue;            // keine offene Order
 
+               openTime   = GMTToServerTime(openTime);
                openPrice += lfxChartDeviation;
 
                if (!SetOpenOrderMarker(label, orderType, units, openTime, openPrice))

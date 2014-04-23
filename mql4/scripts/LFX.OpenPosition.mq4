@@ -245,29 +245,9 @@ int onStart() {
    if (__LOG) log("onStart(9)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) LFX-Position in .ini-Datei speichern
-   //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
-   string sSymbol      = lfxCurrency;
-   string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
-   string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
-   string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sOpenTime, 3)==":00" && TimeSeconds(TimeLocal())!=0) warn("onStart(10)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
-   string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
-   string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
-   string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
-   string sTakeProfit  = "0";                                   sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
-   string sCloseTime   = "0";                                   sCloseTime   = StringLeftPad(sCloseTime  , 19, " ");
-   string sClosePrice  = "0";                                   sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
-   string sOrderProfit = "0";                                   sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
-   string sLastUpdate  = sOpenTime;
-
-   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = ShortAccountCompany() +"."+ GetAccountNumber();
-   string key     = magicNumber;
-   string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
-
-   if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(catch("onStart(11)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   // (9) LFX-Position speichern
+   if (!LFX.WriteTicket(GetAccountNumber(), magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, TimeGMT()))
+      return(last_error);
 
 
    // (10) Lock auf die neue Position wieder freigeben

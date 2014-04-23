@@ -149,39 +149,22 @@ int onStart() {
 
 
       // (8) LFX-Position in .ini-Datei aktualisieren
-      int      rAccount=GetAccountNumber(), rTicket=magics[i], rOrderType;
-      string   rSymbol="", rLabel="";
-      double   rUnits, rOpenEquity, rOpenPrice, rStopLoss, rTakeProfit, rClosePrice, rProfit;
-      datetime rOpenTime, rCloseTime, rLastUpdate;
-      int result = LFX.ReadRemotePosition(rAccount, rTicket, rSymbol, rLabel, rOrderType, rUnits, rOpenTime, rOpenEquity, rOpenPrice, rStopLoss, rTakeProfit, rCloseTime, rClosePrice, rProfit, rLastUpdate);
-      if (result == 0) return(last_error);
-      if (result != 1) return(catch("onStart(5)->LFX.ReadRemotePosition(account="+ rAccount +", ticket=#"+ rTicket +")   ticket not found", ERR_RUNTIME_ERROR));
-                                                                     // +1, wenn das Ticket erfolgreich gelesen wurden
-                                                                     // -1, wenn das Ticket nicht gefunden wurde
-                                                                     //  0, falls ein Fehler auftrat
-      //Ticket = Symbol, Label, OrderType, Units, OpenTime_GMT, OpenEquity, OpenPrice, StopLoss, TakeProfit, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
-      string sSymbol      = rSymbol;
-      string sLabel       = "";                                                               sLabel       = StringRightPad(sLabel     ,  9, " ");
-      string sOrderType   = OperationTypeDescription(rOrderType);                             sOrderType   = StringRightPad(sOrderType ,  9, " ");
-      string sUnits       = NumberToStr(rUnits, ".+");                                        sUnits       = StringLeftPad (sUnits     ,  5, " ");
-      string sOpenTime    = TimeToStr(ServerToGMT(rOpenTime), TIME_FULL);
-      string sOpenEquity  = DoubleToStr(rOpenEquity, 2);                                      sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
-      string sOpenPrice   = DoubleToStr(rOpenPrice, lfxDigits);                               sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
-      string sStopLoss    = ifString(!rStopLoss,   "0", DoubleToStr(rStopLoss,   lfxDigits)); sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
-      string sTakeProfit  = ifString(!rTakeProfit, "0", DoubleToStr(rTakeProfit, lfxDigits)); sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
-      string sCloseTime   = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sCloseTime, 3)==":00" && TimeSeconds(TimeLocal())!=0) warn("onStart(7)   gmtTime=\""+ sCloseTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
-      string sClosePrice  = DoubleToStr(closePrice, lfxDigits);                               sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
-      string sOrderProfit = DoubleToStr(profit, 2);                                           sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
-      string sLastUpdate  = sCloseTime;
+      int      t.operationType, t.account=GetAccountNumber();
+      string   t.symbol="", t.label ="";
+      double   t.units, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closePrice, t.profit;
+      datetime t.openTime, t.closeTime, t.lastUpdate;
 
-      string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-      string section = ShortAccountCompany() +"."+ rAccount;
-      string key     = magics[i];
-      string value   = sSymbol +", "+ sLabel +", "+ sOrderType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sStopLoss +", "+ sTakeProfit +", "+ sCloseTime +", "+ sClosePrice +", "+ sOrderProfit +", "+ sLastUpdate;
+      int result = LFX.ReadTicket(t.account, magics[i], t.symbol, t.label, t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closeTime, t.closePrice, t.profit, t.lastUpdate);
+      if (result == 0) return(last_error);                           //  0, falls ein Fehler auftrat; -1, wenn das Ticket nicht gefunden wurde
+      if (result != 1) return(catch("onStart(5)->LFX.ReadTicket(account="+ t.account +", ticket=#"+ magics[i] +")   ticket not found", ERR_RUNTIME_ERROR));
 
-      if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-         return(catch("onStart(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      t.closeTime  = TimeGMT();
+      t.closePrice = closePrice;
+      t.profit     = profit;
+      t.lastUpdate = t.closeTime;
 
+      if (!LFX.WriteTicket(t.account, magics[i], "", t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closeTime, t.closePrice, t.profit, t.lastUpdate))
+         return(last_error);
       ArrayResize(oes, 0);
    }
 
@@ -191,6 +174,5 @@ int onStart() {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
       //   return(SetLastError(stdlib_GetLastError()));
    }
-
-   return(catch("onStart(9)"));
+   return(catch("onStart(6)"));
 }

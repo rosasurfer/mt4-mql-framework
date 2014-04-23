@@ -1565,7 +1565,7 @@ bool ProcessQCMessage(string message) {
       int      orderType;
       double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
       datetime openTime, closeTime, lastUpdate;                                                                                                                // profit
-      int result = LFX.ReadRemotePosition(account, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
+      int result = LFX.ReadTicket(account, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
       if (!result)
          return(false);                                              //  0: Fehler
 
