@@ -136,6 +136,15 @@ int onStart() {
    if (!LFX.WriteTicket(remoteAccount, ticket, label, OP_SELLLIMIT, Units, TimeGMT(), NULL, LimitPrice, StopLossPrice, TakeProfitPrice, NULL, NULL, NULL, TimeGMT()))
       return(last_error);
 
+
+   // (4) Bestätigungsmeldung
+   PlaySound("Entry order.wav");
+   MessageBox(ifString(remoteAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
+            +"Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" activated.\n\n"
+            +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
+            + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
+            + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),
+            __NAME__, MB_ICONINFORMATION|MB_OK);
    return(last_error);
 }
 

@@ -269,11 +269,11 @@ bool LFX.WriteTicket(int account, int ticket, string label, int operationType, d
    string sOpenTime      = TimeToStr(openTime, TIME_FULL);
    string sOpenEquity    = ifString(!openEquity, "0", DoubleToStr(openEquity, 2));         sOpenEquity    = StringLeftPad(sOpenEquity    ,  7, " ");
    string sOpenPrice     = DoubleToStr(openPrice, lfxDigits);                              sOpenPrice     = StringLeftPad(sOpenPrice     ,  9, " ");
-   string sStopLoss      = ifString(!stopLoss  , "0", DoubleToStr(stopLoss,   lfxDigits)); sStopLoss      = StringLeftPad(sStopLoss      ,  8, " ");
+   string sStopLoss      = ifString(!stopLoss,   "0", DoubleToStr(stopLoss,   lfxDigits)); sStopLoss      = StringLeftPad(sStopLoss      ,  8, " ");
    string sTakeProfit    = ifString(!takeProfit, "0", DoubleToStr(takeProfit, lfxDigits)); sTakeProfit    = StringLeftPad(sTakeProfit    , 10, " ");
    string sCloseTime     = ifString(!closeTime,  "0", TimeToStr(closeTime, TIME_FULL));    sCloseTime     = StringLeftPad(sCloseTime     , 19, " ");
    string sClosePrice    = ifString(!closePrice, "0", DoubleToStr(closePrice, lfxDigits)); sClosePrice    = StringLeftPad(sClosePrice    , 10, " ");
-   string sProfit        = ifString(!profit, "0", DoubleToStr(profit, 2));                 sProfit        = StringLeftPad(sProfit        ,  7, " ");
+   string sProfit        = ifString(!profit,     "0", DoubleToStr(profit, 2));             sProfit        = StringLeftPad(sProfit        ,  7, " ");
    string sLastUpdate    = TimeToStr(lastUpdate, TIME_FULL);
 
 
@@ -290,6 +290,7 @@ bool LFX.WriteTicket(int account, int ticket, string label, int operationType, d
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!catch("LFX.WriteTicket(17)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
    return(true);
 }
 
