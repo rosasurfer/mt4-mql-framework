@@ -44,22 +44,22 @@ int onInit() {
 
    // (2) Parametervalidierung
    // Units
-   if (NE(MathModFix(Units, 0.1), 0))            return(catch("onInit(1)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (Units < 0.1 || Units > 1)                 return(catch("onInit(2)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (NE(MathModFix(Units, 0.1), 0))    return(catch("onInit(1)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (Units < 0.1 || Units > 1)         return(catch("onInit(2)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
 
    // LimitPrice
-   if (LimitPrice >= Bid)                        return(catch("onInit(3)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be lower than the current LFX price)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (LimitPrice <= 0)                          return(catch("onInit(4)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (LimitPrice >= Bid)                return(catch("onInit(3)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be lower than the current LFX price)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (LimitPrice <= 0)                  return(catch("onInit(4)   Illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
 
    // StopLossPrice
-   if (StopLossPrice < 0)                        return(catch("onInit(5)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (StopLossPrice < 0)                return(catch("onInit(5)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
    if (StopLossPrice > 0)
-      if (StopLossPrice >= LimitPrice)           return(catch("onInit(6)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (must be lower than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (StopLossPrice >= LimitPrice)   return(catch("onInit(6)   Illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (must be lower than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
 
    // TakeProfitPrice
    if (TakeProfitPrice != 0)
-      if (TakeProfitPrice <= LimitPrice)         return(catch("onInit(7)   Illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (must be higher than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice <= LimitPrice) return(catch("onInit(7)   Illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (must be higher than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
 
    return(catch("onInit(8)"));
 }
@@ -91,7 +91,7 @@ int onStart() {
    string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
    string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
    string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sOpenTime, 3) == ":00") warn("onStart(10)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);
    string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
    string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");

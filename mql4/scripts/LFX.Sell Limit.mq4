@@ -90,7 +90,7 @@ int onStart() {
    string sLabel       = "#"+ counter;                          sLabel       = StringRightPad(sLabel     ,  9, " ");
    string sOrderType   = OperationTypeDescription(direction);   sOrderType   = StringRightPad(sOrderType ,  9, " ");
    string sUnits       = NumberToStr(Units, ".+");              sUnits       = StringLeftPad (sUnits     ,  5, " ");
-   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sOpenTime, 3) == ":00") warn("onStart(10)   gmtTime=\""+ sOpenTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+   string sOpenTime    = TimeToStr(TimeGMT(), TIME_FULL);
    string sOpenEquity  = DoubleToStr(equity, 2);                sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
    string sOpenPrice   = DoubleToStr(openPrice, lfxDigits);     sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
    string sStopLoss    = "0";                                   sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");

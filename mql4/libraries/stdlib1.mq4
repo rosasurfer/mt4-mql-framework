@@ -5019,6 +5019,9 @@ datetime TimeGMT() {
  */
 datetime GetSystemTimeEx() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
+
+   datetime localTime = TimeLocal();
+
    GetSystemTime(st);
 
    int year  = st.Year  (st);
@@ -5028,8 +5031,13 @@ datetime GetSystemTimeEx() {
    int min   = st.Minute(st);
    int sec   = st.Second(st);
 
-   string strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
-   return(StrToTime(strTime));
+   string   strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
+   datetime time    = StrToTime(strTime);
+
+   if (TimeSeconds(time) != TimeSeconds(localTime))
+      warn("GetSystemTimeEx()   StrToTime("+ strTime +")=\""+ TimeToStr(time, TIME_FULL) +"\"  localTime=\""+ TimeToStr(localTime, TIME_FULL) +"\"");
+
+   return(time);
 }
 
 

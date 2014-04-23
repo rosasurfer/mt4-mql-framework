@@ -164,12 +164,12 @@ int onStart() {
       string sLabel       = "";                                                               sLabel       = StringRightPad(sLabel     ,  9, " ");
       string sOrderType   = OperationTypeDescription(rOrderType);                             sOrderType   = StringRightPad(sOrderType ,  9, " ");
       string sUnits       = NumberToStr(rUnits, ".+");                                        sUnits       = StringLeftPad (sUnits     ,  5, " ");
-      string sOpenTime    = TimeToStr(ServerToGMT(rOpenTime), TIME_FULL); if (StringRight(sOpenTime, 3) == ":00") warn("onStart(6)   gmtTime=\""+ sOpenTime +"\"  rOpenTime=\""+ TimeToStr(rOpenTime, TIME_FULL) +"\"");
+      string sOpenTime    = TimeToStr(ServerToGMT(rOpenTime), TIME_FULL);
       string sOpenEquity  = DoubleToStr(rOpenEquity, 2);                                      sOpenEquity  = StringLeftPad(sOpenEquity ,  7, " ");
       string sOpenPrice   = DoubleToStr(rOpenPrice, lfxDigits);                               sOpenPrice   = StringLeftPad(sOpenPrice  ,  9, " ");
       string sStopLoss    = ifString(!rStopLoss,   "0", DoubleToStr(rStopLoss,   lfxDigits)); sStopLoss    = StringLeftPad(sStopLoss   ,  8, " ");
       string sTakeProfit  = ifString(!rTakeProfit, "0", DoubleToStr(rTakeProfit, lfxDigits)); sTakeProfit  = StringLeftPad(sTakeProfit , 10, " ");
-      string sCloseTime   = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sCloseTime, 3) == ":00") warn("onStart(7)   gmtTime=\""+ sCloseTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
+      string sCloseTime   = TimeToStr(TimeGMT(), TIME_FULL); if (StringRight(sCloseTime, 3)==":00" && TimeSeconds(TimeLocal())!=0) warn("onStart(7)   gmtTime=\""+ sCloseTime +"\"  localTime=\""+ TimeToStr(TimeLocal(), TIME_FULL) +"\"");
       string sClosePrice  = DoubleToStr(closePrice, lfxDigits);                               sClosePrice  = StringLeftPad(sClosePrice , 10, " ");
       string sOrderProfit = DoubleToStr(profit, 2);                                           sOrderProfit = StringLeftPad(sOrderProfit,  7, " ");
       string sLastUpdate  = sCloseTime;
