@@ -5031,18 +5031,20 @@ datetime GetSystemTimeEx() {
    int min   = st.Minute(st);
    int sec   = st.Second(st);
 
-   string   strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
+   string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
    datetime time    = StrToTime(strTime);
 
-   if (TimeSeconds(time) != TimeSeconds(localTime))
-      warn("GetSystemTimeEx()   StrToTime("+ strTime +")=\""+ TimeToStr(time, TIME_FULL) +"\"  localTime=\""+ TimeToStr(localTime, TIME_FULL) +"\"");
+   // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
+   // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
+   if (TimeSeconds(time) != sec)
+      warn("GetSystemTimeEx()   StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
 
    return(time);
 }
 
 
 /**
- * Gibt die aktuelle Zeit in lokaler Zeit zurück.  Die MQL-Funktion TimeLocal() gibt im Gegensatz zu dieser Funktion im Tester
+ * Gibt die aktuelle Zeit in lokaler Zeit zurück.  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
  * die modellierte Serverzeit zurück.
  *
  * @return datetime - lokale Zeit
@@ -5058,8 +5060,24 @@ datetime GetLocalTimeEx() {
    int min   = st.Minute(st);
    int sec   = st.Second(st);
 
-   string strTime = StringConcatenate(year, ".", month, ".", day, " ", hour, ":", min, ":", sec);
-   return(StrToTime(strTime));
+   string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
+   datetime time    = StrToTime(strTime);
+
+   // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
+   // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
+   if (TimeSeconds(time) != sec)
+      warn("GetLocalTimeEx()   StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
+
+   return(time);
+
+
+
+
+
+
+
+
+
 }
 
 
