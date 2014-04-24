@@ -15,9 +15,6 @@ string lfxCurrency;                                                  // aktuelle
 int    lfxCurrencyId;
 double lfxChartDeviation;
 
-int    remoteAccount;                                                // aktueller Remote-Account
-string remoteAccountCompany;                                         // Company des Remote-Accounts
-
 
 /**
  * Initialisierung
@@ -30,7 +27,7 @@ int onInit() {
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
       PlaySound("notify.wav");
-      MessageBox("Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      MessageBox("Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
    lfxCurrencyId     = GetCurrencyId(lfxCurrency);
@@ -38,24 +35,8 @@ int onInit() {
 
 
    // (2) aktuelle Remote-Account-Details ermitteln
-   string section = "LFX";
-   string key     = "MRURemoteAccount";
-   remoteAccount  = GetLocalConfigInt(section, key, 0);
-   if (remoteAccount <= 0) {
-      PlaySound("notify.wav");
-      string value = GetLocalConfigString(section, key, "");
-      if (!StringLen(value)) MessageBox("Missing remote account setting ["+ section +"]->"+ key                      , __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      else                   MessageBox("Invalid remote account setting ["+ section +"]->"+ key +" = \""+ value +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
-   section = "Accounts";
-   key     = remoteAccount +".company";
-   remoteAccountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(remoteAccountCompany)) {
-      PlaySound("notify.wav");
-      MessageBox("Missing account company setting for remote account \""+ remoteAccount +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
+   if (!LFX.CheckAccount())
+      return(last_error);
 
    return(catch("onInit()"));
 }
@@ -74,7 +55,7 @@ int onStart() {
    if (status) {
       // (2.1) Status ON: alle Tickets des Accounts einlesen
       string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-      string section = remoteAccountCompany +"."+ remoteAccount;
+      string section = lfxAccountCompany +"."+ lfxAccount;
       string keys[];
       int keysSize = GetIniKeys(file, section, keys);
 
@@ -88,10 +69,10 @@ int onStart() {
          if (StringIsDigit(keys[i])) {
             ticket = StrToInteger(keys[i]);
             if (LFX.CurrencyId(ticket) == lfxCurrencyId) {
-               int result = LFX.ReadTicket(remoteAccount, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
+               int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
                if (result != 1)                                                        // +1, wenn das Ticket erfolgreich gelesen wurden
                   return(last_error);                                                  // -1, wenn das Ticket nicht gefunden wurde
-               if (!closeTime)                                                         //  0, falls ein Fehler auftrat
+               if (!closeTime)                                                         //  0, falls ein anderer Fehler auftrat
                   continue;            // keine geschlossene Order
 
                openTime    = GMTToServerTime(openTime);

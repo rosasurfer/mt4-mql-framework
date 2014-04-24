@@ -23,10 +23,6 @@ extern double TakeProfitPrice;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-int    remoteAccount;                                                // aktueller Remote-Account
-string remoteAccountCompany;
-int    remoteAccountType;
-
 string lfxCurrency;                                                  // aktuelle LFX-W‰hrung
 int    lfxCurrencyId;
 
@@ -45,45 +41,15 @@ int onInit() {
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
       PlaySound("notify.wav");
-      MessageBox("Cannot manage LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
+      MessageBox("Cannot manage LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
    // (2) Daten des Remote-Account bestimmen
-   string section = "LFX";
-   string key     = "MRURemoteAccount";
-   remoteAccount  = GetLocalConfigInt(section, key, 0);
-   if (remoteAccount <= 0) {
-      PlaySound("notify.wav");
-      string value = GetLocalConfigString(section, key, "");
-      if (!StringLen(value)) MessageBox("Missing remote account setting ["+ section +"]->"+ key                      , __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      else                   MessageBox("Invalid remote account setting ["+ section +"]->"+ key +" = \""+ value +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
-   section = "Accounts";
-   key     = remoteAccount +".company";
-   remoteAccountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(remoteAccountCompany)) {
-      PlaySound("notify.wav");
-      MessageBox("Missing account company setting for remote account \""+ remoteAccount +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
-   key   = remoteAccount +".type";
-   value = StringToLower(GetGlobalConfigString(section, key, ""));
-   if (!StringLen(value)) {
-      PlaySound("notify.wav");
-      MessageBox("Missing remote account setting ["+ section +"]->"+ key, __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
-   if      (value == "demo") remoteAccountType = ACCOUNT_TYPE_DEMO;
-   else if (value == "real") remoteAccountType = ACCOUNT_TYPE_REAL;
-   else {
-      PlaySound("notify.wav");
-      MessageBox("Invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", __NAME__ +"::init()", MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
+   if (!LFX.CheckAccount())
+      return(last_error);
 
 
    // (3) Parametervalidierung
@@ -116,7 +82,7 @@ int onInit() {
 int onStart() {
    // (1) Sicherheitsabfrage
    PlaySound("notify.wav");
-   int button = MessageBox(ifString(remoteAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
+   int button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
                          +"Do you really want to place a limit order to Sell "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                          +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                          + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
@@ -133,13 +99,13 @@ int onStart() {
 
 
    // (3) Order speichern
-   if (!LFX.WriteTicket(remoteAccount, ticket, label, OP_SELLLIMIT, Units, TimeGMT(), NULL, LimitPrice, StopLossPrice, TakeProfitPrice, NULL, NULL, NULL, TimeGMT()))
+   if (!LFX.WriteTicket(ticket, label, OP_SELLLIMIT, Units, TimeGMT(), NULL, LimitPrice, StopLossPrice, TakeProfitPrice, NULL, NULL, NULL, TimeGMT()))
       return(last_error);
 
 
    // (4) Best‰tigungsmeldung
    PlaySound("Entry order.wav");
-   MessageBox(ifString(remoteAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
+   MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
             +"Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" activated.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
             + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
@@ -156,7 +122,7 @@ int onStart() {
  */
 int GetPositionCounter() {
    // Sicherstellen, daﬂ die vorhandenen offenen Positionen eingelesen wurden
-   if (!LFX.ReadInstanceIdsCounter(remoteAccount, lfxCurrency, openPosition.instanceIds, openPosition.counter))
+   if (!LFX.ReadInstanceIdsCounter(lfxCurrency, openPosition.instanceIds, openPosition.counter))
       return(-1);
    return(openPosition.counter);
 }
@@ -195,7 +161,7 @@ int GetCreateInstanceId() {
 
    if (!id) {
       // sicherstellen, daﬂ die offenen Positionen eingelesen wurden
-      if (!LFX.ReadInstanceIdsCounter(remoteAccount, lfxCurrency, openPosition.instanceIds, openPosition.counter))
+      if (!LFX.ReadInstanceIdsCounter(lfxCurrency, openPosition.instanceIds, openPosition.counter))
          return(NULL);
 
       MathSrand(GetTickCount());

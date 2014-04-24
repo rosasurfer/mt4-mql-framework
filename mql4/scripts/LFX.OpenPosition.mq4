@@ -246,7 +246,7 @@ int onStart() {
 
 
    // (9) LFX-Position speichern
-   if (!LFX.WriteTicket(GetAccountNumber(), magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, TimeGMT()))
+   if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, TimeGMT()))
       return(last_error);
 
 
@@ -265,7 +265,7 @@ int onStart() {
  */
 int GetPositionCounter() {
    // Sicherstellen, daﬂ die vorhandenen offenen Positionen eingelesen wurden
-   if (!LFX.ReadInstanceIdsCounter(GetAccountNumber(), lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
+   if (!LFX.ReadInstanceIdsCounter(lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
       return(-1);
    return(openPositions.maxCounter);
 }
@@ -304,7 +304,7 @@ int GetCreateInstanceId() {
 
    if (!id) {
       // sicherstellen, daﬂ die offenen Positionen eingelesen wurden
-      if (!LFX.ReadInstanceIdsCounter(GetAccountNumber(), lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
+      if (!LFX.ReadInstanceIdsCounter(lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
          return(NULL);
 
       MathSrand(GetTickCount());

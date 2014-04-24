@@ -1456,11 +1456,13 @@ int InitializeByteBuffer(int buffer[], int length) {
       if (ArraySize(buffer) != length)
          ArrayResize(buffer, length);
    }
-   else if (ArrayRange(buffer, 1) != length) {                       // Dimension 2: mehrdimensionale Arrays können nicht dynamisch angepaßt werden
+   else if (ArrayRange(buffer, 1) != length) {                       // die 2. Dimension mehrdimensionale Arrays kann nicht dynamisch angepaßt werden
       return(catch("InitializeByteBuffer(3)   cannot runtime adjust size of dimension 2 (size="+ ArrayRange(buffer, 1) +")", ERR_INCOMPATIBLE_ARRAYS));
    }
 
-   ArrayInitialize(buffer, 0);
+   if (ArraySize(buffer) > 0)
+      ArrayInitialize(buffer, 0);
+
    return(catch("InitializeByteBuffer(4)"));
 }
 
@@ -1494,7 +1496,9 @@ int InitializeDoubleBuffer(double buffer[], int size) {
 
    if (ArraySize(buffer) != size)
       ArrayResize(buffer, size);
-   ArrayInitialize(buffer, 0);
+
+   if (ArraySize(buffer) > 0)
+      ArrayInitialize(buffer, 0);
 
    return(catch("InitializeDoubleBuffer(3)"));
 }
@@ -3653,6 +3657,9 @@ int BufferGetChar(int buffer[], int pos) {
  * @return string - ANSI-String
  */
 string BufferCharsToStr(int buffer[], int from, int length) {
+
+   // TODO: testen, ob GetStringValue() bzw. eigene C-Funktion schneller ist
+
    if (from < 0)                return(_empty(catch("BufferCharsToStr(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length < 0)              return(_empty(catch("BufferCharsToStr(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length == 0)
@@ -7414,7 +7421,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                          ); // 4050 invalid parameters count
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                          ); // 4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                            ); // 4052
-      case ERR_SOME_ARRAY_ERROR           : return("undefined array error"                                     ); // 4053 undefined array error
+      case ERR_SOME_ARRAY_ERROR           : return("array error"                                               ); // 4053 some array error
       case ERR_TIMEFRAME_NOT_AVAILABLE    : return("requested timeframe not available"                         ); // 4054 timeframe not available
       case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                    ); // 4055 custom indicator error
       case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                       ); // 4056 incompatible arrays
@@ -7430,7 +7437,7 @@ string ErrorDescription(int error) {
       case ERS_HISTORY_UPDATE             : return("requested history in update state"                         ); // 4066 history in update state - Status
       case ERR_TRADE_ERROR                : return("error in trading function"                                 ); // 4067 error in trading function
       case ERR_END_OF_FILE                : return("end of file"                                               ); // 4099 end of file
-      case ERR_SOME_FILE_ERROR            : return("undefined file error"                                      ); // 4100 undefined file error
+      case ERR_SOME_FILE_ERROR            : return("file error"                                                ); // 4100 some file error
       case ERR_WRONG_FILE_NAME            : return("wrong file name"                                           ); // 4101
       case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                     ); // 4102
       case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                          ); // 4103
@@ -7449,7 +7456,7 @@ string ErrorDescription(int error) {
       case ERR_NO_OBJECT_NAME             : return("no object name"                                            ); // 4204
       case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                  ); // 4205
       case ERR_NO_SPECIFIED_SUBWINDOW     : return("no specified subwindow"                                    ); // 4206
-      case ERR_SOME_OBJECT_ERROR          : return("object error"                                              ); // 4207
+      case ERR_SOME_OBJECT_ERROR          : return("object error"                                              ); // 4207 some object error
 
       // custom errors
       case ERR_WIN32_ERROR                : return("win32 api error"                                           ); // 5000
@@ -10266,7 +10273,7 @@ string ColorToStr(color value)   {
 
 
 /**
- * MT4 structure ORDER_EXECUTION
+ * MQL4 structure ORDER_EXECUTION
  *
  * struct ORDER_EXECUTION {
  *    int  error;             //   4      => oe[ 0]      // Fehlercode
@@ -10354,7 +10361,7 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                        return(error     ); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (maximum "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetBufferAddress(oe)+4, GetStringAddress(symbol), StringLen(symbol)+1);                                                                                   return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                       return(digits    ); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = MathRound(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
@@ -10376,10 +10383,9 @@ double   oe.setCommission      (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.addCommission      (/*ORDER_EXECUTION*/int &oe[],          double   comission ) { oe[20]   += MathRound(comission * 100);                                   return(comission ); }
 double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]    = MathRound(profit * 100);                                      return(profit    ); }
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[21]   += MathRound(profit * 100);                                      return(profit    ); }
-
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > 27) return(_empty(catch("oe.setComment()   too long parameter comment = \""+ comment +"\" (> 27)"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if ( StringLen(comment) > 27) return(_empty(catch("oe.setComment()   too long parameter comment = \""+ comment +"\" (maximum 27 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
    CopyMemory(GetBufferAddress(oe)+88, GetStringAddress(comment), StringLen(comment)+1);                                                                                return(comment   ); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                     return(milliSec  ); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                     return(requotes  ); }
@@ -10392,7 +10398,7 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
                                                                                               oe[i][ 0] = error;                                                        return(error     ); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (maximum "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
    CopyMemory(GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 4, GetStringAddress(symbol), StringLen(symbol)+1);                                                          return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                       return(digits    ); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = MathRound(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
@@ -10414,10 +10420,9 @@ double   oes.setCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 double   oes.addCommission     (/*ORDER_EXECUTION*/int &oe[][], int i, double   comission ) { oe[i][20]+= MathRound(comission * 100);                                   return(comission ); }
 double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21] = MathRound(profit * 100);                                      return(profit    ); }
 double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][21]+= MathRound(profit * 100);                                      return(profit    ); }
-
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > 27) return(_empty(catch("oes.setComment()   too long parameter comment = \""+ comment +"\" (> 27)"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if ( StringLen(comment) > 27) return(_empty(catch("oes.setComment()   too long parameter comment = \""+ comment +"\" (maximum 27 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
    CopyMemory(GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 88, GetStringAddress(comment), StringLen(comment)+1);                                                       return(comment   ); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][29] = milliSec;                                                     return(milliSec  ); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][30] = requotes;                                                     return(requotes  ); }
@@ -10432,7 +10437,7 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
  * @param  int  oe[]        - ORDER_EXECUTION
  * @param  bool debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
- * @return string
+ * @return string - lesbarer String oder Leerstring, falls ein fehler auftrat
  */
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false) {
    int dimensions = ArrayDimension(oe);
@@ -10443,36 +10448,37 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
    int    digits, pipDigits;
    string priceFormat, line, lines[]; ArrayResize(lines, 0);
 
-   // oe ist struct ORDER_EXECUTION (eine Dimension)
+
    if (dimensions == 1) {
+      // oe ist struct ORDER_EXECUTION (eine Dimension)
       digits      = oe.Digits(oe);
       pipDigits   = digits & (~1);
       priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-      line        = StringConcatenate("{error="          ,                ifString(!oe.Error          (oe), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
-                                     ", symbol=\""       ,                          oe.Symbol         (oe), "\"",
-                                     ", digits="         ,                          oe.Digits         (oe),
-                                     ", stopDistance="   ,              NumberToStr(oe.StopDistance   (oe), ".+"),
-                                     ", freezeDistance=" ,              NumberToStr(oe.FreezeDistance (oe), ".+"),
-                                     ", bid="            ,              NumberToStr(oe.Bid            (oe), priceFormat),
-                                     ", ask="            ,              NumberToStr(oe.Ask            (oe), priceFormat),
-                                     ", ticket="         ,                          oe.Ticket         (oe),
-                                     ", type=\""         , OperationTypeDescription(oe.Type           (oe)), "\"",
-                                     ", lots="           ,              NumberToStr(oe.Lots           (oe), ".+"),
-                                     ", openTime="       ,                 ifString(oe.OpenTime       (oe), "'"+ TimeToStr(oe.OpenTime(oe), TIME_FULL) +"'", "0"),
-                                     ", openPrice="      ,              NumberToStr(oe.OpenPrice      (oe), priceFormat),
-                                     ", stopLoss="       ,              NumberToStr(oe.StopLoss       (oe), priceFormat),
-                                     ", takeProfit="     ,              NumberToStr(oe.TakeProfit     (oe), priceFormat),
-                                     ", closeTime="      ,                 ifString(oe.CloseTime      (oe), "'"+ TimeToStr(oe.CloseTime(oe), TIME_FULL) +"'", "0"),
-                                     ", closePrice="     ,              NumberToStr(oe.ClosePrice     (oe), priceFormat),
-                                     ", swap="           ,              DoubleToStr(oe.Swap           (oe), 2),
-                                     ", commission="     ,              DoubleToStr(oe.Commission     (oe), 2),
-                                     ", profit="         ,              DoubleToStr(oe.Profit         (oe), 2),
-                                     ", duration="       ,                          oe.Duration       (oe),
-                                     ", requotes="       ,                          oe.Requotes       (oe),
-                                     ", slippage="       ,              DoubleToStr(oe.Slippage       (oe), 1),
-                                     ", comment=\""      ,                          oe.Comment        (oe), "\"",
-                                     ", remainingTicket=",                          oe.RemainingTicket(oe),
-                                     ", remainingLots="  ,              NumberToStr(oe.RemainingLots  (oe), ".+"), "}");
+      line        = StringConcatenate("{error="          ,          ifString(!oe.Error          (oe), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
+                                     ", symbol=\""       ,                    oe.Symbol         (oe), "\"",
+                                     ", digits="         ,                    oe.Digits         (oe),
+                                     ", stopDistance="   ,        NumberToStr(oe.StopDistance   (oe), ".+"),
+                                     ", freezeDistance=" ,        NumberToStr(oe.FreezeDistance (oe), ".+"),
+                                     ", bid="            ,        NumberToStr(oe.Bid            (oe), priceFormat),
+                                     ", ask="            ,        NumberToStr(oe.Ask            (oe), priceFormat),
+                                     ", ticket="         ,                    oe.Ticket         (oe),
+                                     ", type="           , OperationTypeToStr(oe.Type           (oe)),
+                                     ", lots="           ,        NumberToStr(oe.Lots           (oe), ".+"),
+                                     ", openTime="       ,           ifString(oe.OpenTime       (oe), "'"+ TimeToStr(oe.OpenTime(oe), TIME_FULL) +"'", "0"),
+                                     ", openPrice="      ,        NumberToStr(oe.OpenPrice      (oe), priceFormat),
+                                     ", stopLoss="       ,        NumberToStr(oe.StopLoss       (oe), priceFormat),
+                                     ", takeProfit="     ,        NumberToStr(oe.TakeProfit     (oe), priceFormat),
+                                     ", closeTime="      ,           ifString(oe.CloseTime      (oe), "'"+ TimeToStr(oe.CloseTime(oe), TIME_FULL) +"'", "0"),
+                                     ", closePrice="     ,        NumberToStr(oe.ClosePrice     (oe), priceFormat),
+                                     ", swap="           ,        DoubleToStr(oe.Swap           (oe), 2),
+                                     ", commission="     ,        DoubleToStr(oe.Commission     (oe), 2),
+                                     ", profit="         ,        DoubleToStr(oe.Profit         (oe), 2),
+                                     ", duration="       ,                    oe.Duration       (oe),
+                                     ", requotes="       ,                    oe.Requotes       (oe),
+                                     ", slippage="       ,        DoubleToStr(oe.Slippage       (oe), 1),
+                                     ", comment=\""      ,                    oe.Comment        (oe), "\"",
+                                     ", remainingTicket=",                    oe.RemainingTicket(oe),
+                                     ", remainingLots="  ,        NumberToStr(oe.RemainingLots  (oe), ".+"), "}");
       if (debugOutput)
          debug("ORDER_EXECUTION.toStr()   "+ line);
       ArrayPushString(lines, line);
@@ -10485,31 +10491,31 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
          digits      = oes.Digits(oe, i);
          pipDigits   = digits & (~1);
          priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-         line        = StringConcatenate("[", i, "]={error="          ,                ifString(!oes.Error          (oe, i), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
-                                                  ", symbol=\""       ,                          oes.Symbol         (oe, i), "\"",
-                                                  ", digits="         ,                          oes.Digits         (oe, i),
-                                                  ", stopDistance="   ,              DoubleToStr(oes.StopDistance   (oe, i), 1),
-                                                  ", freezeDistance=" ,              DoubleToStr(oes.FreezeDistance (oe, i), 1),
-                                                  ", bid="            ,              NumberToStr(oes.Bid            (oe, i), priceFormat),
-                                                  ", ask="            ,              NumberToStr(oes.Ask            (oe, i), priceFormat),
-                                                  ", ticket="         ,                          oes.Ticket         (oe, i),
-                                                  ", type=\""         , OperationTypeDescription(oes.Type           (oe, i)), "\"",
-                                                  ", lots="           ,              NumberToStr(oes.Lots           (oe, i), ".+"),
-                                                  ", openTime="       ,                 ifString(oes.OpenTime       (oe, i), "'"+ TimeToStr(oes.OpenTime(oe, i), TIME_FULL) +"'", "0"),
-                                                  ", openPrice="      ,              NumberToStr(oes.OpenPrice      (oe, i), priceFormat),
-                                                  ", stopLoss="       ,              NumberToStr(oes.StopLoss       (oe, i), priceFormat),
-                                                  ", takeProfit="     ,              NumberToStr(oes.TakeProfit     (oe, i), priceFormat),
-                                                  ", closeTime="      ,                 ifString(oes.CloseTime      (oe, i), "'"+ TimeToStr(oes.CloseTime(oe, i), TIME_FULL) +"'", "0"),
-                                                  ", closePrice="     ,              NumberToStr(oes.ClosePrice     (oe, i), priceFormat),
-                                                  ", swap="           ,              DoubleToStr(oes.Swap           (oe, i), 2),
-                                                  ", commission="     ,              DoubleToStr(oes.Commission     (oe, i), 2),
-                                                  ", profit="         ,              DoubleToStr(oes.Profit         (oe, i), 2),
-                                                  ", duration="       ,                          oes.Duration       (oe, i),
-                                                  ", requotes="       ,                          oes.Requotes       (oe, i),
-                                                  ", slippage="       ,              DoubleToStr(oes.Slippage       (oe, i), 1),
-                                                  ", comment=\""      ,                          oes.Comment        (oe, i), "\"",
-                                                  ", remainingTicket=",                          oes.RemainingTicket(oe, i),
-                                                  ", remainingLots="  ,              NumberToStr(oes.RemainingLots  (oe, i), ".+"), "}");
+         line        = StringConcatenate("[", i, "]={error="          ,          ifString(!oes.Error          (oe, i), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
+                                                  ", symbol=\""       ,                    oes.Symbol         (oe, i), "\"",
+                                                  ", digits="         ,                    oes.Digits         (oe, i),
+                                                  ", stopDistance="   ,        DoubleToStr(oes.StopDistance   (oe, i), 1),
+                                                  ", freezeDistance=" ,        DoubleToStr(oes.FreezeDistance (oe, i), 1),
+                                                  ", bid="            ,        NumberToStr(oes.Bid            (oe, i), priceFormat),
+                                                  ", ask="            ,        NumberToStr(oes.Ask            (oe, i), priceFormat),
+                                                  ", ticket="         ,                    oes.Ticket         (oe, i),
+                                                  ", type="           , OperationTypeToStr(oes.Type           (oe, i)),
+                                                  ", lots="           ,        NumberToStr(oes.Lots           (oe, i), ".+"),
+                                                  ", openTime="       ,           ifString(oes.OpenTime       (oe, i), "'"+ TimeToStr(oes.OpenTime(oe, i), TIME_FULL) +"'", "0"),
+                                                  ", openPrice="      ,        NumberToStr(oes.OpenPrice      (oe, i), priceFormat),
+                                                  ", stopLoss="       ,        NumberToStr(oes.StopLoss       (oe, i), priceFormat),
+                                                  ", takeProfit="     ,        NumberToStr(oes.TakeProfit     (oe, i), priceFormat),
+                                                  ", closeTime="      ,           ifString(oes.CloseTime      (oe, i), "'"+ TimeToStr(oes.CloseTime(oe, i), TIME_FULL) +"'", "0"),
+                                                  ", closePrice="     ,        NumberToStr(oes.ClosePrice     (oe, i), priceFormat),
+                                                  ", swap="           ,        DoubleToStr(oes.Swap           (oe, i), 2),
+                                                  ", commission="     ,        DoubleToStr(oes.Commission     (oe, i), 2),
+                                                  ", profit="         ,        DoubleToStr(oes.Profit         (oe, i), 2),
+                                                  ", duration="       ,                    oes.Duration       (oe, i),
+                                                  ", requotes="       ,                    oes.Requotes       (oe, i),
+                                                  ", slippage="       ,        DoubleToStr(oes.Slippage       (oe, i), 1),
+                                                  ", comment=\""      ,                    oes.Comment        (oe, i), "\"",
+                                                  ", remainingTicket=",                    oes.RemainingTicket(oe, i),
+                                                  ", remainingLots="  ,        NumberToStr(oes.RemainingLots  (oe, i), ".+"), "}");
          if (debugOutput)
             debug("ORDER_EXECUTION.toStr()   "+ line);
          ArrayPushString(lines, line);
