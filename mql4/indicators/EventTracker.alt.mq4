@@ -7,7 +7,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 //////////////////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////////////////////
-//                                                     (Konfiguration nicht per Input, sondern per Konfigurationsdatei)
+//                                                 (Konfiguration nicht per Input-Parametern, sondern per Konfigurationsdatei)
 bool   Sound.Alerts                = true;
 bool   SMS.Alerts                  = false;
 string SMS.Receiver                = "";

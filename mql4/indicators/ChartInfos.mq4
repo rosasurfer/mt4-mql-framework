@@ -90,13 +90,21 @@ string lfxChannelBuffer[];                                  // Channel-Buffer fü
 int onTick() {
    positionsAnalyzed = false;
 
-   if (!UpdatePrice()       ) return(last_error);
-   if (!UpdateSpread()      ) return(last_error);
-   if (!UpdateUnitSize()    ) return(last_error);
-   if (!UpdatePositions()   ) return(last_error);
-   if (!UpdateStopoutLevel()) return(last_error);
-   if (!UpdateOHLC()        ) return(last_error);
-   if (!UpdateTime()        ) return(last_error);
+   if (!UpdatePrice()    )       return(last_error);
+   if (!UpdatePositions())       return(last_error);
+   if (!UpdateOHLC()     )       return(last_error);
+
+   if (isLfxChart) {
+   }
+   else {
+      if (!UpdateSpread()      ) return(last_error);
+      if (!UpdateUnitSize()    ) return(last_error);
+      if (!UpdateStopoutLevel()) return(last_error);
+   }
+
+   if (IsVisualMode()) {
+      if (!UpdateTime())         return(last_error);
+   }
 
    return(last_error);
 }
@@ -119,7 +127,7 @@ int CreateLabels() {
    label.stopoutLevel = __NAME__ +"."+ label.stopoutLevel;
 
 
-   // Instrument-Label
+   // Instrument-Label: Anzeige wird sofort hier und nur einmal gesetzt
    if (ObjectFind(label.instrument) == 0)
       ObjectDelete(label.instrument);
    if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
@@ -130,11 +138,10 @@ int CreateLabels() {
       PushObject(label.instrument);
    }
    else GetLastError();
-      // Die Instrumentanzeige wird sofort und nur einmal gesetzt.
-      string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-      if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
-      else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-      ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
+   string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
+   if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
+   else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+   ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
 
 
    // OHLC-Label
@@ -163,46 +170,52 @@ int CreateLabels() {
    else GetLastError();
 
 
-   // Spread-Label
-   if (ObjectFind(label.spread) == 0)
-      ObjectDelete(label.spread);
-   if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
-      ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
-      ObjectSetText(label.spread, " ", 1);
-      PushObject   (label.spread);
+   // Spread-Label: nicht in LFX-Charts
+   if (!isLfxChart) {
+      if (ObjectFind(label.spread) == 0)
+         ObjectDelete(label.spread);
+      if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
+         ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label.spread, " ", 1);
+         PushObject   (label.spread);
+      }
+      else GetLastError();
    }
-   else GetLastError();
 
 
-   // UnitSize-Label
-   if (ObjectFind(label.unitSize) == 0)
-      ObjectDelete(label.unitSize);
-   if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
-      ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
-      ObjectSetText(label.unitSize, " ", 1);
-      PushObject   (label.unitSize);
+   // UnitSize-Label: nicht in LFX-Charts
+   if (!isLfxChart) {
+      if (ObjectFind(label.unitSize) == 0)
+         ObjectDelete(label.unitSize);
+      if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
+         ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
+         ObjectSetText(label.unitSize, " ", 1);
+         PushObject   (label.unitSize);
+      }
+      else GetLastError();
    }
-   else GetLastError();
 
 
-   // Position-Label
-   if (ObjectFind(label.position) == 0)
-      ObjectDelete(label.position);
-   if (ObjectCreate(label.position, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.position, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
-      ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
-      ObjectSetText(label.position, " ", 1);
-      PushObject   (label.position);
+   // Gesamt-Position-Label: nicht in LFX-Charts
+   if (!isLfxChart) {
+      if (ObjectFind(label.position) == 0)
+         ObjectDelete(label.position);
+      if (ObjectCreate(label.position, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label.position, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
+         ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
+         ObjectSetText(label.position, " ", 1);
+         PushObject   (label.position);
+      }
+      else GetLastError();
    }
-   else GetLastError();
 
 
-   // nur im Tester: Time-Label
+   // Time-Label: nur im Tester bei VisualMode = ON
    if (IsVisualMode()) {
       if (ObjectFind(label.time) == 0)
          ObjectDelete(label.time);
@@ -258,6 +271,8 @@ bool UpdatePrice() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateSpread() {
+   if (isLfxChart)
+      return(true);
    if (!Bid)                                                                  // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
       return(true);
 
@@ -278,39 +293,36 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                                           // Anzeige wird im Tester nicht benötigt
-      return(true);
+   if (isLfxChart)  return(true);                                    // Anzeige wird nicht benötigt
+   if (IsTesting()) return(true);                                    // Anzeige wird nicht benötigt
 
    // (1) Konfiguration einlesen
    static double leverage;
    static int    soDistance;
 
    if (!leverage) /*&&*/ if (!soDistance) {
-      string sValue, confValue, iniSection="Leverage", iniKey="Pair";
-      if (IsGlobalConfigKey(iniSection, iniKey)) {
-         confValue = GetGlobalConfigString(iniSection, iniKey, "");
-         int n = StringFind(confValue, ";");
-         if (n != -1) sValue = StringTrimRight(StringSubstrFix(confValue, 0, n));
-         else         sValue = confValue;
+      string section="Leverage", key="Pair", sValue;
+      if (IsGlobalConfigKey(section, key)) {
+         sValue = GetGlobalConfigString(section, key, "");
 
          if (StringIsNumeric(sValue)) {
             // (1.1) numerischer Wert des Hebels
             double dValue = StrToDouble(sValue);
-            if (dValue < 1)                      return(!catch("UpdateUnitSize(1)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
+            if (dValue < 1)                      return(!catch("UpdateUnitSize(1)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
             leverage = dValue;
          }
          else {
             // (1.2) nicht-numerisch, Stopout-Distanz parsen
             sValue = StringToLower(sValue);
-            if (!StringStartsWith(sValue, "so")) return(!catch("UpdateUnitSize(2)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StringStartsWith(sValue, "so")) return(!catch("UpdateUnitSize(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             sValue = StringTrimLeft(StringRight(sValue, -2));
-            if (!StringStartsWith(sValue, ":"))  return(!catch("UpdateUnitSize(3)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StringStartsWith(sValue, ":"))  return(!catch("UpdateUnitSize(3)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             sValue = StringTrimLeft(StringRight(sValue, -1));
-            if (!StringEndsWith(sValue, "p"))    return(!catch("UpdateUnitSize(4)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StringEndsWith(sValue, "p"))    return(!catch("UpdateUnitSize(4)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             sValue = StringTrimRight(StringLeft(sValue, -1));
-            if (!StringIsInteger(sValue))        return(!catch("UpdateUnitSize(5)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StringIsInteger(sValue))        return(!catch("UpdateUnitSize(5)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             int iValue = StrToInteger(sValue);
-            if (iValue >= 0)                     return(!catch("UpdateUnitSize(6)   invalid configuration value ["+ iniSection +"] "+ iniKey +" = \""+ confValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (iValue >= 0)                     return(!catch("UpdateUnitSize(6)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             soDistance = -iValue;
          }
       }
@@ -502,6 +514,8 @@ bool UpdatePositions() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStopoutLevel() {
+   if (isLfxChart)
+      return(true);
    if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
@@ -613,6 +627,9 @@ bool UpdateOHLC() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateTime() {
+   if (!IsVisualMode())
+      return(true);
+
    static datetime lastTime;
 
    datetime now = TimeCurrent();
@@ -653,7 +670,7 @@ bool AnalyzePositions() {
    int sortKeys[][2];                                                // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
    ArrayResize(sortKeys, orders);
 
-   int pos, lfxMagics []={0}; ArrayResize(lfxMagics , 1);            // Die Arrays für die P/L-daten detektierter LFX-Positionen werden mit Größe 1 initialisiert.
+   int pos, lfxMagics []={0}; ArrayResize(lfxMagics , 1);            // Die Arrays für die P/L-Daten detektierter LFX-Positionen werden mit Größe 1 initialisiert.
    double   lfxProfits[]={0}; ArrayResize(lfxProfits, 1);            // So sparen wir den ständigen Test auf einen ungültigen Index bei Arraygröße 0.
 
 
@@ -661,8 +678,8 @@ bool AnalyzePositions() {
    for (int n, i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
       if (OrderType() > OP_SELL) continue;
-      if (LFX.IsMyOrder()) {                                         // dabei P/L-Daten detektierter LFX-Positionen aufaddieren
-         if (lfxMagics[pos] != OrderMagicNumber()) {
+      if (LFX.IsMyOrder()) {                                         // dabei P/L detektierter LFX-Positionen aufaddieren
+         if (OrderMagicNumber() != lfxMagics[pos]) {
             pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
             if (pos == -1)
                pos = ArrayResize(lfxProfits, ArrayPushInt(lfxMagics, OrderMagicNumber()))-1;
@@ -686,7 +703,7 @@ bool AnalyzePositions() {
    isLocalPosition = (longPosition || shortPosition);
 
 
-   // (2) P/L detektierter LFX-Positionen per QuickChannel an LFX-Terminal schicken (nur, wenn sich der Wert seit der letzten Message geändert hat)
+   // (2) P/L detektierter LFX-Positionen per QuickChannel an LFX-Terminal schicken (wenn sich der Wert seit der letzten Message geändert hat)
    double lastLfxProfit;
    string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hLfxChannelSenders));    // 2 x ArrayResize() = ArrayInitialize(string array)
    string globalVarLfxProfit;
@@ -701,26 +718,28 @@ bool AnalyzePositions() {
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
             return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
       }
+
       // TODO: Prüfung auf Wertänderung nur innerhalb der Woche, nicht am Wochenende
+
       if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
-         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
+         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um in (2.4) Marker für Speichern in globaler Variable zu haben
          continue;
       }
-      string mutex = "mutex.LFX.#"+ lfxMagics[i];                    // Wert hat sich geändert, prüfen, ob die Position gesperrt werden kann (also verfügbar ist)
-      if (!AquireLock(mutex, false)) {                               // FALSE = nicht auf Lock warten, sondern bei Mißerfolg sofort zurückkehren
+      string mutex = "mutex.LFX.#"+ lfxMagics[i];                    // prüfen, ob die Position gesperrt werden kann (also verfügbar ist)
+      if (!AquireLock(mutex, false)) {                               // FALSE = nicht warten, sofort zurückkehren
          if (IsError(stdlib_GetLastError()))
             return(SetLastError(stdlib_GetLastError()));
          // kein Fehler = Mutex war gesperrt, Position also nicht verfügbar
-         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um Marker für (2.4) Speichern in globaler Variable zu haben
+         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um in (2.4) Marker für Speichern in globaler Variable zu haben
          continue;
       }
-      if (!ReleaseLock(mutex))                                       // Mutex und Position sind verfügbar, das Lock wird nicht mehr benötigt
+      if (!ReleaseLock(mutex))                                       // Lock wieder freigeben
          return(SetLastError(stdlib_GetLastError()));
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
       int cid = LFX.CurrencyId(lfxMagics[i]);
-      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       GetAccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
-      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, GetAccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
+      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       lfxAccount, ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
+      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, lfxAccount, ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
    }
 
    // (2.3) angesammelte Messages verschicken (Messages je Channel werden gemeinsam, nicht einzeln verschickt)
@@ -733,7 +752,7 @@ bool AnalyzePositions() {
       }
    }
 
-   // (2.4) verschickte Werte in globaler Variable speichern
+   // (2.4) verschickte Werte jeweils in globaler Variable speichern
    for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
       // Marker aus (2.1) verwenden: MagicNumbers unveränderter Werte wurden zurückgesetzt
       if (lfxMagics[i] != 0) {
@@ -1564,8 +1583,8 @@ bool ProcessQCMessage(string message) {
       string   symbol="", label="";
       int      orderType;
       double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
-      datetime openTime, closeTime, lastUpdate;                                                                                                                // profit
-      int result = LFX.ReadTicket(account, ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
+      datetime openTime, closeTime, lastUpdate;                                                                                                       // profit
+      int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
       if (!result)
          return(false);                                              //  0: Fehler
 

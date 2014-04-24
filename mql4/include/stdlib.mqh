@@ -373,12 +373,12 @@
    bool     IsPendingTradeOperation(int value);
 
    // s: StopDistance/FreezeDistance integriert
-   int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]);
-   bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]);
-   bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]);
-   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, int oe[]);
-   bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, int oe[]);
-   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, int oes[][]);
+   int /*s*/OrderSendEx(string symbol, int type, double lots, double price, double slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
+   bool/*s*/OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
+   bool     OrderDeleteEx(int ticket, color markerColor, int oeFlags, int /*ORDER_EXECUTION*/oe[]);
+   bool     OrderCloseEx(int ticket, double lots, double price, double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
+   bool     OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oe[]);
+   bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);
    bool     DeletePendingOrders(color markerColor);
 
    int      OrderPush(string location);

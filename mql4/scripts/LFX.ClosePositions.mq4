@@ -149,21 +149,21 @@ int onStart() {
 
 
       // (8) LFX-Position in .ini-Datei aktualisieren
-      int      t.operationType, t.account=GetAccountNumber();
+      int      t.operationType;
       string   t.symbol="", t.label ="";
       double   t.units, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closePrice, t.profit;
       datetime t.openTime, t.closeTime, t.lastUpdate;
 
-      int result = LFX.ReadTicket(t.account, magics[i], t.symbol, t.label, t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closeTime, t.closePrice, t.profit, t.lastUpdate);
+      int result = LFX.ReadTicket(magics[i], t.symbol, t.label, t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closeTime, t.closePrice, t.profit, t.lastUpdate);
       if (result == 0) return(last_error);                           //  0, falls ein Fehler auftrat; -1, wenn das Ticket nicht gefunden wurde
-      if (result != 1) return(catch("onStart(5)->LFX.ReadTicket(account="+ t.account +", ticket=#"+ magics[i] +")   ticket not found", ERR_RUNTIME_ERROR));
+      if (result != 1) return(catch("onStart(5)->LFX.ReadTicket(ticket=#"+ magics[i] +")   ticket not found", ERR_RUNTIME_ERROR));
 
       t.closeTime  = TimeGMT();
       t.closePrice = closePrice;
       t.profit     = profit;
       t.lastUpdate = t.closeTime;
 
-      if (!LFX.WriteTicket(t.account, magics[i], "", t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closeTime, t.closePrice, t.profit, t.lastUpdate))
+      if (!LFX.WriteTicket(magics[i], "", t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closeTime, t.closePrice, t.profit, t.lastUpdate))
          return(last_error);
       ArrayResize(oes, 0);
    }

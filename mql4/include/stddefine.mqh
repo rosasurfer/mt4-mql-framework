@@ -775,6 +775,9 @@ int      last_error;                                        // der letzte Fehler
 #define ORDER_EXECUTION.size                  136
 #define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
 
+#define LFX_ORDER.size                         84
+#define LFX_ORDER.intSize                      21     // ceil(LFX_ORDER.size/4)
+
 
 // History bar ID's
 #define BAR_O                                   0
