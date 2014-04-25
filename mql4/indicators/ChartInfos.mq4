@@ -738,8 +738,8 @@ bool AnalyzePositions() {
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
       int cid = LFX.CurrencyId(lfxMagics[i]);
-      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       lfxAccount, ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
-      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, lfxAccount, ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
+      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       AccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
+      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, AccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
    }
 
    // (2.3) angesammelte Messages verschicken (Messages je Channel werden gemeinsam, nicht einzeln verschickt)
@@ -1532,21 +1532,22 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
  *
  * @param  string message - QuickChannel-Message, Format: "iAccountNumber,iMagicNumber,dProfit"
  *
- * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Wird keine zur Message passende Remote-Position gefunden, wird die Message ignoriert.
- *                               Auch dies ist eine erfolgreiche Verarbeitung.
+ * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende Remote-Position sind kein Fehler,
+ *                               ein Programmabbruch von außen durch Schicken einer falschen Message ist also nicht möglich. Für eine unerkannte Message wird lediglich eine
+ *                               Warnung ausgegeben, danach wird die Message ignoriert.
  */
 bool ProcessQCMessage(string message) {
    // NOTE: Anstatt die Message mit Explode() zu zerlegen, wird sie zur Beschleunigung manuell geparst.
    // AccountNumber
-   int from=0, to=StringFind(message, ",");                         if (to <= from)   return(!catch("ProcessQCMessage(1)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
-   int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(!catch("ProcessQCMessage(2)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   int from=0, to=StringFind(message, ",");                         if (to <= from)   return(_true(warn("ProcessQCMessage(1)   illegal parameter message=\""+ message +"\"")));
+   int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(_true(warn("ProcessQCMessage(2)   illegal parameter message=\""+ message +"\"")));
 
    // MagicNumber, übernimmt die Funktion eines eindeutigen Tickets für die Gesamtposition
-   from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(!catch("ProcessQCMessage(3)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(!catch("ProcessQCMessage(4)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(_true(warn("ProcessQCMessage(3)   illegal parameter message=\""+ message +"\"")));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(_true(warn("ProcessQCMessage(4)   illegal parameter message=\""+ message +"\"")));
 
    // aktueller P/L-Value
-   from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(!catch("ProcessQCMessage(5)   illegal parameter message=\""+ message +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(_true(warn("ProcessQCMessage(5)   illegal parameter message=\""+ message +"\"")));
    double profit = StrToDouble(StringSubstr(message, from));
 
 
@@ -1750,7 +1751,7 @@ bool StartQCReceiver() {
    if (!hLfxChannelReceiver)
       return(!catch("StartQCReceiver(2)->MT4iQuickChannel::QC_StartReceiver(channelName=\""+ lfxChannelName +"\", hChartWnd=0x"+ IntToHexStr(hChartWnd) +")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    InitializeStringBuffer(lfxChannelBuffer, QC_MAX_BUFFER_SIZE);
-   //debug("StartQCReceiver()   receiver started on \""+ lfxChannelName +"\"");
+
    return(true);
 }
 
