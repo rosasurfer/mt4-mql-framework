@@ -34,7 +34,7 @@ int onInit() {
    lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
 
-   // (2) aktuelle Remote-Account-Details ermitteln
+   // (2) Remoteaccount-Details ermitteln
    if (!LFX.CheckAccount())
       return(last_error);
 
@@ -48,7 +48,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   // (1) aktuellen Anzeigestatus aus dem Chart auslesen (ON/OFF) und umschalten
+   // (1) aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
    bool status = !LFX.ReadDisplayStatus();
 
 
