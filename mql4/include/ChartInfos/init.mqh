@@ -16,7 +16,7 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // Prüfen, ob wir auf einem LFX-Chart laufen und ggf. LFX-Account-Details initialisieren
+   // Prüfen, ob wir auf einem LFX-Chart laufen und wenn ja, LFX-Account-Details initialisieren
    isLfxChart = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
    if (isLfxChart) /*&&*/ if (!LFX.CheckAccount())
       return(last_error);
@@ -35,17 +35,16 @@ int onInit() {
  */
 int onInitParameterChange() {
    if (isLfxChart) {
-      // (1) LFX: offene Remote-Tickets einlesen
-      if (Symbol()=="AUDLFX") {
-         debug("onInitParameterChange()   read open LFX tickets");
-
+      // offene Remote-Tickets einlesen
+      if (Symbol() == "AUDLFX") {
          /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
          LFX.ReadOpenOrders(los);
-         //LFX_ORDER.toStr(los, true);
+
+         LFX_ORDER.toStr(los, true);
          ArrayResize(los, 0);
       }
 
-      // (2) LFX: in Library gespeicherte Remote-Ticketdaten restaurieren (können aktueller als (1) sein)
+      // in Library gespeicherte Remote-Ticketdaten restaurieren (können aktueller als (1) sein)
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
@@ -66,9 +65,9 @@ int onInitChartChange() {
 
    // bei Timeframe-Wechsel
    if (isLfxChart) {
-      // LFX: entweder komplette offene Tickets in Library zwischenspeichern oder offene Tickets neu einlesen
+      // entweder komplette offene Tickets in Library zwischenspeichern oder offene Tickets neu einlesen
 
-      // LFX: in Library gespeicherte Remote-Ticketdaten restaurieren
+      // in Library gespeicherte Remote-Ticketdaten restaurieren
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
@@ -87,13 +86,12 @@ int onInitChartChange() {
  */
 int onInitUndefined() {
    if (isLfxChart) {
-      // LFX: alle offenen Remote-Tickets einlesen
-      if (Symbol()=="AUDLFX") {
-         debug("onInitUndefined()   read open LFX tickets");
-
+      // offene Remote-Tickets einlesen
+      if (Symbol() == "AUDLFX") {
          /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
          LFX.ReadOpenOrders(los);
-         //LFX_ORDER.toStr(los, true);
+
+         LFX_ORDER.toStr(los, true);
          ArrayResize(los, 0);
       }
    }
@@ -120,13 +118,12 @@ int onInitRemove() {
  */
 int onInitRecompile() {
    if (isLfxChart) {
-      // LFX: alle offenen Remote-Tickets einlesen
-      if (Symbol()=="AUDLFX") {
-         debug("onInitRecompile()   read open LFX tickets");
-
+      // offene Remote-Tickets einlesen
+      if (Symbol() == "AUDLFX") {
          /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
          LFX.ReadOpenOrders(los);
-         //LFX_ORDER.toStr(los, true);
+
+         LFX_ORDER.toStr(los, true);
          ArrayResize(los, 0);
       }
    }

@@ -106,7 +106,7 @@ int onStart() {
    // (4) Bestätigungsmeldung
    PlaySound("Entry order.wav");
    MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
-            +"Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" activated.\n\n"
+            +"Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
             + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
             + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),

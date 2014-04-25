@@ -34,7 +34,7 @@ int onInit() {
    lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
 
-   // (2) aktuellen Remote-Account und dessen AccountCompany ermitteln
+   // (2) Remoteaccount-Details ermitteln
    if (!LFX.CheckAccount())
       return(last_error);
 
@@ -48,44 +48,30 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   // (1) aktuellen Anzeigestatus aus dem Chart auslesen (ON/OFF) und umschalten
+   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
    bool status = !LFX.ReadDisplayStatus();
 
 
    if (status) {
-      // (2.1) Status ON: alle Tickets des Accounts einlesen
-      string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-      string section = lfxAccountCompany +"."+ lfxAccount;
-      string keys[];
-      int keysSize = GetIniKeys(file, section, keys);
+      // Status ON: offene Orders einlesen und Orders der aktuellen Währung anzeigen
+      /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
+      int orders = LFX.ReadOpenOrders(los);
 
-      // (2.2) offene Orders finden und anzeigen
-      string   symbol="", label="";
-      int      ticket, orderType;
-      double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
-      datetime openTime, closeTime, lastUpdate;
-
-      for (int i=0; i < keysSize; i++) {
-         if (StringIsDigit(keys[i])) {
-            ticket = StrToInteger(keys[i]);
-            if (LFX.CurrencyId(ticket) == lfxCurrencyId) {
-               int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
-               if (result != 1)                                                        // +1, wenn das Ticket erfolgreich gelesen wurden
-                  return(last_error);                                                  // -1, wenn das Ticket nicht gefunden wurde
-               if (closeTime != 0)                                                     //  0, falls ein anderer Fehler auftrat
-                  continue;            // keine offene Order
-
-               openTime   = GMTToServerTime(openTime);
-               openPrice += lfxChartDeviation;
-
-               if (!SetOpenOrderMarker(label, orderType, units, openTime, openPrice))
-                  break;
-            }
+      for (int i=0; i < orders; i++) {
+         if (los.CurrencyId(los, i) == lfxCurrencyId) {              // aktuelle Währung
+            string   label     =                 los.Comment  (los, i);
+            int      type      =                 los.Type     (los, i);
+            double   units     =                 los.Units    (los, i);
+            datetime openTime  = GMTToServerTime(los.OpenTime (los, i));
+            double   openPrice =                 los.OpenPrice(los, i) + lfxChartDeviation;
+            if (!SetOpenOrderMarker(label, type, units, openTime, openPrice))
+               break;
          }
       }
+      ArrayResize(los, 0);
    }
    else {
-      // (3) Status OFF: alle existierenden Chartobjekte offener Tickets löschen
+      // Status OFF: alle existierenden Chartobjekte offener Orders löschen
       for (i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
          if (StringStartsWith(name, "LFX.OpenTicket."))
@@ -94,7 +80,7 @@ int onStart() {
    }
 
 
-   // (4) aktuellen Status im Chart speichern
+   // aktuellen Status im Chart speichern
    LFX.SaveDisplayStatus(status);
 
    return(last_error);
