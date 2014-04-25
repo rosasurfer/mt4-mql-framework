@@ -336,13 +336,13 @@ int LFX.ReadOpenOrders(/*LFX_ORDER*/int los[][]) {
       if (result != 1) {
          if (!result)                                                // -1, wenn das Ticket nicht gefunden wurde
             return(-1);                                              //  0, falls ein anderer Fehler auftrat
-         return(_int(-1, catch("LFX.ReadOpenOrders(1)->LFX.ReadTicket(ticket=#"+ o.ticket +")   ticket not found", ERR_RUNTIME_ERROR)));
+         return(_int(-1, catch("LFX.ReadOpenOrders(1)->LFX.ReadTicket(ticket="+ o.ticket +")   ticket not found", ERR_RUNTIME_ERROR)));
       }
       if (!o.closeTime) {
          // offene Orders in LFX_ORDER-Array kopieren
          n = losSize;
          losSize++; ArrayResize(los, losSize);
-         los.setTicket    (los, n, o.ticket    );                    // Ticket immer zuerst, damit Currency-ID und Digits ermittelt werden können
+         los.setTicket    (los, n, o.ticket    );                    // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
          los.setType      (los, n, o.type      );
          los.setUnits     (los, n, o.units     );
          los.setLots      (los, n, 0           );
