@@ -128,8 +128,6 @@ bool CheckPendingLfxOrders() {
    int orders = ArrayRange(lfxOrders, 0);
 
    for (int i=0; i < orders; i++) {
-      if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
-         continue;
       int type = los.Type(lfxOrders, i);
 
       if (IsPendingTradeOperation(type)) {

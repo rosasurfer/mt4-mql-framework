@@ -41,7 +41,7 @@ int onInit() {
 int onInitParameterChange() {
    if (isLfxChart) {
       // offene Remote-Orders einlesen
-      LFX.GetOrders(lfxOrders);
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_OPEN);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
@@ -89,7 +89,7 @@ int onInitChartChange() {
 int onInitUndefined() {
    if (isLfxChart) {
       // offene Remote-Orders einlesen
-      LFX.GetOrders(lfxOrders);
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_OPEN);
    }
    return(NO_ERROR);
 }
@@ -115,7 +115,7 @@ int onInitRemove() {
 int onInitRecompile() {
    if (isLfxChart) {
       // offene Remote-Orders einlesen
-      LFX.GetOrders(lfxOrders);
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_OPEN);
    }
    return(NO_ERROR);
 }

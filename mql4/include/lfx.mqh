@@ -327,8 +327,8 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
  */
 int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=NULL) {
    // (1) Parametervaliderung
-   int losSize = ArrayResize(los, 0);
-   int error   = InitializeByteBuffer(los, LFX_ORDER.size);             // validiert Dimensionierung
+   ArrayResize(los, 0);
+   int error = InitializeByteBuffer(los, LFX_ORDER.size);               // validiert Dimensionierung
    if (IsError(error))
       return(_int(-1, SetLastError(error)));
 
@@ -355,14 +355,18 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=N
    int keysSize = GetIniKeys(file, section, keys);
 
 
-   // (3) Tickets nacheinander einlesen und gegen Selektionflags prüfen
+   // (3) Tickets nacheinander einlesen und gegen Currency-ID und Selektionflags prüfen
    int      o.ticket, o.type, result;
    string   o.symbol="", o.label ="";
    double   o.units, o.openEquity, o.openPrice, o.stopLoss, o.takeProfit, o.closePrice, o.profit;
    datetime o.openTime, o.closeTime, o.lastUpdate;
 
-   for (int n, i=0; i < keysSize; i++) {
+   for (int losSize, n, i=0; i < keysSize; i++) {
       o.ticket = StrToInteger(keys[i]);
+      if (lfxCurrencyId != 0)
+         if (LFX.CurrencyId(o.ticket) != lfxCurrencyId)
+            continue;
+      // falls lfxCurrency angegeben, stimmt sie ab hier immer überein
       result   = LFX.ReadTicket(o.ticket, o.symbol, o.label, o.type, o.units, o.openTime, o.openEquity, o.openPrice, o.stopLoss, o.takeProfit, o.closeTime, o.closePrice, o.profit, o.lastUpdate);
       if (result != 1) {
          if (!result)                                                   // -1, wenn das Ticket nicht gefunden wurde
@@ -417,7 +421,10 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=N
    }
 
    ArrayResize(keys, 0);
-   return(losSize);
+
+   if (!catch("LFX.GetOrders(2)"))
+      return(losSize);
+   return(-1);
 }
 
 
