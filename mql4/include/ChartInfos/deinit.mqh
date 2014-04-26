@@ -17,8 +17,13 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onDeinitParameterChange() {
-   // vorhandene Remote-Positionsdaten in Library speichern
-   int error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
+   // LFX-Orders in Library zwischenspeichern
+   int error = ChartInfos.CopyLfxOrders(true, lfxOrders);
+   if (IsError(error))
+      return(SetLastError(error));
+
+   // Remote-Positionsdaten in Library zwischenspeichern
+   error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
    if (IsError(error))
       return(SetLastError(error));
    return(NO_ERROR);
@@ -32,8 +37,13 @@ int onDeinitParameterChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitChartChange() {
-   // vorhandene Remote-Positionsdaten in Library speichern
-   int error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
+   // LFX-Orders in Library zwischenspeichern
+   int error = ChartInfos.CopyLfxOrders(true, lfxOrders);
+   if (IsError(error))
+      return(SetLastError(error));
+
+   // Remote-Positionsdaten in Library zwischenspeichern
+   error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
    if (IsError(error))
       return(SetLastError(error));
    return(NO_ERROR);

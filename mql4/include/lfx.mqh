@@ -303,28 +303,59 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
 }
 
 
+// OrderType-Flags für LFX.GetOrders()
+#define OF_OPEN                1
+#define OF_CLOSED              2
+#define OF_PENDINGORDER        4
+#define OF_OPENPOSITION        8
+#define OF_PENDINGPOSITION    16
+
+
 /**
- * Liest alle offenen LFX-Orders des aktuellen Accounts ein.
+ * Liest die angegebenen LFX-Orders des aktuellen Accounts ein.
  *
- * @param  int los[] - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
+ * @param  int    los[]       - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
+ * @param  string lfxCurrency - LFX-Währung der Order (default: alle Währungen)
+ * @param  int    fSelect     - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
+ *                              OF_OPEN            - gibt alle offenen Orders zurück (Pending-Orders und offene Positionen)
+ *                              OF_CLOSED          - gibt alle geschlossenen Orders zurück (Trade History)
+ *                              OF_PENDINGORDER    - gibt alle herkömmlichen Pending-Orders zurück
+ *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurück
+ *                              OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem StopLoss oder TakeProfit zurück
  *
- * @return int - Anzahl der offenen Orders oder -1, falls ein Fehler auftrat
+ * @return int - Anzahl der zurückgegebenen Orders oder -1, falls ein Fehler auftrat
  */
-int LFX.ReadOpenOrders(/*LFX_ORDER*/int los[][]) {
+int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=NULL) {
+   // (1) Parametervaliderung
    int losSize = ArrayResize(los, 0);
-   int error   = InitializeByteBuffer(los, LFX_ORDER.size);          // validiert die Dimensionierung
+   int error   = InitializeByteBuffer(los, LFX_ORDER.size);             // validiert Dimensionierung
    if (IsError(error))
       return(_int(-1, SetLastError(error)));
 
+   int lfxCurrencyId = 0;                                               // 0: alle Währungen
+   if (lfxCurrency == "0")                                              // (string) NULL
+      lfxCurrency = "";
 
-   // (1) alle Ticket-IDs einlesen
+   if (StringLen(lfxCurrency) > 0) {
+      lfxCurrencyId = GetCurrencyId(lfxCurrency);
+      if (!lfxCurrencyId)
+         return(_int(-1, SetLastError(stdlib_GetLastError())));
+   }
+
+   if (!fSelect)                                                        // ohne Angabe wird alles zurückgeben
+      fSelect |= OF_OPEN | OF_CLOSED;
+   if ((fSelect & OF_PENDINGORDER) && (fSelect & OF_OPENPOSITION))      // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurückgegeben
+      fSelect |= OF_OPEN;
+
+
+   // (2) alle Ticket-IDs einlesen
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = lfxAccountCompany +"."+ lfxAccount;
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
 
 
-   // (2) Tickets nacheinander einlesen und prüfen
+   // (3) Tickets nacheinander einlesen und gegen Selektionflags prüfen
    int      o.ticket, o.type, result;
    string   o.symbol="", o.label ="";
    double   o.units, o.openEquity, o.openPrice, o.stopLoss, o.takeProfit, o.closePrice, o.profit;
@@ -334,15 +365,41 @@ int LFX.ReadOpenOrders(/*LFX_ORDER*/int los[][]) {
       o.ticket = StrToInteger(keys[i]);
       result   = LFX.ReadTicket(o.ticket, o.symbol, o.label, o.type, o.units, o.openTime, o.openEquity, o.openPrice, o.stopLoss, o.takeProfit, o.closeTime, o.closePrice, o.profit, o.lastUpdate);
       if (result != 1) {
-         if (!result)                                                // -1, wenn das Ticket nicht gefunden wurde
-            return(-1);                                              //  0, falls ein anderer Fehler auftrat
-         return(_int(-1, catch("LFX.ReadOpenOrders(1)->LFX.ReadTicket(ticket="+ o.ticket +")   ticket not found", ERR_RUNTIME_ERROR)));
+         if (!result)                                                   // -1, wenn das Ticket nicht gefunden wurde
+            return(-1);                                                 //  0, falls ein anderer Fehler auftrat
+         return(_int(-1, catch("LFX.GetOrders(1)->LFX.ReadTicket(ticket="+ o.ticket +")   ticket not found", ERR_RUNTIME_ERROR)));
       }
-      if (!o.closeTime) {
-         // offene Orders in LFX_ORDER-Array kopieren
+      bool match = false;
+
+      while (true) {
+         if (o.closeTime != 0) {
+            match = (fSelect & OF_CLOSED);
+            break;
+         }
+         // ab hier immer offene Order
+         if (fSelect & OF_OPEN && 1) {
+            match = true;
+            break;
+         }
+         if (OP_BUYLIMIT <= o.type) /*&&*/ if (o.type <= OP_SELLSTOP) { // schneller für IsPendingTradeOperation(o.type)
+            match = (fSelect & OF_PENDINGORDER);
+            break;
+         }
+         // ab hier immer offene Position
+         if (fSelect & OF_OPENPOSITION && 1) {
+            match = true;
+            break;
+         }
+         if (fSelect & OF_PENDINGPOSITION && 1)
+            match = (o.stopLoss || o.takeProfit);
+         break;
+      }
+
+      if (match) {
+         // Order in LFX_ORDER-Array kopieren
          n = losSize;
          losSize++; ArrayResize(los, losSize);
-         los.setTicket    (los, n, o.ticket    );                    // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
+         los.setTicket    (los, n, o.ticket    );                       // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
          los.setType      (los, n, o.type      );
          los.setUnits     (los, n, o.units     );
          los.setLots      (los, n, 0           );
@@ -675,11 +732,11 @@ void DummyCalls() {
    LFX.CheckAccount();
    LFX.Counter(NULL);
    LFX.CurrencyId(NULL);
+   LFX.GetOrders(iNulls);
    LFX.InstanceId(NULL);
    LFX.IsMyOrder();
    LFX.ReadDisplayStatus();
    LFX.ReadInstanceIdsCounter(NULL, iNulls, iNull);
-   LFX.ReadOpenOrders(iNulls);
    LFX.ReadTicket(NULL, sNull, sNull, iNull, dNull, iNull, dNull, dNull, dNull, dNull, iNull, dNull, dNull, iNull);
    LFX.SaveDisplayStatus(NULL);
    LFX.Units(NULL);

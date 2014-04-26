@@ -542,7 +542,7 @@ int onInitChartChange() {
 /**
  * Kein UninitializeReason gesetzt.
  *
- * auﬂerhalb iCustom(): wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * auﬂerhalb iCustom(): wenn Template mit Indikator darin geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
  * innerhalb iCustom(): in allen init()-F‰llen, kein Input-Dialog
  *
  * @return int - Fehlerstatus

@@ -16,10 +16,15 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // Prüfen, ob wir auf einem LFX-Chart laufen und wenn ja, LFX-Account-Details initialisieren
-   isLfxChart = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
-   if (isLfxChart) /*&&*/ if (!LFX.CheckAccount())
-      return(last_error);
+   // Prüfen, ob wir auf einem LFX-Chart laufen und wenn ja, LFX-Details initialisieren
+   if      (StringStartsWith(Symbol(), "LFX")) { isLfxChart = true; lfxCurrency = StringRight(Symbol(), -3); }
+   else if (StringEndsWith  (Symbol(), "LFX")) { isLfxChart = true; lfxCurrency = StringLeft (Symbol(), -3); }
+   else                                        { isLfxChart = false;                                         }
+   if (isLfxChart) {
+      lfxCurrencyId = GetCurrencyId(lfxCurrency);
+      if (!LFX.CheckAccount())
+         return(last_error);
+   }
 
    // Label erzeugen
    CreateLabels();
@@ -35,16 +40,10 @@ int onInit() {
  */
 int onInitParameterChange() {
    if (isLfxChart) {
-      // offene Remote-Tickets einlesen
-      if (Symbol() == "AUDLFX") {
-         /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
-         LFX.ReadOpenOrders(los);
+      // offene Remote-Orders einlesen
+      LFX.GetOrders(lfxOrders);
 
-         LFX_ORDER.toStr(los, true);
-         ArrayResize(los, 0);
-      }
-
-      // in Library gespeicherte Remote-Ticketdaten restaurieren (können aktueller als (1) sein)
+      // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
@@ -65,10 +64,13 @@ int onInitChartChange() {
 
    // bei Timeframe-Wechsel
    if (isLfxChart) {
-      // entweder komplette offene Tickets in Library zwischenspeichern oder offene Tickets neu einlesen
+      // in Library gespeicherte Remote-Orders restaurieren
+      int error = ChartInfos.CopyLfxOrders(false, lfxOrders);
+      if (IsError(error))
+         return(SetLastError(error));
 
-      // in Library gespeicherte Remote-Ticketdaten restaurieren
-      int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
+      // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die Remote-Orderdaten sein
+      error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -79,21 +81,15 @@ int onInitChartChange() {
 /**
  * Kein UninitializeReason gesetzt.
  *
- * außerhalb iCustom(): wenn Indikator im Template (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * außerhalb iCustom(): wenn Template mit Indikator darin geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
  * innerhalb iCustom(): in allen init()-Fällen, kein Input-Dialog
  *
  * @return int - Fehlerstatus
  */
 int onInitUndefined() {
    if (isLfxChart) {
-      // offene Remote-Tickets einlesen
-      if (Symbol() == "AUDLFX") {
-         /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
-         LFX.ReadOpenOrders(los);
-
-         LFX_ORDER.toStr(los, true);
-         ArrayResize(los, 0);
-      }
+      // offene Remote-Orders einlesen
+      LFX.GetOrders(lfxOrders);
    }
    return(NO_ERROR);
 }
@@ -118,14 +114,8 @@ int onInitRemove() {
  */
 int onInitRecompile() {
    if (isLfxChart) {
-      // offene Remote-Tickets einlesen
-      if (Symbol() == "AUDLFX") {
-         /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
-         LFX.ReadOpenOrders(los);
-
-         LFX_ORDER.toStr(los, true);
-         ArrayResize(los, 0);
-      }
+      // offene Remote-Orders einlesen
+      LFX.GetOrders(lfxOrders);
    }
    return(NO_ERROR);
 }

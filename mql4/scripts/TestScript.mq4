@@ -16,6 +16,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+
    debug("onStart(1) running, hWnd=0x"+ IntToHexStr(WindowHandle(Symbol(), NULL)));
 
    if (Symbol() != "AUDUSD") {

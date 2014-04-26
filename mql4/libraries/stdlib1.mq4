@@ -1639,7 +1639,7 @@ string GetGlobalConfigPath() {
  *
  * @param  string currency - 3-stelliger Währungsbezeichner
  *
- * @return int - Currency-ID
+ * @return int - Currency-ID oder 0, falls ein Fehler auftrat
  */
 int GetCurrencyId(string currency) {
    string curr = StringToUpper(currency);

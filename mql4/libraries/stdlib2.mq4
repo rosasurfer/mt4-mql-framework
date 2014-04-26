@@ -710,10 +710,10 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
 
 
 /**
- * Speichert vorhandene Remote-Positionsdaten in der Library oder restauriert sie daraus.
+ * Speichert Remote-Positionsdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
  *
- * @param  bool   store     - Richtung: TRUE=Kopiert aus den Parametern in die Library; FALSE=Kopiert aus der Library in die Parameter.
- * @param  int    tickets[]
+ * @param  bool   store     - Richtung: TRUE  = Kopiert aus den Parametern in die Library.
+ * @param  int    tickets[]             FALSE = Kopiert aus der Library in die Parameter.
  * @param  int    types  []
  * @param  double data   []
  *
@@ -742,10 +742,34 @@ int ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], dou
          ArrayCopy(tickets, static.tickets);
          ArrayCopy(types,   static.types  );
          ArrayCopy(data,    static.data   );
-         //debug("ChartInfos.CopyRemotePositions()   "+ ArrayRange(static.tickets, 0) +" positions restored");
       }
    }
-   return(catch("ChartInfos.CopyRemotePositions(1)"));
+   return(catch("ChartInfos.CopyRemotePositions()"));
+}
+
+
+/**
+ * Speichert LFX-Orderdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
+ *
+ * @param  bool store   - Richtung: TRUE  = Kopiert aus den Parametern in die Library.
+ * @param  int  los[]               FALSE = Kopiert aus der Library in die Parameter.
+ *
+ * @return int - Fehlerstatus
+ */
+int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int los[][]) {
+   static int static.los[][LFX_ORDER.intSize];
+
+   if (store) {
+      ArrayResize(static.los, 0);
+      if (ArrayRange(los, 0) > 0)
+         ArrayCopy(static.los, los);
+   }
+   else {
+      ArrayResize(los, 0);
+      if (ArrayRange(static.los, 0) > 0)
+         ArrayCopy(los, static.los);
+   }
+   return(catch("ChartInfos.CopyLfxOrders()"));
 }
 
 
