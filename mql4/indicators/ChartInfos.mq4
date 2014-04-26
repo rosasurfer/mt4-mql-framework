@@ -15,15 +15,15 @@ int __DEINIT_FLAGS__[];
 
 
 // Label der einzelnen Anzeigen
-string label.instrument    = "Instrument";
-string label.ohlc          = "OHLC";
-string label.price         = "Price";
-string label.spread        = "Spread";
-string label.unitSize      = "UnitSize";
-string label.position      = "Position";
-string label.time          = "Time";
-string label.remoteAccount = "RemoteAccount";
-string label.stopoutLevel  = "StopoutLevel";
+string label.instrument      = "Instrument";
+string label.ohlc            = "OHLC";
+string label.price           = "Price";
+string label.spread          = "Spread";
+string label.unitSize        = "UnitSize";
+string label.position        = "Position";
+string label.time            = "Time";
+string label.lfxTradeAccount = "LfxTradeAccount";
+string label.stopoutLevel    = "StopoutLevel";
 
 
 int    appliedPrice = PRICE_MEDIAN;                         // Bid | Ask | Median (default)
@@ -48,11 +48,10 @@ int    remote.position.types  [][2];
 double remote.position.data   [][4];
 
 // LFX-Daten zur Remote-Orderverwaltung
-bool   isLfxChart;
+bool   isLfxInstrument;
 string lfxCurrency;
 int    lfxCurrencyId;
-int    lfxOrders    [][LFX_ORDER.intSize];                  // LFX_ORDER[]
-int    pendingOrders[][3];                                  // Pending-Orderdetails: = {Ticket, LimitType, LimitPrice}
+int    lfxOrders[][LFX_ORDER.intSize];                      // LFX_ORDER[]
 
 
 #define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (local oder remote)
@@ -101,20 +100,19 @@ string lfxChannelBuffer[];                                  // QuickChannel-Buff
 int onTick() {
    positionsAnalyzed = false;
 
-   if (!UpdatePrice()    )          return(last_error);
-   if (!UpdatePositions())          return(last_error);
-   if (!UpdateOHLC()     )          return(last_error);
+   if (!UpdatePrice()    )            return(last_error);
+   if (!UpdateOHLC()     )            return(last_error);
+   if (!UpdatePositions())            return(last_error);
 
-   if (!isLfxChart) {
-      if (!UpdateSpread()      )    return(last_error);
-      if (!UpdateUnitSize()    )    return(last_error);
-      if (!UpdateStopoutLevel())    return(last_error);
+   if (!isLfxInstrument) {
+      if (!UpdateSpread()      )      return(last_error);
+      if (!UpdateUnitSize()    )      return(last_error);
+      if (!UpdateStopoutLevel())      return(last_error);
       if (IsVisualMode())
-         if (!UpdateTime())         return(last_error);
+         if (!UpdateTime())           return(last_error);
    }
-   else {
-      if (!CheckPendingLfxOrders()) return(last_error);
-   }
+   else if (!CheckPendingLfxOrders()) return(last_error);
+
    return(last_error);
 }
 
@@ -133,17 +131,20 @@ bool CheckPendingLfxOrders() {
       if (IsPendingTradeOperation(type)) {
          // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
          if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
+            debug("CheckPendingLfxOrders()   pending order "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" is triggered");
          }
       }
       else {
-         // check for StopLoss
          if (los.StopLoss(lfxOrders, i) != 0) {
+            // check for StopLoss
             if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i))) {
+               debug("CheckPendingLfxOrders()   stop loss at "+ NumberToStr(los.StopLoss(lfxOrders, i), SubPipPriceFormat) +" is triggered");
             }
          }
-         // check for TakeProfit
          if (los.TakeProfit(lfxOrders, i) != 0) {
+            // check for TakeProfit
             if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i))) {
+               debug("CheckPendingLfxOrders()   take profit at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat) +" is triggered");
             }
          }
       }
@@ -153,19 +154,17 @@ bool CheckPendingLfxOrders() {
 
 
 /**
- * Ob der angegebene LimitPrice erreicht wurde.
+ * Ob der angegebene LimitPrice erreicht wurde. Im LFX-Chart wird immer gegen den Bid-Preis geprüft.
  *
  * @param  int    type  - Limit-Typ: OP_BUYLIMIT | OP_SELLLIMIT | OP_TP_LONG | OP_TP_SHORT
  * @param  double price - LimitPrice
  *
- * @return bool
+ * @return bool - ob das Limit erreicht wurde
  */
 bool IsLimitTriggered(int type, bool sl, bool tp, double price) {
-   debug("IsLimitTriggered()   type="+ OperationTypeToStr(type) +", sl="+ BoolToStr(sl) +", tp="+ BoolToStr(tp));
-
    switch (type) {
       case OP_BUYLIMIT :
-      case OP_SELLSTOP :    return(Bid <= price);                    // im LFX-Chart wird nur der Bid-Preis verwendet
+      case OP_SELLSTOP :    return(Bid <= price);
 
       case OP_SELLLIMIT:
       case OP_BUYSTOP  :    return(Bid >= price);
@@ -243,7 +242,7 @@ int CreateLabels() {
 
 
    // Spread-Label: nicht in LFX-Charts
-   if (!isLfxChart) {
+   if (!isLfxInstrument) {
       if (ObjectFind(label.spread) == 0)
          ObjectDelete(label.spread);
       if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
@@ -258,7 +257,7 @@ int CreateLabels() {
 
 
    // UnitSize-Label: nicht in LFX-Charts
-   if (!isLfxChart) {
+   if (!isLfxInstrument) {
       if (ObjectFind(label.unitSize) == 0)
          ObjectDelete(label.unitSize);
       if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
@@ -273,7 +272,7 @@ int CreateLabels() {
 
 
    // Gesamt-Position-Label: nicht in LFX-Charts
-   if (!isLfxChart) {
+   if (!isLfxInstrument) {
       if (ObjectFind(label.position) == 0)
          ObjectDelete(label.position);
       if (ObjectCreate(label.position, OBJ_LABEL, 0, 0, 0)) {
@@ -343,8 +342,6 @@ bool UpdatePrice() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateSpread() {
-   if (isLfxChart)
-      return(true);
    if (!Bid)                                                                  // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
       return(true);
 
@@ -365,8 +362,8 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (isLfxChart)  return(true);                                    // Anzeige wird nicht benötigt
-   if (IsTesting()) return(true);                                    // Anzeige wird nicht benötigt
+   if (IsTesting())
+      return(true);                             // Anzeige wird im Tester nicht benötigt
 
    // (1) Konfiguration einlesen
    static double leverage;
@@ -586,8 +583,6 @@ bool UpdatePositions() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStopoutLevel() {
-   if (isLfxChart)
-      return(true);
    if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
@@ -915,7 +910,7 @@ bool AnalyzePositions() {
    }
 
    // (3.6) keine lokalen Positionen
-   else if (isLfxChart) {
+   else if (isLfxInstrument) {
       // per QuickChannel eingehende Remote-Positionsdetails auswerten
       if (!hLfxChannelReceiver) /*&&*/ if (!StartQCReceiver())
          return(false);
@@ -1865,7 +1860,7 @@ bool StopQuickChannels() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()   inputs: ",
+   return(StringConcatenate("init()   config: ",
 
                             "appliedPrice=", PriceTypeToStr(appliedPrice), "; ",
                             "leverage=",     DoubleToStr(leverage, 1)    , "; ")

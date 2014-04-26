@@ -47,7 +47,7 @@ int onInit() {
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
-   // (2) Daten des Remote-Account bestimmen
+   // (2) Daten des TradeAccounts bestimmen
    if (!LFX.CheckAccount())
       return(last_error);
 

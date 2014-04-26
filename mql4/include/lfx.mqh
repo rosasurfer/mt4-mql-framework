@@ -10,13 +10,13 @@
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
 
-int    lfxAccount;                                                   // LFX-Account: im LFX-Terminal ein Remote-Account, im Trading-terminal der aktuelle Account
+int    lfxAccount;                                                   // LFX-Account: im LFX-Terminal ein TradeAccount, im Trading-Terminal der aktuelle Account
 string lfxAccountCompany;
 int    lfxAccountType;
 
 
 /**
- * Überprüft bzw. initialisiert die internen Accountvariablen zum Zugriff auf LFX-Orders.
+ * Überprüft bzw. initialisiert die internen Variablen zum Zugriff auf den LFX-TradeAccount.
  *
  * @return bool - ob die ermittelten Daten gültig sind
  */
@@ -28,17 +28,19 @@ bool LFX.CheckAccount() {
    string _accountCompany;
    int    _accountType;
 
-   bool isLfxChart = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
+   bool isLfxInstrument = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
 
-   if (isLfxChart) {
-      // Daten des Remote-Accounts
+   if (isLfxInstrument) {
+      // Daten des TradeAccounts
       string section = "LFX";
-      string key     = "MRURemoteAccount";
+      string key     = "MRUTradeAccount";
+      if (This.IsTesting())
+         key = key + ".Tester";
       _account = GetLocalConfigInt(section, key, 0);
       if (_account <= 0) {
          string value = GetLocalConfigString(section, key, "");
-         if (!StringLen(value)) return(!catch("LFX.CheckAccount(1)   missing remote account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
-                                return(!catch("LFX.CheckAccount(2)   invalid remote account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+         if (!StringLen(value)) return(!catch("LFX.CheckAccount(1)   missing trade account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
+                                return(!catch("LFX.CheckAccount(2)   invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
       }
    }
    else {
@@ -81,7 +83,7 @@ bool LFX.IsMyOrder() {
 
 
 /**
- * Gibt die Currency-ID der MagicNumber einer LFX-Position zurück.
+ * Gibt die Currency-ID der MagicNumber einer LFX-Order zurück.
  *
  * @param  int magicNumber
  *
@@ -93,7 +95,7 @@ int LFX.CurrencyId(int magicNumber) {
 
 
 /**
- * Gibt die Units der MagicNumber einer LFX-Position zurück.
+ * Gibt die Units der MagicNumber einer LFX-Order zurück.
  *
  * @param  int magicNumber
  *
@@ -105,7 +107,7 @@ double LFX.Units(int magicNumber) {
 
 
 /**
- * Gibt die Instanz-ID der MagicNumber einer LFX-Position zurück.
+ * Gibt die Instanz-ID der MagicNumber einer LFX-Order zurück.
  *
  * @param  int magicNumber
  *
@@ -117,7 +119,7 @@ int LFX.InstanceId(int magicNumber) {
 
 
 /**
- * Gibt den Position-Counter der MagicNumber einer LFX-Position zurück.
+ * Gibt den Position-Counter der MagicNumber einer LFX-Order zurück.
  *
  * @param  int magicNumber
  *
@@ -350,7 +352,7 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=N
 
    // (2) alle Ticket-IDs einlesen
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = lfxAccountCompany +"."+ lfxAccount;
+   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
 
@@ -419,7 +421,6 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=N
          los.setVersion   (los, n, o.lastUpdate);
       }
    }
-
    ArrayResize(keys, 0);
 
    if (!catch("LFX.GetOrders(2)"))

@@ -1,5 +1,5 @@
 /**
- * Aktiviert/deaktiviert die Anzeige der in "remote_positions.ini" gespeicherten offenen LFX-Tickets des aktuellen Accounts.
+ * Aktiviert/deaktiviert die Anzeige der offenen LFX-Orders des aktuellen LFX-TradeAccounts.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -34,7 +34,7 @@ int onInit() {
    lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
 
-   // (2) Remoteaccount-Details ermitteln
+   // (2) TradeAccount-Details ermitteln
    if (!LFX.CheckAccount())
       return(last_error);
 
@@ -83,6 +83,9 @@ int onStart() {
    // aktuellen Status im Chart speichern
    LFX.SaveDisplayStatus(status);
 
+
+   if (This.IsTesting())
+      WindowRedraw();
    return(last_error);
 }
 

@@ -16,14 +16,14 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // Prüfen, ob wir auf einem LFX-Chart laufen und wenn ja, LFX-Details initialisieren
-   if      (StringStartsWith(Symbol(), "LFX")) { isLfxChart = true; lfxCurrency = StringRight(Symbol(), -3); }
-   else if (StringEndsWith  (Symbol(), "LFX")) { isLfxChart = true; lfxCurrency = StringLeft (Symbol(), -3); }
-   else                                        { isLfxChart = false;                                         }
-   if (isLfxChart) {
+   // Prüfen, ob wir unter einem LFX-Instrument laufen und wenn ja, LFX-Details initialisieren
+   if      (StringStartsWith(Symbol(), "LFX")) { isLfxInstrument = true; lfxCurrency = StringRight(Symbol(), -3); }
+   else if (StringEndsWith  (Symbol(), "LFX")) { isLfxInstrument = true; lfxCurrency = StringLeft (Symbol(), -3); }
+   else                                        { isLfxInstrument = false;                                         }
+   if (isLfxInstrument) {
       lfxCurrencyId = GetCurrencyId(lfxCurrency);
       if (!LFX.CheckAccount())
-         return(last_error);
+         return(-1);                                                 // -1: kritischer Fehler, init() wird sofort abgebrochen
    }
 
    // Label erzeugen
@@ -39,9 +39,9 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInitParameterChange() {
-   if (isLfxChart) {
-      // offene Remote-Orders einlesen
-      LFX.GetOrders(lfxOrders, lfxCurrency, OF_OPEN);
+   if (isLfxInstrument) {
+      // offene Pending-Orders der aktuellen Währung einlesen
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
@@ -63,7 +63,7 @@ int onInitChartChange() {
    // ???
 
    // bei Timeframe-Wechsel
-   if (isLfxChart) {
+   if (isLfxInstrument) {
       // in Library gespeicherte Remote-Orders restaurieren
       int error = ChartInfos.CopyLfxOrders(false, lfxOrders);
       if (IsError(error))
@@ -87,9 +87,9 @@ int onInitChartChange() {
  * @return int - Fehlerstatus
  */
 int onInitUndefined() {
-   if (isLfxChart) {
-      // offene Remote-Orders einlesen
-      LFX.GetOrders(lfxOrders, lfxCurrency, OF_OPEN);
+   if (isLfxInstrument) {
+      // offene Pending-Orders der aktuellen LFX-Währung einlesen
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
    }
    return(NO_ERROR);
 }
@@ -113,9 +113,9 @@ int onInitRemove() {
  * @return int - Fehlerstatus
  */
 int onInitRecompile() {
-   if (isLfxChart) {
-      // offene Remote-Orders einlesen
-      LFX.GetOrders(lfxOrders, lfxCurrency, OF_OPEN);
+   if (isLfxInstrument) {
+      // offene Pending-Orders der aktuellen LFX-Währung einlesen
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
    }
    return(NO_ERROR);
 }
