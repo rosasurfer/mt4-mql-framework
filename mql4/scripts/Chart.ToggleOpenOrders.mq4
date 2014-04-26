@@ -55,7 +55,7 @@ int onStart() {
    if (status) {
       // Status ON: offene Orders einlesen und Orders der aktuellen Währung anzeigen
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
-      int orders = LFX.ReadOpenOrders(los);
+      int orders = LFX.GetOrders(los);
 
       for (int i=0; i < orders; i++) {
          if (los.CurrencyId(los, i) == lfxCurrencyId) {              // aktuelle Währung

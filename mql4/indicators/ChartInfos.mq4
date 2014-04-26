@@ -14,7 +14,8 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-string label.instrument    = "Instrument";                   // Label der einzelnen Anzeigen
+// Label der einzelnen Anzeigen
+string label.instrument    = "Instrument";
 string label.ohlc          = "OHLC";
 string label.price         = "Price";
 string label.spread        = "Spread";
@@ -24,24 +25,35 @@ string label.time          = "Time";
 string label.remoteAccount = "RemoteAccount";
 string label.stopoutLevel  = "StopoutLevel";
 
+
 int    appliedPrice = PRICE_MEDIAN;                         // Bid | Ask | Median (default)
 double leverage;                                            // Hebel zur UnitSize-Berechnung
 
 
-// Positionsanzeige
-double totalPosition;                                       // lokale Gesamtposition total
-double longPosition;                                        //                       long
-double shortPosition;                                       //                       short
-
+// lokale Positionsdaten                                    // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
+bool   positionsAnalyzed;
 bool   isLocalPosition;
+double totalPosition;                                       // Gesamtposition total
+double longPosition;                                        // Gesamtposition long
+double shortPosition;                                       // Gesamtposition short
 
 double local.position.conf    [][2];                        // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
 int    local.position.types   [][2];                        // Positionsdetails:           = {PositionType, DirectionType}
 double local.position.data    [][4];                        //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
-int    remote.position.tickets[];                           // Remote-Positionsdaten sind im Gegensatz zu lokalen Positionsdaten statisch. Die lokalen Positionsdaten
-int    remote.position.types  [][2];                        // werden bei jedem Tick zurückgesetzt und neu eingelesen.
+
+// Remote-Positionsdaten                                    // Remote-Positionsdaten sind im Gegensatz zu den lokalen Positionsdaten statisch.
+int    remote.position.tickets[];
+int    remote.position.types  [][2];
 double remote.position.data   [][4];
+
+// LFX-Daten zur Remote-Orderverwaltung
+bool   isLfxChart;
+string lfxCurrency;
+int    lfxCurrencyId;
+int    lfxOrders    [][LFX_ORDER.intSize];                  // LFX_ORDER[]
+int    pendingOrders[][3];                                  // Pending-Orderdetails: = {Ticket, LimitType, LimitPrice}
+
 
 #define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (local oder remote)
 #define TYPE_CUSTOM        1                                //                individuell konfigurierte reale Position
@@ -51,27 +63,25 @@ double remote.position.data   [][4];
 #define TYPE_SHORT         2
 #define TYPE_HEDGE         3
 
-#define I_DIRECTLOTSIZE    0                                // Arrayindizes von position.data[]
+#define I_DIRECTLOTSIZE    0                                // Arrayindizes von *.position.data[]
 #define I_HEDGEDLOTSIZE    1
 #define I_BREAKEVEN        2
 #define I_PROFIT           3
 
+
+// Font-Settings der Positionsanzeige
 string positions.fontName     = "MS Sans Serif";
 int    positions.fontSize     = 8;
 color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
 
-bool   positionsAnalyzed;
-
 
 // QuickChannel
-bool   isLfxChart;
-
+string lfxChannelNames   [9];                               // QuickChannel-Namen (ein Channel je Währung)
 int    hLfxChannelSenders[9];                               // QuickChannel-Sender (einer je Währung)
-string lfxChannelNames   [9];                               // QuickChannel-Namen  (einer je Währung)
 
-int    hLfxChannelReceiver;                                 // QuickChannel-Receiver (nur einer)
-string lfxChannelName;                                      // QuickChannel-Name des Receivers
-string lfxChannelBuffer[];                                  // Channel-Buffer für Receiver
+string lfxChannelName;                                      // QuickChannel-Name des Receivers (max. einer je Chart)
+int    hLfxChannelReceiver;                                 // QuickChannel-Receiver (einer)
+string lfxChannelBuffer[];                                  // QuickChannel-Buffer für Receiver
 
 
 #include <ChartInfos/init.mqh>
@@ -79,6 +89,7 @@ string lfxChannelBuffer[];                                  // Channel-Buffer fü
 
 #import "stdlib2.ex4"
    int ChartInfos.CopyRemotePositions(bool direction, int tickets[], int types[][], double data[][]);
+   int ChartInfos.CopyLfxOrders      (bool store, /*LFX_ORDER*/int los[][]);
 #import
 
 
@@ -90,23 +101,86 @@ string lfxChannelBuffer[];                                  // Channel-Buffer fü
 int onTick() {
    positionsAnalyzed = false;
 
-   if (!UpdatePrice()    )       return(last_error);
-   if (!UpdatePositions())       return(last_error);
-   if (!UpdateOHLC()     )       return(last_error);
+   if (!UpdatePrice()    )          return(last_error);
+   if (!UpdatePositions())          return(last_error);
+   if (!UpdateOHLC()     )          return(last_error);
 
-   if (isLfxChart) {
+   if (!isLfxChart) {
+      if (!UpdateSpread()      )    return(last_error);
+      if (!UpdateUnitSize()    )    return(last_error);
+      if (!UpdateStopoutLevel())    return(last_error);
+      if (IsVisualMode())
+         if (!UpdateTime())         return(last_error);
    }
    else {
-      if (!UpdateSpread()      ) return(last_error);
-      if (!UpdateUnitSize()    ) return(last_error);
-      if (!UpdateStopoutLevel()) return(last_error);
+      if (!CheckPendingLfxOrders()) return(last_error);
    }
-
-   if (IsVisualMode()) {
-      if (!UpdateTime())         return(last_error);
-   }
-
    return(last_error);
+}
+
+
+/**
+ * Überprüft alle Pending-LFX-Orders auf ein erfülltes Orderkriterium.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CheckPendingLfxOrders() {
+   int orders = ArrayRange(lfxOrders, 0);
+
+   for (int i=0; i < orders; i++) {
+      if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
+         continue;
+      int type = los.Type(lfxOrders, i);
+
+      if (IsPendingTradeOperation(type)) {
+         // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
+         if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
+         }
+      }
+      else {
+         // check for StopLoss
+         if (los.StopLoss(lfxOrders, i) != 0) {
+            if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i))) {
+            }
+         }
+         // check for TakeProfit
+         if (los.TakeProfit(lfxOrders, i) != 0) {
+            if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i))) {
+            }
+         }
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Ob der angegebene LimitPrice erreicht wurde.
+ *
+ * @param  int    type  - Limit-Typ: OP_BUYLIMIT | OP_SELLLIMIT | OP_TP_LONG | OP_TP_SHORT
+ * @param  double price - LimitPrice
+ *
+ * @return bool
+ */
+bool IsLimitTriggered(int type, bool sl, bool tp, double price) {
+   debug("IsLimitTriggered()   type="+ OperationTypeToStr(type) +", sl="+ BoolToStr(sl) +", tp="+ BoolToStr(tp));
+
+   switch (type) {
+      case OP_BUYLIMIT :
+      case OP_SELLSTOP :    return(Bid <= price);                    // im LFX-Chart wird nur der Bid-Preis verwendet
+
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :    return(Bid >= price);
+
+      case OP_BUY:  if (sl) return(Bid <= price);
+                    if (tp) return(Bid >= price);
+                    break;
+
+      case OP_SELL: if (sl) return(Bid >= price);
+                    if (tp) return(Bid <= price);
+                    break;
+   }
+   return(!catch("IsLimitTriggered()   illegal parameter combination type="+ type +", sl="+ BoolToStr(tp) +", tp="+ BoolToStr(tp), ERR_INVALID_FUNCTION_PARAMVALUE));
 }
 
 
