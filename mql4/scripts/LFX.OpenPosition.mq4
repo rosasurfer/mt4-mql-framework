@@ -245,7 +245,7 @@ int onStart() {
    if (__LOG) log("onStart(9)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) LFX-Position speichern
+   // (9) LFX-Order speichern
    if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, TimeGMT()))
       return(last_error);
 

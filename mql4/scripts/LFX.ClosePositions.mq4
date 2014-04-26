@@ -148,7 +148,7 @@ int onStart() {
       if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(closePrice, lfxFormat) +", profit: "+ DoubleToStr(profit, 2));
 
 
-      // (8) LFX-Position in .ini-Datei aktualisieren
+      // (8) LFX-Ticket in .ini-Datei aktualisieren
       int      t.operationType;
       string   t.symbol="", t.label ="";
       double   t.units, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closePrice, t.profit;
