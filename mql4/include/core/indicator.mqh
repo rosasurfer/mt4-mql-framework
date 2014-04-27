@@ -41,7 +41,12 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    Tick.prevTime = tickData[2];
 
 
-   // (3) user-spezifische Init-Tasks ausführen
+   // (3) bei Aufruf durch iCustom() Parameter loggen
+   if (__LOG) /*&&*/ if (Indicator.IsSuperContext())
+      log(InputsToStr());
+
+
+   // (4) user-spezifische Init-Tasks ausführen
    int initFlags = ec.InitFlags(__ExecutionContext);
 
    if (_bool(initFlags & INIT_PIPVALUE)) {
@@ -66,7 +71,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // noch nicht implementiert
 
 
-   // (4) user-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
+   // (5) user-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
    if (onInit() == -1)                                                     //
       return(last_error);                                                  // Preprocessing-Hook
                                                                            //
@@ -83,18 +88,11 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       return(last_error);                                                  //
                                                                            //
    afterInit();                                                            // Postprocessing-Hook
-                                                                           //
-
-   // (5) bei Aufruf durch iCustom() Parameter loggen
-   if (__LOG) /*&&*/ if (Indicator.IsSuperContext())
-      log(InputsToStr());
 
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS) {
-      //debug("init()   calling Chart.SendTick()");
+   if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS)
       Chart.SendTick(false);                                               // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
-   }
 
    catch("init(3)");
    return(last_error);

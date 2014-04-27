@@ -732,7 +732,7 @@ bool Indicator.IsTesting() {
             return(!catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
          string title = GetWindowText(GetParent(hChart));
          if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
-            return(!catch("Indicator.IsTesting(3)   undefined result in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
+            return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
          static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert)
       }
       else {
@@ -1069,7 +1069,7 @@ string StringToHexStr(string value) {
  *
  * @param  int id
  *
- * @return string oder Leerstring, wenn die übergebene ID ungültig ist
+ * @return string - lesbare Konstante oder Leerstring, wenn die übergebene ID ungültig ist
  */
 string __whereamiToStr(int id) {
    switch (id) {
@@ -5008,50 +5008,27 @@ string BoolToStr(bool value) {
 
 
 /**
- * Alias
- *
- * Gibt die aktuelle Zeit in GMT zurück.
+ * Gibt die Terminal-Zeit in GMT zurück. Im Tester wird die GMT-Zeit der momentan im Tester modellierten Zeit zurückgegeben.
  *
  * @return datetime - GMT-Zeit
  */
 datetime TimeGMT() {
-   return(GetSystemTimeEx());
+   datetime gmt;
+
+   if (This.IsTesting()) {
+      // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
+      //       nicht die modellierte sondern die aktuelle reale Zeit.
+      gmt = ServerToGMT(TimeLocal());                                // TimeLocal() entspricht im Tester der Serverzeit
+   }
+   else {
+      gmt = GetSystemTimeEx();
+   }
+   return(gmt);
 }
 
 
 /**
- * Gibt die aktuelle Zeit in GMT zurück.
- *
- * @return datetime - GMT-Zeit
- */
-datetime GetSystemTimeEx() {
-   /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
-
-   datetime localTime = TimeLocal();
-
-   GetSystemTime(st);
-
-   int year  = st.Year  (st);
-   int month = st.Month (st);
-   int day   = st.Day   (st);
-   int hour  = st.Hour  (st);
-   int min   = st.Minute(st);
-   int sec   = st.Second(st);
-
-   string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
-   datetime time    = StrToTime(strTime);
-
-   // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
-   // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
-   if (TimeSeconds(time) != sec)
-      warn("GetSystemTimeEx()   StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
-
-   return(time);
-}
-
-
-/**
- * Gibt die aktuelle Zeit in lokaler Zeit zurück.  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
+ * Gibt die aktuelle lokale Zeit zurück (auch im Tester).  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
  * die modellierte Serverzeit zurück.
  *
  * @return datetime - lokale Zeit
@@ -5076,15 +5053,37 @@ datetime GetLocalTimeEx() {
       warn("GetLocalTimeEx()   StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
 
    return(time);
+}
 
 
+/**
+ * Gibt die aktuelle GMT-Zeit zurück (auch im Tester).
+ *
+ * @return datetime - GMT-Zeit
+ */
+datetime GetSystemTimeEx() {
+   /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
 
+   datetime localTime = TimeLocal();
 
+   GetSystemTime(st);
 
+   int year  = st.Year  (st);
+   int month = st.Month (st);
+   int day   = st.Day   (st);
+   int hour  = st.Hour  (st);
+   int min   = st.Minute(st);
+   int sec   = st.Second(st);
 
+   string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
+   datetime gmt     = StrToTime(strTime);
 
+   // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
+   // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
+   if (TimeSeconds(gmt) != sec)
+      warn("GetSystemTimeEx()   StrToTime("+ strTime +") => \""+ TimeToStr(gmt, TIME_FULL) +"\"");
 
-
+   return(gmt);
 }
 
 
@@ -6107,13 +6106,13 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
       if (!accountData[1]) {                          // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
-         accountData[2] = GMTToServerTime(TimeGMT());
+         accountData[2] = GMTToServerTime(GetSystemTimeEx());
          //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
-         accountData[2] = GMTToServerTime(TimeGMT());
+         accountData[2] = GMTToServerTime(GetSystemTimeEx());
          //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
          eventStatus = true;
       }
@@ -6214,12 +6213,12 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    // (1) Account initialisieren bzw. Accountwechsel erkennen
    if (!accountNumber[0]) {                                          // erster Aufruf
       accountNumber  [0] = account;
-      accountInitTime[0] = TimeGMT();
+      accountInitTime[0] = GetSystemTimeEx();
       //debug("EventListener.PositionOpen()   Account "+ account +" nach erstem Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
    else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit
       accountNumber  [0] = account;
-      accountInitTime[0] = TimeGMT();
+      accountInitTime[0] = GetSystemTimeEx();
       ArrayResize(knownPendings,  0);                                // gespeicherte Orderdaten löschen
       ArrayResize(knownPositions, 0);
       //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
@@ -7674,7 +7673,7 @@ string EventToStr(int event) {
 /**
  * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück.
  *
- * @return int - Offset in Sekunden
+ * @return int - Offset in Sekunden, es gilt: GMT + offset = LocalTime
  */
 int GetLocalToGMTOffset() {
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);

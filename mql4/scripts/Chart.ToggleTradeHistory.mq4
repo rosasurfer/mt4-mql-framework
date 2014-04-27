@@ -53,39 +53,24 @@ int onStart() {
 
 
    if (status) {
-      // (2.1) Status ON: alle Tickets des Accounts einlesen
-      string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-      string section = lfxAccountCompany +"."+ lfxAccount;
-      string keys[];
-      int keysSize = GetIniKeys(file, section, keys);
+      // Status ON: geschlossene Orders einlesen anzeigen
+      /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
+      int orders = LFX.GetSelectedOrders(los, lfxCurrency, OF_CLOSED);
 
-      // (2.2) geschlossene Orders finden und anzeigen
-      string   symbol="", label="";
-      int      ticket, orderType;
-      double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
-      datetime openTime, closeTime, lastUpdate;
+      for (int i=0; i < orders; i++) {
+         int      ticket     =                 los.Ticket    (los, i);
+         int      type       =                 los.Type      (los, i);
+         double   units      =                 los.Units     (los, i);
+         datetime openTime   = GMTToServerTime(los.OpenTime  (los, i));
+         double   openPrice  =                 los.OpenPrice (los, i) + lfxChartDeviation;
+         datetime closeTime  = GMTToServerTime(los.CloseTime (los, i));
+         double   closePrice =                 los.ClosePrice(los, i) + lfxChartDeviation;
+         double   profit     =                 los.Profit    (los, i);
 
-      for (int i=0; i < keysSize; i++) {
-         if (StringIsDigit(keys[i])) {
-            ticket = StrToInteger(keys[i]);
-            if (LFX.CurrencyId(ticket) == lfxCurrencyId) {
-               int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, profit, lastUpdate);
-               if (result != 1)                                                        // +1, wenn das Ticket erfolgreich gelesen wurden
-                  return(last_error);                                                  // -1, wenn das Ticket nicht gefunden wurde
-               if (!closeTime)                                                         //  0, falls ein anderer Fehler auftrat
-                  continue;            // keine geschlossene Order
-
-               openTime    = GMTToServerTime(openTime);
-               openPrice  += lfxChartDeviation;
-
-               closeTime   = GMTToServerTime(closeTime);
-               closePrice += lfxChartDeviation;
-
-               if (!SetClosedTradeMarker(ticket, orderType, units, openTime, openPrice, closeTime, closePrice, profit))
-                  break;
-            }
-         }
+         if (!SetClosedTradeMarker(ticket, type, units, openTime, openPrice, closeTime, closePrice, profit))
+            break;
       }
+      ArrayResize(los, 0);
    }
    else {
       // (3) Status OFF: alle existierenden Chartobjekte geschlossener Tickets löschen
