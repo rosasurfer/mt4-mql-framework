@@ -3,35 +3,35 @@
   tag=MetaQuotesLanguage
   caption=MetaQuotes Language 4
   lang_params=Parameters:
-  lang_sample=Sample:
+  lang_sample=Example:
 
   <styles>
-  *           { font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif; font-size:1em; }
-  body        { margin-top: 3px; margin-bottom: 3px; padding-left: 3px; padding-right: 3px; margin: 3px; padding: 3px; background-color:#fbfbfc; color:#626363; font-size:0.8em; }
-  div, p      { margin:0px; padding: 0px; }
-  p           { margin-bottom: 12px; }
-  ul          { list-style-type: square; }
-  a           { color:#42639C; }
+  *             { font-family:Tahoma, Verdana, Arial, Helvetica, sans-serif; font-size:1em; }
+  body          { margin-top:3px; margin-bottom:3px; padding-left:3px; padding-right:3px; margin:3px; padding:3px; background-color:#fbfbfc; color:#626363; font-size:0.8em; }
+  div, p        { margin:0px; padding:0px; }
+  p             { margin-bottom:12px; }
+  ul            { list-style-type:square; }
+  a             { color:#42639C; }
   
-  td.l_smb    { font: 12pt Wingdings; }
-  td.d_smb    { font: 12pt Wingdings;background: #E8E8FF; }
-  td.l_code   { border-right: 1px #a8afaa solid; }
-  td.d_code   { border-right: 1px #a8afaa solid;background: #e8e8ff; }
-  td.d_code_e { background: #e8e8ff; }
-  table.symbols{font-family: tahoma; font-size: 8pt; border: thin solid #a8afaa;}
+  td.l_smb      { font:12pt Wingdings; }
+  td.d_smb      { font:12pt Wingdings; background:#E8E8FF; }
+  td.l_code     { border-right:1px #a8afaa solid; }
+  td.d_code     { border-right:1px #a8afaa solid; background:#e8e8ff; }
+  td.d_code_e   { background:#e8e8ff; }
+  table.symbols { font-family:tahoma; font-size:8pt; border:thin solid #a8afaa;}
   
-  .docmenu    { width:200px; margin-right:15px; border-right:1px solid #DADADA; background-color:#f6f9fd; padding-left:10px; padding-right:10px; margin-bottom:5px; }
-  .doctext    { margin-right:15px; padding-left:10px; padding-right:0px; margin-bottom:5px; padding-bottom:10px; padding-top:6px; }
-  .docnav     { clear:both; width:100%; text-align:right; padding-top:4px; border-top:1px solid #DADADA; }
-  .docfunc    { color: #8A2BE2; }
-  .doctable   { border-top:1px solid #DADADA;  }
-  .docvar     { font-family: monospace; font-size: 10pt; font-weight:bold; margin-bottom: 4pt; }
-  .doctabhdr  { font-weight:bold; padding: 0pt 4pt 0pt 0pt; margin: 8pt 2pt 2pt 2pt;  }
-  .docmql4    { font-family: monospace; background-color: #F6F9FC; border: 1px #d8dfea solid; padding: 2pt 2pt 2pt 2pt; margin: 2pt 0pt 2pt 15pt; font-family: monospace; }
-  .docparams  { background-color: #F6F9FC; border: 1px #d8dfea solid; font-family: Tahoma; font-size: 9pt; margin-left: 15pt; }
-  .docenums    { background-color: #F6F9FC; border-top: 1px #d8dfea solid; border-left: 1px #d8dfea solid; font-family: Tahoma; font-size: 9pt; margin-left: 15pt; width: 95%; }
-  .docenums th { vertical-align: top; background-color: #d8dfea; border-bottom: 1px #d8dfea solid; border-right: 1px #d8dfea solid;font-family: Tahoma; font-size: 9pt; }
-  .docenums td { vertical-align: top; background-color: #F6F9FC; border-bottom: 1px #d8dfea solid; border-right: 1px #d8dfea solid;font-family: Tahoma; font-size: 9pt; }
+  .docmenu      { width:200px; margin-right:15px; border-right:1px solid #DADADA; background-color:#f6f9fd; padding-left:10px; padding-right:10px; margin-bottom:5px; }
+  .doctext      { margin-right:15px; padding-left:10px; padding-right:0px; margin-bottom:5px; padding-bottom:10px; padding-top:6px; }
+  .docnav       { clear:both; width:100%; text-align:right; padding-top:4px; border-top:1px solid #DADADA; }
+  .docfunc      { color:#8A2BE2; }
+  .doctable     { border-top:1px solid #DADADA; }
+  .docvar       { font-family:monospace; font-size:10pt; font-weight:bold; margin-bottom:4pt; }
+  .doctabhdr    { font-weight:bold; padding:0pt 4pt 0pt 0pt; margin:8pt 2pt 2pt 2pt;  }
+  .docmql4      { font-family:monospace; background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt 2pt 2pt 2pt; margin:2pt 0pt 2pt 15pt; font-family:monospace; }
+  .docparams    { background-color:#F6F9FC; border:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; }
+  .docenums     { background-color:#F6F9FC; border-top:1px #d8dfea solid; border-left:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; width:95%; }
+  .docenums th  { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
+  .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   </styles>
 
   <group>
@@ -724,18 +724,17 @@ for(i=0;i&lt;array_size;i++)
 the next iteration being called. The purpose of this operator is opposite to that of <a href="help://basis_operators_break"><em>break</em></a> operator.</p>
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">// summary of nonzero elements of array
-int func(int array[])
-  {
+int func(int array[]) {
    int array_size=ArraySize(array);
    int sum=0;
-   for(int i=0;i&lt;array_size; i++)
-     {
-      if(a[i]==0) continue;
-      sum+=a[i]; 
-     }
+   for (int i=0; i&lt;array_size; i++) {
+      if (a[i]==0) 
+         continue;
+      sum += a[i]; 
+   }
    return(sum);
-  }</pre>
-      </content>
+}</pre>
+</content>
     </text>
 
     <text>
@@ -10453,13 +10452,17 @@ Note: For custom indicators, this value is undefined.
       type=void
       <content>
       Redraws the current chart forcedly. It is normally used after the objects properties have been changed.
+		<br>
+		<br>
+		<span style="color:red">Fehler:</span>
+		Funktioniert im Tester bei Aufruf durch Script nicht. Stattdessen muﬂ das Win32-API zum Neuzeichnen des Fensters verwendet werden.
       </content>
       <example>
   //---- set new properties for some objects
   ObjectMove(object_name1, 0, Time[index], price);
-  ObjectSet(object_name1, OBJPROP_ANGLE, angle*2);
-  ObjectSet(object_name1, OBJPROP_FONTSIZE, fontsize);
-  ObjectSet(line_name, OBJPROP_TIME2, time2);
+  ObjectSet (object_name1, OBJPROP_ANGLE,    angle*2 );
+  ObjectSet (object_name1, OBJPROP_FONTSIZE, fontsize);
+  ObjectSet(line_name, OBJPROP_TIME2, time2     );
   ObjectSet(line_name, OBJPROP_ANGLE, line_angle);
   //---- now redraw all
   WindowRedraw();
