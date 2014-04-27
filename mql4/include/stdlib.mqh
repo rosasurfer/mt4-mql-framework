@@ -230,8 +230,9 @@
 
    string   GetDayOfWeek(datetime time, bool longFormat);
    datetime GetLocalTimeEx();
-   datetime GetSystemTimeEx(); datetime TimeGMT();                                                          // Alias
+   datetime GetSystemTimeEx();
    bool     GetServerTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime TimeGMT();
 
 
    // Event-Listener: allgemeine Library-Versionen können durch spezielle lokale Versionen überschrieben werden

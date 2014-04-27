@@ -53,20 +53,18 @@ int onStart() {
 
 
    if (status) {
-      // Status ON: offene Orders einlesen und Orders der aktuellen Währung anzeigen
+      // Status ON: offene Orders einlesen und anzeigen
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
-      int orders = LFX.GetOrders(los, lfxCurrency, OF_OPEN);
+      int orders = LFX.GetSelectedOrders(los, lfxCurrency, OF_OPEN);
 
       for (int i=0; i < orders; i++) {
-         if (los.CurrencyId(los, i) == lfxCurrencyId) {              // aktuelle Währung
-            string   label     =                 los.Comment  (los, i);
-            int      type      =                 los.Type     (los, i);
-            double   units     =                 los.Units    (los, i);
-            datetime openTime  = GMTToServerTime(los.OpenTime (los, i));
-            double   openPrice =                 los.OpenPrice(los, i) + lfxChartDeviation;
-            if (!SetOpenOrderMarker(label, type, units, openTime, openPrice))
-               break;
-         }
+         string   label     =                 los.Comment  (los, i);
+         int      type      =                 los.Type     (los, i);
+         double   units     =                 los.Units    (los, i);
+         datetime openTime  = GMTToServerTime(los.OpenTime (los, i));
+         double   openPrice =                 los.OpenPrice(los, i) + lfxChartDeviation;
+         if (!SetOpenOrderMarker(label, type, units, openTime, openPrice))
+            break;
       }
       ArrayResize(los, 0);
    }

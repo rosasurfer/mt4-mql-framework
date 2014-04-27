@@ -246,7 +246,7 @@ int onStart() {
 
 
    // (9) LFX-Order speichern
-   if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, TimeGMT()))
+   if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, TimeGMT()))
       return(last_error);
 
 

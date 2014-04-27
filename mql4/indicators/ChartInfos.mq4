@@ -131,20 +131,41 @@ bool CheckPendingLfxOrders() {
       if (IsPendingTradeOperation(type)) {
          // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
          if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
-            debug("CheckPendingLfxOrders()   pending order "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" is triggered");
+
+            // (1) Zeitpunkt der Limit-Auslösung speichern
+            datetime gmt = TimeGMT();
+            debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, localTime="+ TimeToStr(TimeLocal(), TIME_FULL) +"  gmt="+ TimeToStr(gmt, TIME_FULL));
+
+            los.setOpenPriceTime(lfxOrders, i, gmt);
+            //LFX.SaveOrder(lfxOrders, i);
+            /*
+            double   lo.OpenPrice     (int lo[]);
+            datetime lo.OpenPriceTime (int lo[]);
+            double   lo.StopLoss      (int lo[]);
+            datetime lo.StopLossTime  (int lo[]);
+            double   lo.TakeProfit    (int lo[]);
+            datetime lo.TakeProfitTime(int lo[]);
+            */
+
+            // (2) TradeCmd an TradeAccount schicken
+            // (3) bei folgenden Ticks dieses Limit nicht erneut prüfen, sondern auf Ausführungsbestätigung vom TradeAccount warten
+            // (4) nach Ablauf einer definierten Zeitspanne ohne Ausführungsbestätigung Fehler melden
+            // (5) Zeitpunkt eines gemeldeten Fehlers lokal speichern
+            // (6) bei folgenden Ticks Fehler nicht erneut melden
+            // (7) später eingehende Ausführungsbestätigung trotzdem wie ohne gemeldeten Fehler verarbeiten
          }
       }
       else {
          if (los.StopLoss(lfxOrders, i) != 0) {
             // check for StopLoss
             if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders()   stop loss at "+ NumberToStr(los.StopLoss(lfxOrders, i), SubPipPriceFormat) +" is triggered");
+               debug("CheckPendingLfxOrders(2)   StopLoss at "+ NumberToStr(los.StopLoss(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
          if (los.TakeProfit(lfxOrders, i) != 0) {
             // check for TakeProfit
             if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders()   take profit at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat) +" is triggered");
+               debug("CheckPendingLfxOrders(3)   TakeProfit at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
       }
@@ -1651,8 +1672,8 @@ bool ProcessQCMessage(string message) {
       string   symbol="", label="";
       int      orderType;
       double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
-      datetime openTime, closeTime, lastUpdate;                                                                                                       // profit
-      int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, stopLoss, takeProfit, closeTime, closePrice, dNull, lastUpdate);
+      datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, lastUpdate;                                                                                                       // profit
+      int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, dNull, lastUpdate);
       if (!result)
          return(false);                                              //  0: Fehler
 
@@ -1860,7 +1881,7 @@ bool StopQuickChannels() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()   config: ",
+   return(StringConcatenate("init()   config: ",                     // 'config' statt 'inputs', da alle Laufzeitparameter per .ini-Konfiguration gesetzt werden
 
                             "appliedPrice=", PriceTypeToStr(appliedPrice), "; ",
                             "leverage=",     DoubleToStr(leverage, 1)    , "; ")

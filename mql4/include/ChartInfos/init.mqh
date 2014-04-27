@@ -22,8 +22,10 @@ int onInit() {
    else                                        { isLfxInstrument = false;                                         }
    if (isLfxInstrument) {
       lfxCurrencyId = GetCurrencyId(lfxCurrency);
-      if (!LFX.CheckAccount())
+      if (!LFX.CheckAccount()) {
+         debug("onInit(0.2)->LFX.CheckAccount() = false  cancelling init()", last_error);
          return(-1);                                                 // -1: kritischer Fehler, init() wird sofort abgebrochen
+      }
    }
 
    // Label erzeugen
@@ -41,7 +43,7 @@ int onInit() {
 int onInitParameterChange() {
    if (isLfxInstrument) {
       // offene Pending-Orders der aktuellen Währung einlesen
-      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+      LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
@@ -89,7 +91,15 @@ int onInitChartChange() {
 int onInitUndefined() {
    if (isLfxInstrument) {
       // offene Pending-Orders der aktuellen LFX-Währung einlesen
-      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+      LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+
+      if (Symbol() == "AUDLFX") {
+         int orders = ArrayRange(lfxOrders, 0);
+         debug("onInitUndefined()   got "+ orders +" pending order"+ ifString(orders==1, "", "s"));
+         if (orders > 0) {
+            LFX_ORDER.toStr(lfxOrders, true);
+         }
+      }
    }
    return(NO_ERROR);
 }
@@ -115,7 +125,15 @@ int onInitRemove() {
 int onInitRecompile() {
    if (isLfxInstrument) {
       // offene Pending-Orders der aktuellen LFX-Währung einlesen
-      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+      LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+
+      if (Symbol() == "AUDLFX") {
+         int orders = ArrayRange(lfxOrders, 0);
+         debug("onInitRecompile()   got "+ orders +" pending order"+ ifString(orders==1, "", "s"));
+         if (orders > 0) {
+            LFX_ORDER.toStr(lfxOrders, true);
+         }
+      }
    }
    return(NO_ERROR);
 }

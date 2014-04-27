@@ -99,7 +99,7 @@ int onStart() {
 
 
    // (3) Order speichern
-   if (!LFX.WriteTicket(ticket, label, OP_SELLLIMIT, Units, TimeGMT(), NULL, LimitPrice, StopLossPrice, TakeProfitPrice, NULL, NULL, NULL, TimeGMT()))
+   if (!LFX.WriteTicket(ticket, label, OP_SELLLIMIT, Units, TimeGMT(), NULL, LimitPrice, NULL, StopLossPrice, NULL, TakeProfitPrice, NULL, NULL, NULL, NULL, TimeGMT()))
       return(last_error);
 
 
