@@ -5286,7 +5286,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=time
-        description=Datetime is the number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime is the number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5295,11 +5295,15 @@ SetLevelValue(1,3.14);
       caption=TimeLocal()
       type=datetime
       <content>
-      Returns local computer time as number of seconds elapsed from 00:00 January 1, 1970.<br/>
-      Note: At the testing, local time is modelled and is the same as the modelled last known server time.
+      Returns local computer time as number of seconds since 00:00 January 1, 1970.<br/>
+      Note: In testing local time is modelled and is the same as the modelled last known server time.<br>
+		<br>
+		<span style="color:red">Vorsicht:</span> Diese Besonderheit bedeutet, daﬂ der Tester die lokale Zeitzone praktisch auf die Server-Zeitzone setzt. Tests laufen also
+		u.U. immer in einer anderen als der lokalen Zeitzone.
       </content>
       <example>
-  if(TimeLocal()-OrderOpenTime()&lt;360) return(0);
+if (TimeLocal()-OrderOpenTime() &lt; 360) 
+   return(0);
       </example>
     </function>
 
@@ -5316,7 +5320,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5333,7 +5337,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5350,7 +5354,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5367,7 +5371,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
