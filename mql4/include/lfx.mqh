@@ -644,11 +644,10 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
  * @param  datetime closeTime
  * @param  double   closePrice
  * @param  double   profit
- * @param  datetime lastUpdate
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.WriteTicket(int ticket, string label, int operationType, double units, datetime openTime, double openEquity, double openPrice, datetime openPriceTime, double stopLoss, datetime stopLossTime, double takeProfit, datetime takeProfitTime, datetime closeTime, double closePrice, double profit, datetime lastUpdate) {
+bool LFX.WriteTicket(int ticket, string label, int operationType, double units, datetime openTime, double openEquity, double openPrice, datetime openPriceTime, double stopLoss, datetime stopLossTime, double takeProfit, datetime takeProfitTime, datetime closeTime, double closePrice, double profit) {
    // (1) Parametervalidierung
    if (ticket >> 22 != STRATEGY_ID)        return(!catch("LFX.WriteTicket(1)   invalid parameter ticket = "+ ticket +" (not a LFX ticket)", ERR_INVALID_FUNCTION_PARAMVALUE));
    int lfxId = LFX.CurrencyId(ticket);
@@ -672,7 +671,6 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    if (!closeTime && closePrice!=0)        return(!catch("LFX.WriteTicket(15)   invalid parameter closeTime/closePrice: mis-match 0/"+ NumberToStr(closePrice, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (closeTime!=0 && !closePrice)        return(!catch("LFX.WriteTicket(16)   invalid parameter closeTime/closePrice: mis-match \""+ TimeToStr(closeTime, TIME_FULL) +"\"/0", ERR_INVALID_FUNCTION_PARAMVALUE));
    // profit: immer ok
-   if (lastUpdate <= 0)                    return(!catch("LFX.WriteTicket(17)   invalid parameter lastUpdate = "+ lastUpdate, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string lfxCurrency = GetCurrency(lfxId);
    int    lfxDigits   = ifInt(lfxId==CID_JPY, 3, 5);
@@ -695,7 +693,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    string sCloseTime      = ifString(!closeTime,      "0", TimeToStr(closeTime, TIME_FULL));      sCloseTime      = StringLeftPad(sCloseTime     , 19, " ");
    string sClosePrice     = ifString(!closePrice,     "0", DoubleToStr(closePrice, lfxDigits));   sClosePrice     = StringLeftPad(sClosePrice    , 10, " ");
    string sProfit         = ifString(!profit,         "0", DoubleToStr(profit, 2));               sProfit         = StringLeftPad(sProfit        ,  7, " ");
-   string sLastUpdate     = TimeToStr(lastUpdate, TIME_FULL);
+   string sLastUpdate     = TimeToStr(TimeGMT(), TIME_FULL);
 
 
    // (3) Ticketdaten schreiben
@@ -707,7 +705,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPrice, ", ", sOpenPriceTime, ", ", sStopLoss, ", ", sStopLossTime, ", ", sTakeProfit, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sLastUpdate);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(!catch("LFX.WriteTicket(18)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      return(!catch("LFX.WriteTicket(17)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
    return(true);
 }
@@ -731,7 +729,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
       // einzelnes Struct übergeben
       if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!catch("LFX.SaveOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
-      if (!LFX.WriteTicket(lo.Ticket(los), lo.Comment(los), lo.Type(los), lo.Units(los), lo.OpenTime(los), lo.OpenEquity(los), lo.OpenPrice(los), lo.OpenPriceTime(los), lo.StopLoss(los), lo.StopLossTime(los), lo.TakeProfit(los), lo.TakeProfitTime(los), lo.CloseTime(los), lo.ClosePrice(los), lo.Profit(los), lo.Version(los)))
+      if (!LFX.WriteTicket(lo.Ticket(los), lo.Comment(los), lo.Type(los), lo.Units(los), lo.OpenTime(los), lo.OpenEquity(los), lo.OpenPrice(los), lo.OpenPriceTime(los), lo.StopLoss(los), lo.StopLossTime(los), lo.TakeProfit(los), lo.TakeProfitTime(los), lo.CloseTime(los), lo.ClosePrice(los), lo.Profit(los)))
          return(false);
    }
    else {
@@ -741,24 +739,12 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
       if (index < -1 || index > losSize-1)         return(!catch("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
 
       for (int i=Max(0, index); i < losSize; i++) {
-         if (!LFX.WriteTicket(los.Ticket(los, i), los.Comment(los, i), los.Type(los, i), los.Units(los, i), los.OpenTime(los, i), los.OpenEquity(los, i), los.OpenPrice(los, i), los.OpenPriceTime(los, i), los.StopLoss(los, i), los.StopLossTime(los, i), los.TakeProfit(los, i), los.TakeProfitTime(los, i), los.CloseTime(los, i), los.ClosePrice(los, i), los.Profit(los, i), los.Version(los, i)))
+         if (!LFX.WriteTicket(los.Ticket(los, i), los.Comment(los, i), los.Type(los, i), los.Units(los, i), los.OpenTime(los, i), los.OpenEquity(los, i), los.OpenPrice(los, i), los.OpenPriceTime(los, i), los.StopLoss(los, i), los.StopLossTime(los, i), los.TakeProfit(los, i), los.TakeProfitTime(los, i), los.CloseTime(los, i), los.ClosePrice(los, i), los.Profit(los, i)))
             return(false);
          if (index != -1)
             break;
       }
    }
-   return(true);
-}
-
-
-/**
- * Interne Hilfsfunktion (Workaround um Dimension-Checks des Compilers)
- *
-private*/bool __LFX.SaveOrder(/*LFX_ORDER*/int los[][], int index) {
-   if (ArrayDimension(los) != 2)        return(!catch("__LFX.SaveOrder(1)   invalid dimensions of parameter los = "+ ArrayDimension(los), ERR_INCOMPATIBLE_ARRAYS));
-   int losSize = ArrayRange(los, 0);
-   if (index < -1 || index > losSize-1) return(!catch("__LFX.SaveOrder(2)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
-
    return(true);
 }
 
@@ -871,9 +857,8 @@ void DummyCalls() {
    LFX.SaveDisplayStatus(NULL);
    LFX.SaveOrder(iNulls, NULL);
    LFX.Units(NULL);
-   LFX.WriteTicket(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   LFX.WriteTicket(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    LFX_ORDER.toStr(iNulls);
- __LFX.SaveOrder(iNulls, NULL);
 
    lo.Ticket           (iNulls);       los.Ticket           (iNulls, NULL);
    lo.Version          (iNulls);       los.Version          (iNulls, NULL);

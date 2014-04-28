@@ -38,7 +38,7 @@ int onInit() {
  */
 int onInitParameterChange() {
    if (isLfxInstrument) {
-      // offene Pending-Orders der aktuellen Währung einlesen
+      // offene Pending-Orders neu einlesen (aus Datei, da die Orders während des Input-Dialogs extern geändert worden sein können)
       LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
@@ -86,16 +86,8 @@ int onInitChartChange() {
  */
 int onInitUndefined() {
    if (isLfxInstrument) {
-      // offene Pending-Orders der aktuellen LFX-Währung einlesen
+      // offene Pending-Orders einlesen
       LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
-
-      if (Symbol() == "AUDLFX") {
-         int orders = ArrayRange(lfxOrders, 0);
-         debug("onInitUndefined()   got "+ orders +" pending order"+ ifString(orders==1, "", "s"));
-         if (orders > 0) {
-            LFX_ORDER.toStr(lfxOrders, true);
-         }
-      }
    }
    return(NO_ERROR);
 }
@@ -120,13 +112,8 @@ int onInitRemove() {
  */
 int onInitRecompile() {
    if (isLfxInstrument) {
-      // offene Pending-Orders der aktuellen LFX-Währung einlesen
+      // offene Pending-Orders einlesen
       LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
-
-      if (Symbol() == "AUDLFX") {
-         int orders = ArrayRange(lfxOrders, 0);
-         debug("onInitRecompile()   got "+ orders +" pending order"+ ifString(orders==1, "", "s"));
-      }
    }
    return(NO_ERROR);
 }

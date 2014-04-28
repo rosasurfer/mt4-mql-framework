@@ -161,9 +161,8 @@ int onStart() {
       t.closeTime  = TimeGMT();
       t.closePrice = closePrice;
       t.profit     = profit;
-      t.lastUpdate = t.closeTime;
 
-      if (!LFX.WriteTicket(magics[i], "", t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.openPriceTime, t.stopLoss, t.stopLossTime, t.takeProfit, t.takeProfitTime, t.closeTime, t.closePrice, t.profit, t.lastUpdate))
+      if (!LFX.WriteTicket(magics[i], "", t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.openPriceTime, t.stopLoss, t.stopLossTime, t.takeProfit, t.takeProfitTime, t.closeTime, t.closePrice, t.profit))
          return(last_error);
       ArrayResize(oes, 0);
    }

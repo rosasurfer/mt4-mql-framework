@@ -17,7 +17,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onDeinitParameterChange() {
-   // LFX-Orders in Library zwischenspeichern
+   // LFX-Orders in Library zwischenspeichern (nur formhalber, bei onInitParameterChange() werden sie wegen des zwischenzeitlichen Input-Dialogs neu aus der Datei eingelesen)
    int error = ChartInfos.CopyLfxOrders(true, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
