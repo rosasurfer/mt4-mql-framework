@@ -126,9 +126,6 @@ int onInitRecompile() {
       if (Symbol() == "AUDLFX") {
          int orders = ArrayRange(lfxOrders, 0);
          debug("onInitRecompile()   got "+ orders +" pending order"+ ifString(orders==1, "", "s"));
-         if (orders > 0) {
-            LFX_ORDER.toStr(lfxOrders, true);
-         }
       }
    }
    return(NO_ERROR);

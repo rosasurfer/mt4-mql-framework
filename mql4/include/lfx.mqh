@@ -46,7 +46,8 @@ bool LFX.InitAccountData() {
    else {
       // oder Daten des aktuellen Accounts
       _account = GetAccountNumber();
-      if (!_account) return(!SetLastError(stdlib_GetLastError()));
+      if (!_account)
+         return(!SetLastError(stdlib_GetLastError()));
    }
 
    // AccountCompany
@@ -716,15 +717,36 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
  * Speichert eine LFX-Order.
  *
  * @param  LFX_ORDER los[] - ein einzelnes oder ein Array von LFX_ORDER-Structs
- * @param  int       index - Index der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist;
- *                           wird ignoriert, wenn los[] ein einzelnes Struct ist
+ * @param  int       index - Arrayindex der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist;
+ *                           -1: speichert alle Orders des Arrays;
+ *                           Der Parameter wird ignoriert, wenn los[] ein einzelnes Struct ist.
  *
  * @return bool - Erfolgsstatus
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
-   if (ArrayDimension(los) > 1)
-      return(__LFX.SaveOrder(los, index));
+   int dims = ArrayDimension(los);
+   if (dims > 2)                                   return(!catch("LFX.SaveOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
 
+   if (dims == 1) {
+      // einzelnes Struct übergeben
+      if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!catch("LFX.SaveOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
+
+      if (!LFX.WriteTicket(lo.Ticket(los), lo.Comment(los), lo.Type(los), lo.Units(los), lo.OpenTime(los), lo.OpenEquity(los), lo.OpenPrice(los), lo.OpenPriceTime(los), lo.StopLoss(los), lo.StopLossTime(los), lo.TakeProfit(los), lo.TakeProfitTime(los), lo.CloseTime(los), lo.ClosePrice(los), lo.Profit(los), lo.Version(los)))
+         return(false);
+   }
+   else {
+      // mehrere Structs übergeben
+      if (ArrayRange(los, 1) != LFX_ORDER.intSize) return(!catch("LFX.SaveOrder(3)   invalid size of parameter los["+ ArrayRange(los, 0) +"]["+ ArrayRange(los, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      int losSize = ArrayRange(los, 0);
+      if (index < -1 || index > losSize-1)         return(!catch("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+
+      for (int i=Max(0, index); i < losSize; i++) {
+         if (!LFX.WriteTicket(los.Ticket(los, i), los.Comment(los, i), los.Type(los, i), los.Units(los, i), los.OpenTime(los, i), los.OpenEquity(los, i), los.OpenPrice(los, i), los.OpenPriceTime(los, i), los.StopLoss(los, i), los.StopLossTime(los, i), los.TakeProfit(los, i), los.TakeProfitTime(los, i), los.CloseTime(los, i), los.ClosePrice(los, i), los.Profit(los, i), los.Version(los, i)))
+            return(false);
+         if (index != -1)
+            break;
+      }
+   }
    return(true);
 }
 
@@ -733,6 +755,10 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
  * Interne Hilfsfunktion (Workaround um Dimension-Checks des Compilers)
  *
 private*/bool __LFX.SaveOrder(/*LFX_ORDER*/int los[][], int index) {
+   if (ArrayDimension(los) != 2)        return(!catch("__LFX.SaveOrder(1)   invalid dimensions of parameter los = "+ ArrayDimension(los), ERR_INCOMPATIBLE_ARRAYS));
+   int losSize = ArrayRange(los, 0);
+   if (index < -1 || index > losSize-1) return(!catch("__LFX.SaveOrder(2)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+
    return(true);
 }
 
@@ -847,6 +873,7 @@ void DummyCalls() {
    LFX.Units(NULL);
    LFX.WriteTicket(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    LFX_ORDER.toStr(iNulls);
+ __LFX.SaveOrder(iNulls, NULL);
 
    lo.Ticket           (iNulls);       los.Ticket           (iNulls, NULL);
    lo.Version          (iNulls);       los.Version          (iNulls, NULL);
