@@ -8568,9 +8568,9 @@ int GetTesterWindow() {
    }
 
 
-   // (3) bei ausbleibenden Erfolg Umgebung prüfen und nur ggf. Exception werfen (das Tester-Fenster könnte noch nicht existieren)
+   // (3) Fenster nicht gefunden (existiert vermutlich noch nicht)
    if (!hWndTester) {
-      if (This.IsTesting())
+      if (This.IsTesting())                                          // darf hier niemals zutreffen
          return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
 
       if (__LOG) log("GetTesterWindow(5)   cannot find Strategy Tester window");
