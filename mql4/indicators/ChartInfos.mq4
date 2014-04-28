@@ -100,21 +100,22 @@ string lfxChannelBuffer[];                                  // QuickChannel-Buff
 int onTick() {
    positionsAnalyzed = false;
 
-   if (!UpdatePrice()    )            return(last_error);
-   if (!UpdateOHLC()     )            return(last_error);
-   if (!UpdatePositions())            return(last_error);
+   if (!UpdatePrice())               return(last_error);
+   if (!UpdateOHLC())                return(last_error);
+   if (!UpdatePositions())           return(last_error);
 
-   if (!isLfxInstrument) {
-      if (!UpdateSpread()      )      return(last_error);
-      if (!UpdateUnitSize()    )      return(last_error);
-      if (!UpdateStopoutLevel())      return(last_error);
-      if (IsVisualMode())
-         if (!UpdateTime())           return(last_error);
+   if (isLfxInstrument) {
+      if (!CheckPendingLfxOrders())  return(last_error);
    }
-   else if (!CheckPendingLfxOrders()) return(last_error);
+   else {
+      if (!UpdateSpread())           return(last_error);
+      if (!UpdateUnitSize())         return(last_error);
+      if (!UpdateStopoutLevel())     return(last_error);
+      if (IsVisualMode())
+         if (!UpdateTime())          return(last_error);
 
-   // TradeCommands verarbeiten
-   //HandleEvent(EVENT_CHART_CMD);
+      if (!QC.HandleTradeCommands()) return(last_error);             // QuickChannel TradeCommands verarbeiten
+   }
 
    return(last_error);
 }
@@ -135,7 +136,7 @@ bool CheckPendingLfxOrders() {
          static bool done;
 
          // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
-         if (!done || IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
+         if (/*!done ||*/ IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
             debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, time="+ TimeToStr(TimeLocal(), TIME_FULL));
 
             // (1) Erreichen des Limits speichern
@@ -166,6 +167,57 @@ bool CheckPendingLfxOrders() {
          }
       }
    }
+   return(true);
+}
+
+
+int    hQC.TradeCmdReceiver;
+string qc.TradeCmdChannelName;
+string qc.msgBuffer[];
+
+
+/**
+ * Handler für QuickChannel TradeCommands.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.HandleTradeCommands() {
+   if (!IsChart) return(false);
+
+   // Receiver ggf. starten
+   if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
+      return(false);
+
+   // Channel auf neu eingetroffene Messages prüfen
+   int result = QC_CheckChannel(qc.TradeCmdChannelName);
+   if (result > QC_CHECK_CHANNEL_EMPTY) {
+      // eingetroffene Messages abholen
+      result = QC_GetMessages3(hQC.TradeCmdReceiver, qc.msgBuffer, QC_MAX_BUFFER_SIZE);
+      if (result != QC_GET_MSG3_SUCCESS) {
+         if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error", ERR_WIN32_ERROR));
+         if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
+                                                  return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result, ERR_WIN32_ERROR));
+      }
+      // Messages verarbeiten
+      debug("QC.HandleTradeCommands()   qc.message= "+ qc.msgBuffer[0]);
+   }
+   else if (result < QC_CHECK_CHANNEL_EMPTY) {
+      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannelName +"\") = QC_CHECK_CHANNEL_ERROR", ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannelName +"\") doesn't exist", ERR_WIN32_ERROR));
+                                            return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannelName +"\") unexpected return value = "+ result, ERR_WIN32_ERROR));
+   }
+
+
+
+
+
+
+
+
+
+
+
+
    return(true);
 }
 
@@ -1841,32 +1893,97 @@ bool StartQCReceiver() {
 
 
 /**
+ * Startet einen QuickChannel-Receiver für TradeCommands.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StartTradeCmdReceiver() {
+   if (hQC.TradeCmdReceiver != NULL) return(true);
+   if (!IsChart)                     return(false);
+
+   int hChartWnd = WindowHandle(Symbol(), NULL);
+   if (!hChartWnd)
+      return(false);
+
+   // Channelnamen definieren
+   qc.TradeCmdChannelName = "Receiver.TradeCommands.0x"+ IntToHexStr(hChartWnd);
+
+   // Receiver starten
+   hQC.TradeCmdReceiver = QC_StartReceiver(qc.TradeCmdChannelName, hChartWnd);
+   if (!hQC.TradeCmdReceiver)
+      return(!catch("QC.StartTradeCmdReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeCmdChannelName +"\", hChartWnd=0x"+ IntToHexStr(hChartWnd) +")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+   if (!ArraySize(qc.msgBuffer))
+      InitializeStringBuffer(qc.msgBuffer, QC_MAX_BUFFER_SIZE);
+
+   debug("QC.StartTradeCmdReceiver()   receiver on channel \""+ qc.TradeCmdChannelName +"\" started");
+
+   // Channelnamen und -status in .ini-Datei hinterlegen
+   string file    = TerminalPath() +"\\..\\quickchannel.ini";
+   string section = GetAccountNumber();
+   string key     = qc.TradeCmdChannelName;
+   string value   = "1";
+   if (!WritePrivateProfileStringA(section, key, value, file))
+      return(!catch("QC.StartTradeCmdReceiver(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+
+   return(true);
+}
+
+
+/**
  * Stoppt alle laufenden QuickChannel-Sender und -Receiver.
  *
  * @return bool - Erfolgsstatus
  */
-bool StopQuickChannels() {
-   int hTmp;
+bool QC.StopChannels() {
+   int    hTmp;
+   string nameTmp;
 
-   // Sender stoppen
+   // (1) LFX-Sender
    for (int i=ArraySize(hLfxChannelSenders)-1; i >= 0; i--) {
       if (hLfxChannelSenders[i] != NULL) {
-         hTmp = hLfxChannelSenders[i];
-         hLfxChannelSenders[i] = NULL;                               // Handle auch bei Fehler zurücksetzen
+         hTmp    = hLfxChannelSenders[i];
+         nameTmp = lfxChannelNames   [i];
+
+         hLfxChannelSenders[i] = NULL;                               // Handle immer zurücksetzen (gegen evt. mehrfache Stopversuche bei Fehlern)
          lfxChannelNames   [i] = "";
          if (!QC_ReleaseSender(hTmp))
-            return(!catch("StopQuickChannels(1)->MT4iQuickChannel::QC_ReleaseSender(hChannel=0x"+ IntToHexStr(hTmp) +")   error stopping QuickChannel sender: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+            return(!catch("QC.StopChannels(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ nameTmp +"\")   error stopping QuickChannel sender: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
       }
    }
 
-   // Receiver stoppen
+
+   // (2) LFX-Receiver
    if (hLfxChannelReceiver != NULL) {
-      hTmp = hLfxChannelReceiver;
-      hLfxChannelReceiver = NULL;                                    // Handle auch bei Fehler zurücksetzen
+      hTmp    = hLfxChannelReceiver;
+      nameTmp = lfxChannelName;
+
+      hLfxChannelReceiver = NULL;                                    // Handle immer zurücksetzen (gegen evt. mehrfache Stopversuche bei Fehlern)
       lfxChannelName      = "";
       if (!QC_ReleaseReceiver(hTmp))
-         return(!catch("StopQuickChannels(2)->MT4iQuickChannel::QC_ReleaseReceiver(hChannel=0x"+ IntToHexStr(hTmp) +")   error stopping QuickChannel receiver: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+         return(!catch("QC.StopChannels(2)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ nameTmp +"\")   error stopping QuickChannel receiver: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
    }
+
+
+   // (3) TradeCmd-Receiver
+   if (hQC.TradeCmdReceiver != NULL) {
+      hTmp    = hQC.TradeCmdReceiver;
+      nameTmp = qc.TradeCmdChannelName;
+
+      hQC.TradeCmdReceiver   = NULL;                                 // Handle immer zurücksetzen (gegen evt. mehrfache Stopversuche bei Fehlern)
+      qc.TradeCmdChannelName = "";
+      if (!QC_ReleaseReceiver(hTmp))
+         return(!catch("QC.StopChannels(3)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ nameTmp +"\")   error stopping QuickChannel receiver: "+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
+      debug("QC.StopChannels()   receiver on channel \""+ nameTmp +"\" stopped");
+
+      // Channelstatus in .ini-Datei aktualisieren
+      string file    = TerminalPath() +"\\..\\quickchannel.ini";
+      string section = GetAccountNumber();
+      string key     = nameTmp;
+      int error = DeleteIniKey(file, section, key);
+      if (IsError(error))
+         return(!SetLastError(error));
+   }
+
    return(true);
 }
 
