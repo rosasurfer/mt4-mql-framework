@@ -129,14 +129,17 @@ bool CheckPendingLfxOrders() {
       int type = los.Type(lfxOrders, i);
 
       if (IsPendingTradeOperation(type)) {
+         static bool done;
+
          // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
-         if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
+         if (!done || IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
+            debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, time="+ TimeToStr(TimeLocal(), TIME_FULL));
 
             // (1) Zeitpunkt des Auslösens speichern
             los.setOpenPriceTime(lfxOrders, i, TimeGMT());
             LFX.SaveOrder(lfxOrders, i);
 
-            debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, time="+ TimeToStr(TimeLocal(), TIME_FULL));
+            debug("LFX.SaveOrder() = ok");
 
 
             // (2) TradeCmd an TradeAccount schicken
@@ -145,6 +148,7 @@ bool CheckPendingLfxOrders() {
             // (5) Zeitpunkt eines gemeldeten Fehlers lokal speichern
             // (6) bei folgenden Ticks Fehler nicht erneut melden
             // (7) später eingehende Ausführungsbestätigung trotzdem wie ohne gemeldeten Fehler verarbeiten
+            done = true;
          }
       }
       else {
