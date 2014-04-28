@@ -36,7 +36,7 @@ int    openPosition.counter;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) LFX-Currency bestimmen
+   // (1) LFX-Currency und ID bestimmen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
@@ -47,12 +47,7 @@ int onInit() {
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
-   // (2) Daten des TradeAccounts bestimmen
-   if (!LFX.CheckAccount())
-      return(last_error);
-
-
-   // (3) Parametervalidierung
+   // (2) Parametervalidierung
    // Units
    if (NE(MathModFix(Units, 0.1), 0))    return(catch("onInit(1)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
    if (Units < 0.1 || Units > 1)         return(catch("onInit(2)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));

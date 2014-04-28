@@ -16,11 +16,11 @@ int    lfxAccountType;
 
 
 /**
- * Überprüft bzw. initialisiert die internen Variablen zum Zugriff auf den LFX-TradeAccount.
+ * Initialisiert die internen Variablen zum Zugriff auf den LFX-TradeAccount.
  *
- * @return bool - ob die ermittelten Daten gültig sind
+ * @return bool - Erfolgsstatus
  */
-bool LFX.CheckAccount() {
+bool LFX.InitAccountData() {
    if (lfxAccount > 0)
       return(true);
 
@@ -39,8 +39,8 @@ bool LFX.CheckAccount() {
       _account = GetLocalConfigInt(section, key, 0);
       if (_account <= 0) {
          string value = GetLocalConfigString(section, key, "");
-         if (!StringLen(value)) return(!catch("LFX.CheckAccount(1)   missing trade account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
-                                return(!catch("LFX.CheckAccount(2)   invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+         if (!StringLen(value)) return(!catch("LFX.InitAccountData(1)   missing trade account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
+                                return(!catch("LFX.InitAccountData(2)   invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
       }
    }
    else {
@@ -53,15 +53,15 @@ bool LFX.CheckAccount() {
    section = "Accounts";
    key     = _account +".company";
    _accountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCompany)) return(!catch("LFX.CheckAccount(3)   missing account company setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(_accountCompany)) return(!catch("LFX.InitAccountData(3)   missing account company setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // AccountType
    key   = _account +".type";
    value = StringToLower(GetGlobalConfigString(section, key, ""));
-   if (!StringLen(value)) return(!catch("LFX.CheckAccount(4)   missing account type setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(value)) return(!catch("LFX.InitAccountData(4)   missing account type setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
    if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
    else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
-   else return(!catch("LFX.CheckAccount(5)   invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
+   else return(!catch("LFX.InitAccountData(5)   invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
 
    // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
    lfxAccount        = _account;
@@ -372,6 +372,8 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
 
 
    // (2) alle Ticket-IDs einlesen
+   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+      return(-1);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string keys[];
@@ -480,8 +482,10 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
  */
 int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, double &orderUnits, datetime &openTime, double &openEquity, double &openPrice, datetime &openPriceTime, double &stopLoss, datetime &stopLossTime, double &takeProfit, datetime &takeProfitTime, datetime &closeTime, double &closePrice, double &orderProfit, datetime &lastUpdate) {
    // (1) Ticket auslesen
+   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+      return(0);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = lfxAccountCompany +"."+ lfxAccount;
+   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string key     = ticket;
    string value   = GetIniString(file, section, key, "");
    if (!StringLen(value)) {
@@ -694,14 +698,41 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
 
 
    // (3) Ticketdaten schreiben
+   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+      return(false);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = lfxAccountCompany +"."+ lfxAccount;
+   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string key     = ticket;
-   string value   = sSymbol +", "+ sLabel +", "+ sOperationType +", "+ sUnits +", "+ sOpenTime +", "+ sOpenEquity +", "+ sOpenPrice +", "+ sOpenPriceTime +", "+ sStopLoss +", "+ sStopLossTime +", "+ sTakeProfit +", "+ sTakeProfitTime +", "+ sCloseTime +", "+ sClosePrice +", "+ sProfit +", "+ sLastUpdate;
+   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPrice, ", ", sOpenPriceTime, ", ", sStopLoss, ", ", sStopLossTime, ", ", sTakeProfit, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sLastUpdate);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!catch("LFX.WriteTicket(18)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
 
+   return(true);
+}
+
+
+/**
+ * Speichert eine LFX-Order.
+ *
+ * @param  LFX_ORDER los[] - ein einzelnes oder ein Array von LFX_ORDER-Structs
+ * @param  int       index - Index der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist;
+ *                           wird ignoriert, wenn los[] ein einzelnes Struct ist
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
+   if (ArrayDimension(los) > 1)
+      return(__LFX.SaveOrder(los, index));
+
+   return(true);
+}
+
+
+/**
+ * Interne Hilfsfunktion (Workaround um Dimension-Checks des Compilers)
+ *
+private*/bool __LFX.SaveOrder(/*LFX_ORDER*/int los[][], int index) {
    return(true);
 }
 
@@ -726,8 +757,10 @@ bool LFX.ReadInstanceIdsCounter(string lfxCurrency, int &instanceIds[], int &cur
    currencyCounter = 0;
 
    // Ticket-IDs einlesen
+   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+      return(false);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = lfxAccountCompany +"."+ lfxAccount;
+   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
 
@@ -800,16 +833,17 @@ void DummyCalls() {
    int    iNull, iNulls[];
    double dNull;
    string sNull;
-   LFX.CheckAccount();
    LFX.Counter(NULL);
    LFX.CurrencyId(NULL);
    LFX.GetSelectedOrders(iNulls);
+   LFX.InitAccountData();
    LFX.InstanceId(NULL);
    LFX.IsMyOrder();
    LFX.ReadDisplayStatus();
    LFX.ReadInstanceIdsCounter(NULL, iNulls, iNull);
    LFX.ReadTicket(NULL, sNull, sNull, iNull, dNull, iNull, dNull, dNull, iNull, dNull, iNull, dNull, iNull, iNull, dNull, dNull, iNull);
    LFX.SaveDisplayStatus(NULL);
+   LFX.SaveOrder(iNulls, NULL);
    LFX.Units(NULL);
    LFX.WriteTicket(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    LFX_ORDER.toStr(iNulls);
