@@ -5,7 +5,7 @@
  */
 int onDeinit() {
    RemoveChartObjects();
-   StopQuickChannels();
+   QC.StopChannels();
    return(last_error);
 }
 
