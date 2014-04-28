@@ -132,20 +132,12 @@ bool CheckPendingLfxOrders() {
          // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
          if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
 
-            // (1) Zeitpunkt der Limit-Auslösung speichern
-            datetime gmt = TimeGMT();
-            debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, localTime="+ TimeToStr(TimeLocal(), TIME_FULL) +"  gmt="+ TimeToStr(gmt, TIME_FULL));
+            // (1) Zeitpunkt des Auslösens speichern
+            los.setOpenPriceTime(lfxOrders, i, TimeGMT());
+            LFX.SaveOrder(lfxOrders, i);
 
-            los.setOpenPriceTime(lfxOrders, i, gmt);
-            //LFX.SaveOrder(lfxOrders, i);
-            /*
-            double   lo.OpenPrice     (int lo[]);
-            datetime lo.OpenPriceTime (int lo[]);
-            double   lo.StopLoss      (int lo[]);
-            datetime lo.StopLossTime  (int lo[]);
-            double   lo.TakeProfit    (int lo[]);
-            datetime lo.TakeProfitTime(int lo[]);
-            */
+            debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, time="+ TimeToStr(TimeLocal(), TIME_FULL));
+
 
             // (2) TradeCmd an TradeAccount schicken
             // (3) bei folgenden Ticks dieses Limit nicht erneut prüfen, sondern auf Ausführungsbestätigung vom TradeAccount warten

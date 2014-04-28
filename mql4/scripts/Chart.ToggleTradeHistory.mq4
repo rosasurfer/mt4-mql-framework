@@ -22,7 +22,7 @@ double lfxChartDeviation;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) LFX-Currency, ID und Chartabweichung setzen
+   // LFX-Currency, ID und Chartabweichung setzen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
@@ -32,11 +32,6 @@ int onInit() {
    }
    lfxCurrencyId     = GetCurrencyId(lfxCurrency);
    lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
-
-
-   // (2) TradeAccount-Details ermitteln
-   if (!LFX.CheckAccount())
-      return(last_error);
 
    return(catch("onInit()"));
 }

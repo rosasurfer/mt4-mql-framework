@@ -16,16 +16,12 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // Prüfen, ob wir unter einem LFX-Instrument laufen und wenn ja, LFX-Details initialisieren
-   if      (StringStartsWith(Symbol(), "LFX")) { isLfxInstrument = true; lfxCurrency = StringRight(Symbol(), -3); }
-   else if (StringEndsWith  (Symbol(), "LFX")) { isLfxInstrument = true; lfxCurrency = StringLeft (Symbol(), -3); }
-   else                                        { isLfxInstrument = false;                                         }
-   if (isLfxInstrument) {
-      lfxCurrencyId = GetCurrencyId(lfxCurrency);
-      if (!LFX.CheckAccount()) {
-         debug("onInit(0.2)->LFX.CheckAccount() = false  cancelling init()", last_error);
-         return(-1);                                                 // -1: kritischer Fehler, init() wird sofort abgebrochen
-      }
+   // Prüfen, ob wir auf einem LFX-Instrument laufen
+   if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
+   else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
+   if (StringLen(lfxCurrency) > 0) {
+      isLfxInstrument = true;
+      lfxCurrencyId   = GetCurrencyId(lfxCurrency);
    }
 
    // Label erzeugen
