@@ -113,6 +113,9 @@ int onTick() {
    }
    else if (!CheckPendingLfxOrders()) return(last_error);
 
+   // TradeCommands verarbeiten
+   //HandleEvent(EVENT_CHART_CMD);
+
    return(last_error);
 }
 
@@ -135,12 +138,9 @@ bool CheckPendingLfxOrders() {
          if (!done || IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
             debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, time="+ TimeToStr(TimeLocal(), TIME_FULL));
 
-            // (1) Zeitpunkt des Auslösens speichern
+            // (1) Erreichen des Limits speichern
             los.setOpenPriceTime(lfxOrders, i, TimeGMT());
             LFX.SaveOrder(lfxOrders, i);
-
-            debug("LFX.SaveOrder() = ok");
-
 
             // (2) TradeCmd an TradeAccount schicken
             // (3) bei folgenden Ticks dieses Limit nicht erneut prüfen, sondern auf Ausführungsbestätigung vom TradeAccount warten
