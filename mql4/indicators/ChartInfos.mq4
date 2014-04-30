@@ -136,7 +136,7 @@ bool CheckPendingLfxOrders() {
          static bool done;
 
          // check for OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT and OP_SELLSTOP
-         if (/*!done ||*/ IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
+         if (!done || IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
             debug("CheckPendingLfxOrders(1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered, time="+ TimeToStr(TimeLocal(), TIME_FULL));
 
             // (1) Erreichen des Limits speichern
@@ -148,7 +148,7 @@ bool CheckPendingLfxOrders() {
             // (4) nach Ablauf einer definierten Zeitspanne ohne Ausführungsbestätigung Fehler melden
             // (5) Zeitpunkt eines gemeldeten Fehlers lokal speichern
             // (6) bei folgenden Ticks Fehler nicht erneut melden
-            // (7) später eingehende Ausführungsbestätigung trotzdem wie ohne gemeldeten Fehler verarbeiten
+            // (7) später eingehende Ausführungsbestätigung wie ohne gemeldeten Fehler verarbeiten
             done = true;
          }
       }
@@ -199,7 +199,7 @@ bool QC.HandleTradeCommands() {
                                                   return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result, ERR_WIN32_ERROR));
       }
       // Messages verarbeiten
-      debug("QC.HandleTradeCommands()   qc.message= "+ qc.msgBuffer[0]);
+      debug("QC.HandleTradeCommands()   .message=\""+ qc.msgBuffer[0] +"\"");
    }
    else if (result < QC_CHECK_CHANNEL_EMPTY) {
       if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannelName +"\") = QC_CHECK_CHANNEL_ERROR", ERR_WIN32_ERROR));
