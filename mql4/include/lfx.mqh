@@ -150,7 +150,7 @@ int LFX.Counter(int magicNumber) {
  *    int  closeTime;         //   4         lo[12]      // CloseTime, GMT
  *    int  closePrice;        //   4         lo[13]      // ClosePrice in Points
  *    int  profit;            //   4         lo[14]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
- *    char szComment[32];     //  32         lo[15]      // Orderkommentar, bis zu 31 Zeichen + <NUL>
+ *    char szComment[32];     //  32         lo[15]      // Kommentar, bis zu 31 Zeichen + <NUL> (stimmt nicht notwendigerweise mit dem Orderkommentar beim Broker überein)
  *    int  version;           //   4         lo[23]      // Zeitpunkt der letzten Aktualisierung, GMT
  * } lo;                      //  96 byte = int[24]
  */
