@@ -30,7 +30,7 @@
 #define ERR_NOT_ENOUGH_MONEY                                        134
 #define ERR_PRICE_CHANGED                                           135
 #define ERR_OFF_QUOTES                                              136
-#define ERR_BROKER_BUSY                                             137
+#define ERR_BROKER_BUSY                                             137    // EA trading disabled (manual trading still enabled)
 #define ERR_REQUOTE                                                 138
 #define ERR_ORDER_LOCKED                                            139
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140
