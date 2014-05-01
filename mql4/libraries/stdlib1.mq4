@@ -1923,7 +1923,6 @@ bool IsTemporaryTradeError(int error) {
       case ERR_INVALID_PRICE:                //      129   Kurs bewegt sich zu schnell (aus dem Fenster)
       case ERR_PRICE_CHANGED:                //      135   price changed
       case ERR_OFF_QUOTES:                   //      136   off quotes
-      case ERR_BROKER_BUSY:                  //      137   broker busy
       case ERR_REQUOTE:                      //      138   requote
       case ERR_TRADE_CONTEXT_BUSY:           //      146   trade context busy
          return(true);
@@ -1943,6 +1942,7 @@ bool IsTemporaryTradeError(int error) {
       case ERR_MARKET_CLOSED:                //      132   market is closed
       case ERR_TRADE_DISABLED:               //      133   trading is disabled
       case ERR_NOT_ENOUGH_MONEY:             //      134   not enough money
+      case ERR_BROKER_BUSY:                  //      137   EA trading disabled (manual trading still enabled)
       case ERR_ORDER_LOCKED:                 //      139   order is locked
       case ERR_LONG_POSITIONS_ONLY_ALLOWED:  //      140   long positions only allowed
       case ERR_TOO_MANY_REQUESTS:            // ???  141   too many requests                                                  // TODO: Ist temporär!
