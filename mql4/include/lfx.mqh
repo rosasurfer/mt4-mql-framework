@@ -3,9 +3,9 @@
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
  *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht stdlib::GetCurrencyId()
- *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10
+ *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10           // nirgends mehr verwendet, LFX.Units() gelöscht
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
- *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15
+ *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // nirgends mehr verwendet, LFX.Counter() gelöscht
  */
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
@@ -31,7 +31,7 @@ bool LFX.InitAccountData() {
    bool isLfxInstrument = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
 
    if (isLfxInstrument) {
-      // Daten des TradeAccounts...
+      // Daten des TradeAccounts
       string section = "LFX";
       string key     = "MRUTradeAccount";
       //if (This.IsTesting())                            // TODO: Workaround schaffen für Fehler in Indikator::init() bei Terminalstart, wenn Chartfenster noch nicht bereit ist
@@ -44,7 +44,7 @@ bool LFX.InitAccountData() {
       }
    }
    else {
-      // oder Daten des aktuellen Accounts
+      // Daten des aktuellen Accounts
       _account = GetAccountNumber();
       if (!_account)
          return(!SetLastError(stdlib_GetLastError()));
@@ -96,18 +96,6 @@ int LFX.CurrencyId(int magicNumber) {
 
 
 /**
- * Gibt die Units der MagicNumber einer LFX-Order zurück.
- *
- * @param  int magicNumber
- *
- * @return double - Units
- */
-double LFX.Units(int magicNumber) {
-   return(magicNumber >> 14 & 0xF / 10.);                            // 4 bit (Bit 15-18) => Bereich 1-15
-}
-
-
-/**
  * Gibt die Instanz-ID der MagicNumber einer LFX-Order zurück.
  *
  * @param  int magicNumber
@@ -116,18 +104,6 @@ double LFX.Units(int magicNumber) {
  */
 int LFX.InstanceId(int magicNumber) {
    return(magicNumber >> 4 & 0x3FF);                                 // 10 bit (Bit 5-14) => Bereich 1-1023
-}
-
-
-/**
- * Gibt den Position-Counter der MagicNumber einer LFX-Order zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Counter
- */
-int LFX.Counter(int magicNumber) {
-   return(magicNumber & 0xF);                                        // 4 bit (Bit 1-4 ) => Bereich 1-15
 }
 
 
@@ -151,7 +127,7 @@ int LFX.Counter(int magicNumber) {
  *    int  closePrice;        //   4         lo[13]      // ClosePrice in Points
  *    int  profit;            //   4         lo[14]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
  *    char szComment[32];     //  32         lo[15]      // Kommentar, bis zu 31 Zeichen + <NUL> (stimmt nicht notwendigerweise mit dem Orderkommentar beim Broker überein)
- *    int  version;           //   4         lo[23]      // Zeitpunkt der letzten Aktualisierung, GMT
+ *    int  version;           //   4         lo[23]      // Zeitpunkt der letzten Änderung, GMT
  * } lo;                      //  96 byte = int[24]
  */
 
@@ -342,24 +318,24 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
  *
  * @param  int    los[]       - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
  * @param  string lfxCurrency - LFX-Währung der Order (default: alle Währungen)
- * @param  int    fSelect     - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
+ * @param  int    fSelection  - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
  *                              OF_OPEN            - gibt alle offenen Orders zurück (Pending-Orders und offene Positionen)
  *                              OF_CLOSED          - gibt alle geschlossenen Orders zurück (Trade History)
- *                              OF_PENDINGORDER    - gibt alle herkömmlichen Pending-Orders zurück
+ *                              OF_PENDINGORDER    - gibt alle herkömmlichen Pending-Orders zurück (OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP)
  *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurück
  *                              OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem StopLoss oder TakeProfit zurück
  *
  * @return int - Anzahl der zurückgegebenen Orders oder -1, falls ein Fehler auftrat
  */
-int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelect=NULL) {
+int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelection=NULL) {
    // (1) Parametervaliderung
    ArrayResize(los, 0);
-   int error = InitializeByteBuffer(los, LFX_ORDER.size);               // validiert Dimensionierung
+   int error = InitializeByteBuffer(los, LFX_ORDER.size);                  // validiert Dimensionierung
    if (IsError(error))
       return(_int(-1, SetLastError(error)));
 
-   int lfxCurrencyId = 0;                                               // 0: alle Währungen
-   if (lfxCurrency == "0")                                              // (string) NULL
+   int lfxCurrencyId = 0;                                                  // 0: alle Währungen
+   if (lfxCurrency == "0")                                                 // (string) NULL
       lfxCurrency = "";
 
    if (StringLen(lfxCurrency) > 0) {
@@ -368,10 +344,10 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
          return(_int(-1, SetLastError(stdlib_GetLastError())));
    }
 
-   if (!fSelect)                                                        // ohne Angabe wird alles zurückgeben
-      fSelect |= OF_OPEN | OF_CLOSED;
-   if ((fSelect & OF_PENDINGORDER) && (fSelect & OF_OPENPOSITION))      // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurückgegeben
-      fSelect |= OF_OPEN;
+   if (!fSelection)                                                        // ohne Angabe wird alles zurückgeben
+      fSelection |= OF_OPEN | OF_CLOSED;
+   if ((fSelection & OF_PENDINGORDER) && (fSelection & OF_OPENPOSITION))   // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurückgegeben
+      fSelection |= OF_OPEN;
 
 
    // (2) alle Ticket-IDs einlesen
@@ -387,42 +363,42 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
    int      o.ticket, o.type, result;
    string   o.symbol="", o.label ="";
    double   o.units, o.openEquity, o.openPrice, o.stopLoss, o.takeProfit, o.closePrice, o.profit;
-   datetime o.openTime, o.openPriceTime, o.stopLossTime, o.takeProfitTime, o.closeTime, o.lastUpdate;
+   datetime o.openTime, o.openPriceTime, o.stopLossTime, o.takeProfitTime, o.closeTime, o.version;
 
    for (int losSize, n, i=0; i < keysSize; i++) {
       o.ticket = StrToInteger(keys[i]);
       if (lfxCurrencyId != 0)
          if (LFX.CurrencyId(o.ticket) != lfxCurrencyId)
             continue;
-      // falls lfxCurrency angegeben, stimmt sie hier immer überein
-      result   = LFX.ReadTicket(o.ticket, o.symbol, o.label, o.type, o.units, o.openTime, o.openEquity, o.openPrice, o.openPriceTime, o.stopLoss, o.stopLossTime, o.takeProfit, o.takeProfitTime, o.closeTime, o.closePrice, o.profit, o.lastUpdate);
+      // falls lfxCurrency angegeben, sind hier alle Orders danach gefiltert
+      result   = LFX.ReadTicket(o.ticket, o.symbol, o.label, o.type, o.units, o.openTime, o.openEquity, o.openPrice, o.openPriceTime, o.stopLoss, o.stopLossTime, o.takeProfit, o.takeProfitTime, o.closeTime, o.closePrice, o.profit, o.version);
       if (result != 1) {
-         if (!result)                                                   // -1, wenn das Ticket nicht gefunden wurde
-            return(-1);                                                 //  0, falls ein anderer Fehler auftrat
+         if (!result)                                                      // -1, wenn das Ticket nicht gefunden wurde
+            return(-1);                                                    //  0, falls ein anderer Fehler auftrat
          return(_int(-1, catch("LFX.GetSelectedOrders(1)->LFX.ReadTicket(ticket="+ o.ticket +")   ticket not found", ERR_RUNTIME_ERROR)));
       }
 
       bool match = false;
       while (true) {
-         if (o.closeTime != 0) {
-            match = (fSelect & OF_CLOSED);
+         if (o.closeTime > 0) {
+            match = (fSelection & OF_CLOSED);
             break;
          }
          // ab hier immer offene Order
-         if (fSelect & OF_OPEN && 1) {
+         if (fSelection & OF_OPEN && 1) {
             match = true;
             break;
          }
-         if (OP_BUYLIMIT <= o.type) /*&&*/ if (o.type <= OP_SELLSTOP) { // schneller für IsPendingTradeOperation(o.type)
-            match = (fSelect & OF_PENDINGORDER);
+         if (OP_BUYLIMIT <= o.type) /*&&*/ if (o.type <= OP_SELLSTOP) {    // schneller für IsPendingTradeOperation(o.type)
+            match = (fSelection & OF_PENDINGORDER);
             break;
          }
          // ab hier immer offene Position
-         if (fSelect & OF_OPENPOSITION && 1) {
+         if (fSelection & OF_OPENPOSITION && 1) {
             match = true;
             break;
          }
-         if (fSelect & OF_PENDINGPOSITION && 1)
+         if (fSelection & OF_PENDINGPOSITION && 1)
             match = (o.stopLoss || o.takeProfit);
          break;
       }
@@ -431,7 +407,7 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
          // Order in LFX_ORDER-Array kopieren
          n = losSize;
          losSize++; ArrayResize(los, losSize);
-         los.setTicket        (los, n, o.ticket        );            // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
+         los.setTicket        (los, n, o.ticket        );                  // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
          los.setType          (los, n, o.type          );
          los.setUnits         (los, n, o.units         );
          los.setLots          (los, n, 0               );
@@ -447,7 +423,7 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
          los.setClosePrice    (los, n, o.closePrice    );
          los.setProfit        (los, n, o.profit        );
          los.setComment       (los, n, o.label         );
-         los.setVersion       (los, n, o.lastUpdate    );
+         los.setVersion       (los, n, o.version       );
       }
    }
    ArrayResize(keys, 0);
@@ -477,13 +453,13 @@ int LFX.GetSelectedOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int f
  * @param  datetime &closeTime      - Variable zur Aufnahme der CloseTime
  * @param  double   &closePrice     - Variable zur Aufnahme des ClosePrice
  * @param  double   &orderProfit    - Variable zur Aufnahme des OrderProfits
- * @param  datetime &lastUpdate     - Variable zur Aufnahme des Zeitpunkts des letzten Updates
+ * @param  datetime &version        - Variable zur Aufnahme des Zeitpunkts der letzten Änderung
  *
  * @return int - Erfolgsstatus: +1, wenn das Ticket erfolgreich gelesen wurden
  *                              -1, wenn das Ticket nicht gefunden wurde
  *                               0, falls ein anderer Fehler auftrat
  */
-int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, double &orderUnits, datetime &openTime, double &openEquity, double &openPrice, datetime &openPriceTime, double &stopLoss, datetime &stopLossTime, double &takeProfit, datetime &takeProfitTime, datetime &closeTime, double &closePrice, double &orderProfit, datetime &lastUpdate) {
+int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, double &orderUnits, datetime &openTime, double &openEquity, double &openPrice, datetime &openPriceTime, double &stopLoss, datetime &stopLossTime, double &takeProfit, datetime &takeProfitTime, datetime &closeTime, double &closePrice, double &orderProfit, datetime &version) {
    // (1) Ticket auslesen
    if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
       return(0);
@@ -498,7 +474,7 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
 
 
    // (2) Ticketdetails validieren
-   //Ticket = Symbol, Label, OrderType, OrderUnits, OpenTime_GMT, OpenEquity, OpenPrice, OpenPriceTime_GMT, StopLoss, StopLossTime_GMT, TakeProfit, TakeProfitTime_GMT, CloseTime_GMT, ClosePrice, OrderProfit, LastUpdate_GMT
+   //Ticket = Symbol, Label, OrderType, OrderUnits, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, OrderProfit, Version
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 16) return(_NULL(catch("LFX.ReadTicket(2)   invalid config value ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
@@ -521,13 +497,13 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    double _orderUnits = StrToDouble(sValue);
    if (_orderUnits <= 0)                        return(_NULL(catch("LFX.ReadTicket(5)   invalid unit size \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
-   // OpenTime_GMT
+   // OpenTime
    sValue = StringTrim(values[4]);
    if      (StringIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
    else if (StringStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _openTime =  StrToTime(sValue);
    if (!_openTime)                              return(_NULL(catch("LFX.ReadTicket(6)   invalid open time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-   if (_openTime > GetSystemTimeEx())           return(_NULL(catch("LFX.ReadTicket(7)   invalid open time_gmt \""+ TimeToStr(_openTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_openTime > GetSystemTimeEx())           return(_NULL(catch("LFX.ReadTicket(7)   invalid open time \""+ TimeToStr(_openTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // OpenEquity
    sValue = StringTrim(values[5]);
@@ -542,13 +518,13 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    double _openPrice = StrToDouble(sValue);
    if (_openPrice <= 0)                         return(_NULL(catch("LFX.ReadTicket(11)   invalid open price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
-   // OpenPriceTime_GMT
+   // OpenPriceTime
    sValue = StringTrim(values[7]);
    if (StringIsDigit(sValue)) datetime _openPriceTime = StrToInteger(sValue);
    else                                _openPriceTime =    StrToTime(sValue);
    if      (_openPriceTime < 0)                 return(_NULL(catch("LFX.ReadTicket(12)   invalid open-price time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    else if (_openPriceTime > 0)
-      if (_openPriceTime > GetSystemTimeEx())   return(_NULL(catch("LFX.ReadTicket(13)   invalid open-price time_gmt \""+ TimeToStr(_openPriceTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (_openPriceTime > GetSystemTimeEx())   return(_NULL(catch("LFX.ReadTicket(13)   invalid open-price time \""+ TimeToStr(_openPriceTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // StopLoss
    sValue = StringTrim(values[8]);
@@ -556,13 +532,13 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    double _stopLoss = StrToDouble(sValue);
    if (_stopLoss < 0)                           return(_NULL(catch("LFX.ReadTicket(15)   invalid stoploss \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
-   // StopLossTime_GMT
+   // StopLossTime
    sValue = StringTrim(values[9]);
    if (StringIsDigit(sValue)) datetime _stopLossTime = StrToInteger(sValue);
    else                                _stopLossTime =    StrToTime(sValue);
    if      (_stopLossTime < 0)                  return(_NULL(catch("LFX.ReadTicket(16)   invalid stoploss time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    else if (_stopLossTime > 0)
-      if (_stopLossTime > GetSystemTimeEx())    return(_NULL(catch("LFX.ReadTicket(17)   invalid stoploss time_gmt \""+ TimeToStr(_stopLossTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (_stopLossTime > GetSystemTimeEx())    return(_NULL(catch("LFX.ReadTicket(17)   invalid stoploss time \""+ TimeToStr(_stopLossTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // TakeProfit
    sValue = StringTrim(values[10]);
@@ -570,21 +546,21 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    double _takeProfit = StrToDouble(sValue);
    if (_takeProfit < 0)                         return(_NULL(catch("LFX.ReadTicket(19)   invalid takeprofit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
-   // TakeProfitTime_GMT
+   // TakeProfitTime
    sValue = StringTrim(values[11]);
    if (StringIsDigit(sValue)) datetime _takeProfitTime = StrToInteger(sValue);
    else                                _takeProfitTime =    StrToTime(sValue);
    if      (_takeProfitTime < 0)                return(_NULL(catch("LFX.ReadTicket(20)   invalid takeprofit time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    else if (_takeProfitTime > 0)
-      if (_takeProfitTime > GetSystemTimeEx())  return(_NULL(catch("LFX.ReadTicket(21)   invalid takeprofit time_gmt \""+ TimeToStr(_takeProfitTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (_takeProfitTime > GetSystemTimeEx())  return(_NULL(catch("LFX.ReadTicket(21)   invalid takeprofit time \""+ TimeToStr(_takeProfitTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
-   // CloseTime_GMT
+   // CloseTime
    sValue = StringTrim(values[12]);
    if (StringIsDigit(sValue)) datetime _closeTime = StrToInteger(sValue);
    else                                _closeTime =    StrToTime(sValue);
    if      (_closeTime < 0)                     return(_NULL(catch("LFX.ReadTicket(22)   invalid close time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    else if (_closeTime > 0)
-      if (_closeTime > GetSystemTimeEx())       return(_NULL(catch("LFX.ReadTicket(23)   invalid close time_gmt \""+ TimeToStr(_closeTime, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (_closeTime > GetSystemTimeEx())       return(_NULL(catch("LFX.ReadTicket(23)   invalid close time \""+ TimeToStr(_closeTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // ClosePrice
    sValue = StringTrim(values[13]);
@@ -599,12 +575,12 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    if (!StringIsNumeric(sValue))                return(_NULL(catch("LFX.ReadTicket(28)   invalid order profit \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    double _orderProfit = StrToDouble(sValue);
 
-   // LastUpdate_GMT
+   // Version
    sValue = StringTrim(values[15]);
-   if (StringIsDigit(sValue)) datetime _lastUpdate = StrToInteger(sValue);
-   else                                _lastUpdate =    StrToTime(sValue);
-   if (_lastUpdate <= 0)                        return(_NULL(catch("LFX.ReadTicket(29)   invalid last update time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-   if (_lastUpdate > GetSystemTimeEx())         return(_NULL(catch("LFX.ReadTicket(30)   invalid last update time_gmt \""+ TimeToStr(_lastUpdate, TIME_FULL) +"\" (current time_gmt \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +"\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (StringIsDigit(sValue)) datetime _version = StrToInteger(sValue);
+   else                                _version =    StrToTime(sValue);
+   if (_version <= 0)                           return(_NULL(catch("LFX.ReadTicket(29)   invalid last update time \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_version > GetSystemTimeEx())            return(_NULL(catch("LFX.ReadTicket(30)   invalid version time \""+ TimeToStr(_version, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in config value ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
 
    // (2) übergebene Variablen erst nach vollständiger erfolgreicher Validierung modifizieren
@@ -623,7 +599,7 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    closeTime      = _closeTime;
    closePrice     = _closePrice;
    orderProfit    = _orderProfit;
-   lastUpdate     = _lastUpdate;
+   version        = _version;
 
    return(1);
 }
@@ -660,7 +636,8 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    if (!IsTradeOperation(operationType))   return(!catch("LFX.WriteTicket(3)   invalid parameter operationType = "+ operationType +" (not a trade operation)", ERR_INVALID_FUNCTION_PARAMVALUE));
    if (units <= 0)                         return(!catch("LFX.WriteTicket(4)   invalid parameter units = "+ NumberToStr(units, ".1+"), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (!openTime)                          return(!catch("LFX.WriteTicket(5)   invalid parameter openTime = "+ openTime, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (openTime > 0 && openEquity <= 0)    return(!catch("LFX.WriteTicket(6)   invalid parameter openEquity = "+ DoubleToStr(openEquity, 2), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (operationType <= OP_SELL)
+      if (openTime > 0 && openEquity <= 0) return(!catch("LFX.WriteTicket(6)   invalid parameter openEquity = "+ DoubleToStr(openEquity, 2), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (openPrice <= 0)                     return(!catch("LFX.WriteTicket(7)   invalid parameter openPrice = "+ NumberToStr(openPrice, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (openPriceTime < 0)                  return(!catch("LFX.WriteTicket(8)   invalid parameter openPriceTime = "+ openPriceTime, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (stopLoss < 0)                       return(!catch("LFX.WriteTicket(9)   invalid parameter stopLoss = "+ NumberToStr(stopLoss, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -678,7 +655,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
 
 
    // (2) Ticketdaten formatieren
-   //Ticket = Symbol, Label, TradeOperation, Units, OpenTime_GMT, OpenEquity, OpenPrice, OpenPriceTime_GMT, StopLoss, StopLossTime_GMT, TakeProfit, TakeProfitTime_GMT, CloseTime_GMT, ClosePrice, Profit, LastUpdate_GMT
+   //Ticket = Symbol, Label, TradeOperation, Units, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, Version
    string sSymbol         = lfxCurrency;
    string sLabel          =                                                                                          StringRightPad(label         ,  9, " ");
    string sOperationType  = OperationTypeDescription(operationType);                               sOperationType  = StringRightPad(sOperationType, 10, " ");
@@ -694,7 +671,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    string sCloseTime      = ifString(!closeTime,      "0", TimeToStr(closeTime, TIME_FULL));       sCloseTime      = StringLeftPad(sCloseTime     , 19, " ");
    string sClosePrice     = ifString(!closePrice,     "0", DoubleToStr(closePrice, lfxDigits));    sClosePrice     = StringLeftPad(sClosePrice    , 10, " ");
    string sProfit         = ifString(!profit,         "0", DoubleToStr(profit, 2));                sProfit         = StringLeftPad(sProfit        ,  7, " ");
-   string sLastUpdate     = TimeToStr(TimeGMT(), TIME_FULL);
+   string sVersion        = TimeToStr(TimeGMT(), TIME_FULL);
 
 
    // (3) Ticketdaten schreiben
@@ -703,7 +680,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string key     = ticket;
-   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPrice, ", ", sOpenPriceTime, ", ", sStopLoss, ", ", sStopLossTime, ", ", sTakeProfit, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sLastUpdate);
+   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPrice, ", ", sOpenPriceTime, ", ", sStopLoss, ", ", sStopLossTime, ", ", sTakeProfit, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!catch("LFX.WriteTicket(17)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR));
@@ -781,12 +758,12 @@ bool LFX.ReadInstanceIdsCounter(string lfxCurrency, int &instanceIds[], int &cur
    string   symbol="", label="";
    int      ticket, orderType, result;
    double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
-   datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, lastUpdate;
+   datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, version;
 
    for (int i=0; i < keysSize; i++) {
       if (StringIsDigit(keys[i])) {
          ticket = StrToInteger(keys[i]);
-         result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, profit, lastUpdate);
+         result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, profit, version);
          if (result != 1)                                            // +1, wenn das Ticket erfolgreich gelesen wurden
             return(last_error);                                      // -1, wenn das Ticket nicht gefunden wurde; 0, falls ein anderer Fehler auftrat
          if (closeTime != 0)
@@ -846,7 +823,6 @@ void DummyCalls() {
    int    iNull, iNulls[];
    double dNull;
    string sNull;
-   LFX.Counter(NULL);
    LFX.CurrencyId(NULL);
    LFX.GetSelectedOrders(iNulls);
    LFX.InitAccountData();
@@ -857,7 +833,6 @@ void DummyCalls() {
    LFX.ReadTicket(NULL, sNull, sNull, iNull, dNull, iNull, dNull, dNull, iNull, dNull, iNull, dNull, iNull, iNull, dNull, dNull, iNull);
    LFX.SaveDisplayStatus(NULL);
    LFX.SaveOrder(iNulls, NULL);
-   LFX.Units(NULL);
    LFX.WriteTicket(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    LFX_ORDER.toStr(iNulls);
 
