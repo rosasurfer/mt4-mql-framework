@@ -143,26 +143,29 @@ bool CheckPendingLfxOrders() {
 
                // (1.1) Erreichen des Limits speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
-               LFX.SaveOrder(lfxOrders, i);                                      // TODO: Fehler auswerten
-               QC.SendTradeCommand("LFX."+ los.Ticket(lfxOrders, i) +".open");   // TODO: Fehler auswerten
+               LFX.SaveOrder(lfxOrders, i);                                                     // TODO: Fehler auswerten
+               QC.SendTradeCommand("LFX."+ los.Ticket(lfxOrders, i) +".open");                  // TODO: Fehler auswerten
             }
             continue;
          }
 
-         // (2) Limit war schon getriggert und TradeCommand verschickt, auf Ausführungsbestätigung vom TradeAccount warten
+         // (1.2) Limit war schon getriggert und TradeCommand verschickt, für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
          now = TimeGMT();
-         if (triggerGMT + 10*SECONDS >= now) {
+         if (triggerGMT + 20*SECONDS >= now) {
             debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
             continue;
          }
 
-         // (3) nach Ablauf einer definierten Zeitspanne ohne Ausführungsbestätigung Fehler melden und ggf. weiterleiten (E-Mail, SMS etc.)
+         // (1.3) bei Ausbleiben der Ausführungsbestätigung Fehler melden und speichern         // TODO: Fehler ggf. weiterleiten (E-Mail, SMS etc.)
          debug("CheckPendingLfxOrders(0.3)   assumed execution error of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" after "+ (now-triggerGMT) +" sec. without execution confirmation");
+         los.setOpenTime(lfxOrders, i, -TimeGMT());
+         LFX.SaveOrder(lfxOrders, i);                                                           // TODO: Versionskonflikt abfangen und verarbeiten
 
 
-         // (5) Zeitpunkt des Fehlers speichern
+
+
          // (6) bei folgenden Ticks Fehler nicht erneut melden
-         // (7) später eingehende Ausführungsbestätigung wie ohne gemeldeten Fehler verarbeiten
+         // (7) später eingehende Ausführungsbestätigung normal verarbeiten                     // TODO: bei vorheriger Benachrichtigung jetzt ebenfalls benachrichtigen (Entwarnung)
       }
       else {
          if (los.StopLoss(lfxOrders, i) != 0) {
