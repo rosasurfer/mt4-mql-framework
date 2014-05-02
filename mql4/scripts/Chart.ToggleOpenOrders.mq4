@@ -53,11 +53,11 @@ int onStart() {
       int orders = LFX.GetSelectedOrders(los, lfxCurrency, OF_OPEN);
 
       for (int i=0; i < orders; i++) {
-         string   label     =                 los.Comment  (los, i);
-         int      type      =                 los.Type     (los, i);
-         double   units     =                 los.Units    (los, i);
-         datetime openTime  = GMTToServerTime(los.OpenTime (los, i));
-         double   openPrice =                 los.OpenPrice(los, i) + lfxChartDeviation;
+         string   label     =                     los.Comment  (los, i);
+         int      type      =                     los.Type     (los, i);
+         double   units     =                     los.Units    (los, i);
+         datetime openTime  = GMTToServerTime(Abs(los.OpenTime (los, i)));
+         double   openPrice =                     los.OpenPrice(los, i) + lfxChartDeviation;
          if (!SetOpenOrderMarker(label, type, units, openTime, openPrice))
             break;
       }

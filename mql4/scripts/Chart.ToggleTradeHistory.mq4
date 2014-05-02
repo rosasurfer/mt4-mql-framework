@@ -53,14 +53,14 @@ int onStart() {
       int orders = LFX.GetSelectedOrders(los, lfxCurrency, OF_CLOSED);
 
       for (int i=0; i < orders; i++) {
-         int      ticket     =                 los.Ticket    (los, i);
-         int      type       =                 los.Type      (los, i);
-         double   units      =                 los.Units     (los, i);
-         datetime openTime   = GMTToServerTime(los.OpenTime  (los, i));
-         double   openPrice  =                 los.OpenPrice (los, i) + lfxChartDeviation;
-         datetime closeTime  = GMTToServerTime(los.CloseTime (los, i));
-         double   closePrice =                 los.ClosePrice(los, i) + lfxChartDeviation;
-         double   profit     =                 los.Profit    (los, i);
+         int      ticket     =                     los.Ticket    (los, i);
+         int      type       =                     los.Type      (los, i);
+         double   units      =                     los.Units     (los, i);
+         datetime openTime   =     GMTToServerTime(los.OpenTime  (los, i));
+         double   openPrice  =                     los.OpenPrice (los, i) + lfxChartDeviation;
+         datetime closeTime  = GMTToServerTime(Abs(los.CloseTime (los, i)));
+         double   closePrice =                     los.ClosePrice(los, i) + lfxChartDeviation;
+         double   profit     =                     los.Profit    (los, i);
 
          if (!SetClosedTradeMarker(ticket, type, units, openTime, openPrice, closeTime, closePrice, profit))
             break;

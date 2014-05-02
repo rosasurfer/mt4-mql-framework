@@ -128,15 +128,15 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool CheckPendingLfxOrders() {
-   datetime triggerGMT, now;
+   datetime triggerTime;
    int orders = ArrayRange(lfxOrders, 0);
 
    for (int i=0; i < orders; i++) {
       int type = los.Type(lfxOrders, i);
 
       if (IsPendingTradeOperation(type)) {
-         triggerGMT = los.OpenPriceTime(lfxOrders, i);
-         if (!triggerGMT) {
+         triggerTime = los.OpenPriceTime(lfxOrders, i);
+         if (!triggerTime) {
             // (1.0) Limit für OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP prüfen
             if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
                debug("CheckPendingLfxOrders(0.1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered");
@@ -149,34 +149,35 @@ bool CheckPendingLfxOrders() {
             continue;
          }
 
-         // (1.2) Limit war schon getriggert und TradeCommand verschickt, für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
-         now = TimeGMT();
-         if (triggerGMT + 20*SECONDS >= now) {
-            debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
-            continue;
+         // (1.2) Limit war schon getriggert, TradeCommand wurde schon verschickt
+         if (!los.IsOpenError(lfxOrders, i)) {
+
+            // (1.3) ohne bisherigen  Fehler für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
+            if (triggerTime + 20*SECONDS >= TimeGMT()) {
+               debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
+               continue;
+            }
+            // (1.4) bei Ausbleiben der Ausführungsbestätigung Fehler melden und speichern      // TODO: Fehler ggf. weiterleiten (E-Mail, SMS etc.)
+            warn("CheckPendingLfxOrders(0.3)   missing execution confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
+            los.setOpenTime(lfxOrders, i, -TimeGMT());
+            LFX.SaveOrder(lfxOrders, i);                                                        // TODO: Versionskonflikt abfangen und verarbeiten
+            // Durch gesetzten Fehler melden folgende Ticks den Fehler nicht erneut,
+            // später eingehende Ausführungsbestätigungen werden normal verarbeitet.            // TODO: bei vorheriger Benachrichtigung jetzt ebenfalls benachrichtigen (Entwarnung)
          }
-
-         // (1.3) bei Ausbleiben der Ausführungsbestätigung Fehler melden und speichern         // TODO: Fehler ggf. weiterleiten (E-Mail, SMS etc.)
-         debug("CheckPendingLfxOrders(0.3)   assumed execution error of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" after "+ (now-triggerGMT) +" sec. without execution confirmation");
-         los.setOpenTime(lfxOrders, i, -TimeGMT());
-         LFX.SaveOrder(lfxOrders, i);                                                           // TODO: Versionskonflikt abfangen und verarbeiten
-
-
-
-
-         // (6) bei folgenden Ticks Fehler nicht erneut melden
-         // (7) später eingehende Ausführungsbestätigung normal verarbeiten                     // TODO: bei vorheriger Benachrichtigung jetzt ebenfalls benachrichtigen (Entwarnung)
+         else {
+            //debug("CheckPendingLfxOrders(0.3)   execution error is set for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
+         }
       }
       else {
          if (los.StopLoss(lfxOrders, i) != 0) {
-            triggerGMT = los.StopLossTime(lfxOrders, i);
+            triggerTime = los.StopLossTime(lfxOrders, i);
             // StopLoss-Limit prüfen
             if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i))) {
                debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLoss(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
          if (los.TakeProfit(lfxOrders, i) != 0) {
-            triggerGMT = los.TakeProfitTime(lfxOrders, i);
+            triggerTime = los.TakeProfitTime(lfxOrders, i);
             // TakeProfit-Limit prüfen
             if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i))) {
                debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
@@ -1686,8 +1687,8 @@ bool ProcessQCMessage(string message) {
       string   symbol="", label="";
       int      orderType;
       double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
-      datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, lastUpdate;                                                                                                       // profit
-      int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, dNull, lastUpdate);
+      datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, version;                                                                                                       // profit
+      int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, dNull, version);
       if (!result)
          return(false);                                              //  0: Fehler
 
