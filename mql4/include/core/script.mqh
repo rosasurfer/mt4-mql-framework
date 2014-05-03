@@ -316,15 +316,8 @@ bool Script.IsTesting() {
       return(static.result);
 
    int hChart = WindowHandle(Symbol(), NULL);
-   if (!hChart) {
-      string function;
-      switch (__WHEREAMI__) {
-         case FUNC_INIT  : function = "init()";   break;
-         case FUNC_START : function = "start()";  break;
-         case FUNC_DEINIT: function = "deinit()"; break;
-      }
-      return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR));
-   }
+   if (!hChart)
+      return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");  // "(visual)" ist nicht internationalisiert
 

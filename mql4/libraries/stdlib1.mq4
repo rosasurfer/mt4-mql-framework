@@ -729,10 +729,10 @@ bool Indicator.IsTesting() {
       else if (__WHEREAMI__ != FUNC_START) {                         // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
          int hChart = WindowHandle(Symbol(), NULL);
          if (!hChart)
-            return(!catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
+            return(!catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          string title = GetWindowText(GetParent(hChart));
          if (title == "")                                            // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
-            return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ ifString(__WHEREAMI__==FUNC_INIT, "init()", "deinit()"), ERR_RUNTIME_ERROR));
+            return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert)
       }
       else {
@@ -754,22 +754,16 @@ bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(!catch("Script.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
 
-   static bool static.resolved, static.result;                       // static: EA ok, Indikator ok
+   static bool static.resolved, static.result;                                      // static: EA ok, Indikator ok
    if (static.resolved)
       return(static.result);
 
    if (IsScript()) {
       int hChart = WindowHandle(Symbol(), NULL);
-      if (!hChart) {
-         string function;
-         switch (__WHEREAMI__) {
-            case FUNC_INIT  : function = "init()";   break;
-            case FUNC_START : function = "start()";  break;
-            case FUNC_DEINIT: function = "deinit()"; break;
-         }
-         return(!catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ function, ERR_RUNTIME_ERROR));
-      }                                                              // "(visual)" ist nicht internationalisiert
-      static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");
+      if (!hChart)
+         return(!catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+
+      static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)"); // "(visual)" ist nicht internationalisiert
    }
 
    static.resolved = true;
@@ -975,7 +969,7 @@ bool Tester.IsPaused() {
    else {
       if (!IsVisualMode())                                                                         // EA/Indikator aus iCustom()
          return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA:deinit() ausgeführt,
-      testerStopped = IsStopped() || __WHEREAMI__==FUNC_DEINIT;                                    // der EA stoppt(e) also auch
+      testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -1039,7 +1033,7 @@ bool Tester.IsStopped() {
       int hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start");            // muß im Script reichen
    }
-   return(IsStopped() || __WHEREAMI__==FUNC_DEINIT);                                               // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+   return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu EA:deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
@@ -1073,12 +1067,28 @@ string StringToHexStr(string value) {
  */
 string __whereamiToStr(int id) {
    switch (id) {
-      case 0          : return("0"          );
       case FUNC_INIT  : return("FUNC_INIT"  );
       case FUNC_START : return("FUNC_START" );
       case FUNC_DEINIT: return("FUNC_DEINIT");
    }
-   return(_empty(catch("__whereamiToStr(1)   unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_empty(catch("__whereamiToStr()   unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung einer Root-Function ID zurück.
+ *
+ * @param  int id
+ *
+ * @return string - lesbare Beschreibung oder Leerstring, wenn die übergebene ID ungültig ist
+ */
+string __whereamiDescription(int id) {
+   switch (id) {
+      case FUNC_INIT  : return("init()"  );
+      case FUNC_START : return("start()" );
+      case FUNC_DEINIT: return("deinit()");
+   }
+   return(_empty(catch("__whereamiDescription()   unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -7900,7 +7910,6 @@ bool IsPendingTradeOperation(int value) {
 string ModuleTypeToStr(int type) {
    string result = "";
 
-   if (!type)                     result = StringConcatenate(result, "|0"          );
    if (_bool(type & T_EXPERT   )) result = StringConcatenate(result, "|T_EXPERT"   );
    if (_bool(type & T_SCRIPT   )) result = StringConcatenate(result, "|T_SCRIPT"   );
    if (_bool(type & T_INDICATOR)) result = StringConcatenate(result, "|T_INDICATOR");

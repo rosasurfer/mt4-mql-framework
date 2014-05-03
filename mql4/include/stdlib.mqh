@@ -498,6 +498,7 @@
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
+   string   __whereamiDescription(int id);
    string   __whereamiToStr(int id);
 
 

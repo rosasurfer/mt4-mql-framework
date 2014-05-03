@@ -7,9 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/indicator.mqh>
 
-#include <lfx.mqh>
-#include <MT4iQuickChannel.mqh>
 #include <win32api.mqh>
+#include <lfx.mqh>
 
 #property indicator_chart_window
 
@@ -82,15 +81,16 @@ string lfxChannelName;                                      // QuickChannel-Name
 int    hLfxChannelReceiver;                                 // QuickChannel-Receiver (einer)
 string lfxChannelBuffer[];                                  // QuickChannel-Buffer für Receiver
 
-
-#include <ChartInfos/init.mqh>
-#include <ChartInfos/deinit.mqh>
+#include <MT4iQuickChannel.mqh>
 #include <ChartInfos/quickchannel.mqh>
 
 #import "stdlib2.ex4"
    int ChartInfos.CopyRemotePositions(bool direction, int tickets[], int types[][], double data[][]);
    int ChartInfos.CopyLfxOrders      (bool store, /*LFX_ORDER*/int los[][]);
 #import
+
+#include <ChartInfos/init.mqh>
+#include <ChartInfos/deinit.mqh>
 
 
 /**
@@ -114,8 +114,7 @@ int onTick() {
       if (!UpdateStopoutLevel())     return(last_error);
       if (IsVisualMode())
          if (!UpdateTime())          return(last_error);
-
-      if (!QC.HandleTradeCommands()) return(last_error);             // QuickChannel TradeCommands verarbeiten
+      if (!QC.HandleTradeCommands()) return(last_error);             // TradeCommand-Messages verarbeiten
    }
 
    return(last_error);
@@ -149,10 +148,9 @@ bool CheckPendingLfxOrders() {
             continue;
          }
 
-         // (1.2) Limit war schon getriggert, TradeCommand wurde schon verschickt
+         // (1.2) Limit war schon getriggert und TradeCommand wurde schon verschickt
          if (!los.IsOpenError(lfxOrders, i)) {
-
-            // (1.3) ohne bisherigen  Fehler für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
+            // (1.3) für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
             if (triggerTime + 20*SECONDS >= TimeGMT()) {
                debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
                continue;
@@ -161,9 +159,7 @@ bool CheckPendingLfxOrders() {
             warn("CheckPendingLfxOrders(0.3)   missing execution confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
             los.setOpenTime(lfxOrders, i, -TimeGMT());
             LFX.SaveOrder(lfxOrders, i);                                                        // TODO: Versionskonflikt abfangen und verarbeiten
-            // Durch gesetzten Fehler melden folgende Ticks den Fehler nicht erneut,
-            // später eingehende Ausführungsbestätigungen werden normal verarbeitet.            // TODO: bei vorheriger Benachrichtigung jetzt ebenfalls benachrichtigen (Entwarnung)
-         }
+         }                                                                                      // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
          else {
             //debug("CheckPendingLfxOrders(0.3)   execution error is set for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
          }
