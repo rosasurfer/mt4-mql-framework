@@ -1001,7 +1001,7 @@ datetime UpdateStatus.CalculateStopTime() {
 
    for (int i=sizeofTickets-1; n != 0; i--) {
       if (orders.closeTime[i] == 0) {
-         if (IsTesting() && __WHEREAMI__==FUNC_DEINIT && orders.type[i]==OP_UNDEFINED)
+         if (IsTesting() && __WHEREAMI__ ==FUNC_DEINIT && orders.type[i]==OP_UNDEFINED)
             continue;                                                // offene Pending-Orders ignorieren
          return(_NULL(catch("UpdateStatus.CalculateStopTime(3)   #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
       }
@@ -1034,7 +1034,7 @@ double UpdateStatus.CalculateStopPrice() {
 
    for (int i=sizeofTickets-1; n != 0; i--) {
       if (orders.closeTime[i] == 0) {
-         if (IsTesting() && __WHEREAMI__==FUNC_DEINIT && orders.type[i]==OP_UNDEFINED)
+         if (IsTesting() && __WHEREAMI__ ==FUNC_DEINIT && orders.type[i]==OP_UNDEFINED)
             continue;                                                // offene Pending-Orders ignorieren
          return(_NULL(catch("UpdateStatus.CalculateStopPrice(3)   #"+ orders.ticket[i] +" is not closed", ERR_RUNTIME_ERROR)));
       }
