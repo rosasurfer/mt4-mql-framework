@@ -46,6 +46,7 @@ int    remote.position.tickets[];
 int    remote.position.types  [][2];
 double remote.position.data   [][4];
 
+
 // LFX-Daten zur Remote-Orderverwaltung
 bool   isLfxInstrument;
 string lfxCurrency;
@@ -1892,6 +1893,10 @@ bool QC.StopChannels() {
    // (3) TradeCommand-Channel
    if (!QC.StopTradeCmdSender()  ) return(false);
    if (!QC.StopTradeCmdReceiver()) return(false);
+
+
+   // (4) ScriptParameter-Channel
+   if (!QC.StopScriptParameterSender()) return(false);               // es gibt keinen Receiver (Sender agiert als Receiver)
 
    return(true);
 }
