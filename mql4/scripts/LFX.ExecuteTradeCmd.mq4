@@ -36,7 +36,7 @@ int onStart() {
 
 
 /**
- * Gibt die per QuickChannel übergebenen Parameter des Scripts zurück.
+ * Gibt die per QuickChannel übergebenen Parameter des aktuellen Scripts zurück.
  *
  * @return string - String mit Parametern oder Leerstring, falls ein Fehler auftrat
  */
@@ -46,7 +46,8 @@ string GetScriptParameters() {
 
    string parameters = "";
 
-   // Um für den QC-Receiver kein Fenster registrieren zu müssen (löst unnötige Ticks aus), benutzen wir zum Lesen des Channels einen zweiten Sender.
+
+   // Um für den QC-Receiver kein Fenster registrieren zu müssen (löst unnötige Ticks aus), benutzen wir zum Lesen des Channels einen weiteren Sender.
    if (!hQC.ScriptParameterSender) /*&&*/ if (!QC.StartScriptParameterSender())
       return("");
 
