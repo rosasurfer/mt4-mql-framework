@@ -30,7 +30,7 @@
 #define QC_FLAG_SEND_MSG_IF_RECEIVER   2
 
 #define QC_SEND_MSG_ADDED              1
-#define QC_SEND_MSG_IGNORED           -1
+#define QC_SEND_MSG_IGNORED           -1     // nur möglich bei gesetztem QC_FLAG_SEND_MSG_IF_RECEIVER
 #define QC_SEND_MSG_ERROR              0
 
 #define QC_GET_MSG2_SUCCESS            0
