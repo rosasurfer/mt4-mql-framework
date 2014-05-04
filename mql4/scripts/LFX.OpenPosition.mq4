@@ -213,21 +213,21 @@ int onStart() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
-
-      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-      if (IsError(catch("onStart(8)")))   return(last_error);
+                                                                     // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
+      if (IsError(stdlib_GetLastError())) return(_last_error(SetLastError(stdlib_GetLastError()), ReleaseLock(mutex)));
+      if (IsError(catch("onStart(8)")))   return(_last_error(                                     ReleaseLock(mutex)));
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
-         return(SetLastError(stdlib_GetLastError()));
+         return(_last_error(SetLastError(stdlib_GetLastError()), ReleaseLock(mutex)));
 
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
    }
    openPrice = MathPow(openPrice, 1.0/7);
    if (lfxCurrency == "JPY")
-      openPrice = 1/openPrice;                     // JPY ist invers notiert
+      openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
 
    // (7) Daten in openPositions.* aktualisieren
@@ -244,7 +244,7 @@ int onStart() {
 
    // (9) LFX-Order speichern
    if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
-      return(last_error);
+      return(_last_error(ReleaseLock(mutex)));
 
 
    // (10) Lock auf die neue Position wieder freigeben
