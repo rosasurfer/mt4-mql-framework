@@ -21,7 +21,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   QC.SendTradeCommand("LFX.428371265.open");               // Sell 0.1 CAD.1
+   QC.SendTradeCommand("LFX.428371265.open");               // Sell Limit 0.1 CAD.1
 
    return(last_error);
 }
