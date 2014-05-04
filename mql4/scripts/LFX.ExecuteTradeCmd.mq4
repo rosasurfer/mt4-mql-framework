@@ -100,8 +100,6 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    if (!lo.IsPending(lo))
       return(!catch("OpenPendingOrder(1)   cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
 
-   LFX_ORDER.toStr(lo, true);
-
 
    // (1) Trade-Parameter einlesen
    string lfxCurrency  = lo.Currency  (lo);
