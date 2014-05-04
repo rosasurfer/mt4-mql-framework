@@ -130,7 +130,7 @@
 #define ERR_INVALID_CONFIG_PARAMVALUE                              5003    // invalid configuration parameter
 #define ERS_TERMINAL_NOT_READY                                     5004    // terminal not yet ready                 // in Scripten Fehler, sonst Status
 #define ERR_INVALID_TIMEZONE_CONFIG                                5005    // invalid or missing timezone configuration
-#define ERR_INVALID_MARKET_DATA                                    5006    // invalid market data
+#define ERR_INVALID_MARKET_DATA                                    5006    // invalid MarketInfo() data
 #define ERR_FILE_NOT_FOUND                                         5007    // file not found
 #define ERR_CANCELLED_BY_USER                                      5008    // execution cancelled by user
 #define ERR_FUNC_NOT_ALLOWED                                       5009    // function not allowed

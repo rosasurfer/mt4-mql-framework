@@ -1655,7 +1655,7 @@ bool GT(double double1, double double2, int digits=8) {
  *
  * @return bool - TRUE
  */
-bool _true(int param1=NULL, int param2=NULL, int param3=NULL) {
+bool _true(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(true);
 }
 
@@ -1668,7 +1668,7 @@ bool _true(int param1=NULL, int param2=NULL, int param3=NULL) {
  *
  * @return bool - FALSE
  */
-bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
+bool _false(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(false);
 }
 
@@ -1681,7 +1681,7 @@ bool _false(int param1=NULL, int param2=NULL, int param3=NULL) {
  *
  * @return int - NULL
  */
-int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
+int _NULL(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(NULL);
 }
 
@@ -1694,7 +1694,7 @@ int _NULL(int param1=NULL, int param2=NULL, int param3=NULL) {
  *
  * @return int - NO_ERROR
  */
-int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
+int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(NO_ERROR);
 }
 
@@ -1707,7 +1707,7 @@ int _NO_ERROR(int param1=NULL, int param2=NULL, int param3=NULL) {
  *
  * @return int - last_error
  */
-int _last_error(int param1=NULL, int param2=NULL, int param3=NULL) {
+int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(last_error);
 }
 
@@ -1720,7 +1720,7 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL) {
  *
  * @return string - Leerstring
  */
-string _empty(int param1=NULL, int param2=NULL, int param3=NULL) {
+string _empty(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return("");
 }
 
@@ -1734,7 +1734,7 @@ string _empty(int param1=NULL, int param2=NULL, int param3=NULL) {
  *
  * @return bool - der erste Parameter
  */
-bool _bool(bool param1, int param2=NULL, int param3=NULL) {
+bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(param1);
 }
 
@@ -1748,7 +1748,7 @@ bool _bool(bool param1, int param2=NULL, int param3=NULL) {
  *
  * @return int - der erste Parameter
  */
-int _int(int param1, int param2=NULL, int param3=NULL) {
+int _int(int param1, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(param1);
 }
 
@@ -1762,7 +1762,7 @@ int _int(int param1, int param2=NULL, int param3=NULL) {
  *
  * @return double - der erste Parameter
  */
-double _double(double param1, int param2=NULL, int param3=NULL) {
+double _double(double param1, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(param1);
 }
 
@@ -1776,7 +1776,7 @@ double _double(double param1, int param2=NULL, int param3=NULL) {
  *
  * @return string - der erste Parameter
  */
-string _string(string param1, int param2=NULL, int param3=NULL) {
+string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(param1);
 }
 

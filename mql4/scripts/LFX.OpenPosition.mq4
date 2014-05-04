@@ -108,20 +108,19 @@ int onStart() {
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      int error = GetLastError();
-      if (error != NO_ERROR)                                                           // Todo: auf ERR_UNKNOWN_SYMBOL prüfen
-         return(catch("onStart(1)   \""+ symbols[i] +"\"", error));
+      if (IsError(catch("onStart(1)   \""+ symbols[i] +"\"")))                         // TODO: auf ERR_UNKNOWN_SYMBOL prüfen
+         return(last_error);
 
-      // (2.2) auf ERR_INVALID_MARKET_DATA prüfen
+      // (2.2) auf ungültige MarketInfo()-Daten prüfen
       errorMsg = "";
-      if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = StringConcatenate("Bid(\""      , symbols[i], "\") = ", NumberToStr(bid      , ".+"));
-      else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = StringConcatenate("TickSize(\"" , symbols[i], "\") = ", NumberToStr(tickSize , ".+"));
-      else if (LT(tickValue, 0.5)    || GT(tickValue, 20) ) errorMsg = StringConcatenate("TickValue(\"", symbols[i], "\") = ", NumberToStr(tickValue, ".+"));
-      else if (LT(minLot, 0.01)      || GT(minLot, 0.1)   ) errorMsg = StringConcatenate("MinLot(\""   , symbols[i], "\") = ", NumberToStr(minLot   , ".+"));
-      else if (LT(maxLot, 50)                             ) errorMsg = StringConcatenate("MaxLot(\""   , symbols[i], "\") = ", NumberToStr(maxLot   , ".+"));
-      else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = StringConcatenate("LotStep(\""  , symbols[i], "\") = ", NumberToStr(lotStep  , ".+"));
+      if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = "Bid(\""      + symbols[i] +"\") = "+ NumberToStr(bid      , ".+");
+      else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = "TickSize(\"" + symbols[i] +"\") = "+ NumberToStr(tickSize , ".+");
+      else if (LT(tickValue, 0.5)    || GT(tickValue, 20) ) errorMsg = "TickValue(\""+ symbols[i] +"\") = "+ NumberToStr(tickValue, ".+");
+      else if (LT(minLot, 0.01)      || GT(minLot, 0.1)   ) errorMsg = "MinLot(\""   + symbols[i] +"\") = "+ NumberToStr(minLot   , ".+");
+      else if (LT(maxLot, 50)                             ) errorMsg = "MaxLot(\""   + symbols[i] +"\") = "+ NumberToStr(maxLot   , ".+");
+      else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = "LotStep(\""  + symbols[i] +"\") = "+ NumberToStr(lotStep  , ".+");
 
-      // (2.3) ERR_INVALID_MARKET_DATA behandeln
+      // (2.3) ungültige MarketInfo()-Daten behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                              // 3 stille Versuche, korrekte Werte zu lesen
             Sleep(200);                                                                // bei Mißerfolg jeweils xxx Millisekunden warten
