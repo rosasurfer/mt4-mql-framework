@@ -25,3 +25,7 @@ int onStart() {
 
    return(last_error);
 }
+
+
+/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender()", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/bool RunScript(string s1, string s2) { return(!catch("RunScript()",                    ERR_NOT_IMPLEMENTED)); }

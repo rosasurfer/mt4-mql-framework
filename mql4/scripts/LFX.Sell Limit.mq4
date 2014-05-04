@@ -7,8 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
 
-#include <lfx.mqh>
 #include <win32api.mqh>
+#include <lfx.mqh>
 
 #property show_inputs
 
@@ -22,9 +22,6 @@ extern double TakeProfitPrice;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-string lfxCurrency;                                                  // aktuelle LFX-Währung
-int    lfxCurrencyId;
 
 int    openPosition.instanceIds[];                                   // Daten der aktuell offenen LFX-Positionen
 int    openPosition.counter;

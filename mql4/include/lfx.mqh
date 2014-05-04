@@ -2,10 +2,10 @@
  *  Format der LFX-MagicNumber:
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
- *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht stdlib::GetCurrencyId()
- *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10           // nirgends mehr verwendet, LFX.Units() gelöscht
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15               entspricht stdlib::GetCurrencyId()
+ *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // nicht mehr verwendet, LFX.Units() gelöscht
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
- *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // nirgends mehr verwendet, LFX.Counter() gelöscht
+ *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // nicht mehr verwendet, LFX.Counter() gelöscht
  */
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
@@ -13,6 +13,11 @@
 int    lfxAccount;                                                   // LFX-Account: im LFX-Terminal ein TradeAccount, im Trading-Terminal der aktuelle Account
 string lfxAccountCompany;
 int    lfxAccountType;
+
+bool   isLfxInstrument;
+string lfxCurrency;
+int    lfxCurrencyId;
+int    lfxOrders[][LFX_ORDER.intSize];                               // LFX_ORDER[]
 
 
 /**

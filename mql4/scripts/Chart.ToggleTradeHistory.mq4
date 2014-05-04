@@ -5,14 +5,12 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <win32api.mqh>
-
 #include <core/script.mqh>
+
+#include <win32api.mqh>
 #include <lfx.mqh>
 
 
-string lfxCurrency;                                                  // aktuelle LFX-Währung
-int    lfxCurrencyId;
 double lfxChartDeviation;
 
 
