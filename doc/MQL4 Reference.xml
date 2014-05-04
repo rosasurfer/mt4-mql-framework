@@ -7293,19 +7293,20 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       Search for a substring. Returns the position in the string from which the searched substring begins, or -1 if the substring has not been found.
       </content>
       <example>
-  string text=&quot;The quick brown dog jumps over the lazy fox&quot;;
-  int index=StringFind(text, &quot;dog jumps over&quot;, 0);
-  if(index!=16)
+  string text = &quot;The quick brown dog jumps over the lazy fox&quot;;
+  int index = StringFind(text, &quot;dog jumps over&quot;, 0);
+  if (index != 16) {
     Print(&quot;oops!&quot;);
+  }
       </example>
       <parameter>
         type=string
-        name=text
+        name=haystack
         description=String to search in.
       </parameter>
       <parameter>
         type=string
-        name=matched_text
+        name=needle
         description=Substring to search for.
       </parameter>
       <parameter>

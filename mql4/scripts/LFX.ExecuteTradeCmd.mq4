@@ -22,6 +22,10 @@ string command = "";
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+int    ticket;
+string action;
+
+
 /**
  * Initialisierung
  *
@@ -32,23 +36,27 @@ int onInit() {
    string names[], values[];
    int size = GetScriptParameters(names, values);
    if (size == -1) return(last_error);
-   if (size ==  0) return(catch("onInit(1)   missing script parameters", ERR_INVALID_INPUT_PARAMVALUE));
-
    for (int i=0; i < size; i++) {
       if (names[i] == "command") {
          command = values[i];
          break;
       }
    }
-   if (i >= size) return(catch("onInit(2)   missing script parameter 'command'", ERR_INVALID_INPUT_PARAMVALUE));
+   if (i >= size) return(catch("onInit(1)   missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
 
 
-   // (2) Parameter validieren
-   debug("onInit()   command=\""+ command +"\"");
+   // (2) Parameter validieren, Format: "LFX.{Ticket}.{Action}", z.B. "LFX.428371265.open"
+   if (StringLeft(command, 4) != "LFX.")  return(catch("onInit(2)   invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
+   int pos = StringFind(command, ".", 4);
+   if (pos == -1)                         return(catch("onInit(3)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
+   string sValue = StringSubstrFix(command, 4, pos-4);
+   if (!StringIsDigit(sValue))            return(catch("onInit(4)   invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
+   ticket = StrToInteger(sValue);
+   if (!ticket)                           return(catch("onInit(5)   invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
+   action = StringToLower(StringSubstr(command, pos+1));
+   if (action!="open" && action!="close") return(catch("onInit(6)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
 
-
-
-   return(catch("onInit()"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -58,8 +66,12 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
+   debug("onStart()   ticket="+ ticket +", action="+ action);
 
+   if (!LFX.GetOrder(ticket, lfxOrder))
+      return(last_error);
 
-   // (2) TradeCommands ausführen
+   LFX_ORDER.toStr(lfxOrder, true);
+
    return(last_error);
 }
