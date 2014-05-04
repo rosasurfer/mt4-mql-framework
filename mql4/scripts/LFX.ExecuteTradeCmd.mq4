@@ -32,7 +32,7 @@ string action;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Parameter einlesen
+   // Parameter einlesen
    string names[], values[];
    int size = GetScriptParameters(names, values);
    if (size == -1) return(last_error);
@@ -44,8 +44,7 @@ int onInit() {
    }
    if (i >= size) return(catch("onInit(1)   missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
 
-
-   // (2) Parameter validieren, Format: "LFX.{Ticket}.{Action}", z.B. "LFX.428371265.open"
+   // Parameter validieren, Format: "LFX.{Ticket}.{Action}", z.B. "LFX.428371265.open"
    if (StringLeft(command, 4) != "LFX.")  return(catch("onInit(2)   invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
    int pos = StringFind(command, ".", 4);
    if (pos == -1)                         return(catch("onInit(3)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
