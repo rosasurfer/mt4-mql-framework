@@ -12,8 +12,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
 
-#include <lfx.mqh>
 #include <win32api.mqh>
+#include <lfx.mqh>
 
 #property show_inputs
 
@@ -27,8 +27,6 @@ extern double Units        = 1.0;                                    // Position
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-string lfxCurrency;
-int    lfxCurrencyId;
 int    direction;
 double leverage;
 
