@@ -39,7 +39,7 @@ int onInit() {
 int onInitParameterChange() {
    if (isLfxInstrument) {
       // offene Pending-Orders neu einlesen (aus Datei, da die Orders während des Input-Dialogs extern geändert worden sein können)
-      LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
@@ -87,7 +87,7 @@ int onInitChartChange() {
 int onInitUndefined() {
    if (isLfxInstrument) {
       // offene Pending-Orders einlesen
-      LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
    }
    return(NO_ERROR);
 }
@@ -113,7 +113,7 @@ int onInitRemove() {
 int onInitRecompile() {
    if (isLfxInstrument) {
       // offene Pending-Orders einlesen
-      LFX.GetSelectedOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+      LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
    }
    return(NO_ERROR);
 }
