@@ -9,9 +9,47 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
 
+#include <lfx.mqh>
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <core/script.ParameterProvider.mqh>
+
+
+//////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QickChannel)  ///////////////////////////////////////////////////////////////////////
+
+string command = "";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   // (1) Parameter einlesen
+   string names[], values[];
+   int size = GetScriptParameters(names, values);
+   if (size == -1) return(last_error);
+   if (size ==  0) return(catch("onInit(1)   missing script parameters", ERR_INVALID_INPUT_PARAMVALUE));
+
+   for (int i=0; i < size; i++) {
+      if (names[i] == "command") {
+         command = values[i];
+         break;
+      }
+   }
+   if (i >= size) return(catch("onInit(2)   missing script parameter 'command'", ERR_INVALID_INPUT_PARAMVALUE));
+
+
+   // (2) Parameter validieren
+   debug("onInit()   command=\""+ command +"\"");
+
+
+
+   return(catch("onInit()"));
+}
 
 
 /**
@@ -20,12 +58,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   // (1) Parameter einlesen
-   string parameters = GetScriptParameters();
-   if (parameters == "")
-      return(last_error);
-
-   debug("onStart()   script parameters=\""+ parameters +"\"");
 
 
    // (2) TradeCommands ausführen
