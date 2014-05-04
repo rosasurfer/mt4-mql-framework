@@ -11,6 +11,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
+#include <win32api.mqh>
 
 #property show_inputs
 
