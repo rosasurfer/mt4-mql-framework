@@ -71,9 +71,9 @@
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <win32api.mqh>
 #include <core/expert.mqh>
 
+#include <win32api.mqh>
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
@@ -2343,7 +2343,7 @@ void SS.All() {
 void SS.Sequence.Id() {
    if (IsTesting()) {
       if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
-         catch("SS.Sequence.Id()->user32::SetWindowTextA()   error="+ RtlGetLastWin32Error(), ERR_WIN32_ERROR);
+         catch("SS.Sequence.Id()->user32::SetWindowTextA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
    }
 }
 
