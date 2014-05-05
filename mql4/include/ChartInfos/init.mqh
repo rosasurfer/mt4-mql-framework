@@ -38,10 +38,10 @@ int onInit() {
  */
 int onInitParameterChange() {
    if (isLfxInstrument) {
-      // offene Pending-Orders neu einlesen (aus Datei, da die Orders während des Input-Dialogs extern geändert worden sein können)
+      // Pending-Orders neu einlesen, da die Orders während des Input-Dialogs extern geändert worden sein können
       LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
 
-      // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die gelesenen Remote-Orderdaten sein
+      // in Library gespeicherte Remote-Positionsdaten restaurieren
       int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
@@ -62,12 +62,12 @@ int onInitChartChange() {
 
    // bei Timeframe-Wechsel
    if (isLfxInstrument) {
-      // in Library gespeicherte Remote-Orders restaurieren
+      // in Library gespeicherte Pending-Orders restaurieren
       int error = ChartInfos.CopyLfxOrders(false, lfxOrders);
       if (IsError(error))
          return(SetLastError(error));
 
-      // in Library gespeicherte Remote-Positionsdaten restaurieren, können aktueller als die Remote-Orderdaten sein
+      // in Library gespeicherte Remote-Positionsdaten restaurieren
       error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
@@ -86,7 +86,7 @@ int onInitChartChange() {
  */
 int onInitUndefined() {
    if (isLfxInstrument) {
-      // offene Pending-Orders einlesen
+      // Pending-Orders neu einlesen
       LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
    }
    return(NO_ERROR);
@@ -112,8 +112,10 @@ int onInitRemove() {
  */
 int onInitRecompile() {
    if (isLfxInstrument) {
-      // offene Pending-Orders einlesen
+      // Pending-Orders neu einlesen
       LFX.GetOrders(lfxOrders, lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION);
+
+      // TODO: irgendwo gespeicherte Remote-Positionsdaten restaurieren (QuickChannel ?)
    }
    return(NO_ERROR);
 }

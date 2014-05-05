@@ -17,11 +17,6 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onDeinitParameterChange() {
-   // LFX-Orders in Library zwischenspeichern (nur formhalber, bei onInitParameterChange() werden sie wegen des zwischenzeitlichen Input-Dialogs neu aus der Datei eingelesen)
-   int error = ChartInfos.CopyLfxOrders(true, lfxOrders);
-   if (IsError(error))
-      return(SetLastError(error));
-
    // Remote-Positionsdaten in Library zwischenspeichern
    error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
    if (IsError(error))
@@ -37,7 +32,7 @@ int onDeinitParameterChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitChartChange() {
-   // LFX-Orders in Library zwischenspeichern
+   // Pending-Orders in Library zwischenspeichern
    int error = ChartInfos.CopyLfxOrders(true, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
@@ -68,7 +63,7 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // Remote-Positionsdaten in "remote_positions.ini" speichern
+   // TODO: Remote-Positionsdaten irgendwo zwischenspeichern (QuickChannel ?)
    return(NO_ERROR);
 }
 
