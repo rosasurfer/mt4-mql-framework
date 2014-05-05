@@ -18,7 +18,7 @@ int onDeinit() {
  */
 int onDeinitParameterChange() {
    // Remote-Positionsdaten in Library zwischenspeichern
-   error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
+   int error = ChartInfos.CopyRemotePositions(true, remote.position.tickets, remote.position.types, remote.position.data);
    if (IsError(error))
       return(SetLastError(error));
    return(NO_ERROR);

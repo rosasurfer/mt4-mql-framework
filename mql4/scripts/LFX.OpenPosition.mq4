@@ -2,9 +2,7 @@
  * Öffnet eine LFX-Position.
  *
  *
- *  TODO:
- *  -----
- *  - Fehler in Counter und damit in MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
+ *  TODO: Fehler in Counter, wenn gleichzeitig zwei Orders erzeugt werden (2 x CHF.3)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -29,9 +27,6 @@ extern double Units        = 1.0;                                    // Position
 
 int    direction;
 double leverage;
-
-int    openPositions.instanceId[];                                   // Daten der aktuell offenen LFX-Positionen
-int    openPositions.maxCounter;
 
 
 /**
@@ -66,6 +61,11 @@ int onInit() {
    leverage = StrToDouble(value);
    if (leverage < 1)                             return(catch("onInit(7)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
+
+   // (3) offene Orders einlesen
+   int size = LFX.GetOrders(lfxOrders, NULL, OF_OPEN);
+   if (size < 0)
+      return(last_error);
    return(catch("onInit(8)"));
 }
 
@@ -192,12 +192,14 @@ int onStart() {
       return(catch("onStart(5)"));
 
 
+   // TODO: Fehler in Counter, wenn gleichzeitig zwei Orders erzeugt werden (2 x CHF.3)
+   int    magicNumber = CreateMagicNumber();
+   int    counter     = GetPositionCounter() + 1;
+   string comment     = lfxCurrency +"."+ counter;
+
+
    // (5) Lock auf die neue Position (MagicNumber) setzen, damit andere Indikatoren/Charts nicht schon vor Ende von LFX.OpenPosition Teilpositionen verarbeiten
-   //     TODO: Fehler in Counter und damit in MagicNumber, wenn 2 Positionen gleichzeitig geöffnet werden (2 x CHF.3)
-   int counter     = GetPositionCounter() + 1;   if (!counter)     return(catch("onStart(6)"));    // Abbruch, falls GetPositionCounter() oder
-   int magicNumber = CreateMagicNumber(counter); if (!magicNumber) return(catch("onStart(7)"));    // CreateMagicNumber() Fehler melden
-   string comment  = lfxCurrency +"."+ counter;
-   string mutex    = "mutex.LFX.#"+ magicNumber;
+   string mutex = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex, true))
       return(SetLastError(stdlib_GetLastError()));
 
@@ -215,7 +217,7 @@ int onStart() {
       int      oeFlags     = NULL;
                                                                      // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
       if (IsError(stdlib_GetLastError())) return(_last_error(SetLastError(stdlib_GetLastError()), ReleaseLock(mutex)));
-      if (IsError(catch("onStart(8)")))   return(_last_error(                                     ReleaseLock(mutex)));
+      if (IsError(catch("onStart(6)")))   return(_last_error(                                     ReleaseLock(mutex)));
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
@@ -230,24 +232,19 @@ int onStart() {
       openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
 
-   // (7) Daten in openPositions.* aktualisieren
-   ArrayPushInt(openPositions.instanceId, LFX.InstanceId(magicNumber));
-   openPositions.maxCounter = counter;
-
-
-   // (8) Logmessage ausgeben
+   // (7) Logmessage ausgeben
    int    lfxDigits =    ifInt(lfxCurrency=="JPY",    3,     5 );
    string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
           openPrice = NormalizeDouble(openPrice, lfxDigits);
-   if (__LOG) log("onStart(9)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   if (__LOG) log("onStart(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (9) LFX-Order speichern
+   // (8) LFX-Order speichern
    if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
       return(_last_error(ReleaseLock(mutex)));
 
 
-   // (10) Lock auf die neue Position wieder freigeben
+   // (9) Lock auf die neue Position wieder freigeben
    if (!ReleaseLock(mutex))
       return(SetLastError(stdlib_GetLastError()));
 
@@ -256,63 +253,61 @@ int onStart() {
 
 
 /**
- * Gibt den Positionszähler der letzten offenen Position im aktuellen Instrument zurück.
- *
- * @return int - Zähler oder -1, falls ein Fehler auftrat
- */
-int GetPositionCounter() {
-   // Sicherstellen, daß die vorhandenen offenen Positionen eingelesen wurden
-   if (!LFX.ReadInstanceIdsCounter(lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
-      return(-1);
-   return(openPositions.maxCounter);
-}
-
-
-/**
  * Generiert aus den internen Daten einen Wert für OrderMagicNumber().
  *
- * @param  int counter - Position-Zähler, für den eine MagicNumber erzeugt werden soll
- *
- * @return int - MagicNumber oder -1, falls ein Fehler auftrat
+ * @return int - MagicNumber oder NULL, falls ein Fehler auftrat
  */
-int CreateMagicNumber(int counter) {
-   if (counter < 1)
-      return(_NULL(catch("CreateMagicNumber()   invalid parameter counter = "+ counter, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
+int CreateMagicNumber() {
    int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
    int iCurrency = GetCurrencyId(lfxCurrency) & 0xF << 18;           //  4 bit (Bits 19-22)
-   int iUnits    = Round(Units * 10) & 0xF << 14;                    //  4 bit (Bits 15-18)
-   int iInstance = GetCreateInstanceId() & 0x3FF << 4;               // 10 bit (Bits  5-14)
-   int pCounter  = counter & 0xF;                                    //  4 bit (Bits  1-4 )
-
-   if (!iInstance)
-      return(NULL);
-   return(iStrategy + iCurrency + iUnits + iInstance + pCounter);
+   int iInstance = CreateInstanceId() & 0x3FF << 4;                  // 10 bit (Bits  5-14)
+   return(iStrategy + iCurrency + iInstance);
 }
 
 
 /**
- * Gibt die aktuelle Instanz-ID zurück. Existiert noch keine, wird eine neue erzeugt.
+ * Erzeugt eine neue Instanz-ID.
  *
- * @return int - Instanz-ID im Bereich 1-1023 (10 bit) oder NULL, falls ein Fehler auftrat
+ * @return int - Instanz-ID im Bereich 1-1023 (10 bit)
  */
-int GetCreateInstanceId() {
-   static int id;
+int CreateInstanceId() {
+   int size=ArrayRange(lfxOrders, 0), id, ids[];
+   ArrayResize(ids, 0);
 
-   if (!id) {
-      // sicherstellen, daß die offenen Positionen eingelesen wurden
-      if (!LFX.ReadInstanceIdsCounter(lfxCurrency, openPositions.instanceId, openPositions.maxCounter))
-         return(NULL);
+   for (int i=0; i < size; i++) {
+      ArrayPushInt(ids, LFX.InstanceId(los.Ticket(lfxOrders, i)));
+   }
 
-      MathSrand(GetTickCount());
-      while (!id) {
-         id = MathRand();
-         while (id > 1023) {
-            id >>= 1;
-         }
-         if (IntInArray(openPositions.instanceId, id))               // sicherstellen, daß alle aktuell benutzten Instanz-ID's eindeutig sind
-            id = 0;
+   MathSrand(GetTickCount());
+   while (!id) {
+      id = MathRand();
+      while (id > 1023) {
+         id >>= 1;
       }
+      if (IntInArray(ids, id))                                       // sicherstellen, daß die ID nicht gerade benutzt wird
+         id = 0;
    }
    return(id);
+}
+
+
+/**
+ * Gibt den Positionszähler der letzten offenen Order im aktuellen Instrument zurück.
+ *
+ * @return int - Zähler
+ */
+int GetPositionCounter() {
+   int counter, size=ArrayRange(lfxOrders, 0);
+
+   for (int i=0; i < size; i++) {
+      if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
+         continue;
+
+      string label = los.Comment(lfxOrders, i);
+      if (StringStartsWith(label, lfxCurrency +".")) label = StringRight(label, -4);
+      if (StringStartsWith(label,              "#")) label = StringRight(label, -1);
+
+      counter = Max(counter, StrToInteger(label));
+   }
+   return(counter);
 }

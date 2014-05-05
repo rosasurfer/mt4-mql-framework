@@ -3,9 +3,9 @@
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
  *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15               entspricht stdlib::GetCurrencyId()
- *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // nicht mehr verwendet, LFX.Units() ist gelöscht
+ *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // nicht mehr verwendet, alle Referenzen gelöscht
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
- *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // nicht mehr verwendet, LFX.Counter() ist gelöscht
+ *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // nicht mehr verwendet, alle Referenzen gelöscht
  */
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
@@ -900,62 +900,6 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
 
 
 /**
- * Liest die Instanz-ID's aller offenen LFX-Tickets und den Counter der angegebenen LFX-Währung in die übergebenen Variablen ein.
- *
- * @param  string  lfxCurrency     - LFX-Währung
- * @param  int    &instanceIds[]   - Array zur Aufnahme der Instanz-ID's aller offenen Tickets
- * @param  int    &currencyCounter - Variable zur Aufnahme des Counters der angegebenen LFX-Währung
- *
- * @return bool - Erfolgsstatus
- */
-bool LFX.ReadInstanceIdsCounter(string lfxCurrency, int &instanceIds[], int &currencyCounter) {
-   static bool done = false;
-   if (done)                                                          // Rückkehr, falls Positionen bereits eingelesen wurden
-      return(true);
-
-   int knownMagics[];
-   ArrayResize(knownMagics,    0);
-   ArrayResize(instanceIds, 0);
-   currencyCounter = 0;
-
-   // Ticket-IDs einlesen
-   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
-      return(false);
-   string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
-   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
-   string keys[];
-   int keysSize = GetIniKeys(file, section, keys);
-
-   // offene Orders finden und auswerten
-   string   symbol="", label="";
-   int      ticket, orderType, result;
-   double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, profit;
-   datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, version;
-
-   for (int i=0; i < keysSize; i++) {
-      if (StringIsDigit(keys[i])) {
-         ticket = StrToInteger(keys[i]);
-         result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, profit, version);
-         if (result != 1)                                            // +1, wenn das Ticket erfolgreich gelesen wurden
-            return(last_error);                                      // -1, wenn das Ticket nicht gefunden wurde; 0, falls ein anderer Fehler auftrat
-         if (closeTime != 0)
-            continue;                                                // keine offene Order
-
-         ArrayPushInt(instanceIds, LFX.InstanceId(ticket));
-         if (symbol == lfxCurrency) {
-            if (StringStartsWith(label, "#"))
-               label = StringSubstr(label, 1);
-            currencyCounter = Max(currencyCounter, StrToInteger(label));
-         }
-      }
-   }
-
-   done = true;                                                      // Erledigt-Flag setzen
-   return(!catch("LFX.ReadInstanceIdsCounter(2)"));
-}
-
-
-/**
  * Liest den im Chart gespeicherten aktuellen Anzeigestatus aus.
  *
  * @return bool - Status: ON/OFF
@@ -1002,7 +946,6 @@ void DummyCalls() {
    LFX.InstanceId(NULL);
    LFX.IsMyOrder();
    LFX.ReadDisplayStatus();
-   LFX.ReadInstanceIdsCounter(NULL, iNulls, iNull);
    LFX.ReadTicket(NULL, sNull, sNull, iNull, dNull, iNull, dNull, dNull, iNull, dNull, iNull, dNull, iNull, iNull, dNull, dNull, iNull);
    LFX.SaveDisplayStatus(NULL);
    LFX.SaveOrder(iNulls, NULL);
