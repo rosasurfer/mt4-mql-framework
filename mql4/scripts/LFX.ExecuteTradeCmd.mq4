@@ -81,10 +81,10 @@ int onStart() {
    if (!LFX.GetOrder(lfxTicket, lfxOrder))
       return(last_error);
 
+   // Action ausführen
    if (action == "open") {
       if (!OpenPendingOrder(lfxOrder)) return(last_error);
    }
-
    return(last_error);
 }
 
