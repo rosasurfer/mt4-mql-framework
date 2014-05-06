@@ -456,10 +456,10 @@ bool LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // (3) übergebenes Struct erst nach vollständiger erfolgreicher Validierung modifizieren
    InitializeByteBuffer(lo, LFX_ORDER.size);
-   lo.setTicket        (lo,  ticket        );                        // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
+   lo.setTicket        (lo,  ticket        );                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
    lo.setType          (lo, _orderType     );
    lo.setUnits         (lo, _orderUnits    );
-   lo.setLots          (lo,  0             );
+   lo.setLots          (lo, NULL           );
    lo.setOpenTime      (lo, _openTime      );
    lo.setOpenEquity    (lo, _openEquity    );
    lo.setOpenPrice     (lo, _openPrice     );
@@ -779,7 +779,7 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
 
 
 /**
- * Schreibt das angegebene LFX-Ticket in die .ini-Datei des angegebenen Accounts.
+ * Schreibt die angegebenen LFX-Orderdaten in die .ini-Datei des aktuellen Accounts.
  *
  * @param  int      ticket
  * @param  string   label
@@ -827,7 +827,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    int    lfxDigits   = ifInt(lfxId==CID_JPY, 3, 5);
 
 
-   // (2) Ticketdaten formatieren
+   // (2) Orderdaten formatieren
    //Ticket = Symbol, Label, TradeOperation, Units, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, Version
    string sSymbol         = lfxCurrency;
    string sLabel          =                                                                                          StringRightPad(label         ,  9, " ");
@@ -847,7 +847,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    string sVersion        = TimeToStr(TimeGMT(), TIME_FULL);
 
 
-   // (3) Ticketdaten schreiben
+   // (3) Orderdaten schreiben
    if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
       return(false);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
@@ -867,34 +867,30 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
  *
  * @param  LFX_ORDER los[] - ein einzelnes oder ein Array von LFX_ORDER-Structs
  * @param  int       index - Arrayindex der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist;
- *                           -1: speichert alle Orders des Arrays;
  *                           Der Parameter wird ignoriert, wenn los[] ein einzelnes Struct ist.
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=-1) {
+bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    int dims = ArrayDimension(los);
    if (dims > 2)                                   return(!catch("LFX.SaveOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
 
    if (dims == 1) {
-      // einzelnes Struct übergeben
+      // Parameter los[] ist einzelne Order
       if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!catch("LFX.SaveOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
       if (!LFX.WriteTicket(lo.Ticket(los), lo.Comment(los), lo.Type(los), lo.Units(los), lo.OpenTime(los), lo.OpenEquity(los), lo.OpenPrice(los), lo.OpenPriceTime(los), lo.StopLoss(los), lo.StopLossTime(los), lo.TakeProfit(los), lo.TakeProfitTime(los), lo.CloseTime(los), lo.ClosePrice(los), lo.Profit(los)))
          return(false);
    }
    else {
-      // mehrere Structs übergeben
+      // Parameter los[] ist Order-Array
       if (ArrayRange(los, 1) != LFX_ORDER.intSize) return(!catch("LFX.SaveOrder(3)   invalid size of parameter los["+ ArrayRange(los, 0) +"]["+ ArrayRange(los, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
       int losSize = ArrayRange(los, 0);
-      if (index < -1 || index > losSize-1)         return(!catch("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+      if (index < 0 || index > losSize-1)          return(!catch("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
 
-      for (int i=Max(0, index); i < losSize; i++) {
-         if (!LFX.WriteTicket(los.Ticket(los, i), los.Comment(los, i), los.Type(los, i), los.Units(los, i), los.OpenTime(los, i), los.OpenEquity(los, i), los.OpenPrice(los, i), los.OpenPriceTime(los, i), los.StopLoss(los, i), los.StopLossTime(los, i), los.TakeProfit(los, i), los.TakeProfitTime(los, i), los.CloseTime(los, i), los.ClosePrice(los, i), los.Profit(los, i)))
-            return(false);
-         if (index != -1)
-            break;
-      }
+      int i = index;
+      if (!LFX.WriteTicket(los.Ticket(los, i), los.Comment(los, i), los.Type(los, i), los.Units(los, i), los.OpenTime(los, i), los.OpenEquity(los, i), los.OpenPrice(los, i), los.OpenPriceTime(los, i), los.StopLoss(los, i), los.StopLossTime(los, i), los.TakeProfit(los, i), los.TakeProfitTime(los, i), los.CloseTime(los, i), los.ClosePrice(los, i), los.Profit(los, i)))
+         return(false);
    }
    return(true);
 }
@@ -947,10 +943,8 @@ void DummyCalls() {
    LFX.InstanceId(NULL);
    LFX.IsMyOrder();
    LFX.ReadDisplayStatus();
-   LFX.ReadTicket(NULL, sNull, sNull, iNull, dNull, iNull, dNull, dNull, iNull, dNull, iNull, dNull, iNull, iNull, dNull, dNull, iNull);
    LFX.SaveDisplayStatus(NULL);
    LFX.SaveOrder(iNulls, NULL);
-   LFX.WriteTicket(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    LFX_ORDER.toStr(iNulls);
 
    lo.ClosePrice       (iNulls);       los.ClosePrice       (iNulls, NULL);

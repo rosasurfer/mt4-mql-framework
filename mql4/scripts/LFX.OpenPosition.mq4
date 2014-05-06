@@ -198,13 +198,13 @@ int onStart() {
    string comment     = lfxCurrency +"."+ counter;
 
 
-   // (5) Lock auf die neue Position (MagicNumber) setzen, damit andere Indikatoren/Charts nicht schon vor Ende von LFX.OpenPosition Teilpositionen verarbeiten
+   // (5) Lock auf die neue LFX-Order setzen, damit andere Indikatoren/Charts nicht schon vor Ende von LFX.OpenPosition Teilpositionen verarbeiten
    string mutex = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex, true))
       return(SetLastError(stdlib_GetLastError()));
 
 
-   // (6) Order ausführen und dabei Gesamt-OpenPrice berechnen
+   // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
    double openPrice = 1.0;
 
    for (i=0; i < 6; i++) {
@@ -239,8 +239,16 @@ int onStart() {
    if (__LOG) log("onStart(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (8) LFX-Order speichern
-   if (!LFX.WriteTicket(magicNumber, "#"+ counter, direction, Units, TimeGMT(), equity, openPrice, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+   // (8) neue LFX-Order erzeugen und speichern
+   /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
+   lo.setTicket    (lo, magicNumber );                               // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+   lo.setType      (lo, direction   );
+   lo.setUnits     (lo, Units       );
+   lo.setOpenTime  (lo, TimeGMT()   );
+   lo.setOpenEquity(lo, equity      );
+   lo.setOpenPrice (lo, openPrice   );
+   lo.setComment   (lo, "#"+ counter);
+   if (!LFX.SaveOrder(lo))
       return(_last_error(ReleaseLock(mutex)));
 
 

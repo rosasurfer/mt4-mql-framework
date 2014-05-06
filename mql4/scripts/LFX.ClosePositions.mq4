@@ -107,6 +107,7 @@ int onStart() {
 
    // (4) Positionen nacheinander schlieﬂen
    int ticketsSize = ArraySize(tickets);
+
    for (i=0; i < magicsSize; i++) {
       int positionSize, position[]; ArrayResize(position, 0);                          // Subset der in (1) gefundenen Tickets, Tickets jeweils einer LFX-Position
       for (n=0; n < ticketsSize; n++) {
@@ -148,23 +149,15 @@ int onStart() {
       if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(closePrice, lfxFormat) +", profit: "+ DoubleToStr(profit, 2));
 
 
-      // (8) LFX-Ticket in .ini-Datei aktualisieren
-      int      t.operationType;
-      string   t.symbol="", t.label ="";
-      double   t.units, t.openEquity, t.openPrice, t.stopLoss, t.takeProfit, t.closePrice, t.profit;
-      datetime t.openTime, t.openPriceTime, t.stopLossTime, t.takeProfitTime, t.closeTime, t.version;
+      // (8) LFX-Order in .ini-Datei aktualisieren
+      /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
 
-      int result = LFX.ReadTicket(magics[i], t.symbol, t.label, t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.openPriceTime, t.stopLoss, t.stopLossTime, t.takeProfit, t.takeProfitTime, t.closeTime, t.closePrice, t.profit, t.version);
-      if (!result)     return(last_error);                           //  0, falls ein Fehler auftrat; -1, wenn das Ticket nicht gefunden wurde
-      if (result != 1) return(catch("onStart(5)->LFX.ReadTicket(ticket="+ magics[i] +")   ticket not found", ERR_RUNTIME_ERROR));
-
-      t.closeTime  = TimeGMT();
-      t.closePrice = closePrice;
-      t.profit     = profit;
-
-      if (!LFX.WriteTicket(magics[i], "", t.operationType, t.units, t.openTime, t.openEquity, t.openPrice, t.openPriceTime, t.stopLoss, t.stopLossTime, t.takeProfit, t.takeProfitTime, t.closeTime, t.closePrice, t.profit))
-         return(last_error);
-      ArrayResize(oes, 0);
+      if (!LFX.GetOrder(magics[i], lo)) return(last_error);
+         lo.setCloseTime (lo, TimeGMT() );
+         lo.setClosePrice(lo, closePrice);
+         lo.setProfit    (lo, profit    );
+         lo.setComment   (lo, ""        );
+      if (!LFX.SaveOrder(lo))           return(last_error);
    }
 
 
@@ -173,5 +166,5 @@ int onStart() {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
       //   return(SetLastError(stdlib_GetLastError()));
    }
-   return(catch("onStart(6)"));
+   return(catch("onStart(5)"));
 }

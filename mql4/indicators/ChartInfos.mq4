@@ -129,24 +129,26 @@ bool CheckPendingLfxOrders() {
 
                // (1.1) Erreichen des Limits speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
-               LFX.SaveOrder(lfxOrders, i);                                                     // TODO: Fehler auswerten
-               QC.SendTradeCommand("LFX."+ los.Ticket(lfxOrders, i) +".open");                  // TODO: Fehler auswerten
+               LFX.SaveOrder(lfxOrders, i);                                               // TODO: Fehler auswerten
+               QC.SendTradeCommand("LFX."+ los.Ticket(lfxOrders, i) +".open");            // TODO: Fehler auswerten
             }
             continue;
          }
 
          // (1.2) Limit war schon getriggert und TradeCommand wurde schon verschickt
          if (!los.IsOpenError(lfxOrders, i)) {
-            // (1.3) für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
+
             if (triggerTime + 20*SECONDS >= TimeGMT()) {
+               // (1.3) auf Ausführungsbestätigung vom TradeAccount warten
                debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
                continue;
             }
-            // (1.4) bei Ausbleiben der Ausführungsbestätigung Fehler melden und speichern      // TODO: Fehler ggf. weiterleiten (E-Mail, SMS etc.)
+
+            // (1.4) bei Ausbleiben Fehler speichern                                      // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
             warn("CheckPendingLfxOrders(0.3)   missing execution confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
             los.setOpenTime(lfxOrders, i, -TimeGMT());
-            LFX.SaveOrder(lfxOrders, i);                                                        // TODO: Versionskonflikt abfangen und verarbeiten
-                                                                                                // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
+            LFX.SaveOrder(lfxOrders, i);                                                  // TODO: Versionskonflikt abfangen und verarbeiten
+                                                                                          // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
             /*
             F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.1)          OP_BUYLIMIT at 1.5726'0 triggered
             S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959955 Sell 0.03 AUDCAD "CAD.1" at 1.0168'2 (instead of 1.0168'4) after 0.718 s (0.2 pip slippage)
