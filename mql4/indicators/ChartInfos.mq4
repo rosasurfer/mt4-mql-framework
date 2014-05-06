@@ -123,9 +123,9 @@ bool CheckPendingLfxOrders() {
       if (IsPendingTradeOperation(type)) {
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
-            // (1.0) Limit für OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP prüfen
-            if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders(0.1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat) +" triggered");
+            // (1.0) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT bzw. OP_SELLSTOP prüfen
+            if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i)+lfxChartDeviation)) {
+               debug("CheckPendingLfxOrders(0.1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered");
 
                // (1.1) Erreichen des Limits speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
@@ -139,31 +139,47 @@ bool CheckPendingLfxOrders() {
          if (!los.IsOpenError(lfxOrders, i)) {
             // (1.3) für definierte Zeitspanne auf Ausführungsbestätigung vom TradeAccount warten
             if (triggerTime + 20*SECONDS >= TimeGMT()) {
-               debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
+               debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
                continue;
             }
             // (1.4) bei Ausbleiben der Ausführungsbestätigung Fehler melden und speichern      // TODO: Fehler ggf. weiterleiten (E-Mail, SMS etc.)
-            warn("CheckPendingLfxOrders(0.3)   missing execution confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
+            warn("CheckPendingLfxOrders(0.3)   missing execution confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
             los.setOpenTime(lfxOrders, i, -TimeGMT());
             LFX.SaveOrder(lfxOrders, i);                                                        // TODO: Versionskonflikt abfangen und verarbeiten
-         }                                                                                      // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
+                                                                                                // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
+            /*
+            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.1)          OP_BUYLIMIT at 1.5726'0 triggered
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959955 Sell 0.03 AUDCAD "CAD.1" at 1.0168'2 (instead of 1.0168'4) after 0.718 s (0.2 pip slippage)
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959956 Buy 0.03 CADCHF "CAD.1" at 0.8011'0 after 0.514 s
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959957 Buy 0.03 CADJPY "CAD.1" at 93.18'8 after 0.234 s
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959958 Sell 0.02 EURCAD "CAD.1" at 1.5205'4 after 0.281 s
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959959 Sell 0.01 GBPCAD "CAD.1" at 1.8485'3 after 0.234 s
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959960 Sell 0.03 USDCAD "CAD.1" at 1.0958'5 after 0.281 s
+            S1::USDCAD,H1::LFX.ExecuteTradeCmd::OpenPendingOrder(7)        CAD.1 long position opened at 1.5730'7
+            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.2)          waiting for execution confirmation of OP_BUYLIMIT at 1.5726'0
+            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.2)          waiting for execution confirmation of OP_BUYLIMIT at 1.5726'0
+            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.2)          waiting for execution confirmation of OP_BUYLIMIT at 1.5726'0
+            F1::CADLFX,M5::ChartInfos::WARN: CheckPendingLfxOrders(0.3)    missing execution confirmation for OP_BUYLIMIT at 1.5726'0
+            F1::CADLFX,M5::ChartInfos::ERROR: LFX.ReadTicket(9)            invalid open equity "0" in config value [IC Markets.{account-no}]->428352864 = "CAD, #1, Buy, 0.2, 2014.05.05 23:39:08, 0, 1.57307, 2014.05.05 23:39:06, 0, 0, 0, 0, 0, 0, 0, 2014.05.05 23:39:28" in "E:\Trading\MetaTrader\F1\experts\files\LiteForex\remote_positions.ini" [5003 - invalid configuration value]
+            */
+         }
          else {
-            //debug("CheckPendingLfxOrders(0.3)   execution error is set for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
+            //debug("CheckPendingLfxOrders(0.3)   open error is set for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
          }
       }
       else {
          if (los.StopLoss(lfxOrders, i) != 0) {
             triggerTime = los.StopLossTime(lfxOrders, i);
             // StopLoss-Limit prüfen
-            if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLoss(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
+            if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i)+lfxChartDeviation)) {
+               debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLoss(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
          if (los.TakeProfit(lfxOrders, i) != 0) {
             triggerTime = los.TakeProfitTime(lfxOrders, i);
             // TakeProfit-Limit prüfen
-            if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
+            if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i)+lfxChartDeviation)) {
+               debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfit(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
       }
@@ -175,28 +191,28 @@ bool CheckPendingLfxOrders() {
 /**
  * Ob der angegebene LimitPrice erreicht wurde. Im LFX-Chart wird immer gegen den Bid-Preis geprüft.
  *
- * @param  int    type  - Limit-Typ: OP_BUYLIMIT | OP_SELLLIMIT | OP_TP_LONG | OP_TP_SHORT
+ * @param  int    type  - OrderType der entsprechenden Order: OP_BUY | OP_SELL | OP_BUYLIMIT | OP_SELLLIMIT | OP_BUYSTOP | OP_SELLSTOP
  * @param  double price - LimitPrice
  *
- * @return bool - ob das Limit erreicht wurde
+ * @return bool
  */
 bool IsLimitTriggered(int type, bool sl, bool tp, double price) {
    switch (type) {
       case OP_BUYLIMIT :
-      case OP_SELLSTOP :    return(Bid <= price);
+      case OP_SELLSTOP :    return(LE(Bid, price));
 
       case OP_SELLLIMIT:
-      case OP_BUYSTOP  :    return(Bid >= price);
+      case OP_BUYSTOP  :    return(GE(Bid, price));
 
-      case OP_BUY:  if (sl) return(Bid <= price);
-                    if (tp) return(Bid >= price);
+      case OP_BUY:  if (sl) return(LE(Bid, price));
+                    if (tp) return(GE(Bid, price));
                     break;
 
-      case OP_SELL: if (sl) return(Bid >= price);
-                    if (tp) return(Bid <= price);
+      case OP_SELL: if (sl) return(GE(Bid, price));
+                    if (tp) return(LE(Bid, price));
                     break;
    }
-   return(!catch("IsLimitTriggered()   illegal parameter combination type="+ type +", sl="+ BoolToStr(tp) +", tp="+ BoolToStr(tp), ERR_INVALID_FUNCTION_PARAMVALUE));
+   return(!catch("IsLimitTriggered()   illegal parameter combination type="+ OperationTypeToStr(type) +", sl="+ BoolToStr(tp) +", tp="+ BoolToStr(tp), ERR_INVALID_FUNCTION_PARAMVALUE));
 }
 
 
@@ -1694,7 +1710,7 @@ bool ProcessTradeToLfxMessage(string message) {
       remote.position.types  [pos][1]               = orderType + 1; // OP_LONG =0, TYPE_LONG =1
       remote.position.data   [pos][I_DIRECTLOTSIZE] = units;         // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice + GetGlobalConfigDouble("LfxChartDeviation", GetCurrency(LFX.CurrencyId(ticket)), 0);
+      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice + lfxChartDeviation;
    }
 
    // (3) P/L aktualisieren
