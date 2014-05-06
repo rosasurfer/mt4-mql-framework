@@ -77,7 +77,7 @@ int onInit() {
 
 
    // (3) offene Orders einlesen
-   int size = LFX.GetOrders(lfxOrders, NULL, OF_OPEN);
+   int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);
    return(catch("onInit(7)"));

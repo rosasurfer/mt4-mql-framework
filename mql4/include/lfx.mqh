@@ -336,7 +336,7 @@ bool LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if (ticket <= 0) return(!catch("LFX.GetOrder(1)   invalid parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
 
 
-   // (1) Zeile mit Orderdaten lesen
+   // (1) Orderdaten lesen
    if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
       return(0);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
@@ -349,7 +349,7 @@ bool LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    }
 
 
-   // (2) Orderdetails validieren
+   // (2) Orderdaten validieren
    //Ticket = Symbol, Label, OrderType, OrderUnits, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, OrderProfit, Version
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 16) return(!catch("LFX.GetOrder(4)   invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -454,8 +454,9 @@ bool LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if (_version > GetSystemTimeEx())            return(!catch("LFX.GetOrder(32)   invalid version time \""+ TimeToStr(_version, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetSystemTimeEx(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ value +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
-   // (3) übergebenes Struct erst nach vollständiger erfolgreicher Validierung modifizieren
+   // (3) Orderdaten in übergebenes Array schreiben (erst nach vollständiger erfolgreicher Validierung)
    InitializeByteBuffer(lo, LFX_ORDER.size);
+
    lo.setTicket        (lo,  ticket        );                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
    lo.setType          (lo, _orderType     );
    lo.setUnits         (lo, _orderUnits    );
@@ -487,33 +488,28 @@ bool LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
 /**
- * Gibt die angegebenen LFX-Orders des aktuellen Accounts zurück.
+ * Gibt mehrere LFX-Orders des aktuellen Accounts zurück.
  *
- * @param  int    los[]       - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
- * @param  string lfxCurrency - LFX-Währung der Order (default: alle Währungen)
- * @param  int    fSelection  - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
- *                              OF_OPEN            - gibt alle offenen Orders zurück (Pending-Orders und offene Positionen)
- *                              OF_CLOSED          - gibt alle geschlossenen Orders zurück (Trade History)
- *                              OF_PENDINGORDER    - gibt alle herkömmlichen Pending-Orders zurück (OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP)
- *                              OF_OPENPOSITION    - gibt alle offenen Positionen zurück
- *                              OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem StopLoss oder TakeProfit zurück
+ * @param  string currency   - LFX-Währung der Orders (default: alle Währungen)
+ * @param  int    fSelection - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
+ *                             OF_OPEN            - gibt alle offenen Orders zurück (Pending-Orders und offene Positionen)
+ *                             OF_CLOSED          - gibt alle geschlossenen Orders zurück (Trade History)
+ *                             OF_PENDINGORDER    - gibt alle herkömmlichen Pending-Orders zurück (OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP)
+ *                             OF_OPENPOSITION    - gibt alle offenen Positionen zurück
+ *                             OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem StopLoss oder TakeProfit zurück
+ * @param  int    los[]      - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
  *
  * @return int - Anzahl der zurückgegebenen Orders oder -1, falls ein Fehler auftrat
  */
-int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelection=NULL) {
+int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
    // (1) Parametervaliderung
-   ArrayResize(los, 0);
-   int error = InitializeByteBuffer(los, LFX_ORDER.size);                  // validiert Dimensionierung
-   if (IsError(error))
-      return(_int(-1, SetLastError(error)));
+   int currencyId = 0;                                                     // 0: alle Währungen
+   if (currency == "0")                                                    // (string) NULL
+      currency = "";
 
-   int lfxCurrencyId = 0;                                                  // 0: alle Währungen
-   if (lfxCurrency == "0")                                                 // (string) NULL
-      lfxCurrency = "";
-
-   if (StringLen(lfxCurrency) > 0) {
-      lfxCurrencyId = GetCurrencyId(lfxCurrency);
-      if (!lfxCurrencyId)
+   if (StringLen(currency) > 0) {
+      currencyId = GetCurrencyId(currency);
+      if (!currencyId)
          return(_int(-1, SetLastError(stdlib_GetLastError())));
    }
 
@@ -521,6 +517,11 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelectio
       fSelection |= OF_OPEN | OF_CLOSED;
    if ((fSelection & OF_PENDINGORDER) && (fSelection & OF_OPENPOSITION))   // sind OF_PENDINGORDER und OF_OPENPOSITION gesetzt, werden alle OF_OPEN zurückgegeben
       fSelection |= OF_OPEN;
+
+   ArrayResize(los, 0);
+   int error = InitializeByteBuffer(los, LFX_ORDER.size);                  // validiert Dimensionierung
+   if (IsError(error))
+      return(_int(-1, SetLastError(error)));
 
 
    // (2) alle Ticket-IDs einlesen
@@ -540,11 +541,12 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelectio
 
    for (int losSize, n, i=0; i < keysSize; i++) {
       o.ticket = StrToInteger(keys[i]);
-      if (lfxCurrencyId != 0)
-         if (LFX.CurrencyId(o.ticket) != lfxCurrencyId)
+      if (currencyId != 0)
+         if (LFX.CurrencyId(o.ticket) != currencyId)
             continue;
-      // falls lfxCurrency angegeben, sind hier alle Orders danach gefiltert
-      result   = LFX.ReadTicket(o.ticket, o.symbol, o.label, o.type, o.units, o.openTime, o.openEquity, o.openPrice, o.openPriceTime, o.stopLoss, o.stopLossTime, o.takeProfit, o.takeProfitTime, o.closeTime, o.closePrice, o.profit, o.version);
+
+      // falls ein Currency-Filter angegeben ist, sind hier alle Orders gefiltert
+      result = LFX.ReadTicket(o.ticket, o.symbol, o.label, o.type, o.units, o.openTime, o.openEquity, o.openPrice, o.openPriceTime, o.stopLoss, o.stopLossTime, o.takeProfit, o.takeProfitTime, o.closeTime, o.closePrice, o.profit, o.version);
       if (result != 1) {
          if (!result)                                                      // -1, wenn das Ticket nicht gefunden wurde
             return(-1);                                                    //  0, falls ein anderer Fehler auftrat
@@ -580,10 +582,10 @@ int LFX.GetOrders(/*LFX_ORDER*/int los[][], string lfxCurrency="", int fSelectio
          // Order in LFX_ORDER-Array kopieren
          n = losSize;
          losSize++; ArrayResize(los, losSize);
-         los.setTicket        (los, n, o.ticket        );                  // Ticket immer zuerst, damit im Struct daraus Currency-ID und Digits ermittelt werden können
+         los.setTicket        (los, n, o.ticket        );                  // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
          los.setType          (los, n, o.type          );
          los.setUnits         (los, n, o.units         );
-         los.setLots          (los, n, 0               );
+         los.setLots          (los, n, NULL            );
          los.setOpenTime      (los, n, o.openTime      );
          los.setOpenEquity    (los, n, o.openEquity    );
          los.setOpenPrice     (los, n, o.openPrice     );
@@ -938,7 +940,7 @@ void DummyCalls() {
    string sNull;
    LFX.CurrencyId(NULL);
    LFX.GetOrder(NULL, iNulls);
-   LFX.GetOrders(iNulls);
+   LFX.GetOrders(NULL, NULL, iNulls);
    LFX.InitAccountData();
    LFX.InstanceId(NULL);
    LFX.IsMyOrder();
