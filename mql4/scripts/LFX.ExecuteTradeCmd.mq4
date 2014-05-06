@@ -208,7 +208,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       return(_false(SetLastError(stdlib_GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
 
 
-   // (6) Orders ausführen und dabei Gesamt-OpenPrice berechnen
+   // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
       if (!StringStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
@@ -246,7 +246,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    if (__LOG) log("OpenPendingOrder(7)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
 
 
-   // (8) LFX-Order speichern
+   // (8) Order speichern
    lo.setType      (lo, lfxDirection);
    lo.setOpenTime  (lo, TimeGMT()   );
    lo.setOpenPrice (lo, openPrice   );
@@ -256,7 +256,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       return(_false(ReleaseLock(mutex)));
 
 
-   // (9) LFX-Order wieder freigeben
+   // (9) Order wieder freigeben
    if (!ReleaseLock(mutex))
       return(!SetLastError(stdlib_GetLastError()));
 

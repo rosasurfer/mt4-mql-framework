@@ -45,7 +45,7 @@ int onStart() {
    if (status) {
       // Status ON: offene Orders einlesen und anzeigen
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
-      int orders = LFX.GetOrders(los, lfxCurrency, OF_OPEN);
+      int orders = LFX.GetOrders(lfxCurrency, OF_OPEN, los);
 
       for (int i=0; i < orders; i++) {
          string   label     =                     los.Comment  (los, i);
