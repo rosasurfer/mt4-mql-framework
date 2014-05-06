@@ -202,13 +202,13 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    }
 
 
-   // (5) Lock auf die neue Position (LFX-Ticket) setzen, damit andere Indikatoren/Charts nicht schon vor Ende des Scripts auftauchende Teilpositionen verarbeiten.
+   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist
    string mutex = "mutex.LFX.#"+ lfxTicket;
    if (!AquireLock(mutex, true))
       return(_false(SetLastError(stdlib_GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
 
 
-   // (6) Order ausführen und dabei Gesamt-OpenPrice berechnen
+   // (6) Orders ausführen und dabei Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
       if (!StringStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
@@ -256,7 +256,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       return(_false(ReleaseLock(mutex)));
 
 
-   // (9) Lock auf die neue Position wieder freigeben
+   // (9) LFX-Order wieder freigeben
    if (!ReleaseLock(mutex))
       return(!SetLastError(stdlib_GetLastError()));
 

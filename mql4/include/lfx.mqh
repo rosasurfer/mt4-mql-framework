@@ -17,6 +17,7 @@ int    lfxAccountType;
 bool   isLfxInstrument;
 string lfxCurrency;
 int    lfxCurrencyId;
+double lfxChartDeviation;                                            // RealPrice + Deviation = LFX-ChartPrice
 int    lfxOrder   [LFX_ORDER.intSize];                               // LFX_ORDER
 int    lfxOrders[][LFX_ORDER.intSize];                               // LFX_ORDER[]
 

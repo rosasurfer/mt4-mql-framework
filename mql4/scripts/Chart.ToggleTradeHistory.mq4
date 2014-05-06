@@ -11,9 +11,6 @@ int __DEINIT_FLAGS__[];
 #include <lfx.mqh>
 
 
-double lfxChartDeviation;
-
-
 /**
  * Initialisierung
  *

@@ -20,8 +20,9 @@ int onInit() {
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    if (StringLen(lfxCurrency) > 0) {
-      isLfxInstrument = true;
-      lfxCurrencyId   = GetCurrencyId(lfxCurrency);
+      isLfxInstrument   = true;
+      lfxCurrencyId     = GetCurrencyId(lfxCurrency);
+      lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
    }
 
    // Label erzeugen

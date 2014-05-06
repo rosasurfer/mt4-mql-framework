@@ -45,8 +45,8 @@ int onInit() {
       MessageBox("Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
-   lfxCurrencyId            = GetCurrencyId(lfxCurrency);
-   double lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
+   lfxCurrencyId     = GetCurrencyId(lfxCurrency);
+   lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
 
    // (2) Parametervalidierung
