@@ -103,11 +103,19 @@ int onStart() {
       return(catch("onStart(1)"));
 
 
-   // (2) Orderdetails definieren und Order speichern
-   int    ticket = CreateMagicNumber();
-   string label  = "#"+ (GetPositionCounter()+1);
+   // (2) neue Order erzeugen und speichern
+   /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
 
-   if (!LFX.WriteTicket(ticket, label, OP_BUYLIMIT, Units, TimeGMT(), NULL, devLimitPrice, NULL, devStopLossPrice, NULL, devTakeProfitPrice, NULL, NULL, NULL, NULL))
+   lo.setTicket    (lo, CreateMagicNumber()          );              // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+   lo.setType      (lo, OP_BUYLIMIT                  );
+   lo.setUnits     (lo, Units                        );
+   lo.setOpenTime  (lo, TimeGMT()                    );
+   lo.setOpenPrice (lo, devLimitPrice                );
+   lo.setStopLoss  (lo, devStopLossPrice             );
+   lo.setTakeProfit(lo, devTakeProfitPrice           );
+   lo.setComment   (lo, "#"+ (GetPositionCounter()+1));
+
+   if (!LFX.SaveOrder(lo))
       return(last_error);
 
 
