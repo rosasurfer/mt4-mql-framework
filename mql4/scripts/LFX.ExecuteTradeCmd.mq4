@@ -78,8 +78,9 @@ int onInit() {
  */
 int onStart() {
    // Order holen
-   if (!LFX.GetOrder(lfxTicket, lfxOrder))
-      return(last_error);
+   int result = LFX.GetOrder(lfxTicket, lfxOrder);
+   if (result < 1) { if (!result) return(last_error); return(catch("onStart()   LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
+
 
    // Action ausführen
    if (action == "open") {
