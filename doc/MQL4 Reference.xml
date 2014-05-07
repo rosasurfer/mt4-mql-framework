@@ -3723,8 +3723,8 @@ dim_size=ArrayRange(num_array, 1);
       <content>
         Sets a new size for the first dimension. If executed successfully, it returns count of all elements contained 
         in the array after resizing, otherwise, returns -1, and array is not resized.<br/>
-        Note: An array declared locally (in a function) and resized will remain resized after the function has completed its operation.
-        At function recall such array will have a size differing from the declared one.
+        Note: A locally declared (in a function) and resized array will remain resized after the function has completed its operation.
+        The next time the function is called such array will have a size different from the declared one.
       </content>
       <example>
 double array1[][4];
