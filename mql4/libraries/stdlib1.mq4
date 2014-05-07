@@ -10763,7 +10763,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
 
 /**
- * Exception-Handler für in einer der Orderfunktionen aufgetretene Fehler. Je nach Execution-Flags werden die entsprechenden Laufzeitfehler abgefangen.
+ * "Exception"-Handler für in einer der Orderfunktionen aufgetretene Fehler. Je nach Execution-Flags werden "laute" Meldungen für die
+ * entsprechenden Laufzeitfehler abgefangen. Die Fehler werden stattdessen leise gesetzt, was das eigene Behandeln und die Fortsetzung
+ * des Programms ermöglicht.
  *
  * @param  string message     - Fehlermeldung
  * @param  int    error       - der aufgetretene Fehler
