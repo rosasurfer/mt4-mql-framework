@@ -786,13 +786,13 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
  * Speichert eine LFX-Order in der .ini-Datei des aktuellen Accounts.
  *
  * @param  LFX_ORDER los[] - ein einzelnes oder ein Array von LFX_ORDER-Structs
- * @param  int       index - Arrayindex der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist;
+ * @param  int       index - Arrayindex der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist.
  *                           Der Parameter wird ignoriert, wenn los[] ein einzelnes Struct ist.
  *
  * @return bool - Erfolgsstatus
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
-   // (1) übergebene Order in *eine* Order umkopieren (Parameter los[] kann unterschiedliche Dimensionen haben)
+   // (1) übergebene Order in eine einzelne Order umkopieren (Parameter los[] kann unterschiedliche Dimensionen haben)
    int dims = ArrayDimension(los); if (dims > 2)   return(!catch("LFX.SaveOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
 
    /*LFX_ORDER*/int lo[]; ArrayResize(lo, LFX_ORDER.intSize);
@@ -815,9 +815,10 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
    int result = LFX.GetOrder(ticket, lastVersion);
    if (!result) return(false);
-   if (result > 1)
+   if (result > 0)
       if (lo.Version(lastVersion) > lo.Version(lo))
          return(!catch("LFX.SaveOrder(5)   concurrent modification of order "+ ticket +" (expected version \""+ TimeToStr(lo.Version(lo), TIME_FULL) +"\", found version \""+ TimeToStr(lo.Version(lastVersion), TIME_FULL) +"\")", ERR_CONCURRENT_MODIFICATION));
+   datetime newVersion = TimeGMT();
 
 
    // (3) Daten formatieren
@@ -837,7 +838,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    string sCloseTime      =                 ifString(lo.CloseTime     (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime      = StringLeftPad (sCloseTime     , 20, " ");
    string sClosePrice     =                ifString(!lo.ClosePrice    (lo), "0", DoubleToStr(lo.ClosePrice(lo), lo.Digits(lo)));                                          sClosePrice     = StringLeftPad (sClosePrice    , 10, " ");
    string sProfit         =                ifString(!lo.Profit        (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit         = StringLeftPad (sProfit        ,  7, " ");
-   string sVersion        = TimeToStr(TimeGMT(), TIME_FULL);
+   string sVersion        = TimeToStr(newVersion, TIME_FULL);
 
 
    // (4) Daten schreiben
@@ -850,6 +851,11 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!catch("LFX.SaveOrder(6)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
+
+
+   // (5) Versions-Timestamp der übergebenen Order aktualisieren
+   if (dims == 1) lo.setVersion(los,        newVersion);             // Parameter los[] ist einzelne Order
+   else          los.setVersion(los, index, newVersion);             // Parameter los[] ist Order-Array
    return(true);
 }
 
