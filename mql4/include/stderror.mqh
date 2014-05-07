@@ -139,3 +139,4 @@
 #define ERS_EXECUTION_STOPPING                                     5012    // IsStopped() returned TRUE              // Status
 #define ERR_ORDER_CHANGED                                          5013    // order status changed
 #define ERR_HISTORY_INSUFFICIENT                                   5014    // history insufficient for calculation
+#define ERR_CONCURRENT_MODIFICATION                                5015    // concurrent modification

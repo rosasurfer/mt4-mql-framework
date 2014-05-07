@@ -7503,6 +7503,7 @@ string ErrorDescription(int error) {
       case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                ); // 5012 Status
       case ERR_ORDER_CHANGED              : return("order status changed"                                      ); // 5013
       case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      ); // 5014
+      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   ); // 5015
    }
    return(StringConcatenate("unknown error (", error, ")"));
 }
@@ -7645,6 +7646,7 @@ string ErrorToStr(int error) {
       case ERS_EXECUTION_STOPPING         : return("ERS_EXECUTION_STOPPING"         ); // 5012 Status
       case ERR_ORDER_CHANGED              : return("ERR_ORDER_CHANGED"              ); // 5013
       case ERR_HISTORY_INSUFFICIENT       : return("ERR_HISTORY_INSUFFICIENT"       ); // 5014
+      case ERR_CONCURRENT_MODIFICATION    : return("ERR_CONCURRENT_MODIFICATION"    ); // 5015
    }
    return(error);
 }

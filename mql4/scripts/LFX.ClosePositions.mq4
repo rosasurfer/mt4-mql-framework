@@ -150,9 +150,9 @@ int onStart() {
 
 
       // (8) LFX-Order in .ini-Datei aktualisieren
-      /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-
-      if (!LFX.GetOrder(magics[i], lo)) return(last_error);
+      /*LFX_ORDER*/int lo[];
+      int result = LFX.GetOrder(magics[i], lo);
+      if (result < 1) { if (!result)    return(last_error); return(catch("onStart(5)   LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
          lo.setCloseTime (lo, TimeGMT() );
          lo.setClosePrice(lo, closePrice);
          lo.setProfit    (lo, profit    );
@@ -166,5 +166,5 @@ int onStart() {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
       //   return(SetLastError(stdlib.GetLastError()));
    }
-   return(catch("onStart(5)"));
+   return(catch("onStart(6)"));
 }
