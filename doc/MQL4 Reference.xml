@@ -3319,11 +3319,7 @@ else
     <content>
     A group of functions to work with arrays.<br/><br/>
     Arrays are allowed to be maximum four-dimensional. Each dimension is indexed from 0 to <b>dimension size</b>-1.
-    In a particular case of a one-dimensional array of 50 elements, calling of the first element will appear as array[0], of the last one - as array[49].<br/><br/>
-    Using these functions (except for those which change quantitative and qualitative characteristics of the array) one can process 
-    predefined time series <a href="help://predefined_variables_time">Time[]</a>, <a href="help://predefined_variables_open">Open[]</a>,
-    <a href="help://predefined_variables_high">High[]</a>, <a href="help://predefined_variables_low">Low[]</a>,
-    <a href="help://predefined_variables_close">Close[]</a>, <a href="help://predefined_variables_volume">Volume[]</a>
+    In a particular case of a one-dimensional array of 50 elements, calling of the first element will appear as array[0], of the last one - as array[49].
     </content>
     <function>
       tag=array_ArrayBsearch
@@ -3727,8 +3723,8 @@ dim_size=ArrayRange(num_array, 1);
       <content>
         Sets a new size for the first dimension. If executed successfully, it returns count of all elements contained 
         in the array after resizing, otherwise, returns -1, and array is not resized.<br/>
-        Note: Array declared at a local level in a function and resized will remain unchanged after the function has completed its operation.
-        After the function has been recalled, such array will have a size differing from the declared one.
+        Note: An array declared locally (in a function) and resized will remain resized after the function has completed its operation.
+        At function recall such array will have a size differing from the declared one.
       </content>
       <example>
 double array1[][4];
