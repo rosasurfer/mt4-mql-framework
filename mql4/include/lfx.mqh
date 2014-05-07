@@ -781,7 +781,7 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
 
 
 /**
- * Speichert eine LFX-Order.
+ * Speichert eine LFX-Order in der .ini-Datei des aktuellen Accounts.
  *
  * @param  LFX_ORDER los[] - ein einzelnes oder ein Array von LFX_ORDER-Structs
  * @param  int       index - Arrayindex der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist;
@@ -793,12 +793,13 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    int dims = ArrayDimension(los);
    if (dims > 2)                                   return(!catch("LFX.SaveOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
 
+   /*LFX_ORDER*/int copy[]; ArrayResize(copy, LFX_ORDER.intSize);
+
    if (dims == 1) {
       // Parameter los[] ist einzelne Order
       if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!catch("LFX.SaveOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
-      if (!LFX.WriteTicket(lo.Ticket(los), lo.Comment(los), lo.Type(los), lo.Units(los), lo.OpenTime(los), lo.OpenEquity(los), lo.OpenPrice(los), lo.OpenPriceTime(los), lo.StopLoss(los), lo.StopLossTime(los), lo.TakeProfit(los), lo.TakeProfitTime(los), lo.CloseTime(los), lo.ClosePrice(los), lo.Profit(los)))
-         return(false);
+      ArrayCopy(copy, los);
    }
    else {
       // Parameter los[] ist Order-Array
@@ -806,93 +807,52 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       int losSize = ArrayRange(los, 0);
       if (index < 0 || index > losSize-1)          return(!catch("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
 
-      int i = index;
-      if (!LFX.WriteTicket(los.Ticket(los, i), los.Comment(los, i), los.Type(los, i), los.Units(los, i), los.OpenTime(los, i), los.OpenEquity(los, i), los.OpenPrice(los, i), los.OpenPriceTime(los, i), los.StopLoss(los, i), los.StopLossTime(los, i), los.TakeProfit(los, i), los.TakeProfitTime(los, i), los.CloseTime(los, i), los.ClosePrice(los, i), los.Profit(los, i)))
-         return(false);
+      CopyMemory(GetIntsAddress(los)+ index*LFX_ORDER.intSize*4, GetIntsAddress(copy), LFX_ORDER.intSize*4);
    }
+
+   if (!LFX.WriteOrder(copy))
+      return(false);
    return(true);
 }
 
 
 /**
- * Schreibt die angegebenen Orderdaten in die .ini-Datei des aktuellen Accounts.
+ * Schreibt die angegebene Order in die .ini-Datei des aktuellen Accounts.
  *
- * @param  int      ticket
- * @param  string   label
- * @param  int      operationType
- * @param  double   units
- * @param  datetime openTime
- * @param  double   openEquity
- * @param  double   openPrice
- * @param  datetime openPriceTime
- * @param  double   stopLoss
- * @param  datetime stopLossTime
- * @param  double   takeProfit
- * @param  datetime takeProfitTime
- * @param  datetime closeTime
- * @param  double   closePrice
- * @param  double   profit
+ * @param  LFX_ORDER los[] - LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.WriteTicket(int ticket, string label, int operationType, double units, datetime openTime, double openEquity, double openPrice, datetime openPriceTime, double stopLoss, datetime stopLossTime, double takeProfit, datetime takeProfitTime, datetime closeTime, double closePrice, double profit) {
-   // (1) Parametervalidierung
-   if (ticket >> 22 != STRATEGY_ID)        return(!catch("LFX.WriteTicket(1)   invalid parameter ticket = "+ ticket +" (not a LFX ticket)", ERR_INVALID_FUNCTION_PARAMVALUE));
-   int lfxId = LFX.CurrencyId(ticket);
-   if (lfxId < CID_AUD || lfxId > CID_USD) return(!catch("LFX.WriteTicket(2)   invalid parameter ticket = "+ ticket +" (not a LFX currency ticket="+ lfxId +")", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (label == "0")                       // (string) NULL
-      label = "";
-   if (!IsTradeOperation(operationType))   return(!catch("LFX.WriteTicket(3)   invalid parameter operationType = "+ operationType +" (not a trade operation)", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (units <= 0)                         return(!catch("LFX.WriteTicket(4)   invalid parameter units = "+ NumberToStr(units, ".1+"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (!openTime)                          return(!catch("LFX.WriteTicket(5)   invalid parameter openTime = "+ openTime, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (operationType <= OP_SELL)
-      if (openTime > 0 && openEquity <= 0) return(!catch("LFX.WriteTicket(6)   invalid parameter openEquity = "+ DoubleToStr(openEquity, 2), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (openPrice <= 0)                     return(!catch("LFX.WriteTicket(7)   invalid parameter openPrice = "+ NumberToStr(openPrice, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (openPriceTime < 0)                  return(!catch("LFX.WriteTicket(8)   invalid parameter openPriceTime = "+ openPriceTime, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (stopLoss < 0)                       return(!catch("LFX.WriteTicket(9)   invalid parameter stopLoss = "+ NumberToStr(stopLoss, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (stopLossTime < 0)                   return(!catch("LFX.WriteTicket(10)   invalid parameter stopLossTime = "+ stopLossTime, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (takeProfit < 0)                     return(!catch("LFX.WriteTicket(11)   invalid parameter takeProfit = "+ NumberToStr(takeProfit, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (takeProfitTime < 0)                 return(!catch("LFX.WriteTicket(12)   invalid parameter takeProfitTime = "+ takeProfitTime, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (closeTime < 0)                      return(!catch("LFX.WriteTicket(13)   invalid parameter closeTime = "+ closeTime, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (closePrice < 0)                     return(!catch("LFX.WriteTicket(14)   invalid parameter closePrice = "+ NumberToStr(closePrice, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (!closeTime && closePrice!=0)        return(!catch("LFX.WriteTicket(15)   invalid parameter closeTime/closePrice: mis-match 0/"+ NumberToStr(closePrice, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (closeTime!=0 && !closePrice)        return(!catch("LFX.WriteTicket(16)   invalid parameter closeTime/closePrice: mis-match \""+ TimeToStr(closeTime, TIME_FULL) +"\"/0", ERR_INVALID_FUNCTION_PARAMVALUE));
-   // profit: immer ok
-
-   string lfxCurrency = GetCurrency(lfxId);
-   int    lfxDigits   = ifInt(lfxId==CID_JPY, 3, 5);
-
-
-   // (2) Orderdaten formatieren
+bool LFX.WriteOrder(/*LFX_ORDER*/int lo[]) {
+   // (1) Daten formatieren
    //Ticket = Symbol, Label, TradeOperation, Units, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, Version
-   string sSymbol         = lfxCurrency;
-   string sLabel          =                                                                                          StringRightPad(label         ,  9, " ");
-   string sOperationType  = OperationTypeDescription(operationType);                               sOperationType  = StringRightPad(sOperationType, 10, " ");
-   string sUnits          = NumberToStr(units, ".+");                                              sUnits          = StringLeftPad (sUnits        ,  5, " ");
-   string sOpenTime       = ifString(openTime < 0, "-", "") + TimeToStr(Abs(openTime), TIME_FULL); sOpenTime       = StringLeftPad(sOpenTime      , 20, " ");
-   string sOpenEquity     = ifString(!openEquity,    "0", DoubleToStr(openEquity, 2));             sOpenEquity     = StringLeftPad(sOpenEquity    ,  7, " ");
-   string sOpenPrice      = DoubleToStr(openPrice, lfxDigits);                                     sOpenPrice      = StringLeftPad(sOpenPrice     ,  9, " ");
-   string sOpenPriceTime  = ifString(!openPriceTime,  "0", TimeToStr(openPriceTime, TIME_FULL));   sOpenPriceTime  = StringLeftPad(sOpenPriceTime , 19, " ");
-   string sStopLoss       = ifString(!stopLoss,       "0", DoubleToStr(stopLoss,   lfxDigits));    sStopLoss       = StringLeftPad(sStopLoss      ,  8, " ");
-   string sStopLossTime   = ifString(!stopLossTime,   "0", TimeToStr(stopLossTime, TIME_FULL));    sStopLossTime   = StringLeftPad(sStopLossTime  , 19, " ");
-   string sTakeProfit     = ifString(!takeProfit,     "0", DoubleToStr(takeProfit, lfxDigits));    sTakeProfit     = StringLeftPad(sTakeProfit    , 10, " ");
-   string sTakeProfitTime = ifString(!takeProfitTime, "0", TimeToStr(takeProfitTime, TIME_FULL));  sTakeProfitTime = StringLeftPad(sTakeProfitTime, 19, " ");
-   string sCloseTime      = ifString(!closeTime,      "0", TimeToStr(closeTime, TIME_FULL));       sCloseTime      = StringLeftPad(sCloseTime     , 19, " ");
-   string sClosePrice     = ifString(!closePrice,     "0", DoubleToStr(closePrice, lfxDigits));    sClosePrice     = StringLeftPad(sClosePrice    , 10, " ");
-   string sProfit         = ifString(!profit,         "0", DoubleToStr(profit, 2));                sProfit         = StringLeftPad(sProfit        ,  7, " ");
+   string sSymbol         =                          lo.Currency      (lo);
+   string sLabel          =                          lo.Comment       (lo);                                                                                               sLabel          = StringRightPad(sLabel         ,  9, " ");
+   string sOperationType  = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringRightPad(sOperationType , 10, " ");
+   string sUnits          =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringLeftPad (sUnits         ,  5, " ");
+   string sOpenTime       =                 ifString(lo.OpenTime      (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime       = StringLeftPad (sOpenTime      , 20, " ");
+   string sOpenEquity     =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringLeftPad (sOpenEquity    ,  7, " ");
+   string sOpenPrice      =              DoubleToStr(lo.OpenPrice     (lo), lo.Digits(lo));                                                                               sOpenPrice      = StringLeftPad (sOpenPrice     ,  9, " ");
+   string sOpenPriceTime  =                ifString(!lo.OpenPriceTime (lo), "0", TimeToStr(lo.OpenPriceTime(lo), TIME_FULL));                                             sOpenPriceTime  = StringLeftPad (sOpenPriceTime , 19, " ");
+   string sStopLoss       =                ifString(!lo.StopLoss      (lo), "0", DoubleToStr(lo.StopLoss(lo),   lo.Digits(lo)));                                          sStopLoss       = StringLeftPad (sStopLoss      ,  8, " ");
+   string sStopLossTime   =                ifString(!lo.StopLossTime  (lo), "0", TimeToStr(lo.StopLossTime(lo), TIME_FULL));                                              sStopLossTime   = StringLeftPad (sStopLossTime  , 19, " ");
+   string sTakeProfit     =                ifString(!lo.TakeProfit    (lo), "0", DoubleToStr(lo.TakeProfit(lo), lo.Digits(lo)));                                          sTakeProfit     = StringLeftPad (sTakeProfit    , 10, " ");
+   string sTakeProfitTime =                ifString(!lo.TakeProfitTime(lo), "0", TimeToStr(lo.TakeProfitTime(lo), TIME_FULL));                                            sTakeProfitTime = StringLeftPad (sTakeProfitTime, 19, " ");
+   string sCloseTime      =                 ifString(lo.CloseTime     (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime      = StringLeftPad (sCloseTime     , 20, " ");
+   string sClosePrice     =                ifString(!lo.ClosePrice    (lo), "0", DoubleToStr(lo.ClosePrice(lo), lo.Digits(lo)));                                          sClosePrice     = StringLeftPad (sClosePrice    , 10, " ");
+   string sProfit         =                ifString(!lo.Profit        (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit         = StringLeftPad (sProfit        ,  7, " ");
    string sVersion        = TimeToStr(TimeGMT(), TIME_FULL);
 
-
-   // (3) Orderdaten schreiben
+   // (2) Daten schreiben
    if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
       return(false);
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
-   string key     = ticket;
+   string key     = lo.Ticket(lo);
    string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPrice, ", ", sOpenPriceTime, ", ", sStopLoss, ", ", sStopLossTime, ", ", sTakeProfit, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(!catch("LFX.WriteTicket(17)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
+      return(!catch("LFX.WriteOrder(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
 
    return(true);
 }

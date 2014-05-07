@@ -1983,7 +1983,7 @@ bool IsPermanentTradeError(int error) {
 
 
 /**
- * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (enspricht array[i] = values[] für Arrays von Arrays).
+ * Weist einer Position eines zweidimensionalen Integer-Arrays ein anderes Array zu (entspricht array[i] = values[] für ein Array von Arrays).
  *
  * @param  int array[][] - zu modifizierendes zwei-dimensionales Arrays
  * @param  int i         - zu modifizierende Position
@@ -10796,7 +10796,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    }
 
    // (2) die angegebenen Laufzeitfehler abfangen
-   if (_bool(oeFlags & OE_CATCH_INVALID_STOP)) {
+   if (_bool(oeFlags & CATCH_ERR_INVALID_STOP)) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
          return(error);
