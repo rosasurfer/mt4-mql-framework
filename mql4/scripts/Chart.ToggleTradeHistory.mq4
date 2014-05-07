@@ -101,9 +101,9 @@ bool SetClosedTradeMarker(int ticket, int type, double lots, datetime openTime, 
    string comment     = "Profit: "+ DoubleToStr(profit, 2);
 
    if (!ChartMarker.OrderSent_B(ticket, SubPipDigits, markerColor, type, lots, lfxCurrency, openTime, openPrice, NULL, NULL, comment))
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
 
    if (!ChartMarker.PositionClosed_B(ticket, SubPipDigits, Orange, type, lots, lfxCurrency, openTime, openPrice, closeTime, closePrice))
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
    return(true);
 }

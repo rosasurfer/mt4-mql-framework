@@ -44,7 +44,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
+int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -90,19 +90,19 @@ int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                            // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
-         return(catch("stdlib_init(1)", error));
+            return(debug("stdlib.init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+         return(catch("stdlib.init(1)", error));
       }
-      if (!TickSize) return(debug("stdlib_init()   MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!TickSize) return(debug("stdlib.init()   MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                            // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib_init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
-         return(catch("stdlib_init(2)", error));
+            return(debug("stdlib.init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+         return(catch("stdlib.init(2)", error));
       }
-      if (!tickValue) return(debug("stdlib_init()   MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!tickValue) return(debug("stdlib.init()   MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
       */
    }
 
@@ -115,11 +115,11 @@ int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
 
       if (IsTesting()) {                                             // nur im Tester
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-            return(catch("stdlib_init(3)->user32::SetWindowTextA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
+            return(catch("stdlib.init(3)->user32::SetWindowTextA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber()) {                                  // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
             if (last_error == ERS_TERMINAL_NOT_READY)                // u.U. den UI-Thread blockieren kann.
-               return(debug("stdlib_init()   GetAccountNumber() = 0", last_error));
+               return(debug("stdlib.init()   GetAccountNumber() = 0", last_error));
          }
       }
    }
@@ -132,7 +132,7 @@ int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
    tickData[1] = Tick.Time;
    tickData[2] = Tick.prevTime;
 
-   return(catch("stdlib_init(4)"));
+   return(catch("stdlib.init(4)"));
 }
 
 
@@ -148,12 +148,12 @@ int stdlib_init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
  *
  * @return int - Fehlerstatus
  */
-int stdlib_start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
+int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
    // Library nach Recompile neu initialisieren
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
-         if (IsError(stdlib_init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
+         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
             return(last_error);
       }
    }
@@ -195,12 +195,12 @@ int stdlib_start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
-int stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
+int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    // Library nach Recompile neu initialisieren
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
-         if (IsError(stdlib_init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
+         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
             return(last_error);
       }
    }
@@ -219,7 +219,7 @@ int stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    // (2) EXECUTION_CONTEXT von Indikatoren zwischenspeichern
    if (IsIndicator()) {
       ArrayCopy(__ExecutionContext, ec);
-      if (IsError(catch("stdlib_deinit"))) {
+      if (IsError(catch("stdlib.deinit"))) {
          ArrayInitialize(__ExecutionContext, 0);
          error = last_error;
       }
@@ -264,7 +264,7 @@ int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus()
  *
  * @return int - Fehlerstatus
  */
-int stdlib_GetLastError() {
+int stdlib.GetLastError() {
    return(last_error);
 }
 
@@ -465,10 +465,10 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
       // (1.1) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
       string names[2]; names[0] = CreateString(MAX_PATH);                                          // Programm-Name (Länge variabel, da hier noch nicht bekannt)
                        names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
-      int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
-                       CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
-                       CopyMemory(lpNames[0], GetBufferAddress(lpNames)+8, 1);                     // beide Strings mit <NUL> initialisieren (lpNames[2] = <NUL>)
-                       CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);
+      int  lpNames[3]; CopyMemory(GetStringsAddress(names)+ 4, GetBufferAddress(lpNames),   4);    // Zeiger auf beide Strings holen
+                       CopyMemory(GetStringsAddress(names)+12, GetBufferAddress(lpNames)+4, 4);
+                       CopyMemory(GetBufferAddress(lpNames)+8, lpNames[0], 1);                     // beide Strings mit <NUL> initialisieren (lpNames[2] = <NUL>)
+                       CopyMemory(GetBufferAddress(lpNames)+8, lpNames[1], 1);
 
       // (1.2) Zeiger auf die Namen im Context speichern
       ec.setLpName   (__ExecutionContext, lpNames[0]);
@@ -695,13 +695,13 @@ M15::Moving Average::stdlib::onTick()   MODE_FREEZELEVEL       = 0
 
 
 /**
- * Kopiert einen Speicherbereich. Die betroffenen Speicherblöcke können sich überlappen.
+ * Kopiert einen Speicherbereich. Korrekterweise als MoveMemory() implementiert (die betroffenen Speicherblöcke können sich überlappen).
  *
- * @param  int destination - Zieladresse
  * @param  int source      - Quelladdrese
+ * @param  int destination - Zieladresse
  * @param  int bytes       - Anzahl zu kopierender Bytes
  */
-void CopyMemory(int destination, int source, int bytes) {
+void CopyMemory(int source, int destination, int bytes) {
    RtlMoveMemory(destination, source, bytes);
 }
 
@@ -1579,7 +1579,7 @@ string GetLocalConfigPath() {
       string lnkFile = StringConcatenate(iniFile, ".lnk");
 
       if (IsFile(lnkFile)) {
-         iniFile = GetWin32ShortcutTarget(lnkFile);
+         iniFile = GetWindowsShortcutTarget(lnkFile);
          createIniFile = !IsFile(iniFile);
       }
       else {
@@ -1621,7 +1621,7 @@ string GetGlobalConfigPath() {
       string lnkFile = StringConcatenate(iniFile, ".lnk");
 
       if (IsFile(lnkFile)) {
-         iniFile = GetWin32ShortcutTarget(lnkFile);
+         iniFile = GetWindowsShortcutTarget(lnkFile);
          createIniFile = !IsFile(iniFile);
       }
       else {
@@ -1999,7 +1999,7 @@ int ArraySetIntArray(int array[][], int i, int values[]) {
    if (ArraySize(values) != dim2)   return(catch("ArraySetIntArray(3)   array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
    if (i < 0 || i >= dim1)          return(catch("ArraySetIntArray(4)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   CopyMemory(GetBufferAddress(array) + i*dim2*4, GetBufferAddress(values), dim2*4);
+   CopyMemory(GetBufferAddress(values), GetBufferAddress(array) + i*dim2*4, dim2*4);
    return(NO_ERROR);
 }
 
@@ -2058,7 +2058,7 @@ int ArrayPushIntArray(int array[][], int value[]) {
    if (ArraySize(value) != dim2)   return(_int(-1, catch("ArrayPushIntArray(3)   array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
 
    ArrayResize(array, dim1+1);
-   CopyMemory(GetBufferAddress(array) + dim1*dim2*4, GetBufferAddress(value), dim2*4);
+   CopyMemory(GetBufferAddress(value), GetBufferAddress(array) + dim1*dim2*4, dim2*4);
    return(dim1+1);
 }
 
@@ -2715,10 +2715,10 @@ int ArrayInsertString(string &array[], int offset, string value) {
    if (offset == size)
       return(ArrayPushString(array, value));
 
-   // Einfügen innerhalb des Arrays: ArrayCopy() überschreibt bei String-Arrays den sich überlappenden Bereich (wie CopyMemory()), zusätzliche Kopie nötig
+   // Einfügen innerhalb des Arrays: ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, daher zusätzliche Kopie nötig
    string tmp[]; ArrayResize(tmp, 0);
-   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Elemente nach Offset kopieren
-   ArrayCopy(array, tmp, offset+1);                                              // Elemente nach Offset nach hinten schieben (aus Kopie)
+   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfügepunkt machen
+   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfügepunkt nach hinten schieben (Quelle: die Kopie)
    ArrayResize(tmp, 0);
    array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
    return(size + 1);
@@ -2865,10 +2865,10 @@ int ArrayInsertStrings(string array[], int offset, string values[]) {
    int newSize = sizeOfArray + sizeOfValues;
    ArrayResize(array, newSize);
 
-   // ArrayCopy() überschreibt bei String-Arrays den sich überlappenden Bereich (analog zu CopyMemory()), wir müssen mit einer zusätzlichen Kopie arbeiten
+   // ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, wir müssen mit einer zusätzlichen Kopie arbeiten
    string tmp[]; ArrayResize(tmp, 0);
-   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Elemente nach Offset
-   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente nach Offset nach hinten schieben
+   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfügepunkt erstellen
+   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfügepunkt nach hinten schieben
    ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
 
    ArrayResize(tmp, 0);
@@ -3729,7 +3729,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
       return(BufferCharsToStr(buffer, from, length));
 
    int dest[]; InitializeByteBuffer(dest, ArraySize(buffer)*4);
-   CopyMemory(GetBufferAddress(dest), GetBufferAddress(buffer), ArraySize(buffer)*4);
+   CopyMemory(GetBufferAddress(buffer), GetBufferAddress(dest), ArraySize(buffer)*4);
 
    string result = BufferCharsToStr(dest, from, length);
    ArrayResize(dest, 0);
@@ -3855,7 +3855,7 @@ int ExplodeStringsW(int buffer[], string results[]) {
  *
  * @return string - Dateipfad der Zieldatei oder Leerstring, falls ein Fehler auftrat
  */
-string GetWin32ShortcutTarget(string lnkFilename) {
+string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    // How to read the target's path from a .lnk-file:
    // --------------------------------------------------------------------------
@@ -3903,18 +3903,18 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
-      return(_empty(catch("GetWin32ShortcutTarget(1)   invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_empty(catch("GetWindowsShortcutTarget(1)   invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
    if (hFile == HFILE_ERROR)
-      return(_empty(catch("GetWin32ShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
 
    int iNull[], fileSize=GetFileSize(hFile, iNull);
    if (fileSize == 0xFFFFFFFF) {
-      catch("GetWin32ShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      catch("GetWindowsShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
@@ -3922,14 +3922,14 @@ string GetWin32ShortcutTarget(string lnkFilename) {
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
-      catch("GetWin32ShortcutTarget(4)->kernel32::_lread(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      catch("GetWindowsShortcutTarget(4)->kernel32::_lread(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
    }
    _lclose(hFile);
 
    if (bytes < 24)
-      return(_empty(catch("GetWin32ShortcutTarget(5)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(5)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int integers  = ArraySize(buffer);
    int charsSize = bytes;
@@ -3948,7 +3948,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
    if (chars[0] != 'L')                            // test the magic value
-      return(_empty(catch("GetWin32ShortcutTarget(6)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(6)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    if (chars[ 4] != 0x01 ||                        // test the GUID
        chars[ 5] != 0x14 ||
@@ -3966,7 +3966,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
        chars[17] != 0x00 ||
        chars[18] != 0x00 ||
        chars[19] != 0x46) {
-      return(_empty(catch("GetWin32ShortcutTarget(7)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(7)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
    }
 
    // --------------------------------------------------------------------------
@@ -3992,7 +3992,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    bool pointsToFileOrDir  = _bool(dwFlags & 0x00000002);
 
    if (!pointsToFileOrDir) {
-      if (__LOG) log("GetWin32ShortcutTarget(8)   shortcut target is not a file or directory: \""+ lnkFilename +"\"");
+      if (__LOG) log("GetWindowsShortcutTarget(8)   shortcut target is not a file or directory: \""+ lnkFilename +"\"");
       return("");
    }
 
@@ -4003,7 +4003,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    if (hasShellItemIdList) {
       i = 76;
       if (charsSize < i+2)
-         return(_empty(catch("GetWin32ShortcutTarget(9)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+         return(_empty(catch("GetWindowsShortcutTarget(9)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
       A  = chars[76];               // little endian format
       A |= chars[77] << 8;
    }
@@ -4016,7 +4016,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
    if (charsSize < i+4)
-      return(_empty(catch("GetWin32ShortcutTarget(10)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(10)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int B  = chars[i];       i++;    // little endian format
        B |= chars[i] <<  8; i++;
@@ -4031,7 +4031,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B;
    if (charsSize < i+4)
-      return(_empty(catch("GetWin32ShortcutTarget(11)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(11)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int C  = chars[i];       i++;    // little endian format
        C |= chars[i] <<  8; i++;
@@ -4043,7 +4043,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
    if (charsSize < i+1)
-      return(_empty(catch("GetWin32ShortcutTarget(12)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(12)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    string target = "";
    for (; i < charsSize; i++) {
@@ -4052,7 +4052,7 @@ string GetWin32ShortcutTarget(string lnkFilename) {
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
    if (StringLen(target) == 0)
-      return(_empty(catch("GetWin32ShortcutTarget(13)   invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(13)   invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    // --------------------------------------------------------------------------
    // Convert the target path into the long filename format:
@@ -4063,9 +4063,9 @@ string GetWin32ShortcutTarget(string lnkFilename) {
    if (GetLongPathNameA(target, lfnBuffer[0], MAX_PATH) != 0)        // file does exist
       target = lfnBuffer[0];
 
-   //debug("GetWin32ShortcutTarget(14)   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
+   //debug("GetWindowsShortcutTarget(14)   chars="+ ArraySize(chars) +"   A="+ A +"   B="+ B +"   C="+ C +"   target=\""+ target +"\"");
 
-   if (!catch("GetWin32ShortcutTarget(15)"))
+   if (!catch("GetWindowsShortcutTarget(15)"))
       return(target);
    return("");
 }
@@ -5291,30 +5291,50 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * @param  string search  - Suchstring
  * @param  string replace - Ersatzstring
  *
- * @return string
+ * @return string - modifizierter String
  */
 string StringReplace(string object, string search, string replace) {
    if (StringLen(object) == 0) return(object);
    if (StringLen(search) == 0) return(object);
+   if (search == replace)      return(object);
 
-   int startPos = 0;
-   int foundPos = StringFind(object, search, startPos);
-   if (foundPos == -1)
+   int from=0, found=StringFind(object, search);
+   if (found == -1)
       return(object);
 
    string result = "";
 
-   while (foundPos > -1) {
-      result   = StringConcatenate(result, StringSubstrFix(object, startPos, foundPos-startPos), replace);
-      startPos = foundPos + StringLen(search);
-      foundPos = StringFind(object, search, startPos);
+   while (found > -1) {
+      result = StringConcatenate(result, StringSubstrFix(object, from, found-from), replace);
+      from   = found + StringLen(search);
+      found  = StringFind(object, search, from);
    }
-   result = StringConcatenate(result, StringSubstr(object, startPos));
+   result = StringConcatenate(result, StringSubstr(object, from));
 
-   int error = GetLastError();
-   if (!error)
-      return(result);
-   return(_empty(catch("StringReplace()", error)));
+   return(result);
+}
+
+
+/**
+ * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
+ * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
+ *
+ * @param  string object  - Ausgangsstring
+ * @param  string search  - Suchstring
+ * @param  string replace - Ersatzstring
+ *
+ * @return string - rekursiv modifizierter String
+ */
+string StringReplace.Recursive(string object, string search, string replace) {
+   if (StringLen(object) == 0) return(object);
+
+   string lastResult="", result=object;
+
+   while (result != lastResult) {
+      lastResult = result;
+      result     = StringReplace(result, search, replace);
+   }
+   return(lastResult);
 }
 
 
@@ -10072,7 +10092,7 @@ string DateToStr(datetime time, string mask) {
    int min = TimeMinute   (time);
    int sec = TimeSeconds  (time);
 
-   bool h12f = StringFind(StringToUpper(mask), "A", 0) >= 0;
+   bool h12f = StringFind(StringToUpper(mask), "A") >= 0;
 
    int h12 = 12;
    if      (hr > 12) h12 = hr - 12;
@@ -10370,7 +10390,7 @@ int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
    if (StringLen(symbol) == 0)                  return(_empty(catch("oe.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH)   return(_empty(catch("oe.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (maximum "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   CopyMemory(GetBufferAddress(oe)+4, GetStringAddress(symbol), StringLen(symbol)+1);                                                                                   return(symbol    ); }
+   CopyMemory(GetStringAddress(symbol), GetBufferAddress(oe)+4, StringLen(symbol)+1);                                                                                   return(symbol    ); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                       return(digits    ); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = MathRound(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
 double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 7]    = MathRound(distance * MathPow(10, oe.Digits(oe)<<31>>31));     return(distance  ); }
@@ -10394,7 +10414,7 @@ double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 27) return(_empty(catch("oe.setComment()   too long parameter comment = \""+ comment +"\" (maximum 27 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   CopyMemory(GetBufferAddress(oe)+88, GetStringAddress(comment), StringLen(comment)+1);                                                                                return(comment   ); }
+   CopyMemory(GetStringAddress(comment), GetBufferAddress(oe)+88, StringLen(comment)+1);                                                                                return(comment   ); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                     return(milliSec  ); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                     return(requotes  ); }
 double   oe.setSlippage        (/*ORDER_EXECUTION*/int &oe[],          double   slippage  ) { oe[31]    = MathRound(slippage * MathPow(10, oe.Digits(oe)<<31>>31));     return(slippage  ); }
@@ -10407,7 +10427,7 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
    if (StringLen(symbol) == 0)                return(_empty(catch("oes.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\""), ERR_INVALID_FUNCTION_PARAMVALUE));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("oes.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (maximum "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   CopyMemory(GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 4, GetStringAddress(symbol), StringLen(symbol)+1);                                                          return(symbol    ); }
+   CopyMemory(GetStringAddress(symbol), GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 4, StringLen(symbol)+1);                                                          return(symbol    ); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                       return(digits    ); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = MathRound(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
 double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 7] = MathRound(distance * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(distance  ); }
@@ -10431,7 +10451,7 @@ double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 27) return(_empty(catch("oes.setComment()   too long parameter comment = \""+ comment +"\" (maximum 27 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
-   CopyMemory(GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 88, GetStringAddress(comment), StringLen(comment)+1);                                                       return(comment   ); }
+   CopyMemory(GetStringAddress(comment), GetBufferAddress(oe)+ i*ArrayRange(oe, 1)*4 + 88, StringLen(comment)+1);                                                       return(comment   ); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][29] = milliSec;                                                     return(milliSec  ); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][30] = requotes;                                                     return(requotes  ); }
 double   oes.setSlippage       (/*ORDER_EXECUTION*/int &oe[][], int i, double   slippage  ) { oe[i][31] = MathRound(slippage * MathPow(10, oes.Digits(oe, i)<<31>>31)); return(slippage  ); }
@@ -12172,7 +12192,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(8)")));
-      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
+      CopyMemory(GetBufferAddress(oe), GetBufferAddress(oes), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(9)") && !oes.setError(oes, -1, last_error));
    }
@@ -12201,7 +12221,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfSymbols == 1) {
       if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(11)")));
-      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oes2), ArraySize(oes2)*4);
+      CopyMemory(GetBufferAddress(oes2), GetBufferAddress(oes), ArraySize(oes2)*4);
       ArrayResize(oes2, 0);
       return(OrderPop("OrderMultiClose(12)") && !oes.setError(oes, -1, last_error));
    }
@@ -12346,7 +12366,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error)));
-      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
+      CopyMemory(GetBufferAddress(oe), GetBufferAddress(oes), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(true);
    }

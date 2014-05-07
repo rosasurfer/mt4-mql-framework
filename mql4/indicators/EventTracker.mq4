@@ -195,7 +195,7 @@ int onTick() {
 
          int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
          if (!trend) {
-            int error = stdlib_GetLastError();
+            int error = stdlib.GetLastError();
             if (IsError(error))
                return(SetLastError(error));
          }
@@ -575,7 +575,7 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
    int fromBar = iBarShiftNext(symbol, period, from);
    if (fromBar == EMPTY_VALUE)                                       // ERS_HISTORY_UPDATE ???
-      return(stdlib_GetLastError());
+      return(stdlib.GetLastError());
 
    int toBar = iBarShiftPrevious(symbol, period, to-1);
 

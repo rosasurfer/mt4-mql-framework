@@ -48,7 +48,7 @@ int onStart() {
 
       // (3) Command setzen
       if (!AquireLock(mutex, true))
-         return(SetLastError(stdlib_GetLastError()));
+         return(SetLastError(stdlib.GetLastError()));
 
       for (i=0; i < sizeOfIds; i++) {
          label = StringConcatenate("SnowRoller.", ids[i], ".command");           // TODO: Commands zu bereits existierenden Commands hinzufügen
@@ -61,7 +61,7 @@ int onStart() {
       }
 
       if (!ReleaseLock(mutex))
-         return(SetLastError(stdlib_GetLastError()));
+         return(SetLastError(stdlib.GetLastError()));
 
 
       // (4) Tick senden

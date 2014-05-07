@@ -201,7 +201,7 @@ int onStart() {
    // (5) Lock auf die neue LFX-Order setzen, damit andere Indikatoren/Charts nicht schon vor Ende von LFX.OpenPosition Teilpositionen verarbeiten
    string mutex = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex, true))
-      return(SetLastError(stdlib_GetLastError()));
+      return(SetLastError(stdlib.GetLastError()));
 
 
    // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
@@ -216,13 +216,13 @@ int onStart() {
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
                                                                      // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-      if (IsError(stdlib_GetLastError())) return(_last_error(SetLastError(stdlib_GetLastError()), ReleaseLock(mutex)));
+      if (IsError(stdlib.GetLastError())) return(_last_error(SetLastError(stdlib.GetLastError()), ReleaseLock(mutex)));
       if (IsError(catch("onStart(6)")))   return(_last_error(                                     ReleaseLock(mutex)));
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
-         return(_last_error(SetLastError(stdlib_GetLastError()), ReleaseLock(mutex)));
+         return(_last_error(SetLastError(stdlib.GetLastError()), ReleaseLock(mutex)));
 
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
@@ -254,7 +254,7 @@ int onStart() {
 
    // (9) Lock auf die neue Position wieder freigeben
    if (!ReleaseLock(mutex))
-      return(SetLastError(stdlib_GetLastError()));
+      return(SetLastError(stdlib.GetLastError()));
 
    return(last_error);
 }

@@ -32,7 +32,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib (re-)initialisieren
    int tickData[3];
-   int error = stdlib_init(__ExecutionContext, tickData);
+   int error = stdlib.init(__ExecutionContext, tickData);
    if (IsError(error))
       return(SetLastError(error));
 
@@ -205,8 +205,8 @@ int start() {
 
 
    // (5) stdLib benachrichtigen
-   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_GetLastError()));
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      return(SetLastError(stdlib.GetLastError()));
 
 
    // (6) bei Bedarf Input-Dialog aufrufen
@@ -266,7 +266,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren und Context speichern
-   error = stdlib_deinit(__ExecutionContext);
+   error = stdlib.deinit(__ExecutionContext);
    if (IsError(error))
       SetLastError(error);
 
@@ -328,7 +328,7 @@ int InitExecutionContext() {
       int super[EXECUTION_CONTEXT.intSize], chartProperties;
       if (__lpSuperContext != NULL) {
          if (__lpSuperContext < 0x00010000) return(catch("InitExecutionContext(2)   invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
-         CopyMemory(GetBufferAddress(super), __lpSuperContext, EXECUTION_CONTEXT.size);
+         CopyMemory(__lpSuperContext, GetBufferAddress(super), EXECUTION_CONTEXT.size);
 
          IsChart        = _bool(ec.ChartProperties(super) & CP_CHART);
          IsOfflineChart =       ec.ChartProperties(super) & CP_OFFLINE && IsChart;

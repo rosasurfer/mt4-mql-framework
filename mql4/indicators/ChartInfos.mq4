@@ -135,9 +135,8 @@ bool CheckPendingLfxOrders() {
             continue;
          }
 
-         // (1.2) Limit war schon getriggert und TradeCommand wurde schon verschickt
+         // (1.2) Limit war schon getriggert, TradeCommand wurde schon verschickt
          if (!los.IsOpenError(lfxOrders, i)) {
-
             if (triggerTime + 20*SECONDS >= TimeGMT()) {
                // (1.3) auf Ausführungsbestätigung vom TradeAccount warten
                debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
@@ -690,7 +689,7 @@ bool UpdateOHLC() {
    // (2) Beginn und Ende der aktuellen Session ermitteln
    datetime sessionStart = GetServerSessionStartTime(lastTickTime);              // throws ERR_MARKET_CLOSED
    if (sessionStart == -1) {
-      if (SetLastError(stdlib_GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
+      if (SetLastError(stdlib.GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
          return(false);
       sessionStart = GetServerPrevSessionStartTime(lastTickTime);
    }
@@ -699,10 +698,10 @@ bool UpdateOHLC() {
 
    // (3) Baroffsets von Sessionbeginn und -ende ermitteln
    int openBar = iBarShiftNext(NULL, NULL, sessionStart);
-      if (openBar == EMPTY_VALUE) return(!SetLastError(stdlib_GetLastError()));  // Fehler
+      if (openBar == EMPTY_VALUE) return(!SetLastError(stdlib.GetLastError()));  // Fehler
       if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart
    int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
-      if (closeBar == EMPTY_VALUE) return(!SetLastError(stdlib_GetLastError())); // Fehler
+      if (closeBar == EMPTY_VALUE) return(!SetLastError(stdlib.GetLastError())); // Fehler
       if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart
    if (openBar < closeBar)
       return(!catch("UpdateOHLC(1)   illegal open/close bar offsets for session from="+ DateToStr(sessionStart, "w D.M.Y H:I") +" (bar="+ openBar +")  to="+ DateToStr(sessionEnd, "w D.M.Y H:I") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
@@ -831,14 +830,14 @@ bool AnalyzePositions() {
       }
       string mutex = "mutex.LFX.#"+ lfxMagics[i];                    // prüfen, ob die Position gesperrt werden kann (also verfügbar ist)
       if (!AquireLock(mutex, false)) {                               // FALSE = nicht warten, sofort zurückkehren
-         if (IsError(stdlib_GetLastError()))
-            return(SetLastError(stdlib_GetLastError()));
+         if (IsError(stdlib.GetLastError()))
+            return(SetLastError(stdlib.GetLastError()));
          // kein Fehler = Mutex war gesperrt, Position also nicht verfügbar
          lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um in (2.4) Marker für Speichern in globaler Variable zu haben
          continue;
       }
       if (!ReleaseLock(mutex))                                       // Lock wieder freigeben
-         return(SetLastError(stdlib_GetLastError()));
+         return(SetLastError(stdlib.GetLastError()));
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
       int cid = LFX.CurrencyId(lfxMagics[i]);
