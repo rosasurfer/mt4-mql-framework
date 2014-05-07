@@ -439,7 +439,7 @@ bool LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    double _closePrice = StrToDouble(sValue);
    if (_closePrice < 0)                         return(!catch("LFX.GetOrder(27)   invalid close price \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    if (!_closeTime && _closePrice!=0)           return(!catch("LFX.GetOrder(28)   close time/price mis-match 0/"+ NumberToStr(_closePrice, ".+") +" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_closeTime!=0 && !_closePrice)           return(!catch("LFX.GetOrder(29)   close time/price mis-match "+ TimeToStr(_closeTime, TIME_FULL) +"/0 in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_closeTime!=0 && !_closePrice)           return(!catch("LFX.GetOrder(29)   close time/price mis-match \""+ TimeToStr(_closeTime, TIME_FULL) +"\"/0 in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OrderProfit
    sValue = StringTrim(values[14]);
@@ -743,7 +743,7 @@ int LFX.ReadTicket(int ticket, string &symbol, string &label, int &orderType, do
    double _closePrice = StrToDouble(sValue);
    if (_closePrice < 0)                         return(_NULL(catch("LFX.ReadTicket(25)   invalid close price \""+ sValue +"\" in config value ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
    if (!_closeTime && _closePrice!=0)           return(_NULL(catch("LFX.ReadTicket(26)   close time/price mis-match 0/"+ NumberToStr(_closePrice, ".+") +" in config value ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
-   if (_closeTime!=0 && !_closePrice)           return(_NULL(catch("LFX.ReadTicket(27)   close time/price mis-match "+ TimeToStr(_closeTime, TIME_FULL) +"/0 in config value ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (_closeTime!=0 && !_closePrice)           return(_NULL(catch("LFX.ReadTicket(27)   close time/price mis-match \""+ TimeToStr(_closeTime, TIME_FULL) +"\"/0 in config value ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE)));
 
    // OrderProfit
    sValue = StringTrim(values[14]);
