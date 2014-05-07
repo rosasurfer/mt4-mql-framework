@@ -741,10 +741,10 @@ int      last_error;                                        // der letzte Fehler
 #define IDD_TESTER_JOURNAL   IDD_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
-// Order execution flags                              // korrespondierende Fehler können individuell behandelt werden
-#define OE_CATCH_INVALID_STOP                   1     // ERR_INVALID_STOP
-#define OE_CATCH_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED
-#define OE_CATCH_EXECUTION_STOPPING             4     // ERS_EXECUTION_STOPPING (Status)
+// Flags zur Fehlerunterdrückung                      // korrespondierende Fehler können individuell behandelt werden
+#define CATCH_ERR_INVALID_STOP                  1     // ERR_INVALID_STOP
+#define CATCH_ERR_ORDER_CHANGED                 2     // ERR_ORDER_CHANGED
+#define CATCH_ERS_EXECUTION_STOPPING            4     // ERS_EXECUTION_STOPPING (Status)
 
 
 // String padding types, siehe StringPad()

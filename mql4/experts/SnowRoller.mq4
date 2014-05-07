@@ -1826,7 +1826,7 @@ int SubmitStopOrder(int type, int level, int oe[]) {
    if (orderDisplayMode == ODM_NONE)
       markerColor = CLR_NONE;
 
-   int oeFlags = OE_CATCH_INVALID_STOP;                              // ERR_INVALID_STOP abfangen
+   int oeFlags = CATCH_ERR_INVALID_STOP;                             // ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, stopPrice, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0)
@@ -1977,7 +1977,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
       markerColor = CLR_NONE;
 
    if (!clientSL) /*&&*/ if (Abs(level) >= Abs(sequence.level))
-      oeFlags |= OE_CATCH_INVALID_STOP;                                    // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
+      oeFlags |= CATCH_ERR_INVALID_STOP;                             // ab dem letzten Level bei server-seitigem StopLoss ERR_INVALID_STOP abfangen
 
    int ticket = OrderSendEx(Symbol(), type, LotSize, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (ticket > 0)
@@ -1985,7 +1985,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
 
    int error = oe.Error(oe);
 
-   if (_bool(oeFlags & OE_CATCH_INVALID_STOP)) {
+   if (_bool(oeFlags & CATCH_ERR_INVALID_STOP)) {
       if (error == ERR_INVALID_STOP) {
          // Der StopLoss liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
          bool insideSpread;
