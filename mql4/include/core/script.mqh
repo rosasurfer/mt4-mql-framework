@@ -23,9 +23,9 @@ int init() {
 
    // (2) stdlib initialisieren
    int iNull[];
-   int error = stdlib_init(__ExecutionContext, iNull);
+   int error = stdlib.init(__ExecutionContext, iNull);
    if (IsError(error))
-      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
+      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib.init()
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
@@ -105,8 +105,8 @@ int start() {
 
 
    // (3) stdLib benachrichtigen
-   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib_GetLastError()));
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      return(SetLastError(stdlib.GetLastError()));
 
 
    // (4) Main-Funktion aufrufen
@@ -156,7 +156,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(__ExecutionContext);
+   error = stdlib.deinit(__ExecutionContext);
    if (IsError(error))
       SetLastError(error);
 
@@ -196,10 +196,10 @@ int InitExecutionContext() {
    string names[2]; names[0] = WindowExpertName();                                              // Programm-Name (Länge konstant)
                     names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
 
-   int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
-                    CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
+   int  lpNames[3]; CopyMemory(GetStringsAddress(names)+ 4, GetBufferAddress(lpNames),   4);    // Zeiger auf beide Strings holen
+                    CopyMemory(GetStringsAddress(names)+12, GetBufferAddress(lpNames)+4, 4);
 
-                    CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
+                    CopyMemory(GetBufferAddress(lpNames)+8, lpNames[1], 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
 
 
    // (2) globale Variablen initialisieren

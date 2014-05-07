@@ -135,7 +135,7 @@ int onStart() {
          int oeFlags = NULL;
          /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, selected); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
          if (!OrderMultiClose(tickets, 0.1, Orange, oeFlags, oes))
-            return(SetLastError(stdlib_GetLastError()));
+            return(SetLastError(stdlib.GetLastError()));
          ArrayResize(oes, 0);
       }
    }

@@ -101,7 +101,7 @@ int onStart() {
    for (i=0; i < magicsSize; i++) {
       // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
       //if (!AquireLock("mutex.LFX.#"+ magics[i], true))
-      //   return(SetLastError(stdlib_GetLastError()));
+      //   return(SetLastError(stdlib.GetLastError()));
    }
 
 
@@ -121,12 +121,12 @@ int onStart() {
       color  markerColor = CLR_NONE;
       int    oeFlags     = NULL;
 
-      if (IsError(stdlib_GetLastError())) return(SetLastError(stdlib_GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
+      if (IsError(stdlib.GetLastError())) return(SetLastError(stdlib.GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
       if (IsError(catch("onStart(3)")))   return(last_error);
 
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ArraySize(position)); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
       if (!OrderMultiClose(position, slippage, markerColor, oeFlags, oes))
-         return(SetLastError(stdlib_GetLastError()));
+         return(SetLastError(stdlib.GetLastError()));
 
 
       // (6) Gesamt-ClosePrice und Profit der LFX-Position berechnen
@@ -164,7 +164,7 @@ int onStart() {
    // (9) Locks wieder freigeben
    for (i=0; i < magicsSize; i++) {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
-      //   return(SetLastError(stdlib_GetLastError()));
+      //   return(SetLastError(stdlib.GetLastError()));
    }
    return(catch("onStart(5)"));
 }

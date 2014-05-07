@@ -434,7 +434,7 @@ bool IsStartSignal(int &lpSignal) {
 
          int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
          if (!trend) {
-            int error = stdlib_GetLastError();
+            int error = stdlib.GetLastError();
             if (IsError(error))
                SetLastError(error);
             return(false);

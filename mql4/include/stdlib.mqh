@@ -26,7 +26,7 @@
    bool     IsError(int value);
    bool     IsErrorCode(int value);
    int      SetLastError(int error, int param);
-   int      stdlib_GetLastError();
+   int      stdlib.GetLastError();
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();
@@ -37,6 +37,8 @@
 
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
+
+   int      MT4InternalMsg();    int WM_MT4();  // Alias             // MetaTrader4_Internal_Message (kann wie Pseudo-Konstante benutzt werden)
 
 
    // Account-Informationen
@@ -358,7 +360,8 @@
 
    int      StringFindR(string object, string search);
    string   StringRepeat(string input, int times);
-   string   StringReplace(string object, string search, string replace);
+   string   StringReplace          (string object, string search, string replace);
+   string   StringReplace.Recursive(string object, string search, string replace);
    string   StringSubstrFix(string object, int start, int length);
 
    int      Explode(string input, string separator, string results[], int limit);
@@ -560,15 +563,14 @@
 
 
    // Win32-Funktionen (an MQL angepaﬂt)
-   void     CopyMemory(int destination, int source, int bytes);
+   void     CopyMemory(int source, int destination, int bytes);      // intern als MoveMemory() implementiert
    string   GetClassName(int hWnd);
    string   GetComputerName();
-   string   GetWin32ShortcutTarget(string lnkFile);
+   string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      MT4InternalMsg();    int WM_MT4();  // Alias             // MetaTrader4_Internal_Message (kann wie Pseudo-Konstante benutzt werden)
    int      win32.GetLastError();
 
 
@@ -601,9 +603,9 @@
 
 
    // erweiterte Root-Funktionen
-   int      stdlib_init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
-   int      stdlib_start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
-   int      stdlib_deinit(/*EXECUTION_CONTEXT*/int ec[]);
+   int      stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int      stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int      stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
 #import "MetaQuotes1.ex4"

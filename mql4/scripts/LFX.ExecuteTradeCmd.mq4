@@ -205,7 +205,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist
    string mutex = "mutex.LFX.#"+ lfxTicket;
    if (!AquireLock(mutex, true))
-      return(_false(SetLastError(stdlib_GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
+      return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
 
 
    // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
@@ -223,13 +223,13 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
                                                                                        // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-      if (IsError(stdlib_GetLastError()))        return(_false(SetLastError(stdlib_GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
+      if (IsError(stdlib.GetLastError()))        return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
       if (IsError(catch("OpenPendingOrder(6)"))) return(_false(                                     lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, lfxTicket, expiration, markerColor, oeFlags, oe);
       if (tickets[i] == -1)
-         return(_false(SetLastError(stdlib_GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
+         return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
 
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
@@ -258,7 +258,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    // (9) Order wieder freigeben
    if (!ReleaseLock(mutex))
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
 
    return(true);
 }

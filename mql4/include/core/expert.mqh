@@ -38,7 +38,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
    // (2) stdlib (re-)initialisieren
    int iNull[];
-   int error = stdlib_init(__ExecutionContext, iNull);
+   int error = stdlib.init(__ExecutionContext, iNull);
    if (IsError(error))
       return(SetLastError(error));
 
@@ -46,7 +46,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    // (3) in Experts immer auch die history-lib (re-)initialisieren
    error = history_init(__ExecutionContext);
    if (IsError(error))
-      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib_init()
+      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib.init()
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
    // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
@@ -190,8 +190,8 @@ int start() {
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib_start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(ShowStatus(SetLastError(stdlib_GetLastError())));
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
+      return(ShowStatus(SetLastError(stdlib.GetLastError())));
 
 
    // (5) Main-Funktion aufrufen und auswerten
@@ -228,7 +228,7 @@ int start() {
  *
  *
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen verfrüht ab.
- *       afterDeinit() und stdlib_deinit() werden u.U. schon nicht mehr ausgeführt.
+ *       afterDeinit() und stdlib.deinit() werden u.U. schon nicht mehr ausgeführt.
  *
  *       Workaround: Testperiode auslesen (Controls), letzten Tick ermitteln (Historydatei) und Test nach letztem Tick per Tester.Stop() beenden.
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
@@ -271,7 +271,7 @@ int deinit() {
 
 
    // (3) stdlib deinitialisieren
-   error = stdlib_deinit(__ExecutionContext);
+   error = stdlib.deinit(__ExecutionContext);
    if (IsError(error))
       SetLastError(error);
 
@@ -310,10 +310,10 @@ int InitExecutionContext() {
    string names[2]; names[0] = WindowExpertName();                                              // Programm-Name (Länge konstant)
                     names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
 
-   int  lpNames[3]; CopyMemory(GetBufferAddress(lpNames),   GetStringsAddress(names)+ 4, 4);    // Zeiger auf beide Strings holen
-                    CopyMemory(GetBufferAddress(lpNames)+4, GetStringsAddress(names)+12, 4);
+   int  lpNames[3]; CopyMemory(GetStringsAddress(names)+ 4, GetBufferAddress(lpNames),   4);    // Zeiger auf beide Strings holen
+                    CopyMemory(GetStringsAddress(names)+12, GetBufferAddress(lpNames)+4, 4);
 
-                    CopyMemory(lpNames[1], GetBufferAddress(lpNames)+8, 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
+                    CopyMemory(GetBufferAddress(lpNames)+8, lpNames[1], 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
 
 
    // (2) globale Variablen initialisieren

@@ -482,7 +482,7 @@ bool StopSequence() {
       /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, sizeOfPositions); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
 
       if (!OrderMultiClose(positions, NULL, CLR_CLOSE, oeFlags, oes))
-         return(!SetLastError(stdlib_GetLastError()));
+         return(!SetLastError(stdlib.GetLastError()));
 
       for (i=0; i < sizeOfPositions; i++) {
          int pos = SearchIntArray(orders.ticket, positions[i]);
@@ -1079,13 +1079,13 @@ bool EventListener.ChartCommand(string commands[], int flags=NULL) {
 
    if (ObjectFind(label) == 0) {
       if (!AquireLock(mutex, true))
-         return(!SetLastError(stdlib_GetLastError()));
+         return(!SetLastError(stdlib.GetLastError()));
 
       ArrayPushString(commands, ObjectDescription(label));
       ObjectDelete(label);
 
       if (!ReleaseLock(mutex))
-         return(!SetLastError(stdlib_GetLastError()));
+         return(!SetLastError(stdlib.GetLastError()));
 
       return(true);
    }
@@ -1145,7 +1145,7 @@ bool IsStartSignal() {
 
             int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
             if (!trend) {
-               int error = stdlib_GetLastError();
+               int error = stdlib.GetLastError();
                if (IsError(error))
                   SetLastError(error);
                return(false);
@@ -1309,7 +1309,7 @@ bool IsStopSignal() {
 
             int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
             if (!trend) {
-               int error = stdlib_GetLastError();
+               int error = stdlib.GetLastError();
                if (IsError(error))
                   SetLastError(error);
                return(false);
@@ -3394,7 +3394,7 @@ bool ResolveStatusLocation() {
       directory = StringConcatenate(directory, StdSymbol(), "\\");
       int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY);
       if (size == -1)
-         return(!SetLastError(stdlib_GetLastError()));
+         return(!SetLastError(stdlib.GetLastError()));
       //debug("ResolveStatusLocation()   subdirs="+ StringsToStr(subdirs, NULL));
 
       for (int i=0; i < size; i++) {
@@ -3447,7 +3447,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
 
    int size = FindFileNames(filePattern, files, FF_FILESONLY);                   // Dateien suchen, die den Sequenznamen enthalten und mit "set" enden
    if (size == -1)
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
 
    //debug("ResolveStatusLocation.FindFile()   "+ size +" results for \""+ filePattern +"\"");
 
@@ -3789,7 +3789,7 @@ bool RestoreStatus() {
    string lines[];
    int size = FileReadLines(fileName, lines, true);
    if (size < 0)
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
    if (size == 0) {
       FileDelete(fileName);
       return(_false(catch("RestoreStatus(4)   no status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));
@@ -5059,7 +5059,7 @@ bool ChartMarker.OrderSent(int i) {
    }
 
    if (!ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, LotSize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment))
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
    return(true);
 }
 
@@ -5086,7 +5086,7 @@ bool ChartMarker.OrderFilled(int i) {
       markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
 
    if (!ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], comment))
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
    return(true);
 }
 
@@ -5114,7 +5114,7 @@ bool ChartMarker.PositionClosed(int i) {
    }
 
    if (!ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], LotSize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]))
-      return(!SetLastError(stdlib_GetLastError()));
+      return(!SetLastError(stdlib.GetLastError()));
    return(true);
 }
 

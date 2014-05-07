@@ -1101,7 +1101,7 @@ int hf.Header(int hFile, int array[]) {
    if (ArrayDimension(array) > 1)       return(catch("hf.Header(5)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
 
    ArrayResize(array, HISTORY_HEADER.intSize);                       // entspricht: array = hf.header[hFile];
-   CopyMemory(GetBufferAddress(array), GetBufferAddress(hf.header) + hFile*HISTORY_HEADER.size, HISTORY_HEADER.size);
+   CopyMemory(GetBufferAddress(hf.header) + hFile*HISTORY_HEADER.size, GetBufferAddress(array), HISTORY_HEADER.size);
    return(NO_ERROR);
 }
 

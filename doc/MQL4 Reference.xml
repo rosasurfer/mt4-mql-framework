@@ -7313,7 +7313,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
         type=int
         name=start
         def_value=0
-        description=Position in the string to start search from.
+        description=Position in the string to start search from (default: 0)
       </parameter>
     </function>
 

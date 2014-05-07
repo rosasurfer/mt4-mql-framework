@@ -142,7 +142,7 @@ int DrawGrid() {
       else {                                                         // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
          bar = iBarShiftNext(NULL, NULL, separatorTime);
          if (bar == EMPTY_VALUE) {                                   // ERS_HISTORY_UPDATE ???
-            if (SetLastError(stdlib_GetLastError()) != ERS_HISTORY_UPDATE)
+            if (SetLastError(stdlib.GetLastError()) != ERS_HISTORY_UPDATE)
                catch("DrawGrid(1)", last_error);
             return(last_error);
          }

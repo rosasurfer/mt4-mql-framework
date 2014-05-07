@@ -1447,7 +1447,7 @@ double PipValue(double lots=1, bool hideErrors=false) {
  * @return bool
  *
  *
- * NOTE: In der Headerdatei implementiert, um Verwendung vor Aufruf von stdlib_init() zu ermöglichen.
+ * NOTE: In der Headerdatei implementiert, um Verwendung vor Aufruf von stdlib.init() zu ermöglichen.
  */
 bool IsLogging() {
    string name = __NAME__;
