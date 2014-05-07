@@ -892,7 +892,7 @@ bool LFX.WriteTicket(int ticket, string label, int operationType, double units, 
    string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPrice, ", ", sOpenPriceTime, ", ", sStopLoss, ", ", sStopLossTime, ", ", sTakeProfit, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(!catch("LFX.WriteTicket(17)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
+      return(!catch("LFX.WriteTicket(17)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
 
    return(true);
 }
