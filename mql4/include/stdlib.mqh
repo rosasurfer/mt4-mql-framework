@@ -571,7 +571,7 @@
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      win32.GetLastError();
+   int      win32.GetLastError(int altError);
 
 
    // Default-Implementierungen: müssen bei Verwendung im Programm implementiert werden

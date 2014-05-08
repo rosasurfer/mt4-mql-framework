@@ -13,6 +13,7 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <core/script.ParameterProvider.mqh>
+#include <ChartInfos/quickchannel.mqh>
 
 
 //////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QickChannel)  ///////////////////////////////////////////////////////////////////////
@@ -46,9 +47,9 @@ int onInit() {
    if (i >= size) return(catch("onInit(1)   missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
 
 
-   // (2) Scriptparameter validieren, Format: "LFX.{Ticket}.{Action}", z.B. "LFX.428371265.open"
-   if (StringLeft(command, 4) != "LFX.")            return(catch("onInit(2)   invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
-   int pos = StringFind(command, ".", 4);
+   // (2) Scriptparameter validieren, Format: "LFX:{iTicket}:{Action}", z.B. "LFX:428371265:open"
+   if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)   invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
+   int pos = StringFind(command, ":", 4);
    if (pos == -1)                                   return(catch("onInit(3)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
    string sValue = StringSubstrFix(command, 4, pos-4);
    if (!StringIsDigit(sValue))                      return(catch("onInit(4)   invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
@@ -68,6 +69,17 @@ int onInit() {
    }
 
    return(catch("onInit(7)"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   QC.StopChannels();
+   return(last_error);
 }
 
 
@@ -103,7 +115,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
 
    // (1) Trade-Parameter einlesen
-   string lfxCurrency  = lo.Currency  (lo);
+   string lfxCurrency  = lo.Currency(lo);
    int    lfxDirection = IsShortTradeOperation(lo.Type(lo));
    double lfxUnits     = lo.Units(lo);
 
@@ -183,14 +195,14 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       // (3.5) Lotsize validieren
       if (GT(roundedLots[i], maxLot)) return(_false(catch("OpenPendingOrder(4)   too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
 
-      // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (2.7) hinterlegen
+      // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.7) hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
    }
 
-   // (3.7) bei Leverageüberschreitung in (2.6) Warnung ausgeben, jedoch nicht abbrechen
+   // (3.7) bei Leverageüberschreitung in (3.6) Warnung ausgeben, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
       warn("OpenPendingOrder(5)   Not enough money. The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2));
 
@@ -203,7 +215,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    }
 
 
-   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist
+   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
    string mutex = "mutex.LFX.#"+ lfxTicket;
    if (!AquireLock(mutex, true))
       return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
@@ -257,9 +269,17 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       return(_false(ReleaseLock(mutex)));
 
 
-   // (9) Order wieder freigeben
+   // (9) Order freigeben
    if (!ReleaseLock(mutex))
       return(!SetLastError(stdlib.GetLastError()));
 
+
+   // (10) Ausführungsbestätigung an LFX-Account schicken
+   if (!QC.SendTradeConfirmation(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
+      return(false);
+
    return(true);
 }
+
+
+/*abstract*/bool ProcessTradeTerminalMessage(string s1) { return(!catch("ProcessTradeTerminalMessage()",  ERR_WRONG_JUMP)); }
