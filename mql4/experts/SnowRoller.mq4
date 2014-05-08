@@ -2343,7 +2343,7 @@ void SS.All() {
 void SS.Sequence.Id() {
    if (IsTesting()) {
       if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
-         catch("SS.Sequence.Id()->user32::SetWindowTextA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+         catch("SS.Sequence.Id()->user32::SetWindowTextA()", win32.GetLastError(ERR_WIN32_ERROR));
    }
 }
 
@@ -3732,7 +3732,7 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
    int error = WinExec(cmdLine, SW_HIDE);                            // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("UploadStatus(2)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
+      return(catch("UploadStatus(2)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", win32.GetLastError(ERR_WIN32_ERROR)));
 
    ArrayResize(parts, 0);
    return(catch("UploadStatus(3)"));

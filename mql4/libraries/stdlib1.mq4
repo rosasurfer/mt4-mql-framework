@@ -115,7 +115,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
 
       if (IsTesting()) {                                             // nur im Tester
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
-            return(catch("stdlib.init(3)->user32::SetWindowTextA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR));  // TODO: Warten, bis die Titelzeile gesetzt ist
+            return(catch("stdlib.init(3)->user32::SetWindowTextA()", win32.GetLastError(ERR_WIN32_ERROR)));    // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber()) {                                  // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
             if (last_error == ERS_TERMINAL_NOT_READY)                // u.U. den UI-Thread blockieren kann.
@@ -945,7 +945,7 @@ int Chart.Expert.Properties() {
       return(catch("Chart.Expert.Properties(2)->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
 
    if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
-      return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
+      return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()", win32.GetLastError(ERR_WIN32_ERROR)));
 
    return(NO_ERROR);
 }
@@ -1106,7 +1106,7 @@ int LoadCursorById(int hInstance, int resourceId) {
 
    int hCursor = LoadCursorW(hInstance, resourceId);
    if (!hCursor)
-      catch("LoadCursorById(2)->user32::LoadCursorW()   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      catch("LoadCursorById(2)->user32::LoadCursorW()", win32.GetLastError(ERR_WIN32_ERROR));
    return(hCursor);
 }
 
@@ -1122,7 +1122,7 @@ int LoadCursorById(int hInstance, int resourceId) {
 int LoadCursorByName(int hInstance, string cursorName) {
    int hCursor = LoadCursorA(hInstance, cursorName);
    if (!hCursor)
-      catch("LoadCursorByName(1)->user32::LoadCursorA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      catch("LoadCursorByName(1)->user32::LoadCursorA()", win32.GetLastError(ERR_WIN32_ERROR));
    return(hCursor);
 }
 
@@ -1341,7 +1341,7 @@ bool IsIniKey(string fileName, string section, string key) {
 int DeleteIniKey(string fileName, string section, string key) {
    string sNull;
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(catch("DeleteIniKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
+      return(catch("DeleteIniKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")", win32.GetLastError(ERR_WIN32_ERROR)));
    return(NO_ERROR);
 }
 
@@ -1360,15 +1360,15 @@ string GetTerminalVersion() {
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
    int chars = GetModuleFileNameA(NULL, fileName[0], bufferSize);
    if (!chars)
-      return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()", win32.GetLastError(ERR_WIN32_ERROR))));
 
    int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
    if (!infoSize)
-      return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()", win32.GetLastError(ERR_WIN32_ERROR))));
 
    int infoBuffer[]; InitializeByteBuffer(infoBuffer, infoSize);
    if (!GetFileVersionInfoA(fileName[0], 0, infoSize, infoBuffer))
-      return(_empty(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()", win32.GetLastError(ERR_WIN32_ERROR))));
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
    //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
@@ -1589,7 +1589,7 @@ string GetLocalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR)
-            return(_empty(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+            return(_empty(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", win32.GetLastError(ERR_WIN32_ERROR))));
          _lclose(hFile);
       }
    }
@@ -1631,7 +1631,7 @@ string GetGlobalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR)
-            return(_empty(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+            return(_empty(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", win32.GetLastError(ERR_WIN32_ERROR))));
          _lclose(hFile);
       }
    }
@@ -3910,11 +3910,11 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
    if (hFile == HFILE_ERROR)
-      return(_empty(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")", win32.GetLastError(ERR_WIN32_ERROR))));
 
    int iNull[], fileSize=GetFileSize(hFile, iNull);
    if (fileSize == 0xFFFFFFFF) {
-      catch("GetWindowsShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      catch("GetWindowsShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")", win32.GetLastError(ERR_WIN32_ERROR));
       _lclose(hFile);
       return("");
    }
@@ -3922,7 +3922,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
 
    int bytes = _lread(hFile, buffer, fileSize);
    if (bytes != fileSize) {
-      catch("GetWindowsShortcutTarget(4)->kernel32::_lread(\""+ lnkFilename +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      catch("GetWindowsShortcutTarget(4)->kernel32::_lread(\""+ lnkFilename +"\")", win32.GetLastError(ERR_WIN32_ERROR));
       _lclose(hFile);
       return("");
    }
@@ -4084,7 +4084,7 @@ int MT4InternalMsg() {
 
       if (!static.messageId) {
          static.messageId = -1;                                      // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
-         catch("MT4InternalMsg(1)->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
+         catch("MT4InternalMsg(1)->user32::RegisterWindowMessageA()", win32.GetLastError(ERR_WIN32_ERROR));
       }
    }
 
@@ -4204,7 +4204,7 @@ string GetServerDirectory() {
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_empty(catch("GetServerDirectory(2)->kernel32::DeleteFileA(filename=\""+ pattern +"\")   error="+ win32.GetLastError(), ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_empty(catch("GetServerDirectory(2)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", win32.GetLastError(ERR_WIN32_ERROR)), FindClose(hFindDir)));
                   break;
                }
             }
@@ -4305,12 +4305,12 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    string sNull;
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
-      return(catch("WinExecAndWait(1)->kernel32::CreateProcessA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR));
+      return(catch("WinExecAndWait(1)->kernel32::CreateProcessA()", win32.GetLastError(ERR_WIN32_ERROR)));
 
    int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
-      if (result == WAIT_FAILED) catch("WinExecAndWait(2)->kernel32::WaitForSingleObject()   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+      if (result == WAIT_FAILED) catch("WinExecAndWait(2)->kernel32::WaitForSingleObject()", win32.GetLastError(ERR_WIN32_ERROR));
       else if (__LOG)              log("WinExecAndWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
@@ -6821,7 +6821,7 @@ string GetComputerName() {
    string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
 
    if (!GetComputerNameA(buffer[0], bufferSize))
-      return(_empty(catch("GetComputerName()->kernel32::GetComputerNameA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetComputerName()->kernel32::GetComputerNameA()", win32.GetLastError(ERR_WIN32_ERROR))));
 
    static.result[0] = buffer[0];
 
@@ -8723,7 +8723,7 @@ string GetClassName(int hWnd) {
    }
 
    if (!chars)
-      return(_empty(catch("GetClassName()->user32::GetClassNameA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR)));
+      return(_empty(catch("GetClassName()->user32::GetClassNameA()", win32.GetLastError(ERR_WIN32_ERROR))));
 
    return(buffer[0]);
 }
@@ -9053,7 +9053,7 @@ int SendSMS(string receiver, string message) {
 
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendSMS(1)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", ERR_WIN32_ERROR));
+      return(catch("SendSMS(1)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", win32.GetLastError(ERR_WIN32_ERROR)));
 
    /**
     * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
@@ -12908,12 +12908,19 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
 
 /**
- * Gibt den letzten aufgetretenen Win32-Fehler zurück.
+ * Gibt den letzten aufgetretenen interne Windows-Fehler zurück. Ist kein interner Windows-Fehler gesetzt, wird der alternative Fehlercode zurückgegeben.
+ *
+ * @param  int altError - alternativer Fehlercode (default: kein Fehler)
  *
  * @return int - Fehlercode
  */
-int win32.GetLastError() {
-   return(RtlGetLastWin32Error());
+int win32.GetLastError(int altError=NULL) {
+   int error = RtlGetLastWin32Error();
+
+   if (!error)
+      error = altError;
+
+   return(error);
 }
 
 

@@ -3189,7 +3189,7 @@ int ShowStatus(int error=NO_ERROR) {
 void SS.Instance.Id() {
    if (IsTesting()) {
       if (!SetWindowTextA(GetTesterWindow(), "Tester - SR-Dual."+ instance.id))
-         catch("SS.Instance.Id()->user32::SetWindowTextA()   error="+ win32.GetLastError(), ERR_WIN32_ERROR);
+         catch("SS.Instance.Id()->user32::SetWindowTextA()", win32.GetLastError(ERR_WIN32_ERROR));
    }
 }
 

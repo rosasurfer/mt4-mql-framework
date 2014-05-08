@@ -93,7 +93,16 @@ int onTick() {
    if (!UpdatePositions())           return(last_error);
 
    if (isLfxInstrument) {
-      if (!CheckPendingLfxOrders())  return(last_error);
+      /*
+      if (Symbol() == "NZDLFX") {
+         static double lastBid, lastAsk;
+         static int    lastVol;
+         bool isRealTick = !(Bid==lastBid && Ask==lastAsk && Volume[0]==lastVol);
+         //debug("onTick()   "+ ifString(isRealTick, "real tick:   ", "virtual tick:") +" Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
+         lastBid = Bid; lastAsk = Ask; lastVol = Volume[0];
+      }
+      */
+      if (!CheckPendingLfxOrders())  return(last_error);             // TODO: Orders nur bei echten Ticks prüfen
    }
    else {
       if (!UpdateSpread())           return(last_error);
@@ -130,40 +139,23 @@ bool CheckPendingLfxOrders() {
                // (1.1) Erreichen des Limits speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
                LFX.SaveOrder(lfxOrders, i);                                               // TODO: Fehler auswerten
-               QC.SendTradeCommand("LFX."+ los.Ticket(lfxOrders, i) +".open");            // TODO: Fehler auswerten
+               QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":open");            // TODO: Fehler auswerten
             }
             continue;
          }
 
-         // (1.2) Limit war schon getriggert, TradeCommand wurde schon verschickt
+         // (1.2) Limit war schon getriggert, TradeCommand schon verschickt
          if (!los.IsOpenError(lfxOrders, i)) {
             if (triggerTime + 20*SECONDS >= TimeGMT()) {
-               // (1.3) auf Ausführungsbestätigung vom TradeAccount warten
-               debug("CheckPendingLfxOrders(0.2)   waiting for execution confirmation of "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
+               //debug("CheckPendingLfxOrders(0.2)   waiting for trade confirmation");
                continue;
             }
 
-            // (1.4) bei Ausbleiben Fehler speichern                                      // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-            warn("CheckPendingLfxOrders(0.3)   missing execution confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
+            // (1.3) bei Ausbleiben Fehler melden und speichern                           // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
+            warn("CheckPendingLfxOrders(1)   missing trade confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
             los.setOpenTime(lfxOrders, i, -TimeGMT());
             LFX.SaveOrder(lfxOrders, i);                                                  // TODO: Versionskonflikt abfangen und verarbeiten
-                                                                                          // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
-            /*
-            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.1)          OP_BUYLIMIT at 1.5726'0 triggered
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959955 Sell 0.03 AUDCAD "CAD.1" at 1.0168'2 (instead of 1.0168'4) after 0.718 s (0.2 pip slippage)
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959956 Buy 0.03 CADCHF "CAD.1" at 0.8011'0 after 0.514 s
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959957 Buy 0.03 CADJPY "CAD.1" at 93.18'8 after 0.234 s
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959958 Sell 0.02 EURCAD "CAD.1" at 1.5205'4 after 0.281 s
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959959 Sell 0.01 GBPCAD "CAD.1" at 1.8485'3 after 0.234 s
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::stdlib1::OrderSendEx(30)   opened #13959960 Sell 0.03 USDCAD "CAD.1" at 1.0958'5 after 0.281 s
-            S1::USDCAD,H1::LFX.ExecuteTradeCmd::OpenPendingOrder(7)        CAD.1 long position opened at 1.5730'7
-            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.2)          waiting for execution confirmation of OP_BUYLIMIT at 1.5726'0
-            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.2)          waiting for execution confirmation of OP_BUYLIMIT at 1.5726'0
-            F1::CADLFX,M5::ChartInfos::CheckPendingLfxOrders(0.2)          waiting for execution confirmation of OP_BUYLIMIT at 1.5726'0
-            F1::CADLFX,M5::ChartInfos::WARN: CheckPendingLfxOrders(0.3)    missing execution confirmation for OP_BUYLIMIT at 1.5726'0
-            F1::CADLFX,M5::ChartInfos::ERROR: LFX.ReadTicket(9)            invalid open equity "0" in config value [IC Markets.{account-no}]->428352864 = "CAD, #1, Buy, 0.2, 2014.05.05 23:39:08, 0, 1.57307, 2014.05.05 23:39:06, 0, 0, 0, 0, 0, 0, 0, 2014.05.05 23:39:28" in "E:\Trading\MetaTrader\F1\experts\files\LiteForex\remote_positions.ini" [5003 - invalid configuration value]
-            */
-         }
+         }                                                                                // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
          else {
             //debug("CheckPendingLfxOrders(0.3)   open error is set for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
          }
@@ -781,7 +773,7 @@ bool AnalyzePositions() {
    for (int n, i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
       if (OrderType() > OP_SELL) continue;
-      if (LFX.IsMyOrder()) {                                         // dabei P/L detektierter LFX-Positionen aufaddieren
+      if (LFX.IsMyOrder()) {                                         // dabei P/L gefundener LFX-Positionen aufaddieren
          if (OrderMagicNumber() != lfxMagics[pos]) {
             pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
             if (pos == -1)
@@ -806,7 +798,7 @@ bool AnalyzePositions() {
    isLocalPosition = (longPosition || shortPosition);
 
 
-   // (2) P/L detektierter LFX-Positionen ans LFX-Terminal schicken (wenn sich der Wert seit der letzten Message geändert hat)
+   // (2) P/L gefundener LFX-Positionen ans LFX-Terminal schicken (wenn sich der Wert seit der letzten Nachricht geändert hat)
    double lastLfxProfit;
    string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hQC.TradeToLfxSenders));    // 2 x ArrayResize() = ArrayInitialize(string array)
    string globalVarLfxProfit;
@@ -841,17 +833,17 @@ bool AnalyzePositions() {
 
       // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
       int cid = LFX.CurrencyId(lfxMagics[i]);
-      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       AccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
-      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, AccountNumber(), ",", lfxMagics[i], ",", DoubleToStr(lfxProfits[i], 2));
+      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       "LFX:", lfxMagics[i], ":profit=", DoubleToStr(lfxProfits[i], 2));
+      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, "LFX:", lfxMagics[i], ":profit=", DoubleToStr(lfxProfits[i], 2));
    }
 
-   // (2.3) angesammelte Messages verschicken (Messages je Channel werden gemeinsam, nicht einzeln verschickt)
+   // (2.3) angesammelte Messages verschicken: Messages je Channel werden gemeinsam, nicht einzeln verschickt, um beim Empfänger unnötige Ticks zu vermeiden
    for (i=ArraySize(lfxMessages)-1; i > 0; i--) {                    // Index 0 ist unbenutzt
       if (StringLen(lfxMessages[i]) > 0) {
          if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartTradeToLfxSender(i))
             return(false);
          if (!QC_SendMessage(hQC.TradeToLfxSenders[i], lfxMessages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
-            return(!catch("AnalyzePositions(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+            return(!catch("AnalyzePositions(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", win32.GetLastError(ERR_WIN32_ERROR)));
       }
    }
 
@@ -947,45 +939,12 @@ bool AnalyzePositions() {
 
    // (3.6) keine lokalen Positionen
    else if (isLfxInstrument) {
-      // per QuickChannel eingehende Remote-Positionsdetails auswerten
-      if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartTradeToLfxReceiver())
+      if (!QC.HandleTradeTerminalMessages())                         // eingehende TradeTerminal-Messages verarbeiten
          return(false);
-
-      int result = QC_CheckChannel(qc.TradeToLfxChannel);
-      if (result > QC_CHECK_CHANNEL_EMPTY) {
-         result = QC_GetMessages3(hQC.TradeToLfxReceiver, qc.TradeToLfxBuffer, QC_MAX_BUFFER_SIZE);
-         if (result != QC_GET_MSG3_SUCCESS) {
-            if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("AnalyzePositions(5)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
-            if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("AnalyzePositions(6)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
-                                                     return(!catch("AnalyzePositions(7)->MT4iQuickChannel::QC_GetMessages3() = unexpected return value: "+ result,                                      ERR_WIN32_ERROR));
-         }
-         string values = qc.TradeToLfxBuffer[0];
-         int lenValues = StringLen(values);
-         i = 0; pos = 0;
-
-         while (i < lenValues) {
-            pos = StringFind(values, TAB, i);
-            if (pos == -1) {                                         // kein weiterer Message-Separator
-               if (!ProcessTradeToLfxMessage(StringSubstr(values, i)))
-                  return(false);
-               break;
-            }
-            else if (pos != i) {                                     // Separator-Message-Separator
-               if (!ProcessTradeToLfxMessage(StringSubstr(values, i, pos-i)))
-                  return(false);
-            }
-            i = pos + 1;
-         }                                                           // aufeinanderfolgende (pos == i) und abschließende Separatoren (i == lenValues) werden ignoriert
-      }
-      else if (result < QC_CHECK_CHANNEL_EMPTY) {
-         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("AnalyzePositions(8)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") = QC_CHECK_CHANNEL_ERROR",             ERR_WIN32_ERROR));
-         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("AnalyzePositions(9)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") doesn't exist",                        ERR_WIN32_ERROR));
-                                               return(!catch("AnalyzePositions(10)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
-      }
    }
 
    positionsAnalyzed = true;
-   return(!catch("AnalyzePositions(11)"));
+   return(!catch("AnalyzePositions(5)"));
 }
 
 
@@ -1633,25 +1592,45 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
 /**
  * Verarbeitet die übergebene "TradeToLfxChannel"-Message.
  *
- * @param  string message - QuickChannel-Message, Format: "iAccountNumber,iMagicNumber,dProfit"
+ * @param  string message - QuickChannel-Message, Format: "LFX:{iTicket]:open={0|1}"
+ *                                                  oder: "LFX:{iTicket]:close={0|1}"
+ *                                                  oder: "LFX:{iTicket]:profit={dValue}"
  *
  * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende Remote-Position sind kein Fehler,
  *                               ein Programmabbruch von außen durch Schicken einer falschen Message ist also nicht möglich. Für eine unerkannte Message wird lediglich eine
  *                               Warnung ausgegeben, danach wird die Message ignoriert.
  */
-bool ProcessTradeToLfxMessage(string message) {
-   // NOTE: Anstatt die Message mit Explode() zu zerlegen, wird sie zur Beschleunigung manuell geparst.
-   // AccountNumber
-   int from=0, to=StringFind(message, ",");                         if (to <= from)   return(_true(warn("ProcessTradeToLfxMessage(1)   illegal parameter message=\""+ message +"\"")));
-   int account = StrToInteger(StringSubstr(message, from, to));     if (account <= 0) return(_true(warn("ProcessTradeToLfxMessage(2)   illegal parameter message=\""+ message +"\"")));
+bool ProcessTradeTerminalMessage(string message) {
+   //debug("ProcessTradeTerminalMessage()   "+ message);
 
-   // MagicNumber, übernimmt die Funktion eines eindeutigen Tickets für die Gesamtposition
-   from = to+1; to = StringFind(message, ",", from);                if (to <= from)   return(_true(warn("ProcessTradeToLfxMessage(3)   illegal parameter message=\""+ message +"\"")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0)  return(_true(warn("ProcessTradeToLfxMessage(4)   illegal parameter message=\""+ message +"\"")));
+   // NOTE: Anstatt mit Explode() wird die Message zur Beschleunigung manuell zerlegt.
 
-   // aktueller P/L-Value
-   from = to+1; to = StringFind(message, ",", from);                if (to != -1)     return(_true(warn("ProcessTradeToLfxMessage(5)   illegal parameter message=\""+ message +"\"")));
-   double profit = StrToDouble(StringSubstr(message, from));
+   // Prefix
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessTradeTerminalMessage(1)   unknown message format \""+ message +"\"")));
+   // LFX-Ticket
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessTradeTerminalMessage(2)   unknown message \""+ message +"\" (illegal order ticket)")));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessTradeTerminalMessage(3)   unknown message \""+ message +"\" (illegal order ticket)")));
+
+   // Daten
+   double profit;
+   bool   success;
+   from = to+1;
+   if (StringSubstr(message, from, 7) == "profit=") {                // die häufigste Message wird zuerst geprüft
+      profit = StrToDouble(StringSubstr(message, from+7));
+   }
+   else if (StringSubstr(message, from, 5) == "open=") {
+      success = (StrToInteger(StringSubstr(message, from+5)) != 0);
+      debug("ProcessTradeTerminalMessage()   #"+ ticket +" opening "+ ifString(success, "confirmation", "error"));
+      return(true);
+   }
+   else if (StringSubstr(message, from, 6) == "close=") {
+      success = (StrToInteger(StringSubstr(message, from+6)) != 0);
+      debug("ProcessTradeTerminalMessage()   #"+ ticket +" closing "+ ifString(success, "confirmation", "error"));
+      return(true);
+   }
+   else {
+      return(_true(warn("ProcessTradeTerminalMessage(4)   unknown message \""+ message +"\"")));
+   }
 
 
    // (1) Ticket in vorhandenen Remote-Positionen suchen
@@ -1659,27 +1638,23 @@ bool ProcessTradeToLfxMessage(string message) {
    if (pos == -1) {
 
       // (2.1) bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
-      int ignoredTickets[][3], timeToIgnore=5;                       // Ignorier-Zeitdauer in Sekunden
-      #define I_ACCOUNT 0
-      #define I_TICKET  1
-      #define I_TIME    2
+      int ignoredTickets[][2], timeToIgnore=5;                       // Ignorier-Zeitdauer in Sekunden
+      #define I_TICKET  0
+      #define I_TIME    1
 
       int ignoredSize = ArrayRange(ignoredTickets, 0);
       for (int i=0; i < ignoredSize; i++) {
          if (ignoredTickets[i][I_TICKET] == ticket) {
-            if (ignoredTickets[i][I_ACCOUNT] == account) {
-               if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal())
-                  return(true);                                      // Ticket wurde und wird weiterhin ignoriert
+            if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal())
+               return(true);                                         // Ticket wurde und wird weiterhin ignoriert
 
-               for (int n=i+1; n < ignoredSize; n++) {               // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
-                  ignoredTickets[n-1][I_ACCOUNT] = ignoredTickets[n][I_ACCOUNT];
-                  ignoredTickets[n-1][I_TICKET ] = ignoredTickets[n][I_TICKET ];
-                  ignoredTickets[n-1][I_TIME   ] = ignoredTickets[n][I_TIME   ];
-               }
-               ArrayResize(ignoredTickets, ignoredSize-1);           // Ticket aus zu ignorierenden Tickets löschen
-               ignoredSize--;
-               break;
+            for (int n=i+1; n < ignoredSize; n++) {                  // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
+               ignoredTickets[n-1][I_TICKET] = ignoredTickets[n][I_TICKET];
+               ignoredTickets[n-1][I_TIME  ] = ignoredTickets[n][I_TIME  ];
             }
+            ArrayResize(ignoredTickets, ignoredSize-1);              // Ticket aus zu ignorierenden Tickets löschen
+            ignoredSize--;
+            break;
          }
       }
 
@@ -1691,12 +1666,10 @@ bool ProcessTradeToLfxMessage(string message) {
       int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, dNull, version);
       if (!result)
          return(false);                                              //  0: Fehler
-
       if (result < 0) {                                              // -1: Ticket nicht gefunden, Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
          ArrayResize(ignoredTickets, ignoredSize+1);
-         ignoredTickets[ignoredSize][I_ACCOUNT] = account;
-         ignoredTickets[ignoredSize][I_TICKET ] = ticket;
-         ignoredTickets[ignoredSize][I_TIME   ] = TimeLocal();
+         ignoredTickets[ignoredSize][I_TICKET] = ticket;
+         ignoredTickets[ignoredSize][I_TIME  ] = TimeLocal();
          return(true);
       }
 
