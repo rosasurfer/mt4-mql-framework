@@ -132,7 +132,7 @@ int onStart() {
 
 
    // (3) Orderbenachrichtigung an den Chart schicken
-   if (!QC.SendOrderConfirmation(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":pending=1"))
+   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":pending=1"))
       return(false);
 
 
