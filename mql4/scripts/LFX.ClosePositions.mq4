@@ -11,8 +11,8 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/script.mqh>
 
-#include <lfx.mqh>
 #include <win32api.mqh>
+#include <LFX/functions.mqh>
 
 #property show_inputs
 

@@ -5,13 +5,13 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
 #include <core/script.mqh>
-#include <win32api.mqh>
 
-#include <lfx.mqh>
+#include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <ChartInfos/quickchannel.mqh>
+
+#include <LFX/functions.mqh>
+#include <LFX/quickchannel.mqh>
 
 
 /**

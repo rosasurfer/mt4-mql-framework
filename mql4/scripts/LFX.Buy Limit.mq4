@@ -11,9 +11,10 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 
 #include <win32api.mqh>
-#include <lfx.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <ChartInfos/quickchannel.mqh>
+
+#include <LFX/functions.mqh>
+#include <LFX/quickchannel.mqh>
 
 #property show_inputs
 

@@ -8,10 +8,11 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 
 #include <win32api.mqh>
-#include <lfx.mqh>
 #include <MT4iQuickChannel.mqh>
-#include <ChartInfos/quickchannel.mqh>
+
 #include <core/script.ParameterProvider.mqh>
+#include <LFX/functions.mqh>
+#include <LFX/quickchannel.mqh>
 
 #property indicator_chart_window
 
