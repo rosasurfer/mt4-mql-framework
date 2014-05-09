@@ -1605,13 +1605,12 @@ bool ProcessTradeTerminalMessage(string message) {
 
    // NOTE: Anstatt mit Explode() wird die Message zur Beschleunigung manuell zerlegt.
 
-   // Prefix
+   // LFX-Prefix
    if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessTradeTerminalMessage(1)   unknown message format \""+ message +"\"")));
    // LFX-Ticket
    int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessTradeTerminalMessage(2)   unknown message \""+ message +"\" (illegal order ticket)")));
    int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessTradeTerminalMessage(3)   unknown message \""+ message +"\" (illegal order ticket)")));
-
-   // Daten
+   // LFX-Parameter
    double profit;
    bool   success;
    from = to+1;
