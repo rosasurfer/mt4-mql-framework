@@ -111,7 +111,7 @@ int onStart() {
  */
 bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    if (!lo.IsPending(lo))
-      return(!catch("OpenPendingOrder(1)   cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
+      return(!catch("OpenPendingOrder(1)   #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
 
 
    // (1) Trade-Parameter einlesen
@@ -193,7 +193,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       else                                { if (lotStep < 100.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
       // (3.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(_false(catch("OpenPendingOrder(4)   too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
+      if (GT(roundedLots[i], maxLot)) return(_false(catch("OpenPendingOrder(4)   #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
 
       // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.7) hinterlegen
       if (LT(roundedLots[i], minLot)) {
@@ -204,7 +204,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    // (3.7) bei Leverageüberschreitung in (3.6) Warnung ausgeben, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
-      warn("OpenPendingOrder(5)   Not enough money. The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2));
+      warn("OpenPendingOrder(5)   #"+ lo.Ticket(lo) +" Not enough money. The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2));
 
 
    // (4) Directions der Teilpositionen bestimmen
@@ -276,7 +276,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
 
    // (10) Ausführungsbestätigung an LFX-Account schicken
-   if (!QC.SendTradeConfirmation(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
+   if (!QC.SendOrderConfirmation(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
       return(false);
 
    return(true);
