@@ -87,6 +87,8 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedli
  * @return int - Fehlerstatus
  */
 int onTick() {
+   static double lastBid, lastAsk;
+
    positionsAnalyzed = false;
 
    if (!UpdatePrice())               return(last_error);
@@ -94,16 +96,8 @@ int onTick() {
    if (!UpdatePositions())           return(last_error);
 
    if (isLfxInstrument) {
-      /*
-      if (Symbol() == "NZDLFX") {
-         static double lastBid, lastAsk;
-         static int    lastVol;
-         bool isRealTick = !(Bid==lastBid && Ask==lastAsk && Volume[0]==lastVol);
-         //debug("onTick()   "+ ifString(isRealTick, "real tick:   ", "virtual tick:") +" Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  Vol="+ _int(Volume[0]));
-         lastBid = Bid; lastAsk = Ask; lastVol = Volume[0];
-      }
-      */
-      if (!CheckPendingLfxOrders())  return(last_error);             // TODO: Orders nur bei echten Ticks prüfen
+      if (Bid!=lastBid || Ask!=lastAsk)
+         if (!CheckPendingLfxOrders())  return(last_error);          // Pending-Orders nur nach Preisänderung prüfen
    }
    else {
       if (!UpdateSpread())           return(last_error);
@@ -111,15 +105,17 @@ int onTick() {
       if (!UpdateStopoutLevel())     return(last_error);
       if (IsVisualMode())
          if (!UpdateTime())          return(last_error);
-      if (!QC.HandleTradeCommands()) return(last_error);             // TradeCommand-Messages verarbeiten
+      if (!QC.HandleTradeCommands()) return(last_error);             // TradeCommands verarbeiten
    }
 
+   lastBid = Bid;
+   lastAsk = Ask;
    return(last_error);
 }
 
 
 /**
- * Überprüft alle Pending-LFX-Orders auf ein erfülltes Orderkriterium.
+ * Überprüft alle Pending-LFX-Orders (Pending-Open, StopLoss, TakeProfit) auf erreichte Limite.
  *
  * @return bool - Erfolgsstatus
  */
@@ -127,41 +123,39 @@ bool CheckPendingLfxOrders() {
    datetime triggerTime;
    int orders = ArrayRange(lfxOrders, 0);
 
-   for (int i=0; i < orders; i++) {
-      int type = los.Type(lfxOrders, i);
+   for (int i=0; i < orders; i++) {                                                                   // TODO: Orders mit Open/Close-Error irgendwie behandeln
+      if (los.IsOpenError (lfxOrders, i)) { log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set");  continue; }
+      if (los.IsCloseError(lfxOrders, i)) { log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set"); continue; }
 
-      if (IsPendingTradeOperation(type)) {
+
+      if (los.IsPending(lfxOrders, i)) {
+         // (1) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP-Order
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
-            // (1.0) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT bzw. OP_SELLSTOP prüfen
-            if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i)+lfxChartDeviation)) {
-               debug("CheckPendingLfxOrders(0.1)   #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered");
-
-               // (1.1) Erreichen des Limits speichern und TradeCommand verschicken
+            // (1.1) Limit ist noch nicht getriggert
+            if (IsLimitTriggered(los.Type(lfxOrders, i), false, false, los.OpenPrice(lfxOrders, i)+lfxChartDeviation)) {
+               // Auslösen speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
-               LFX.SaveOrder(lfxOrders, i);                                               // TODO: Fehler auswerten
-               QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":open");            // TODO: Fehler auswerten
+               if (!LFX.SaveOrder(lfxOrders, i))                                    return(false);
+               if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":open")) return(false);
             }
             continue;
          }
+         // (1.2) Limit war bereits getriggert, auf Orderbestätigung warten
+         if (triggerTime + 20*SECONDS >= TimeGMT())
+            continue;
 
-         // (1.2) Limit war schon getriggert, TradeCommand schon verschickt
-         if (!los.IsOpenError(lfxOrders, i)) {
-            if (triggerTime + 20*SECONDS >= TimeGMT()) {
-               //debug("CheckPendingLfxOrders(0.2)   waiting for trade confirmation");
-               continue;
-            }
-
-            // (1.3) bei Ausbleiben Fehler melden und speichern                           // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-            warn("CheckPendingLfxOrders(1)   missing trade confirmation for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
-            los.setOpenTime(lfxOrders, i, -TimeGMT());
-            LFX.SaveOrder(lfxOrders, i);                                                  // TODO: Versionskonflikt abfangen und verarbeiten
-         }                                                                                // TODO: wenn Fehlerbenachrichtigung, bei Ausführung ebenfalls benachrichtigen (Entwarnung)
-         else {
-            //debug("CheckPendingLfxOrders(0.3)   open error is set for "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
-         }
+         // (1.3) bei Ausbleiben Fehler melden und speichern                                          // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
+         warn("CheckPendingLfxOrders(3)   missing trade confirmation for "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
+         los.setOpenTime(lfxOrders, i, -TimeGMT());
+         if (!LFX.SaveOrder(lfxOrders, i))
+            return(false);                                                                            // TODO: Versionskonflikt abfangen und verarbeiten
+         if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) +":open=0"))
+            return(false);
       }
       else {
+         // (2) StopLoss oder TakeProfit
+         /*
          if (los.StopLoss(lfxOrders, i) != 0) {
             triggerTime = los.StopLossTime(lfxOrders, i);
             // StopLoss-Limit prüfen
@@ -176,6 +170,7 @@ bool CheckPendingLfxOrders() {
                debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfit(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
+         */
       }
    }
    return(true);

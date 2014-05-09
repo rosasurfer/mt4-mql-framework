@@ -277,7 +277,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
 
    // (10) Ausführungsbestätigung an LFX-Account schicken
-   if (!QC.SendOrderConfirmation(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
+   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
       return(false);
 
    return(true);

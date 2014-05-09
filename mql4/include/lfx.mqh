@@ -23,98 +23,6 @@ int    lfxOrders[][LFX_ORDER.intSize];                               // LFX_ORDE
 
 
 /**
- * Initialisiert die internen Variablen zum Zugriff auf den LFX-TradeAccount.
- *
- * @return bool - Erfolgsstatus
- */
-bool LFX.InitAccountData() {
-   if (lfxAccount > 0)
-      return(true);
-
-   int    _account;
-   string _accountCompany;
-   int    _accountType;
-
-   bool isLfxInstrument = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
-
-   if (isLfxInstrument) {
-      // Daten des TradeAccounts
-      string section = "LFX";
-      string key     = "MRUTradeAccount";
-      //if (This.IsTesting())                            // TODO: Workaround schaffen für Fehler in Indikator::init() bei Terminalstart, wenn Chartfenster noch nicht bereit ist
-      //   key = key + ".Tester";                        //       WindowHandle() = 0
-      _account = GetLocalConfigInt(section, key, 0);
-      if (_account <= 0) {
-         string value = GetLocalConfigString(section, key, "");
-         if (!StringLen(value)) return(!catch("LFX.InitAccountData(1)   missing trade account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
-                                return(!catch("LFX.InitAccountData(2)   invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
-      }
-   }
-   else {
-      // Daten des aktuellen Accounts
-      _account = GetAccountNumber();
-      if (!_account)
-         return(!SetLastError(stdlib.GetLastError()));
-   }
-
-   // AccountCompany
-   section = "Accounts";
-   key     = _account +".company";
-   _accountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCompany)) return(!catch("LFX.InitAccountData(3)   missing account company setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-
-   // AccountType
-   key   = _account +".type";
-   value = StringToLower(GetGlobalConfigString(section, key, ""));
-   if (!StringLen(value)) return(!catch("LFX.InitAccountData(4)   missing account type setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
-   else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
-   else return(!catch("LFX.InitAccountData(5)   invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
-
-   // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   lfxAccount        = _account;
-   lfxAccountCompany = _accountCompany;
-   lfxAccountType    = _accountType;
-
-   return(true);
-}
-
-
-/**
- * Ob die aktuell selektierte Order zu dieser Strategie gehört.
- *
- * @return bool
- */
-bool LFX.IsMyOrder() {
-   return(OrderMagicNumber() >> 22 == STRATEGY_ID);                  // 10 bit (Bit 23-32) => Bereich 101-1023
-}
-
-
-/**
- * Gibt die Currency-ID der MagicNumber einer LFX-Order zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Currency-ID, entsprechend stdlib1::GetCurrencyId()
- */
-int LFX.CurrencyId(int magicNumber) {
-   return(magicNumber >> 18 & 0xF);                                  // 4 bit (Bit 19-22) => Bereich 1-15
-}
-
-
-/**
- * Gibt die Instanz-ID der MagicNumber einer LFX-Order zurück.
- *
- * @param  int magicNumber
- *
- * @return int - Instanz-ID
- */
-int LFX.InstanceId(int magicNumber) {
-   return(magicNumber >> 4 & 0x3FF);                                 // 10 bit (Bit 5-14) => Bereich 1-1023
-}
-
-
-/**
  * MQL4 structure LFX_ORDER
  *
  * struct LFX_ORDER {
@@ -320,6 +228,98 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
 
    catch("LFX_ORDER.toStr(3)");
    return(output);
+}
+
+
+/**
+ * Initialisiert die internen Variablen zum Zugriff auf den LFX-TradeAccount.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool LFX.InitAccountData() {
+   if (lfxAccount > 0)
+      return(true);
+
+   int    _account;
+   string _accountCompany;
+   int    _accountType;
+
+   bool isLfxInstrument = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
+
+   if (isLfxInstrument) {
+      // Daten des TradeAccounts
+      string section = "LFX";
+      string key     = "MRUTradeAccount";
+      //if (This.IsTesting())                            // TODO: Workaround schaffen für Fehler in Indikator::init() bei Terminalstart, wenn Chartfenster noch nicht bereit ist
+      //   key = key + ".Tester";                        //       WindowHandle() = 0
+      _account = GetLocalConfigInt(section, key, 0);
+      if (_account <= 0) {
+         string value = GetLocalConfigString(section, key, "");
+         if (!StringLen(value)) return(!catch("LFX.InitAccountData(1)   missing trade account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
+                                return(!catch("LFX.InitAccountData(2)   invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+      }
+   }
+   else {
+      // Daten des aktuellen Accounts
+      _account = GetAccountNumber();
+      if (!_account)
+         return(!SetLastError(stdlib.GetLastError()));
+   }
+
+   // AccountCompany
+   section = "Accounts";
+   key     = _account +".company";
+   _accountCompany = GetGlobalConfigString(section, key, "");
+   if (!StringLen(_accountCompany)) return(!catch("LFX.InitAccountData(3)   missing account company setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
+   // AccountType
+   key   = _account +".type";
+   value = StringToLower(GetGlobalConfigString(section, key, ""));
+   if (!StringLen(value)) return(!catch("LFX.InitAccountData(4)   missing account type setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
+   else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
+   else return(!catch("LFX.InitAccountData(5)   invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
+
+   // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
+   lfxAccount        = _account;
+   lfxAccountCompany = _accountCompany;
+   lfxAccountType    = _accountType;
+
+   return(true);
+}
+
+
+/**
+ * Ob die aktuell selektierte Order zu dieser Strategie gehört.
+ *
+ * @return bool
+ */
+bool LFX.IsMyOrder() {
+   return(OrderMagicNumber() >> 22 == STRATEGY_ID);                  // 10 bit (Bit 23-32) => Bereich 101-1023
+}
+
+
+/**
+ * Gibt die Currency-ID der MagicNumber einer LFX-Order zurück.
+ *
+ * @param  int magicNumber
+ *
+ * @return int - Currency-ID, entsprechend stdlib1::GetCurrencyId()
+ */
+int LFX.CurrencyId(int magicNumber) {
+   return(magicNumber >> 18 & 0xF);                                  // 4 bit (Bit 19-22) => Bereich 1-15
+}
+
+
+/**
+ * Gibt die Instanz-ID der MagicNumber einer LFX-Order zurück.
+ *
+ * @param  int magicNumber
+ *
+ * @return int - Instanz-ID
+ */
+int LFX.InstanceId(int magicNumber) {
+   return(magicNumber >> 4 & 0x3FF);                                 // 10 bit (Bit 5-14) => Bereich 1-1023
 }
 
 
