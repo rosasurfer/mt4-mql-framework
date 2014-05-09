@@ -7,9 +7,10 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 #include <core/indicator.mqh>
 
-#include <lfx.mqh>
 #include <win32api.mqh>
+#include <lfx.mqh>
 #include <MT4iQuickChannel.mqh>
+#include <ChartInfos/quickchannel.mqh>
 #include <core/script.ParameterProvider.mqh>
 
 #property indicator_chart_window
@@ -77,7 +78,6 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedli
 
 #include <ChartInfos/init.mqh>
 #include <ChartInfos/deinit.mqh>
-#include <ChartInfos/quickchannel.mqh>
 
 
 /**
