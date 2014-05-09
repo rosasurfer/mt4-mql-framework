@@ -134,7 +134,7 @@ bool CheckPendingLfxOrders() {
          if (!triggerTime) {
             // (1.0) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT bzw. OP_SELLSTOP prüfen
             if (IsLimitTriggered(type, false, false, los.OpenPrice(lfxOrders, i)+lfxChartDeviation)) {
-               debug("CheckPendingLfxOrders(0.1)   "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered");
+               debug("CheckPendingLfxOrders(0.1)   #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(type) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered");
 
                // (1.1) Erreichen des Limits speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
@@ -1592,13 +1592,16 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
 /**
  * Verarbeitet die übergebene "TradeToLfxChannel"-Message.
  *
- * @param  string message - QuickChannel-Message, Format: "LFX:{iTicket]:open={0|1}"
- *                                                  oder: "LFX:{iTicket]:close={0|1}"
- *                                                  oder: "LFX:{iTicket]:profit={dValue}"
+ * @param  string message - QuickChannel-Message, siehe Formatbeschreibung
  *
- * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende Remote-Position sind kein Fehler,
- *                               ein Programmabbruch von außen durch Schicken einer falschen Message ist also nicht möglich. Für eine unerkannte Message wird lediglich eine
- *                               Warnung ausgegeben, danach wird die Message ignoriert.
+ * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende Order sind kein Fehler,
+ *                               ein Programmabbruch von außen durch Schicken einer falschen Message ist nicht möglich. Für unerkannte Messages wird eine
+ *                               Warnung ausgegeben.
+ *
+ *  Messageformat: "LFX:{iTicket]:pending=1"       - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
+ *                 "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
+ *                 "LFX:{iTicket]:close={0|1}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
+ *                 "LFX:{iTicket]:profit={dValue}" - der kumulierte P/L-Wert der angegebenen Position hat sich geändert
  */
 bool ProcessTradeTerminalMessage(string message) {
    //debug("ProcessTradeTerminalMessage()   "+ message);
@@ -1617,14 +1620,19 @@ bool ProcessTradeTerminalMessage(string message) {
    if (StringSubstr(message, from, 7) == "profit=") {                // die häufigste Message wird zuerst geprüft
       profit = StrToDouble(StringSubstr(message, from+7));
    }
+   else if (StringSubstr(message, from, 8) == "pending=") {
+      success = (StrToInteger(StringSubstr(message, from+8)) != 0);
+      debug("ProcessTradeTerminalMessage()   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
+      return(true);
+   }
    else if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      debug("ProcessTradeTerminalMessage()   #"+ ticket +" opening "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeTerminalMessage()   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
       return(true);
    }
    else if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      debug("ProcessTradeTerminalMessage()   #"+ ticket +" closing "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeTerminalMessage()   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
       return(true);
    }
    else {

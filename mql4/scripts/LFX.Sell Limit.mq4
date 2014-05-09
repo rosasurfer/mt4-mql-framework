@@ -12,6 +12,8 @@ int __DEINIT_FLAGS__[];
 
 #include <win32api.mqh>
 #include <lfx.mqh>
+#include <MT4iQuickChannel.mqh>
+#include <ChartInfos/quickchannel.mqh>
 
 #property show_inputs
 
@@ -85,6 +87,17 @@ int onInit() {
 
 
 /**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   QC.StopTradeToLfxSenders();
+   return(last_error);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
@@ -104,21 +117,21 @@ int onStart() {
 
    // (2) neue Order erzeugen und speichern
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-
-   lo.setTicket    (lo, CreateMagicNumber()          );              // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-   lo.setType      (lo, OP_SELLLIMIT                 );
-   lo.setUnits     (lo, Units                        );
-   lo.setOpenTime  (lo, TimeGMT()                    );
-   lo.setOpenPrice (lo, devLimitPrice                );
-   lo.setStopLoss  (lo, devStopLossPrice             );
-   lo.setTakeProfit(lo, devTakeProfitPrice           );
-   lo.setComment   (lo, "#"+ (GetPositionCounter()+1));
-
+      lo.setTicket    (lo, CreateMagicNumber()          );           // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setType      (lo, OP_SELLLIMIT                 );
+      lo.setUnits     (lo, Units                        );
+      lo.setOpenTime  (lo, TimeGMT()                    );
+      lo.setOpenPrice (lo, devLimitPrice                );
+      lo.setStopLoss  (lo, devStopLossPrice             );
+      lo.setTakeProfit(lo, devTakeProfitPrice           );
+      lo.setComment   (lo, "#"+ (GetPositionCounter()+1));
    if (!LFX.SaveOrder(lo))
       return(last_error);
 
 
-   // (3) TODO: Command an den Chart schicken, die Pending-Orders neu einzulesen
+   // (3) Orderbenachrichtigung an den Chart schicken
+   if (!QC.SendOrderConfirmation(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":pending=1"))
+      return(false);
 
 
    // (4) Bestätigungsmeldung
@@ -192,3 +205,8 @@ int GetPositionCounter() {
    }
    return(counter);
 }
+
+
+/*abstract*/bool QC.StopScriptParameterSender()         { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+/*abstract*/bool ProcessTradeTerminalMessage(string s1) { return(!catch("ProcessTradeTerminalMessage()",  ERR_WRONG_JUMP)); }
+/*abstract*/bool RunScript(string s1, string s2)        { return(!catch("RunScript()",                    ERR_WRONG_JUMP)); }

@@ -143,10 +143,11 @@ int onStart() {
 
 
       // (7) Logmessage ausgeben
-      int    lfxDigits  =    ifInt(currency=="JPY",    3,     5 );
-      string lfxFormat  = ifString(currency=="JPY", ".2'", ".4'");
-             closePrice = NormalizeDouble(closePrice, lfxDigits);
-      if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(closePrice, lfxFormat) +", profit: "+ DoubleToStr(profit, 2));
+      int    lfxDigits     =    ifInt(currency=="JPY",    3,     5 );
+      string lfxFormat     = ifString(currency=="JPY", ".2'", ".4'");
+             closePrice    = NormalizeDouble(closePrice, lfxDigits);
+      double closePriceLfx = NormalizeDouble(closePrice + GetGlobalConfigDouble("LfxChartDeviation", currency, 0), lfxDigits);
+      if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(closePrice, lfxFormat) +" (LFX price: "+ NumberToStr(closePriceLfx, lfxFormat) +"), profit: "+ DoubleToStr(profit, 2));
 
 
       // (8) LFX-Order in .ini-Datei aktualisieren

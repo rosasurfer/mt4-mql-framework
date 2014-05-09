@@ -817,7 +817,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    if (!result) return(false);
    if (result > 0)
       if (lo.Version(lastVersion) > lo.Version(lo))
-         return(!catch("LFX.SaveOrder(5)   concurrent modification of order #"+ ticket +" (expected version \""+ TimeToStr(lo.Version(lo), TIME_FULL) +"\", found version \""+ TimeToStr(lo.Version(lastVersion), TIME_FULL) +"\")", ERR_CONCURRENT_MODIFICATION));
+         return(!catch("LFX.SaveOrder(5)   concurrent modification of #"+ ticket +" (expected version \""+ TimeToStr(lo.Version(lo), TIME_FULL) +"\", found version \""+ TimeToStr(lo.Version(lastVersion), TIME_FULL) +"\")", ERR_CONCURRENT_MODIFICATION));
    datetime newVersion = TimeGMT();
 
 
