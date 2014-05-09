@@ -17,7 +17,7 @@ extern string Close.Symbols      = "";    // Symbole:                      komma
 extern string Close.Direction    = "";    // (B)uy|(L)ong|(S)ell|(S)hort
 extern string Close.Tickets      = "";    // Tickets:                      kommagetrennt
 extern string Close.MagicNumbers = "";    // MagicNumbers:                 kommagetrennt
-extern string Close.Comment      = "";    // Kommentar:                    Prüfung per OrderComment().StringIStartsWith(value)
+extern string Close.Comments     = "";    // Kommentare:                   kommagetrennt, Prüfung per OrderComment().StringIStartsWith(value)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,7 +26,7 @@ string orderSymbols [];
 int    orderType = OP_UNDEFINED;
 int    orderTickets [];
 int    orderMagics  [];
-string orderComment;
+string orderComments[];
 
 
 /**
@@ -85,8 +85,12 @@ int onInit() {
       }
    }
 
-   // Close.Comment
-   orderComment = StringTrim(Close.Comment);
+   // Close.Comments
+   size = Explode(Close.Comments, ",", values, NULL);
+   for (i=0; i < size; i++) {
+      if (StringLen(values[i]) > 0)
+         ArrayPushString(orderComments, values[i]);
+   }
 
    return(catch("onInit(6)"));
 }
@@ -114,16 +118,19 @@ int onStart() {
       if (close) close = (orderType              == OP_UNDEFINED || OrderType() == orderType);
       if (close) close = (ArraySize(orderTickets)== 0            || IntInArray(orderTickets, OrderTicket()));
       if (close) close = (ArraySize(orderMagics) == 0            || IntInArray(orderMagics, OrderMagicNumber()));
-
-      if (close) /*&&*/ if (orderComment!="") /*&&*/ if (!StringIStartsWith(OrderComment(), orderComment))
-         close = false;
-
+      if (close) {
+         int commentsSize = ArraySize(orderComments);
+         for (int n=0; n < commentsSize; n++) {
+            if (StringIStartsWith(OrderComment(), orderComments[n]))
+               break;
+         }
+         if (commentsSize != 0)                                      // Comments angegeben
+            close = (n < commentsSize);                              // Order paßt, wenn break getriggert
+      }
       if (close) /*&&*/ if (!IntInArray(tickets, OrderTicket()))
          ArrayPushInt(tickets, OrderTicket());
    }
-
-
-   bool isInput = !(ArraySize(orderSymbols) + ArraySize(orderTickets) + ArraySize(orderMagics) + orderType==-1 && orderComment=="");
+   bool isInput = (ArraySize(orderSymbols) + ArraySize(orderTickets) + ArraySize(orderMagics) + ArraySize(orderComments) + (orderType!=OP_UNDEFINED)) != 0;
 
 
    // Positionen schließen
