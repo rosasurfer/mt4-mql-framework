@@ -253,10 +253,11 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
 
    // (7) Logmessage ausgeben
-   int    lfxDigits = lo.Digits(lo);
-   string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-          openPrice = NormalizeDouble(openPrice, lfxDigits);
-   if (__LOG) log("OpenPendingOrder(7)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat));
+   int    lfxDigits    = lo.Digits(lo);
+   string lfxFormat    = ifString(lfxCurrency=="JPY", ".2'", ".4'");
+          openPrice    = NormalizeDouble(openPrice, lfxDigits);
+   double openPriceLfx = NormalizeDouble(openPrice + GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0), lfxDigits);
+   if (__LOG) log("OpenPendingOrder(7)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat) +" (LFX price: "+ NumberToStr(openPriceLfx, lfxFormat) +")");
 
 
    // (8) Order speichern
