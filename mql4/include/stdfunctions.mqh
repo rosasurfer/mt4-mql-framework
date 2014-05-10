@@ -775,8 +775,8 @@ int      last_error;                                        // der letzte Fehler
 #define ORDER_EXECUTION.size                  136
 #define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
 
-#define LFX_ORDER.size                         96
-#define LFX_ORDER.intSize                      24     // ceil(LFX_ORDER.size/4)
+#define LFX_ORDER.size                        100
+#define LFX_ORDER.intSize                      25     // ceil(LFX_ORDER.size/4)
 
 
 // History bar ID's
@@ -785,6 +785,48 @@ int      last_error;                                        // der letzte Fehler
 #define BAR_H                                   2
 #define BAR_C                                   3
 #define BAR_V                                   4
+
+
+#import "stdlib1.ex4"
+   int    ArrayPopInt(int array[]);
+   int    ArrayPushInt(int array[], int value);
+   int    ArrayPushString(string array[], string value);
+   int    Chart.Expert.Properties();
+   string ErrorDescription(int error);
+   bool   EventListener.AccountChange(int data[], int criteria);
+   bool   EventListener.AccountPayment(int data[], int criteria);
+   bool   EventListener.BarOpen(int data[], int criteria);
+   bool   EventListener.ChartCommand(string data[], int criteria);
+   bool   EventListener.ExternalCommand(string data[], int criteria);
+   bool   EventListener.InternalCommand(string data[], int criteria);
+   bool   EventListener.OrderCancel(int data[], int criteria);
+   bool   EventListener.OrderChange(int data[], int criteria);
+   bool   EventListener.OrderPlace(int data[], int criteria);
+   bool   EventListener.PositionClose(int data[], int criteria);
+   bool   EventListener.PositionOpen(int data[], int criteria);
+   bool   GetConfigBool(string section, string key, bool defaultValue);
+   int    GetCustomLogID();
+   bool   GetLocalConfigBool(string section, string key, bool defaultValue);
+   bool   Indicator.IsTesting();
+   int    onAccountChange(int data[]);
+   int    onAccountPayment(int data[]);
+   int    onBarOpen(int data[]);
+   int    onChartCommand(string data[]);
+   int    onExternalCommand(string data[]);
+   int    onInternalCommand(string data[]);
+   int    onOrderCancel(int data[]);
+   int    onOrderChange(int data[]);
+   int    onOrderPlace(int data[]);
+   int    onPositionClose(int data[]);
+   int    onPositionOpen(int data[]);
+   string PeriodDescription(int period);
+   bool   ReverseStringArray(string array[]);
+   string StdSymbol();
+   bool   StringContains(string object, string substring);
+   string StringLeft(string value, int n);
+   string StringRight(string value, int n);
+   string StringRightPad(string input, int length, string pad_string);
+#import
 
 
 /**

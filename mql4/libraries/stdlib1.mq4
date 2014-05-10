@@ -5031,7 +5031,7 @@ datetime TimeGMT() {
       gmt = ServerToGMT(TimeLocal());                                // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
-      gmt = GetSystemTimeEx();
+      gmt = mql.GetSystemTime();
    }
    return(gmt);
 }
@@ -5071,7 +5071,7 @@ datetime GetLocalTimeEx() {
  *
  * @return datetime - GMT-Zeit
  */
-datetime GetSystemTimeEx() {
+datetime mql.GetSystemTime() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
 
    datetime localTime = TimeLocal();
@@ -5091,7 +5091,7 @@ datetime GetSystemTimeEx() {
    // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
    // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
    if (TimeSeconds(gmt) != sec)
-      warn("GetSystemTimeEx()   StrToTime("+ strTime +") => \""+ TimeToStr(gmt, TIME_FULL) +"\"");
+      warn("mql.GetSystemTime()   StrToTime("+ strTime +") => \""+ TimeToStr(gmt, TIME_FULL) +"\"");
 
    return(gmt);
 }
@@ -6136,13 +6136,13 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
       if (!accountData[1]) {                          // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
-         accountData[2] = GMTToServerTime(GetSystemTimeEx());
+         accountData[2] = GMTToServerTime(mql.GetSystemTime());
          //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
-         accountData[2] = GMTToServerTime(GetSystemTimeEx());
+         accountData[2] = GMTToServerTime(mql.GetSystemTime());
          //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
          eventStatus = true;
       }
@@ -6243,12 +6243,12 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    // (1) Account initialisieren bzw. Accountwechsel erkennen
    if (!accountNumber[0]) {                                          // erster Aufruf
       accountNumber  [0] = account;
-      accountInitTime[0] = GetSystemTimeEx();
+      accountInitTime[0] = mql.GetSystemTime();
       //debug("EventListener.PositionOpen()   Account "+ account +" nach erstem Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
    else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit
       accountNumber  [0] = account;
-      accountInitTime[0] = GetSystemTimeEx();
+      accountInitTime[0] = mql.GetSystemTime();
       ArrayResize(knownPendings,  0);                                // gespeicherte Orderdaten löschen
       ArrayResize(knownPositions, 0);
       //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
