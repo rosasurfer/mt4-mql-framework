@@ -1,3 +1,14 @@
+#import "stdlib1.ex4"
+   string __whereamiDescription(int id);
+   int    Explode(string input, string separator, string results[], int limit);
+   int    InitializeStringBuffer(string buffer[], int length);
+   string ModuleTypeDescription(int type);
+   int    MT4InternalMsg();
+   int    win32.GetLastError(int altError);
+#import "MetaQuotes5.ex4"
+   int    GetStringAddress(string value);
+#import
+
 
 string qc.ScriptParameterChannel;
 string qc.ScriptParameterBuffer[];

@@ -232,7 +232,7 @@
 
    string   GetDayOfWeek(datetime time, bool longFormat);
    datetime GetLocalTimeEx();
-   datetime GetSystemTimeEx();
+   datetime mql.GetSystemTime();
    bool     GetServerTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime TimeGMT();
 

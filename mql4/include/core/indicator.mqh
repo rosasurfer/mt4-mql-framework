@@ -5,6 +5,40 @@ extern string ___________________________;
 extern int    __lpSuperContext;
 
 
+#import "stdlib1.ex4"
+   int    afterDeinit();
+   int    afterInit();
+   int    afterInit();
+   int    Chart.SendTick(bool sound);
+   void   CopyMemory(int source, int destination, int bytes);
+   int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
+   string IntToHexStr(int integer);
+   int    onDeinitAccountChange();
+   int    onDeinitChartChange();
+   int    onDeinitChartClose();
+   int    onDeinitParameterChange();
+   int    onDeinitRecompile();
+   int    onDeinitRemove();
+   int    onDeinitUndefined();
+   int    onInitAccountChange();
+   int    onInitChartChange();
+   int    onInitChartClose();
+   int    onInitParameterChange();
+   int    onInitRecompile();
+   int    onInitRemove();
+   int    onInitUndefined();
+   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
+   int    stdlib.GetLastError();
+   int    stdlib.init(int ec[], int tickData[]);
+   int    stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    SumInts(int array[]);
+#import "structs1.ex4"
+   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+#import "MetaQuotes2.ex4"
+   int    GetBufferAddress(int buffer[]);
+#import
+
+
 /**
  * Globale init()-Funktion für Indikatoren.
  *

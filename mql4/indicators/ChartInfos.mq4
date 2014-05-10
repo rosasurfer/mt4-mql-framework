@@ -4,9 +4,9 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 #include <core/indicator.mqh>
 
+#include <ChartInfos/imports.mqh>
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 
@@ -88,7 +88,6 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedli
  */
 int onTick() {
    static double lastBid, lastAsk;
-
    positionsAnalyzed = false;
 
    if (!UpdatePrice())               return(last_error);
@@ -96,8 +95,14 @@ int onTick() {
    if (!UpdatePositions())           return(last_error);
 
    if (isLfxInstrument) {
-      if (Bid!=lastBid || Ask!=lastAsk)
+      if (Bid!=lastBid || Ask!=lastAsk) {
+         if (Symbol() == "LFXJPY") debug("onTick()   price change");
+
          if (!CheckPendingLfxOrders())  return(last_error);          // Pending-Orders nur nach Preisänderung prüfen
+      }
+      else {
+         if (Symbol() == "LFXJPY") debug("onTick()   no price change");
+      }
    }
    else {
       if (!UpdateSpread())           return(last_error);
@@ -123,6 +128,9 @@ bool CheckPendingLfxOrders() {
    datetime triggerTime;
    int orders = ArrayRange(lfxOrders, 0);
 
+   if (Symbol() == "LFXJPY") LFX_ORDER.toStr(lfxOrders, true);
+
+
    for (int i=0; i < orders; i++) {                                                                   // TODO: Orders mit Open/Close-Error irgendwie behandeln
       if (los.IsOpenError (lfxOrders, i)) { log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set");  continue; }
       if (los.IsCloseError(lfxOrders, i)) { log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set"); continue; }
@@ -133,6 +141,9 @@ bool CheckPendingLfxOrders() {
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
             // (1.1) Limit ist noch nicht getriggert
+
+            debug("CheckPendingLfxOrders()   limit="+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, PriceFormat));
+
             if (IsLimitTriggered(los.Type(lfxOrders, i), false, false, los.OpenPrice(lfxOrders, i)+lfxChartDeviation)) {
                // Auslösen speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
@@ -1661,22 +1672,18 @@ bool ProcessTradeTerminalMessage(string message) {
          }
       }
 
-      // (2.2) Ticketdetails einlesen
-      string   symbol="", label="";
-      int      orderType;
-      double   units, openEquity, openPrice, stopLoss, takeProfit, closePrice, dNull;
-      datetime openTime, openPriceTime, stopLossTime, takeProfitTime, closeTime, version;                                                                                                       // profit
-      int result = LFX.ReadTicket(ticket, symbol, label, orderType, units, openTime, openEquity, openPrice, openPriceTime, stopLoss, stopLossTime, takeProfit, takeProfitTime, closeTime, closePrice, dNull, version);
+      // (2.2) Order einlesen
+      int result = LFX.GetOrder(ticket, lfxOrder);
       if (!result)
          return(false);                                              //  0: Fehler
-      if (result < 0) {                                              // -1: Ticket nicht gefunden, Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
+      if (result < 0) {                                              // -1: Order nicht gefunden, Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
          ArrayResize(ignoredTickets, ignoredSize+1);
          ignoredTickets[ignoredSize][I_TICKET] = ticket;
          ignoredTickets[ignoredSize][I_TIME  ] = TimeLocal();
          return(true);
       }
 
-      // (2.3) Positionsdetails zu Remote-Positionen hinzufügen
+      // (2.3) Orderdetails zu Remote-Positionen hinzufügen
       pos = ArraySize(remote.position.tickets);
       ArrayResize(remote.position.tickets, pos+1);
       ArrayResize(remote.position.types,   pos+1);
@@ -1684,10 +1691,10 @@ bool ProcessTradeTerminalMessage(string message) {
 
       remote.position.tickets[pos]                  = ticket;
       remote.position.types  [pos][0]               = TYPE_DEFAULT;
-      remote.position.types  [pos][1]               = orderType + 1; // OP_LONG =0, TYPE_LONG =1
-      remote.position.data   [pos][I_DIRECTLOTSIZE] = units;         // OP_SHORT=1, TYPE_SHORT=2
+      remote.position.types  [pos][1]               = lo.Type(lfxOrder) + 1;  // OP_LONG =0, TYPE_LONG =1
+      remote.position.data   [pos][I_DIRECTLOTSIZE] = lo.Units(lfxOrder);     // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = openPrice + lfxChartDeviation;
+      remote.position.data   [pos][I_BREAKEVEN    ] = lo.OpenPrice(lfxOrder) + lfxChartDeviation;
    }
 
    // (3) P/L aktualisieren
