@@ -29,11 +29,6 @@ extern double TakeProfitPrice;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-double devLimitPrice;                                                // Limite nach Berücksichtigung der LFX-Chartabweichung
-double devStopLossPrice;
-double devTakeProfitPrice;
-
-
 /**
  * Initialisierung
  *
@@ -48,8 +43,7 @@ int onInit() {
       MessageBox("Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
-   lfxCurrencyId     = GetCurrencyId(lfxCurrency);
-   lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
+   lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
    // (2) Parametervalidierung
@@ -62,22 +56,17 @@ int onInit() {
    LimitPrice    = NormalizeDouble(LimitPrice, SubPipDigits);
    if (LimitPrice >= Bid)                return(catch("onInit(3)   illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be lower than the current LFX price)", ERR_INVALID_INPUT_PARAMVALUE));
    if (LimitPrice <= 0)                  return(catch("onInit(4)   illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
-   devLimitPrice = NormalizeDouble(LimitPrice - lfxChartDeviation, SubPipDigits);
 
    // StopLossPrice
    StopLossPrice       = NormalizeDouble(StopLossPrice, SubPipDigits);
    if (StopLossPrice < 0)                return(catch("onInit(5)   illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (StopLossPrice > 0) {
+   if (StopLossPrice > 0)
       if (StopLossPrice >= LimitPrice)   return(catch("onInit(6)   illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (must be lower than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
-      devStopLossPrice = NormalizeDouble(StopLossPrice - lfxChartDeviation, SubPipDigits);
-   }
 
    // TakeProfitPrice
    TakeProfitPrice       = NormalizeDouble(TakeProfitPrice, SubPipDigits);
-   if (TakeProfitPrice != 0) {
+   if (TakeProfitPrice != 0)
       if (TakeProfitPrice <= LimitPrice) return(catch("onInit(7)   illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (must be higher than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
-      devTakeProfitPrice = NormalizeDouble(TakeProfitPrice - lfxChartDeviation, SubPipDigits);
-   }
 
 
    // (3) offene Orders einlesen
@@ -118,15 +107,18 @@ int onStart() {
 
 
    // (2) neue Order erzeugen und speichern
+   double deviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
+
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket    (lo, CreateMagicNumber()          );           // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setType      (lo, OP_BUYLIMIT                  );
-      lo.setUnits     (lo, Units                        );
-      lo.setOpenTime  (lo, TimeGMT()                    );
-      lo.setOpenPrice (lo, devLimitPrice                );
-      lo.setStopLoss  (lo, devStopLossPrice             );
-      lo.setTakeProfit(lo, devTakeProfitPrice           );
-      lo.setComment   (lo, "#"+ (GetPositionCounter()+1));
+      lo.setTicket       (lo, CreateMagicNumber()          );        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setDeviation    (lo, deviation                    );        // LFX-Deviation immer vor allen Preisen
+      lo.setType         (lo, OP_BUYLIMIT                  );
+      lo.setUnits        (lo, Units                        );
+      lo.setOpenTime     (lo, TimeGMT()                    );
+      lo.setOpenPriceLfx (lo, LimitPrice                   );
+      lo.setStopLossLfx  (lo, StopLossPrice                );
+      lo.setTakeProfitLfx(lo, TakeProfitPrice              );
+      lo.setComment      (lo, "#"+ (GetPositionCounter()+1));
    if (!LFX.SaveOrder(lo))
       return(last_error);
 

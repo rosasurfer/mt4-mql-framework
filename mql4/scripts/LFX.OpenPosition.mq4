@@ -232,17 +232,12 @@ int onStart() {
       openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
 
-   // (7) Logmessage ausgeben
-   int    lfxDigits    =    ifInt(lfxCurrency=="JPY",    3,     5 );
-   string lfxFormat    = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-          openPrice    = NormalizeDouble(openPrice, lfxDigits);
-   double openPriceLfx = NormalizeDouble(openPrice + GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0), lfxDigits);
-   if (__LOG) log("onStart(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat) +" (LFX price: "+ NumberToStr(openPriceLfx, lfxFormat) +")");
+   // (7) neue LFX-Order erzeugen und speichern
+   double deviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
-
-   // (8) neue LFX-Order erzeugen und speichern
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
       lo.setTicket    (lo, magicNumber );                            // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setDeviation (lo, deviation   );                            // LFX-Deviation immer vor allen Preisen
       lo.setType      (lo, direction   );
       lo.setUnits     (lo, Units       );
       lo.setOpenTime  (lo, TimeGMT()   );
@@ -251,6 +246,11 @@ int onStart() {
       lo.setComment   (lo, "#"+ counter);
    if (!LFX.SaveOrder(lo))
       return(_last_error(ReleaseLock(mutex)));
+
+
+   // (8) Logmessage ausgeben
+   string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
+   if (__LOG) log("onStart(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
 
 
    // (9) Lock auf die neue Position wieder freigeben

@@ -253,22 +253,18 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       openPrice = 1/openPrice;                     // JPY ist invers notiert
 
 
-   // (7) Logmessage ausgeben
-   int    lfxDigits    = lo.Digits(lo);
-   string lfxFormat    = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-          openPrice    = NormalizeDouble(openPrice, lfxDigits);
-   double openPriceLfx = NormalizeDouble(openPrice + GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0), lfxDigits);
-   if (__LOG) log("OpenPendingOrder(7)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(openPrice, lfxFormat) +" (LFX price: "+ NumberToStr(openPriceLfx, lfxFormat) +")");
-
-
-   // (8) Order speichern
+   // (7) Order speichern
    lo.setType      (lo, lfxDirection);
    lo.setOpenTime  (lo, TimeGMT()   );
    lo.setOpenPrice (lo, openPrice   );
    lo.setOpenEquity(lo, equity      );
-
    if (!LFX.SaveOrder(lo))
       return(_false(ReleaseLock(mutex)));
+
+
+   // (8) Logmessage ausgeben
+   string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+   if (__LOG) log("OpenPendingOrder(7)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
 
 
    // (9) Order freigeben

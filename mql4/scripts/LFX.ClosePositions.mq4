@@ -129,7 +129,7 @@ int onStart() {
          return(SetLastError(stdlib.GetLastError()));
 
 
-      // (6) Gesamt-ClosePrice und Profit der LFX-Position berechnen
+      // (6) Gesamt-ClosePrice und -Profit berechnen
       string currency = GetCurrency(LFX.CurrencyId(magics[i]));
       double closePrice=1.0, profit=0;
       for (n=0; n < positionSize; n++) {
@@ -142,15 +142,7 @@ int onStart() {
          closePrice = 1/closePrice;             // JPY ist invers notiert
 
 
-      // (7) Logmessage ausgeben
-      int    lfxDigits     =    ifInt(currency=="JPY",    3,     5 );
-      string lfxFormat     = ifString(currency=="JPY", ".2'", ".4'");
-             closePrice    = NormalizeDouble(closePrice, lfxDigits);
-      double closePriceLfx = NormalizeDouble(closePrice + GetGlobalConfigDouble("LfxChartDeviation", currency, 0), lfxDigits);
-      if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(closePrice, lfxFormat) +" (LFX price: "+ NumberToStr(closePriceLfx, lfxFormat) +"), profit: "+ DoubleToStr(profit, 2));
-
-
-      // (8) LFX-Order in .ini-Datei aktualisieren
+      // (8) LFX-Order aktualisieren und speichern
       /*LFX_ORDER*/int lo[];
       int result = LFX.GetOrder(magics[i], lo);
       if (result < 1) { if (!result)    return(last_error); return(catch("onStart(5)   LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
@@ -159,6 +151,11 @@ int onStart() {
          lo.setProfit    (lo, profit    );
          lo.setComment   (lo, ""        );
       if (!LFX.SaveOrder(lo))           return(last_error);
+
+
+      // (7) Logmessage ausgeben
+      string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+      if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
    }
 
 
