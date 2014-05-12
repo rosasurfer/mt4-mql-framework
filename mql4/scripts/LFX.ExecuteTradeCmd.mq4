@@ -280,4 +280,4 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 }
 
 
-/*abstract*/bool ProcessTradeTerminalMessage(string s1) { return(!catch("ProcessTradeTerminalMessage()",  ERR_WRONG_JUMP)); }
+/*abstract*/bool ProcessTradeToLfxTerminalMsg(string s1) { return(!catch("ProcessTradeToLfxTerminalMsg()",  ERR_WRONG_JUMP)); }
