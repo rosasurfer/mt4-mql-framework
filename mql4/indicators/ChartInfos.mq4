@@ -90,25 +90,21 @@ int onTick() {
    static double lastBid, lastAsk;
    positionsAnalyzed = false;
 
-   if (!UpdatePrice())               return(last_error);
-   if (!UpdateOHLC())                return(last_error);
-   if (!UpdatePositions())           return(last_error);
+   if (!UpdatePrice())                 return(last_error);
+   if (!UpdateOHLC())                  return(last_error);
+   if (!UpdatePositions())             return(last_error);           // hier werden TradeToLfxTerminal-Messages verarbeitet
 
    if (isLfxInstrument) {
-      if (Bid!=lastBid || Ask!=lastAsk) {
-         if (!CheckPendingLfxOrders())  return(last_error);          // Pending-Orders nur nach Preisänderung prüfen
-      }
-      else {
-         //if (Symbol() == "LFXJPY") debug("onTick()   no price change");
-      }
+      if (Bid!=lastBid || Ask!=lastAsk)
+         if (!CheckPendingLfxOrders()) return(last_error);           // Pending-Orders nur nach Preisänderung prüfen
    }
    else {
-      if (!UpdateSpread())           return(last_error);
-      if (!UpdateUnitSize())         return(last_error);
-      if (!UpdateStopoutLevel())     return(last_error);
+      if (!UpdateSpread())             return(last_error);
+      if (!UpdateUnitSize())           return(last_error);
+      if (!UpdateStopoutLevel())       return(last_error);
       if (IsVisualMode())
-         if (!UpdateTime())          return(last_error);
-      if (!QC.HandleTradeCommands()) return(last_error);             // TradeCommands verarbeiten
+         if (!UpdateTime())            return(last_error);
+      if (!QC.HandleTradeCommands())   return(last_error);           // TradeCommands verarbeiten
    }
 
    lastBid = Bid;
@@ -126,15 +122,15 @@ bool CheckPendingLfxOrders() {
    datetime triggerTime;
    int orders = ArrayRange(lfxOrders, 0);
 
-   //if (Symbol() == "LFXJPY") LFX_ORDER.toStr(lfxOrders, true);
+   //if (Symbol() == "LFXJPY") debug("CheckPendingLfxOrders()   orders="+ orders);
 
    for (int i=0; i < orders; i++) {                                                                                  // TODO: Open/Close-Error irgendwie behandeln
-      if (los.IsOpenError (lfxOrders, i)) { /*log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set" );*/ continue; }
-      if (los.IsCloseError(lfxOrders, i)) { /*log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set");*/ continue; }
+      if (los.IsOpenError (lfxOrders, i)) { log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set" ); continue; }
+      if (los.IsCloseError(lfxOrders, i)) { log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set"); continue; }
 
 
+      // (1) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP-Order
       if (los.IsPending(lfxOrders, i)) {
-         // (1) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP-Order
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
             // (1.1) Limit ist noch nicht getriggert
@@ -156,26 +152,27 @@ bool CheckPendingLfxOrders() {
          los.setOpenTime(lfxOrders, i, -TimeGMT());
          if (!LFX.SaveOrder(lfxOrders, i))                                                          return(false);   // TODO: Versionskonflikt abfangen und verarbeiten
          if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) +":open=0")) return(false);
+         continue;
       }
-      else {
-         // (2) StopLoss oder TakeProfit
-         /*
-         if (los.StopLoss(lfxOrders, i) != 0) {
-            triggerTime = los.StopLossTime(lfxOrders, i);
-            // StopLoss-Limit prüfen
-            if (IsLimitTriggered(type, true, false, los.StopLossLfx(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
-            }
+
+
+      // (2) StopLoss oder TakeProfit
+      /*
+      if (los.StopLoss(lfxOrders, i) != 0) {
+         triggerTime = los.StopLossTime(lfxOrders, i);
+         // StopLoss-Limit prüfen
+         if (IsLimitTriggered(type, true, false, los.StopLossLfx(lfxOrders, i))) {
+            debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
          }
-         if (los.TakeProfit(lfxOrders, i) != 0) {
-            triggerTime = los.TakeProfitTime(lfxOrders, i);
-            // TakeProfit-Limit prüfen
-            if (IsLimitTriggered(type, false, true, los.TakeProfitLfx(lfxOrders, i))) {
-               debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
-            }
-         }
-         */
       }
+      if (los.TakeProfit(lfxOrders, i) != 0) {
+         triggerTime = los.TakeProfitTime(lfxOrders, i);
+         // TakeProfit-Limit prüfen
+         if (IsLimitTriggered(type, false, true, los.TakeProfitLfx(lfxOrders, i))) {
+            debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
+         }
+      }
+      */
    }
    return(true);
 }
@@ -1603,40 +1600,46 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
  *                 "LFX:{iTicket]:close={0|1}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
  *                 "LFX:{iTicket]:profit={dValue}" - der kumulierte P/L-Wert der angegebenen Position hat sich geändert
  */
-bool ProcessTradeTerminalMessage(string message) {
-   //debug("ProcessTradeTerminalMessage()   "+ message);
-
-   // NOTE: Anstatt mit Explode() wird die Message zur Beschleunigung manuell zerlegt.
-
+bool ProcessTradeToLfxTerminalMsg(string message) {
+   // Da hier sehr viele Messages eingehen, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessTradeTerminalMessage(1)   unknown message format \""+ message +"\"")));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessTradeToLfxTerminalMsg(1)   unknown message format \""+ message +"\"")));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessTradeTerminalMessage(2)   unknown message \""+ message +"\" (illegal order ticket)")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessTradeTerminalMessage(3)   unknown message \""+ message +"\" (illegal order ticket)")));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessTradeToLfxTerminalMsg(2)   unknown message \""+ message +"\" (illegal order ticket)")));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessTradeToLfxTerminalMsg(3)   unknown message \""+ message +"\" (illegal order ticket)")));
    // LFX-Parameter
    double profit;
    bool   success;
    from = to+1;
-   if (StringSubstr(message, from, 7) == "profit=") {                // die häufigste Message wird zuerst geprüft
+   if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
       profit = StrToDouble(StringSubstr(message, from+7));
    }
    else if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      debug("ProcessTradeTerminalMessage()   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
+      if (success)                                                            // Pending-Orders neu einlesen
+         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+            return(false);
       return(true);
    }
    else if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      debug("ProcessTradeTerminalMessage()   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      if (success)                                                            // Pending-Orders neu einlesen
+         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+            return(false);
       return(true);
    }
    else if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      debug("ProcessTradeTerminalMessage()   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      if (success)                                                            // Pending-Orders neu einlesen
+         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+            return(false);
       return(true);
    }
    else {
-      return(_true(warn("ProcessTradeTerminalMessage(4)   unknown message \""+ message +"\"")));
+      return(_true(warn("ProcessTradeToLfxTerminalMsg(4)   unknown message \""+ message +"\"")));
    }
 
 
@@ -1645,7 +1648,7 @@ bool ProcessTradeTerminalMessage(string message) {
    if (pos == -1) {
 
       // (2.1) bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
-      int ignoredTickets[][2], timeToIgnore=5;                       // Ignorier-Zeitdauer in Sekunden
+      int ignoredTickets[][2], timeToIgnore=5;                                // Ignorier-Zeitdauer in Sekunden
       #define I_TICKET  0
       #define I_TIME    1
 
@@ -1653,13 +1656,13 @@ bool ProcessTradeTerminalMessage(string message) {
       for (int i=0; i < ignoredSize; i++) {
          if (ignoredTickets[i][I_TICKET] == ticket) {
             if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal())
-               return(true);                                         // Ticket wurde und wird weiterhin ignoriert
+               return(true);                                                  // Ticket wurde und wird weiterhin ignoriert
 
-            for (int n=i+1; n < ignoredSize; n++) {                  // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
+            for (int n=i+1; n < ignoredSize; n++) {                           // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
                ignoredTickets[n-1][I_TICKET] = ignoredTickets[n][I_TICKET];
                ignoredTickets[n-1][I_TIME  ] = ignoredTickets[n][I_TIME  ];
             }
-            ArrayResize(ignoredTickets, ignoredSize-1);              // Ticket aus zu ignorierenden Tickets löschen
+            ArrayResize(ignoredTickets, ignoredSize-1);                       // Ticket aus zu ignorierenden Tickets löschen
             ignoredSize--;
             break;
          }
@@ -1668,8 +1671,8 @@ bool ProcessTradeTerminalMessage(string message) {
       // (2.2) Order einlesen
       int result = LFX.GetOrder(ticket, lfxOrder);
       if (!result)
-         return(false);                                              //  0: Fehler
-      if (result < 0) {                                              // -1: Order nicht gefunden, Messages zu diesem Ticket werden für die definierte Zeitdauer ignoriert
+         return(false);                                                       //  0: Fehler
+      if (result < 0) {                                                       // -1: Order nicht gefunden, Ticket wird für die definierte Zeitdauer ignoriert
          ArrayResize(ignoredTickets, ignoredSize+1);
          ignoredTickets[ignoredSize][I_TICKET] = ticket;
          ignoredTickets[ignoredSize][I_TIME  ] = TimeLocal();

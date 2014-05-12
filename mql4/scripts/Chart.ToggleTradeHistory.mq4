@@ -43,6 +43,8 @@ int onStart() {
       // Status ON: geschlossene Orders einlesen anzeigen
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
       int orders = LFX.GetOrders(lfxCurrency, OF_CLOSED, los);
+      if (orders < 0)
+         return(last_error);
 
       for (int i=0; i < orders; i++) {
          int      ticket     =                     los.Ticket       (los, i);
