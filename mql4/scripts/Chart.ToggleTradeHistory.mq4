@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // LFX-Currency, ID und Chartabweichung setzen
+   // LFX-Currency setzen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
@@ -25,9 +25,6 @@ int onInit() {
       MessageBox("Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
-   lfxCurrencyId     = GetCurrencyId(lfxCurrency);
-   lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
-
    return(catch("onInit()"));
 }
 
@@ -38,7 +35,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   // (1) aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
+   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
    bool status = !LFX.ReadDisplayStatus();
 
 
@@ -48,14 +45,14 @@ int onStart() {
       int orders = LFX.GetOrders(lfxCurrency, OF_CLOSED, los);
 
       for (int i=0; i < orders; i++) {
-         int      ticket     =                     los.Ticket    (los, i);
-         int      type       =                     los.Type      (los, i);
-         double   units      =                     los.Units     (los, i);
-         datetime openTime   =     GMTToServerTime(los.OpenTime  (los, i));
-         double   openPrice  =                     los.OpenPrice (los, i) + lfxChartDeviation;
-         datetime closeTime  = GMTToServerTime(Abs(los.CloseTime (los, i)));
-         double   closePrice =                     los.ClosePrice(los, i) + lfxChartDeviation;
-         double   profit     =                     los.Profit    (los, i);
+         int      ticket     =                     los.Ticket       (los, i);
+         int      type       =                     los.Type         (los, i);
+         double   units      =                     los.Units        (los, i);
+         datetime openTime   =     GMTToServerTime(los.OpenTime     (los, i));
+         double   openPrice  =                     los.OpenPriceLfx (los, i);
+         datetime closeTime  = GMTToServerTime(Abs(los.CloseTime    (los, i)));
+         double   closePrice =                     los.ClosePriceLfx(los, i);
+         double   profit     =                     los.Profit       (los, i);
 
          if (!SetClosedTradeMarker(ticket, type, units, openTime, openPrice, closeTime, closePrice, profit))
             break;
@@ -63,7 +60,7 @@ int onStart() {
       ArrayResize(los, 0);
    }
    else {
-      // (3) Status OFF: alle existierenden Chartobjekte geschlossener Tickets löschen
+      // Status OFF: alle existierenden Chartobjekte geschlossener Tickets löschen
       for (i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
          if (StringStartsWith(name, "#"))
@@ -72,7 +69,7 @@ int onStart() {
    }
 
 
-   // (4) aktuellen Status im Chart speichern
+   // aktuellen Status im Chart speichern
    LFX.SaveDisplayStatus(status);
 
 

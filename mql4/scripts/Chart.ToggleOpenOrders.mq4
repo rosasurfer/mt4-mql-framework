@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // LFX-Currency, ID und Chartabweichung setzen
+   // LFX-Currency setzen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else {
@@ -25,9 +25,6 @@ int onInit() {
       MessageBox("Cannot display LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
       return(SetLastError(ERR_RUNTIME_ERROR));
    }
-   lfxCurrencyId     = GetCurrencyId(lfxCurrency);
-   lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
-
    return(catch("onInit()"));
 }
 
@@ -48,11 +45,11 @@ int onStart() {
       int orders = LFX.GetOrders(lfxCurrency, OF_OPEN, los);
 
       for (int i=0; i < orders; i++) {
-         string   label     =                     los.Comment  (los, i);
-         int      type      =                     los.Type     (los, i);
-         double   units     =                     los.Units    (los, i);
-         datetime openTime  = GMTToServerTime(Abs(los.OpenTime (los, i)));
-         double   openPrice =                     los.OpenPrice(los, i) + lfxChartDeviation;
+         string   label     =                     los.Comment     (los, i);
+         int      type      =                     los.Type        (los, i);
+         double   units     =                     los.Units       (los, i);
+         datetime openTime  = GMTToServerTime(Abs(los.OpenTime    (los, i)));
+         double   openPrice =                     los.OpenPriceLfx(los, i);
          if (!SetOpenOrderMarker(label, type, units, openTime, openPrice))
             break;
       }
@@ -99,7 +96,7 @@ bool SetOpenOrderMarker(string label, int type, double lots, datetime openTime, 
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
       ObjectSet(name, OBJPROP_BACK , false);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(lots, ".+"), " x ", NumberToStr(NormalizeDouble(openPrice, SubPipDigits), SubPipPriceFormat)));
+      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(lots, ".+"), " x ", NumberToStr(openPrice, SubPipPriceFormat)));
    }
    else GetLastError();
 

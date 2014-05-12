@@ -96,8 +96,6 @@ int onTick() {
 
    if (isLfxInstrument) {
       if (Bid!=lastBid || Ask!=lastAsk) {
-         if (Symbol() == "LFXJPY") debug("onTick()   price change");
-
          if (!CheckPendingLfxOrders())  return(last_error);          // Pending-Orders nur nach Preisänderung prüfen
       }
       else {
@@ -128,12 +126,11 @@ bool CheckPendingLfxOrders() {
    datetime triggerTime;
    int orders = ArrayRange(lfxOrders, 0);
 
-   if (Symbol() == "LFXJPY") LFX_ORDER.toStr(lfxOrders, true);
+   //if (Symbol() == "LFXJPY") LFX_ORDER.toStr(lfxOrders, true);
 
-
-   for (int i=0; i < orders; i++) {                                                                   // TODO: Orders mit Open/Close-Error irgendwie behandeln
-      if (los.IsOpenError (lfxOrders, i)) { log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set");  continue; }
-      if (los.IsCloseError(lfxOrders, i)) { log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set"); continue; }
+   for (int i=0; i < orders; i++) {                                                                                  // TODO: Open/Close-Error irgendwie behandeln
+      if (los.IsOpenError (lfxOrders, i)) { /*log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set" );*/ continue; }
+      if (los.IsCloseError(lfxOrders, i)) { /*log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set");*/ continue; }
 
 
       if (los.IsPending(lfxOrders, i)) {
@@ -141,10 +138,7 @@ bool CheckPendingLfxOrders() {
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
             // (1.1) Limit ist noch nicht getriggert
-
-            debug("CheckPendingLfxOrders()   limit="+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, PriceFormat));
-
-            if (IsLimitTriggered(los.Type(lfxOrders, i), false, false, los.OpenPrice(lfxOrders, i)+lfxChartDeviation)) {
+            if (IsLimitTriggered(los.Type(lfxOrders, i), false, false, los.OpenPriceLfx(lfxOrders, i))) {
                // Auslösen speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i))                                    return(false);
@@ -152,17 +146,16 @@ bool CheckPendingLfxOrders() {
             }
             continue;
          }
+
          // (1.2) Limit war bereits getriggert, auf Orderbestätigung warten
          if (triggerTime + 20*SECONDS >= TimeGMT())
             continue;
 
-         // (1.3) bei Ausbleiben Fehler melden und speichern                                          // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-         warn("CheckPendingLfxOrders(3)   missing trade confirmation for "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat));
+         // (1.3) bei Ausbleiben Fehler melden und speichern                                                         // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
+         warn("CheckPendingLfxOrders(3)   missing trade confirmation for "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat));
          los.setOpenTime(lfxOrders, i, -TimeGMT());
-         if (!LFX.SaveOrder(lfxOrders, i))
-            return(false);                                                                            // TODO: Versionskonflikt abfangen und verarbeiten
-         if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) +":open=0"))
-            return(false);
+         if (!LFX.SaveOrder(lfxOrders, i))                                                          return(false);   // TODO: Versionskonflikt abfangen und verarbeiten
+         if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) +":open=0")) return(false);
       }
       else {
          // (2) StopLoss oder TakeProfit
@@ -170,15 +163,15 @@ bool CheckPendingLfxOrders() {
          if (los.StopLoss(lfxOrders, i) != 0) {
             triggerTime = los.StopLossTime(lfxOrders, i);
             // StopLoss-Limit prüfen
-            if (IsLimitTriggered(type, true, false, los.StopLoss(lfxOrders, i)+lfxChartDeviation)) {
-               debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLoss(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
+            if (IsLimitTriggered(type, true, false, los.StopLossLfx(lfxOrders, i))) {
+               debug("CheckPendingLfxOrders(0.4)   StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
          if (los.TakeProfit(lfxOrders, i) != 0) {
             triggerTime = los.TakeProfitTime(lfxOrders, i);
             // TakeProfit-Limit prüfen
-            if (IsLimitTriggered(type, false, true, los.TakeProfit(lfxOrders, i)+lfxChartDeviation)) {
-               debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfit(lfxOrders, i)+lfxChartDeviation, SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
+            if (IsLimitTriggered(type, false, true, los.TakeProfitLfx(lfxOrders, i))) {
+               debug("CheckPendingLfxOrders(0.5)   TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered: "+ TimeToStr(TimeLocal(), TIME_FULL));
             }
          }
          */
@@ -1694,7 +1687,7 @@ bool ProcessTradeTerminalMessage(string message) {
       remote.position.types  [pos][1]               = lo.Type(lfxOrder) + 1;  // OP_LONG =0, TYPE_LONG =1
       remote.position.data   [pos][I_DIRECTLOTSIZE] = lo.Units(lfxOrder);     // OP_SHORT=1, TYPE_SHORT=2
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = lo.OpenPrice(lfxOrder) + lfxChartDeviation;
+      remote.position.data   [pos][I_BREAKEVEN    ] = lo.OpenPriceLfx(lfxOrder);
    }
 
    // (3) P/L aktualisieren
