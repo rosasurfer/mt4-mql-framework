@@ -12,7 +12,10 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 
 #include <win32api.mqh>
+#include <MT4iQuickChannel.mqh>
+
 #include <LFX/functions.mqh>
+#include <LFX/quickchannel.mqh>
 
 #property show_inputs
 
@@ -45,6 +48,17 @@ int onInit() {
       inputLabels[i] = StringTrim(inputLabels[i]);
    }
    return(catch("onInit(2)"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   QC.StopTradeToLfxSenders();
+   return(last_error);
 }
 
 
@@ -139,23 +153,35 @@ int onStart() {
       }
       closePrice = MathPow(closePrice, 1.0/7);
       if (currency == "JPY")
-         closePrice = 1/closePrice;             // JPY ist invers notiert
+         closePrice = 1/closePrice;                                  // JPY ist invers notiert
 
 
-      // (8) LFX-Order aktualisieren und speichern
+      // (7) LFX-Order aktualisieren und speichern
       /*LFX_ORDER*/int lo[];
       int result = LFX.GetOrder(magics[i], lo);
-      if (result < 1) { if (!result)    return(last_error); return(catch("onStart(5)   LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
+      if (result < 1) { if (!result) return(last_error); return(catch("onStart(5)   LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
          lo.setCloseTime (lo, TimeGMT() );
          lo.setClosePrice(lo, closePrice);
          lo.setProfit    (lo, profit    );
+            string comment = lo.Comment(lo);
+               if (StringStartsWith(comment, lo.Currency(lo))) comment = StringSubstr(comment, 3);
+               if (StringStartsWith(comment, "."            )) comment = StringSubstr(comment, 1);
+               if (StringStartsWith(comment, "#"            )) comment = StringSubstr(comment, 1);
+               int counter = StrToInteger(comment);
+            string sCounter = ifString(!counter, "", "."+ counter);  // letzten Counter ermitteln
          lo.setComment   (lo, ""        );
-      if (!LFX.SaveOrder(lo))           return(last_error);
+      if (!LFX.SaveOrder(lo))
+         return(last_error);
 
 
-      // (7) Logmessage ausgeben
+      // (8) Logmessage ausgeben
       string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-      if (__LOG) log("onStart(4)   "+ currency +" position closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+      if (__LOG) log("onStart(4)   "+ currency +"."+ sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+
+
+      // (9) LFX-Terminal benachrichtigen
+      if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1"))
+         return(false);
    }
 
 
@@ -166,3 +192,8 @@ int onStart() {
    }
    return(catch("onStart(6)"));
 }
+
+
+/*abstract*/bool ProcessTradeToLfxTerminalMsg(string s1) { return(!catch("ProcessTradeToLfxTerminalMsg()", ERR_WRONG_JUMP)); }
+/*abstract*/bool QC.StopScriptParameterSender()          { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+/*abstract*/bool RunScript(string s1, string s2)         { return(!catch("RunScript()",                    ERR_WRONG_JUMP)); }

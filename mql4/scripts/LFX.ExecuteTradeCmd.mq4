@@ -224,6 +224,8 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
    string comment = lo.Comment(lo);
+      if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
+      if ( StringStartsWith(comment, "."        )) comment = StringSubstr(comment, 1);
       if ( StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
       if (!StringStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
    double openPrice = 1.0;
@@ -272,7 +274,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       return(!SetLastError(stdlib.GetLastError()));
 
 
-   // (10) Ausführungsbestätigung an LFX-Account schicken
+   // (10) Ausführungsbestätigung ans LFX-Terminal schicken
    if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
       return(false);
 

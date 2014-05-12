@@ -11,7 +11,10 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 
 #include <win32api.mqh>
+#include <MT4iQuickChannel.mqh>
+
 #include <LFX/functions.mqh>
+#include <LFX/quickchannel.mqh>
 
 #property show_inputs
 
@@ -67,6 +70,17 @@ int onInit() {
    if (size < 0)
       return(last_error);
    return(catch("onInit(8)"));
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   QC.StopTradeToLfxSenders();
+   return(last_error);
 }
 
 
@@ -250,13 +264,18 @@ int onStart() {
 
    // (8) Logmessage ausgeben
    string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-   if (__LOG) log("onStart(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
+   if (__LOG) log("onStart(7)   "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
 
 
    // (9) Lock auf die neue Position wieder freigeben
    if (!ReleaseLock(mutex))
       return(SetLastError(stdlib.GetLastError()));
 
+
+   // (9) LFX-Terminal benachrichtigen
+   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
+
+      return(false);
    return(last_error);
 }
 
@@ -320,3 +339,8 @@ int GetPositionCounter() {
    }
    return(counter);
 }
+
+
+/*abstract*/bool ProcessTradeToLfxTerminalMsg(string s1) { return(!catch("ProcessTradeToLfxTerminalMsg()", ERR_WRONG_JUMP)); }
+/*abstract*/bool QC.StopScriptParameterSender()          { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+/*abstract*/bool RunScript(string s1, string s2)         { return(!catch("RunScript()",                    ERR_WRONG_JUMP)); }
