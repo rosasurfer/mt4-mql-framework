@@ -99,7 +99,7 @@ int onTick() {
          if (!CheckPendingLfxOrders())  return(last_error);          // Pending-Orders nur nach Preisänderung prüfen
       }
       else {
-         if (Symbol() == "LFXJPY") debug("onTick()   no price change");
+         //if (Symbol() == "LFXJPY") debug("onTick()   no price change");
       }
    }
    else {
