@@ -88,8 +88,9 @@ int onInit() {
    // Close.Comments
    size = Explode(Close.Comments, ",", values, NULL);
    for (i=0; i < size; i++) {
-      if (StringLen(values[i]) > 0)
-         ArrayPushString(orderComments, values[i]);
+      sValue = StringTrim(values[i]);
+      if (StringLen(sValue) > 0)
+         ArrayPushString(orderComments, sValue);
    }
 
    return(catch("onInit(6)"));
