@@ -92,12 +92,18 @@ int onDeinit() {
 int onStart() {
    // Order holen
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
-   if (result < 1) { if (!result) return(last_error); return(catch("onStart()   LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
+   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)   LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
 
 
    // Action ausf¸hren
    if (action == "open") {
       if (!OpenPendingOrder(lfxOrder)) return(last_error);
+   }
+   else if (action == "close") {
+      if (!ClosePosition(lfxOrder))    return(last_error);
+   }
+   else {
+      warn("onStart(2)   "+ action +" command not implemented");
    }
    return(last_error);
 }
@@ -276,6 +282,88 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    // (10) Ausf¸hrungsbest‰tigung ans LFX-Terminal schicken
    if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
+      return(false);
+
+   return(true);
+}
+
+
+/**
+ * Schleﬂt eine offene Position.
+ *
+ * @param  LFX_ORDER lo[] - die zu schlieﬂende Order
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ClosePosition(/*LFX_ORDER*/int lo[]) {
+   if (!lo.IsOpen(lo))
+      return(!catch("ClosePosition(1)   #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPending(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
+
+
+   // (1) zu schlieﬂende Einzelpositionen selektieren
+   int tickets[], orders=OrdersTotal();
+
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: w‰hrend des Auslesens wurde in einem anderen Thread eine aktive Order geschlossen oder gestrichen
+         break;
+      if (OrderType() > OP_SELL)
+         continue;
+      if (OrderMagicNumber() == lo.Ticket(lo))
+         ArrayPushInt(tickets, OrderTicket());
+   }
+   int ticketsSize = ArraySize(tickets);
+   if (!ticketsSize)
+      return(!catch("ClosePosition(2)   #"+ lo.Ticket(lo) +" no matching open MT4 tickets found ", ERR_RUNTIME_ERROR));
+
+
+   // (2) Positionen schlieﬂen
+   double slippage    = 0.1;
+   color  markerColor = CLR_NONE;
+   int    oeFlags     = NULL;
+
+   if (IsError(stdlib.GetLastError()))     return(!SetLastError(stdlib.GetLastError())); // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
+   if (IsError(catch("ClosePosition(3)"))) return(false);
+
+   /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
+   if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
+      return(!SetLastError(stdlib.GetLastError()));
+
+
+   // (3) Gesamt-ClosePrice und -Profit berechnen
+   string currency = lo.Currency(lo);
+   double closePrice=1.0, profit=0;
+   for (i=0; i < ticketsSize; i++) {
+      if (StringStartsWith(oes.Symbol(oes, i), currency)) closePrice *= oes.ClosePrice(oes, i);
+      else                                                closePrice /= oes.ClosePrice(oes, i);
+      profit += oes.Swap(oes, i) + oes.Commission(oes, i) + oes.Profit(oes, i);
+   }
+   closePrice = MathPow(closePrice, 1.0/7);
+   if (currency == "JPY")
+      closePrice = 1/closePrice;                                     // JPY ist invers notiert
+
+
+   // (4) LFX-Order aktualisieren und speichern
+   lo.setCloseTime (lo, TimeGMT() );
+   lo.setClosePrice(lo, closePrice);
+   lo.setProfit    (lo, profit    );
+      string comment = lo.Comment(lo);                               // letzten Counter aus Comment ermitteln (nur f¸r Logmessage)
+         if (StringStartsWith(comment, lo.Currency(lo))) comment = StringSubstr(comment, 3);
+         if (StringStartsWith(comment, "."            )) comment = StringSubstr(comment, 1);
+         if (StringStartsWith(comment, "#"            )) comment = StringSubstr(comment, 1);
+         int counter = StrToInteger(comment);
+      string sCounter = ifString(!counter, "", "."+ counter);
+   lo.setComment   (lo, ""        );
+   if (!LFX.SaveOrder(lo))
+      return(false);
+
+
+   // (5) Logmessage ausgeben
+   string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+   if (__LOG) log("ClosePosition(4)   "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+
+
+   // (6) LFX-Terminal benachrichtigen
+   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1"))
       return(false);
 
    return(true);
