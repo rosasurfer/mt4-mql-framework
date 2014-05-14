@@ -249,8 +249,11 @@ int UpdateInfos() {
       audlfx_Bid = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.0);
       audlfx_Ask = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.0);
    }
-   if (usd)
-      audlfx.u = usdlfx * audusd;
+   if (usd) {
+      audlfx.u     = usdlfx     * audusd;
+      audlfx_Bid.u = usdlfx_Bid * audusd_Bid;
+      audlfx_Ask.u = usdlfx_Ask * audusd_Ask;
+   }
 
    // CADLFX
    double cadchf_Bid = MarketInfo("CADCHF", MODE_BID), cadchf_Ask = MarketInfo("CADCHF", MODE_ASK), cadchf = (cadchf_Bid + cadchf_Ask)/2;
@@ -265,8 +268,11 @@ int UpdateInfos() {
       cadlfx_Bid = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.0);
       cadlfx_Ask = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.0);
    }
-   if (usd)
-      cadlfx.u = usdlfx / usdcad;
+   if (usd) {
+      cadlfx.u     = usdlfx     / usdcad;
+      cadlfx_Bid.u = usdlfx_Bid / usdcad_Ask;
+      cadlfx_Ask.u = usdlfx_Ask / usdcad_Bid;
+   }
 
    // CHFLFX
    double chfjpy_Bid = MarketInfo("CHFJPY", MODE_BID), chfjpy_Ask = MarketInfo("CHFJPY", MODE_ASK), chfjpy = (chfjpy_Bid + chfjpy_Ask)/2;
@@ -282,13 +288,9 @@ int UpdateInfos() {
       chflfx_Ask = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.0);
    }
    if (usd) {
-      chflfx.u = usdlfx / usdchf;
-      /*
-      chflfx_Bid_u = usdlfx_Bid / usdchf_Ask;
-      chflfx_Ask_u = usdlfx_Ask / usdchf_Bid;
-      chflfx_Bid_u = MathPow((usdcad_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask * usdchf_Ask), 1/7.0);
-      chflfx_Ask_u = MathPow((usdcad_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid * usdchf_Bid), 1/7.0);
-      */
+      chflfx.u     = usdlfx     / usdchf;
+      chflfx_Bid.u = usdlfx_Ask / usdchf_Ask;
+      chflfx_Ask.u = usdlfx_Bid / usdchf_Bid;
    }
 
    // EURLFX
@@ -304,8 +306,11 @@ int UpdateInfos() {
       eurlfx_Bid = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.0);
       eurlfx_Ask = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.0);
    }
-   if (usd)
-      eurlfx.u = usdlfx * eurusd;
+   if (usd) {
+      eurlfx.u     = usdlfx     * eurusd;
+      eurlfx_Bid.u = usdlfx_Bid * eurusd_Bid;
+      eurlfx_Ask.u = usdlfx_Ask * eurusd_Ask;
+   }
 
    // GBPLFX
    //     gbpaud_Bid = ...
@@ -320,8 +325,11 @@ int UpdateInfos() {
       gbplfx_Bid = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.0);
       gbplfx_Ask = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.0);
    }
-   if (usd)
-      gbplfx.u = usdlfx * gbpusd;
+   if (usd) {
+      gbplfx.u     = usdlfx     * gbpusd;
+      gbplfx_Bid.u = usdlfx_Bid * gbpusd_Bid;
+      gbplfx_Ask.u = usdlfx_Ask * gbpusd_Ask;
+   }
 
    // JPYLFX
    //     audjpy_Bid = ...
@@ -336,14 +344,20 @@ int UpdateInfos() {
       jpylfx_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.0);
       jpylfx_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.0);
    }
-   if (usd)
-      jpylfx.u = usdjpy / usdlfx;
+   if (usd) {
+      jpylfx.u     = usdjpy     / usdlfx;
+      jpylfx_Bid.u = usdjpy_Bid / usdlfx_Ask;
+      jpylfx_Ask.u = usdjpy_Ask / usdlfx_Bid;
+   }
 
    // NZDLFX
    double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2;
    bool   nzd = (nzdusd_Bid!=0);
-   if (usd && nzd)
-      nzdlfx.u = usdlfx * nzdusd;
+   if (usd && nzd) {
+      nzdlfx.u     = usdlfx      * nzdusd;
+      nzdlfx_Bid.u = usdlfx_Bid * nzdusd_Bid;
+      nzdlfx_Ask.u = usdlfx_Ask * nzdusd_Ask;
+   }
 
 
    // Fehlerbehandlung
@@ -354,7 +368,7 @@ int UpdateInfos() {
       return(catch("UpdateInfos(1)", error));
 
 
-   // Index-Anzeige (direct)
+   // Index-Anzeige: direkt
    if (usdlfx       != 0) ObjectSetText(symbols[I_USD] +".quote.direct",               NumberToStr(NormalizeDouble(usdlfx, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_USD] +".quote.direct",  " ", fontSize, fontName);
    if (audlfx       != 0) ObjectSetText(symbols[I_AUD] +".quote.direct",               NumberToStr(NormalizeDouble(audlfx, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_AUD] +".quote.direct",  " ", fontSize, fontName);
    if (cadlfx       != 0) ObjectSetText(symbols[I_CAD] +".quote.direct",               NumberToStr(NormalizeDouble(cadlfx, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CAD] +".quote.direct",  " ", fontSize, fontName);
@@ -364,7 +378,7 @@ int UpdateInfos() {
    if (jpylfx       != 0) ObjectSetText(symbols[I_JPY] +".quote.direct",               NumberToStr(NormalizeDouble(jpylfx, 3), ".2'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_JPY] +".quote.direct",  " ", fontSize, fontName);
    if (nzdlfx       != 0) ObjectSetText(symbols[I_NZD] +".quote.direct",               NumberToStr(NormalizeDouble(nzdlfx, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".quote.direct",  " ", fontSize, fontName);
 
-   // Spread-Anzeige (direct)
+   // Spread-Anzeige: direkt
    if (usdlfx_Bid   != 0) ObjectSetText(symbols[I_USD] +".spread.direct",     "("+ DoubleToStr((usdlfx_Ask-usdlfx_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_USD] +".spread.direct", " ", fontSize, fontName);
    if (audlfx_Bid   != 0) ObjectSetText(symbols[I_AUD] +".spread.direct",     "("+ DoubleToStr((audlfx_Ask-audlfx_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_AUD] +".spread.direct", " ", fontSize, fontName);
    if (cadlfx_Bid   != 0) ObjectSetText(symbols[I_CAD] +".spread.direct",     "("+ DoubleToStr((cadlfx_Ask-cadlfx_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CAD] +".spread.direct", " ", fontSize, fontName);
@@ -374,8 +388,7 @@ int UpdateInfos() {
    if (jpylfx_Bid   != 0) ObjectSetText(symbols[I_JPY] +".spread.direct",     "("+ DoubleToStr((jpylfx_Ask-jpylfx_Bid)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_JPY] +".spread.direct", " ", fontSize, fontName);
    if (nzdlfx_Bid   != 0) ObjectSetText(symbols[I_NZD] +".spread.direct",     "("+ DoubleToStr((nzdlfx_Ask-nzdlfx_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".spread.direct", " ", fontSize, fontName);
 
-   // Index-Anzeige (via USDLFX)
-   if (usdlfx.u     != 0) ObjectSetText(symbols[I_USD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(usdlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_USD] +".quote.viaUSD",  " ", fontSize, fontName);
+   // Index-Anzeige: via USDLFX
    if (audlfx.u     != 0) ObjectSetText(symbols[I_AUD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(audlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_AUD] +".quote.viaUSD",  " ", fontSize, fontName);
    if (cadlfx.u     != 0) ObjectSetText(symbols[I_CAD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(cadlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CAD] +".quote.viaUSD",  " ", fontSize, fontName);
    if (chflfx.u     != 0) ObjectSetText(symbols[I_CHF] +".quote.viaUSD",             NumberToStr(NormalizeDouble(chflfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CHF] +".quote.viaUSD",  " ", fontSize, fontName);
@@ -384,8 +397,7 @@ int UpdateInfos() {
    if (jpylfx.u     != 0) ObjectSetText(symbols[I_JPY] +".quote.viaUSD",             NumberToStr(NormalizeDouble(jpylfx.u, 3), ".2'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_JPY] +".quote.viaUSD",  " ", fontSize, fontName);
    if (nzdlfx.u     != 0) ObjectSetText(symbols[I_NZD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(nzdlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".quote.viaUSD",  " ", fontSize, fontName);
 
-   // Spread-Anzeige (via USDLFX)
-   if (usdlfx_Bid.u != 0) ObjectSetText(symbols[I_USD] +".spread.viaUSD", "("+ DoubleToStr((usdlfx_Ask.u-usdlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_USD] +".spread.viaUSD", " ", fontSize, fontName);
+   // Spread-Anzeige: via USDLFX
    if (audlfx_Bid.u != 0) ObjectSetText(symbols[I_AUD] +".spread.viaUSD", "("+ DoubleToStr((audlfx_Ask.u-audlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_AUD] +".spread.viaUSD", " ", fontSize, fontName);
    if (cadlfx_Bid.u != 0) ObjectSetText(symbols[I_CAD] +".spread.viaUSD", "("+ DoubleToStr((cadlfx_Ask.u-cadlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CAD] +".spread.viaUSD", " ", fontSize, fontName);
    if (chflfx_Bid.u != 0) ObjectSetText(symbols[I_CHF] +".spread.viaUSD", "("+ DoubleToStr((chflfx_Ask.u-chflfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CHF] +".spread.viaUSD", " ", fontSize, fontName);
