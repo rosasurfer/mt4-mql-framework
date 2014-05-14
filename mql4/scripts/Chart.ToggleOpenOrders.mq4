@@ -82,13 +82,13 @@ int onStart() {
  *
  * @param  string   label
  * @param  int      type
- * @param  double   lots
+ * @param  double   units
  * @param  datetime openTime
  * @param  double   openPrice
  *
  * @return bool - Erfolgsstatus
  */
-bool SetOpenOrderMarker(string label, int type, double lots, datetime openTime, double openPrice) {
+bool SetOpenOrderMarker(string label, int type, double units, datetime openTime, double openPrice) {
    string name = StringConcatenate("LFX.OpenTicket.", label, ".Line");
    if (ObjectFind(name) > -1)
       ObjectDelete(name);
@@ -96,9 +96,9 @@ bool SetOpenOrderMarker(string label, int type, double lots, datetime openTime, 
    if (ObjectCreate(name, OBJ_TREND, 0, D'1970.01.01 00:01', openPrice, openTime, openPrice)) {
       ObjectSet(name, OBJPROP_RAY  , false);
       ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet(name, OBJPROP_COLOR, ifInt(type==OP_BUY, Green, Red));
+      ObjectSet(name, OBJPROP_COLOR, ifInt(IsLongTradeOperation(type), Green, Red));
       ObjectSet(name, OBJPROP_BACK , false);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(lots, ".+"), " x ", NumberToStr(openPrice, SubPipPriceFormat)));
+      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(units, ".+"), " x ", NumberToStr(openPrice, SubPipPriceFormat)));
    }
    else GetLastError();
 

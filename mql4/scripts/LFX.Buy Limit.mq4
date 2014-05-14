@@ -97,7 +97,7 @@ int onStart() {
    // (1) Sicherheitsabfrage
    PlaySound("notify.wav");
    int button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
-                         +"Do you really want to place a limit order to Buy "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
+                         +"Do you really want to place a Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                          +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                          + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
                          + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),
