@@ -269,9 +269,9 @@ int UpdateInfos() {
       cadlfx_Ask = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.0);
    }
    if (usd) {
-      cadlfx.u     = usdlfx     / usdcad;
-      cadlfx_Bid.u = usdlfx_Bid / usdcad_Ask;
-      cadlfx_Ask.u = usdlfx_Ask / usdcad_Bid;
+      cadlfx.u     = usdlfx / usdcad;  // Bid.u und Ask.u ???
+      cadlfx_Bid.u = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.0) / usdcad_Ask;
+      cadlfx_Ask.u = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.0) / usdcad_Bid;
    }
 
    // CHFLFX
@@ -288,9 +288,9 @@ int UpdateInfos() {
       chflfx_Ask = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.0);
    }
    if (usd) {
-      chflfx.u     = usdlfx     / usdchf;
-      chflfx_Bid.u = usdlfx_Ask / usdchf_Ask;
-      chflfx_Ask.u = usdlfx_Bid / usdchf_Bid;
+      chflfx.u     = usdlfx / usdchf;  // Bid.u und Ask.u korrekt
+      chflfx_Bid.u = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.0) / usdchf_Ask;
+      chflfx_Ask.u = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.0) / usdchf_Bid;
    }
 
    // EURLFX
@@ -354,7 +354,7 @@ int UpdateInfos() {
    double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2;
    bool   nzd = (nzdusd_Bid!=0);
    if (usd && nzd) {
-      nzdlfx.u     = usdlfx      * nzdusd;
+      nzdlfx.u     = usdlfx     * nzdusd;
       nzdlfx_Bid.u = usdlfx_Bid * nzdusd_Bid;
       nzdlfx_Ask.u = usdlfx_Ask * nzdusd_Ask;
    }
@@ -406,9 +406,62 @@ int UpdateInfos() {
    if (jpylfx_Bid.u != 0) ObjectSetText(symbols[I_JPY] +".spread.viaUSD", "("+ DoubleToStr((jpylfx_Ask.u-jpylfx_Bid.u)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_JPY] +".spread.viaUSD", " ", fontSize, fontName);
    if (nzdlfx_Bid.u != 0) ObjectSetText(symbols[I_NZD] +".spread.viaUSD", "("+ DoubleToStr((nzdlfx_Ask.u-nzdlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".spread.viaUSD", " ", fontSize, fontName);
 
- //if (chflfx_Bid_u != 0) {
- //   debug("UpdateInfos()   chflfx_Bid_u="+ NumberToStr(chflfx_Bid_u, ".4'") + "   chflfx_Ask_u="+ NumberToStr(chflfx_Ask_u, ".4'"));
- //   ObjectSetText(symbols[I_CHF] +".quote.spread", StringConcatenate(ObjectDescription(symbols[I_CHF] +".quote.spread"), " ", DoubleToStr((chflfx_Ask_u-chflfx_Bid_u)*10000, 1)), fontSize, fontName, fontColor);
- //}
+   /*
+   chfjpy = usdjpy / usdchf
+   audchf = audusd * usdchf
+   cadchf = usdchf / usdcad
+   eurchf = eurusd * usdchf
+   gbpchf = gbpusd * usdchf
+
+            |                       chfjpy                        |
+   chflfx = | --------------------------------------------------- | ^ 1/7
+            |     audchf * cadchf * eurchf * gbpchf * usdchf      |
+
+
+            |                                  (usdjpy/usdchf)                                     |
+          = | ------------------------------------------------------------------------------------ | ^ 1/7
+            | (audusd * usdchf) * (usdchf/usdcad) * (eurusd * usdchf) * (gbpusd * usdchf) * usdchf |
+
+
+            |                                         usdjpy                                          |
+          = | --------------------------------------------------------------------------------------- | ^ 1/7
+            | usdchf * audusd * usdchf * (usdchf/usdcad) * eurusd * usdchf * gbpusd * usdchf * usdchf |
+
+
+            |    1           usdcad * usdjpy      |
+          = | -------- * ------------------------ | ^ 1/7
+            | usdchf^6   audusd * eurusd * gbpusd |
+
+
+            |      usdcad * usdchf * usdjpy       |
+          = | ----------------------------------- | ^ 1/7
+            | usdchf^7 * audusd * eurusd * gbpusd |
+
+
+            |     1    |         | usdcad * usdchf * usdjpy |
+          = | -------- | ^ 1/7 * | ------------------------ | ^ 1/7
+            | usdchf^7 |         | audusd * eurusd * gbpusd |
+
+
+            | usdcad * usdchf * usdjpy |
+          = | ------------------------ | ^ 1/7 / usdchf
+            | audusd * eurusd * gbpusd |
+
+
+          =   usdlfx / usdchf
+   */
+
+   double test = MathPow((1/MathPow(usdchf, 7)) * (usdchf * usdcad * usdjpy / (audusd * eurusd * gbpusd)), 1/7.);
+
+
+   static bool done;
+   if (!done) {
+      debug("   chflfx(usdlfx)="+ NumberToStr(chflfx.u, ".4'"));
+      debug("   chflfx(6xchf) ="+ NumberToStr(chflfx,   ".4'"));
+      debug("   chflfx(test)  ="+ NumberToStr(test,     ".4'"));
+
+
+      done = true;
+   }
    return(catch("UpdateInfos(2)"));
 }
