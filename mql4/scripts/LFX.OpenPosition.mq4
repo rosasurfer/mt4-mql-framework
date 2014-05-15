@@ -90,22 +90,23 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string symbols    [6];
-   double preciseLots[6], roundedLots[6];
-   int    directions [6];
-   int    tickets    [6];
+   string symbols    [7];
+   int    symbolsSize;
+   double preciseLots[7], roundedLots[7];
+   int    directions [7];
+   int    tickets    [7];
 
 
    // (1) zu handelnde Pairs bestimmen
    //     TODO: Brokerspezifische Symbole ermitteln
-   if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
-   else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
-   else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
-   else if (lfxCurrency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
-   else if (lfxCurrency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
-   else if (lfxCurrency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
-   else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "NZDCAD"; symbols[3] = "GBPNZD"; symbols[4] = "NZDUSD"; symbols[5] = "NZDJPY"; }
-   else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
+   if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF";                        symbolsSize = 6; }
+   else if (lfxCurrency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
+   else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "GBPNZD"; symbols[3] = "NZDCAD"; symbols[4] = "NZDCHF"; symbols[5] = "NZDJPY"; symbols[6] = "NZDUSD"; symbolsSize = 7; }
+   else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
 
    // (2) Lotsizes berechnen
@@ -113,7 +114,7 @@ int onStart() {
    int    button;
    string errorMsg, overLeverageMsg;
 
-   for (int retry, i=0; i < 6; i++) {
+   for (int retry, i=0; i < symbolsSize; i++) {
       // (2.1) notwendige Daten ermitteln
       double bid           = MarketInfo(symbols[i], MODE_BID      );
       double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
@@ -153,7 +154,7 @@ int onStart() {
 
       // (2.4) Lotsize berechnen (dabei immer abrunden)
       double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
-      double unitSize = equity / lotValue * leverage / 6;                              // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
+      double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
       preciseLots[i] = Units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
       roundedLots[i] = NormalizeDouble(MathFloor(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
 
@@ -192,7 +193,7 @@ int onStart() {
 
 
    // (3) Directions der Teilpositionen bestimmen
-   for (i=0; i < 6; i++) {
+   for (i=0; i < symbolsSize; i++) {
       if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = direction;
       else                                           directions[i]  = direction ^ 1;   // 0=>1, 1=>0
       if (lfxCurrency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
@@ -212,7 +213,7 @@ int onStart() {
    string comment     = lfxCurrency +"."+ counter;
 
 
-   // (5) Lock auf die neue LFX-Order setzen, damit andere Indikatoren/Charts nicht schon vor Ende von LFX.OpenPosition Teilpositionen verarbeiten
+   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
    string mutex = "mutex.LFX.#"+ magicNumber;
    if (!AquireLock(mutex, true))
       return(SetLastError(stdlib.GetLastError()));
@@ -221,7 +222,7 @@ int onStart() {
    // (6) Teilorders ausführen und Gesamt-OpenPrice berechnen
    double openPrice = 1.0;
 
-   for (i=0; i < 6; i++) {
+   for (i=0; i < symbolsSize; i++) {
       double   price       = NULL;
       double   slippage    = 0.1;
       double   sl          = NULL;
@@ -241,7 +242,7 @@ int onStart() {
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
    }
-   openPrice = MathPow(openPrice, 1.0/7);
+   openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
       openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
@@ -267,7 +268,7 @@ int onStart() {
    if (__LOG) log("onStart(7)   "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
 
 
-   // (9) Lock auf die neue Position wieder freigeben
+   // (9) Order freigeben
    if (!ReleaseLock(mutex))
       return(SetLastError(stdlib.GetLastError()));
 

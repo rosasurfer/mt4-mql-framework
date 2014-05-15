@@ -128,25 +128,26 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
 
    // (2) zu handelnde Pairs bestimmen                                                 // TODO: Brokerspezifische Symbole ermitteln
-   string symbols    [6];
-   double preciseLots[6], roundedLots[6];
-   int    directions [6];
-   int    tickets    [6];
-   if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD"; }
-   else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD"; }
-   else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF"; }
-   else if (lfxCurrency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD"; }
-   else if (lfxCurrency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD"; }
-   else if (lfxCurrency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY"; }
-   else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "NZDCAD"; symbols[3] = "GBPNZD"; symbols[4] = "NZDUSD"; symbols[5] = "NZDJPY"; }
-   else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY"; }
+   string symbols    [7];
+   int    symbolsSize;
+   double preciseLots[7], roundedLots[7];
+   int    directions [7];
+   int    tickets    [7];
+   if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "CAD") { symbols[0] = "AUDCAD"; symbols[1] = "CADCHF"; symbols[2] = "CADJPY"; symbols[3] = "EURCAD"; symbols[4] = "GBPCAD"; symbols[5] = "USDCAD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "CHF") { symbols[0] = "AUDCHF"; symbols[1] = "CADCHF"; symbols[2] = "CHFJPY"; symbols[3] = "EURCHF"; symbols[4] = "GBPCHF"; symbols[5] = "USDCHF";                        symbolsSize = 6; }
+   else if (lfxCurrency == "EUR") { symbols[0] = "EURAUD"; symbols[1] = "EURCAD"; symbols[2] = "EURCHF"; symbols[3] = "EURGBP"; symbols[4] = "EURJPY"; symbols[5] = "EURUSD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "GBP") { symbols[0] = "EURGBP"; symbols[1] = "GBPAUD"; symbols[2] = "GBPCAD"; symbols[3] = "GBPCHF"; symbols[4] = "GBPJPY"; symbols[5] = "GBPUSD";                        symbolsSize = 6; }
+   else if (lfxCurrency == "JPY") { symbols[0] = "AUDJPY"; symbols[1] = "CADJPY"; symbols[2] = "CHFJPY"; symbols[3] = "EURJPY"; symbols[4] = "GBPJPY"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
+   else if (lfxCurrency == "NZD") { symbols[0] = "AUDNZD"; symbols[1] = "EURNZD"; symbols[2] = "GBPNZD"; symbols[3] = "NZDCAD"; symbols[4] = "NZDCHF"; symbols[5] = "NZDJPY"; symbols[6] = "NZDUSD"; symbolsSize = 7; }
+   else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
 
    // (3) Lotsizes je Pair berechnen
    double equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
    string errorMsg, overLeverageMsg;
 
-   for (int retry, i=0; i < 6; i++) {
+   for (int retry, i=0; i < symbolsSize; i++) {
       // (3.1) notwendige Daten ermitteln
       double bid           = MarketInfo(symbols[i], MODE_BID      );
       double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
@@ -180,7 +181,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
       // (3.4) Lotsize berechnen (dabei immer abrunden)
       double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
-      double unitSize = equity / lotValue * leverage / 6;                              // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
+      double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
       preciseLots[i] = lfxUnits * unitSize;                                            // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
       roundedLots[i] = NormalizeDouble(MathFloor(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
 
@@ -215,7 +216,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
 
    // (4) Directions der Teilpositionen bestimmen
-   for (i=0; i < 6; i++) {
+   for (i=0; i < symbolsSize; i++) {
       if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = lfxDirection;
       else                                           directions[i]  = lfxDirection ^ 1;   // 0=>1, 1=>0
       if (lfxCurrency == "JPY")                      directions[i] ^= 1;                  // JPY ist invers notiert
@@ -236,7 +237,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       if (!StringStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
    double openPrice = 1.0;
 
-   for (i=0; i < 6; i++) {
+   for (i=0; i < symbolsSize; i++) {
       double   price       = NULL;
       double   slippage    = 0.1;
       double   sl          = NULL;
@@ -256,7 +257,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
    }
-   openPrice = MathPow(openPrice, 1.0/7);
+   openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
       openPrice = 1/openPrice;                     // JPY ist invers notiert
 
@@ -337,7 +338,7 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
       else                                                closePrice /= oes.ClosePrice(oes, i);
       profit += oes.Swap(oes, i) + oes.Commission(oes, i) + oes.Profit(oes, i);
    }
-   closePrice = MathPow(closePrice, 1.0/7);
+   closePrice = MathPow(closePrice, 1/7.);
    if (currency == "JPY")
       closePrice = 1/closePrice;                                     // JPY ist invers notiert
 
