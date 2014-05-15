@@ -231,9 +231,9 @@ int UpdateInfos() {
    double gbpusd_Bid = MarketInfo("GBPUSD", MODE_BID), gbpusd_Ask = MarketInfo("GBPUSD", MODE_ASK), gbpusd = (gbpusd_Bid + gbpusd_Ask)/2;
    bool   usd = (usdcad_Bid!=0 && usdchf_Bid!=0 && usdjpy_Bid!=0 && audusd_Bid!=0 && eurusd_Bid!=0 && gbpusd_Bid!=0);
    if (usd) {
-      usdlfx     = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.0);
-      usdlfx_Bid = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.0);
-      usdlfx_Ask = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.0);
+      usdlfx     = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
+      usdlfx_Bid = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+      usdlfx_Ask = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
    }
 
    // AUDLFX
@@ -245,14 +245,14 @@ int UpdateInfos() {
    double gbpaud_Bid = MarketInfo("GBPAUD", MODE_BID), gbpaud_Ask = MarketInfo("GBPAUD", MODE_ASK), gbpaud = (gbpaud_Bid + gbpaud_Ask)/2;
    bool   aud = (audcad_Bid!=0 && audchf_Bid!=0 && audjpy_Bid!=0 && audusd_Bid!=0 && euraud_Bid!=0 && gbpaud_Bid!=0);
    if (aud) {
-      audlfx     = MathPow((audcad     * audchf     * audjpy     * audusd    ) / (euraud     * gbpaud    ), 1/7.0);
-      audlfx_Bid = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.0);
-      audlfx_Ask = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.0);
+      audlfx     = MathPow((audcad     * audchf     * audjpy     * audusd    ) / (euraud     * gbpaud    ), 1/7.);
+      audlfx_Bid = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.);
+      audlfx_Ask = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.);
    }
    if (usd) {
-      audlfx.u     = usdlfx     * audusd;
-      audlfx_Bid.u = usdlfx_Bid * audusd_Bid;
-      audlfx_Ask.u = usdlfx_Ask * audusd_Ask;
+      audlfx.u     = usdlfx * audusd;           // ok
+      audlfx_Bid.u = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
+      audlfx_Ask.u = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
    }
 
    // CADLFX
@@ -264,14 +264,14 @@ int UpdateInfos() {
    //     usdcad_Bid = ...
    bool   cad = (cadchf_Bid!=0 && cadjpy_Bid!=0 && audcad_Bid!=0 && eurcad_Bid!=0 && gbpcad_Bid!=0 && usdcad_Bid!=0);
    if (cad) {
-      cadlfx     = MathPow((cadchf     * cadjpy    ) / (audcad     * eurcad     * gbpcad     * usdcad    ), 1/7.0);
-      cadlfx_Bid = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.0);
-      cadlfx_Ask = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.0);
+      cadlfx     = MathPow((cadchf     * cadjpy    ) / (audcad     * eurcad     * gbpcad     * usdcad    ), 1/7.);
+      cadlfx_Bid = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.);
+      cadlfx_Ask = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.);
    }
    if (usd) {
-      cadlfx.u     = usdlfx / usdcad;  // Bid.u und Ask.u ???
-      cadlfx_Bid.u = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.0) / usdcad_Ask;
-      cadlfx_Ask.u = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.0) / usdcad_Bid;
+      cadlfx.u     = usdlfx / usdcad;           // ok
+      cadlfx_Bid.u = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
+      cadlfx_Ask.u = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
    }
 
    // CHFLFX
@@ -283,14 +283,14 @@ int UpdateInfos() {
    //     usdchf_Bid = ...
    bool   chf = (chfjpy_Bid!=0 && audchf_Bid!=0 && cadchf_Bid!=0 && eurchf_Bid!=0 && gbpchf_Bid!=0 && usdchf_Bid!=0);
    if (chf) {
-      chflfx     = MathPow(chfjpy     / (audchf     * cadchf     * eurchf     * gbpchf     * usdchf    ), 1/7.0);
-      chflfx_Bid = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.0);
-      chflfx_Ask = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.0);
+      chflfx     = MathPow(chfjpy     / (audchf     * cadchf     * eurchf     * gbpchf     * usdchf    ), 1/7.);
+      chflfx_Bid = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.);
+      chflfx_Ask = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.);
    }
    if (usd) {
-      chflfx.u     = usdlfx / usdchf;  // Bid.u und Ask.u korrekt
-      chflfx_Bid.u = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.0) / usdchf_Ask;
-      chflfx_Ask.u = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.0) / usdchf_Bid;
+      chflfx.u     = usdlfx / usdchf;           // ok
+      chflfx_Bid.u = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
+      chflfx_Ask.u = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
    }
 
    // EURLFX
@@ -302,14 +302,14 @@ int UpdateInfos() {
    //     eurusd_Bid = ...
    bool   eur = (euraud_Bid!=0 && eurcad_Bid!=0 && eurchf_Bid!=0 && eurgbp_Bid!=0 && eurjpy_Bid!=0 && eurusd_Bid!=0);
    if (eur) {
-      eurlfx     = MathPow((euraud     * eurcad     * eurchf     * eurgbp     * eurjpy     * eurusd    ), 1/7.0);
-      eurlfx_Bid = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.0);
-      eurlfx_Ask = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.0);
+      eurlfx     = MathPow((euraud     * eurcad     * eurchf     * eurgbp     * eurjpy     * eurusd    ), 1/7.);
+      eurlfx_Bid = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.);
+      eurlfx_Ask = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.);
    }
    if (usd) {
-      eurlfx.u     = usdlfx     * eurusd;
-      eurlfx_Bid.u = usdlfx_Bid * eurusd_Bid;
-      eurlfx_Ask.u = usdlfx_Ask * eurusd_Ask;
+      eurlfx.u     = usdlfx * eurusd;           // ok
+      eurlfx_Bid.u = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
+      eurlfx_Ask.u = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
    }
 
    // GBPLFX
@@ -321,14 +321,14 @@ int UpdateInfos() {
    //     eurgbp_Bid = ...
    bool   gbp = (gbpaud_Bid!=0 && gbpcad_Bid!=0 && gbpchf_Bid!=0 && gbpjpy_Bid!=0 && gbpusd_Bid!=0 && eurgbp_Bid!=0);
    if (gbp) {
-      gbplfx     = MathPow((gbpaud     * gbpcad     * gbpchf     * gbpjpy     * gbpusd    ) / eurgbp    , 1/7.0);
-      gbplfx_Bid = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.0);
-      gbplfx_Ask = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.0);
+      gbplfx     = MathPow((gbpaud     * gbpcad     * gbpchf     * gbpjpy     * gbpusd    ) / eurgbp    , 1/7.);
+      gbplfx_Bid = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.);
+      gbplfx_Ask = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.);
    }
    if (usd) {
-      gbplfx.u     = usdlfx     * gbpusd;
-      gbplfx_Bid.u = usdlfx_Bid * gbpusd_Bid;
-      gbplfx_Ask.u = usdlfx_Ask * gbpusd_Ask;
+      gbplfx.u     = usdlfx * gbpusd;       // ok
+      gbplfx_Bid.u = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
+      gbplfx_Ask.u = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
    }
 
    // JPYLFX
@@ -340,23 +340,23 @@ int UpdateInfos() {
    //     usdjpy_Bid = ...
    bool   jpy = (audjpy_Bid!=0 && cadjpy_Bid!=0 && chfjpy_Bid!=0 && eurjpy_Bid!=0 && gbpjpy_Bid!=0 && usdjpy_Bid!=0);
    if (jpy) {
-      jpylfx     = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.0);
-      jpylfx_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.0);
-      jpylfx_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.0);
+      jpylfx     = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
+      jpylfx_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
+      jpylfx_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
    }
    if (usd) {
-      jpylfx.u     = usdjpy     / usdlfx;
-      jpylfx_Bid.u = usdjpy_Bid / usdlfx_Ask;
-      jpylfx_Ask.u = usdjpy_Ask / usdlfx_Bid;
+      jpylfx.u     = usdjpy / usdlfx;           // ok
+      jpylfx_Bid.u = usdjpy_Bid / MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+      jpylfx_Ask.u = usdjpy_Ask / MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
    }
 
    // NZDLFX
    double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2;
    bool   nzd = (nzdusd_Bid!=0);
    if (usd && nzd) {
-      nzdlfx.u     = usdlfx     * nzdusd;
-      nzdlfx_Bid.u = usdlfx_Bid * nzdusd_Bid;
-      nzdlfx_Ask.u = usdlfx_Ask * nzdusd_Ask;
+      nzdlfx.u     = usdlfx * nzdusd;       // ???
+      nzdlfx_Bid.u = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
+      nzdlfx_Ask.u = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
    }
 
 
@@ -414,7 +414,7 @@ int UpdateInfos() {
    gbpchf = gbpusd * usdchf
 
             |                       chfjpy                        |
-   chflfx = | --------------------------------------------------- | ^ 1/7
+   CHFLFX = | --------------------------------------------------- | ^ 1/7
             |     audchf * cadchf * eurchf * gbpchf * usdchf      |
 
 
@@ -448,19 +448,16 @@ int UpdateInfos() {
             | audusd * eurusd * gbpusd |
 
 
-          =   usdlfx / usdchf
+          =   USDLFX / usdchf
    */
-
-   double test = MathPow((1/MathPow(usdchf, 7)) * (usdchf * usdcad * usdjpy / (audusd * eurusd * gbpusd)), 1/7.);
-
 
    static bool done;
    if (!done) {
-      debug("   chflfx(usdlfx)="+ NumberToStr(chflfx.u, ".4'"));
-      debug("   chflfx(6xchf) ="+ NumberToStr(chflfx,   ".4'"));
-      debug("   chflfx(test)  ="+ NumberToStr(test,     ".4'"));
-
-
+      //double test = MathPow((1/MathPow(usdchf, 7)) * (usdchf * usdcad * usdjpy / (audusd * eurusd * gbpusd)), 1/7.);
+      //debug("   chflfx(usdlfx)="+ NumberToStr(chflfx.u, ".4'"));
+      //debug("   chflfx(6xchf) ="+ NumberToStr(chflfx,   ".4'"));
+      //debug("   chflfx(test)  ="+ NumberToStr(test,     ".4'"));
+      //debug("  NZDLFX.u Bid/Ask: "+ NumberToStr(nzdlfx_Bid.u, ".4'") +" / "+ NumberToStr(nzdlfx_Ask.u, ".4'"));
       done = true;
    }
    return(catch("UpdateInfos(2)"));

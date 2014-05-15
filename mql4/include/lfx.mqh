@@ -30,10 +30,10 @@ int    lfxOrders[][LFX_ORDER.intSize];                               // LFX_ORDE
  *    int  type;              //   4         lo[ 1]      // Operation-Type
  *    int  units;             //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
  *    int  lots;              //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
- *    int  openTime;          //   4         lo[ 4]      // OpenTime, GMT
- *    int  openPriceLfx;      //   4         lo[ 5]      // OpenPrice in Points, LFX
- *    int  openPriceTime      //   4         lo[ 6]      // Zeitpunkt des Erreichens des OpenPrice-Limits, GMT
- *    int  openEquity;        //   4         lo[ 7]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
+ *    int  openEquity;        //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
+ *    int  openTime;          //   4         lo[ 5]      // OpenTime, GMT
+ *    int  openPriceLfx;      //   4         lo[ 6]      // OpenPrice in Points, LFX
+ *    int  openPriceTime      //   4         lo[ 7]      // Zeitpunkt des Erreichens des OpenPrice-Limits, GMT
  *    int  stopLossLfx;       //   4         lo[ 8]      // StopLoss-Preis in Points, LFX
  *    int  stopLossTime       //   4         lo[ 9]      // Zeitpunkt des Erreichens des StopLosses, GMT
  *    int  takeProfitLfx;     //   4         lo[10]      // TakeProfit-Preis in Points, LFX
@@ -52,10 +52,10 @@ int      lo.Ticket         (/*LFX_ORDER*/int lo[]         ) {                   
 int      lo.Type           (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 1]);                                      }
 double   lo.Units          (/*LFX_ORDER*/int lo[]         ) {                                  return(NormalizeDouble(lo[ 2]/ 10., 1));                             }
 double   lo.Lots           (/*LFX_ORDER*/int lo[]         ) {                                  return(NormalizeDouble(lo[ 3]/100., 2));                             }
-datetime lo.OpenTime       (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 4]);                                      }
-double   lo.OpenPriceLfx   (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[ 5]/MathPow(10, digits), digits));         }
-datetime lo.OpenPriceTime  (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 6]);                                      }
-double   lo.OpenEquity     (/*LFX_ORDER*/int lo[]         ) {                                  return(NormalizeDouble(lo[ 7]/100., 2));                             }
+double   lo.OpenEquity     (/*LFX_ORDER*/int lo[]         ) {                                  return(NormalizeDouble(lo[ 4]/100., 2));                             }
+datetime lo.OpenTime       (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 5]);                                      }
+double   lo.OpenPriceLfx   (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[ 6]/MathPow(10, digits), digits));         }
+datetime lo.OpenPriceTime  (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 7]);                                      }
 double   lo.StopLossLfx    (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[ 8]/MathPow(10, digits), digits));         }
 datetime lo.StopLossTime   (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 9]);                                      }
 double   lo.TakeProfitLfx  (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[10]/MathPow(10, digits), digits));         }
@@ -86,10 +86,10 @@ int      los.Ticket        (/*LFX_ORDER*/int lo[][], int i) {                   
 int      los.Type          (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][ 1]);                                   }
 double   los.Units         (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][ 2]/ 10., 1));                          }
 double   los.Lots          (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][ 3]/100., 2));                          }
-datetime los.OpenTime      (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][ 4]);                                   }
-double   los.OpenPriceLfx  (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][ 5]/MathPow(10, digits), digits));      }
-datetime los.OpenPriceTime (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][ 6]);                                   }
-double   los.OpenEquity    (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][ 7]/100., 2));                          }
+double   los.OpenEquity    (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][ 4]/100., 2));                          }
+datetime los.OpenTime      (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][ 5]);                                   }
+double   los.OpenPriceLfx  (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][ 6]/MathPow(10, digits), digits));      }
+datetime los.OpenPriceTime (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][ 7]);                                   }
 double   los.StopLossLfx   (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][ 8]/MathPow(10, digits), digits));      }
 datetime los.StopLossTime  (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][ 9]);                                   }
 double   los.TakeProfitLfx (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][10]/MathPow(10, digits), digits));      }
@@ -122,10 +122,10 @@ int      lo.setTicket         (/*LFX_ORDER*/int &lo[],          int      ticket 
 int      lo.setType           (/*LFX_ORDER*/int &lo[],          int      type          ) { lo[ 1]    = type;                                                   return(type          ); }
 double   lo.setUnits          (/*LFX_ORDER*/int &lo[],          double   units         ) { lo[ 2]    = MathRound(units *  10);                                 return(units         ); }
 double   lo.setLots           (/*LFX_ORDER*/int &lo[],          double   lots          ) { lo[ 3]    = MathRound(lots  * 100);                                 return(lots          ); }
-datetime lo.setOpenTime       (/*LFX_ORDER*/int &lo[],          datetime openTime      ) { lo[ 4]    = openTime;                                               return(openTime      ); }
-double   lo.setOpenPriceLfx   (/*LFX_ORDER*/int &lo[],          double   openPriceLfx  ) { lo[ 5]    = MathRound(openPriceLfx * MathPow(10, lo.Digits(lo)));   return(openPriceLfx  ); }
-datetime lo.setOpenPriceTime  (/*LFX_ORDER*/int &lo[],          datetime openPriceTime ) { lo[ 6]    = openPriceTime;                                          return(openPriceTime ); }
-double   lo.setOpenEquity     (/*LFX_ORDER*/int &lo[],          double   openEquity    ) { lo[ 7]    = MathRound(openEquity * 100);                            return(openEquity    ); }
+double   lo.setOpenEquity     (/*LFX_ORDER*/int &lo[],          double   openEquity    ) { lo[ 4]    = MathRound(openEquity * 100);                            return(openEquity    ); }
+datetime lo.setOpenTime       (/*LFX_ORDER*/int &lo[],          datetime openTime      ) { lo[ 5]    = openTime;                                               return(openTime      ); }
+double   lo.setOpenPriceLfx   (/*LFX_ORDER*/int &lo[],          double   openPriceLfx  ) { lo[ 6]    = MathRound(openPriceLfx * MathPow(10, lo.Digits(lo)));   return(openPriceLfx  ); }
+datetime lo.setOpenPriceTime  (/*LFX_ORDER*/int &lo[],          datetime openPriceTime ) { lo[ 7]    = openPriceTime;                                          return(openPriceTime ); }
 double   lo.setStopLossLfx    (/*LFX_ORDER*/int &lo[],          double   stopLossLfx   ) { lo[ 8]    = MathRound(stopLossLfx * MathPow(10, lo.Digits(lo)));    return(stopLossLfx   ); }
 datetime lo.setStopLossTime   (/*LFX_ORDER*/int &lo[],          datetime stopLossTime  ) { lo[ 9]    = stopLossTime;                                           return(stopLossTime  ); }
 double   lo.setTakeProfitLfx  (/*LFX_ORDER*/int &lo[],          double   takeProfitLfx ) { lo[10]    = MathRound(takeProfitLfx * MathPow(10, lo.Digits(lo)));  return(takeProfitLfx ); }
@@ -148,10 +148,10 @@ int      los.setTicket        (/*LFX_ORDER*/int &lo[][], int i, int      ticket 
 int      los.setType          (/*LFX_ORDER*/int &lo[][], int i, int      type          ) { lo[i][ 1] = type;                                                   return(type          ); }
 double   los.setUnits         (/*LFX_ORDER*/int &lo[][], int i, double   units         ) { lo[i][ 2] = MathRound(units *  10);                                 return(units         ); }
 double   los.setLots          (/*LFX_ORDER*/int &lo[][], int i, double   lots          ) { lo[i][ 3] = MathRound(lots  * 100);                                 return(lots          ); }
-datetime los.setOpenTime      (/*LFX_ORDER*/int &lo[][], int i, datetime openTime      ) { lo[i][ 4] = openTime;                                               return(openTime      ); }
-double   los.setOpenPriceLfx  (/*LFX_ORDER*/int &lo[][], int i, double   openPrice     ) { lo[i][ 5] = MathRound(openPrice  * MathPow(10, los.Digits(lo, i))); return(openPrice     ); }
-datetime los.setOpenPriceTime (/*LFX_ORDER*/int &lo[][], int i, datetime openPriceTime ) { lo[i][ 6] = openPriceTime;                                          return(openPriceTime ); }
-double   los.setOpenEquity    (/*LFX_ORDER*/int &lo[][], int i, double   openEquity    ) { lo[i][ 7] = MathRound(openEquity * 100);                            return(openEquity    ); }
+double   los.setOpenEquity    (/*LFX_ORDER*/int &lo[][], int i, double   openEquity    ) { lo[i][ 4] = MathRound(openEquity * 100);                            return(openEquity    ); }
+datetime los.setOpenTime      (/*LFX_ORDER*/int &lo[][], int i, datetime openTime      ) { lo[i][ 5] = openTime;                                               return(openTime      ); }
+double   los.setOpenPriceLfx  (/*LFX_ORDER*/int &lo[][], int i, double   openPrice     ) { lo[i][ 6] = MathRound(openPrice  * MathPow(10, los.Digits(lo, i))); return(openPrice     ); }
+datetime los.setOpenPriceTime (/*LFX_ORDER*/int &lo[][], int i, datetime openPriceTime ) { lo[i][ 7] = openPriceTime;                                          return(openPriceTime ); }
 double   los.setStopLossLfx   (/*LFX_ORDER*/int &lo[][], int i, double   stopLoss      ) { lo[i][ 8] = MathRound(stopLoss   * MathPow(10, los.Digits(lo, i))); return(stopLoss      ); }
 datetime los.setStopLossTime  (/*LFX_ORDER*/int &lo[][], int i, datetime stopLossTime  ) { lo[i][ 9] = stopLossTime;                                           return(stopLossTime  ); }
 double   los.setTakeProfitLfx (/*LFX_ORDER*/int &lo[][], int i, double   takeProfit    ) { lo[i][10] = MathRound(takeProfit * MathPow(10, los.Digits(lo, i))); return(takeProfit    ); }
@@ -190,7 +190,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
 
 
    if (dimensions == 1) {
-      // lo ist struct LFX_ORDER (eine Dimension)
+      // lo ist einzelnes Struct LFX_ORDER (eine Dimension)
       digits      = lo.Digits(lo);
       pipDigits   = digits & (~1);
       priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -199,10 +199,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
                                      ", type="          , OperationTypeToStr(lo.Type          (lo)),
                                      ", units="         ,        NumberToStr(lo.Units         (lo), ".+"),
                                      ", lots="          ,        NumberToStr(lo.Lots          (lo), ".+"),
+                                     ", openEquity="    ,        DoubleToStr(lo.OpenEquity    (lo), 2),
                                      ", openTime="      ,           ifString(lo.OpenTime      (lo), "'"+ TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL) +"'"+ ifString(lo.IsOpenError(lo), "(ERROR)", ""), "0"),
                                      ", openPrice="     ,        NumberToStr(lo.OpenPriceLfx  (lo), priceFormat),
                                      ", openPriceTime=" ,           ifString(lo.OpenPriceTime (lo), "'"+ TimeToStr(lo.OpenPriceTime(lo), TIME_FULL) +"'", "0"),
-                                     ", openEquity="    ,        DoubleToStr(lo.OpenEquity    (lo), 2),
                                      ", stopLoss="      ,           ifString(lo.StopLossLfx   (lo), NumberToStr(lo.StopLossLfx(lo), priceFormat), "0"),
                                      ", stopLossTime="  ,           ifString(lo.StopLossTime  (lo), "'"+ TimeToStr(lo.StopLossTime(lo), TIME_FULL) +"'", "0"),
                                      ", takeProfit="    ,           ifString(lo.TakeProfitLfx (lo), NumberToStr(lo.TakeProfitLfx(lo), priceFormat), "0"),
@@ -218,7 +218,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
       ArrayPushString(lines, line);
    }
    else {
-      // lo ist struct[] LFX_ORDER (zwei Dimensionen)
+      // lo ist Struct-Array LFX_ORDER[] (zwei Dimensionen)
       int size = ArrayRange(lo, 0);
 
       for (int i=0; i < size; i++) {
@@ -230,8 +230,8 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
                                                   ", type="          , OperationTypeToStr(los.Type          (lo, i)),
                                                   ", units="         ,        NumberToStr(los.Units         (lo, i), ".+"),
                                                   ", lots="          ,        NumberToStr(los.Lots          (lo, i), ".+"),
-                                                  ", openTime="      ,           ifString(los.OpenTime      (lo, i), "'"+ TimeToStr(Abs(los.OpenTime(lo, i)), TIME_FULL) +"'"+ ifString(los.IsOpenError(lo, i), "(ERROR)", ""), "0"),
                                                   ", openEquity="    ,        DoubleToStr(los.OpenEquity    (lo, i), 2),
+                                                  ", openTime="      ,           ifString(los.OpenTime      (lo, i), "'"+ TimeToStr(Abs(los.OpenTime(lo, i)), TIME_FULL) +"'"+ ifString(los.IsOpenError(lo, i), "(ERROR)", ""), "0"),
                                                   ", openPrice="     ,        NumberToStr(los.OpenPriceLfx  (lo, i), priceFormat),
                                                   ", openPriceTime=" ,           ifString(los.OpenPriceTime (lo, i), "'"+ TimeToStr(los.OpenPriceTime(lo, i), TIME_FULL) +"'", "0"),
                                                   ", stopLoss="      ,           ifString(los.StopLossLfx   (lo, i), NumberToStr(los.StopLossLfx(lo, i), priceFormat), "0"),
@@ -379,7 +379,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (2) Orderdaten validieren
-   //Ticket = Symbol, Label, OrderType, OrderUnits, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, OrderProfit, LfxDeviation, Version
+   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation, Version
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 17)  return(!catch("LFX.GetOrder(3)   invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
@@ -397,20 +397,20 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    double _orderUnits = StrToDouble(sValue);
    if (_orderUnits <= 0)                         return(!catch("LFX.GetOrder(6)   invalid unit size \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
-   // OpenTime
+   // OpenEquity
    sValue = StringTrim(values[4]);
+   if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(7)   invalid open equity \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   double _openEquity = StrToDouble(sValue);
+   if (!IsPendingTradeOperation(_orderType))
+      if (_openEquity <= 0)                      return(!catch("LFX.GetOrder(8)   invalid open equity \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+
+   // OpenTime
+   sValue = StringTrim(values[5]);
    if      (StringIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
    else if (StringStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _openTime =  StrToTime(sValue);
-   if (!_openTime)                               return(!catch("LFX.GetOrder(7)   invalid open time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_openTime > mql.GetSystemTime())          return(!catch("LFX.GetOrder(8)   invalid open time \""+ TimeToStr(_openTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-
-   // OpenEquity
-   sValue = StringTrim(values[5]);
-   if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(9)   invalid open equity \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   double _openEquity = StrToDouble(sValue);
-   if (!IsPendingTradeOperation(_orderType))
-      if (_openEquity <= 0)                      return(!catch("LFX.GetOrder(10)   invalid open equity \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!_openTime)                               return(!catch("LFX.GetOrder(9)   invalid open time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_openTime > mql.GetSystemTime())          return(!catch("LFX.GetOrder(10)   invalid open time \""+ TimeToStr(_openTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenPrice
    sValue = StringTrim(values[6]);
@@ -496,8 +496,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    lo.setType          (lo, _orderType     );
    lo.setUnits         (lo, _orderUnits    );
    lo.setLots          (lo,  NULL          );
-   lo.setOpenTime      (lo, _openTime      );
    lo.setOpenEquity    (lo, _openEquity    );
+   lo.setOpenTime      (lo, _openTime      );
    lo.setOpenPriceLfx  (lo, _openPrice     );
    lo.setOpenPriceTime (lo, _openPriceTime );
    lo.setStopLossLfx   (lo, _stopLoss      );
@@ -662,13 +662,13 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
 
    // (3) Daten formatieren
-   //Ticket = Symbol, Label, TradeOperation, Units, OpenTime, OpenEquity, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation,Version
+   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation, Version
    string sSymbol         =                          lo.Currency      (lo);
    string sLabel          =                          lo.Comment       (lo);                                                                                               sLabel          = StringRightPad(sLabel         ,  9, " ");
    string sOperationType  = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringRightPad(sOperationType , 10, " ");
    string sUnits          =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringLeftPad (sUnits         ,  5, " ");
+   string sOpenEquity     =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringLeftPad (sOpenEquity    , 10, " ");
    string sOpenTime       =                 ifString(lo.OpenTime      (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime       = StringLeftPad (sOpenTime      , 20, " ");
-   string sOpenEquity     =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringLeftPad (sOpenEquity    ,  7, " ");
    string sOpenPriceLfx   =              DoubleToStr(lo.OpenPriceLfx  (lo), lo.Digits(lo));                                                                               sOpenPriceLfx   = StringLeftPad (sOpenPriceLfx  ,  9, " ");
    string sOpenPriceTime  =                ifString(!lo.OpenPriceTime (lo), "0", TimeToStr(lo.OpenPriceTime(lo), TIME_FULL));                                             sOpenPriceTime  = StringLeftPad (sOpenPriceTime , 19, " ");
    string sStopLossLfx    =                ifString(!lo.StopLossLfx   (lo), "0", DoubleToStr(lo.StopLossLfx(lo),   lo.Digits(lo)));                                       sStopLossLfx    = StringLeftPad (sStopLossLfx   ,  8, " ");
@@ -688,7 +688,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string key     = ticket;
-   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenTime, ", ", sOpenEquity, ", ", sOpenPriceLfx, ", ", sOpenPriceTime, ", ", sStopLossLfx, ", ", sStopLossTime, ", ", sTakeProfitLfx, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", sVersion);
+   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPriceLfx, ", ", sOpenPriceTime, ", ", sStopLossLfx, ", ", sStopLossTime, ", ", sTakeProfitLfx, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!catch("LFX.SaveOrder(6)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", win32.GetLastError(ERR_WIN32_ERROR)));
