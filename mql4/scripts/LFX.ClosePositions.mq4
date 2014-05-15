@@ -111,7 +111,7 @@ int onStart() {
       return(catch("onStart(2)"));
 
 
-   // (3) Alle selektierten LFX-Positionen sperren, damit andere Indikatoren/Charts keine temporären Teilpositionen verarbeiten.
+   // (3) Alle selektierten LFX-Orders sperren, damit andere Indikatoren/Charts keine temporären Teilpositionen verarbeiten.
    for (i=0; i < magicsSize; i++) {
       // TODO: Deadlocks verhindern, falls einer der Mutexe bereits gesperrt ist.
       //if (!AquireLock("mutex.LFX.#"+ magics[i], true))
@@ -151,7 +151,7 @@ int onStart() {
          else                                                closePrice /= oes.ClosePrice(oes, n);
          profit += oes.Swap(oes, n) + oes.Commission(oes, n) + oes.Profit(oes, n);
       }
-      closePrice = MathPow(closePrice, 1.0/7);
+      closePrice = MathPow(closePrice, 1/7.);
       if (currency == "JPY")
          closePrice = 1/closePrice;                                  // JPY ist invers notiert
 
@@ -185,7 +185,7 @@ int onStart() {
    }
 
 
-   // (9) Locks wieder freigeben
+   // (9) Orders wieder freigeben
    for (i=0; i < magicsSize; i++) {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
       //   return(SetLastError(stdlib.GetLastError()));
