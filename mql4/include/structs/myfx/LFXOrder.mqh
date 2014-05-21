@@ -148,7 +148,7 @@ double   los.setClosePrice    (/*LFX_ORDER*/int &lo[][], int i, double   closePr
 
 
 /**
- * Gibt die lesbare Repräsentation ein oder mehrerer LFX_ORDER-Strukturen zurück.
+ * Gibt die lesbare Repräsentation einer oder mehrerer LFX_ORDER-Strukturen zurück.
  *
  * @param  int  lo[]        - LFX_ORDER
  * @param  bool debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
@@ -231,4 +231,54 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
 
    catch("LFX_ORDER.toStr(3)");
    return(output);
+
+
+   // unterdrückt unnütze Compilerwarnungen
+   int iNulls[];
+   lo.ClosePrice       (iNulls);       los.ClosePrice       (iNulls, NULL);
+   lo.CloseTime        (iNulls);       los.CloseTime        (iNulls, NULL);
+   lo.Comment          (iNulls);       los.Comment          (iNulls, NULL);
+   lo.Currency         (iNulls);       los.Currency         (iNulls, NULL);
+   lo.CurrencyId       (iNulls);       los.CurrencyId       (iNulls, NULL);
+   lo.Digits           (iNulls);       los.Digits           (iNulls, NULL);
+   lo.IsClosed         (iNulls);       los.IsClosed         (iNulls, NULL);
+   lo.IsCloseError     (iNulls);       los.IsCloseError     (iNulls, NULL);
+   lo.IsOpen           (iNulls);       los.IsOpen           (iNulls, NULL);
+   lo.IsOpened         (iNulls);       los.IsOpened         (iNulls, NULL);
+   lo.IsOpenError      (iNulls);       los.IsOpenError      (iNulls, NULL);
+   lo.IsPending        (iNulls);       los.IsPending        (iNulls, NULL);
+   lo.Lots             (iNulls);       los.Lots             (iNulls, NULL);
+   lo.OpenEquity       (iNulls);       los.OpenEquity       (iNulls, NULL);
+   lo.OpenPrice        (iNulls);       los.OpenPrice        (iNulls, NULL);
+   lo.OpenPriceTime    (iNulls);       los.OpenPriceTime    (iNulls, NULL);
+   lo.OpenTime         (iNulls);       los.OpenTime         (iNulls, NULL);
+   lo.Profit           (iNulls);       los.Profit           (iNulls, NULL);
+   lo.Deviation        (iNulls);       los.Deviation        (iNulls, NULL);
+   lo.StopLoss         (iNulls);       los.StopLoss         (iNulls, NULL);
+   lo.StopLossTime     (iNulls);       los.StopLossTime     (iNulls, NULL);
+   lo.TakeProfit       (iNulls);       los.TakeProfit       (iNulls, NULL);
+   lo.TakeProfitTime   (iNulls);       los.TakeProfitTime   (iNulls, NULL);
+   lo.Ticket           (iNulls);       los.Ticket           (iNulls, NULL);
+   lo.Type             (iNulls);       los.Type             (iNulls, NULL);
+   lo.Units            (iNulls);       los.Units            (iNulls, NULL);
+   lo.Version          (iNulls);       los.Version          (iNulls, NULL);
+
+   lo.setClosePrice    (iNulls, NULL); los.setClosePrice    (iNulls, NULL, NULL);
+   lo.setCloseTime     (iNulls, NULL); los.setCloseTime     (iNulls, NULL, NULL);
+   lo.setComment       (iNulls, NULL); los.setComment       (iNulls, NULL, NULL);
+   lo.setLots          (iNulls, NULL); los.setLots          (iNulls, NULL, NULL);
+   lo.setOpenEquity    (iNulls, NULL); los.setOpenEquity    (iNulls, NULL, NULL);
+   lo.setOpenPrice     (iNulls, NULL); los.setOpenPrice     (iNulls, NULL, NULL);
+   lo.setOpenPriceTime (iNulls, NULL); los.setOpenPriceTime (iNulls, NULL, NULL);
+   lo.setOpenTime      (iNulls, NULL); los.setOpenTime      (iNulls, NULL, NULL);
+   lo.setProfit        (iNulls, NULL); los.setProfit        (iNulls, NULL, NULL);
+   lo.setDeviation     (iNulls, NULL); los.setDeviation     (iNulls, NULL, NULL);
+   lo.setStopLoss      (iNulls, NULL); los.setStopLoss      (iNulls, NULL, NULL);
+   lo.setStopLossTime  (iNulls, NULL); los.setStopLossTime  (iNulls, NULL, NULL);
+   lo.setTakeProfit    (iNulls, NULL); los.setTakeProfit    (iNulls, NULL, NULL);
+   lo.setTakeProfitTime(iNulls, NULL); los.setTakeProfitTime(iNulls, NULL, NULL);
+   lo.setTicket        (iNulls, NULL); los.setTicket        (iNulls, NULL, NULL);
+   lo.setType          (iNulls, NULL); los.setType          (iNulls, NULL, NULL);
+   lo.setUnits         (iNulls, NULL); los.setUnits         (iNulls, NULL, NULL);
+   lo.setVersion       (iNulls, NULL); los.setVersion       (iNulls, NULL, NULL);
 }

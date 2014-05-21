@@ -2,9 +2,7 @@
  * Globale Konstanten, Variablen und Funktionen
  */
 #include <stderror.mqh>
-
-
-#define EXECUTION_CONTEXT.intSize   12                      // ceil(EXECUTION_CONTEXT.size/4)
+#include <structs/sizes.mqh>
 
 
 // globale Variablen, stehen überall zur Verfügung
@@ -751,32 +749,6 @@ int      last_error;                                        // der letzte Fehler
 #define STR_PAD_LEFT                            1
 #define STR_PAD_RIGHT                           2
 #define STR_PAD_BOTH                            3
-
-
-// Struct sizes
-#define BAR.size                               44
-#define BAR.intSize                            11     // ceil(BAR.size/4)
-
-#define TICK.size                              40
-#define TICK.intSize                           10     // ceil(TICK.size/4)
-
-#define SYMBOL_GROUP.size                      80
-#define SYMBOL_GROUP.intSize                   20     // ceil(SYMBOL_GROUP.size/4)
-
-#define SUBSCRIBED_SYMBOL.size                128
-#define SUBSCRIBED_SYMBOL.intSize              32     // ceil(SUBSCRIBED_SYMBOL.size/4)
-
-#define HISTORY_HEADER.size                   148
-#define HISTORY_HEADER.intSize                 37     // ceil(HISTORY_HEADER.size/4)
-
-#define EXECUTION_CONTEXT.size                 48
-#define EXECUTION_CONTEXT.intSize              12     // ceil(EXECUTION_CONTEXT.size/4)
-
-#define ORDER_EXECUTION.size                  136
-#define ORDER_EXECUTION.intSize                34     // ceil(ORDER_EXECUTION.size/4)
-
-#define LFX_ORDER.size                        100
-#define LFX_ORDER.intSize                      25     // ceil(LFX_ORDER.size/4)
 
 
 // History bar ID's

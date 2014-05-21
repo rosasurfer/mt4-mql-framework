@@ -35,7 +35,7 @@
 #define TICK.intSize                     10     // ceil(TICK.size/4)
 
 
-// pewa: selbst definierte Structs
+// pewa selbst definierte Structs
 #define EXECUTION_CONTEXT.size           48
 #define EXECUTION_CONTEXT.intSize        12     // ceil(EXECUTION_CONTEXT.size/4)
 

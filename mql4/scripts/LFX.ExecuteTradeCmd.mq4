@@ -15,6 +15,7 @@ int __DEINIT_FLAGS__[];
 #include <core/script.ParameterProvider.mqh>
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
+#include <structs/LFX_ORDER.mqh>
 
 
 //////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QickChannel)  ///////////////////////////////////////////////////////////////////////

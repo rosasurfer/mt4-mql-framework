@@ -9,6 +9,7 @@ int __DEINIT_FLAGS__[];
 
 #include <win32api.mqh>
 #include <LFX/functions.mqh>
+#include <structs/LFX_ORDER.mqh>
 
 
 /**
