@@ -712,19 +712,22 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
 /**
  * Speichert Remote-Positionsdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
  *
- * @param  bool   store     - Richtung: TRUE  = Kopiert aus den Parametern in die Library.
- * @param  int    tickets[]             FALSE = Kopiert aus der Library in die Parameter.
+ * @param  bool   store     - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
+ * @param  string symbol [] - Symbol des Instruments der kopierten Daten
+ * @param  int    tickets[]
  * @param  int    types  []
  * @param  double data   []
  *
  * @return int - Fehlerstatus
  */
-int ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], double data[][]) {
+int ChartInfos.CopyRemotePositions(bool store, string &symbol[], int tickets[], int types[][], double data[][]) {
+   static string static.symbol [1];
    static int    static.tickets[];
    static int    static.types  [][2];
    static double static.data   [][4];
 
    if (store) {
+      static.symbol[0] = symbol[0];
       ArrayResize(static.tickets, 0);
       ArrayResize(static.types,   0);
       ArrayResize(static.data,    0);
@@ -735,6 +738,7 @@ int ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], dou
       }
    }
    else {
+      symbol[0] = static.symbol[0];
       ArrayResize(tickets, 0);
       ArrayResize(types,   0);
       ArrayResize(data,    0);
@@ -751,20 +755,24 @@ int ChartInfos.CopyRemotePositions(bool store, int tickets[], int types[][], dou
 /**
  * Speichert LFX-Orderdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
  *
- * @param  bool store   - Richtung: TRUE  = Kopiert aus den Parametern in die Library.
- * @param  int  los[]               FALSE = Kopiert aus der Library in die Parameter.
+ * @param  bool   store    - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
+ * @param  string symbol[] - Symbol des Instruments der kopierten Daten
+ * @param  int    los   []
  *
  * @return int - Fehlerstatus
  */
-int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int los[][]) {
-   static int static.los[][LFX_ORDER.intSize];
+int ChartInfos.CopyLfxOrders(bool store, string &symbol[], /*LFX_ORDER*/int los[][]) {
+   static string static.symbol[1];
+   static int    static.los [][LFX_ORDER.intSize];
 
    if (store) {
+      static.symbol[0] = symbol[0];
       ArrayResize(static.los, 0);
       if (ArrayRange(los, 0) > 0)
          ArrayCopy(static.los, los);
    }
    else {
+      symbol[0] = static.symbol[0];
       ArrayResize(los, 0);
       if (ArrayRange(static.los, 0) > 0)
          ArrayCopy(los, static.los);

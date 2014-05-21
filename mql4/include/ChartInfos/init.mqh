@@ -44,7 +44,8 @@ int onInitParameterChange() {
          return(last_error);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren
-      int error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
+      string symbol[1];
+      int error = ChartInfos.CopyRemotePositions(false, symbol, remote.position.tickets, remote.position.types, remote.position.data);
       if (IsError(error))
          return(SetLastError(error));
    }
@@ -59,20 +60,24 @@ int onInitParameterChange() {
  * @return int - Fehlerstatus
  */
 int onInitChartChange() {
-   // bei Symbolwechsel
-   // ???
-
-   // bei Timeframe-Wechsel
    if (isLfxInstrument) {
       // in Library gespeicherte Pending-Orders restaurieren
-      int error = ChartInfos.CopyLfxOrders(false, lfxOrders);
+      string symbol[1];
+      int error = ChartInfos.CopyLfxOrders(false, symbol, lfxOrders);
       if (IsError(error))
          return(SetLastError(error));
 
-      // in Library gespeicherte Remote-Positionsdaten restaurieren
-      error = ChartInfos.CopyRemotePositions(false, remote.position.tickets, remote.position.types, remote.position.data);
-      if (IsError(error))
-         return(SetLastError(error));
+      if (symbol[0] != Symbol()) {
+         // bei Symbolwechsel Pending-Orders neu einlesen
+         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+            return(last_error);
+      }
+      else {
+         // bei Timeframe-Wechsel in Library gespeicherte Remote-Positionsdaten restaurieren
+         error = ChartInfos.CopyRemotePositions(false, symbol, remote.position.tickets, remote.position.types, remote.position.data);
+         if (IsError(error))
+            return(SetLastError(error));
+      }
    }
    return(NO_ERROR);
 }

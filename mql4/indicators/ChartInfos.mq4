@@ -72,12 +72,6 @@ int    positions.fontSize     = 8;
 color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
 
 
-#import "stdlib2.ex4"
-   int ChartInfos.CopyRemotePositions(bool direction, int tickets[], int types[][], double data[][]);
-   int ChartInfos.CopyLfxOrders      (bool store, /*LFX_ORDER*/int los[][]);
-#import
-
-
 #include <ChartInfos/init.mqh>
 #include <ChartInfos/deinit.mqh>
 
