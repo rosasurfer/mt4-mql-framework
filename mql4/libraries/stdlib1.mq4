@@ -4808,17 +4808,17 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "AUDCHF"  ) return("AUD/CHF"  );
    if (symbol == "AUDDKK"  ) return("AUD/DKK"  );
    if (symbol == "AUDJPY"  ) return("AUD/JPY"  );
-   if (symbol == "AUDLFX"  ) return("AUD-Index");
+   if (symbol == "AUDLFX"  ) return("AUD"      );
    if (symbol == "AUDNZD"  ) return("AUD/NZD"  );
    if (symbol == "AUDPLN"  ) return("AUD/PLN"  );
    if (symbol == "AUDSGD"  ) return("AUD/SGD"  );
    if (symbol == "AUDUSD"  ) return("AUD/USD"  );
    if (symbol == "CADCHF"  ) return("CAD/CHF"  );
    if (symbol == "CADJPY"  ) return("CAD/JPY"  );
-   if (symbol == "CADLFX"  ) return("CAD-Index");
+   if (symbol == "CADLFX"  ) return("CAD"      );
    if (symbol == "CADSGD"  ) return("CAD/SGD"  );
    if (symbol == "CHFJPY"  ) return("CHF/JPY"  );
-   if (symbol == "CHFLFX"  ) return("CHF-Index");
+   if (symbol == "CHFLFX"  ) return("CHF"      );
    if (symbol == "CHFPLN"  ) return("CHF/PLN"  );
    if (symbol == "CHFSGD"  ) return("CHF/SGD"  );
    if (symbol == "CHFZAR"  ) return("CHF/ZAR"  );
@@ -4831,7 +4831,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "EURHKD"  ) return("EUR/HKD"  );
    if (symbol == "EURHUF"  ) return("EUR/HUF"  );
    if (symbol == "EURJPY"  ) return("EUR/JPY"  );
-   if (symbol == "EURLFX"  ) return("EUR-Index");
+   if (symbol == "EURLFX"  ) return("EUR"      );
    if (symbol == "EURLVL"  ) return("EUR/LVL"  );
    if (symbol == "EURMXN"  ) return("EUR/MXN"  );
    if (symbol == "EURNOK"  ) return("EUR/NOK"  );
@@ -4849,7 +4849,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "GBPCHF"  ) return("GBP/CHF"  );
    if (symbol == "GBPDKK"  ) return("GBP/DKK"  );
    if (symbol == "GBPJPY"  ) return("GBP/JPY"  );
-   if (symbol == "GBPLFX"  ) return("GBP-Index");
+   if (symbol == "GBPLFX"  ) return("GBP"      );
    if (symbol == "GBPNOK"  ) return("GBP/NOK"  );
    if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
    if (symbol == "GBPPLN"  ) return("GBP/PLN"  );
@@ -4858,14 +4858,14 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "GBPUSD"  ) return("GBP/USD"  );
    if (symbol == "GBPZAR"  ) return("GBP/ZAR"  );
    if (symbol == "HKDJPY"  ) return("HKD/JPY"  );
-   if (symbol == "LFXJPY"  ) return("JPY-Index");
+   if (symbol == "LFXJPY"  ) return("JPY"      );
    if (symbol == "MXNJPY"  ) return("MXN/JPY"  );
    if (symbol == "NOKJPY"  ) return("NOK/JPY"  );
    if (symbol == "NOKSEK"  ) return("NOK/SEK"  );
    if (symbol == "NZDCAD"  ) return("NZD/CAD"  );
    if (symbol == "NZDCHF"  ) return("NZD/CHF"  );
    if (symbol == "NZDJPY"  ) return("NZD/JPY"  );
-   if (symbol == "NZDLFX"  ) return("NZD-Index");
+   if (symbol == "NZDLFX"  ) return("NZD"      );
    if (symbol == "NZDSGD"  ) return("NZD/SGD"  );
    if (symbol == "NZDUSD"  ) return("NZD/USD"  );
    if (symbol == "PLNJPY"  ) return("PLN/JPY"  );
@@ -4882,7 +4882,7 @@ string GetSymbolNameStrict(string symbol) {
    if (symbol == "USDHUF"  ) return("USD/HUF"  );
    if (symbol == "USDINR"  ) return("USD/INR"  );
    if (symbol == "USDJPY"  ) return("USD/JPY"  );
-   if (symbol == "USDLFX"  ) return("USD-Index");
+   if (symbol == "USDLFX"  ) return("USD"      );
    if (symbol == "USDLTL"  ) return("USD/LTL"  );
    if (symbol == "USDLVL"  ) return("USD/LVL"  );
    if (symbol == "USDMXN"  ) return("USD/MXN"  );
@@ -4929,7 +4929,7 @@ string GetLongSymbolName(string symbol) {
 
 /**
  * Gibt den Langnamen eines Symbols zurück oder den angegebenen Alternativwert, wenn kein Langname gefunden wurde.
- * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD-Index (LFX)")
+ * (z.B. GetLongSymbolNameOrAlt("USDLFX") => "USD (LFX)")
  *
  * @param  string symbol   - Symbol
  * @param  string altValue - alternativer Rückgabewert
@@ -4951,7 +4951,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
 
 /**
  * Gibt den Langnamen eines Symbols zurück.
- * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD-Index (LFX)")
+ * (z.B. GetLongSymbolNameStrict("USDLFX") => "USD (LFX)")
  *
  * @param  string symbol - Symbol
  *
@@ -4972,15 +4972,15 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
    if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
    if (symbol == "#SPX.X"  ) return("S&P 500"                 );
-   if (symbol == "AUDLFX"  ) return("AUD-Index (LFX)"         );
-   if (symbol == "CADLFX"  ) return("CAD-Index (LFX)"         );
-   if (symbol == "CHFLFX"  ) return("CHF-Index (LFX)"         );
-   if (symbol == "EURLFX"  ) return("EUR-Index (LFX)"         );
+   if (symbol == "AUDLFX"  ) return("AUD (LFX)"               );
+   if (symbol == "CADLFX"  ) return("CAD (LFX)"               );
+   if (symbol == "CHFLFX"  ) return("CHF (LFX)"               );
+   if (symbol == "EURLFX"  ) return("EUR (LFX)"               );
    if (symbol == "EURX"    ) return("EUR-Index (ICE)"         );
-   if (symbol == "GBPLFX"  ) return("GBP-Index (LFX)"         );
-   if (symbol == "LFXJPY"  ) return("1/JPY-Index (LFX)"       );
-   if (symbol == "NZDLFX"  ) return("NZD-Index (LFX)"         );
-   if (symbol == "USDLFX"  ) return("USD-Index (LFX)"         );
+   if (symbol == "GBPLFX"  ) return("GBP (LFX)"               );
+   if (symbol == "LFXJPY"  ) return("1/JPY (LFX)"             );
+   if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
+   if (symbol == "USDLFX"  ) return("USD (LFX)"               );
    if (symbol == "USDX"    ) return("USD-Index (ICE)"         );
    if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
    if (symbol == "XAGJPY"  ) return("Silver/JPY"              );
