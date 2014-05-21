@@ -639,15 +639,6 @@
 #define STARTF_USESTDHANDLES                     0x0100
 
 
-// Struct sizes
-#define PROCESS_INFORMATION.size                     16
-#define SECURITY_ATTRIBUTES.size                     12
-#define STARTUPINFO.size                             68
-#define SYSTEMTIME.size                              16
-#define TIME_ZONE_INFORMATION.size                  172
-#define WIN32_FIND_DATA.size                        318
-
-
 // VirtualAlloc() allocation type flags
 #define MEM_COMMIT                           0x00001000
 #define MEM_RESERVE                          0x00002000
