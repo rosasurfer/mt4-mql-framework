@@ -22,7 +22,8 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern double Units           = 1.0;                                 // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
+extern string Help  = "Buy Limit Order";
+extern double Units = 1.0;                                           // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
 extern double LimitPrice;
 extern double StopLossPrice;
 extern double TakeProfitPrice;
@@ -97,7 +98,7 @@ int onDeinit() {
 int onStart() {
    // (1) Sicherheitsabfrage
    PlaySound("notify.wav");
-   int button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
+   int button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
                          +"Do you really want to place a Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                          +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                          + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
@@ -131,7 +132,7 @@ int onStart() {
 
    // (4) Bestätigungsmeldung
    PlaySound("Entry order.wav");
-   MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Live Account -\n\n", "")
+   MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
             +"Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
             + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))

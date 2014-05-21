@@ -87,7 +87,7 @@ int onInitChartClose() {
       int sizeOfIds = ArraySize(ids);
       for (int i=0; i < sizeOfIds; i++) {
          ForceSound("notify.wav");
-         button = ForceMessageBox(__NAME__, ifString(!IsDemo(), "- Live Account -\n\n", "") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids, ", ") +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
+         button = ForceMessageBox(__NAME__, ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Running sequence"+ ifString(sizeOfIds==1, " ", "s ") + JoinInts(ids, ", ") +" found.\n\nDo you want to load "+ ifString(sizeOfIds==1, "it", ids[i]) +"?", MB_ICONQUESTION|MB_YESNOCANCEL);
          if (button == IDYES) {
             isTest      = false;
             sequenceId  = ids[i];
