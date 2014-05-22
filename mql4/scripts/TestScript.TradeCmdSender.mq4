@@ -12,6 +12,7 @@ int __DEINIT_FLAGS__[];
 
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
+#include <structs/LFX_ORDER.mqh>
 
 
 /**
