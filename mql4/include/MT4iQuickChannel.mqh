@@ -15,6 +15,36 @@
    int  QC_CheckChannel      (string lpChannelName);
    int  QC_ChannelHasReceiver(string lpChannelName);
 
+   /*
+   undocumented:
+   -------------
+   CreateHelper2();
+   RemoveHelper();
+
+   SetupTimedTicks();
+   RemoveTimedTicks();
+
+   TimeUTC();
+
+   QC_GetMessages();
+   QC_GetMessages4();
+   QC_ClearMessages();
+   QC_FreeString();
+
+   QC_StartSendInternetMessages();
+   QC_SendInternetMessage();
+   QC_EndSendInternetMessages();
+
+   QC_StartReceiveInternetMessages();
+   QC_QueryInternetMessages();
+   QC_EndReceiveInternetMessages();
+
+   QC_IsInternetSendSessionTerminated();
+   QC_IsInternetReceiverActive();
+
+   QC_GetLastInternetSendError();
+   QC_GetLastInternetReceiveError();
+   */
 #import
 
 
