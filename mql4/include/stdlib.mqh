@@ -410,6 +410,7 @@
 
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
+   bool     IsCurrency(string value);
 
    string   StdSymbol();                                                               // Alias für GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                                          // Alias für GetStandardSymbolOrAlt(symbol, symbol)

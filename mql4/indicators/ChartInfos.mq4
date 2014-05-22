@@ -257,17 +257,18 @@ bool IsLimitTriggered(int type, bool sl, bool tp, double price) {
  */
 int CreateLabels() {
    // Label definieren
-   label.instrument   = __NAME__ +"."+ label.instrument;
-   label.ohlc         = __NAME__ +"."+ label.ohlc;
-   label.price        = __NAME__ +"."+ label.price;
-   label.spread       = __NAME__ +"."+ label.spread;
-   label.unitSize     = __NAME__ +"."+ label.unitSize;
-   label.position     = __NAME__ +"."+ label.position;
-   label.time         = __NAME__ +"."+ label.time;
-   label.stopoutLevel = __NAME__ +"."+ label.stopoutLevel;
+   label.instrument      = __NAME__ +"."+ label.instrument;
+   label.ohlc            = __NAME__ +"."+ label.ohlc;
+   label.price           = __NAME__ +"."+ label.price;
+   label.spread          = __NAME__ +"."+ label.spread;
+   label.unitSize        = __NAME__ +"."+ label.unitSize;
+   label.position        = __NAME__ +"."+ label.position;
+   label.time            = __NAME__ +"."+ label.time;
+   label.lfxTradeAccount = __NAME__ +"."+ label.lfxTradeAccount;
+   label.stopoutLevel    = __NAME__ +"."+ label.stopoutLevel;
 
 
-   // Instrument-Label: Anzeige wird sofort hier und nur einmal gesetzt
+   // Instrument-Label: Anzeige wird sofort und nur hier gesetzt
    if (ObjectFind(label.instrument) == 0)
       ObjectDelete(label.instrument);
    if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
@@ -350,6 +351,23 @@ int CreateLabels() {
          ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
          ObjectSetText(label.position, " ", 1);
          PushObject   (label.position);
+      }
+      else GetLastError();
+   }
+   else {
+      // LFX-Trade-Account-Label: nur in LFX-Charts, Anzeige wird sofort und nur hier gesetzt
+      if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+         return(last_error);
+
+      if (ObjectFind(label.lfxTradeAccount) == 0)
+         ObjectDelete(label.lfxTradeAccount);
+      if (ObjectCreate(label.lfxTradeAccount, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label.lfxTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
+         ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 6);
+            name = lfxAccountName +" ("+ lfxAccountCompany +":"+ lfxAccount +", "+ lfxAccountCurrency +")";
+         ObjectSetText(label.lfxTradeAccount, name, 9, "Tahoma Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
+         PushObject   (label.lfxTradeAccount);
       }
       else GetLastError();
    }

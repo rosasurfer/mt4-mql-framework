@@ -1645,6 +1645,49 @@ string GetGlobalConfigPath() {
 
 
 /**
+ * Ob ein String einen gültigen Währungsbezeichner darstellt.
+ *
+ * @param  string value - Wert
+ *
+ * @return bool
+ */
+bool IsCurrency(string value) {
+   value = StringToUpper(value);
+
+   if (value == C_AUD) return(true);
+   if (value == C_CAD) return(true);
+   if (value == C_CHF) return(true);
+   if (value == C_CNY) return(true);
+   if (value == C_CZK) return(true);
+   if (value == C_DKK) return(true);
+   if (value == C_EUR) return(true);
+   if (value == C_GBP) return(true);
+   if (value == C_HKD) return(true);
+   if (value == C_HRK) return(true);
+   if (value == C_HUF) return(true);
+   if (value == C_INR) return(true);
+   if (value == C_JPY) return(true);
+   if (value == C_LTL) return(true);
+   if (value == C_LVL) return(true);
+   if (value == C_MXN) return(true);
+   if (value == C_NOK) return(true);
+   if (value == C_NZD) return(true);
+   if (value == C_PLN) return(true);
+   if (value == C_RUB) return(true);
+   if (value == C_SAR) return(true);
+   if (value == C_SEK) return(true);
+   if (value == C_SGD) return(true);
+   if (value == C_THB) return(true);
+   if (value == C_TRY) return(true);
+   if (value == C_TWD) return(true);
+   if (value == C_USD) return(true);
+   if (value == C_ZAR) return(true);
+
+   return(false);
+}
+
+
+/**
  * Gibt die eindeutige ID einer Währung zurück.
  *
  * @param  string currency - 3-stelliger Währungsbezeichner
