@@ -11,8 +11,10 @@
 
 
 int    lfxAccount;                                                   // LFX-Account: im LFX-Terminal ein TradeAccount, im Trading-Terminal der aktuelle Account
-string lfxAccountCompany;
+string lfxAccountCurrency;
 int    lfxAccountType;
+string lfxAccountName;
+string lfxAccountCompany;
 
 bool   isLfxInstrument;
 string lfxCurrency;
@@ -32,8 +34,10 @@ bool LFX.InitAccountData() {
       return(true);
 
    int    _account;
-   string _accountCompany;
+   string _accountCurrency;
    int    _accountType;
+   string _accountName;
+   string _accountCompany;
 
    bool isLfxInstrument = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
 
@@ -57,24 +61,41 @@ bool LFX.InitAccountData() {
          return(!SetLastError(stdlib.GetLastError()));
    }
 
-   // AccountCompany
+   // AccountCurrency
    section = "Accounts";
-   key     = _account +".company";
-   _accountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCompany)) return(!catch("LFX.InitAccountData(3)   missing account company setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   key     = _account +".currency";
+   _accountCurrency = GetGlobalConfigString(section, key, "");
+   if (!StringLen(_accountCurrency))  return(!catch("LFX.InitAccountData(3)   missing account currency setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!IsCurrency(_accountCurrency)) return(!catch("LFX.InitAccountData(4)   invalid account currency setting ["+ section +"]->"+ key +" = \""+ _accountCurrency +"\"", ERR_RUNTIME_ERROR));
+   _accountCurrency = StringToUpper(_accountCurrency);
 
    // AccountType
    key   = _account +".type";
    value = StringToLower(GetGlobalConfigString(section, key, ""));
-   if (!StringLen(value)) return(!catch("LFX.InitAccountData(4)   missing account type setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(value))             return(!catch("LFX.InitAccountData(5)   missing account type setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
    if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
    else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
-   else return(!catch("LFX.InitAccountData(5)   invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
+   else                               return(!catch("LFX.InitAccountData(6)   invalid account type setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
+
+   // AccountName
+   section = "Accounts";
+   key     = _account +".name";
+   _accountName = GetGlobalConfigString(section, key, "");
+   if (!StringLen(_accountName))      return(!catch("LFX.InitAccountData(7)   missing account name setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
+   // AccountCompany
+   section = "Accounts";
+   key     = _account +".company";
+   _accountCompany = GetGlobalConfigString(section, key, "");
+   if (!StringLen(_accountCompany))   return(!catch("LFX.InitAccountData(8)   missing account company setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
 
    // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   lfxAccount        = _account;
-   lfxAccountCompany = _accountCompany;
-   lfxAccountType    = _accountType;
+   lfxAccount         = _account;
+   lfxAccountCurrency = _accountCurrency;
+   lfxAccountType     = _accountType;
+   lfxAccountName     = _accountName;
+   lfxAccountCompany  = _accountCompany;
 
    return(true);
 }
