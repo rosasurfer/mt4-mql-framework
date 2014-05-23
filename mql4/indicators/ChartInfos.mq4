@@ -358,6 +358,7 @@ int CreateLabels() {
       // LFX-Trade-Account-Label: nur in LFX-Charts, Anzeige wird sofort und nur hier gesetzt
       if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
          return(last_error);
+      name = lfxAccountName +" ("+ lfxAccountCompany +":"+ lfxAccount +", "+ lfxAccountCurrency +")";
 
       if (ObjectFind(label.lfxTradeAccount) == 0)
          ObjectDelete(label.lfxTradeAccount);
@@ -365,8 +366,7 @@ int CreateLabels() {
          ObjectSet    (label.lfxTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
          ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
          ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 6);
-            name = lfxAccountName +" ("+ lfxAccountCompany +":"+ lfxAccount +", "+ lfxAccountCurrency +")";
-         ObjectSetText(label.lfxTradeAccount, name, 9, "Tahoma Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
+         ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
          PushObject   (label.lfxTradeAccount);
       }
       else GetLastError();
