@@ -39,21 +39,13 @@ int onStart() {
    // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
    bool status = !LFX.ReadDisplayStatus();
 
-
    if (status) {
       // Status ON: offene Orders einlesen und anzeigen
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
       int orders = LFX.GetOrders(lfxCurrency, OF_OPEN, los);
-      if (orders < 0)
-         return(last_error);
 
       for (int i=0; i < orders; i++) {
-         string   label     =                     los.Comment     (los, i);
-         int      type      =                     los.Type        (los, i);
-         double   units     =                     los.Units       (los, i);
-         datetime openTime  = GMTToServerTime(Abs(los.OpenTime    (los, i)));
-         double   openPrice =                     los.OpenPriceLfx(los, i);
-         if (!SetOpenOrderMarker(label, type, units, openTime, openPrice))
+         if (!ShowOpenOrder(los, i))
             break;
       }
       ArrayResize(los, 0);
@@ -67,10 +59,8 @@ int onStart() {
       }
    }
 
-
    // aktuellen Status im Chart speichern
    LFX.SaveDisplayStatus(status);
-
 
    if (This.IsTesting())
       WindowRedraw();
@@ -79,17 +69,40 @@ int onStart() {
 
 
 /**
- * Zeichnet für die angegebenen Daten einen Positions-Marker in den Chart.
+ * Zeigt die angegebene LFX_ORDER an.
  *
- * @param  string   label
- * @param  int      type
- * @param  double   units
- * @param  datetime openTime
- * @param  double   openPrice
+ * @param  LFX_ORDER los[] - eine einzelne LFX_ORDER oder ein LFX_ORDER-Array
+ * @param  int       index - Arrayindex der zu speichernden Order, wenn los[] ein LFX_ORDER-Array ist.
+ *                           Wird ignoriert, wenn los[] eine einzelne LFX_ORDER ist.
  *
  * @return bool - Erfolgsstatus
  */
-bool SetOpenOrderMarker(string label, int type, double units, datetime openTime, double openPrice) {
+bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
+   // (1) übergebene Order in eine einzelne Order umkopieren (Parameter los[] kann unterschiedliche Dimensionen haben)
+   int dims = ArrayDimension(los); if (dims > 2)   return(!catch("ShowOpenOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
+
+   /*LFX_ORDER*/int lo[]; ArrayResize(lo, LFX_ORDER.intSize);
+   if (dims == 1) {
+      // Parameter los[] ist einzelne Order
+      if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!catch("ShowOpenOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      ArrayCopy(lo, los);
+   }
+   else {
+      // Parameter los[] ist Order-Array
+      if (ArrayRange(los, 1) != LFX_ORDER.intSize) return(!catch("ShowOpenOrder(3)   invalid size of parameter los["+ ArrayRange(los, 0) +"]["+ ArrayRange(los, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      int losSize = ArrayRange(los, 0);
+      if (index < 0 || index > losSize-1)          return(!catch("ShowOpenOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+      CopyMemory(GetIntsAddress(los)+ index*LFX_ORDER.intSize*4, GetIntsAddress(lo), LFX_ORDER.intSize*4);
+   }
+
+
+   // (2) Order anzeigen
+   string   label     =                     lo.Comment     (lo);
+   int      type      =                     lo.Type        (lo);
+   double   units     =                     lo.Units       (lo);
+   datetime openTime  = GMTToServerTime(Abs(lo.OpenTime    (lo)));
+   double   openPrice =                     lo.OpenPriceLfx(lo);
+
    string name = StringConcatenate("LFX.OpenTicket.", label, ".Line");
    if (ObjectFind(name) > -1)
       ObjectDelete(name);
@@ -103,5 +116,6 @@ bool SetOpenOrderMarker(string label, int type, double units, datetime openTime,
    }
    else GetLastError();
 
-   return(!catch("SetOpenOrderMarker()"));
+   ArrayResize(lo, 0);
+   return(!catch("ShowOpenOrder(5)"));
 }
