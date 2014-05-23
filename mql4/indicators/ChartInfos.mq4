@@ -359,6 +359,7 @@ int CreateLabels() {
       if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
          return(last_error);
       name = lfxAccountName +" ("+ lfxAccountCompany +":"+ lfxAccount +", "+ lfxAccountCurrency +")";
+      name = lfxAccountName +": "+ lfxAccountCompany +", "+ lfxAccount +", "+ lfxAccountCurrency;
 
       if (ObjectFind(label.lfxTradeAccount) == 0)
          ObjectDelete(label.lfxTradeAccount);
