@@ -366,7 +366,7 @@ int CreateLabels() {
       if (ObjectCreate(label.lfxTradeAccount, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label.lfxTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
          ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
-         ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 6);
+         ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 4);
          ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
          PushObject   (label.lfxTradeAccount);
       }
