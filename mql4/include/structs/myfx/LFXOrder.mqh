@@ -42,7 +42,7 @@ double   lo.Profit         (/*LFX_ORDER*/int lo[]         ) {                   
 double   lo.Deviation      (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[15]/MathPow(10, digits), digits));         }
 string   lo.Comment        (/*LFX_ORDER*/int lo[]         ) {                                 return(BufferCharsToStr(lo, 64, 32));                                 }
 datetime lo.Version        (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[24]);                                      }
-//---------------------------------------------------------------------------  Helper  ------------------------------------------------------------------------------
+//----------------------------------------------------------------------- Helper Functions --------------------------------------------------------------------------
 int      lo.Digits         (/*LFX_ORDER*/int lo[]         ) {                   return(ifInt(LFX.CurrencyId(lo.Ticket(lo))==CID_JPY, 3, 5));                        }
 string   lo.Currency       (/*LFX_ORDER*/int lo[]         ) {             return(GetCurrency(LFX.CurrencyId(lo.Ticket(lo))));                                       }
 int      lo.CurrencyId     (/*LFX_ORDER*/int lo[]         ) {                         return(LFX.CurrencyId(lo.Ticket(lo)));                                        }
@@ -76,7 +76,7 @@ double   los.Profit        (/*LFX_ORDER*/int lo[][], int i) {                   
 double   los.Deviation     (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo, i);    return(NormalizeDouble(lo[i][15]/MathPow(10, digits), digits));      }
 string   los.Comment       (/*LFX_ORDER*/int lo[][], int i) {                                 return(BufferCharsToStr(lo, ArrayRange(lo, 1)*i*4 + 64, 32));         }
 datetime los.Version       (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][24]);                                   }
-//---------------------------------------------------------------------------  Helper  ------------------------------------------------------------------------------
+//----------------------------------------------------------------------- Helper Functions --------------------------------------------------------------------------
 int      los.Digits        (/*LFX_ORDER*/int lo[][], int i) {                  return(ifInt(LFX.CurrencyId(los.Ticket(lo, i))==CID_JPY, 3, 5));                     }
 string   los.Currency      (/*LFX_ORDER*/int lo[][], int i) {            return(GetCurrency(LFX.CurrencyId(los.Ticket(lo, i))));                                    }
 int      los.CurrencyId    (/*LFX_ORDER*/int lo[][], int i) {                        return(LFX.CurrencyId(los.Ticket(lo, i)));                                     }

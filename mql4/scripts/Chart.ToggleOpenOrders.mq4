@@ -97,22 +97,27 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
 
    // (2) Order anzeigen
-   string   label     =                     lo.Comment     (lo);
-   int      type      =                     lo.Type        (lo);
-   double   units     =                     lo.Units       (lo);
-   datetime openTime  = GMTToServerTime(Abs(lo.OpenTime    (lo)));
-   double   openPrice =                     lo.OpenPriceLfx(lo);
+   string   comment    =                     lo.Comment      (lo);
+   int      type       =                     lo.Type         (lo);
+   double   units      =                     lo.Units        (lo);
+   datetime openTime   = GMTToServerTime(Abs(lo.OpenTime     (lo)));
+   double   openPrice  =                     lo.OpenPriceLfx (lo);
+   bool     isSL       =                    (lo.StopLossLfx  (lo) != 0);
+   bool     isTP       =                    (lo.TakeProfitLfx(lo) != 0);
 
-   string name = StringConcatenate("LFX.OpenTicket.", label, ".Line");
-   if (ObjectFind(name) > -1)
-      ObjectDelete(name);
+   string label = StringConcatenate("LFX.OpenTicket.", comment, ".Line");
+   string text  = StringConcatenate(" ", comment, ":  ", NumberToStr(units, ".+"), " x ", NumberToStr(openPrice, SubPipPriceFormat));
+      if (isTP) text = StringConcatenate(text, ",  TP: ", NumberToStr(lo.TakeProfitLfx(lo), SubPipPriceFormat));
+      if (isSL) text = StringConcatenate(text, ",  SL: ", NumberToStr(lo.StopLossLfx  (lo), SubPipPriceFormat));
 
-   if (ObjectCreate(name, OBJ_TREND, 0, D'1970.01.01 00:01', openPrice, openTime, openPrice)) {
-      ObjectSet(name, OBJPROP_RAY  , false);
-      ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet(name, OBJPROP_COLOR, ifInt(IsLongTradeOperation(type), Green, Red));
-      ObjectSet(name, OBJPROP_BACK , false);
-      ObjectSetText(name, StringConcatenate(" ", label, ":  ", NumberToStr(units, ".+"), " x ", NumberToStr(openPrice, SubPipPriceFormat)));
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_TREND, 0, D'1970.01.01 00:01', openPrice, openTime, openPrice)) {
+      ObjectSet(label, OBJPROP_RAY  , false);
+      ObjectSet(label, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet(label, OBJPROP_COLOR, ifInt(IsLongTradeOperation(type), Green, Red));
+      ObjectSet(label, OBJPROP_BACK , false);
+      ObjectSetText(label, text);
    }
    else GetLastError();
 
