@@ -8777,18 +8777,5 @@ period_flags=31
 show_data=0
 </indicator>
 
-<indicator>
-name=Custom Indicator
-<expert>
-name=EventTracker
-flags=347
-window_num=0
-<inputs>
-</inputs>
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
 </window>
 </chart>

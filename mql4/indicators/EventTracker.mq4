@@ -12,7 +12,7 @@ bool   Sound.Alerts                = true;
 bool   SMS.Alerts                  = false;
 string SMS.Receiver                = "";
 
-bool   Track.Positions             = true;
+bool   Track.Positions             = false;
 string Positions.SoundOnOpen       = "OrderFilled.wav";
 string Positions.SoundOnClose      = "PositionClosed.wav";
 
