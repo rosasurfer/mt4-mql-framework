@@ -4,14 +4,14 @@
  * Dateiformat ".hst":
  * -------------------
  * struct HISTORY_HEADER {
- *   int  version;               //   4      => hh[ 0]      // HST-Formatversion (MT4: immer 400)
- *   char description[64];       //  64      => hh[ 1]      // Beschreibung
- *   char symbol[12];            //  12      => hh[17]      // Symbol
- *   int  period;                //   4      => hh[20]      // Timeframe
- *   int  digits;                //   4      => hh[21]      // Digits
- *   int  dbVersion;             //   4      => hh[22]      // Server-Datenbankversion (timestamp)
- *   int  prevDbVersion;         //   4      => hh[23]      // LastSync                (timestamp)    // unbenutzt
- *   int  reserved[13];          //  52      => hh[24]      //                                        // unbenutzt
+ *   int    version;             //   4      => hh[ 0]      // HST-Formatversion (MT4: immer 400)
+ *   szchar description[64];     //  64      => hh[ 1]      // Beschreibung, <NUL>-terminiert
+ *   szchar symbol[12];          //  12      => hh[17]      // Symbol, <NUL>-terminiert
+ *   int    period;              //   4      => hh[20]      // Timeframe
+ *   int    digits;              //   4      => hh[21]      // Digits
+ *   int    dbVersion;           //   4      => hh[22]      // Server-Datenbankversion (timestamp)
+ *   int    prevDbVersion;       //   4      => hh[23]      // LastSync                (timestamp)    // unbenutzt
+ *   int    reserved[13];        //  52      => hh[24]      //                                        // unbenutzt
  * } hh;                         // 148 byte = int[37]
  */
 
