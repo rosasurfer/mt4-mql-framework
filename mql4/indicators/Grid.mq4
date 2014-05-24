@@ -157,7 +157,7 @@ int DrawGrid() {
          ObjectDelete(lastLabel);                                    // Separator für die fehlende Periode wieder löschen
 
       // Separator zeichnen
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0)) {
          sepStyle = STYLE_DOT;

@@ -13,16 +13,6 @@
  *   int  prevDbVersion;         //   4      => hh[23]      // LastSync                (timestamp)    // unbenutzt
  *   int  reserved[13];          //  52      => hh[24]      //                                        // unbenutzt
  * } hh;                         // 148 byte = int[37]
- *
- *                                  size        offset
- * struct BAR {                     ----        ------
- *   int    time;                     4            0        // BarOpen-Time
- *   double open;                     8            4
- *   double low;                      8           12
- *   double high;                     8           20
- *   double close;                    8           28
- *   double volume;                   8           36        // Double, jedoch immer Ganzzahl
- * } bar;                          = 44 byte
  */
 
 #import "history.ex4"

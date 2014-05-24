@@ -79,7 +79,7 @@ int CreateLabels() {
    // Backgrounds
    c++;
    string label = StringConcatenate(__NAME__, ".", c, ".Background");
-   if (ObjectFind(label) > -1)
+   if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -92,7 +92,7 @@ int CreateLabels() {
 
    c++;
    label = StringConcatenate(__NAME__, ".", c, ".Background");
-   if (ObjectFind(label) > -1)
+   if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -108,7 +108,7 @@ int CreateLabels() {
    int yCoord    =  58;
    c++;
    label = StringConcatenate(__NAME__, ".", c, ".Header.direct");
-   if (ObjectFind(label) > -1)
+   if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -121,7 +121,7 @@ int CreateLabels() {
 
    c++;
    label = StringConcatenate(__NAME__, ".", c, ".Header.viaUSD");
-   if (ObjectFind(label) > -1)
+   if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -138,7 +138,7 @@ int CreateLabels() {
       c++;
       // Währung
       label = StringConcatenate(__NAME__, ".", c, ".", symbols[i]);
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -152,7 +152,7 @@ int CreateLabels() {
 
       // Index direct
       label = StringConcatenate(symbols[i], ".quote.direct");
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -165,7 +165,7 @@ int CreateLabels() {
 
       // Spread direct
       label = StringConcatenate(symbols[i], ".spread.direct");
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -178,7 +178,7 @@ int CreateLabels() {
 
       // Index via USD
       label = StringConcatenate(symbols[i], ".quote.viaUSD");
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -191,7 +191,7 @@ int CreateLabels() {
 
       // Spread via USD
       label = StringConcatenate(symbols[i], ".spread.viaUSD");
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);

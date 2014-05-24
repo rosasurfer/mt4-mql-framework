@@ -46,7 +46,7 @@ int CreateLabels() {
       // Backgrounds
       c++;
       string label = StringConcatenate(__NAME__, ".", c, ".Background");
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
@@ -62,7 +62,7 @@ int CreateLabels() {
       for (int i=0; i < names; i++) {
          c++;
          label = StringConcatenate(__NAME__, ".", c, ".", fontNames[i]);
-         if (ObjectFind(label) > -1)
+         if (ObjectFind(label) == 0)
             ObjectDelete(label);
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);

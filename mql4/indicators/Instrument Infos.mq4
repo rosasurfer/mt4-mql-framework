@@ -91,7 +91,7 @@ int CreateLabels() {
 
    // Background
    string label = StringConcatenate(__NAME__, ".", n, ".Background");
-   if (ObjectFind(label) > -1)
+   if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
@@ -104,7 +104,7 @@ int CreateLabels() {
 
    n++;
    label = StringConcatenate(__NAME__, ".", n, ".Background");
-   if (ObjectFind(label) > -1)
+   if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
@@ -120,7 +120,7 @@ int CreateLabels() {
    for (int i=0; i < ArraySize(labels); i++) {
       n++;
       label = StringConcatenate(__NAME__, ".", n, ".", labels[i]);
-      if (ObjectFind(label) > -1)
+      if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
