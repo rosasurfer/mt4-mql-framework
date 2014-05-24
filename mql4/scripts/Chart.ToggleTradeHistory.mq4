@@ -63,7 +63,7 @@ int onStart() {
       ArrayResize(los, 0);
    }
    else {
-      // Status OFF: alle existierenden Chartobjekte geschlossener Tickets löschen
+      // Status OFF: Chartobjekte geschlossener Orders löschen
       for (i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
          if (StringStartsWith(name, "#"))
