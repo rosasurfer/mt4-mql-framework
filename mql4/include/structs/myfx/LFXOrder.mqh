@@ -2,24 +2,24 @@
  * MQL structure LFX_ORDER
  *
  * struct LFX_ORDER {
- *    int  ticket;            //   4         lo[ 0]      // Ticket, enthält Strategy- und Currency-ID
- *    int  type;              //   4         lo[ 1]      // Operation-Type
- *    int  units;             //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
- *    int  lots;              //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
- *    int  openEquity;        //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
- *    int  openTime;          //   4         lo[ 5]      // OpenTime, GMT
- *    int  openPriceLfx;      //   4         lo[ 6]      // OpenPrice in Points, LFX
- *    int  openPriceTime      //   4         lo[ 7]      // Zeitpunkt des Erreichens des OpenPrice-Limits, GMT
- *    int  stopLossLfx;       //   4         lo[ 8]      // StopLoss-Preis in Points, LFX
- *    int  stopLossTime       //   4         lo[ 9]      // Zeitpunkt des Erreichens des StopLosses, GMT
- *    int  takeProfitLfx;     //   4         lo[10]      // TakeProfit-Preis in Points, LFX
- *    int  takeProfitTime     //   4         lo[11]      // Zeitpunkt des Erreichens des TakeProfits, GMT
- *    int  closeTime;         //   4         lo[12]      // CloseTime, GMT
- *    int  closePriceLfx;     //   4         lo[13]      // ClosePrice in Points, LFX
- *    int  profit;            //   4         lo[14]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
- *    int  deviation;         //   4         lo[15]      // Abweichung der gespeicherten LFX- von den tatsächlichen Preisen in Points: realPrice + deviation = lfxPrice
- *    char szComment[32];     //  32         lo[16]      // Kommentar, bis zu 31 Zeichen + <NUL> (kann vom Orderkommentar beim Broker abweichen)
- *    int  version;           //   4         lo[24]      // Zeitpunkt der letzten Änderung, GMT
+ *    int    ticket;          //   4         lo[ 0]      // Ticket, enthält Strategy- und Currency-ID
+ *    int    type;            //   4         lo[ 1]      // Operation-Type
+ *    int    units;           //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
+ *    int    lots;            //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
+ *    int    openEquity;      //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
+ *    int    openTime;        //   4         lo[ 5]      // OpenTime, GMT
+ *    int    openPriceLfx;    //   4         lo[ 6]      // OpenPrice in Points, LFX
+ *    int    openPriceTime    //   4         lo[ 7]      // Zeitpunkt des Erreichens des OpenPrice-Limits, GMT
+ *    int    stopLossLfx;     //   4         lo[ 8]      // StopLoss-Preis in Points, LFX
+ *    int    stopLossTime     //   4         lo[ 9]      // Zeitpunkt des Erreichens des StopLosses, GMT
+ *    int    takeProfitLfx;   //   4         lo[10]      // TakeProfit-Preis in Points, LFX
+ *    int    takeProfitTime   //   4         lo[11]      // Zeitpunkt des Erreichens des TakeProfits, GMT
+ *    int    closeTime;       //   4         lo[12]      // CloseTime, GMT
+ *    int    closePriceLfx;   //   4         lo[13]      // ClosePrice in Points, LFX
+ *    int    profit;          //   4         lo[14]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
+ *    int    deviation;       //   4         lo[15]      // Abweichung der gespeicherten LFX- von den tatsächlichen Preisen in Points: realPrice + deviation = lfxPrice
+ *    szchar comment[32];     //  32         lo[16]      // Kommentar, <NUL>-terminiert
+ *    int    version;         //   4         lo[24]      // Zeitpunkt der letzten Änderung, GMT
  * } lo;                      // 100 byte = int[25]
  */
 

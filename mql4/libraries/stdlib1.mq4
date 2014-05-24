@@ -10349,31 +10349,31 @@ string ColorToStr(color value)   {
  * MQL4 structure ORDER_EXECUTION
  *
  * struct ORDER_EXECUTION {
- *    int  error;             //   4      => oe[ 0]      // Fehlercode
- *    char symbol[12];        //  16      => oe[ 1]      // OrderSymbol, bis zu 11 Zeichen + <NUL>
- *    int  digits;            //   4      => oe[ 5]      // Digits des Ordersymbols
- *    int  stopDistance;      //   4      => oe[ 6]      // Stop-Distance in Points
- *    int  freezeDistance;    //   4      => oe[ 7]      // Freeze-Distance in Points
- *    int  bid;               //   4      => oe[ 8]      // Bid-Preis vor Ausführung in Points
- *    int  ask;               //   4      => oe[ 9]      // Ask-Preis vor Ausführung in Points
- *    int  ticket;            //   4      => oe[10]      // Ticket
- *    int  type;              //   4      => oe[11]      // Operation-Type
- *    int  lots;              //   4      => oe[12]      // Ordervolumen in Hundertsteln eines Lots
- *    int  openTime;          //   4      => oe[13]      // OrderOpenTime
- *    int  openPrice;         //   4      => oe[14]      // OpenPrice in Points
- *    int  stopLoss;          //   4      => oe[15]      // StopLoss-Preis in Points
- *    int  takeProfit;        //   4      => oe[16]      // TakeProfit-Preis in Points
- *    int  closeTime;         //   4      => oe[17]      // OrderCloseTime
- *    int  closePrice;        //   4      => oe[18]      // ClosePrice in Points
- *    int  swap;              //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
- *    int  commission;        //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
- *    int  profit;            //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
- *    char comment[28];       //  28      => oe[22]      // Orderkommentar, bis zu 27 Zeichen + <NUL>
- *    int  duration;          //   4      => oe[29]      // Dauer der Auführung in Millisekunden
- *    int  requotes;          //   4      => oe[30]      // Anzahl aufgetretener Requotes
- *    int  slippage;          //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
- *    int  remainingTicket;   //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
- *    int  remainingLots;     //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
+ *    int    error;           //   4      => oe[ 0]      // Fehlercode
+ *    szchar symbol[12];      //  16      => oe[ 1]      // OrderSymbol, <NUL>-terminiert
+ *    int    digits;          //   4      => oe[ 5]      // Digits des Ordersymbols
+ *    int    stopDistance;    //   4      => oe[ 6]      // Stop-Distance in Points
+ *    int    freezeDistance;  //   4      => oe[ 7]      // Freeze-Distance in Points
+ *    int    bid;             //   4      => oe[ 8]      // Bid-Preis vor Ausführung in Points
+ *    int    ask;             //   4      => oe[ 9]      // Ask-Preis vor Ausführung in Points
+ *    int    ticket;          //   4      => oe[10]      // Ticket
+ *    int    type;            //   4      => oe[11]      // Operation-Type
+ *    int    lots;            //   4      => oe[12]      // Ordervolumen in Hundertsteln eines Lots
+ *    int    openTime;        //   4      => oe[13]      // OrderOpenTime
+ *    int    openPrice;       //   4      => oe[14]      // OpenPrice in Points
+ *    int    stopLoss;        //   4      => oe[15]      // StopLoss-Preis in Points
+ *    int    takeProfit;      //   4      => oe[16]      // TakeProfit-Preis in Points
+ *    int    closeTime;       //   4      => oe[17]      // OrderCloseTime
+ *    int    closePrice;      //   4      => oe[18]      // ClosePrice in Points
+ *    int    swap;            //   4      => oe[19]      // Swap-Betrag in Hundertsteln der Account-Währung
+ *    int    commission;      //   4      => oe[20]      // Commission-Betrag in Hundertsteln der Account-Währung
+ *    int    profit;          //   4      => oe[21]      // Profit in Hundertsteln der Account-Währung
+ *    szchar comment[28];     //  28      => oe[22]      // Orderkommentar, <NUL>-terminiert
+ *    int    duration;        //   4      => oe[29]      // Dauer der Auführung in Millisekunden
+ *    int    requotes;        //   4      => oe[30]      // Anzahl aufgetretener Requotes
+ *    int    slippage;        //   4      => oe[31]      // aufgetretene Slippage in Points (positiv: zu ungunsten, negativ: zu gunsten)
+ *    int    remainingTicket; //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
+ *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } oe;                      // 136 byte = int[34]
  */
 
