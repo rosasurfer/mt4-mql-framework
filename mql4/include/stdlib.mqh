@@ -1,23 +1,25 @@
 /**
- * NOTE: kompatibel zur Original-MetaQuotes-Version
+ * Je Modultyp implementierte Statusfunktionen (core), dürfen NICHT exportiert werden:
+ * -----------------------------------------------------------------------------------
+ *  bool IsExpert();
+ *  bool IsScript();
+ *  bool IsIndicator();
+ *  bool IsLibrary();
+ *
+ *  bool Expert.IsTesting();
+ *  bool Script.IsTesting();
+ *  bool Indicator.IsTesting();
+ *  bool This.IsTesting();
+ *
+ *  int  InitExecutionContext();                                     // nicht in Libraries (dort nicht notwendig)
+ *  bool Indicator.IsSuperContext();
+ *
+ *  int  SetLastError(int error, int param);
  */
+
 #import "stdlib1.ex4"
 
-   // MQL-Status- und Laufzeitumgebungs-Informationen
-   bool     IsExpert();
-   bool     Expert.IsTesting();
-
-   bool     IsIndicator();
-   bool     Indicator.IsTesting();
-   int      Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
-   bool     Indicator.IsSuperContext();
-
-   bool     IsScript();
-   bool     Script.IsTesting();
-
-   bool     IsLibrary();
-   bool     This.IsTesting();                                        // Short für (Expert.IsTesting() || Indicator.IsTesting() || Script.IsTesting())
-
+   // Status- und Laufzeit-Informationen
    bool     IsLogging();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
@@ -25,7 +27,6 @@
 
    bool     IsError(int value);
    bool     IsErrorCode(int value);
-   int      SetLastError(int error, int param);
    int      stdlib.GetLastError();
 
    string   GetTerminalVersion();
@@ -38,7 +39,7 @@
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
 
-   int      MT4InternalMsg();    int WM_MT4();  // Alias             // MetaTrader4_Internal_Message (kann wie Pseudo-Konstante benutzt werden)
+   int      MT4InternalMsg(); int WM_MT4();  // Alias                // MetaTrader4_Internal_Message (kann wie Pseudo-Konstante benutzt werden)
 
 
    // Account-Informationen
@@ -237,7 +238,7 @@
    datetime TimeGMT();
 
 
-   // Event-Listener: allgemeine Library-Versionen können durch spezielle lokale Versionen überschrieben werden
+   // Event-Listener: diese allgemeinen Library-Versionen können durch spezielle lokale Versionen überschrieben werden
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -251,7 +252,7 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // "abstrakte" Event-Handler: *müssen* bei Verwendung im Programm implementiert werden
+   // Event-Handler: Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden
    /*abstract*/ int onBarOpen        (int    data[]);
    /*abstract*/ int onAccountChange  (int    data[]);
    /*abstract*/ int onAccountPayment (int    data[]);
@@ -331,7 +332,7 @@
 
    // Strings
    string   CreateString(int length);
-   string   StringToStr(string value);
+   string   StringToStr(string value);                               // "value" (mit Anführungszeichen) oder NULL (ohne Anführungszeichen)
 
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
@@ -492,7 +493,6 @@
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr      (int type);
-   string   ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false);
    string   PeriodFlagToStr(int flag);
    string   PeriodDescription(int period);         string TimeframeDescription(int timeframe);        // Alias
    string   PeriodToStr      (int period);         string TimeframeToStr      (int timeframe);        // Alias
@@ -504,63 +504,6 @@
    string   WaitForSingleObjectValueToStr(int value);
    string   __whereamiDescription(int id);
    string   __whereamiToStr(int id);
-
-
-   // MQL-Structs Getter und Setter
-   int      oe.Error             (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i);
-   string   oe.Symbol            (/*ORDER_EXECUTION*/int oe[]);                       string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i);
-   int      oe.Digits            (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.StopDistance      (/*ORDER_EXECUTION*/int oe[]);                       double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.FreezeDistance    (/*ORDER_EXECUTION*/int oe[]);                       double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Bid               (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Ask               (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i);
-   int      oe.Ticket            (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i);
-   int      oe.Type              (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Lots              (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i);
-   datetime oe.OpenTime          (/*ORDER_EXECUTION*/int oe[]);                       datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.OpenPrice         (/*ORDER_EXECUTION*/int oe[]);                       double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.StopLoss          (/*ORDER_EXECUTION*/int oe[]);                       double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.TakeProfit        (/*ORDER_EXECUTION*/int oe[]);                       double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i);
-   datetime oe.CloseTime         (/*ORDER_EXECUTION*/int oe[]);                       datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.ClosePrice        (/*ORDER_EXECUTION*/int oe[]);                       double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Swap              (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Commission        (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Profit            (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i);
-   string   oe.Comment           (/*ORDER_EXECUTION*/int oe[]);                       string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i);
-   int      oe.Duration          (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i);
-   int      oe.Requotes          (/*ORDER_EXECUTION*/int oe[]);                       int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.Slippage          (/*ORDER_EXECUTION*/int oe[]);                       double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i);
-   int      oe.RemainingTicket   (/*ORDER_EXECUTION*/int oe[]);                       int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i);
-   double   oe.RemainingLots     (/*ORDER_EXECUTION*/int oe[]);                       double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i);
-
-   int      oe.setError          (/*ORDER_EXECUTION*/int oe[], int      error     );  int      oes.setError          (/*ORDER_EXECUTION*/int oe[][], int i, int      error     );
-   string   oe.setSymbol         (/*ORDER_EXECUTION*/int oe[], string   symbol    );  string   oes.setSymbol         (/*ORDER_EXECUTION*/int oe[][], int i, string   symbol    );
-   int      oe.setDigits         (/*ORDER_EXECUTION*/int oe[], int      digits    );  int      oes.setDigits         (/*ORDER_EXECUTION*/int oe[][], int i, int      digits    );
-   double   oe.setStopDistance   (/*ORDER_EXECUTION*/int oe[], double   distance  );  double   oes.setStopDistance   (/*ORDER_EXECUTION*/int oe[][], int i, double   distance  );
-   double   oe.setFreezeDistance (/*ORDER_EXECUTION*/int oe[], double   distance  );  double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int oe[][], int i, double   distance  );
-   double   oe.setBid            (/*ORDER_EXECUTION*/int oe[], double   bid       );  double   oes.setBid            (/*ORDER_EXECUTION*/int oe[][], int i, double   bid       );
-   double   oe.setAsk            (/*ORDER_EXECUTION*/int oe[], double   ask       );  double   oes.setAsk            (/*ORDER_EXECUTION*/int oe[][], int i, double   ask       );
-   int      oe.setTicket         (/*ORDER_EXECUTION*/int oe[], int      ticket    );  int      oes.setTicket         (/*ORDER_EXECUTION*/int oe[][], int i, int      ticket    );
-   int      oe.setType           (/*ORDER_EXECUTION*/int oe[], int      type      );  int      oes.setType           (/*ORDER_EXECUTION*/int oe[][], int i, int      type      );
-   double   oe.setLots           (/*ORDER_EXECUTION*/int oe[], double   lots      );  double   oes.setLots           (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
-   datetime oe.setOpenTime       (/*ORDER_EXECUTION*/int oe[], datetime openTime  );  datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int oe[][], int i, datetime openTime  );
-   double   oe.setOpenPrice      (/*ORDER_EXECUTION*/int oe[], double   openPrice );  double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int oe[][], int i, double   openPrice );
-   double   oe.setStopLoss       (/*ORDER_EXECUTION*/int oe[], double   stopLoss  );  double   oes.setStopLoss       (/*ORDER_EXECUTION*/int oe[][], int i, double   stopLoss  );
-   double   oe.setTakeProfit     (/*ORDER_EXECUTION*/int oe[], double   takeProfit);  double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int oe[][], int i, double   takeProfit);
-   datetime oe.setCloseTime      (/*ORDER_EXECUTION*/int oe[], datetime closeTime );  datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int oe[][], int i, datetime closeTime );
-   double   oe.setClosePrice     (/*ORDER_EXECUTION*/int oe[], double   closePrice);  double   oes.setClosePrice     (/*ORDER_EXECUTION*/int oe[][], int i, double   closePrice);
-   double   oe.setSwap           (/*ORDER_EXECUTION*/int oe[], double   swap      );  double   oes.setSwap           (/*ORDER_EXECUTION*/int oe[][], int i, double   swap      );
-   double   oe.addSwap           (/*ORDER_EXECUTION*/int oe[], double   swap      );  double   oes.addSwap           (/*ORDER_EXECUTION*/int oe[][], int i, double   swap      );
-   double   oe.setCommission     (/*ORDER_EXECUTION*/int oe[], double   comission );  double   oes.setCommission     (/*ORDER_EXECUTION*/int oe[][], int i, double   comission );
-   double   oe.addCommission     (/*ORDER_EXECUTION*/int oe[], double   comission );  double   oes.addCommission     (/*ORDER_EXECUTION*/int oe[][], int i, double   comission );
-   double   oe.setProfit         (/*ORDER_EXECUTION*/int oe[], double   profit    );  double   oes.setProfit         (/*ORDER_EXECUTION*/int oe[][], int i, double   profit    );
-   double   oe.addProfit         (/*ORDER_EXECUTION*/int oe[], double   profit    );  double   oes.addProfit         (/*ORDER_EXECUTION*/int oe[][], int i, double   profit    );
-   string   oe.setComment        (/*ORDER_EXECUTION*/int oe[], string   comment   );  string   oes.setComment        (/*ORDER_EXECUTION*/int oe[][], int i, string   comment   );
-   int      oe.setDuration       (/*ORDER_EXECUTION*/int oe[], int      milliSec  );  int      oes.setDuration       (/*ORDER_EXECUTION*/int oe[][], int i, int      milliSec  );
-   int      oe.setRequotes       (/*ORDER_EXECUTION*/int oe[], int      requotes  );  int      oes.setRequotes       (/*ORDER_EXECUTION*/int oe[][], int i, int      requotes  );
-   double   oe.setSlippage       (/*ORDER_EXECUTION*/int oe[], double   slippage  );  double   oes.setSlippage       (/*ORDER_EXECUTION*/int oe[][], int i, double   slippage  );
-   int      oe.setRemainingTicket(/*ORDER_EXECUTION*/int oe[], int      ticket    );  int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int oe[][], int i, int      ticket    );
-   double   oe.setRemainingLots  (/*ORDER_EXECUTION*/int oe[], double   lots      );  double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
 
 
    // Win32-Funktionen (an MQL angepaßt)
@@ -575,7 +518,7 @@
    int      win32.GetLastError(int altError);
 
 
-   // Default-Implementierungen: müssen bei Verwendung im Programm implementiert werden
+   // leere Library-Stubs, bei Verwendung *müssen* diese Funktionen im Programm implementiert werden
    int      onInit();
    int      onInitParameterChange();
    int      onInitChartChange();
@@ -588,9 +531,6 @@
 
    int      onStart();                                               // Scripte
    int      onTick();                                                // EA's + Indikatoren
-   int      ShowStatus(int error);                                   // EA's
-   string   InputsToStr();
-   void     DummyCalls();
 
    int      onDeinit();
    int      onDeinitParameterChange();
@@ -602,6 +542,10 @@
    int      onDeinitRecompile();
    int      afterDeinit();
 
+   string   InputsToStr();
+   int      ShowStatus(int error);                                   // EA's
+   void     DummyCalls();
+
 
    // erweiterte Root-Funktionen
    int      stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
@@ -611,19 +555,21 @@
 
 #import "MetaQuotes1.ex4"
    int      GetBoolsAddress(bool array[]);
+
 #import "MetaQuotes2.ex4"
    int      GetIntsAddress(int array[]);     int GetBufferAddress(int buffer[]);    // Alias
+
 #import "MetaQuotes3.ex4"
    int      GetDoublesAddress(double array[]);
+
 #import "MetaQuotes4.ex4"
    int      GetStringsAddress(string array[]);
+
 #import "MetaQuotes5.ex4"
    int      GetStringAddress(string value);
+
 #import "MetaQuotes.dll"
    string   GetStringValue(int address);
-#import "structs1.ex4"
-   string   EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
-   string   HISTORY_HEADER.toStr   (/*HISTORY_HEADER*/   int hh[], bool debugOutput);
 #import
 
 

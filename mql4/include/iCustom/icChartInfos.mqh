@@ -1,13 +1,4 @@
 /**
- * In Headerdatei implementiert, um direkt inkludiert werden zu können.
- */
-
-#import "structs1.ex4"
-   int  ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
-#import
-
-
-/**
  * Ruft den "ChartInfos"-Indikator auf. Der Indikator hat keine Buffer und gibt keinen Wert zurück.
  *
  * @param  int timeframe - Timeframe, in dem der Indikator geladen werden soll
@@ -35,3 +26,14 @@ bool icChartInfos(int timeframe) {
       return(true);
    return(!SetLastError(error));
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "MetaQuotes2.ex4"
+   int GetBufferAddress(int buffer[]);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
+#import

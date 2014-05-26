@@ -1,8 +1,8 @@
 /**
  * Es gilt:
  *
- *  STRUCT.intSize    = ceil(STRUCT.size / 4)         // sizeof(int):    4
- *  STRUCT.doubleSize = ceil(STRUCT.size / 8)         // sizeof(double): 8
+ *  STRUCT.intSize    = ceil(STRUCT.size / 4)         // sizeof(int)    = 4
+ *  STRUCT.doubleSize = ceil(STRUCT.size / 8)         // sizeof(double) = 8
  */
 
 // Win32 structs

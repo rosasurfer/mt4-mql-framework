@@ -13,7 +13,7 @@ int __DEINIT_FLAGS__[];
 #include <core/script.ParameterProvider.mqh>
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
-#include <structs/LFX_ORDER.mqh>
+#include <structs/pewa/LFX_ORDER.mqh>
 
 #property indicator_chart_window
 

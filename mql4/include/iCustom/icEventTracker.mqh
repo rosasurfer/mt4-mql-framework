@@ -1,13 +1,4 @@
 /**
- * In Headerdatei implementiert, um direkt inkludiert werden zu können.
- */
-
-#import "structs1.ex4"
-   int  ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
-#import
-
-
-/**
  * Ruft den "EventTracker"-Indikator auf. Der Indikator hat keine Buffer und gibt keinen Wert zurück.
  *
  * @param  int timeframe - Timeframe, in dem der Indikator geladen werden soll
@@ -15,7 +6,7 @@
  * @return bool - Erfolgsstatus
  */
 bool icEventTracker(int timeframe) {
-   if (1 && last_error)
+   if (IsLastError())
       return(false);
 
    int lpLocalContext = GetBufferAddress(__ExecutionContext);
@@ -27,7 +18,7 @@ bool icEventTracker(int timeframe) {
                           0);                                              // iBar
 
    int error = GetLastError();
-   if (1 && error) {
+   if (IsError(error)) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icEventTracker(1)", error));
       warn("icEventTracker(2)   ERS_HISTORY_UPDATE (tick="+ Tick +")");    // TODO: geladene Bars prüfen
@@ -37,3 +28,14 @@ bool icEventTracker(int timeframe) {
       return(true);
    return(!SetLastError(error));
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "MetaQuotes2.ex4"
+   int GetBufferAddress(int buffer[]);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
+#import

@@ -15,7 +15,7 @@ int __DEINIT_FLAGS__[];
 
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
-#include <structs/LFX_ORDER.mqh>
+#include <structs/pewa/LFX_ORDER.mqh>
 
 #property show_inputs
 

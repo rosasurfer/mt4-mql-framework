@@ -44,7 +44,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 
 
    // (3) in Experts immer auch die history-lib (re-)initialisieren
-   error = history_init(__ExecutionContext);
+   error = history.init(__ExecutionContext);
    if (IsError(error))
       return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib.init()
                                                                               // #define INIT_PIPVALUE
@@ -279,22 +279,84 @@ int deinit() {
 }
 
 
-#import "structs1.ex4"
-   int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
+/**
+ * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
+ *
+ * @return bool
+ */
+bool IsExpert() {
+   return(true);
+}
 
-   int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
-   int  ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int  ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
-   int  ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
-   int  ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
-   int  ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
-   int  ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
-   int  ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
-   bool ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
-   int  ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
-   int  ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
-#import
+
+/**
+ * Ob das aktuell ausgeführte Programm ein Script ist.
+ *
+ * @return bool
+ */
+bool IsScript() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein Indikator ist.
+ *
+ * @return bool
+ */
+bool IsIndicator() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Modul eine Library ist.
+ *
+ * @return bool
+ */
+bool IsLibrary() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
+   return(IsTesting());
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ *
+ * @return bool
+ */
+bool Script.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
+ *
+ * @return bool
+ */
+bool Indicator.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   return(Expert.IsTesting());
+}
 
 
 /**
@@ -357,46 +419,6 @@ int InitExecutionContext() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
- *
- * @return bool
- */
-bool IsExpert() {
-   return(true);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   return(IsTesting());
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein Indikator ist.
- *
- * @return bool
- */
-bool IsIndicator() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return bool
- */
-bool Indicator.IsTesting() {
-   return(false);
-}
-
-
-/**
  * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
  *
  * @return bool
@@ -407,42 +429,28 @@ bool Indicator.IsSuperContext() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Script ist.
+ * Setzt den internen Fehlercode des EA's.
  *
- * @return bool
- */
-bool IsScript() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ * @param  int error - Fehlercode
  *
- * @return bool
- */
-bool Script.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Modul eine Library ist.
+ * @return int - derselbe Fehlercode (for chaining)
  *
- * @return bool
- */
-bool IsLibrary() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @return bool
+ * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
-bool This.IsTesting() {
-   return(IsTesting());
+int SetLastError(int error, int param=NULL) {
+   last_error = error;
+
+   switch (error) {
+      case NO_ERROR              :
+      case ERS_HISTORY_UPDATE    :
+      case ERS_TERMINAL_NOT_READY:
+      case ERS_EXECUTION_STOPPING: break;
+
+      default:
+         __STATUS_ERROR = true;
+   }
+   return(ec.setLastError(__ExecutionContext, last_error));
 }
 
 
@@ -514,30 +522,70 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 }
 
 
-/**
- * Setzt den internen Fehlercode des Moduls.
- *
- * @param  int error - Fehlercode
- *
- * @return int - derselbe Fehlercode (for chaining)
- *
- *
- * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
- */
-int SetLastError(int error, int param=NULL) {
-   last_error = error;
+// --------------------------------------------------------------------------------------------------------------------------------------------------
 
-   switch (error) {
-      case NO_ERROR              :
-      case ERS_HISTORY_UPDATE    :
-      case ERS_TERMINAL_NOT_READY:
-      case ERS_EXECUTION_STOPPING: break;
 
-      default:
-         __STATUS_ERROR = true;
-   }
-   return(ec.setLastError(__ExecutionContext, last_error));
-}
+#import "stdlib1.ex4"
+   int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
+   int    stdlib.GetLastError();
+
+   int    onInit();
+   int    onInitAccountChange();
+   int    onInitChartChange();
+   int    onInitChartClose();
+   int    onInitParameterChange();
+   int    onInitRecompile();
+   int    onInitRemove();
+   int    onInitUndefined();
+   int    afterInit();
+
+   int    onDeinit();
+   int    onDeinitAccountChange();
+   int    onDeinitChartChange();
+   int    onDeinitChartClose();
+   int    onDeinitParameterChange();
+   int    onDeinitRecompile();
+   int    onDeinitRemove();
+   int    onDeinitUndefined();
+   int    afterDeinit();
+
+   int    ShowStatus(int error);
+
+   int    Chart.SendTick(bool sound);
+   void   CopyMemory(int source, int destination, int bytes);
+   string CreateString(int length);
+   bool   IntInArray(int haystack[], int needle);
+   int    PeriodFlag(int period);
+   int    SumInts(int array[]);
+   int    Tester.Stop();
+   int    Toolbar.Experts(bool enable);
+
+#import "MetaQuotes2.ex4"
+   int    GetBufferAddress(int buffer[]);
+
+#import "MetaQuotes4.ex4"
+   int    GetStringsAddress(string array[]);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
+   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
+   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
+   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
+   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
+   int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
+   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
+   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
+   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
+   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
+
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+#import
 
 
 // -- init()-Templates ------------------------------------------------------------------------------------------------------------------------------

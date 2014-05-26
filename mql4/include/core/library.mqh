@@ -9,8 +9,10 @@ int __lpSuperContext = NULL;
  * @return int - Fehlerstatus
  */
 int init() {
-   // Im Tester globale Arrays zurücksetzen (zur Zeit kein besserer Workaround).
-   Tester.ResetGlobalArrays();
+   // Im Tester globale Arrays eines EA's zurücksetzen (zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests).
+   if (IsTesting()) {
+      Tester.ResetGlobalArrays();                                    // Fehler tritt nur in EA's auf, IsTesting() reicht aus und ist fehler-resistenter.
+   }
    return(catch("init()"));
 }
 
@@ -54,46 +56,7 @@ int deinit() {
 bool IsExpert() {
    if (__TYPE__ == T_LIBRARY)
       return(!catch("IsExpert()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
-   return(1 && __TYPE__ & T_EXPERT);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   if (__TYPE__ == T_LIBRARY)
-      return(!catch("Expert.IsTesting()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
-
-   if (IsTesting()) /*&&*/ if (IsExpert())
-      return(true);
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein Indikator ist.
- *
- * @return bool
- */
-bool IsIndicator() {
-   if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsIndicator()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
-   return(1 && __TYPE__ & T_INDICATOR);
-}
-
-
-/**
- * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
- *
- * @return bool
- */
-bool Indicator.IsSuperContext() {
-   if (__TYPE__ == T_LIBRARY)
-      return(!catch("Indicator.IsSuperContext()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
-   return(__lpSuperContext != 0);
+   return(__TYPE__ & T_EXPERT != 0);
 }
 
 
@@ -110,12 +73,106 @@ bool IsScript() {
 
 
 /**
+ * Ob das aktuell ausgeführte Programm ein Indikator ist.
+ *
+ * @return bool
+ */
+bool IsIndicator() {
+   if (__TYPE__ == T_LIBRARY)
+      return(!catch("IsIndicator()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+   return(__TYPE__ & T_INDICATOR != 0);
+}
+
+
+/**
  * Ob das aktuell ausgeführte Modul eine Library ist.
  *
  * @return bool
  */
 bool IsLibrary() {
    return(true);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(!catch("Expert.IsTesting()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+
+   if (IsTesting()) /*&&*/ if (IsExpert())                           // IsTesting() allein reicht nicht, da auch in Indikatoren TRUE zurückgeben werden kann.
+      return(true);
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ *
+ * @return bool
+ */
+bool Script.IsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(!catch("Script.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+
+   if (!IsScript())
+      return(false);
+
+   static bool static.resolved, static.result;                                      // static: EA ok, Indikator ok
+   if (static.resolved)
+      return(static.result);
+
+   int hChart = WindowHandle(Symbol(), NULL);
+   if (!hChart)
+      return(!catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+
+   static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");    // "(visual)" ist nicht internationalisiert
+
+   static.resolved = true;
+   return(static.result);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
+ *
+ * @return bool
+ */
+bool Indicator.IsTesting() {
+   if (__TYPE__ == T_LIBRARY)
+      return(!catch("Indicator.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+
+   if (!IsIndicator())
+      return(false);
+
+   static bool static.resolved, static.result;
+   if (static.resolved)
+      return(static.result);
+
+   if (IsTesting()) {                                                // Indikator läuft in EA::iCustom() im Tester
+      static.result = true;
+   }
+   else if (GetCurrentThreadId() != GetUIThreadId()) {               // Indikator läuft im Testchart in Indicator::start()
+      static.result = true;
+   }
+   else if (__WHEREAMI__ != FUNC_START) {                            // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
+      int hChart = WindowHandle(Symbol(), NULL);
+      if (!hChart)
+         return(!catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      string title = GetWindowText(GetParent(hChart));
+      if (title == "")                                               // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
+         return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      static.result = StringEndsWith(title, "(visual)");             // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert)
+   }
+   else {
+      static.result = false;                                         // Indikator läuft in Indicator::start() im Hauptchart
+   }
+
+   static.resolved = true;
+   return(static.result);
 }
 
 
@@ -136,9 +193,16 @@ bool This.IsTesting() {
 }
 
 
-#import "structs1.ex4"
-   int ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
-#import
+/**
+ * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
+ *
+ * @return bool
+ */
+bool Indicator.IsSuperContext() {
+   if (__TYPE__ == T_LIBRARY)
+      return(!catch("Indicator.IsSuperContext()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+   return(__lpSuperContext != 0);
+}
 
 
 /**
@@ -158,3 +222,23 @@ int SetLastError(int error, int param=NULL) {
 
    return(ec.setLastError(__ExecutionContext, last_error));
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   string __whereamiDescription(int id);
+   int    GetUIThreadId();
+   string GetWindowText(int hWnd);
+   bool   StringEndsWith(string object, string postfix);
+
+#import "kernel32.dll"
+   int    GetCurrentThreadId();
+
+#import "user32.dll"
+   int    GetParent(int hWnd);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int    ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+#import

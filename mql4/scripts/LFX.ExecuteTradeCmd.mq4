@@ -1,13 +1,13 @@
 /**
  * LFX.ExecuteTradeCmd
  *
- * Script, daß nur intern zur Ausführung von zwischen den Terminals verschickten TradeCommands benutzt wird. Ein manueller Aufruf ist nicht möglich.
+ * Script, daß intern zur Ausführung von zwischen den Terminals verschickten TradeCommands benutzt wird. Ein manueller Aufruf ist nicht möglich.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 #include <core/script.mqh>
+#include <stdlib.mqh>
 
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -15,7 +15,8 @@ int __DEINIT_FLAGS__[];
 #include <core/script.ParameterProvider.mqh>
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
-#include <structs/LFX_ORDER.mqh>
+
+#include <structs/pewa/LFX_ORDER.mqh>
 
 
 //////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QickChannel)  ///////////////////////////////////////////////////////////////////////
@@ -372,4 +373,20 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
 }
 
 
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 /*abstract*/bool ProcessTradeToLfxTerminalMsg(string s1) { return(!catch("ProcessTradeToLfxTerminalMsg()",  ERR_WRONG_JUMP)); }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "structs.ORDER_EXECUTION.ex4"
+   double oe.OpenPrice  (/*ORDER_EXECUTION*/int oe[]         );
+   double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.Commission(/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.Profit    (/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.Swap      (/*ORDER_EXECUTION*/int oe[][], int i);
+   string oes.Symbol    (/*ORDER_EXECUTION*/int oe[][], int i);
+#import

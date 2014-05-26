@@ -77,6 +77,7 @@ int __DEINIT_FLAGS__[];
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
+#include <structs/pewa/ORDER_EXECUTION.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
@@ -5285,22 +5286,22 @@ bool RecordEquity(int flags=NULL) {
       hHst = FindHistory(symbol);
       if (hHst > 0) {
          if (!ResetHistory(hHst))
-            return(!SetLastError(history_GetLastError()));
+            return(!SetLastError(history.GetLastError()));
       }
       else {
-         int error = history_GetLastError();
+         int error = history.GetLastError();
          if (IsError(error))
             return(!SetLastError(error));
          hHst = CreateHistory(symbol, "Equity SR."+ sequenceId, 2);
          if (hHst <= 0)
-            return(!SetLastError(history_GetLastError()));
+            return(!SetLastError(history.GetLastError()));
       }
    }
    double value = sequence.startEquity + sequence.totalPL;
 
    if (History.AddTick(hHst, Tick.Time, value, flags))
       return(true);
-   return(!SetLastError(history_GetLastError()));
+   return(!SetLastError(history.GetLastError()));
 }
 
 

@@ -15,7 +15,7 @@ extern double StepMaximum = 0.2;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//#include <core/indicator.mqh>
+#include <core/indicator.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   1
@@ -37,7 +37,7 @@ double save_sar;
 /**
  *
  */
-int init() {
+int onInit() {
    SetIndexBuffer(0, SarBuffer );
    SetIndexStyle (0, DRAW_ARROW);
    SetIndexArrow (0, 159       );
@@ -63,7 +63,7 @@ void SaveLastReversal(int last, bool dir, double step, double low, double high, 
 /**
  *
  */
-int start() {
+int onTick() {
    bool   dirlong;
    double last_high, last_low, ep, step, sar, prevSar;
    int    i, counted_bars=IndicatorCounted();

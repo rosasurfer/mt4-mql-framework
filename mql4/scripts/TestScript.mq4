@@ -4,9 +4,10 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
-
 #include <core/script.mqh>
+//#include <stdlib.mqh>
+
+//#include <structs/pewa/ORDER_EXECUTION.mqh>
 
 
 /**
@@ -15,5 +16,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   catch("onStart()");
    return(last_error);
 }

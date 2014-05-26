@@ -1,14 +1,13 @@
 /**
  * TestIndicator
  */
+#property indicator_chart_window
+
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
-
 #include <core/indicator.mqh>
-
-#property indicator_chart_window
+#include <stdlib.mqh>
 
 
 /**
@@ -17,5 +16,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
+   catch("onTick()");
    return(last_error);
 }
