@@ -5,40 +5,6 @@ extern string ___________________________;
 extern int    __lpSuperContext;
 
 
-#import "stdlib1.ex4"
-   int    afterDeinit();
-   int    afterInit();
-   int    afterInit();
-   int    Chart.SendTick(bool sound);
-   void   CopyMemory(int source, int destination, int bytes);
-   int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
-   string IntToHexStr(int integer);
-   int    onDeinitAccountChange();
-   int    onDeinitChartChange();
-   int    onDeinitChartClose();
-   int    onDeinitParameterChange();
-   int    onDeinitRecompile();
-   int    onDeinitRemove();
-   int    onDeinitUndefined();
-   int    onInitAccountChange();
-   int    onInitChartChange();
-   int    onInitChartClose();
-   int    onInitParameterChange();
-   int    onInitRecompile();
-   int    onInitRemove();
-   int    onInitUndefined();
-   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
-   int    stdlib.GetLastError();
-   int    stdlib.init(int ec[], int tickData[]);
-   int    stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
-   int    SumInts(int array[]);
-#import "structs1.ex4"
-   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
-#import "MetaQuotes2.ex4"
-   int    GetBufferAddress(int buffer[]);
-#import
-
-
 /**
  * Globale init()-Funktion für Indikatoren.
  *
@@ -308,26 +274,84 @@ int deinit() {
 }
 
 
-#import "structs1.ex4"
-   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                           );
-   int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                           );
-   int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                           );
-   int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                           );
-   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                           );
-   int    ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                           );
+/**
+ * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
+ *
+ * @return bool
+ */
+bool IsExpert() {
+   return(false);
+}
 
-   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
-   string ec.setName              (/*EXECUTION_CONTEXT*/int ec[], string name              );
-   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
-   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int    chartProperties   );
-   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpContext         );
-   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
-   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
-   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
-   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
-   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
-#import
+
+/**
+ * Ob das aktuell ausgeführte Programm ein Script ist.
+ *
+ * @return bool
+ */
+bool IsScript() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein Indikator ist.
+ *
+ * @return bool
+ */
+bool IsIndicator() {
+   return(true);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Modul eine Library ist.
+ *
+ * @return bool
+ */
+bool IsLibrary() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ *
+ * @return bool
+ */
+bool Script.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
+ *
+ * @return bool
+ */
+bool Indicator.IsTesting() {
+   return(__Indicator.IsTesting());                                  // In stdlib1 implementiert, damit das Ergebnis gecacht werden kann.
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   return(Indicator.IsTesting());
+}
 
 
 /**
@@ -418,95 +442,12 @@ int InitExecutionContext() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
- *
- * @return bool
- */
-bool IsExpert() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein Indikator ist.
- *
- * @return bool
- */
-bool IsIndicator() {
-   return(true);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return bool
- *
- *
- * NOTE: Nur in stdlib implementiert, damit das Ergebnis gecacht werden kann.
- *
-bool Indicator.IsTesting() {
-}
- */
-
-
-/**
  * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
  *
  * @return bool
  */
 bool Indicator.IsSuperContext() {
    return(__lpSuperContext != 0);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein Script ist.
- *
- * @return bool
- */
-bool IsScript() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
- *
- * @return bool
- */
-bool Script.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Modul eine Library ist.
- *
- * @return bool
- */
-bool IsLibrary() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return bool
- */
-bool This.IsTesting() {
-   return(Indicator.IsTesting());
 }
 
 
@@ -534,6 +475,69 @@ int SetLastError(int error, int param=NULL) {
    }
    return(ec.setLastError(__ExecutionContext, last_error));
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
+   int    stdlib.GetLastError();
+
+   int    onInit();
+   int    onInitAccountChange();
+   int    onInitChartChange();
+   int    onInitChartClose();
+   int    onInitParameterChange();
+   int    onInitRecompile();
+   int    onInitRemove();
+   int    onInitUndefined();
+   int    afterInit();
+
+   int    onDeinit();
+   int    onDeinitAccountChange();
+   int    onDeinitChartChange();
+   int    onDeinitChartClose();
+   int    onDeinitParameterChange();
+   int    onDeinitRecompile();
+   int    onDeinitRemove();
+   int    onDeinitUndefined();
+   int    afterDeinit();
+
+   int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
+   bool __Indicator.IsTesting();
+   string InputsToStr();
+
+   int    Chart.SendTick(bool sound);
+   void   CopyMemory(int source, int destination, int bytes);
+   string IntToHexStr(int integer);
+   int    SumInts(int array[]);
+
+#import "MetaQuotes2.ex4"
+   int    GetBufferAddress(int buffer[]);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int    chartProperties   );
+   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
+   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
+   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
+   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
+   string ec.setName              (/*EXECUTION_CONTEXT*/int ec[], string name              );
+   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
+   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
+   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
+
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+#import
 
 
 // -- init()-Templates ------------------------------------------------------------------------------------------------------------------------------
@@ -682,5 +686,3 @@ int afterDeinit() {
    return(NO_ERROR);
 }
 */
-
-// ------------------------------------------------------------------------------------------------------------------------------------------------

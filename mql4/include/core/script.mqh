@@ -164,23 +164,95 @@ int deinit() {
 }
 
 
-#import "structs1.ex4"
-   int  ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                         );
-   int  ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                         );
+/**
+ * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
+ *
+ * @return bool
+ */
+bool IsExpert() {
+   return(false);
+}
 
-   int  ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
-   int  ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int  ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
-   int  ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
-   int  ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
-   int  ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
-   int  ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
-   int  ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
-   bool ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
-   int  ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
-   int  ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
-#import
+
+/**
+ * Ob das aktuell ausgeführte Programm ein Script ist.
+ *
+ * @return bool
+ */
+bool IsScript() {
+   return(true);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein Indikator ist.
+ *
+ * @return bool
+ */
+bool IsIndicator() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Modul eine Library ist.
+ *
+ * @return bool
+ */
+bool IsLibrary() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
+ *
+ * @return bool
+ */
+bool Expert.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
+ *
+ * @return bool
+ */
+bool Script.IsTesting() {
+   static bool static.resolved, static.result;
+   if (static.resolved)
+      return(static.result);
+
+   int hChart = WindowHandle(Symbol(), NULL);
+   if (!hChart)
+      return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+
+   static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");  // "(visual)" ist nicht internationalisiert
+
+   static.resolved = true;
+   return(static.result);
+}
+
+
+/**
+ * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
+ *
+ * @return bool
+ */
+bool Indicator.IsTesting() {
+   return(false);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester ausgeführt wird.
+ *
+ * @return bool
+ */
+bool This.IsTesting() {
+   return(Script.IsTesting());
+}
 
 
 /**
@@ -241,46 +313,6 @@ int InitExecutionContext() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
- *
- * @return bool
- */
-bool IsExpert() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein Indikator ist.
- *
- * @return bool
- */
-bool IsIndicator() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return bool
- */
-bool Indicator.IsTesting() {
-   return(false);
-}
-
-
-/**
  * Ob das aktuelle Programm durch ein anderes Programm ausgeführt wird.
  *
  * @return bool
@@ -291,63 +323,7 @@ bool Indicator.IsSuperContext() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein Script ist.
- *
- * @return bool
- */
-bool IsScript() {
-   return(true);
-}
-
-
-#import "user32.dll"
-   int  GetParent(int hWnd);
-#import
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
- *
- * @return bool
- */
-bool Script.IsTesting() {
-   static bool static.resolved, static.result;
-   if (static.resolved)
-      return(static.result);
-
-   int hChart = WindowHandle(Symbol(), NULL);
-   if (!hChart)
-      return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
-
-   static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");  // "(visual)" ist nicht internationalisiert
-
-   static.resolved = true;
-   return(static.result);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Modul eine Library ist.
- *
- * @return bool
- */
-bool IsLibrary() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return bool
- */
-bool This.IsTesting() {
-   return(Script.IsTesting());
-}
-
-
-/**
- * Setzt den internen Fehlercode des Scriptes.
+ * Setzt den internen Fehlercode des Scripts.
  *
  * @param  int error - Fehlercode
  *
@@ -370,3 +346,68 @@ int SetLastError(int error, int param=NULL) {
    }
    return(ec.setLastError(__ExecutionContext, last_error));
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   int    stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
+   int    stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
+   int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
+   int    stdlib.GetLastError();
+
+   int    onInit();
+   int    onInitAccountChange();
+   int    onInitChartChange();
+   int    onInitChartClose();
+   int    onInitParameterChange();
+   int    onInitRecompile();
+   int    onInitRemove();
+   int    onInitUndefined();
+   int    afterInit();
+
+   int    onDeinit();
+   int    onDeinitAccountChange();
+   int    onDeinitChartChange();
+   int    onDeinitChartClose();
+   int    onDeinitParameterChange();
+   int    onDeinitRecompile();
+   int    onDeinitRemove();
+   int    onDeinitUndefined();
+   int    afterDeinit();
+
+   void   CopyMemory(int source, int destination, int bytes);
+   string CreateString(int length);
+   string GetWindowText(int hWnd);
+   bool   StringEndsWith(string object, string postfix);
+   int    SumInts(int array[]);
+   string __whereamiDescription(int id);
+
+#import "MetaQuotes2.ex4"
+   int    GetBufferAddress(int buffer[]);
+
+#import "MetaQuotes4.ex4"
+   int    GetStringsAddress(string array[]);
+
+#import "user32.dll"
+   int    GetParent(int hWnd);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
+   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
+   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
+   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
+   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
+   int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
+   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
+   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
+   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
+   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
+
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+#import

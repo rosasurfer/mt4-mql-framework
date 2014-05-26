@@ -7,9 +7,8 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
-
 #include <core/library.mqh>
+#include <stdlib.mqh>
 
 
 #import "kernel32.dll"
@@ -782,10 +781,8 @@ int ChartInfos.CopyLfxOrders(bool store, string &symbol[], /*LFX_ORDER*/int los[
 
 
 /**
- * Setzt die globalen Arrays zurück. Wird nur im Tester und in library::init() aufgerufen.
+ * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
-   if (IsTesting()) {
-      ArrayResize(stack.orderSelections, 0);
-   }
+   ArrayResize(stack.orderSelections, 0);
 }

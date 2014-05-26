@@ -19,12 +19,12 @@
  */
 
 // Getter
-int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 0]);      }
-int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 1]);      }
-string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetStringValue(ec[ 1]));     }
-int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 2]);      }
-int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 3]);      }
-int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 4]);      }
+int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 0]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 1]);                       EXECUTION_CONTEXT.toStr(ec); }
+string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetStringValue(ec[ 1]));                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 2]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 3]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 4]);                       EXECUTION_CONTEXT.toStr(ec); }
 int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
    if (ArrayDimension(sec) != 1)               return(catch("ec.SuperContext(1)   too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
@@ -39,48 +39,48 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
       // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
       if (ec.Signature(sec) != lpSuperContext) return(catch("ec.SuperContext(2)   invalid super-EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpSuperContext), ERR_RUNTIME_ERROR));
    }
-   return(catch("ec.SuperContext(3)"));
+   return(catch("ec.SuperContext(3)"));                                                                                                               EXECUTION_CONTEXT.toStr(ec);
 }
-int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 5]);      }
-int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 6]);      }
-int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 7]);      }
-int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 8]);      }
-bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 9] != 0); }
-int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[10]);      }
-string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetStringValue(ec[10]));     }
-int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[11]);      }
+int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 5]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 6]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 7]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 8]);                       EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 9] != 0);                  EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[10]);                       EXECUTION_CONTEXT.toStr(ec); }
+string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetStringValue(ec[10]));                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[11]);                       EXECUTION_CONTEXT.toStr(ec); }
 
 
 // Setter
-int    ec.setSignature         (/*EXECUTION_CONTEXT*/int &ec[], int    signature         ) { ec[ 0] = signature;          return(signature         ); }
-int    ec.setLpName            (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) { ec[ 1] = lpName;             return(lpName            ); }
+int    ec.setSignature         (/*EXECUTION_CONTEXT*/int &ec[], int    signature         ) { ec[ 0] = signature;          return(signature         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLpName            (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) { ec[ 1] = lpName;             return(lpName            ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setName              (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
    if (!StringLen(name))           return(_empty(catch("ec.setName(1)   invalid parameter name = "+ StringToStr(name), ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (StringLen(name) > MAX_PATH) return(_empty(catch("ec.setName(2)   illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpName = ec.lpName(ec);
    if (!lpName)                    return(_empty(catch("ec.setName(3)   no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
-   CopyMemory(GetStringAddress(name), lpName, StringLen(name)+1); /*terminierendes <NUL> wird mitkopiert*/                return(name              ); }
-int    ec.setType              (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[ 2] = type;               return(type              ); }
-int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int &ec[], int    chartProperties   ) { ec[ 3] = chartProperties;    return(chartProperties   ); }
-int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) { ec[ 4] = lpSuperContext;     return(lpSuperContext    ); }
-int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[ 5] = initFlags;          return(initFlags         ); }
-int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[ 6] = deinitFlags;        return(deinitFlags       ); }
-int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[ 7] = uninitializeReason; return(uninitializeReason); }
-int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami          ) { ec[ 8] = whereami;           return(whereami          ); }
-bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[ 9] = logging != 0;       return(logging != 0      ); }
-int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) { ec[10] = lpLogFile;          return(lpLogFile         ); }
+   CopyMemory(GetStringAddress(name), lpName, StringLen(name)+1); /*terminierendes <NUL> wird mitkopiert*/                return(name              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setType              (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[ 2] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int &ec[], int    chartProperties   ) { ec[ 3] = chartProperties;    return(chartProperties   ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) { ec[ 4] = lpSuperContext;     return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[ 5] = initFlags;          return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[ 6] = deinitFlags;        return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[ 7] = uninitializeReason; return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami          ) { ec[ 8] = whereami;           return(whereami          ); EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[ 9] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) { ec[10] = lpLogFile;          return(lpLogFile         ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
    if (!StringLen(logFile))           return(_empty(catch("ec.setLogFile(1)   invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (StringLen(logFile) > MAX_PATH) return(_empty(catch("ec.setLogFile(2)   illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpLogFile = ec.lpLogFile(ec);
    if (!lpLogFile)                    return(_empty(catch("ec.setLogFile(3)   no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
-   CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/       return(logFile           ); }
+   CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/       return(logFile           ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) {
    ec[11] = lastError;
    int lpSuperContext = ec.lpSuperContext(ec);
    if (lpSuperContext != 0)
       CopyMemory(ec.Signature(ec)+11*4, lpSuperContext+11*4, 4);     // Fehler immer auch im SuperContext setzen
-   return(lastError);
+   return(lastError);                                                                                                                                 EXECUTION_CONTEXT.toStr(ec);
 }
 
 
@@ -99,7 +99,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
    string result = StringConcatenate("{signature="         ,               ifString(!ec.Signature         (ec), "0", "0x"+ IntToHexStr(ec.Signature(ec))),
                                     ", name=\""            ,                         ec.Name              (ec), "\"");
    if (!ec.Type(ec))
-          result = result          +", type="+                                       ec.Type              (ec);   // ModuleTypeToStr() gibt für fehlerhafte ID Leerstring zurück
+          result = result          +", type="+                                       ec.Type              (ec);   // ModuleTypeToStr() gibt für ungültige ID Leerstring zurück
    else   result = result          +", type="+                       ModuleTypeToStr(ec.Type              (ec));
           result = StringConcatenate(result,
                                     ", chartProperties="   ,    ChartPropertiesToStr(ec.ChartProperties   (ec)),
@@ -108,7 +108,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
                                     ", deinitFlags="       ,        DeinitFlagsToStr(ec.DeinitFlags       (ec)),
                                     ", uninitializeReason=", UninitializeReasonToStr(ec.UninitializeReason(ec)));
    if (!ec.Whereami(ec))
-          result = result          +", whereami="+                                   ec.Whereami          (ec);   // __whereamiToStr() löst für fehlerhafte ID Fehler aus
+          result = result          +", whereami="+                                   ec.Whereami          (ec);   // __whereamiToStr() löst für ungültige ID Fehler aus
    else   result = result          +", whereami="+                   __whereamiToStr(ec.Whereami          (ec));
           result = StringConcatenate(result,
                                     ", logging="           ,               BoolToStr(ec.Logging           (ec)),
@@ -119,4 +119,49 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
 
    catch("EXECUTION_CONTEXT.toStr(3)");
    return(result);
+
+
+   // unnütze Compilerwarnungen unterdrücken
+   ec.Signature         (ec    ); ec.setSignature         (ec, NULL);
+   ec.lpName            (ec    ); ec.setLpName            (ec, NULL);
+   ec.Name              (ec    ); ec.setName              (ec, NULL);
+   ec.Type              (ec    ); ec.setType              (ec, NULL);
+   ec.ChartProperties   (ec    ); ec.setChartProperties   (ec, NULL);
+   ec.lpSuperContext    (ec    ); ec.setLpSuperContext    (ec, NULL);
+   ec.SuperContext      (ec, ec);
+   ec.InitFlags         (ec    ); ec.setInitFlags         (ec, NULL);
+   ec.DeinitFlags       (ec    ); ec.setDeinitFlags       (ec, NULL);
+   ec.UninitializeReason(ec    ); ec.setUninitializeReason(ec, NULL);
+   ec.Whereami          (ec    ); ec.setWhereami          (ec, NULL);
+   ec.Logging           (ec    ); ec.setLogging           (ec, NULL);
+   ec.lpLogFile         (ec    ); ec.setLpLogFile         (ec, NULL);
+   ec.LogFile           (ec    ); ec.setLogFile           (ec, NULL);
+   ec.LastError         (ec    ); ec.setLastError         (ec, NULL);
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   string BoolToStr(bool value);
+   string ChartPropertiesToStr(int flags);
+   void   CopyMemory(int source, int destination, int bytes);
+   string DeinitFlagsToStr(int flags);
+   string ErrorToStr(int error);
+   string InitFlagsToStr(int flags);
+   string IntToHexStr(int integer);
+   string ModuleTypeToStr(int type);
+   string StringToStr(string value);
+   string UninitializeReasonToStr(int reason);
+   string __whereamiToStr(int id);
+
+#import "MetaQuotes2.ex4"
+   int    GetBufferAddress(int buffer[]);
+
+#import "MetaQuotes5.ex4"
+   int    GetStringAddress(string value);
+
+#import "MetaQuotes.dll"
+   string GetStringValue(int address);
+#import

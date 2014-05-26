@@ -7,11 +7,11 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
-#include <win32api.mqh>
-
 #include <core/library.mqh>
-#include <structs.mqh>
+#include <stdlib.mqh>
+#include <structs/pewa/EXECUTION_CONTEXT.mqh>
+
+
 #include <test/teststatic.mqh>
 
 
@@ -22,7 +22,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int testlib_init(/*EXECUTION_CONTEXT*/int ec[]) {
+int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -48,15 +48,13 @@ int testlib_init(/*EXECUTION_CONTEXT*/int ec[]) {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   return(catch("testlib_init()"));
+   return(catch("testlib.init(1)"));
 }
 
 
 /**
- * Setzt die globalen Arrays zurück. Wird nur im Tester und in library::init() aufgerufen.
+ * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
-   if (IsTesting()) {
-      ArrayResize(stack.orderSelections, 0);
-   }
+   ArrayResize(stack.orderSelections, 0);
 }

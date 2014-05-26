@@ -46,7 +46,7 @@ int      last_error;                                        // der letzte Fehler
 #define EMPTY                      -1
 #define CLR_NONE                   -1                       // no color
 #define WHOLE_ARRAY                 0
-#define MAX_SYMBOL_LENGTH          12
+#define MAX_SYMBOL_LENGTH          11
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 #define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
 #define NL                          "\n"                    // new line (MQL schreibt 0x0D0A)
@@ -124,7 +124,7 @@ int      last_error;                                        // der letzte Fehler
 #define I_TRANSITION_DST            2
 
 
-// MQL Programmtyp-Flags
+// MQL Moduletyp-Flags
 #define T_INDICATOR                 1
 #define T_EXPERT                    2
 #define T_SCRIPT                    4
@@ -759,48 +759,6 @@ int      last_error;                                        // der letzte Fehler
 #define BAR_V                                   4
 
 
-#import "stdlib1.ex4"
-   int    ArrayPopInt(int array[]);
-   int    ArrayPushInt(int array[], int value);
-   int    ArrayPushString(string array[], string value);
-   int    Chart.Expert.Properties();
-   string ErrorDescription(int error);
-   bool   EventListener.AccountChange(int data[], int criteria);
-   bool   EventListener.AccountPayment(int data[], int criteria);
-   bool   EventListener.BarOpen(int data[], int criteria);
-   bool   EventListener.ChartCommand(string data[], int criteria);
-   bool   EventListener.ExternalCommand(string data[], int criteria);
-   bool   EventListener.InternalCommand(string data[], int criteria);
-   bool   EventListener.OrderCancel(int data[], int criteria);
-   bool   EventListener.OrderChange(int data[], int criteria);
-   bool   EventListener.OrderPlace(int data[], int criteria);
-   bool   EventListener.PositionClose(int data[], int criteria);
-   bool   EventListener.PositionOpen(int data[], int criteria);
-   bool   GetConfigBool(string section, string key, bool defaultValue);
-   int    GetCustomLogID();
-   bool   GetLocalConfigBool(string section, string key, bool defaultValue);
-   bool   Indicator.IsTesting();
-   int    onAccountChange(int data[]);
-   int    onAccountPayment(int data[]);
-   int    onBarOpen(int data[]);
-   int    onChartCommand(string data[]);
-   int    onExternalCommand(string data[]);
-   int    onInternalCommand(string data[]);
-   int    onOrderCancel(int data[]);
-   int    onOrderChange(int data[]);
-   int    onOrderPlace(int data[]);
-   int    onPositionClose(int data[]);
-   int    onPositionOpen(int data[]);
-   string PeriodDescription(int period);
-   bool   ReverseStringArray(string array[]);
-   string StdSymbol();
-   bool   StringContains(string object, string substring);
-   string StringLeft(string value, int n);
-   string StringRight(string value, int n);
-   string StringRightPad(string input, int length, string pad_string);
-#import
-
-
 /**
  * Lädt den Input-Dialog des aktuellen Programms neu.
  *
@@ -1076,8 +1034,8 @@ int log(string message, int error=NO_ERROR) {
  * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
- */
-/*private*/bool log.custom(string message) {
+ *
+private*/bool log.custom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
    int logId = GetCustomLogID();
    if (logId == NULL)
@@ -1973,7 +1931,7 @@ int Ceil(double value) {
 
 
 /**
- * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (ein NULL-Pointer) ist.
+ * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (NULL-Pointer) ist.
  *
  * @param  string value - zu prüfende Stringvariable
  *
@@ -2020,8 +1978,22 @@ int ArrayUnshiftString(string array[], string value) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
-   int    iNull, iNulls[];
+   int    iNull;
    string sNulls[];
+
+   IsExpert();
+   IsScript();
+   IsIndicator();
+   IsLibrary();
+
+   Expert.IsTesting();
+   Script.IsTesting();
+   Indicator.IsTesting();
+   This.IsTesting();
+
+   Indicator.IsSuperContext();
+   SetLastError(NULL, NULL);
+
    _bool(NULL);
    _double(NULL);
    _empty();
@@ -2037,9 +2009,8 @@ void __DummyCalls() {
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    debug(NULL);
-   DummyCalls();                    // Library-Stub, kann lokal implementiert werden
+   DummyCalls();
    EQ(NULL, NULL);
-   Expert.IsTesting();
    Floor(NULL);
    GE(NULL, NULL);
    GT(NULL, NULL);
@@ -2049,14 +2020,9 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
-   Indicator.IsSuperContext();
-   Indicator.IsTesting();
    IsError(NULL);
-   IsExpert();
-   IsIndicator();
    IsLastError();
    IsLogging();
-   IsScript();
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
@@ -2073,12 +2039,57 @@ void __DummyCalls() {
    RoundEx(NULL);
    RoundFloor(NULL);
    RoundCeil(NULL);
-   Script.IsTesting();
    SelectTicket(NULL, NULL);
-   SetLastError(NULL, NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
    StringIsNull(NULL);
    WaitForTicket(NULL);
    warn(NULL);
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   bool   EventListener.AccountChange(int data[], int criteria);
+   bool   EventListener.AccountPayment(int data[], int criteria);
+   bool   EventListener.BarOpen(int data[], int criteria);
+   bool   EventListener.ChartCommand(string data[], int criteria);
+   bool   EventListener.ExternalCommand(string data[], int criteria);
+   bool   EventListener.InternalCommand(string data[], int criteria);
+   bool   EventListener.OrderCancel(int data[], int criteria);
+   bool   EventListener.OrderChange(int data[], int criteria);
+   bool   EventListener.OrderPlace(int data[], int criteria);
+   bool   EventListener.PositionClose(int data[], int criteria);
+   bool   EventListener.PositionOpen(int data[], int criteria);
+
+   int    onAccountChange(int data[]);
+   int    onAccountPayment(int data[]);
+   int    onBarOpen(int data[]);
+   int    onChartCommand(string data[]);
+   int    onExternalCommand(string data[]);
+   int    onInternalCommand(string data[]);
+   int    onOrderCancel(int data[]);
+   int    onOrderChange(int data[]);
+   int    onOrderPlace(int data[]);
+   int    onPositionClose(int data[]);
+   int    onPositionOpen(int data[]);
+
+   int    ArrayPopInt(int array[]);
+   int    ArrayPushInt(int array[], int value);
+   int    ArrayPushString(string array[], string value);
+   int    Chart.Expert.Properties();
+   void   DummyCalls();                                              // Library-Stub: kann lokal überschrieben werden (muß aber nicht)
+   string ErrorDescription(int error);
+   bool   GetConfigBool(string section, string key, bool defaultValue);
+   int    GetCustomLogID();
+   bool   GetLocalConfigBool(string section, string key, bool defaultValue);
+   string PeriodDescription(int period);
+   bool   ReverseStringArray(string array[]);
+   string StdSymbol();
+   bool   StringContains(string object, string substring);
+   string StringLeft(string value, int n);
+   string StringRight(string value, int n);
+   string StringRightPad(string input, int length, string pad_string);
+#import

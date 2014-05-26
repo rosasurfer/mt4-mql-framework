@@ -201,7 +201,8 @@ bool QC.StopScriptParameterSender() {
    //debug("QC.StopScriptParameterSender()   sender on \""+ channel +"\" stopped");
    return(true);
 
-   // Dummy-Calls
+
+   // unnütze Compilerwarnungen unterdrücken
    string sNulls[];
    GetScriptParameters(sNulls, sNulls);
    RunScript(NULL, NULL);

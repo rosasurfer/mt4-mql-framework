@@ -7,15 +7,16 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 #include <core/script.mqh>
+#include <stdlib.mqh>
 
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
-#include <structs/LFX_ORDER.mqh>
+#include <structs/pewa/LFX_ORDER.mqh>
+#include <structs/pewa/ORDER_EXECUTION.mqh>
 
 #property show_inputs
 

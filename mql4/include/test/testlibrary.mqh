@@ -11,6 +11,6 @@
 
 
    // Library-Management
-   int  testlib_init(/*EXECUTION_CONTEXT*/int ec[]);
+   int  testlib.init(/*EXECUTION_CONTEXT*/int ec[]);
 
 #import

@@ -1,15 +1,8 @@
 /**
- * In Headerdatei implementiert, um direkt inkludiert werden zu können.  Dies ist notwendig, wenn die Indikatorausgabe
- * im Tester nach Testende bei VisualMode=On gezeichnet werden soll.  Der Tester zeichnet den Inhalt der Buffer nur dann,
- * wenn der iCustom()-Aufruf direkt im EA erfolgt (nicht bei Aufruf in einer Library).
- */
-
-#import "structs1.ex4"
-   int  ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
-#import
-
-
-/**
+ * In Headerdatei implementiert, um direkt inkludiert werden zu können.  Notwendig, wenn die Indikatorausgabe nach Testende
+ * bei VisualMode=On gezeichnet werden soll. Der Tester zeichnet den Inhalt der Buffer nur dann, wenn der iCustom()-Aufruf
+ * direkt im EA erfolgt, jedoch nicht bei Aufruf in einer Library.
+ *
  * Berechnet den angegebenen Wert des "Moving Average"-Indikators und gibt ihn zurück.
  *
  * @param  int    timeframe      - Timeframe, in dem der Indikator geladen wird
@@ -60,3 +53,14 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 
    return(_NULL(SetLastError(error)));
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "MetaQuotes2.ex4"
+   int GetBufferAddress(int buffer[]);
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
+#import

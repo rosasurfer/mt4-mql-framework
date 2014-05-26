@@ -10,9 +10,9 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <structs.mqh>
-
 #include <core/library.mqh>
+#include <structs/mt4/HISTORY_HEADER.mqh>
+#include <structs/pewa/EXECUTION_CONTEXT.mqh>
 
 
 /**
@@ -22,7 +22,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int history_init(/*EXECUTION_CONTEXT*/int ec[]) {
+int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -48,7 +48,7 @@ int history_init(/*EXECUTION_CONTEXT*/int ec[]) {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   return(catch("history_init()"));
+   return(catch("history.init(1)"));
 }
 
 
@@ -63,11 +63,11 @@ int history_init(/*EXECUTION_CONTEXT*/int ec[]) {
  * NOTE: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere deinit()-Funktionen
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. Diese deinit()-Funktion wird deswegen u.U. nicht mehr ausgeführt.
  */
-int history_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
+int history.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    // Library nach Recompile neu initialisieren
    if (__TYPE__ == T_LIBRARY)
       if (UninitializeReason() == REASON_RECOMPILE)
-         if (IsError(history_init(ec)))
+         if (IsError(history.init(ec)))
             return(last_error);
 
    __WHEREAMI__ =                               FUNC_DEINIT;
@@ -82,7 +82,7 @@ int history_deinit(/*EXECUTION_CONTEXT*/int ec[]) {
  *
  * @return int - Fehlerstatus
  */
-int history_GetLastError() {
+int history.GetLastError() {
    return(last_error);
 }
 
@@ -751,7 +751,7 @@ bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
  *       gleichzeitig offen gehalten werden.
  */
 int HistoryFile.Open(string symbol, string description, int digits, int timeframe, int mode) {
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                      return(_NULL(catch("HistoryFile.Open(1)   illegal parameter symbol = "+ symbol +" (length="+ StringLen(symbol) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                      return(_NULL(catch("HistoryFile.Open(1)   illegal parameter symbol = "+ symbol +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (digits <  0)                                                return(_NULL(catch("HistoryFile.Open(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (timeframe <= 0)                                             return(_NULL(catch("HistoryFile.Open(3)   illegal parameter timeframe = "+ timeframe, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (_bool(mode & FILE_CSV) || !(mode & (FILE_READ|FILE_WRITE))) return(_NULL(catch("HistoryFile.Open(4)   illegal history file access mode "+ FileAccessModeToStr(mode), ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -871,8 +871,8 @@ bool HistoryFile.Close(int hFile) {
  * @param  int size - neue Größe
  *
  * @return int - neue Größe der Arrays
- */
-/*private*/ int hf.ResizeArrays(int size) {
+ *
+private*/ int hf.ResizeArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {
@@ -920,8 +920,8 @@ bool HistoryFile.Close(int hFile) {
  * @param  int size - neue Größe
  *
  * @return int - neue Größe der Arrays
- */
-/*private*/ int h.ResizeArrays(int size) {
+ *
+private*/ int h.ResizeArrays(int size) {
    if (size != ArraySize(h.hHst)) {
       ArrayResize(h.hHst,        size);
       ArrayResize(h.symbol,      size);
@@ -1277,49 +1277,47 @@ bool History.CloseFiles(bool warn=false) {
 
 
 /**
- * Setzt die globalen Arrays zurück. Wird nur im Tester und in library::init() aufgerufen.
+ * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
-   if (IsTesting()) {
-      ArrayResize(stack.orderSelections      , 0);
+   ArrayResize(stack.orderSelections      , 0);
 
-      // Daten einzelner HistoryFiles
-      ArrayResize(hf.hFile                   , 0);
-      ArrayResize(hf.name                    , 0);
-      ArrayResize(hf.read                    , 0);
-      ArrayResize(hf.write                   , 0);
-      ArrayResize(hf.size                    , 0);
+   // Daten einzelner HistoryFiles
+   ArrayResize(hf.hFile                   , 0);
+   ArrayResize(hf.name                    , 0);
+   ArrayResize(hf.read                    , 0);
+   ArrayResize(hf.write                   , 0);
+   ArrayResize(hf.size                    , 0);
 
-      ArrayResize(hf.header                  , 0);
-      ArrayResize(hf.symbol                  , 0);
-      ArrayResize(hf.period                  , 0);
-      ArrayResize(hf.periodSecs              , 0);
-      ArrayResize(hf.digits                  , 0);
+   ArrayResize(hf.header                  , 0);
+   ArrayResize(hf.symbol                  , 0);
+   ArrayResize(hf.period                  , 0);
+   ArrayResize(hf.periodSecs              , 0);
+   ArrayResize(hf.digits                  , 0);
 
-      ArrayResize(hf.bars                    , 0);
-      ArrayResize(hf.from                    , 0);
-      ArrayResize(hf.to                      , 0);
+   ArrayResize(hf.bars                    , 0);
+   ArrayResize(hf.from                    , 0);
+   ArrayResize(hf.to                      , 0);
 
-      // Cache der aktuellen Bar
-      ArrayResize(hf.currentBar.offset       , 0);
-      ArrayResize(hf.currentBar.openTime     , 0);
-      ArrayResize(hf.currentBar.closeTime    , 0);
-      ArrayResize(hf.currentBar.nextCloseTime, 0);
-      ArrayResize(hf.currentBar.data         , 0);
+   // Cache der aktuellen Bar
+   ArrayResize(hf.currentBar.offset       , 0);
+   ArrayResize(hf.currentBar.openTime     , 0);
+   ArrayResize(hf.currentBar.closeTime    , 0);
+   ArrayResize(hf.currentBar.nextCloseTime, 0);
+   ArrayResize(hf.currentBar.data         , 0);
 
-      // Ticks einer ungespeicherten Bar
-      ArrayResize(hf.tickBar.offset          , 0);
-      ArrayResize(hf.tickBar.openTime        , 0);
-      ArrayResize(hf.tickBar.closeTime       , 0);
-      ArrayResize(hf.tickBar.nextCloseTime   , 0);
-      ArrayResize(hf.tickBar.data            , 0);
+   // Ticks einer ungespeicherten Bar
+   ArrayResize(hf.tickBar.offset          , 0);
+   ArrayResize(hf.tickBar.openTime        , 0);
+   ArrayResize(hf.tickBar.closeTime       , 0);
+   ArrayResize(hf.tickBar.nextCloseTime   , 0);
+   ArrayResize(hf.tickBar.data            , 0);
 
-      // Daten einzelner History-Sets
-      ArrayResize(h.hHst                     , 0);
-      ArrayResize(h.symbol                   , 0);
-      ArrayResize(h.description              , 0);
-      ArrayResize(h.digits                   , 0);
-      ArrayResize(h.hFile                    , 0);
-    //ArrayResize(h.periods...                           // hat Initializer und wird nicht modifiziert
-   }
+   // Daten einzelner History-Sets
+   ArrayResize(h.hHst                     , 0);
+   ArrayResize(h.symbol                   , 0);
+   ArrayResize(h.description              , 0);
+   ArrayResize(h.digits                   , 0);
+   ArrayResize(h.hFile                    , 0);
+ //ArrayResize(h.periods...                           // hat Initializer und wird nicht modifiziert
 }
