@@ -14,6 +14,9 @@
  *   int    prevDbVersion;             4      => hh[23]     // LastSync                (timestamp)   unbenutzt
  *   int    reserved[13];             52      => hh[24]     //                                       unbenutzt
  * } hh;                           = 148 byte = int[37]
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 
 // Getter
@@ -151,3 +154,43 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) 
 #import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 #import
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//#import "struct.HISTORY_HEADER.ex4"
+//   int      hh.Version          (/*HISTORY_HEADER*/int hh[]);
+//   string   hh.Description      (/*HISTORY_HEADER*/int hh[]);
+//   string   hh.Symbol           (/*HISTORY_HEADER*/int hh[]);
+//   int      hh.Period           (/*HISTORY_HEADER*/int hh[]);
+//   int      hh.Digits           (/*HISTORY_HEADER*/int hh[]);
+//   datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[]);
+//   datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[]);
+
+//   int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
+//   string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
+//   string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i);
+//   int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i);
+//   int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i);
+//   datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i);
+//   datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i);
+
+//   int      hh.setVersion       (/*HISTORY_HEADER*/int hh[], int      version    );
+//   string   hh.setDescription   (/*HISTORY_HEADER*/int hh[], string   description);
+//   string   hh.setSymbol        (/*HISTORY_HEADER*/int hh[], string   symbol     );
+//   int      hh.setPeriod        (/*HISTORY_HEADER*/int hh[], int      period     );
+//   int      hh.setDigits        (/*HISTORY_HEADER*/int hh[], int      digits     );
+//   datetime hh.setDbVersion     (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
+//   datetime hh.setPrevDbVersion (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
+
+//   int      hhs.setVersion      (/*HISTORY_HEADER*/int hh[][], int i, int      version    );
+//   string   hhs.setDescription  (/*HISTORY_HEADER*/int hh[][], int i, string   description);
+//   string   hhs.setSymbol       (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
+//   int      hhs.setPeriod       (/*HISTORY_HEADER*/int hh[][], int i, int      period     );
+//   int      hhs.setDigits       (/*HISTORY_HEADER*/int hh[][], int i, int      digits     );
+//   datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
+//   datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
+
+//   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput);
+//#import

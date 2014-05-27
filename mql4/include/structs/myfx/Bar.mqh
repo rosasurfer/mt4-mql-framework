@@ -10,4 +10,7 @@
  *   double close;            8        double[4]
  *   double volume;           8        double[5]      // immer Ganzzahl
  * } bar;                  = 48 byte = double[6]
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */

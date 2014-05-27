@@ -5,4 +5,7 @@
  *   szchar name       [16];         16            0        // Name, <NUL>-terminiert
  *   szchar description[64];         64            4        // Beschreibung, <NUL>-terminiert
  * } sg;                           = 80 byte
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */

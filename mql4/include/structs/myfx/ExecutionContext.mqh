@@ -16,6 +16,9 @@
  *    LPTSTR lpLogFile;                  4      => ec[10]      // Zeiger auf Pfad+Namen der Logdatei (konstant)   => wie verhalte ich mich
  *    int    lastError;                  4      => ec[11]      // letzter aufgetretener Fehler       (variabel)   => Fehlerrückmeldung
  * } ec;                              = 48 byte = int[12]
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 
 // Getter
@@ -165,3 +168,42 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
 #import "MetaQuotes.dll"
    string GetStringValue(int address);
 #import
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//#import "struct.EXECUTION_CONTEXT.ex4"
+//   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
+//   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                );
+
+//   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
+//   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int    lpName            );
+//   string ec.setName              (/*EXECUTION_CONTEXT*/int ec[], string name              );
+//   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
+//   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int    chartProperties   );
+//   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
+//   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
+//   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
+//   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
+//   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
+//   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
+//   int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int    lpLogFile         );
+//   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
+//   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+
+//   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+//#import
