@@ -1,5 +1,5 @@
 /**
- * MQL structure BAR. Dient der Vereinfachung der MT4 structure RATE_INFO. Die Typen sind einheitlich, die Kursreihenfolge ist OHLC.
+ * MQL structure BAR. Dient der Vereinfachung der MT4 structure RATE_INFO. Die Datentypen sind einheitlich, die Kursreihenfolge ist OHLC.
  *
  *                          size          offset
  * struct BAR {             ----          ------
