@@ -10,4 +10,7 @@
  *   int    counter;                  4           32        // fortlaufender Zähler innerhalb der Datei
  *   int    reserved[1];              4           36
  * } t;                            = 40 byte
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */

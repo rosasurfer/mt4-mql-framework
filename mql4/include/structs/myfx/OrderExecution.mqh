@@ -28,6 +28,9 @@
  *    int    remainingTicket; //   4      => oe[32]      // zusätzlich erzeugtes, verbleibendes Ticket
  *    int    remainingLots;   //   4      => oe[33]      // verbleibendes Ordervolumen in Hundertsteln eines Lots (nach partial close)
  * } oe;                      // 136 byte = int[34]
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 
 // Getter
@@ -331,3 +334,123 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
 #import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 #import
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//#import "struct.ORDER_EXECUTION.ex4"
+//   // Getter
+//   int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);
+//   string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]);
+//   int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Bid                (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Ask                (/*ORDER_EXECUTION*/int oe[]);
+//   int      oe.Ticket             (/*ORDER_EXECUTION*/int oe[]);
+//   int      oe.Type               (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Lots               (/*ORDER_EXECUTION*/int oe[]);
+//   datetime oe.OpenTime           (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.OpenPrice          (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.StopLoss           (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.TakeProfit         (/*ORDER_EXECUTION*/int oe[]);
+//   datetime oe.CloseTime          (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]);
+//   string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]);
+//   int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]);
+//   int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]);
+//   int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]);
+//   double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]);
+
+//   int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i);
+//   string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i);
+//   int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Bid               (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Ask               (/*ORDER_EXECUTION*/int oe[][], int i);
+//   int      oes.Ticket            (/*ORDER_EXECUTION*/int oe[][], int i);
+//   int      oes.Type              (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Lots              (/*ORDER_EXECUTION*/int oe[][], int i);
+//   datetime oes.OpenTime          (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.OpenPrice         (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.StopLoss          (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.TakeProfit        (/*ORDER_EXECUTION*/int oe[][], int i);
+//   datetime oes.CloseTime         (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i);
+//   string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i);
+//   int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i);
+//   int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i);
+//   int      oes.RemainingTicket   (/*ORDER_EXECUTION*/int oe[][], int i);
+//   double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i);
+
+//   // Setter
+//   int      oe.setError           (/*ORDER_EXECUTION*/int oe[], int      error     );
+//   string   oe.setSymbol          (/*ORDER_EXECUTION*/int oe[], string   symbol    );
+//   int      oe.setDigits          (/*ORDER_EXECUTION*/int oe[], int      digits    );
+//   double   oe.setStopDistance    (/*ORDER_EXECUTION*/int oe[], double   distance  );
+//   double   oe.setFreezeDistance  (/*ORDER_EXECUTION*/int oe[], double   distance  );
+//   double   oe.setBid             (/*ORDER_EXECUTION*/int oe[], double   bid       );
+//   double   oe.setAsk             (/*ORDER_EXECUTION*/int oe[], double   ask       );
+//   int      oe.setTicket          (/*ORDER_EXECUTION*/int oe[], int      ticket    );
+//   int      oe.setType            (/*ORDER_EXECUTION*/int oe[], int      type      );
+//   double   oe.setLots            (/*ORDER_EXECUTION*/int oe[], double   lots      );
+//   datetime oe.setOpenTime        (/*ORDER_EXECUTION*/int oe[], datetime openTime  );
+//   double   oe.setOpenPrice       (/*ORDER_EXECUTION*/int oe[], double   openPrice );
+//   double   oe.setStopLoss        (/*ORDER_EXECUTION*/int oe[], double   stopLoss  );
+//   double   oe.setTakeProfit      (/*ORDER_EXECUTION*/int oe[], double   takeProfit);
+//   datetime oe.setCloseTime       (/*ORDER_EXECUTION*/int oe[], datetime closeTime );
+//   double   oe.setClosePrice      (/*ORDER_EXECUTION*/int oe[], double   closePrice);
+//   double   oe.setSwap            (/*ORDER_EXECUTION*/int oe[], double   swap      );
+//   double   oe.addSwap            (/*ORDER_EXECUTION*/int oe[], double   swap      );
+//   double   oe.setCommission      (/*ORDER_EXECUTION*/int oe[], double   comission );
+//   double   oe.addCommission      (/*ORDER_EXECUTION*/int oe[], double   comission );
+//   double   oe.setProfit          (/*ORDER_EXECUTION*/int oe[], double   profit    );
+//   double   oe.addProfit          (/*ORDER_EXECUTION*/int oe[], double   profit    );
+//   string   oe.setComment         (/*ORDER_EXECUTION*/int oe[], string   comment   );
+//   int      oe.setDuration        (/*ORDER_EXECUTION*/int oe[], int      milliSec  );
+//   int      oe.setRequotes        (/*ORDER_EXECUTION*/int oe[], int      requotes  );
+//   double   oe.setSlippage        (/*ORDER_EXECUTION*/int oe[], double   slippage  );
+//   int      oe.setRemainingTicket (/*ORDER_EXECUTION*/int oe[], int      ticket    );
+//   double   oe.setRemainingLots   (/*ORDER_EXECUTION*/int oe[], double   lots      );
+
+//   int      oes.setError          (/*ORDER_EXECUTION*/int oe[][], int i, int      error     );
+//   string   oes.setSymbol         (/*ORDER_EXECUTION*/int oe[][], int i, string   symbol    );
+//   int      oes.setDigits         (/*ORDER_EXECUTION*/int oe[][], int i, int      digits    );
+//   double   oes.setStopDistance   (/*ORDER_EXECUTION*/int oe[][], int i, double   distance  );
+//   double   oes.setFreezeDistance (/*ORDER_EXECUTION*/int oe[][], int i, double   distance  );
+//   double   oes.setBid            (/*ORDER_EXECUTION*/int oe[][], int i, double   bid       );
+//   double   oes.setAsk            (/*ORDER_EXECUTION*/int oe[][], int i, double   ask       );
+//   int      oes.setTicket         (/*ORDER_EXECUTION*/int oe[][], int i, int      ticket    );
+//   int      oes.setType           (/*ORDER_EXECUTION*/int oe[][], int i, int      type      );
+//   double   oes.setLots           (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
+//   datetime oes.setOpenTime       (/*ORDER_EXECUTION*/int oe[][], int i, datetime openTime  );
+//   double   oes.setOpenPrice      (/*ORDER_EXECUTION*/int oe[][], int i, double   openPrice );
+//   double   oes.setStopLoss       (/*ORDER_EXECUTION*/int oe[][], int i, double   stopLoss  );
+//   double   oes.setTakeProfit     (/*ORDER_EXECUTION*/int oe[][], int i, double   takeProfit);
+//   datetime oes.setCloseTime      (/*ORDER_EXECUTION*/int oe[][], int i, datetime closeTime );
+//   double   oes.setClosePrice     (/*ORDER_EXECUTION*/int oe[][], int i, double   closePrice);
+//   double   oes.setSwap           (/*ORDER_EXECUTION*/int oe[][], int i, double   swap      );
+//   double   oes.addSwap           (/*ORDER_EXECUTION*/int oe[][], int i, double   swap      );
+//   double   oes.setCommission     (/*ORDER_EXECUTION*/int oe[][], int i, double   comission );
+//   double   oes.addCommission     (/*ORDER_EXECUTION*/int oe[][], int i, double   comission );
+//   double   oes.setProfit         (/*ORDER_EXECUTION*/int oe[][], int i, double   profit    );
+//   double   oes.addProfit         (/*ORDER_EXECUTION*/int oe[][], int i, double   profit    );
+//   string   oes.setComment        (/*ORDER_EXECUTION*/int oe[][], int i, string   comment   );
+//   int      oes.setDuration       (/*ORDER_EXECUTION*/int oe[][], int i, int      milliSec  );
+//   int      oes.setRequotes       (/*ORDER_EXECUTION*/int oe[][], int i, int      requotes  );
+//   double   oes.setSlippage       (/*ORDER_EXECUTION*/int oe[][], int i, double   slippage  );
+//   int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int oe[][], int i, int      ticket    );
+//   double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
+
+//   string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[], bool debugOutput);
+//#import

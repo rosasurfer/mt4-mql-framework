@@ -22,4 +22,7 @@
  *   double bid;                      8          112        // Bid (Wiederholung)
  *   double ask;                      8          120        // Ask (Wiederholung)
  * } ss;                          = 128 byte
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */

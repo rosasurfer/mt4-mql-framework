@@ -21,6 +21,9 @@
  *    szchar comment[32];     //  32         lo[16]      // Kommentar, <NUL>-terminiert
  *    int    version;         //   4         lo[24]      // Zeitpunkt der letzten Änderung, GMT
  * } lo;                      // 100 byte = int[25]
+ *
+ *
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 
 // Getter
@@ -301,3 +304,123 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
 #import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 #import
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+//#import "struct.LFX_ORDER.ex4"
+//   // Getter
+//   int      lo.Ticket            (/*LFX_ORDER*/int lo[]);
+//   int      lo.Type              (/*LFX_ORDER*/int lo[]);
+//   double   lo.Units             (/*LFX_ORDER*/int lo[]);
+//   double   lo.Lots              (/*LFX_ORDER*/int lo[]);
+//   double   lo.OpenEquity        (/*LFX_ORDER*/int lo[]);
+//   datetime lo.OpenTime          (/*LFX_ORDER*/int lo[]);
+//   double   lo.OpenPriceLfx      (/*LFX_ORDER*/int lo[]);
+//   datetime lo.OpenPriceTime     (/*LFX_ORDER*/int lo[]);
+//   double   lo.StopLossLfx       (/*LFX_ORDER*/int lo[]);
+//   datetime lo.StopLossTime      (/*LFX_ORDER*/int lo[]);
+//   double   lo.TakeProfitLfx     (/*LFX_ORDER*/int lo[]);
+//   datetime lo.TakeProfitTime    (/*LFX_ORDER*/int lo[]);
+//   datetime lo.CloseTime         (/*LFX_ORDER*/int lo[]);
+//   double   lo.ClosePriceLfx     (/*LFX_ORDER*/int lo[]);
+//   double   lo.Profit            (/*LFX_ORDER*/int lo[]);
+//   double   lo.Deviation         (/*LFX_ORDER*/int lo[]);
+//   string   lo.Comment           (/*LFX_ORDER*/int lo[]);
+//   datetime lo.Version           (/*LFX_ORDER*/int lo[]);
+//   int      lo.Digits            (/*LFX_ORDER*/int lo[]);
+//   string   lo.Currency          (/*LFX_ORDER*/int lo[]);
+//   int      lo.CurrencyId        (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsPending         (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsOpened          (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsOpen            (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsClosed          (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsOpenError       (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsCloseError      (/*LFX_ORDER*/int lo[]);
+//   double   lo.OpenPrice         (/*LFX_ORDER*/int lo[]);
+//   double   lo.StopLoss          (/*LFX_ORDER*/int lo[]);
+//   double   lo.TakeProfit        (/*LFX_ORDER*/int lo[]);
+//   double   lo.ClosePrice        (/*LFX_ORDER*/int lo[]);
+
+//   int      los.Ticket           (/*LFX_ORDER*/int lo[][], int i);
+//   int      los.Type             (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.Units            (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.Lots             (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.OpenEquity       (/*LFX_ORDER*/int lo[][], int i);
+//   datetime los.OpenTime         (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.OpenPriceLfx     (/*LFX_ORDER*/int lo[][], int i);
+//   datetime los.OpenPriceTime    (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.StopLossLfx      (/*LFX_ORDER*/int lo[][], int i);
+//   datetime los.StopLossTime     (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.TakeProfitLfx    (/*LFX_ORDER*/int lo[][], int i);
+//   datetime los.TakeProfitTime   (/*LFX_ORDER*/int lo[][], int i);
+//   datetime los.CloseTime        (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.ClosePriceLfx    (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.Profit           (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.Deviation        (/*LFX_ORDER*/int lo[][], int i);
+//   string   los.Comment          (/*LFX_ORDER*/int lo[][], int i);
+//   datetime los.Version          (/*LFX_ORDER*/int lo[][], int i);
+//   int      los.Digits           (/*LFX_ORDER*/int lo[][], int i);
+//   string   los.Currency         (/*LFX_ORDER*/int lo[][], int i);
+//   int      los.CurrencyId       (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsPending        (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsOpened         (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsOpen           (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsClosed         (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsOpenError      (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsCloseError     (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.OpenPrice        (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.StopLoss         (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.TakeProfit       (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.ClosePrice       (/*LFX_ORDER*/int lo[][], int i);
+
+//   // Setter
+//   int      lo.setTicket         (/*LFX_ORDER*/int lo[], int      ticket        );
+//   int      lo.setType           (/*LFX_ORDER*/int lo[], int      type          );
+//   double   lo.setUnits          (/*LFX_ORDER*/int lo[], double   units         );
+//   double   lo.setLots           (/*LFX_ORDER*/int lo[], double   lots          );
+//   double   lo.setOpenEquity     (/*LFX_ORDER*/int lo[], double   openEquity    );
+//   datetime lo.setOpenTime       (/*LFX_ORDER*/int lo[], datetime openTime      );
+//   double   lo.setOpenPriceLfx   (/*LFX_ORDER*/int lo[], double   openPriceLfx  );
+//   datetime lo.setOpenPriceTime  (/*LFX_ORDER*/int lo[], datetime openPriceTime );
+//   double   lo.setStopLossLfx    (/*LFX_ORDER*/int lo[], double   stopLossLfx   );
+//   datetime lo.setStopLossTime   (/*LFX_ORDER*/int lo[], datetime stopLossTime  );
+//   double   lo.setTakeProfitLfx  (/*LFX_ORDER*/int lo[], double   takeProfitLfx );
+//   datetime lo.setTakeProfitTime (/*LFX_ORDER*/int lo[], datetime takeProfitTime);
+//   datetime lo.setCloseTime      (/*LFX_ORDER*/int lo[], datetime closeTime     );
+//   double   lo.setClosePriceLfx  (/*LFX_ORDER*/int lo[], double   closePriceLfx );
+//   double   lo.setProfit         (/*LFX_ORDER*/int lo[], double   profit        );
+//   double   lo.setDeviation      (/*LFX_ORDER*/int lo[], double   deviation     );
+//   string   lo.setComment        (/*LFX_ORDER*/int lo[], string   comment       );
+//   datetime lo.setVersion        (/*LFX_ORDER*/int lo[], datetime version       );
+//   double   lo.setOpenPrice      (/*LFX_ORDER*/int lo[], double   openPrice     );
+//   double   lo.setStopLoss       (/*LFX_ORDER*/int lo[], double   stopLoss      );
+//   double   lo.setTakeProfit     (/*LFX_ORDER*/int lo[], double   takeProfit    );
+//   double   lo.setClosePrice     (/*LFX_ORDER*/int lo[], double   closePrice    );
+
+//   int      los.setTicket        (/*LFX_ORDER*/int lo[][], int i, int      ticket        );
+//   int      los.setType          (/*LFX_ORDER*/int lo[][], int i, int      type          );
+//   double   los.setUnits         (/*LFX_ORDER*/int lo[][], int i, double   units         );
+//   double   los.setLots          (/*LFX_ORDER*/int lo[][], int i, double   lots          );
+//   double   los.setOpenEquity    (/*LFX_ORDER*/int lo[][], int i, double   openEquity    );
+//   datetime los.setOpenTime      (/*LFX_ORDER*/int lo[][], int i, datetime openTime      );
+//   double   los.setOpenPriceLfx  (/*LFX_ORDER*/int lo[][], int i, double   openPrice     );
+//   datetime los.setOpenPriceTime (/*LFX_ORDER*/int lo[][], int i, datetime openPriceTime );
+//   double   los.setStopLossLfx   (/*LFX_ORDER*/int lo[][], int i, double   stopLoss      );
+//   datetime los.setStopLossTime  (/*LFX_ORDER*/int lo[][], int i, datetime stopLossTime  );
+//   double   los.setTakeProfitLfx (/*LFX_ORDER*/int lo[][], int i, double   takeProfit    );
+//   datetime los.setTakeProfitTime(/*LFX_ORDER*/int lo[][], int i, datetime takeProfitTime);
+//   datetime los.setCloseTime     (/*LFX_ORDER*/int lo[][], int i, datetime closeTime     );
+//   double   los.setClosePriceLfx (/*LFX_ORDER*/int lo[][], int i, double   closePrice    );
+//   double   los.setProfit        (/*LFX_ORDER*/int lo[][], int i, double   profit        );
+//   double   los.setDeviation     (/*LFX_ORDER*/int lo[][], int i, double   deviation     );
+//   string   los.setComment       (/*LFX_ORDER*/int lo[][], int i, string   comment       );
+//   datetime los.setVersion       (/*LFX_ORDER*/int lo[][], int i, datetime version       );
+//   double   los.setOpenPrice     (/*LFX_ORDER*/int lo[][], int i, double   openPrice     );
+//   double   los.setStopLoss      (/*LFX_ORDER*/int lo[][], int i, double   stopLoss      );
+//   double   los.setTakeProfit    (/*LFX_ORDER*/int lo[][], int i, double   takeProfit    );
+//   double   los.setClosePrice    (/*LFX_ORDER*/int lo[][], int i, double   closePrice    );
+
+//   string   LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput);
+//#import
