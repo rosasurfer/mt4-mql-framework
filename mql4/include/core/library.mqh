@@ -228,10 +228,10 @@ int SetLastError(int error, int param=NULL) {
 
 
 #import "stdlib1.ex4"
-   string __whereamiDescription(int id);
    int    GetUIThreadId();
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
+   string __whereamiDescription(int id);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();
