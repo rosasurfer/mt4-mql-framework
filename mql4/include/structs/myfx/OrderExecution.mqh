@@ -180,7 +180,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
 
 
    if (dimensions == 1) {
-      // oe ist struct ORDER_EXECUTION (eine Dimension)
+      // oe ist einzelnes Struct ORDER_EXECUTION (eine Dimension)
       digits      = oe.Digits(oe);
       pipDigits   = digits & (~1);
       priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -214,7 +214,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
       ArrayPushString(lines, line);
    }
    else {
-      // oe ist struct[] ORDER_EXECUTION (zwei Dimensionen)
+      // oe ist Struct-Array ORDER_EXECUTION[] (zwei Dimensionen)
       int size = ArrayRange(oe, 0);
 
       for (int i=0; i < size; i++) {
