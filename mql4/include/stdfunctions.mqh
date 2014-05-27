@@ -2051,6 +2051,19 @@ void __DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+#import "this-library-doesnt-exist.ex4"                              // zum Testen von stddefine.mqh ohne "core"-Dateien
+   /*
+   bool   IsExpert();
+   bool   IsScript();
+   bool   IsIndicator();
+   bool   IsLibrary();
+   bool   Expert.IsTesting();
+   bool   Script.IsTesting();
+   bool   Indicator.IsTesting();
+   bool   This.IsTesting();
+   bool   Indicator.IsSuperContext();
+   int    SetLastError(int error, int param);
+   */
 #import "stdlib1.ex4"
    bool   EventListener.AccountChange(int data[], int criteria);
    bool   EventListener.AccountPayment(int data[], int criteria);
