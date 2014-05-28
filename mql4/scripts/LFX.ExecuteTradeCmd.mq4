@@ -382,7 +382,7 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "structs.ORDER_EXECUTION.ex4"
+#import "struct.ORDER_EXECUTION.ex4"
    double oe.OpenPrice  (/*ORDER_EXECUTION*/int oe[]         );
    double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
    double oes.Commission(/*ORDER_EXECUTION*/int oe[][], int i);
