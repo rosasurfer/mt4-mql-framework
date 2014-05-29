@@ -1,21 +1,20 @@
 /**
  * Zeigt im Chart verschiedene aktuelle Informationen an.
  */
+#property indicator_chart_window
+
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 
-#include <ChartInfos/imports.mqh>
-#include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
+#include <win32api.mqh>
 
 #include <core/script.ParameterProvider.mqh>
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
-
-#property indicator_chart_window
 
 
 // Label der einzelnen Anzeigen
@@ -493,10 +492,10 @@ bool UpdateUnitSize() {
    string strUnitSize = "UnitSize:  -";
 
    if (leverage > 0 || soDistance) {
-      bool   tradeAllowed   = _bool(MarketInfo(Symbol(), MODE_TRADEALLOWED ));
-      double tickSize       =       MarketInfo(Symbol(), MODE_TICKSIZE      );
-      double tickValue      =       MarketInfo(Symbol(), MODE_TICKVALUE     );
-      double marginRequired =       MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
+      bool   tradeAllowed   = (MarketInfo(Symbol(), MODE_TRADEALLOWED  ) && 1);
+      double tickSize       =  MarketInfo(Symbol(), MODE_TICKSIZE      );
+      double tickValue      =  MarketInfo(Symbol(), MODE_TICKVALUE     );
+      double marginRequired =  MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
 
       int error = GetLastError();
       if (IsError(error)) {
@@ -1851,3 +1850,40 @@ string InputsToStr() {
                             "leverage=",     DoubleToStr(leverage, 1)    , "; ")
    );
 }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   bool     AquireLock(string mutexName, bool wait);
+   int      ArrayPushDouble(double array[], double value);
+   string   BoolToStr(bool value);
+   string   DateToStr(datetime time, string mask);
+   double   GetCommission();
+   double   GetGlobalConfigDouble(string section, string key, double defaultValue);
+   string   GetLocalConfigPath();
+   string   GetLongSymbolNameOrAlt(string symbol, string altValue);
+   datetime GetServerPrevSessionStartTime(datetime serverTime);
+   datetime GetServerSessionStartTime(datetime serverTime);
+   string   GetSymbolName(string symbol);
+   int      GetTerminalBuild();
+   int      iBarShiftNext(string symbol, int period, datetime time);
+   int      iBarShiftPrevious(string symbol, int period, datetime time);
+   bool     IsCurrency(string value);
+   bool     IsGlobalConfigKey(string section, string key);
+   double   MathModFix(double a, double b);
+   string   PriceTypeToStr(int type);
+   int      PushObject(string label);
+   bool     ReleaseLock(string mutexName);
+   int      RemoveChartObjects();
+   int      SearchStringArrayI(string haystack[], string needle);
+   bool     StringEndsWith(string object, string postfix);
+   bool     StringIEndsWith(string object, string postfix);
+   string   StringSubstrFix(string object, int start, int length);
+   string   StringToUpper(string value);
+
+#import "stdlib2.ex4"
+   int      ChartInfos.CopyRemotePositions(bool direction, string symbol[], int tickets[], int types[][], double data[][]);
+   int      ChartInfos.CopyLfxOrders      (bool direction, string symbol[], /*LFX_ORDER*/int los[][]);
+#import
