@@ -59,10 +59,10 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
    __TYPE__      |=                   ec.Type           (ec);
    __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
    __WHEREAMI__   =                   ec.Whereami       (ec);
-   IsChart        =             _bool(ec.ChartProperties(ec) & CP_CHART);
-   IsOfflineChart =                   ec.ChartProperties(ec) & CP_OFFLINE && IsChart;
+   IsChart        =                  (ec.ChartProperties(ec) & CP_CHART   && 1);
+   IsOfflineChart =                  (ec.ChartProperties(ec) & CP_OFFLINE && IsChart);
    __LOG          =                   ec.Logging        (ec);
-   __LOG_CUSTOM   = _bool(initFlags & INIT_CUSTOMLOG);
+   __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
@@ -79,12 +79,12 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
 
 
    // (4) user-spezifische Init-Tasks ausführen
-   if (_bool(initFlags & INIT_TIMEZONE)) {                           // Zeitzonen-Konfiguration überprüfen
+   if (initFlags & INIT_TIMEZONE && 1) {                             // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
    }
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {                           // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
+   if (initFlags & INIT_PIPVALUE && 1) {                             // im Moment unnötig, da in stdlib weder TickSize noch PipValue() verwendet werden
       /*
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
@@ -505,6 +505,9 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
  * @param  string location - Aufruf-Bezeichner
  *
  * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Erläuterungen zu den Werten in stddefine.mqh
  */
 int DebugMarketInfo(string location) {
    int    error;
@@ -1046,7 +1049,7 @@ string __whereamiDescription(int id) {
  * @return int - Cursor-Handle oder NULL, falls ein Fehler auftrat
  */
 int LoadCursorById(int hInstance, int resourceId) {
-   if (_bool(resourceId & 0xFFFF0000))                               // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
+   if (resourceId & 0xFFFF0000 && 1)                                 // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
       return(_NULL(catch("LoadCursorById(1)   illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be smaller then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int hCursor = LoadCursorW(hInstance, resourceId);
@@ -3976,8 +3979,8 @@ string GetWindowsShortcutTarget(string lnkFilename) {
        dwFlags |= chars[22] << 16;
        dwFlags |= chars[23] << 24;
 
-   bool hasShellItemIdList = _bool(dwFlags & 0x00000001);
-   bool pointsToFileOrDir  = _bool(dwFlags & 0x00000002);
+   bool hasShellItemIdList = (dwFlags & 0x00000001 && 1);
+   bool pointsToFileOrDir  = (dwFlags & 0x00000002 && 1);
 
    if (!pointsToFileOrDir) {
       if (__LOG) log("GetWindowsShortcutTarget(8)   shortcut target is not a file or directory: \""+ lnkFilename +"\"");
@@ -6286,15 +6289,15 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
 
-            if (_bool(flags & OFLAG_CURRENTSYMBOL)) event &= _int(OrderSymbol() == Symbol());
-            if (_bool(flags & OFLAG_BUY          )) event &= _int(         type == OP_BUY  );
-            if (_bool(flags & OFLAG_SELL         )) event &= _int(         type == OP_SELL );
-            if (_bool(flags & OFLAG_MARKETORDER  )) {
+            if (flags & OFLAG_CURRENTSYMBOL && 1) event &= _int(OrderSymbol() == Symbol());
+            if (flags & OFLAG_BUY           && 1) event &= _int(         type == OP_BUY  );
+            if (flags & OFLAG_SELL          && 1) event &= _int(         type == OP_SELL );
+            if (flags & OFLAG_MARKETORDER   && 1) {
                for (int z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)                 // Order war pending
                      break;                         event &= _int(z == pendings);
             }
-            if (_bool(flags & OFLAG_PENDINGORDER )) {
+            if (flags & OFLAG_PENDINGORDER && 1) {
                for (z=0; z < pendings; z++)
                   if (knownPendings[z][0] == ticket)                 // Order war pending
                      break;                         event &= _int(z < pendings);
@@ -6376,11 +6379,11 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
                else if (type == OP_SELL)                pending = (OrderClosePrice() <= OrderTakeProfit());
             }
 
-            if (_bool(flags & OFLAG_CURRENTSYMBOL)) event &= _int(OrderSymbol() == Symbol());
-            if (_bool(flags & OFLAG_BUY          )) event &= _int(type == OP_BUY );
-            if (_bool(flags & OFLAG_SELL         )) event &= _int(type == OP_SELL);
-            if (_bool(flags & OFLAG_MARKETORDER  )) event &= _int(!pending);
-            if (_bool(flags & OFLAG_PENDINGORDER )) event &= _int( pending);
+            if (flags & OFLAG_CURRENTSYMBOL && 1) event &= _int(OrderSymbol() == Symbol());
+            if (flags & OFLAG_BUY           && 1) event &= _int(type == OP_BUY );
+            if (flags & OFLAG_SELL          && 1) event &= _int(type == OP_SELL);
+            if (flags & OFLAG_MARKETORDER   && 1) event &= _int(!pending);
+            if (flags & OFLAG_PENDINGORDER  && 1) event &= _int( pending);
 
             // wenn alle Kriterien erfüllt sind, Ticket in Resultarray speichern
             if (event == 1)
@@ -7920,10 +7923,10 @@ bool IsPendingTradeOperation(int value) {
 string ModuleTypeToStr(int type) {
    string result = "";
 
-   if (_bool(type & T_EXPERT   )) result = StringConcatenate(result, "|T_EXPERT"   );
-   if (_bool(type & T_SCRIPT   )) result = StringConcatenate(result, "|T_SCRIPT"   );
-   if (_bool(type & T_INDICATOR)) result = StringConcatenate(result, "|T_INDICATOR");
-   if (_bool(type & T_LIBRARY  )) result = StringConcatenate(result, "|T_LIBRARY"  );
+   if (type & T_EXPERT    && 1) result = StringConcatenate(result, "|T_EXPERT"   );
+   if (type & T_SCRIPT    && 1) result = StringConcatenate(result, "|T_SCRIPT"   );
+   if (type & T_INDICATOR && 1) result = StringConcatenate(result, "|T_INDICATOR");
+   if (type & T_LIBRARY   && 1) result = StringConcatenate(result, "|T_LIBRARY"  );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -7941,10 +7944,10 @@ string ModuleTypeToStr(int type) {
 string ModuleTypeDescription(int type) {
    string result = "";
 
-   if (_bool(type & T_EXPERT   )) result = StringConcatenate(result, ".Expert"   );
-   if (_bool(type & T_SCRIPT   )) result = StringConcatenate(result, ".Script"   );
-   if (_bool(type & T_INDICATOR)) result = StringConcatenate(result, ".Indicator");
-   if (_bool(type & T_LIBRARY  )) result = StringConcatenate(result, ".Library"  );
+   if (type & T_EXPERT    && 1) result = StringConcatenate(result, ".Expert"   );
+   if (type & T_SCRIPT    && 1) result = StringConcatenate(result, ".Script"   );
+   if (type & T_INDICATOR && 1) result = StringConcatenate(result, ".Indicator");
+   if (type & T_LIBRARY   && 1) result = StringConcatenate(result, ".Library"  );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8306,16 +8309,16 @@ int PeriodFlag(int period=NULL) {
 string PeriodFlagToStr(int flags) {
    string result = "";
 
-   if (!flags)                      result = StringConcatenate(result, "|0"  );
-   if (_bool(flags & F_PERIOD_M1 )) result = StringConcatenate(result, "|M1" );
-   if (_bool(flags & F_PERIOD_M5 )) result = StringConcatenate(result, "|M5" );
-   if (_bool(flags & F_PERIOD_M15)) result = StringConcatenate(result, "|M15");
-   if (_bool(flags & F_PERIOD_M30)) result = StringConcatenate(result, "|M30");
-   if (_bool(flags & F_PERIOD_H1 )) result = StringConcatenate(result, "|H1" );
-   if (_bool(flags & F_PERIOD_H4 )) result = StringConcatenate(result, "|H4" );
-   if (_bool(flags & F_PERIOD_D1 )) result = StringConcatenate(result, "|D1" );
-   if (_bool(flags & F_PERIOD_W1 )) result = StringConcatenate(result, "|W1" );
-   if (_bool(flags & F_PERIOD_MN1)) result = StringConcatenate(result, "|MN1");
+   if (!flags)                    result = StringConcatenate(result, "|0"  );
+   if (flags & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|M1" );
+   if (flags & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|M5" );
+   if (flags & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|M15");
+   if (flags & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|M30");
+   if (flags & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|H1" );
+   if (flags & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|H4" );
+   if (flags & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|D1" );
+   if (flags & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|W1" );
+   if (flags & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|MN1");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8333,9 +8336,9 @@ string PeriodFlagToStr(int flags) {
 string ChartPropertiesToStr(int flags) {
    string result = "";
 
-   if (!flags)                    result = StringConcatenate(result, "|0"         );
-   if (_bool(flags & CP_CHART  )) result = StringConcatenate(result, "|CP_CHART"  );
-   if (_bool(flags & CP_OFFLINE)) result = StringConcatenate(result, "|CP_OFFLINE");
+   if (!flags)                  result = StringConcatenate(result, "|0"         );
+   if (flags & CP_CHART   && 1) result = StringConcatenate(result, "|CP_CHART"  );
+   if (flags & CP_OFFLINE && 1) result = StringConcatenate(result, "|CP_OFFLINE");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8353,11 +8356,11 @@ string ChartPropertiesToStr(int flags) {
 string InitFlagsToStr(int flags) {
    string result = "";
 
-   if (!flags)                                  result = StringConcatenate(result, "|0"                       );
-   if (_bool(flags & INIT_TIMEZONE           )) result = StringConcatenate(result, "|INIT_TIMEZONE"           );
-   if (_bool(flags & INIT_PIPVALUE           )) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
-   if (_bool(flags & INIT_BARS_ON_HIST_UPDATE)) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
-   if (_bool(flags & INIT_CUSTOMLOG          )) result = StringConcatenate(result, "|INIT_CUSTOMLOG"          );
+   if (!flags)                                result = StringConcatenate(result, "|0"                       );
+   if (flags & INIT_TIMEZONE            && 1) result = StringConcatenate(result, "|INIT_TIMEZONE"           );
+   if (flags & INIT_PIPVALUE            && 1) result = StringConcatenate(result, "|INIT_PIPVALUE"           );
+   if (flags & INIT_BARS_ON_HIST_UPDATE && 1) result = StringConcatenate(result, "|INIT_BARS_ON_HIST_UPDATE");
+   if (flags & INIT_CUSTOMLOG           && 1) result = StringConcatenate(result, "|INIT_CUSTOMLOG"          );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8394,11 +8397,11 @@ string DeinitFlagsToStr(int flags) {
 string FileAccessModeToStr(int mode) {
    string result = "";
 
-   if (!mode)                    result = StringConcatenate(result, "|0"         );
-   if (_bool(mode & FILE_CSV  )) result = StringConcatenate(result, "|FILE_CSV"  );
-   if (_bool(mode & FILE_BIN  )) result = StringConcatenate(result, "|FILE_BIN"  );
-   if (_bool(mode & FILE_READ )) result = StringConcatenate(result, "|FILE_READ" );
-   if (_bool(mode & FILE_WRITE)) result = StringConcatenate(result, "|FILE_WRITE");
+   if (!mode)                  result = StringConcatenate(result, "|0"         );
+   if (mode & FILE_CSV   && 1) result = StringConcatenate(result, "|FILE_CSV"  );
+   if (mode & FILE_BIN   && 1) result = StringConcatenate(result, "|FILE_BIN"  );
+   if (mode & FILE_READ  && 1) result = StringConcatenate(result, "|FILE_READ" );
+   if (mode & FILE_WRITE && 1) result = StringConcatenate(result, "|FILE_WRITE");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -9480,11 +9483,11 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
 
       while (true) {
          if (wfd.FileAttribute.Directory(wfd)) {
-            if (_bool(flags & FF_FILESONLY))  break;
-            if (name ==  ".")                 break;
-            if (name == "..")                 break;
+            if (flags & FF_FILESONLY && 1)  break;
+            if (name ==  ".")               break;
+            if (name == "..")               break;
          }
-         else if (_bool(flags & FF_DIRSONLY)) break;
+         else if (flags & FF_DIRSONLY && 1) break;
          ArrayPushString(lpResults, name);
          break;
       }
@@ -9498,7 +9501,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
 
    int size = ArraySize(lpResults);
 
-   if (_bool(flags & FF_SORT)) /*&&*/ if (size > 1) {                // TODO: Ergebnisse ggf. sortieren
+   if (flags & FF_SORT && size > 1) {                                // TODO: Ergebnisse ggf. sortieren
    }
    return(size);
 }
@@ -10528,7 +10531,7 @@ private*/int Order.HandleError(string message, int error, bool serverError, int 
    }
 
    // (2) die angegebenen Laufzeitfehler abfangen
-   if (_bool(oeFlags & CATCH_ERR_INVALID_STOP)) {
+   if (oeFlags & CATCH_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
          return(error);

@@ -1329,7 +1329,7 @@ int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXEC
 
    int error = oe.Error(oe);
 
-   if (_bool(oeFlags & CATCH_ERR_INVALID_STOP)) {
+   if (oeFlags & CATCH_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
          // Der StopLoss liegt entweder innerhalb des Spreads (-1) oder innerhalb der StopDistance (-2).
          bool insideSpread;

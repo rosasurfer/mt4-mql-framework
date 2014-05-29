@@ -52,7 +52,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
    int initFlags = ec.InitFlags(__ExecutionContext);
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {
+   if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
@@ -71,7 +71,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       }
       if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_READY)));
    }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
    // (5) ggf. EA's aktivieren

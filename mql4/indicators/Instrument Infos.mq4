@@ -148,7 +148,7 @@ int CreateLabels() {
 int UpdateInfos() {
    string symbol          = Symbol();
    string accountCurrency = AccountCurrency();
-   bool   tradeAllowed    = _bool(MarketInfo(symbol, MODE_TRADEALLOWED));
+   bool   tradeAllowed    = (MarketInfo(symbol, MODE_TRADEALLOWED) && 1);
    color  fg.fontColor    = ifInt(tradeAllowed, fg.fontColor.Enabled, fg.fontColor.Disabled);
 
                                                                         ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ ifString(tradeAllowed, "yes", "no"),                 fg.fontSize, fg.fontName, fg.fontColor);

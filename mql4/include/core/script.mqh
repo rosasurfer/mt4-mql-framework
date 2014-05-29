@@ -31,7 +31,7 @@ int init() {
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
    int initFlags = ec.InitFlags(__ExecutionContext);
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {
+   if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(1)"))) return(last_error);
       if (!TickSize)                 return(catch("init(2)   MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA));
@@ -40,7 +40,7 @@ int init() {
       if (IsError(catch("init(3)"))) return(last_error);
       if (!tickValue)                return(catch("init(4)   MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA));
    }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                        // noch nicht implementiert
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.

@@ -110,19 +110,19 @@ string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
    string result = "";
    int flags = si.Flags(si);
 
-   if (_bool(flags & STARTF_FORCEONFEEDBACK )) result = StringConcatenate(result, "|STARTF_FORCEONFEEDBACK" );
-   if (_bool(flags & STARTF_FORCEOFFFEEDBACK)) result = StringConcatenate(result, "|STARTF_FORCEOFFFEEDBACK");
-   if (_bool(flags & STARTF_PREVENTPINNING  )) result = StringConcatenate(result, "|STARTF_PREVENTPINNING"  );
-   if (_bool(flags & STARTF_RUNFULLSCREEN   )) result = StringConcatenate(result, "|STARTF_RUNFULLSCREEN"   );
-   if (_bool(flags & STARTF_TITLEISAPPID    )) result = StringConcatenate(result, "|STARTF_TITLEISAPPID"    );
-   if (_bool(flags & STARTF_TITLEISLINKNAME )) result = StringConcatenate(result, "|STARTF_TITLEISLINKNAME" );
-   if (_bool(flags & STARTF_USECOUNTCHARS   )) result = StringConcatenate(result, "|STARTF_USECOUNTCHARS"   );
-   if (_bool(flags & STARTF_USEFILLATTRIBUTE)) result = StringConcatenate(result, "|STARTF_USEFILLATTRIBUTE");
-   if (_bool(flags & STARTF_USEHOTKEY       )) result = StringConcatenate(result, "|STARTF_USEHOTKEY"       );
-   if (_bool(flags & STARTF_USEPOSITION     )) result = StringConcatenate(result, "|STARTF_USEPOSITION"     );
-   if (_bool(flags & STARTF_USESHOWWINDOW   )) result = StringConcatenate(result, "|STARTF_USESHOWWINDOW"   );
-   if (_bool(flags & STARTF_USESIZE         )) result = StringConcatenate(result, "|STARTF_USESIZE"         );
-   if (_bool(flags & STARTF_USESTDHANDLES   )) result = StringConcatenate(result, "|STARTF_USESTDHANDLES"   );
+   if (flags & STARTF_FORCEONFEEDBACK  && 1) result = StringConcatenate(result, "|STARTF_FORCEONFEEDBACK" );
+   if (flags & STARTF_FORCEOFFFEEDBACK && 1) result = StringConcatenate(result, "|STARTF_FORCEOFFFEEDBACK");
+   if (flags & STARTF_PREVENTPINNING   && 1) result = StringConcatenate(result, "|STARTF_PREVENTPINNING"  );
+   if (flags & STARTF_RUNFULLSCREEN    && 1) result = StringConcatenate(result, "|STARTF_RUNFULLSCREEN"   );
+   if (flags & STARTF_TITLEISAPPID     && 1) result = StringConcatenate(result, "|STARTF_TITLEISAPPID"    );
+   if (flags & STARTF_TITLEISLINKNAME  && 1) result = StringConcatenate(result, "|STARTF_TITLEISLINKNAME" );
+   if (flags & STARTF_USECOUNTCHARS    && 1) result = StringConcatenate(result, "|STARTF_USECOUNTCHARS"   );
+   if (flags & STARTF_USEFILLATTRIBUTE && 1) result = StringConcatenate(result, "|STARTF_USEFILLATTRIBUTE");
+   if (flags & STARTF_USEHOTKEY        && 1) result = StringConcatenate(result, "|STARTF_USEHOTKEY"       );
+   if (flags & STARTF_USEPOSITION      && 1) result = StringConcatenate(result, "|STARTF_USEPOSITION"     );
+   if (flags & STARTF_USESHOWWINDOW    && 1) result = StringConcatenate(result, "|STARTF_USESHOWWINDOW"   );
+   if (flags & STARTF_USESIZE          && 1) result = StringConcatenate(result, "|STARTF_USESIZE"         );
+   if (flags & STARTF_USESTDHANDLES    && 1) result = StringConcatenate(result, "|STARTF_USESTDHANDLES"   );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -277,21 +277,21 @@ string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
    string result = "";
    int flags = wfd.FileAttributes(wfd);
 
-   if (_bool(flags & FILE_ATTRIBUTE_READONLY     )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_READONLY"     );
-   if (_bool(flags & FILE_ATTRIBUTE_HIDDEN       )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_HIDDEN"       );
-   if (_bool(flags & FILE_ATTRIBUTE_SYSTEM       )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_SYSTEM"       );
-   if (_bool(flags & FILE_ATTRIBUTE_DIRECTORY    )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_DIRECTORY"    );
-   if (_bool(flags & FILE_ATTRIBUTE_ARCHIVE      )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_ARCHIVE"      );
-   if (_bool(flags & FILE_ATTRIBUTE_DEVICE       )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_DEVICE"       );
-   if (_bool(flags & FILE_ATTRIBUTE_NORMAL       )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_NORMAL"       );
-   if (_bool(flags & FILE_ATTRIBUTE_TEMPORARY    )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_TEMPORARY"    );
-   if (_bool(flags & FILE_ATTRIBUTE_SPARSE_FILE  )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_SPARSE_FILE"  );
-   if (_bool(flags & FILE_ATTRIBUTE_REPARSE_POINT)) result = StringConcatenate(result, "|FILE_ATTRIBUTE_REPARSE_POINT");
-   if (_bool(flags & FILE_ATTRIBUTE_COMPRESSED   )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_COMPRESSED"   );
-   if (_bool(flags & FILE_ATTRIBUTE_OFFLINE      )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_OFFLINE"      );
-   if (_bool(flags & FILE_ATTRIBUTE_NOT_INDEXED  )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_NOT_INDEXED"  );
-   if (_bool(flags & FILE_ATTRIBUTE_ENCRYPTED    )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_ENCRYPTED"    );
-   if (_bool(flags & FILE_ATTRIBUTE_VIRTUAL      )) result = StringConcatenate(result, "|FILE_ATTRIBUTE_VIRTUAL"      );
+   if (flags & FILE_ATTRIBUTE_READONLY      && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_READONLY"     );
+   if (flags & FILE_ATTRIBUTE_HIDDEN        && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_HIDDEN"       );
+   if (flags & FILE_ATTRIBUTE_SYSTEM        && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_SYSTEM"       );
+   if (flags & FILE_ATTRIBUTE_DIRECTORY     && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_DIRECTORY"    );
+   if (flags & FILE_ATTRIBUTE_ARCHIVE       && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_ARCHIVE"      );
+   if (flags & FILE_ATTRIBUTE_DEVICE        && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_DEVICE"       );
+   if (flags & FILE_ATTRIBUTE_NORMAL        && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_NORMAL"       );
+   if (flags & FILE_ATTRIBUTE_TEMPORARY     && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_TEMPORARY"    );
+   if (flags & FILE_ATTRIBUTE_SPARSE_FILE   && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_SPARSE_FILE"  );
+   if (flags & FILE_ATTRIBUTE_REPARSE_POINT && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_REPARSE_POINT");
+   if (flags & FILE_ATTRIBUTE_COMPRESSED    && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_COMPRESSED"   );
+   if (flags & FILE_ATTRIBUTE_OFFLINE       && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_OFFLINE"      );
+   if (flags & FILE_ATTRIBUTE_NOT_INDEXED   && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_NOT_INDEXED"  );
+   if (flags & FILE_ATTRIBUTE_ENCRYPTED     && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_ENCRYPTED"    );
+   if (flags & FILE_ATTRIBUTE_VIRTUAL       && 1) result = StringConcatenate(result, "|FILE_ATTRIBUTE_VIRTUAL"      );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);

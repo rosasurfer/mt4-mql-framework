@@ -374,8 +374,8 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Market info identifiers, siehe MarketInfo()
-#define MODE_LOW                       1        // low price of the current day (since midnight server time)
-#define MODE_HIGH                      2        // high price of the current day (since midnight server time)
+#define MODE_LOW                       1        // session low price (since midnight server time)
+#define MODE_HIGH                      2        // session high price (since midnight server time)
 //                                     3        // ???
 //                                     4        // ???
 #define MODE_TIME                      5        // last tick time

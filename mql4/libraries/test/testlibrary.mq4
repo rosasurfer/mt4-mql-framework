@@ -37,10 +37,10 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__      |=                   ec.Type           (ec);
    __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
    __WHEREAMI__   =                   ec.Whereami       (ec);
-   IsChart        =             _bool(ec.ChartProperties(ec) & CP_CHART);
-   IsOfflineChart =                   ec.ChartProperties(ec) & CP_OFFLINE && IsChart;
+   IsChart        =                  (ec.ChartProperties(ec) & CP_CHART   && 1);
+   IsOfflineChart =                  (ec.ChartProperties(ec) & CP_OFFLINE && IsChart);
    __LOG          =                   ec.Logging        (ec);
-   __LOG_CUSTOM   = _bool(initFlags & INIT_CUSTOMLOG);
+   __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;

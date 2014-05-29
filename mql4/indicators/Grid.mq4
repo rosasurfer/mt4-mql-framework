@@ -46,11 +46,6 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error == ERS_HISTORY_UPDATE) {
-      ValidBars   = 0;
-      ChangedBars = Bars - ValidBars;
-   }
-
    // TODO: Handler onAccountChanged() integrieren und alle Separatoren löschen.
 
    // Grid zeichnen

@@ -37,10 +37,10 @@ int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__      |=                   ec.Type           (ec);
    __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
    __WHEREAMI__   =                   ec.Whereami       (ec);
-   IsChart        =             _bool(ec.ChartProperties(ec) & CP_CHART);
-   IsOfflineChart =                   ec.ChartProperties(ec) & CP_OFFLINE && IsChart;
+   IsChart        =                  (ec.ChartProperties(ec) & CP_CHART   && 1);
+   IsOfflineChart =                  (ec.ChartProperties(ec) & CP_OFFLINE && IsChart);
    __LOG          =                   ec.Logging        (ec);
-   __LOG_CUSTOM   = _bool(initFlags & INIT_CUSTOMLOG);
+   __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
@@ -751,10 +751,10 @@ bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
  *       gleichzeitig offen gehalten werden.
  */
 int HistoryFile.Open(string symbol, string description, int digits, int timeframe, int mode) {
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                      return(_NULL(catch("HistoryFile.Open(1)   illegal parameter symbol = "+ symbol +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (digits <  0)                                                return(_NULL(catch("HistoryFile.Open(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (timeframe <= 0)                                             return(_NULL(catch("HistoryFile.Open(3)   illegal parameter timeframe = "+ timeframe, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (_bool(mode & FILE_CSV) || !(mode & (FILE_READ|FILE_WRITE))) return(_NULL(catch("HistoryFile.Open(4)   illegal history file access mode "+ FileAccessModeToStr(mode), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH)               return(_NULL(catch("HistoryFile.Open(1)   illegal parameter symbol = "+ symbol +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (digits <  0)                                         return(_NULL(catch("HistoryFile.Open(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (timeframe <= 0)                                      return(_NULL(catch("HistoryFile.Open(3)   illegal parameter timeframe = "+ timeframe, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (mode & FILE_CSV || !(mode & (FILE_READ|FILE_WRITE))) return(_NULL(catch("HistoryFile.Open(4)   illegal history file access mode "+ FileAccessModeToStr(mode), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string fileName = StringConcatenate(symbol, timeframe, ".hst");
    mode |= FILE_BIN;
