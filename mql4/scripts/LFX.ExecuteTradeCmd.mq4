@@ -132,7 +132,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    // (2) zu handelnde Pairs bestimmen                                                 // TODO: Brokerspezifische Symbole ermitteln
    string symbols    [7];
    int    symbolsSize;
-   double preciseLots[7], roundedLots[7];
+   double preciseLots[7], roundedLots[7], realUnits;
    int    directions [7];
    int    tickets    [7];
    if      (lfxCurrency == "AUD") { symbols[0] = "AUDCAD"; symbols[1] = "AUDCHF"; symbols[2] = "AUDJPY"; symbols[3] = "AUDUSD"; symbols[4] = "EURAUD"; symbols[5] = "GBPAUD";                        symbolsSize = 6; }
@@ -205,16 +205,20 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       // (3.5) Lotsize validieren
       if (GT(roundedLots[i], maxLot)) return(_false(catch("OpenPendingOrder(4)   #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
 
-      // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.7) hinterlegen
+      // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
-   }
 
-   // (3.7) bei Leverageüberschreitung in (3.6) Warnung ausgeben, jedoch nicht abbrechen
+      // (3.7) tatsächlich zu handelnde Units (nach Auf-/Abrunden) berechnen
+      realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
+   }
+   realUnits = NormalizeDouble(realUnits * lfxUnits, 1);
+
+   // (3.8) bei Leverageüberschreitung Warnung ausgeben, jedoch nicht abbrechen
    if (StringLen(overLeverageMsg) > 0)
-      warn("OpenPendingOrder(5)   #"+ lo.Ticket(lo) +" Not enough money. The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2));
+      warn("OpenPendingOrder(5)   #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, lfxUnits), " units (unchanged)", " instead of "+ DoubleToStr(lfxUnits, 1) +" units"+ ifString(LT(realUnits, lfxUnits), " (not realizable)", "")));
 
 
    // (4) Directions der Teilpositionen bestimmen
@@ -225,7 +229,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    }
 
 
-   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
+   // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: system-weites Lock setzen
    string mutex = "mutex.LFX.#"+ lfxTicket;
    if (!AquireLock(mutex, true))
       return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
@@ -266,6 +270,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    // (7) Order speichern
    lo.setType      (lo, lfxDirection);
+   lo.setUnits     (lo, realUnits   );
    lo.setOpenTime  (lo, TimeGMT()   );
    lo.setOpenPrice (lo, openPrice   );
    lo.setOpenEquity(lo, equity      );
