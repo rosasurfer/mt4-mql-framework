@@ -41,7 +41,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    Tick.prevTime = tickData[2];
 
 
-   // (3) bei Aufruf durch iCustom() Parameter loggen
+   // (3) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
    if (__LOG) /*&&*/ if (Indicator.IsSuperContext())
       log(InputsToStr());
 
@@ -49,7 +49,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    // (4) user-spezifische Init-Tasks ausführen
    int initFlags = ec.InitFlags(__ExecutionContext);
 
-   if (_bool(initFlags & INIT_PIPVALUE)) {
+   if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
@@ -68,7 +68,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       }
       if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_READY)));
    }
-   if (_bool(initFlags & INIT_BARS_ON_HIST_UPDATE)) {}                     // noch nicht implementiert
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
 
    // (5) user-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -388,9 +388,9 @@ int InitExecutionContext() {
          if (__lpSuperContext < 0x00010000) return(catch("InitExecutionContext(2)   invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
          CopyMemory(__lpSuperContext, GetBufferAddress(super), EXECUTION_CONTEXT.size);
 
-         IsChart        = _bool(ec.ChartProperties(super) & CP_CHART);
-         IsOfflineChart =       ec.ChartProperties(super) & CP_OFFLINE && IsChart;
-         __LOG          =       ec.Logging        (super);
+         IsChart        = (ec.ChartProperties(super) & CP_CHART   && 1);
+         IsOfflineChart = (ec.ChartProperties(super) & CP_OFFLINE && IsChart);
+         __LOG          =  ec.Logging        (super);
       }
 
       // (3.2) Context-Variablen setzen
@@ -409,9 +409,9 @@ int InitExecutionContext() {
    }
    else {
       // (3.3) Context war bereits initialisiert, globale Variablen und variable Context-Werte aktualisieren
-      IsChart        = _bool(ec.ChartProperties(__ExecutionContext) & CP_CHART);
-      IsOfflineChart =       ec.ChartProperties(__ExecutionContext) & CP_OFFLINE && IsChart;
-      __LOG          =       ec.Logging        (__ExecutionContext);
+      IsChart        = (ec.ChartProperties(__ExecutionContext) & CP_CHART   && 1);
+      IsOfflineChart = (ec.ChartProperties(__ExecutionContext) & CP_OFFLINE && IsChart);
+      __LOG          =  ec.Logging        (__ExecutionContext);
 
    }
 
