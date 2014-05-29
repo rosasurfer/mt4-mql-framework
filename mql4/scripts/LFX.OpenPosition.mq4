@@ -94,7 +94,7 @@ int onDeinit() {
 int onStart() {
    string symbols    [7];
    int    symbolsSize;
-   double preciseLots[7], roundedLots[7];
+   double preciseLots[7], roundedLots[7], realUnits;
    int    directions [7];
    int    tickets    [7];
 
@@ -128,7 +128,7 @@ int onStart() {
       if (IsError(catch("onStart(1)   \""+ symbols[i] +"\"")))                         // TODO: auf ERR_UNKNOWN_SYMBOL prüfen
          return(last_error);
 
-      // (2.2) auf ungültige MarketInfo()-Daten prüfen
+      // (2.2) Werte auf ungültige MarketInfo()-Daten prüfen
       errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = "Bid(\""      + symbols[i] +"\") = "+ NumberToStr(bid      , ".+");
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = "TickSize(\"" + symbols[i] +"\") = "+ NumberToStr(tickSize , ".+");
@@ -157,11 +157,11 @@ int onStart() {
       // (2.4) Lotsize berechnen (dabei immer abrunden)
       double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
-      preciseLots[i] = Units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
+      preciseLots[i] = Units * unitSize;                                               // preciseLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
       roundedLots[i] = NormalizeDouble(MathFloor(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
 
       // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
-      if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung max. 6.7% je Schritt
+      if      (roundedLots[i] <=    0.3 ) {                                                                                                       }   // Abstufung maximal 6.7% je Schritt
       else if (roundedLots[i] <=    0.75) { if (lotStep <   0.02) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.02) *   0.02, 2); }   // 0.3-0.75: Vielfaches von   0.02
       else if (roundedLots[i] <=    1.2 ) { if (lotStep <   0.05) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.05) *   0.05, 2); }   // 0.75-1.2: Vielfaches von   0.05
       else if (roundedLots[i] <=    3.  ) { if (lotStep <   0.1 ) roundedLots[i] = NormalizeDouble(MathFloor(roundedLots[i]/  0.1 ) *   0.1 , 1); }   //    1.2-3: Vielfaches von   0.1
@@ -183,12 +183,16 @@ int onStart() {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, "\n", GetSymbolName(symbols[i]), ": ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
-   }
 
-   // (2.7) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
+      // (2.7) tatsächlich zu handelnde Units (nach Auf-/Abrunden) berechnen
+      realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
+   }
+   realUnits = NormalizeDouble(realUnits * Units, 1);
+
+   // (2.8) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
    if (StringLen(overLeverageMsg) > 0) {
       PlaySound("notify.wav");
-      button = MessageBox("Not enough money.\nThe following positions will over-leverage:\n"+ overLeverageMsg +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBox("Not enough money! The following positions will over-leverage:\n"+ overLeverageMsg +"\n\nResulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not realizable)", "")) +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(4)"));
    }
@@ -204,7 +208,7 @@ int onStart() {
 
    // (4) finale Sicherheitsabfrage
    PlaySound("notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not realizable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
 
@@ -256,7 +260,7 @@ int onStart() {
       lo.setTicket    (lo, magicNumber );                            // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setDeviation (lo, deviation   );                            // LFX-Deviation immer vor allen Preisen
       lo.setType      (lo, direction   );
-      lo.setUnits     (lo, Units       );
+      lo.setUnits     (lo, realUnits   );
       lo.setOpenTime  (lo, TimeGMT()   );
       lo.setOpenEquity(lo, equity      );
       lo.setOpenPrice (lo, openPrice   );
