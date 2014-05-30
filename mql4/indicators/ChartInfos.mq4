@@ -134,7 +134,7 @@ bool CheckPendingLfxOrders() {
          if (!triggerTime) {
             // (2.1) Limit ist noch nicht getriggert
             if (IsLimitTriggered(los.Type(lfxOrders, i), false, false, los.OpenPriceLfx(lfxOrders, i))) {
-               log("CheckPendingLfxOrders(3)   #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat) +" triggered");
+               log("CheckPendingLfxOrders(3)   #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
                // Auslösen speichern und TradeCommand verschicken
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
@@ -164,7 +164,7 @@ bool CheckPendingLfxOrders() {
          if (!triggerTime) {
             // (3.1) StopLoss ist noch nicht getriggert
             if (IsLimitTriggered(los.Type(lfxOrders, i), true, false, los.StopLossLfx(lfxOrders, i))) {
-               log("CheckPendingLfxOrders(5)   #"+ los.Ticket(lfxOrders, i) +" StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered");
+               log("CheckPendingLfxOrders(5)   #"+ los.Ticket(lfxOrders, i) +" StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
                // Auslösen speichern und TradeCommand verschicken
                los.setStopLossTime(lfxOrders, i, TimeGMT());
@@ -195,7 +195,7 @@ bool CheckPendingLfxOrders() {
          if (!triggerTime) {
             // (4.1) TakeProfit ist noch nicht getriggert
             if (IsLimitTriggered(los.Type(lfxOrders, i), false, true, los.TakeProfitLfx(lfxOrders, i))) {
-               log("CheckPendingLfxOrders(7)   #"+ los.Ticket(lfxOrders, i) +" TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered");
+               log("CheckPendingLfxOrders(7)   #"+ los.Ticket(lfxOrders, i) +" TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
                // Auslösen speichern und TradeCommand verschicken
                los.setTakeProfitTime(lfxOrders, i, TimeGMT());
