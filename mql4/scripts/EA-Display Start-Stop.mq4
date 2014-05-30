@@ -6,9 +6,9 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+#include <core/script.mqh>
 #include <stdlib.mqh>
 
-#include <core/script.mqh>
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 

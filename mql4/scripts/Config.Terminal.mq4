@@ -4,10 +4,10 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
-#include <win32api.mqh>
-
 #include <core/script.mqh>
+#include <stdlib.mqh>
+
+#include <win32api.mqh>
 
 
 /**
