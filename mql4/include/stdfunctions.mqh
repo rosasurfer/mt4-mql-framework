@@ -1424,7 +1424,7 @@ double PipValue(double lots=1, bool hideErrors=false) {
 bool IsLogging() {
    string name = __NAME__;
    if (IsLibrary()) {
-      if (StringLen(__NAME__) == 0)
+      if (!StringLen(__NAME__))
          return(!catch("IsLogging()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
