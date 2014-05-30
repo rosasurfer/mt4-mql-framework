@@ -600,7 +600,7 @@ int onInitRemove() {
 
 
 /**
- * auﬂerhalb iCustom(): nach Recompile und Reload, vorhandener Indikator, kein Input-Dialog
+ * auﬂerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
@@ -656,7 +656,40 @@ int onDeinitChartChange() {
 
 
 /**
- * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen
+ * auﬂerhalb iCustom(): ???
+ * innerhalb iCustom(): ???
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitAccountChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): ???
+ * innerhalb iCustom(): ???
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitChartClose() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): ???
+ * innerhalb iCustom(): ???
+ *
+ * @return int - Fehlerstatus
+ *
+int onDeinitUndefined() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, w‰hrend des Ladens eines Profils oder Templates
  * innerhalb iCustom(): in allen deinit()-F‰llen
  *
  * @return int - Fehlerstatus
@@ -667,7 +700,7 @@ int onDeinitRemove() {
 
 
 /**
- * auﬂerhalb iCustom(): nach Recompilation, vor Reload
+ * auﬂerhalb iCustom(): bei Reload nach Recompilation
  * innerhalb iCustom(): nie
  *
  * @return int - Fehlerstatus
