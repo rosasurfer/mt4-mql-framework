@@ -85,7 +85,7 @@ int onTick() {
 
    if (!UpdatePrice())               return(last_error);
    if (!UpdateOHLC())                return(last_error);
-   if (!UpdatePositions())           return(last_error);             // hier werden TradeToLfxTerminal-Messages verarbeitet
+   if (!UpdatePositions())           return(last_error);             // verarbeitet TradeToLfxTerminal-Messages
 
    if (isLfxInstrument) {
       if (!CheckPendingLfxOrders())  return(last_error);
@@ -96,7 +96,7 @@ int onTick() {
       if (!UpdateStopoutLevel())     return(last_error);
       if (IsVisualMode())
          if (!UpdateTime())          return(last_error);
-      if (!QC.HandleTradeCommands()) return(last_error);             // TradeCommands verarbeiten
+      if (!QC.HandleTradeCommands()) return(last_error);             // verarbeitet LfxToTradeTerminal-Messages (TradeCommands)
    }
    return(last_error);
 }
@@ -108,13 +108,12 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool CheckPendingLfxOrders() {
-   // (1) die Orders werden nur nach Preisänderung oder nach verschicktem TradeCommand überprüft
+   // (1) die Orders werden nur nach Preisänderung oder beim Warten auf eine Trade-Bestätigung überprüft (nach gerade verschicktem TradeCommand)
    static double lastBid, lastAsk;
    static bool   isPendingCmd;
 
    if (Bid==lastBid) /*&&*/ if (Ask==lastAsk) /*&&*/ if (!isPendingCmd)
       return(true);
-   //if (Symbol() == "LFXJPY") debug("CheckPendingLfxOrders()   orders="+ ArrayRange(lfxOrders, 0) +"  priceChange="+ (Bid!=lastBid || Ask!=lastAsk) +"  pendingCmd="+ isPendingCmd);
    lastBid      = Bid;
    lastAsk      = Ask;
    isPendingCmd = false;
