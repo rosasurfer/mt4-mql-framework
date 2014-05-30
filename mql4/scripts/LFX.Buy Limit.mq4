@@ -40,42 +40,41 @@ int onInit() {
    // (1) LFX-Currency und ID bestimmen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   else {
-      PlaySound("notify.wav");
-      MessageBox("Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
+   else                                  return(ShowInputError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
    // (2) Parametervalidierung
    // Units
-   if (NE(MathModFix(Units, 0.1), 0))    return(catch("onInit(1)   invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (Units < 0.1 || Units > 1)         return(catch("onInit(2)   invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (NE(MathModFix(Units, 0.1), 0))    return(ShowInputError("onInit(2)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (Units < 0.1 || Units > 1)         return(ShowInputError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
 
    // LimitPrice
-   LimitPrice    = NormalizeDouble(LimitPrice, SubPipDigits);
-   if (LimitPrice >= Bid)                return(catch("onInit(3)   illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be lower than the current LFX price)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (LimitPrice <= 0)                  return(catch("onInit(4)   illegal input parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +" (must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
+   LimitPrice = NormalizeDouble(LimitPrice, SubPipDigits);
+   if (LimitPrice <= 0)                  return(ShowInputError("onInit(4)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +"\n(must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (LimitPrice >= Bid)                return(ShowInputError("onInit(5)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
 
    // StopLossPrice
-   StopLossPrice       = NormalizeDouble(StopLossPrice, SubPipDigits);
-   if (StopLossPrice < 0)                return(catch("onInit(5)   illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (StopLossPrice > 0)
-      if (StopLossPrice >= LimitPrice)   return(catch("onInit(6)   illegal input parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +" (must be lower than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
+   StopLossPrice = NormalizeDouble(StopLossPrice, SubPipDigits);
+   if (StopLossPrice != 0) {
+      if (StopLossPrice < 0)             return(ShowInputError("onInit(6)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (StopLossPrice >= LimitPrice)   return(ShowInputError("onInit(7)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+   }
 
    // TakeProfitPrice
-   TakeProfitPrice       = NormalizeDouble(TakeProfitPrice, SubPipDigits);
-   if (TakeProfitPrice != 0)
-      if (TakeProfitPrice <= LimitPrice) return(catch("onInit(7)   illegal input parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +" (must be higher than the limit price)", ERR_INVALID_INPUT_PARAMVALUE));
+   TakeProfitPrice = NormalizeDouble(TakeProfitPrice, SubPipDigits);
+   if (TakeProfitPrice != 0) {
+      if (TakeProfitPrice < 0)           return(ShowInputError("onInit(8)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice <= LimitPrice) return(ShowInputError("onInit(9)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+   }
 
 
    // (3) offene Orders einlesen
    int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);
-   return(catch("onInit(8)"));
+   return(catch("onInit(10)"));
 }
 
 
@@ -201,6 +200,30 @@ int GetPositionCounter() {
    }
    return(counter);
 }
+
+
+/**
+ * Handler für ungültige Input-Parameter.
+ *
+ * @param  string location - Ort, an dem der Fehler auftrat
+ * @param  string message  - Fehlermeldung
+ * @param  int    error    - zu setzender Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ */
+int ShowInputError(string location, string message, int error) {
+   if (StringLen(location) > 0)
+      location = " :: "+ location;
+
+   PlaySound("chord.wav");
+   MessageBox(message, __NAME__ + location, MB_ICONERROR|MB_OK);
+
+   __STATUS_INVALID_INPUT = true;
+   return(SetLastError(error));
+}
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 /*abstract*/bool ProcessTradeToLfxTerminalMsg(string s1) { return(!catch("ProcessTradeToLfxTerminalMsg()", ERR_WRONG_JUMP)); }
