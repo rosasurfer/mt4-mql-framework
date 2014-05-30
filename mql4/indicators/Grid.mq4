@@ -1,6 +1,8 @@
 /**
  * Chart-Grid. Die vertikalen Separatoren sind auf der ersten Bar der Session positioniert und tragen im Label das Datum der begonnenen Session.
  */
+#property indicator_chart_window
+
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
@@ -13,8 +15,6 @@ extern color Grid.Color = LightGray;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-
-#property indicator_chart_window
 
 
 /**
@@ -69,22 +69,22 @@ int DrawGrid() {
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
    datetime fromFXT = GetFXTNextSessionStartTime(ServerToFXT(Time[Bars-1]) - 1*SECOND);
-   datetime toFXT   = GetFXTNextSessionStartTime(ServerToFXT(TimeCurrent()));
+   datetime toFXT   = GetFXTNextSessionStartTime(GMTToFXT(TimeGMT()));     // nicht TimeCurrent() verwenden, kann 0 sein
 
    // Tagesseparatoren
-   if (Period() < PERIOD_H4) {                                       // fromFXT bleibt unverändert
-      toFXT += (8-TimeDayOfWeek(toFXT))%7 * DAYS;                    // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
+   if (Period() < PERIOD_H4) {                                             // fromFXT bleibt unverändert
+      toFXT += (8-TimeDayOfWeek(toFXT))%7 * DAYS;                          // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
    }
 
    // Wochenseparatoren
    else if (Period() == PERIOD_H4) {
-      fromFXT += (8-TimeDayOfWeek(fromFXT))%7 * DAYS;                // fromFXT ist der erste Montag
-      toFXT   += (8-TimeDayOfWeek(toFXT))%7 * DAYS;                  // toFXT ist der nächste Montag
+      fromFXT += (8-TimeDayOfWeek(fromFXT))%7 * DAYS;                      // fromFXT ist der erste Montag
+      toFXT   += (8-TimeDayOfWeek(toFXT))%7 * DAYS;                        // toFXT ist der nächste Montag
    }
 
    // Monatsseparatoren
    else if (Period() == PERIOD_D1) {
-      yyyy = TimeYear(fromFXT);                                      // fromFXT ist der erste Wochentag des ersten vollen Monats
+      yyyy = TimeYear(fromFXT);                                            // fromFXT ist der erste Wochentag des ersten vollen Monats
       mm   = TimeMonth(fromFXT);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
@@ -94,7 +94,7 @@ int DrawGrid() {
       }
       fromFXT = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYear(toFXT);                                        // toFXT ist der erste Wochentag des nächsten Monats
+      yyyy = TimeYear(toFXT);                                              // toFXT ist der erste Wochentag des nächsten Monats
       mm   = TimeMonth(toFXT);
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, mm);
 
@@ -107,13 +107,13 @@ int DrawGrid() {
 
    // Jahresseparatoren
    else if (Period() > PERIOD_D1) {
-      yyyy = TimeYear(fromFXT);                                      // fromFXT ist der erste Wochentag des ersten vollen Jahres
+      yyyy = TimeYear(fromFXT);                                            // fromFXT ist der erste Wochentag des ersten vollen Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
       if (firstWeekDay < fromFXT)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       fromFXT = firstWeekDay;
       // ------------------------------------------------------
-      yyyy = TimeYear(toFXT);                                        // toFXT ist der erste Wochentag des nächsten Jahres
+      yyyy = TimeYear(toFXT);                                              // toFXT ist der erste Wochentag des nächsten Jahres
       firstWeekDay = GetFirstWeekdayOfMonth(yyyy, 1);
       if (firstWeekDay < toFXT)
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
@@ -124,19 +124,19 @@ int DrawGrid() {
 
    // (2) Separatoren zeichnen
    for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
-      separatorTime = FXTToServerTime(time);                         // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
+      separatorTime = FXTToServerTime(time);                               // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
       dow           = TimeDayOfWeek(time);
 
       // Bar und Chart-Time des Separators ermitteln
-      if (Time[0] < separatorTime) {                                 // keine entsprechende Bar: aktuelle Session oder noch laufendes ERS_HISTORY_UPDATE
+      if (Time[0] < separatorTime) {                                       // keine entsprechende Bar: aktuelle Session oder noch laufendes ERS_HISTORY_UPDATE
          bar = -1;
-         chartTime = separatorTime;                                  // ursprüngliche Zeit verwenden
+         chartTime = separatorTime;                                        // ursprüngliche Zeit verwenden
          if (dow == MONDAY)
-            chartTime -= 2*DAYS;                                     // bei zukünftigen Separatoren Wochenenden von Hand "kollabieren" TODO: Bug bei Periode > H4
+            chartTime -= 2*DAYS;                                           // bei zukünftigen Separatoren Wochenenden von Hand "kollabieren" TODO: Bug bei Periode > H4
       }
-      else {                                                         // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
+      else {                                                               // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
          bar = iBarShiftNext(NULL, NULL, separatorTime);
-         if (bar == EMPTY_VALUE) {                                   // ERS_HISTORY_UPDATE ???
+         if (bar == EMPTY_VALUE) {                                         // ERS_HISTORY_UPDATE ???
             if (SetLastError(stdlib.GetLastError()) != ERS_HISTORY_UPDATE)
                catch("DrawGrid(1)", last_error);
             return(last_error);
@@ -148,8 +148,8 @@ int DrawGrid() {
       label = TimeToStr(time);
       label = StringConcatenate(GetDayOfWeek(time, false), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
 
-      if (lastChartTime == chartTime)                                // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
-         ObjectDelete(lastLabel);                                    // Separator für die fehlende Periode wieder löschen
+      if (lastChartTime == chartTime)                                      // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
+         ObjectDelete(lastLabel);                                          // Separator für die fehlende Periode wieder löschen
 
       // Separator zeichnen
       if (ObjectFind(label) == 0)
@@ -174,28 +174,28 @@ int DrawGrid() {
       }
       else GetLastError();
       lastChartTime = chartTime;
-      lastLabel     = label;                                         // Daten des letzten Separators für Lückenerkennung merken
+      lastLabel     = label;                                               // Daten des letzten Separators für Lückenerkennung merken
 
 
       // (2.1) je nach Periode einen Tag *vor* den nächsten Separator springen
       // Tagesseparatoren
       if (Period() < PERIOD_H4) {
-         if (dow == FRIDAY)                                          // Wochenenden überspringen
+         if (dow == FRIDAY)                                                // Wochenenden überspringen
             time += 2*DAYS;
       }
       // Wochenseparatoren
       else if (Period() == PERIOD_H4) {
-         time += 6*DAYS;                                             // TimeDayOfWeek(time) == MONDAY
+         time += 6*DAYS;                                                   // TimeDayOfWeek(time) == MONDAY
       }
       // Monatsseparatoren
-      else if (Period() == PERIOD_D1) {                              // erster Wochentag des Monats
+      else if (Period() == PERIOD_D1) {                                    // erster Wochentag des Monats
          yyyy = TimeYear(time);
          mm   = TimeMonth(time);
          if (mm == 12) { yyyy++; mm = 0; }
          time = GetFirstWeekdayOfMonth(yyyy, mm+1) - 1*DAY;
       }
       // Jahresseparatoren
-      else if (Period() > PERIOD_D1) {                               // erster Wochentag des Jahres
+      else if (Period() > PERIOD_D1) {                                     // erster Wochentag des Jahres
          yyyy = TimeYear(time);
          time = GetFirstWeekdayOfMonth(yyyy+1, 1) - 1*DAY;
       }

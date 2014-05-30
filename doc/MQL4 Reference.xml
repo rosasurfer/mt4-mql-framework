@@ -4171,7 +4171,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=GetTickCount()
       type=int
       <content>
-        The GetTickCount() function retrieves the number of milliseconds that have elapsed since the system was started. 
+        The GetTickCount() function retrieves the number of milliseconds since the system was started. 
       It is limited to the resolution of the system timer.
       </content>
       <example>
@@ -5104,7 +5104,7 @@ SetLevelValue(1,3.14);
     tag=dateandtime
     caption=Date &amp; Time functions
     <content>
-    A group of functions providing the working with data of the datetime type (integer representing the amount of seconds elapsed from midnight, 1 January, 1970).
+    A group of functions providing the working with data of the datetime type (integer representing the amount of seconds since midnight, 1 January 1970).
     </content>
 
     <function>
@@ -5112,8 +5112,8 @@ SetLevelValue(1,3.14);
       caption=Day()
       type=int
       <content>
-      Returns the current day of the month, i.e., the day of month of the last known server time.<br/>
-      Note: At the testing, the last known server time is modelled.
+      Returns the current day of the month, i.e. the day of month of the last known server time.<br/>
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   if(Day()&lt;5) return(0);
@@ -5126,7 +5126,7 @@ SetLevelValue(1,3.14);
       type=int
       <content>
       Returns the current zero-based day of the week (0-Sunday,1,2,3,4,5,6) of the last known server time.<br/>
-      Note: At the testing, the last known server time is modelled.
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   // does not work on holidays.
@@ -5140,7 +5140,7 @@ SetLevelValue(1,3.14);
       type=int
       <content>
       Returns the current day of the year (1 means 1 January,..,365(6) does 31 December), i.e., the day of year of the last known server time.<br/>
-      Note: At the testing, the last known server time is modelled.
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   if(DayOfYear()==245)
@@ -5154,7 +5154,7 @@ SetLevelValue(1,3.14);
       type=int
       <content>
       Returns the hour (0,1,2,..23) of the last known server time by the moment of the program start (this value will not change within the time of the program execution).<br/>
-      Note: At the testing, the last known server time is modelled.
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   bool is_siesta=false;
@@ -5182,7 +5182,7 @@ SetLevelValue(1,3.14);
       type=int
       <content>
       Returns the current month as number (1-January,2,3,4,5,6,7,8,9,10,11,12), i.e., the number of month of the last known server time.<br/>
-      Note: At the testing, the last known server time is modelled.
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   if(Month()&lt;=5)
@@ -5195,7 +5195,7 @@ SetLevelValue(1,3.14);
       caption=Seconds()
       type=int
       <content>
-      Returns the amount of seconds elapsed from the beginning of the current minute of the last known server time by the moment of the program start (this value will not change within the time of the program execution).
+      Returns the number of seconds since the beginning of the current minute of the last known server time at the moment of program start (this value will not change within the time of the program execution).
       </content>
       <example>
   if(Seconds()&lt;=15)
@@ -5208,8 +5208,8 @@ SetLevelValue(1,3.14);
       caption=TimeCurrent()
       type=datetime
       <content>
-      Returns the last known server time (time of incoming of the latest quote) as number of seconds elapsed from 00:00 January 1, 1970.<br/><br/>
-      Note: At the testing, the last known server time is modelled.
+      Returns the last known server time (time of incoming of the latest quote) as number of seconds since 00:00 January 1, 1970.<br/><br/>
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   if(TimeCurrent()-OrderOpenTime()&lt;360) return(0);
@@ -5230,7 +5230,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=date
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5248,7 +5248,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=date
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5265,7 +5265,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=date
-        description=Datetime as number of seconds elapsed since midnight (00:00:00), January 1, 1970.
+        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
       </parameter>
     </function>
 
@@ -5342,7 +5342,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=TimeSeconds()
       type=int
       <content>
-      Returns the amount of seconds elapsed from the beginning of the minute for the specified time.
+      Returns the number of seconds of the minute of the specified time.
       </content>
       <example>
   int m=TimeSeconds(TimeCurrent());
@@ -5377,7 +5377,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=int
       <content>
       Returns the current year, i.e., the year of the last known server time.<br/>
-      Note: At the testing, the last known server time is modelled.
+      Note: At testing the last known server time is modelled.
       </content>
       <example>
   // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
@@ -9010,8 +9010,8 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
     that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case, 
     <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed 
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
-    At the testing, price data of the same symbol but of another timeframe are modelled exactly, with the exception of volumes. Volumes of another timeframe are not modelled.
-    Price data of other symbols are not modelled, either. In all cases, the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
+    At testing price data of the same symbol but of another timeframe are modelled exactly with the exception of volume. Volume of another timeframe is not modelled.
+    Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
     </content>
 
     <function>

@@ -57,7 +57,7 @@ string   hhs.setDescription  (/*HISTORY_HEADER*/int &hh[][], int i, string   des
    if ( StringLen(description) > 63)          return(_empty(catch("hhs.setDescription(1)   too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + 4, StringLen(description)+1); /*term. <NUL> wird mitkopiert*/ return(description); HISTORY_HEADER.toStr(hh); }
 string   hhs.setSymbol       (/*HISTORY_HEADER*/int &hh[][], int i, string   symbol     ) {
-   if (StringLen(symbol) == 0)                return(_empty(catch("hhs.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!StringLen(symbol))                    return(_empty(catch("hhs.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("hhs.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + 68, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/ return(symbol     ); HISTORY_HEADER.toStr(hh); }
 int      hhs.setPeriod       (/*HISTORY_HEADER*/int &hh[][], int i, int      period     ) { hh[i][20] = period;                                          return(period     ); HISTORY_HEADER.toStr(hh); }

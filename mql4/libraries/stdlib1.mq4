@@ -827,7 +827,7 @@ bool AquireLock(string mutexName, bool wait) {
  * @return bool - Erfolgsstatus
  */
 bool ReleaseLock(string mutexName) {
-   if (StringLen(mutexName) == 0)
+   if (!StringLen(mutexName))
       return(!catch("ReleaseLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // check, if we indeed own that lock
@@ -1109,7 +1109,7 @@ int GetServerToFXTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
       return(_int(EMPTY_VALUE, catch("GetServerToFXTOffset()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   if (!StringLen(zone))
       return(EMPTY_VALUE);
 
    // schnelle Rückkehr, wenn der Server unter FXT läuft
@@ -1145,7 +1145,7 @@ int GetServerToGMTOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
       return(_int(EMPTY_VALUE, catch("GetServerToGMTOffset(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string timezone = GetServerTimezone();
-   if (StringLen(timezone) == 0)
+   if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
    if (timezone == "Alpari") {
@@ -1371,7 +1371,7 @@ int GetTerminalBuild() {
       return(static.result);
 
    string version = GetTerminalVersion();
-   if (StringLen(version) == 0)
+   if (!StringLen(version))
       return(0);
 
    string strings[];
@@ -3378,7 +3378,7 @@ string JoinDoubles(double values[], string separator) {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], ".1+");
-      if (StringLen(strings[i]) == 0)
+      if (!StringLen(strings[i]))
          return("");
    }
 
@@ -4042,7 +4042,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
          break;
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
-   if (StringLen(target) == 0)
+   if (!StringLen(target))
       return(_empty(catch("GetWindowsShortcutTarget(13)   invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    // --------------------------------------------------------------------------
@@ -4171,7 +4171,7 @@ string GetServerDirectory() {
    string directory = AccountServer();
 
    // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
-   if (StringLen(directory) == 0) {
+   if (!StringLen(directory)) {
       // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
@@ -4214,7 +4214,7 @@ string GetServerDirectory() {
    if (IsError(error))
       return(_empty(catch("GetServerDirectory(4)", error)));
 
-   if (StringLen(directory) == 0)
+   if (!StringLen(directory))
       return(_empty(catch("GetServerDirectory(5)   cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    static.result[0] = directory;
@@ -4359,7 +4359,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd  = true;
          if (newLine) {
-            if (StringLen(value) == 0) {
+            if (!StringLen(value)) {
                if (FileIsEnding(hFile))                                    // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
                   break;
                blankLine = true;                                           // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
@@ -4491,7 +4491,7 @@ string StdSymbol() {
  * NOTE: Alias für GetStandardSymbolOrAlt(symbol, symbol)
  */
 string GetStandardSymbol(string symbol) {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetStandardSymbol()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetStandardSymbolOrAlt(symbol, symbol));
 }
@@ -4511,12 +4511,12 @@ string GetStandardSymbol(string symbol) {
  *       läßt jedoch nicht mehr so einfach erkennen, ob ein Standardsymbol gefunden wurde oder nicht.
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetStandardSymbolOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetStandardSymbolStrict(symbol);
 
-   if (StringLen(value) == 0)
+   if (!StringLen(value))
       value = altValue;
 
    return(value);
@@ -4535,7 +4535,7 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  * @see GetStandardSymbolOrAlt() - für die Angabe eines Alternativwertes, wenn kein Standardsymbol gefunden wurde
  */
 string GetStandardSymbolStrict(string symbol) {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetStandardSymbolStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = StringToUpper(symbol);
@@ -4742,7 +4742,7 @@ string GetStandardSymbolStrict(string symbol) {
  * NOTE: Alias für GetSymbolNameOrAlt(symbol, symbol)
  */
 string GetSymbolName(string symbol) {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetSymbolNameOrAlt(symbol, symbol));
 }
@@ -4760,12 +4760,12 @@ string GetSymbolName(string symbol) {
  * @see GetSymbolNameStrict()
  */
 string GetSymbolNameOrAlt(string symbol, string altValue="") {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetSymbolNameStrict(symbol);
 
-   if (StringLen(value) == 0)
+   if (!StringLen(value))
       value = altValue;
 
    return(value);
@@ -4781,11 +4781,11 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
  * @return string - Kurzname oder Leerstring, falls das Symbol unbekannt ist
  */
 string GetSymbolNameStrict(string symbol) {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = GetStandardSymbolStrict(symbol);
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return("");
 
    if (symbol == "#DAX.X"  ) return("DAX"      );
@@ -4912,7 +4912,7 @@ string GetSymbolNameStrict(string symbol) {
  * NOTE: Alias für GetLongSymbolNameOrAlt(symbol, symbol)
  */
 string GetLongSymbolName(string symbol) {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetLongSymbolName()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(GetLongSymbolNameOrAlt(symbol, symbol));
 }
@@ -4928,12 +4928,12 @@ string GetLongSymbolName(string symbol) {
  * @return string - Ergebnis
  */
 string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetLongSymbolNameOrAlt()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string value = GetLongSymbolNameStrict(symbol);
 
-   if (StringLen(value) == 0)
+   if (!StringLen(value))
       value = altValue;
 
    return(value);
@@ -4949,12 +4949,12 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
  * @return string - Langname oder Leerstring, falls das Symnol unbekannt ist oder keinen Langnamen hat
  */
 string GetLongSymbolNameStrict(string symbol) {
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return(_empty(catch("GetLongSymbolNameStrict()   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    symbol = GetStandardSymbolStrict(symbol);
 
-   if (StringLen(symbol) == 0)
+   if (!StringLen(symbol))
       return("");
 
    if (symbol == "#DJI.X"  ) return("Dow Jones Industrial"    );
@@ -5132,7 +5132,7 @@ double MathModFix(double a, double b) {
  * @return bool
  */
 bool StringStartsWith(string object, string prefix) {
-   if (StringLen(prefix) == 0)
+   if (!StringLen(prefix))
       return(!catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(object, prefix) == 0);
 }
@@ -5147,7 +5147,7 @@ bool StringStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringIStartsWith(string object, string prefix) {
-   if (StringLen(prefix) == 0)
+   if (!StringLen(prefix))
       return(!catch("StringIStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
@@ -5285,9 +5285,9 @@ string StringSubstrFix(string object, int start, int length=INT_MAX) {
  * @return string - modifizierter String
  */
 string StringReplace(string object, string search, string replace) {
-   if (StringLen(object) == 0) return(object);
-   if (StringLen(search) == 0) return(object);
-   if (search == replace)      return(object);
+   if (!StringLen(object)) return(object);
+   if (!StringLen(search)) return(object);
+   if (search == replace)  return(object);
 
    int from=0, found=StringFind(object, search);
    if (found == -1)
@@ -5317,7 +5317,7 @@ string StringReplace(string object, string search, string replace) {
  * @return string - rekursiv modifizierter String
  */
 string StringReplace.Recursive(string object, string search, string replace) {
-   if (StringLen(object) == 0) return(object);
+   if (!StringLen(object)) return(object);
 
    string lastResult="", result=object;
 
@@ -5462,7 +5462,7 @@ datetime GetServerSessionStartTime(datetime serverTime) { // throws ERR_INVALID_
 
    datetime fxtTime = serverTime - offset;
    if (fxtTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(2)   illegal datetime result: "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetServerSessionStartTime(2)   illegal result "+ fxtTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    int dayOfWeek = TimeDayOfWeek(fxtTime);
 
@@ -5473,7 +5473,7 @@ datetime GetServerSessionStartTime(datetime serverTime) { // throws ERR_INVALID_
    serverTime = fxtTime + offset;
 
    if (serverTime < 0)
-      return(_int(-1, catch("GetServerSessionStartTime(3)   illegal datetime result: "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetServerSessionStartTime(3)   illegal result "+ serverTime +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_INVALID_FUNCTION_PARAMVALUE)));
    return(serverTime);
 }
 
@@ -5548,7 +5548,7 @@ datetime GetServerNextSessionEndTime(datetime serverTime) { // throws ERR_INVALI
  */
 datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTPrevSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTPrevSessionStartTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5571,7 +5571,7 @@ datetime GetGMTPrevSessionStartTime(datetime gmtTime) {
  */
 datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTPrevSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTPrevSessionEndTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTPrevSessionStartTime(gmtTime);
    if (startTime == -1)
@@ -5590,7 +5590,7 @@ datetime GetGMTPrevSessionEndTime(datetime gmtTime) {
  */
 datetime GetGMTSessionStartTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTSessionStartTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5613,7 +5613,7 @@ datetime GetGMTSessionStartTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  */
 datetime GetGMTSessionEndTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTSessionEndTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -5632,7 +5632,7 @@ datetime GetGMTSessionEndTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  */
 datetime GetGMTNextSessionStartTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTNextSessionStartTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTNextSessionStartTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime fxtTime = GMTToFXT(gmtTime);
    if (fxtTime == -1)
@@ -5655,7 +5655,7 @@ datetime GetGMTNextSessionStartTime(datetime gmtTime) {
  */
 datetime GetGMTNextSessionEndTime(datetime gmtTime) {
    if (gmtTime < 0)
-      return(_int(-1, catch("GetGMTNextSessionEndTime()   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("GetGMTNextSessionEndTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = GetGMTNextSessionStartTime(datetime gmtTime);
    if (startTime == -1)
@@ -5678,7 +5678,7 @@ datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
    if (startTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(2)   illegal result "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5686,7 +5686,7 @@ datetime GetFXTPrevSessionStartTime(datetime fxtTime) {
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
    if (startTime < 0)
-      return(_int(-1, catch("GetFXTPrevSessionStartTime(3)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTPrevSessionStartTime(3)   illegal result "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    return(startTime);
 }
@@ -5724,7 +5724,7 @@ datetime GetFXTSessionStartTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
    if (startTime < 0)
-      return(_int(-1, catch("GetFXTSessionStartTime(2)   illegal datetime result: "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GetFXTSessionStartTime(2)   illegal result "+ startTime +" (not a time)", ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -6004,7 +6004,7 @@ datetime FXTToGMT(datetime fxtTime) {
 
    datetime result = fxtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("FXTToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("FXTToGMT(2)   illegal result "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -6027,7 +6027,7 @@ datetime FXTToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
 
    datetime result = fxtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("FXTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("FXTToServerTime(2)   illegal result "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -6484,7 +6484,7 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
       ArrayResize(results, 1);
       results[0] = _input;
    }
-   else if (StringLen(separator) == 0) {     // NUL-Separator: String in einzelne Zeichen zerlegen
+   else if (!StringLen(separator)) {         // NUL-Separator: String in einzelne Zeichen zerlegen
       if (limit==NULL || limit > lenInput)
          limit = lenInput;
       ArrayResize(results, limit);
@@ -6588,7 +6588,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
       if (FileIsLineEnding(hFile) || FileIsEnding(hFile)) {
          lineEnd = true;
          if (newLine) {
-            if (StringLen(value) == 0) {
+            if (!StringLen(value)) {
                if (FileIsEnding(hFile))                        // Zeilenbeginn + Leervalue + Dateiende  => nichts, also Abbruch
                   break;
                blankLine = true;                               // Zeilenbeginn + Leervalue + Zeilenende => Leerzeile
@@ -6685,7 +6685,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_READY            // evt. wäh
 
    if (!account) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
-      if (StringLen(title) == 0)                                     // benutzt SendMessage(), nicht nach Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
+      if (!StringLen(title))                                         // benutzt SendMessage(), nicht nach Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
          return(_NULL(SetLastError(ERS_TERMINAL_NOT_READY)));
 
       int pos = StringFind(title, ":");
@@ -7151,7 +7151,7 @@ int GetGMTToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       return(_int(EMPTY_VALUE, catch("GetGMTToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string timezone = GetServerTimezone();
-   if (StringLen(timezone) == 0)
+   if (!StringLen(timezone))
       return(EMPTY_VALUE);
 
    if (timezone == "Alpari") {
@@ -8437,7 +8437,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    // (2) Timezone-ID ermitteln
    string timezone, directory=StringToLower(GetServerDirectory());
 
-   if (StringLen(directory) == 0)
+   if (!StringLen(directory))
       return("");
    else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin"
    else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //          ab 01.04.2012 "Europe/Kiev"
@@ -8483,7 +8483,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
-      if (StringLen(timezone) == 0)
+      if (!StringLen(timezone))
          return(_empty(catch("GetServerTimezone(1)   missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
@@ -8737,7 +8737,7 @@ datetime GMTToFXT(datetime gmtTime) {
 
    datetime result = gmtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("GMTToFXT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GMTToFXT(2)   illegal result "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -8755,7 +8755,7 @@ datetime GMTToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONF
       return(_int(-1, catch("GMTToServerTime(1)   invalid parameter gmtTime = "+ gmtTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   if (!StringLen(zone))
       return(-1);
 
    // schnelle Rückkehr, wenn der Server unter GMT läuft
@@ -8768,7 +8768,7 @@ datetime GMTToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONF
 
    datetime result = gmtTime - offset;
    if (result < 0)
-      return(_int(-1, catch("GMTToServerTime(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("GMTToServerTime(2)   illegal result "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -9070,10 +9070,10 @@ int SendSMS(string receiver, string message) {
  */
 datetime ServerToFXT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (serverTime < 0)
-      return(_int(-1, catch("ServerToFXT()   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_int(-1, catch("ServerToFXT(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   if (!StringLen(zone))
       return(-1);
 
    // schnelle Rückkehr, wenn der Server unter FXT läuft
@@ -9100,7 +9100,7 @@ datetime ServerToGMT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFI
       return(_int(-1, catch("ServerToGMT(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string zone = GetServerTimezone();
-   if (StringLen(zone) == 0)
+   if (!StringLen(zone))
       return(-1);
 
    // schnelle Rückkehr, wenn der Server unter GMT läuft
@@ -9113,7 +9113,7 @@ datetime ServerToGMT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFI
 
    datetime result = serverTime - offset;
    if (result < 0)
-      return(_int(-1, catch("ServerToGMT(2)   illegal datetime result: "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_int(-1, catch("ServerToGMT(2)   illegal result "+ result +" (not a time) for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    return(result);
 }
@@ -9128,7 +9128,7 @@ datetime ServerToGMT(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFI
  * @return bool
  */
 bool StringContains(string object, string substring) {
-   if (StringLen(substring) == 0)
+   if (!StringLen(substring))
       return(!catch("StringContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(object, substring) != -1);
 }
@@ -9143,7 +9143,7 @@ bool StringContains(string object, string substring) {
  * @return bool
  */
 bool StringIContains(string object, string substring) {
-   if (StringLen(substring) == 0)
+   if (!StringLen(substring))
       return(!catch("StringIContains()   empty substring \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
 }
@@ -9468,7 +9468,7 @@ bool IsMqlDirectory(string filename) {
  * @return int - Anzahl der gefundenen Einträge oder -1, falls ein Fehler auftrat
  */
 int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
-   if (StringLen(pattern) == 0)
+   if (!StringLen(pattern))
       return(_int(-1, catch("FindFileNames(1)   illegal parameter pattern = \""+ pattern +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    ArrayResize(lpResults, 0);
@@ -9859,8 +9859,8 @@ string StringRepeat(string input, int times) {
    if (times < 0)
       return(_empty(catch("StringRepeat()   invalid parameter times = "+ times, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   if (times ==  0)           return("");
-   if (StringLen(input) == 0) return("");
+   if (times ==  0)       return("");
+   if (!StringLen(input)) return("");
 
    string output = input;
    for (int i=1; i < times; i++) {
@@ -10071,7 +10071,7 @@ string NumberToStr(double number, string mask) {
 string DateToStr(datetime time, string mask) {
    if (time < 0) return(_empty(catch("DateToStr()   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   if (StringLen(mask) == 0)
+   if (!StringLen(mask))
       return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
 
    string months[12] = {"","January","February","March","April","May","June","July","August","September","October","November","December"};

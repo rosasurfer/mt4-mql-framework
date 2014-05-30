@@ -560,7 +560,7 @@ bool ValidateConfiguration(bool interactive) {
       // (5.2) jeden Ausdruck parsen und validieren
       for (int i=0; i < sizeOfExprs; i++) {
          expr = StringToLower(StringTrim(exprs[i]));
-         if (StringLen(expr) == 0) {
+         if (!StringLen(expr)) {
             if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(7)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             break;
          }
@@ -569,7 +569,7 @@ bool ValidateConfiguration(bool interactive) {
          if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfiguration(10)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
-         if (StringLen(value) == 0)                    return(_false(ValidateConfig.HandleError("ValidateConfiguration(11)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(11)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
          if (key == "@trend") {
             if (start.trend.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(12)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple trend conditions)", interactive)));

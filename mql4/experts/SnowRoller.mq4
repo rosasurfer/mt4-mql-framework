@@ -2689,7 +2689,7 @@ bool ValidateConfiguration.ID(bool interactive) {
 
    string strValue = StringToUpper(StringTrim(Sequence.ID));
 
-   if (StringLen(strValue) == 0)
+   if (!StringLen(strValue))
       return(false);
 
    if (StringLeft(strValue, 1) == "T") {
@@ -2745,7 +2745,7 @@ bool ValidateConfiguration(bool interactive) {
          }
       }
    }
-   else if (StringLen(Sequence.ID) == 0) {       // wir müssen im STATUS_UNINITIALIZED sein (sequenceId = 0)
+   else if (!StringLen(Sequence.ID)) {           // wir müssen im STATUS_UNINITIALIZED sein (sequenceId = 0)
       if (sequenceId != 0)                       return(_false(catch("ValidateConfiguration(4)   illegal Sequence.ID = \""+ Sequence.ID +"\" (sequenceId="+ sequenceId +")", ERR_RUNTIME_ERROR)));
    }
    else {}     // wenn gesetzt, ist die ID schon validiert und die Sequenz geladen (sonst landen wir hier nicht)
@@ -2813,7 +2813,7 @@ bool ValidateConfiguration(bool interactive) {
       for (int i=0; i < sizeOfExprs; i++) {
          start.conditions = false;                     // im Fehlerfall ist start.conditions deaktiviert
          expr = StringToLower(StringTrim(exprs[i]));
-         if (StringLen(expr) == 0) {
+         if (!StringLen(expr)) {
             if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(16)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             break;
          }
@@ -2822,7 +2822,7 @@ bool ValidateConfiguration(bool interactive) {
          if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfiguration(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
-         if (StringLen(value) == 0)                    return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
+         if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
 
          if (key == "@trend") {
             if (start.trend.condition)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(21)", "Invalid StartConditions = \""+ StartConditions +"\" (multiple trend conditions)", interactive)));
@@ -2935,7 +2935,7 @@ bool ValidateConfiguration(bool interactive) {
       for (i=0; i < sizeOfExprs; i++) {
          stop.conditions = false;                  // im Fehlerfall ist stop.conditions deaktiviert
          expr = StringToLower(StringTrim(exprs[i]));
-         if (StringLen(expr) == 0) {
+         if (!StringLen(expr)) {
             if (sizeOfExprs > 1)                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(46)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             break;
          }
@@ -2944,7 +2944,7 @@ bool ValidateConfiguration(bool interactive) {
          if (!StringEndsWith(elems[1], ")"))           return(_false(ValidateConfig.HandleError("ValidateConfiguration(49)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
-         if (StringLen(value) == 0)                    return(_false(ValidateConfig.HandleError("ValidateConfiguration(50)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+         if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(50)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
          //debug("()   key="+ StringRightPad("\""+ key +"\"", 9, " ") +"   value=\""+ value +"\"");
 
          if (key == "@trend") {
@@ -3033,7 +3033,7 @@ bool ValidateConfiguration(bool interactive) {
             sizeOfElems = Explode(value, "%", elems, NULL);
             if (sizeOfElems > 2)                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(71)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             value = StringTrim(elems[0]);
-            if (StringLen(value) == 0)                 return(_false(ValidateConfig.HandleError("ValidateConfiguration(72)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
+            if (!StringLen(value))                     return(_false(ValidateConfig.HandleError("ValidateConfiguration(72)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             if (!StringIsNumeric(value))               return(_false(ValidateConfig.HandleError("ValidateConfiguration(73)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             dValue = StrToDouble(value);
             if (sizeOfElems == 1) {

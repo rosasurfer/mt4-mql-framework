@@ -181,12 +181,12 @@ string RatesToStr(double values[], string separator=", ") {
       if (!values[i]) strings[i] = "0";
       else            strings[i] = NumberToStr(values[i], PriceFormat);
 
-      if (StringLen(strings[i]) == 0)
+      if (!StringLen(strings[i]))
          return("");
    }
 
    string joined = JoinStrings(strings, separator);
-   if (StringLen(joined) == 0)
+   if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
 }
@@ -231,12 +231,12 @@ string MoneysToStr(double values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = NumberToStr(values[i], ".2");
-      if (StringLen(strings[i]) == 0)
+      if (!StringLen(strings[i]))
          return("");
    }
 
    string joined = JoinStrings(strings, separator);
-   if (StringLen(joined) == 0)
+   if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
 }
@@ -268,12 +268,12 @@ string iBufferToStr(double values[], string separator=", ") {
    for (int i=0; i < size; i++) {
       if (!MathModFix(values[i], 1)) strings[i] = DoubleToStr(values[i], 0);
       else                           strings[i] = NumberToStr(values[i], PriceFormat);
-      if (StringLen(strings[i]) == 0)
+      if (!StringLen(strings[i]))
          return("");
    }
 
    string joined = JoinStrings(strings, separator);
-   if (StringLen(joined) == 0)
+   if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
 }
@@ -377,7 +377,7 @@ string TimesToStr(datetime values[], string separator=", ") {
    }
 
    string joined = JoinStrings(strings, separator);
-   if (StringLen(joined) == 0)
+   if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
 }
@@ -406,12 +406,12 @@ string OperationTypesToStr(int values[], string separator=", ") {
 
    for (int i=0; i < size; i++) {
       strings[i] = OperationTypeToStr(values[i]);
-      if (StringLen(strings[i]) == 0)
+      if (!StringLen(strings[i]))
          return("");
    }
 
    string joined = JoinStrings(strings, separator);
-   if (StringLen(joined) == 0)
+   if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
 }
@@ -444,7 +444,7 @@ string CharsToStr(int values[], string separator=", ") {
    }
 
    string joined = JoinStrings(strings, separator);
-   if (StringLen(joined) == 0)
+   if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
 }
