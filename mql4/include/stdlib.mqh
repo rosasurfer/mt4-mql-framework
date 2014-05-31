@@ -234,9 +234,9 @@
    datetime GetNextSessionEndGmtTime     (datetime gmtTime   );
    datetime GetNextSessionEndServerTime  (datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   string   GetDayOfWeek(datetime time, bool longFormat);
-   datetime GetLocalTimeEx();
+   datetime mql.GetLocalTime();
    datetime mql.GetSystemTime();
+   string   GetDayOfWeek(datetime time, bool longFormat);
    bool     GetServerTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime TimeGMT();
 
