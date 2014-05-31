@@ -374,7 +374,7 @@ int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar)
       return(SetLastError(ERS_HISTORY_UPDATE));
 
    startTime = GetSessionStartServerTime(startTime);
-   if (startTime == EMPTY_VALUE)                                        // Wochenend-Candles
+   if (startTime == NOT_A_TIME)                                         // Wochenend-Candles
       startTime = GetPrevSessionEndServerTime(iTime(symbol, period, 0));
 
    int endBar=0, startBar=iBarShiftNext(symbol, period, startTime);
@@ -390,7 +390,7 @@ int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar)
       }
 
       startTime = GetSessionStartServerTime(iTime(symbol, period, endBar));
-      while (startTime == EMPTY_VALUE) {                                // Endbar kann theoretisch wieder eine Wochenend-Candle sein
+      while (startTime == NOT_A_TIME) {                                 // Endbar kann theoretisch wieder eine Wochenend-Candle sein
          startBar = iBarShiftNext(symbol, period, GetPrevSessionEndServerTime(iTime(symbol, period, endBar)));
          if (startBar == -1)
             return(catch("GetDailyStartEndBars(3:symbol="+ symbol +", bar="+ bar +")    iBarShiftNext() => -1    no history bars for "+ TimeToStr(GetPrevSessionEndServerTime(iTime(symbol, period, endBar))), ERR_RUNTIME_ERROR));

@@ -738,7 +738,7 @@ bool UpdateOHLC() {
 
    // (2) Beginn und Ende der aktuellen Session ermitteln
    datetime sessionStart = GetSessionStartServerTime(lastTickTime);              // throws ERR_MARKET_CLOSED
-   if (sessionStart == EMPTY_VALUE) {
+   if (sessionStart == NOT_A_TIME) {
       if (SetLastError(stdlib.GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
          return(false);
       sessionStart = GetPrevSessionStartServerTime(lastTickTime);
