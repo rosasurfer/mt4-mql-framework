@@ -190,46 +190,49 @@
 
 
    // Date/Time
-   datetime FXTToGMT(datetime fxtTime);
-   datetime FXTToServerTime(datetime fxtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime FxtToGmtTime   (datetime fxtTime);
+   datetime FxtToServerTime(datetime fxtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GMTToFXT(datetime gmtTime);
-   datetime GMTToServerTime(datetime gmtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GmtToFxtTime   (datetime gmtTime);
+   datetime GmtToServerTime(datetime gmtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime ServerToFXT(datetime serverTime);                                                               // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime ServerToGMT(datetime serverTime);                                                               // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ServerToFxtTime(datetime serverTime);                                                           // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ServerToGmtTime(datetime serverTime);                                                           // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   int      GetFXTToGMTOffset(datetime fxtTime);
-   int      GetFXTToServerTimeOffset(datetime fxtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetFxtToGmtTimeOffset   (datetime fxtTime);
+   int      GetFxtToServerTimeOffset(datetime fxtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   int      GetGMTToFXTOffset(datetime gmtTime);
-   int      GetGMTToServerTimeOffset(datetime gmtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetGmtToFxtTimeOffset   (datetime gmtTime);
+   int      GetGmtToServerTimeOffset(datetime gmtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   int      GetServerToFXTOffset(datetime serverTime);                                                      // throws ERR_INVALID_TIMEZONE_CONFIG
-   int      GetServerToGMTOffset(datetime serverTime);                                                      // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetServerToFxtTimeOffset(datetime serverTime);                                                  // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetServerToGmtTimeOffset(datetime serverTime);                                                  // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   int      GetLocalToGMTOffset();
+   int      GetLocalToGmtTimeOffset();
 
-   datetime GetFXTPrevSessionStartTime(datetime fxtTime);
-   datetime GetFXTPrevSessionEndTime(datetime fxtTime);
-   datetime GetFXTSessionStartTime(datetime fxtTime);                                                       // throws ERR_MARKET_CLOSED
-   datetime GetFXTSessionEndTime(datetime fxtTime);                                                         // throws ERR_MARKET_CLOSED
-   datetime GetFXTNextSessionStartTime(datetime fxtTime);
-   datetime GetFXTNextSessionEndTime(datetime fxtTime);
+   datetime GetPrevSessionStartFxtTime   (datetime fxtTime   );
+   datetime GetPrevSessionStartGmtTime   (datetime gmtTime   );
+   datetime GetPrevSessionStartServerTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetGMTPrevSessionStartTime(datetime gmtTime);
-   datetime GetGMTPrevSessionEndTime(datetime gmtTime);
-   datetime GetGMTSessionStartTime(datetime gmtTime);                                                       // throws ERR_MARKET_CLOSED
-   datetime GetGMTSessionEndTime(datetime gmtTime);                                                         // throws ERR_MARKET_CLOSED
-   datetime GetGMTNextSessionStartTime(datetime gmtTime);
-   datetime GetGMTNextSessionEndTime(datetime gmtTime);
+   datetime GetPrevSessionEndFxtTime     (datetime fxtTime   );
+   datetime GetPrevSessionEndGmtTime     (datetime gmtTime   );
+   datetime GetPrevSessionEndServerTime  (datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetServerPrevSessionStartTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime GetServerPrevSessionEndTime(datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime GetServerSessionStartTime(datetime serverTime);                                                 // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime GetServerSessionEndTime(datetime serverTime);                                                   // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime GetServerNextSessionStartTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime GetServerNextSessionEndTime(datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetSessionStartFxtTime       (datetime fxtTime   );                                             // throws ERR_MARKET_CLOSED
+   datetime GetSessionStartGmtTime       (datetime gmtTime   );                                             // throws ERR_MARKET_CLOSED
+   datetime GetSessionStartServerTime    (datetime serverTime);                                             // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
+
+   datetime GetSessionEndFxtTime         (datetime fxtTime   );                                             // throws ERR_MARKET_CLOSED
+   datetime GetSessionEndGmtTime         (datetime gmtTime   );                                             // throws ERR_MARKET_CLOSED
+   datetime GetSessionEndServerTime      (datetime serverTime);                                             // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
+
+   datetime GetNextSessionStartFxtTime   (datetime fxtTime   );
+   datetime GetNextSessionStartGmtTime   (datetime gmtTime   );
+   datetime GetNextSessionStartServerTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+
+   datetime GetNextSessionEndFxtTime     (datetime fxtTime   );
+   datetime GetNextSessionEndGmtTime     (datetime gmtTime   );
+   datetime GetNextSessionEndServerTime  (datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
 
    string   GetDayOfWeek(datetime time, bool longFormat);
    datetime GetLocalTimeEx();
@@ -238,7 +241,7 @@
    datetime TimeGMT();
 
 
-   // Event-Listener: diese allgemeinen Library-Versionen können durch spezielle lokale Versionen überschrieben werden
+   // Event-Listener: Diese allgemeinen Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
    bool     EventListener.AccountPayment (int    data[], int criteria);
@@ -252,18 +255,18 @@
    bool     EventListener.ExternalCommand(string data[], int criteria);
 
 
-   // Event-Handler: Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden
-   /*abstract*/ int onBarOpen        (int    data[]);
-   /*abstract*/ int onAccountChange  (int    data[]);
-   /*abstract*/ int onAccountPayment (int    data[]);
-   /*abstract*/ int onOrderPlace     (int    data[]);
-   /*abstract*/ int onOrderChange    (int    data[]);
-   /*abstract*/ int onOrderCancel    (int    data[]);
-   /*abstract*/ int onPositionOpen   (int    data[]);
-   /*abstract*/ int onPositionClose  (int    data[]);
-   /*abstract*/ int onChartCommand   (string data[]);
-   /*abstract*/ int onInternalCommand(string data[]);
-   /*abstract*/ int onExternalCommand(string data[]);
+   // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
+   int      onBarOpen        (int    data[]);
+   int      onAccountChange  (int    data[]);
+   int      onAccountPayment (int    data[]);
+   int      onOrderPlace     (int    data[]);
+   int      onOrderChange    (int    data[]);
+   int      onOrderCancel    (int    data[]);
+   int      onPositionOpen   (int    data[]);
+   int      onPositionClose  (int    data[]);
+   int      onChartCommand   (string data[]);
+   int      onInternalCommand(string data[]);
+   int      onExternalCommand(string data[]);
 
 
    // Farben

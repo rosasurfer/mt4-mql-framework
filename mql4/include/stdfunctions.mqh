@@ -1698,6 +1698,19 @@ string _empty(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY_VALUE (0x7FFFFFFF = 2147483647 = INT_MAX) zurückzugeben.
+ * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ *
+ * @param  beliebige Parameter (werden ignoriert)
+ *
+ * @return int - EMPTY_VALUE
+ */
+int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+   return(EMPTY_VALUE);
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -1997,6 +2010,7 @@ void __DummyCalls() {
    _bool(NULL);
    _double(NULL);
    _empty();
+   _EMPTY_VALUE();
    _false();
    _int(NULL);
    _last_error();

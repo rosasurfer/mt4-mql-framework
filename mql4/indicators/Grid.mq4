@@ -68,8 +68,8 @@ int DrawGrid() {
 
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime fromFXT = GetFXTNextSessionStartTime(ServerToFXT(Time[Bars-1]) - 1*SECOND);
-   datetime toFXT   = GetFXTNextSessionStartTime(GMTToFXT(TimeGMT()));     // nicht TimeCurrent() verwenden, kann 0 sein
+   datetime fromFXT = GetNextSessionStartFxtTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND);
+   datetime toFXT   = GetNextSessionStartFxtTime(GmtToFxtTime(TimeGMT())); // nicht TimeCurrent() verwenden, kann 0 sein
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {                                             // fromFXT bleibt unverändert
@@ -124,7 +124,7 @@ int DrawGrid() {
 
    // (2) Separatoren zeichnen
    for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
-      separatorTime = FXTToServerTime(time);                               // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
+      separatorTime = FxtToServerTime(time);                               // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
       dow           = TimeDayOfWeek(time);
 
       // Bar und Chart-Time des Separators ermitteln

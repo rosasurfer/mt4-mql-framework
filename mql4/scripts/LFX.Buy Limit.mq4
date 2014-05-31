@@ -40,33 +40,33 @@ int onInit() {
    // (1) LFX-Currency und ID bestimmen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   else                                  return(InputError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
+   else                                  return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
    // (2) Parametervalidierung
    // Units
-   if (NE(MathModFix(Units, 0.1), 0))    return(InputError("onInit(2)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (Units < 0.1 || Units > 1)         return(InputError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (NE(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(2)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (Units < 0.1 || Units > 1)         return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
 
    // LimitPrice
    LimitPrice = NormalizeDouble(LimitPrice, SubPipDigits);
-   if (LimitPrice <= 0)                  return(InputError("onInit(4)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +"\n(must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (LimitPrice >= Bid)                return(InputError("onInit(5)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+   if (LimitPrice <= 0)                  return(HandleScriptError("onInit(4)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +"\n(must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (LimitPrice >= Bid)                return(HandleScriptError("onInit(5)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
 
    // StopLossPrice
    StopLossPrice = NormalizeDouble(StopLossPrice, SubPipDigits);
    if (StopLossPrice != 0) {
-      if (StopLossPrice < 0)             return(InputError("onInit(6)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-      if (StopLossPrice >= LimitPrice)   return(InputError("onInit(7)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (StopLossPrice < 0)             return(HandleScriptError("onInit(6)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (StopLossPrice >= LimitPrice)   return(HandleScriptError("onInit(7)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
    }
 
    // TakeProfitPrice
    TakeProfitPrice = NormalizeDouble(TakeProfitPrice, SubPipDigits);
    if (TakeProfitPrice != 0) {
-      if (TakeProfitPrice < 0)           return(InputError("onInit(8)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-      if (TakeProfitPrice <= LimitPrice) return(InputError("onInit(9)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice < 0)           return(HandleScriptError("onInit(8)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice <= LimitPrice) return(HandleScriptError("onInit(9)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
    }
 
 

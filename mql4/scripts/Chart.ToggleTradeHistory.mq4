@@ -22,7 +22,8 @@ int onInit() {
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else
-      return(HandleScriptError("", "Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR););
+      return(HandleScriptError("", "Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
+
    return(catch("onInit()"));
 }
 
@@ -48,9 +49,9 @@ int onStart() {
          int      ticket     =                     los.Ticket       (los, i);
          int      type       =                     los.Type         (los, i);
          double   units      =                     los.Units        (los, i);
-         datetime openTime   =     GMTToServerTime(los.OpenTime     (los, i));
+         datetime openTime   =     GmtToServerTime(los.OpenTime     (los, i));
          double   openPrice  =                     los.OpenPriceLfx (los, i);
-         datetime closeTime  = GMTToServerTime(Abs(los.CloseTime    (los, i)));
+         datetime closeTime  = GmtToServerTime(Abs(los.CloseTime    (los, i)));
          double   closePrice =                     los.ClosePriceLfx(los, i);
          double   profit     =                     los.Profit       (los, i);
 
