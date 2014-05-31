@@ -53,20 +53,19 @@ int onInit() {
    // LimitPrice
    LimitPrice = NormalizeDouble(LimitPrice, SubPipDigits);
    if (LimitPrice <= 0)                  return(HandleScriptError("onInit(4)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +"\n(must be positive)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (LimitPrice >= Bid)                return(HandleScriptError("onInit(5)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
 
    // StopLossPrice
    StopLossPrice = NormalizeDouble(StopLossPrice, SubPipDigits);
    if (StopLossPrice != 0) {
-      if (StopLossPrice < 0)             return(HandleScriptError("onInit(6)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-      if (StopLossPrice >= LimitPrice)   return(HandleScriptError("onInit(7)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (StopLossPrice < 0)             return(HandleScriptError("onInit(5)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (StopLossPrice >= LimitPrice)   return(HandleScriptError("onInit(6)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
    }
 
    // TakeProfitPrice
    TakeProfitPrice = NormalizeDouble(TakeProfitPrice, SubPipDigits);
    if (TakeProfitPrice != 0) {
-      if (TakeProfitPrice < 0)           return(HandleScriptError("onInit(8)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
-      if (TakeProfitPrice <= LimitPrice) return(HandleScriptError("onInit(9)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice < 0)           return(HandleScriptError("onInit(7)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice <= LimitPrice) return(HandleScriptError("onInit(8)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
    }
 
 
@@ -74,7 +73,7 @@ int onInit() {
    int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);
-   return(catch("onInit(10)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -95,16 +94,33 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
+   int button;
+
+
    // (1) Sicherheitsabfrage
-   PlaySound("notify.wav");
-   int button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
-                         +"Do you really want to place a Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
-                         +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
-                         + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
-                         + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),
-                         __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
-   if (button != IDOK)
-      return(catch("onStart(1)"));
+   if (LimitPrice >= Bid) {
+      PlaySound("notify.wav");
+      button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
+                        +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" is already triggered (current price "+ NumberToStr(Bid, SubPipPriceFormat) +").\n\n"
+                        +"Do you really want the order to immediately get executed?",
+                        __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+      if (button != IDOK)
+         return(catch("onStart(1)"));
+      if (StopLossPrice   && StopLossPrice   >= Bid) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      if (TakeProfitPrice && TakeProfitPrice <= Bid) return(HandleScriptError("onStart(3)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
+      // TODO: Statt PendingOrder Order sofort hier ausführen.
+   }
+   else {
+      PlaySound("notify.wav");
+      button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
+                        +"Do you really want to place a Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
+                        +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
+                        + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
+                        + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),
+                        __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+      if (button != IDOK)
+         return(catch("onStart(4)"));
+   }
 
 
    // (2) neue Order erzeugen und speichern
