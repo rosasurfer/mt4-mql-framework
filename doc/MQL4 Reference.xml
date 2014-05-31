@@ -108,7 +108,7 @@
       <li><p>no operation of [condition]?[expression 1]:[expression 2];</p></li>
       <li><p>no compound data types (structures);</p></li>
       <li><p>complex assignments are impossible; for example, val1=val2=0; arr[i++]=val; cond=(cnt=OrdersTotal)>0; etc.;</p></li>
-      <li><p>calculation of a logical expression is always completed, never early terminated.</p></li>
+      <li><p>evaluation of a logical expression is always completed, never early terminated.</p></li>
       </ul>
     </content>
     
@@ -135,12 +135,11 @@
       caption=Identifiers
       <content>
         <p>Identifiers are used as names of variables, functions, and data types.
-        The length of an identifier cannot exceed 31 character.</p>
-        <p>Symbols you can use: numbers from 0 to 9, Latin capital and small letters a to z, A to Z 
-        (recognized as different symbols), the symbol of underlining (_). The first symbol cannot be 
-        a number. The identifier must not coincide with any reserved word.</p>
+        The length of an identifier cannot exceed 31 characters.</p>
+        <p>Characters you can use: digits (0 - 9), latin case sensitive letters (a - z, A - Z), underscore (_) and dot (.). 
+        The first character cannot be a digit or a dot. The identifier must not coincide with a reserved word.</p>
         <p class="doctabhdr">Examples:</p>
-        <pre class="docmql4">NAME1 namel Total_5 Paper</pre>
+        <pre class="docmql4">NAME1 namel Total_5 Paper name.var</pre>
       </content>
     </text>
 
@@ -5195,7 +5194,7 @@ SetLevelValue(1,3.14);
       caption=Seconds()
       type=int
       <content>
-      Returns the number of seconds since the beginning of the current minute of the last known server time at the moment of program start (this value will not change within the time of the program execution).
+      Returns the seconds since the beginning of the current minute of the last known server time at the moment of program start (this value will not change within the time of the program execution).
       </content>
       <example>
   if(Seconds()&lt;=15)
@@ -5208,7 +5207,7 @@ SetLevelValue(1,3.14);
       caption=TimeCurrent()
       type=datetime
       <content>
-      Returns the last known server time (time of incoming of the latest quote) as number of seconds since 00:00 January 1, 1970.<br/><br/>
+      Returns the last known server time (time of the latest tick) as seconds since 00:00 January 1, 1970.<br/><br/>
       Note: At testing the last known server time is modelled.
       </content>
       <example>
@@ -5221,7 +5220,7 @@ SetLevelValue(1,3.14);
       caption=TimeDay()
       type=int
       <content>
-      Returns day of month (1 - 31) for the specified date.
+      Returns the day of the month (1 - 31) for the specified date.
       </content>
       <example>
   int day=TimeDay(D'2003.12.31');
@@ -5230,7 +5229,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=date
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5248,7 +5247,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=date
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5265,7 +5264,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=date
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5282,7 +5281,7 @@ SetLevelValue(1,3.14);
       <parameter>
         type=datetime
         name=time
-        description=Datetime is the number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5291,11 +5290,11 @@ SetLevelValue(1,3.14);
       caption=TimeLocal()
       type=datetime
       <content>
-      Returns local computer time as number of seconds since 00:00 January 1, 1970.<br/>
-      Note: In testing local time is modelled and is the same as the modelled last known server time.<br>
+      Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
+      Note: At testing local time is modelled and is the same as the modelled server time.<br>
 		<br>
-		<span style="color:red">Vorsicht:</span> Diese Besonderheit bedeutet, daﬂ der Tester die lokale Zeitzone praktisch auf die Server-Zeitzone setzt. Tests laufen also
-		u.U. immer in einer anderen als der lokalen Zeitzone.
+		<span style="color:red">Vorsicht:</span> Dies bedeutet, daﬂ der Tester die lokale Zeitzone auf die Server-Zeitzone setzt, Tests laufen also
+		u.U. in einer anderen als der tats‰chlichen lokalen Zeitzone.
       </content>
       <example>
 if (TimeLocal()-OrderOpenTime() &lt; 360) 
@@ -5308,7 +5307,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=TimeMinute()
       type=int
       <content>
-      Returns the minute for the specified time.
+      Returns the minute value for the specified time.
       </content>
       <example>
   int m=TimeMinute(TimeCurrent());
@@ -5316,7 +5315,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5333,7 +5332,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5342,7 +5341,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=TimeSeconds()
       type=int
       <content>
-      Returns the number of seconds of the minute of the specified time.
+      Returns the seconds of the minute for the specified time.
       </content>
       <example>
   int m=TimeSeconds(TimeCurrent());
@@ -5350,7 +5349,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 
@@ -5367,7 +5366,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <parameter>
         type=datetime
         name=time
-        description=Datetime as number of seconds since midnight (00:00:00), January 1, 1970.
+        description=Datetime value.
       </parameter>
     </function>
 

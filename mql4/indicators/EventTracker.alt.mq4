@@ -373,13 +373,13 @@ int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar)
    if (GetLastError() == ERS_HISTORY_UPDATE)
       return(SetLastError(ERS_HISTORY_UPDATE));
 
-   startTime = GetServerSessionStartTime(startTime);
-   if (startTime == -1)                                                 // Wochenend-Candles
-      startTime = GetServerPrevSessionEndTime(iTime(symbol, period, 0));
+   startTime = GetSessionStartServerTime(startTime);
+   if (startTime == EMPTY_VALUE)                                        // Wochenend-Candles
+      startTime = GetPrevSessionEndServerTime(iTime(symbol, period, 0));
 
    int endBar=0, startBar=iBarShiftNext(symbol, period, startTime);
    if (startBar == -1)
-      return(catch("GetDailyStartEndBars(1)(symbol="+ symbol +", bar="+ bar +")    iBarShiftNext() => -1    no history bars for "+ TimeToStr(startTime), ERR_RUNTIME_ERROR));
+      return(catch("GetDailyStartEndBars(1:symbol="+ symbol +", bar="+ bar +")    iBarShiftNext() => -1    no history bars for "+ TimeToStr(startTime), ERR_RUNTIME_ERROR));
 
    // Bars durchlaufen und Bar-Range der gewünschten Periode ermitteln
    for (int i=1; i<=bar; i++) {
@@ -389,18 +389,18 @@ int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar)
          return(ERR_NO_RESULT);
       }
 
-      startTime = GetServerSessionStartTime(iTime(symbol, period, endBar));
-      while (startTime == -1) {                                         // Endbar kann theoretisch wieder eine Wochenend-Candle sein
-         startBar = iBarShiftNext(symbol, period, GetServerPrevSessionEndTime(iTime(symbol, period, endBar)));
+      startTime = GetSessionStartServerTime(iTime(symbol, period, endBar));
+      while (startTime == EMPTY_VALUE) {                                // Endbar kann theoretisch wieder eine Wochenend-Candle sein
+         startBar = iBarShiftNext(symbol, period, GetPrevSessionEndServerTime(iTime(symbol, period, endBar)));
          if (startBar == -1)
-            return(catch("GetDailyStartEndBars(3)(symbol="+ symbol +", bar="+ bar +")    iBarShiftNext() => -1    no history bars for "+ TimeToStr(GetServerPrevSessionEndTime(iTime(symbol, period, endBar))), ERR_RUNTIME_ERROR));
+            return(catch("GetDailyStartEndBars(3:symbol="+ symbol +", bar="+ bar +")    iBarShiftNext() => -1    no history bars for "+ TimeToStr(GetPrevSessionEndServerTime(iTime(symbol, period, endBar))), ERR_RUNTIME_ERROR));
 
          endBar = startBar + 1;
          if (endBar >= Bars) {                                          // Chart deckt die Session nicht ab => Abbruch
             catch("GetDailyStartEndBars(4)");
             return(ERR_NO_RESULT);
          }
-         startTime = GetServerSessionStartTime(iTime(symbol, period, endBar));
+         startTime = GetSessionStartServerTime(iTime(symbol, period, endBar));
       }
 
       startBar = iBarShiftNext(symbol, period, startTime);

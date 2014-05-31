@@ -213,7 +213,7 @@ int UpdateInfos() {
       if (StringLen(serverTimezone) > 0) {
          datetime lastTime = MarketInfo(symbol, MODE_TIME);
          if (lastTime > 0) {
-            int tzOffset = GetServerToFXTOffset(lastTime);
+            int tzOffset = GetServerToFxtTimeOffset(lastTime);
             if (tzOffset != EMPTY_VALUE)
                strOffset = ifString(tzOffset>= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
          }
