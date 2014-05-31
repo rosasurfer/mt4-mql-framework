@@ -28,21 +28,22 @@ int      PipDigits, SubPipDigits;                           // Digits eines Pips
 int      PipPoint, PipPoints;                               // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick, Ticks;
+int      Tick;
 datetime Tick.Time;
 datetime Tick.prevTime;
 int      ValidBars;
 int      ChangedBars;
 
-int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
-int      last_error;                                        // der letzte Fehler des aktuellen start()-Aufrufs
+int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs des Programms
+int      last_error;                                        // der letzte Fehler des aktuellen start()-Aufrufs des Programms
 
 
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648
-#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647
-#define EMPTY_VALUE           INT_MAX                       // empty custom indicator value
+#define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648                (datetime) INT_MIN = '1901-12-13 20:45:52'
+#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647                (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define NOT_A_TIME            INT_MIN                       // ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: datetime_min = '1970-01-01 00:00:00'
+#define EMPTY_VALUE           INT_MAX                       // empty custom indicator value (Integer, kein Double)                 datetime_max = '2037-12-31 23:59:59'
 #define EMPTY                      -1
 #define CLR_NONE                   -1                       // no color
 #define WHOLE_ARRAY                 0
@@ -53,7 +54,7 @@ int      last_error;                                        // der letzte Fehler
 #define TAB                         "\t"                    // tab
 
 
-// Special chars
+// Magic characters
 #define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
 #define PLACEHOLDER_CTL_CHAR        '•'                     // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
 
@@ -1711,6 +1712,19 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante NOT_A_TIME (0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
+ * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
+ *
+ * @param  beliebige Parameter (werden ignoriert)
+ *
+ * @return int - NOT_A_TIME
+ */
+int _NOT_A_TIME(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+   return(NOT_A_TIME);
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -2015,6 +2029,7 @@ void __DummyCalls() {
    _int(NULL);
    _last_error();
    _NO_ERROR();
+   _NOT_A_TIME();
    _NULL();
    _string(NULL);
    _true();

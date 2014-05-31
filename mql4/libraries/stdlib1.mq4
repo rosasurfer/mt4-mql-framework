@@ -176,7 +176,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
       // (3) erneuter Aufruf während desselben Ticks (alles bleibt unverändert)
    }
 
-   Tick        = tick; Ticks = Tick;                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
+   Tick        = tick;                                               // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    ValidBars   = validBars;
    ChangedBars = changedBars;
 

@@ -148,7 +148,7 @@ int start() {
    }
 
 
-   Tick++; Ticks = Tick;                                                   // einfacher Zähler, der konkrete Wert hat keine Bedeutung
+   Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;
