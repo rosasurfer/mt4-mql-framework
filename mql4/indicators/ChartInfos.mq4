@@ -1677,7 +1677,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessTradeToLfxTerminalMsg()   received #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
@@ -1685,7 +1685,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessTradeToLfxTerminalMsg()   received #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
@@ -1693,7 +1693,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessTradeToLfxTerminalMsg()   received #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
