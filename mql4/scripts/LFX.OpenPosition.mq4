@@ -43,7 +43,7 @@ int onInit() {
    // (1.1) Parametervalidierung: LFX.Currency
    string value = StringToUpper(StringTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
-   if (!StringInArray(currencies, value))        return(catch("onInit(1)   Invalid input parameter LFX.Currency = \""+ LFX.Currency +"\" (not a LFX currency)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (!StringInArray(currencies, value))        return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency = \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMVALUE));
    lfxCurrency   = value;
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
@@ -51,20 +51,20 @@ int onInit() {
    value = StringToUpper(StringTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
-   else                                          return(catch("onInit(2)   Invalid input parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   else                                          return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.3) Units
-   if (NE(MathModFix(Units, 0.1), 0))            return(catch("onInit(3)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
-   if (Units < 0.1 || Units > 1)                 return(catch("onInit(4)   Invalid input parameter Units = "+ NumberToStr(Units, ".+") +" (valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (NE(MathModFix(Units, 0.1), 0))            return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (Units < 0.1 || Units > 1)                 return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMVALUE));
    Units = NormalizeDouble(Units, 1);
 
 
    // (2) Leverage-Konfiguration einlesen und validieren
-   if (!IsGlobalConfigKey("Leverage", "Basket")) return(catch("onInit(5)   Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!IsGlobalConfigKey("Leverage", "Basket")) return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
    value = GetGlobalConfigString("Leverage", "Basket", "");
-   if (!StringIsNumeric(value))                  return(catch("onInit(6)   Invalid MetaTrader config value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(value))                  return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1)                             return(catch("onInit(7)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1)                             return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    // (3) offene Orders einlesen

@@ -21,11 +21,8 @@ int onInit() {
    // LFX-Currency setzen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   else {
-      PlaySound("notify.wav");
-      MessageBox("Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", __NAME__, MB_ICONSTOP|MB_OK);
-      return(SetLastError(ERR_RUNTIME_ERROR));
-   }
+   else
+      return(HandleScriptError("", "Cannot display LFX trades on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR););
    return(catch("onInit()"));
 }
 
