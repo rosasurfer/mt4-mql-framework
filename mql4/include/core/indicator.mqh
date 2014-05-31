@@ -36,7 +36,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
    if (IsError(error))
       return(SetLastError(error));
 
-   Tick          = tickData[0]; Ticks = Tick;
+   Tick          = tickData[0];
    Tick.Time     = tickData[1];
    Tick.prevTime = tickData[2];
 
@@ -116,7 +116,7 @@ int start() {
 
    int error;
 
-   Tick++; Ticks = Tick;                                                   // einfacher Zähler, der konkrete Wert hat keine Bedeutung
+   Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                        // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
    ValidBars     = IndicatorCounted();
@@ -179,7 +179,7 @@ int start() {
       if      (prev_error == ERS_TERMINAL_NOT_READY  ) ValidBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE      ) ValidBars = 0;
       else if (prev_error == ERR_HISTORY_INSUFFICIENT) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE               ) ValidBars = 0;      // "History update/insufficient" kann je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS_HISTORY_UPDATE               ) ValidBars = 0;      // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
       if      (__STATUS_HISTORY_INSUFFICIENT         ) ValidBars = 0;
    }
 
