@@ -96,7 +96,6 @@ int onDeinit() {
 int onStart() {
    int button;
 
-
    // (1) Sicherheitsabfrage
    if (LimitPrice >= Bid) {
       PlaySound("notify.wav");
@@ -108,7 +107,7 @@ int onStart() {
          return(catch("onStart(1)"));
       if (StopLossPrice   && StopLossPrice   >= Bid) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
       if (TakeProfitPrice && TakeProfitPrice <= Bid) return(HandleScriptError("onStart(3)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMVALUE));
-      // TODO: Statt PendingOrder Order sofort hier ausführen.
+      // TODO: Statt PendingOrder Order sofort hier ausführen, da sie sonst erst bei der nächsten Preisänderung ausgeführt wird (und evt. auch eben nicht).
    }
    else {
       PlaySound("notify.wav");
