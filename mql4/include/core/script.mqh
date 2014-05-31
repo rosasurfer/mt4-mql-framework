@@ -323,6 +323,26 @@ bool Indicator.IsSuperContext() {
 
 
 /**
+ * Handler für im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
+ *
+ * @param  string location - Ort, an dem der Fehler auftrat
+ * @param  string message  - Fehlermeldung
+ * @param  int    error    - zu setzender Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ */
+int HandleScriptError(string location, string message, int error) {
+   if (StringLen(location) > 0)
+      location = " :: "+ location;
+
+   PlaySound("chord.wav");
+   MessageBox(message, __NAME__ + location, MB_ICONERROR|MB_OK);
+
+   return(SetLastError(error));
+}
+
+
+/**
  * Setzt den internen Fehlercode des Scripts.
  *
  * @param  int error - Fehlercode
