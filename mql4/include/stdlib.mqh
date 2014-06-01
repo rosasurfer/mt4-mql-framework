@@ -190,14 +190,14 @@
 
 
    // Date/Time
-   datetime FxtToGmtTime   (datetime fxtTime);
-   datetime FxtToServerTime(datetime fxtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ConvertFxtToGmtTime   (datetime fxtTime);
+   datetime ConvertFxtToServerTime(datetime fxtTime);                                                       // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GmtToFxtTime   (datetime gmtTime);
-   datetime GmtToServerTime(datetime gmtTime);                                                              // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ConvertGmtToFxtTime   (datetime gmtTime);
+   datetime ConvertGmtToServerTime(datetime gmtTime);                                                       // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime ServerToFxtTime(datetime serverTime);                                                           // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime ServerToGmtTime(datetime serverTime);                                                           // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ConvertServerToFxtTime(datetime serverTime);                                                    // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime ConvertServerToGmtTime(datetime serverTime);                                                    // throws ERR_INVALID_TIMEZONE_CONFIG
 
    int      GetFxtToGmtTimeOffset   (datetime fxtTime);
    int      GetFxtToServerTimeOffset(datetime fxtTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG

@@ -247,7 +247,7 @@ bool UpdateWeekendStop() {
    if (__STATUS_ERROR)
       return(false);
 
-   datetime friday, now=ServerToFxtTime(TimeCurrent());
+   datetime friday, now=ConvertServerToFxtTime(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -258,7 +258,7 @@ bool UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
+   weekend.stop.time = ConvertFxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
 
    return(!last_error|catch("UpdateWeekendStop()"));
 }
