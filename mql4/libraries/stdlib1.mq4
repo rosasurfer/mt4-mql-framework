@@ -5019,7 +5019,7 @@ datetime TimeGMT() {
    if (This.IsTesting()) {
       // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
       //       nicht die modellierte sondern die aktuelle reale Zeit.
-      gmt = ServerToGmtTime(TimeLocal());                                // TimeLocal() entspricht im Tester der Serverzeit
+      gmt = ConvertServerToGmtTime(TimeLocal());                                // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
       gmt = mql.GetSystemTime();
@@ -5411,7 +5411,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ServerToFxtTime(serverTime);
+   datetime fxtTime = ConvertServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5419,7 +5419,7 @@ datetime GetPrevSessionStartTime.server(datetime serverTime) { // throws ERR_INV
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(FxtToServerTime(startTime));
+   return(ConvertFxtToServerTime(startTime));
 }
 
 
@@ -5488,7 +5488,7 @@ datetime GetSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_T
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ServerToFxtTime(serverTime);
+   datetime fxtTime = ConvertServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5496,7 +5496,7 @@ datetime GetNextSessionStartTime.server(datetime serverTime) { // throws ERR_INV
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(FxtToServerTime(startTime));
+   return(ConvertFxtToServerTime(startTime));
 }
 
 
@@ -5524,7 +5524,7 @@ datetime GetNextSessionEndTime.server(datetime serverTime) { // throws ERR_INVAL
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
+   datetime fxtTime = ConvertGmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5532,7 +5532,7 @@ datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(FxtToGmtTime(startTime));
+   return(ConvertFxtToGmtTime(startTime));
 }
 
 
@@ -5560,7 +5560,7 @@ datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime fxtTime = GmtToFxtTime(gmtTime);
+   datetime fxtTime = ConvertGmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5568,7 +5568,7 @@ datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(FxtToGmtTime(startTime));
+   return(ConvertFxtToGmtTime(startTime));
 }
 
 
@@ -5596,7 +5596,7 @@ datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
+   datetime fxtTime = ConvertGmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5604,7 +5604,7 @@ datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(FxtToGmtTime(startTime));
+   return(ConvertFxtToGmtTime(startTime));
 }
 
 
@@ -5941,7 +5941,7 @@ string DoubleToStrTrim(double value) {
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime FxtToGmtTime(datetime fxtTime) {
+datetime ConvertFxtToGmtTime(datetime fxtTime) {
    int offset = GetFxtToGmtTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
@@ -5957,7 +5957,7 @@ datetime FxtToGmtTime(datetime fxtTime) {
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ConvertFxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetFxtToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
@@ -6060,13 +6060,13 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
       if (!accountData[1]) {                          // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
-         accountData[2] = GmtToServerTime(mql.GetSystemTime());
+         accountData[2] = ConvertGmtToServerTime(mql.GetSystemTime());
          //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
-         accountData[2] = GmtToServerTime(mql.GetSystemTime());
+         accountData[2] = ConvertGmtToServerTime(mql.GetSystemTime());
          //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
          eventStatus = true;
       }
@@ -6217,7 +6217,7 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
          // neue Positionen zusätzlich anhand ihres OrderOpen-Timestamps auf ihren jeweiligen Status überprüft werden.
 
          // neue (unbekannte) Position: prüfen, ob sie nach Accountinitialisierung geöffnet wurde (= wirklich neu ist)
-         if (accountInitTime[0] <= ServerToGmtTime(OrderOpenTime())) {
+         if (accountInitTime[0] <= ConvertServerToGmtTime(OrderOpenTime())) {
             // ja, in flags angegebene Orderkriterien prüfen
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
@@ -8666,7 +8666,7 @@ string GetClassName(int hWnd) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GmtToFxtTime(datetime gmtTime) {
+datetime ConvertGmtToFxtTime(datetime gmtTime) {
    int offset = GetGmtToFxtTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
@@ -8682,7 +8682,7 @@ datetime GmtToFxtTime(datetime gmtTime) {
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ConvertGmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    string zone = GetServerTimezone();
    if (!StringLen(zone))
       return(NOT_A_TIME);
@@ -8993,7 +8993,7 @@ int SendSMS(string receiver, string message) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ConvertServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    string zone = GetServerTimezone();
    if (!StringLen(zone))
       return(NOT_A_TIME);
@@ -9002,11 +9002,11 @@ datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
    if (zone == "FXT")
       return(serverTime);
 
-   datetime gmtTime = ServerToGmtTime(serverTime);
+   datetime gmtTime = ConvertServerToGmtTime(serverTime);
    if (gmtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(GmtToFxtTime(gmtTime));
+   return(ConvertGmtToFxtTime(gmtTime));
 }
 
 
@@ -9017,7 +9017,7 @@ datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ConvertServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    string zone = GetServerTimezone();
    if (!StringLen(zone))
       return(NOT_A_TIME);

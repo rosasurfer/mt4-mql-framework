@@ -49,9 +49,9 @@ int onStart() {
          int      ticket     =                     los.Ticket       (los, i);
          int      type       =                     los.Type         (los, i);
          double   units      =                     los.Units        (los, i);
-         datetime openTime   =     GmtToServerTime(los.OpenTime     (los, i));
+         datetime openTime   =     ConvertGmtToServerTime(los.OpenTime     (los, i));
          double   openPrice  =                     los.OpenPriceLfx (los, i);
-         datetime closeTime  = GmtToServerTime(Abs(los.CloseTime    (los, i)));
+         datetime closeTime  = ConvertGmtToServerTime(Abs(los.CloseTime    (los, i)));
          double   closePrice =                     los.ClosePriceLfx(los, i);
          double   profit     =                     los.Profit       (los, i);
 
