@@ -46,14 +46,14 @@ int onStart() {
          return(last_error);
 
       for (int i=0; i < orders; i++) {
-         int      ticket     =                     los.Ticket       (los, i);
-         int      type       =                     los.Type         (los, i);
-         double   units      =                     los.Units        (los, i);
+         int      ticket     =                            los.Ticket       (los, i);
+         int      type       =                            los.Type         (los, i);
+         double   units      =                            los.Units        (los, i);
          datetime openTime   =     ConvertGmtToServerTime(los.OpenTime     (los, i));
-         double   openPrice  =                     los.OpenPriceLfx (los, i);
+         double   openPrice  =                            los.OpenPriceLfx (los, i);
          datetime closeTime  = ConvertGmtToServerTime(Abs(los.CloseTime    (los, i)));
-         double   closePrice =                     los.ClosePriceLfx(los, i);
-         double   profit     =                     los.Profit       (los, i);
+         double   closePrice =                            los.ClosePriceLfx(los, i);
+         double   profit     =                            los.Profit       (los, i);
 
          if (!SetClosedTradeMarker(ticket, type, units, openTime, openPrice, closeTime, closePrice, profit))
             break;

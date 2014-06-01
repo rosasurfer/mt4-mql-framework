@@ -12,14 +12,14 @@
   p             { margin-bottom:12px; }
   ul            { list-style-type:square; }
   a             { color:#42639C; }
-  
+
   td.l_smb      { font:12pt Wingdings; }
   td.d_smb      { font:12pt Wingdings; background:#E8E8FF; }
   td.l_code     { border-right:1px #a8afaa solid; }
   td.d_code     { border-right:1px #a8afaa solid; background:#e8e8ff; }
   td.d_code_e   { background:#e8e8ff; }
   table.symbols { font-family:tahoma; font-size:8pt; border:thin solid #a8afaa;}
-  
+
   .docmenu      { width:200px; margin-right:15px; border-right:1px solid #DADADA; background-color:#f6f9fd; padding-left:10px; padding-right:10px; margin-bottom:5px; }
   .doctext      { margin-right:15px; padding-left:10px; padding-right:0px; margin-bottom:5px; padding-bottom:10px; padding-top:6px; }
   .docnav       { clear:both; width:100%; text-align:right; padding-top:4px; border-top:1px solid #DADADA; }
@@ -42,60 +42,60 @@
       <p>MetaQuotes Language 4 (MQL4) is a new built-in language for programming of trading
       strategies. This language allows to create your own Expert Advisors that make
       trading management automated and are perfectly suitable for implementing of one's
-      own trade strategies. Besides, one can use MQL4 for creation of one's own Custom 
-      Indicators, Scripts, and Libraries. You can start learning the language using Sergey Kovalyov's book named 
-      <i>Programming in Algorithmic Language MQL4</i> published and supported by 
+      own trade strategies. Besides, one can use MQL4 for creation of one's own Custom
+      Indicators, Scripts, and Libraries. You can start learning the language using Sergey Kovalyov's book named
+      <i>Programming in Algorithmic Language MQL4</i> published and supported by
       <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a>
       You can download the Book in .chm format at: <a href="http://www.mql4.com/files/mql4bookenglish.chm?source=metaeditor_help">http://www.mql4.com/files/mql4bookenglish.chm</a> (size 2.0 Mb).</p>
-      
-      <p>A large amount of functions necessary for analysis of the current and 
-      previously income quotes, as well as basic arithmetic and logic operations are included in MQL4 
-      structure. There are also basic indicators built in and commands of order 
+
+      <p>A large amount of functions necessary for analysis of the current and
+      previously income quotes, as well as basic arithmetic and logic operations are included in MQL4
+      structure. There are also basic indicators built in and commands of order
       placement and control.</p>
-      
-      <p>The MetaEditor 4 (text editor) that highlights different constructions of MQL4 
-      language is used for writing the program code. It helps users to orientate themselves in 
-      the expert system text quite easily. We use MetaQuotes Language Dictionary as a Help System for MQL4 language. 
-      An abridged guide contains functions divided into categories, operations, reserved words, and other language 
+
+      <p>The MetaEditor 4 (text editor) that highlights different constructions of MQL4
+      language is used for writing the program code. It helps users to orientate themselves in
+      the expert system text quite easily. We use MetaQuotes Language Dictionary as a Help System for MQL4 language.
+      An abridged guide contains functions divided into categories, operations, reserved words, and other language
       constructions and allows finding the description of every element we use.</p>
-      
+
       <p>Programs written in MetaQuotes Language 4 have different features and purposes:</p>
       <ul><li><p>
-          <strong>Expert Advisor</strong> is a mechanical trading system (MTS) linked up to a certain chart. 
-          An Advisor starts to run with every incoming tick for a given symbol. The Advisor will not be launched for a new, 
+          <strong>Expert Advisor</strong> is a mechanical trading system (MTS) linked up to a certain chart.
+          An Advisor starts to run with every incoming tick for a given symbol. The Advisor will not be launched for a new,
           tick if it is processing the previous one at this moment (i.e., the Advisor has not completed its operation yet).
-          The Advisor can both inform you about a possibility to trade and trade at an account automatically sending orders 
-          directly to the trade server. Like most trading systems, the terminal supports testing strategies on history data 
+          The Advisor can both inform you about a possibility to trade and trade at an account automatically sending orders
+          directly to the trade server. Like most trading systems, the terminal supports testing strategies on history data
           with displaying trading in-and-out points in the chart.<br/>
           Experts are stored in <em>terminal_directory\experts</em>.</p></li>
-        <li><p><strong>Custom Indicator</strong> is a technical indicator written independently in addition to those 
-          already integrated into the client terminal. Like built-in indicators, they cannot trade automatically 
+        <li><p><strong>Custom Indicator</strong> is a technical indicator written independently in addition to those
+          already integrated into the client terminal. Like built-in indicators, they cannot trade automatically
           and are intended for implementing of analytical functions only.<br/>
           Custom Indicators are stored in <em>terminal_directory\experts\indicators</em>.</p></li>
-        <li><p><strong>Script</strong> is a program intended for a single execution of some actions. Unlike 
+        <li><p><strong>Script</strong> is a program intended for a single execution of some actions. Unlike
           Expert Advisors, Scripts are not run tickwise, but on request.<br/>
           Scripts are stored in <em>terminal_dictionary\experts\scripts</em>.</p></li>
         <li><p><strong>Library</strong> is a set of custom functions containing programs most frequently used. Libraries cannot start execution by itself.<br/>
           Libraries are recommended to be stored in <em>terminal_directory\experts\libraries</em>.</p></li>
-        <li><p><strong>Included file</strong> is a source text of the most frequently used blocks of custom programs. 
-          Such files can be included into the source texts of experts, scripts, custom indicators, and libraries at the compiling stage. 
-          The use of included files is more preferable than the use of libraries because of additional burden occurring 
+        <li><p><strong>Included file</strong> is a source text of the most frequently used blocks of custom programs.
+          Such files can be included into the source texts of experts, scripts, custom indicators, and libraries at the compiling stage.
+          The use of included files is more preferable than the use of libraries because of additional burden occurring
           at calling library functions.<br/>
           Included files are recommended to be stored in <em>terminal_directory\experts\include</em></p></li>
       </ul>
     </content>
-    
+
   <group>
     tag=basis
     caption=Basics
-    
+
     <content>
       <p>MetaQuotes Language 4 (MQL4) is a new integrated language for programming of trading strategies.
-      This language allows users writing of their own programs (Expert Advisors) that automate trading management  
+      This language allows users writing of their own programs (Expert Advisors) that automate trading management
       and ideally suit for implementing of their own trading strategies. Besides, one can create one's own technical
       indicators (Custom Indicators), scripts, and libraries in MQL 4.</p>
     </content>
-    
+
   <group>
     tag=basis_syntax
     caption=Syntax
@@ -111,21 +111,21 @@
       <li><p>evaluation of a logical expression is always completed, never early terminated.</p></li>
       </ul>
     </content>
-    
+
     <text>
       tag=basis_syntax_comments
       caption=Comments
       <content>
-        <p>Multiline comments start with /* symbols and end with */ symbols. Such comments cannot be nested. Single 
-        comments start with // symbols, end with the symbol of a new line and can be nested into multiline comments. Comments are 
+        <p>Multiline comments start with /* symbols and end with */ symbols. Such comments cannot be nested. Single
+        comments start with // symbols, end with the symbol of a new line and can be nested into multiline comments. Comments are
         allowed where blank spaces are possible and tolerate any number of spaces.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
 // single comment
 
-/*  multi-     
+/*  multi-
     line         // nested single comment
-    comment 
+    comment
 */</pre>
       </content>
     </text>
@@ -136,7 +136,7 @@
       <content>
         <p>Identifiers are used as names of variables, functions, and data types.
         The length of an identifier cannot exceed 31 characters.</p>
-        <p>Characters you can use: digits (0 - 9), latin case sensitive letters (a - z, A - Z), underscore (_) and dot (.). 
+        <p>Characters you can use: digits (0 - 9), latin case sensitive letters (a - z, A - Z), underscore (_) and dot (.).
         The first character cannot be a digit or a dot. The identifier must not coincide with a reserved word.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">NAME1 namel Total_5 Paper name.var</pre>
@@ -147,9 +147,9 @@
       tag=basis_syntax_reserved
       caption=Reserved words
       <content>
-        <p>The identifiers listed below are fixed reserved words. A certain action is assigned to each 
+        <p>The identifiers listed below are fixed reserved words. A certain action is assigned to each
         of them, and they cannot be used for other purposes:</p>
-        
+
         <table cellspacing="0" cellpadding="4" border="0" class="docenums">
         <tr><th width="25%">Data types</th><th width="25%">Memory classes</th><th width="25%">Operators</th><th width="25%">Other</th></tr>
         <tr><td>bool</td><td>extern</td><td>break</td><td>false</td></tr>
@@ -178,7 +178,7 @@
       This is related to the fact that no special data type is foreseen for price data in MQL 4.</p>
       <p>Data of different types are processed with different rates. Integer data are processed at the fastest.
       To process the double precision data, a special co-processor is used. However, because of complicity of internal presentation
-      of data with floating point, they are processed slower than the integer ones. String data are processed at the longest because of 
+      of data with floating point, they are processed slower than the integer ones. String data are processed at the longest because of
       dynamic computer memory allocation/reallocation.</p>
       <p>The main data types are:</p>
       <ul><li><a href="help://basis_types_integer">Integer (int)</a></li>
@@ -189,9 +189,9 @@
           <li><a href="help://basis_types_color">Color (color)</a></li>
           <li><a href="help://basis_types_datetime">Date and time (datetime)</a></li>
       </ul>
-      <p>The <em>color</em> and <em>datetime</em> types make sense only to facilitate visualization 
-      and enter those parameters that had been set from expert advisor property tab or custom indicator 
-      &quot;Inputs&quot; tab. The data of <em>color</em> and <em>datetime</em> types are represented 
+      <p>The <em>color</em> and <em>datetime</em> types make sense only to facilitate visualization
+      and enter those parameters that had been set from expert advisor property tab or custom indicator
+      &quot;Inputs&quot; tab. The data of <em>color</em> and <em>datetime</em> types are represented
       as integer values. <em>int</em> and <em>double</em> are called arithmetic (numeric) types.</p>
       <p>Only implicit <a href="help://basis_types_casting">type casting</a> is used in <a href="help://basis_operations_expression">expressions</a>.</p>
     </content>
@@ -205,7 +205,7 @@
 int  (bool,color,datetime);
 double;
 string;</pre>
-        <p>Before operations (except for the assignment ones) are performed,  the data have been conversed 
+        <p>Before operations (except for the assignment ones) are performed,  the data have been conversed
         into the maximum priority type. Before assignment operations are performed, the data have been cast into the target type.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
@@ -230,13 +230,13 @@ string s = &quot;Ticket #&quot;+12345; // the expression is cast to the string t
         <p>Decimals: numbers from 0 to 9; zero must not be the first number.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">12, 111, -956 1007</pre>
-        
-        <p>Hexadecimals: numbers from 0 to 9, letters from a to f or A to F to represent the values 10 to 15; 
+
+        <p>Hexadecimals: numbers from 0 to 9, letters from a to f or A to F to represent the values 10 to 15;
         they start with 0x or 0X.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">0x0A, 0x12, 0X12, 0x2f, 0xA3, 0Xa3, 0X7C7</pre>
-        
-        <p>Its internal representation is a long 4-byte integer number. Integer constants can assume values from -2147483648 to 2147483647. 
+
+        <p>Its internal representation is a long 4-byte integer number. Integer constants can assume values from -2147483648 to 2147483647.
       If the constant exceeds this range, the result is undefined.</p>
       </content>
     </text>
@@ -245,9 +245,9 @@ string s = &quot;Ticket #&quot;+12345; // the expression is cast to the string t
       tag=basis_types_literal
       caption=Literal constants
       <content>
-        <p>Any single character enclosed in single quotes or a hexadecimal ASCII-code of a character looking 
-        like '\x10' is a character constant of integer type. Some characters like a single quote ('), double quote 
-        (&quot;) a question mark (?), a reverse slash (\), and control characters can be represented as a combination of 
+        <p>Any single character enclosed in single quotes or a hexadecimal ASCII-code of a character looking
+        like '\x10' is a character constant of integer type. Some characters like a single quote ('), double quote
+        (&quot;) a question mark (?), a reverse slash (\), and control characters can be represented as a combination of
         characters starting with a reverse slash (\) according to the table below:</p>
         <pre class="docmql4">line feed                NL (LF)  \n
 horizontal tab           HT       \t
@@ -262,18 +262,18 @@ hexadecimal ASCII-code   hh      \xhh</pre>
 int b = '$';
 int c = '&#xA9;'; // code 0xA9
 int d = '\xAE';   // symbol code &#xAE;</pre>
-        
-   <p>Its internal representation is a long 4-byte integer number. Literal constants can assume values from 0 to 255. 
+
+   <p>Its internal representation is a long 4-byte integer number. Literal constants can assume values from 0 to 255.
    If the constant exceeds this given range, the result is undefined.</p>
     </content>
     </text>
-    
+
    <text>
       tag=basis_types_bool
       caption=Boolean constants
       keywords=;bool;true;false;
       <content>
-        <p>Boolean constants may have the value of true or false, numeric representation of them is 1 or 0, 
+        <p>Boolean constants may have the value of true or false, numeric representation of them is 1 or 0,
         respectively. True or TRUE, False or FALSE can be used, as well.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">bool a = true;
@@ -288,14 +288,14 @@ bool c = 1;</pre>
       caption=Floating-point number constants (double)
       keywords=;double;
       <content>
-        <p>Floating-point constants consist of an integer part, a point (.), and a fractional part. The integer 
+        <p>Floating-point constants consist of an integer part, a point (.), and a fractional part. The integer
         and the fractional parts represent sequences of decimal numbers.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">double a = 12.111;
 double b = -956.1007;
 double c = 0.0001;
 double d = 16;</pre>
-        <p>Its internal representation is a double-precision number of 8 bytes. Floating-point constants can assume values from -1.7 * e-308 to 1.7 * e308. If a 
+        <p>Its internal representation is a double-precision number of 8 bytes. Floating-point constants can assume values from -1.7 * e-308 to 1.7 * e308. If a
         constant exceeds this range, the result is undefined.</p>
       </content>
     </text>
@@ -306,11 +306,11 @@ double d = 16;</pre>
       keywords=;string;
       <content>
         <p>String constant is a sequence of ASCII-code characters enclosed in double quotes: &quot;Character constant&quot;.</p>
-        
-      <p>A string constant is an array of characters enclosed in quotes. It is of the string type. 
-      If there is a need to insert a double quote (&quot;) into the string, a reverse slash (\) must be put before it. 
-      Any special <a href="help://basis_types_literal">character constants</a> can be inserted into the string if they have a reverse slash (\) before them. 
-      The length of a string constant lies between 0 and 255 characters. 
+
+      <p>A string constant is an array of characters enclosed in quotes. It is of the string type.
+      If there is a need to insert a double quote (&quot;) into the string, a reverse slash (\) must be put before it.
+      Any special <a href="help://basis_types_literal">character constants</a> can be inserted into the string if they have a reverse slash (\) before them.
+      The length of a string constant lies between 0 and 255 characters.
         If the string constant is longer, the superfluous characters on the right will be rejected, and compiler will alert correspondingly.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
@@ -320,7 +320,7 @@ double d = 16;</pre>
 "C:\\Program Files\\MetaTrader 4"
 "A" "1234567890" "0" "$"
 </pre>
-  <p>Its internal representation is a structure of 8 bytes. The first element of the structure is a long integer that contains 
+  <p>Its internal representation is a structure of 8 bytes. The first element of the structure is a long integer that contains
         the size of the buffer distributed for the line. The second element of the structure is 32-order address of the buffer that contains the line.</p>
       </content>
     </text>
@@ -333,12 +333,12 @@ double d = 16;</pre>
 <p>Color constants can be represented in three ways: literally, by integers, or by name (for named Web colors only).</p>
 
 <p>Literal representation consists of three parts representing numerical rate values of three main color components: red,
-green, blue. The constant starts with C and is enclosed in single quotes. Numerical rate values of a color component lie in the range 
+green, blue. The constant starts with C and is enclosed in single quotes. Numerical rate values of a color component lie in the range
 from 0 to 255.</p>
 
-<p>Integer-valued representation is written in a form of hexadecimal or a decimal number. A hexadecimal number looks 
-like 0x00BBGGRR where RR is the rate of the red color component, GG - of the green one, and BB - of the blue one. Decimal constants 
-are not directly reflected in RGB. They represent a decimal value of the hexadecimal integer representation.</p> 
+<p>Integer-valued representation is written in a form of hexadecimal or a decimal number. A hexadecimal number looks
+like 0x00BBGGRR where RR is the rate of the red color component, GG - of the green one, and BB - of the blue one. Decimal constants
+are not directly reflected in RGB. They represent a decimal value of the hexadecimal integer representation.</p>
 
 <p>Specific colors reflect the so-called <a href="help://constants_colors">Web colors set</a>.</p>
 
@@ -367,7 +367,7 @@ Black
       caption=Datetime constants
       keywords=;datetime;
       <content>
-<p>Datetime constants can be represented as a literal line consisting of 6 parts for values of year, month, 
+<p>Datetime constants can be represented as a literal line consisting of 6 parts for values of year, month,
 date, hours, minutes, and seconds. The constant is enclosed in single quotes and starts with D.
 Either date (year, month, date) or time (hours, minutes, seconds), or both can be skipped.
 Datetime constant can vary from Jan 1, 1970 to Dec 31, 2037.</p>
@@ -376,12 +376,12 @@ Datetime constant can vary from Jan 1, 1970 to Dec 31, 2037.</p>
 D'2004.01.01 00:00'     // New Year
 D'1980.07.19 12:30:27'
 D'19.07.1980 12:30:27'
-D'19.07.1980 12'        //equal to D'1980.07.19 12:00:00' 
+D'19.07.1980 12'        //equal to D'1980.07.19 12:00:00'
 D'01.01.2004'           //equal to D'01.01.2004 00:00:00'
 D'12:30:27'             //equal to D'[compilation date] 12:30:27'
 D''                     //equal to D'[compilation date] 00:00:00'</pre>
-      
-      <p>Its internal representation is a long integer number of 4 bytes. The value represents the amount of seconds  
+
+      <p>Its internal representation is a long integer number of 4 bytes. The value represents the amount of seconds
         elapse from 00:00 Jan 1, 1970.</p>
       </content>
     </text>
@@ -429,7 +429,7 @@ Changing the operation sign             x = - x;
 Product of values                       z = 3 * x;
 Division quotient                       i = j / 5;
 Division remainder                      minutes = time % 60;
-Adding 1 to the variable value          i++; 
+Adding 1 to the variable value          i++;
 Subtracting 1 from the variable value   k--;
 </pre>
 <p>The operations of adding/subtracting 1 (increment/decrement) cannot be used in expressions.</p>
@@ -460,11 +460,11 @@ Logical shift of y representation to the right by x bit  y &gt;&gt;= x;
 Logical shift of y representation to the left by x bit   y &lt;&lt;= x;
 Bitwise operation AND                                    y &amp;= x;
 Bitwise operation OR                                     y |= x;
-Bitwise operation exclusive OR 
+Bitwise operation exclusive OR
 of x and y binary notations                              y ^= x;</pre><br/>
 
- <p>There can be only one operation of assignment in an expression. Bitwise operations are performed with integer 
-numbers only. The logical shift operation uses values of x less than 5 binary digits. The greater digits are rejected, 
+ <p>There can be only one operation of assignment in an expression. Bitwise operations are performed with integer
+numbers only. The logical shift operation uses values of x less than 5 binary digits. The greater digits are rejected,
 so the shift is for the range of 0 to 31 bit. By %= operation (y value by module of x), the result sign is equal to the sign of divided number.</p>
       </content>
     </text>
@@ -474,8 +474,8 @@ so the shift is for the range of 0 to 31 bit. By %= operation (y value by module
       caption=Operations of relation
       keywords=;==;!=;&lt;;&gt;;&lt;=;&gt;=;
       <content>
-<p>The logical value FALSE is represented with an integer zero value, while the logical value TRUE is 
-represented with any value differing from zero.<br/>The value of expressions 
+<p>The logical value FALSE is represented with an integer zero value, while the logical value TRUE is
+represented with any value differing from zero.<br/>The value of expressions
 containing operations of relation or logical operations is 0 (FALSE) or 1 (TRUE).</p>
 <pre class="docmql4">
 True if a equals b                        a == b;
@@ -485,8 +485,8 @@ True if a is greater than b               a &gt; b;
 True if a is less than or equals b        a &lt;= b;
 True if a is greater than or equals b     a &gt;= b;
 </pre>
-<p>Two unnormalized floating-point numbers cannot be linked by == or != operations. 
-That is why it is necessary to subtract one from another, and the <a href="help://convert_NormalizeDouble">normalized</a> 
+<p>Two unnormalized floating-point numbers cannot be linked by == or != operations.
+That is why it is necessary to subtract one from another, and the <a href="help://convert_NormalizeDouble">normalized</a>
 outcome needs to be compared to null.</p>
       </content>
     </text>
@@ -496,46 +496,46 @@ outcome needs to be compared to null.</p>
       caption=Boolean operations
       keywords=;||;&amp;&amp;;
       <content>
-<p>Operand of logical negation (operation NOT displayed as exclamation mark) must be of arithmetic type. The result equals TRUE (1) if the operand value is FALSE (0); 
+<p>Operand of logical negation (operation NOT displayed as exclamation mark) must be of arithmetic type. The result equals TRUE (1) if the operand value is FALSE (0);
 and it equals FALSE (0) if the operand differs from FALSE (0).</p>
         <pre class="docmql4">if(!a) Print(&quot;not 'a'&quot;);</pre><br/>
 
 <p>Logical operation OR (||) of x and y values. The expression value is TRUE (1) if x or y value is true (not null).
 Otherwise, it is FALSE (0). Logical expressions are calculated completely, i.e., the so-called "short estimate" method does not apply to them.</p>
     <pre class="docmql4">if(x&lt;0 || x&gt;=max_bars) Print(&quot;out of range&quot;);</pre><br/>
-   
+
 <p>Logical operation AND (&amp;&amp;) of x and y values. The expression value is TRUE (1) if both x and y values are ture (not null).
 Otherwise, it is FALSE (0). </p>
 <pre class="docmql4">if(p!=x &amp;&amp; p&gt;y) Print(&quot;TRUE&quot;);</pre>
       </content>
     </text>
-      
+
     <text>
       tag=basis_operations_bit
       caption=Bitwise operations
       keywords=;&lt;&lt;;&gt;&gt;;~;!;^;&amp;;|;
       <content>
-<p>Complement of the variable value up to one. The value of the expression contains 1 in all digits where n contains 0, 
+<p>Complement of the variable value up to one. The value of the expression contains 1 in all digits where n contains 0,
 and it contains 0 in all digits where n contains 1.</p>
         <pre class="docmql4">b = ~n;</pre><br/>
-      
-<p>Binary-coded representation of x is shifted to the right by y digits. The right shift is a logical one, 
+
+<p>Binary-coded representation of x is shifted to the right by y digits. The right shift is a logical one,
 i.e., the freed left-side bits will be filled with zeros.</p>
         <pre class="docmql4">x = x &gt;&gt; y;</pre><br/>
 
-<p>The binary-coded representation of x is shifted to the right by y digits, the freed digits on the right will 
+<p>The binary-coded representation of x is shifted to the right by y digits, the freed digits on the right will
 be filled with zeroes.</p>
         <pre class="docmql4">x = x &lt;&lt; y;</pre><br/>
 
-<p>Bitwise operation AND of binary-coded x and y representations. The value of the expression contains 1 (TRUE) 
+<p>Bitwise operation AND of binary-coded x and y representations. The value of the expression contains 1 (TRUE)
 in all digits where both x and y do not contain zero; and it contains 0 (FALSE) in all other digits.</p>
         <pre class="docmql4">b = ((x &amp; y) != 0);</pre><br/>
 
-<p>Bitwise operation OR of binary-coded x and y representations. The expression value contains 1 in all digits 
+<p>Bitwise operation OR of binary-coded x and y representations. The expression value contains 1 in all digits
 where x or y is not equal to 0, and it contains 0 in all other digits.</p>
         <pre class="docmql4">b = x | y;</pre><br/>
 
-<p>Bitwise operation EXCLUSIVE OR of binary-coded x and y representations. The expression value contains 1 
+<p>Bitwise operation EXCLUSIVE OR of binary-coded x and y representations. The expression value contains 1
 in all digits where x and y have different binary values, and it contains 0 in all other digits.</p>
         <pre class="docmql4">b = x ^ y;</pre><br/>
 
@@ -552,38 +552,38 @@ At addressing to the i-th element of array, the expression value is the value of
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">array[i] = 3; //Assign the value of 3 to the i-th element of the array.</pre><br/>
 
-<p>Only an integer can be index of an array. Four-dimensional and below arrays are allowed. Each measurement is 
-        indexed from 0 to <b>measurement size</b>-1. In particular case, for a one-dimensional array consisting of 50 elements,  
+<p>Only an integer can be index of an array. Four-dimensional and below arrays are allowed. Each measurement is
+        indexed from 0 to <b>measurement size</b>-1. In particular case, for a one-dimensional array consisting of 50 elements,
         the reference to the first element will look like array[0], that to the the last element will array[49].</p>
 
-        <p>At access beyond the array, the executing subsystem will generate the error of <a href="help://constants_errors">ERR_ARRAY_INDEX_OUT_OF_RANGE</a> 
+        <p>At access beyond the array, the executing subsystem will generate the error of <a href="help://constants_errors">ERR_ARRAY_INDEX_OUT_OF_RANGE</a>
         that can be got through the <a href="help://check_GetLastError">GetLastError()</a> function.</p>
 
 <p><b>Call for function with x1,x2,...,xn arguments.</b><br/>
 Each argument can represent a constant, a variable, or an expression of the corresponding type. The arguments passed are separated by commas and must
 be inside of parentheses, the opening parenthesis to follow the name of the called function.<br/><br/>
-The expression value is the value returned by the function. If the returned value is of the void type, such function call cannot be 
+The expression value is the value returned by the function. If the returned value is of the void type, such function call cannot be
 placed to the right in the assignment operation. Please make sure that the expressions x1,x2,...,xn are executed exactly in this order.</p>
 <p class="doctabhdr">Example:</p>
         <pre class="docmql4">double SL=Bid-25*Point;
 int    ticket=OrderSend(Symbol(),OP_BUY,1,Ask,3,SL,Ask+25*Point,"My comment",123,0,Red);</pre><br/>
- 
+
 
 <p><b>Comma operation</b><br/>
-Expressions separated by commas are executed from left to right. All side effects of the left expression calculation can 
-appear before the right expression is calculated. The result type and value coincide with those of the right expression. The list 
+Expressions separated by commas are executed from left to right. All side effects of the left expression calculation can
+appear before the right expression is calculated. The result type and value coincide with those of the right expression. The list
 of parameters to be passed (see above) can be considered as an example.</p>
         <p class="doctabhdr">Example:</p>
         <pre class="docmql4">for(i=0,j=99; i&lt;100; i++,j--) Print(array[i][j]);</pre>
       </content>
     </text>
-   
+
     <text>
       tag=basis_operations_rules
       caption=Precedence rules
       <content>
-<p>Each group of operations in the 
-table has the same priority. The higher is the priority, the higher is the position of the group in the table. 
+<p>Each group of operations in the
+table has the same priority. The higher is the priority, the higher is the position of the group in the table.
 The precedence rules determine the grouping of operations and operands.</p>
 <pre class="docmql4">
 ()     Function call                     From left to right
@@ -617,7 +617,7 @@ The precedence rules determine the grouping of operations and operands.</p>
 &lt;=     Less than or equal
 &gt;      Greater than
 &gt;=     Greater than or equal
-==     Equal                        
+==     Equal
 !=     Not equal
 </pre>
 <pre class="docmql4">||     Logical OR                        From left to right</pre>
@@ -651,25 +651,25 @@ The precedence rules determine the grouping of operations and operands.</p>
     <content>
 <p>Language operators describe some algorithmic operations that must be executed to accomplish a task. The program
 body is a sequence of such operators. Operators following one by one are separated with a semicolon.<br/><br/>
-One operator can occupy one or several lines. Two or more operators can be located in the same line. Operators 
+One operator can occupy one or several lines. Two or more operators can be located in the same line. Operators
 that control over the execution order (if, if-else, switch, while and for) can be nested into each other.</p>
 <p class="doctabhdr">Example:</p>
         <pre class="docmql4">
 if(Month() == 12)
   if(Day() == 31) Print("Happy New Year!");</pre>
     </content>
-   
+
     <text>
       tag=basis_operators_compound
       caption=Compound operator
       <content>
-<p>A compound operator (a block) consists of one or more operators of any type enclosed in braces {}. The closing 
+<p>A compound operator (a block) consists of one or more operators of any type enclosed in braces {}. The closing
 brace must not be followed by a semicolon (;).</p>
         <p class="doctabhdr">Example:</p>
         <pre class="docmql4">if(x==0)
   {
    Print("invalid position x=",x);
-   return; 
+   return;
   }</pre>
       </content>
     </text>
@@ -687,7 +687,7 @@ y=x=3; // error</pre>
       <p>Assignment operator can be used in an expression only once.</p>
       <p><b>Function call operator</b>:</p>
       <pre class="docmql4"><i>Function_name(argument1,..., argumentN);</i>
-           
+
   FileClose(file);</pre><br/>
 
         <p><b>Empty operator</b><br/>
@@ -700,15 +700,15 @@ y=x=3; // error</pre>
       caption=Break operator
       keywords=;break;
       <content>
-<p>A <em>break</em> operator terminates the execution of the nearest nested outward 
-<a href="help://basis_operators_switch"><em>switch</em></a>, <a href="help://basis_operators_while"><em>while</em></a>, or  
-<a href="help://basis_operators_for"><em>for</em></a> operator. The control is given to the operator that follows the terminated one. 
+<p>A <em>break</em> operator terminates the execution of the nearest nested outward
+<a href="help://basis_operators_switch"><em>switch</em></a>, <a href="help://basis_operators_while"><em>while</em></a>, or
+<a href="help://basis_operators_for"><em>for</em></a> operator. The control is given to the operator that follows the terminated one.
 One of the purposes of this operator is to finish the looping execution when a certain value is assigned to a variable.</p>
 
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">// searching for the first zero element
-for(i=0;i&lt;array_size;i++) 
-  if((array[i]==0) 
+for(i=0;i&lt;array_size;i++)
+  if((array[i]==0)
     break;</pre>
       </content>
     </text>
@@ -718,8 +718,8 @@ for(i=0;i&lt;array_size;i++)
       caption=Continue operator
       keywords=;continue;
       <content>
-<p>A <em>continue</em> operator gives control to the beginning of the nearest outward cycle 
-<a href="help://basis_operators_while"><em>while</em></a> or <a href="help://basis_operators_for"><em>for</em></a> operator,  
+<p>A <em>continue</em> operator gives control to the beginning of the nearest outward cycle
+<a href="help://basis_operators_while"><em>while</em></a> or <a href="help://basis_operators_for"><em>for</em></a> operator,
 the next iteration being called. The purpose of this operator is opposite to that of <a href="help://basis_operators_break"><em>break</em></a> operator.</p>
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">// summary of nonzero elements of array
@@ -727,9 +727,9 @@ int func(int array[]) {
    int array_size=ArraySize(array);
    int sum=0;
    for (int i=0; i&lt;array_size; i++) {
-      if (a[i]==0) 
+      if (a[i]==0)
          continue;
-      sum += a[i]; 
+      sum += a[i];
    }
    return(sum);
 }</pre>
@@ -742,7 +742,7 @@ int func(int array[]) {
       keywords=;return;
       <content>
 <p>A <em>return</em> operator terminates the current function execution and returns the control to the calling program.
-A <em>return(expression);</em> operator terminates the current function execution with result transmission. The operator expression 
+A <em>return(expression);</em> operator terminates the current function execution with result transmission. The operator expression
 must be enclosed in parentheses and should not contain an assignment operator.</p>
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">int CalcSum(int x, int y)
@@ -764,15 +764,15 @@ must be enclosed in parentheses and should not contain an assignment operator.</
       caption=Conditional operator if-else
       keywords=;else;
       <content>
-        <p>If the expression is true, operator1 is executed and the control is given to the operator that follows 
+        <p>If the expression is true, operator1 is executed and the control is given to the operator that follows
       operator2 (operator2 is not executed). If the expression is false, operator2 is executed.</p>
         <pre class="docmql4"><i>if (expression)
      operator1
 else
      operator2</i></pre><br/>
 
-        <p>The <em>else</em> part of the <em>if</em> operator can be omitted. Thus, a divergence may appear in nested 
-      <em>if</em> operators with omitted <em>else</em> part. In this case, <em>else</em> addresses to the nearest previous 
+        <p>The <em>else</em> part of the <em>if</em> operator can be omitted. Thus, a divergence may appear in nested
+      <em>if</em> operators with omitted <em>else</em> part. In this case, <em>else</em> addresses to the nearest previous
         <em>if</em> operator in the same block that has no <em>else</em> part.</p>
 
         <p class="doctabhdr">Examples:</p>
@@ -790,7 +790,7 @@ if(x&gt;l)
 else        z=6;
 <br/>
 
-//   Nested operators 
+//   Nested operators
 if(x=='a')
   {
    y=1;
@@ -813,8 +813,8 @@ else Print(&quot;ERROR&quot;);</pre>
       caption=Switch operator
       keywords=;switch;case;default;
       <content>
-       <p>It compares the expression value with constants in all variants of <em>case</em> and gives control to the 
-      operator that corresponds with the expression value. Each variant of the <em>case</em> can be marked with an integer or 
+       <p>It compares the expression value with constants in all variants of <em>case</em> and gives control to the
+      operator that corresponds with the expression value. Each variant of the <em>case</em> can be marked with an integer or
       literal constant or with a constant expression. The constant expression cannot contain variables or function calls.
       Expression of the <em>switch</em> operator must be of integer type.</p>
         <pre class="docmql4"><i>switch(expression)
@@ -824,20 +824,20 @@ else Print(&quot;ERROR&quot;);</pre>
      ...
    default: operators
   }</i></pre><br/>
-  
-<p>Operators connected with the <em>default</em> label are executed if none of the constants in <em>case</em> 
-operators equals the expression value. The <em>default</em> variant must be necessarily final. If none of the constants 
-corresponds to the expression value and the <em>default</em> variant is not available, no actions are executed. The keyword 
-<em>case</em> and the constant are just labels, and if operators are executed for some <em>case</em> variant, the program will 
-further execute the operators of all following variants until <a href="help://basis_operators_break"><em>break</em></a> operator occurs. 
-It makes it possible to bind a subsequence of operators with several variants.</p> 
 
-<p>A constant expression is calculated during compilation. No two constants in one <em>switch</em> operator can have 
+<p>Operators connected with the <em>default</em> label are executed if none of the constants in <em>case</em>
+operators equals the expression value. The <em>default</em> variant must be necessarily final. If none of the constants
+corresponds to the expression value and the <em>default</em> variant is not available, no actions are executed. The keyword
+<em>case</em> and the constant are just labels, and if operators are executed for some <em>case</em> variant, the program will
+further execute the operators of all following variants until <a href="help://basis_operators_break"><em>break</em></a> operator occurs.
+It makes it possible to bind a subsequence of operators with several variants.</p>
+
+<p>A constant expression is calculated during compilation. No two constants in one <em>switch</em> operator can have
 the same values.</p>
 
 <p class="doctabhdr">Example:</p>
-<pre class="docmql4">switch(x) 
-  { 
+<pre class="docmql4">switch(x)
+  {
    case 'A':
       Print(&quot;CASE A&quot;);
       break;
@@ -857,33 +857,33 @@ the same values.</p>
       caption=Cycle operator while
       keywords=;while;
       <content>
-        <p>If the expression is true, the operator is executed until the expression becomes false. If the expression 
+        <p>If the expression is true, the operator is executed until the expression becomes false. If the expression
       is false, the control will be given to the next operator.</p>
-        <pre class="docmql4"><i>while(expression) 
+        <pre class="docmql4"><i>while(expression)
   operator;</i></pre><br/>
-        <p>An expression value has been defined before the operator is executed. Therefore, if the expression is false 
+        <p>An expression value has been defined before the operator is executed. Therefore, if the expression is false
       from the very beginning, the operator will not be executed at all.</p>
         <p class="doctabhdr">Example:</p>
-        <pre class="docmql4">while(k&lt;n) 
+        <pre class="docmql4">while(k&lt;n)
   {
-   y=y*x; 
+   y=y*x;
    k++;
   }</pre>
       </content>
     </text>
-      
+
     <text>
       tag=basis_operators_for
       caption=Cycle operator for
       keywords=;for;
       <content>
-        <p><em>Expression1</em> describes the cycle initialization. <em>Expression2</em> is the conditional test for the cycle 
-      termination. If it is true, the loop body <em>for</em> operator will be executed. The cycle repeats until <em>Expression2</em> 
-      becomes false. If it is false, the cycle will be terminated, and the control will be given to the next operator. <em>Expression3</em> 
+        <p><em>Expression1</em> describes the cycle initialization. <em>Expression2</em> is the conditional test for the cycle
+      termination. If it is true, the loop body <em>for</em> operator will be executed. The cycle repeats until <em>Expression2</em>
+      becomes false. If it is false, the cycle will be terminated, and the control will be given to the next operator. <em>Expression3</em>
       is calculated after each iteration.</p>
       <pre class="docmql4"><i>for (Expression1; Expression2; Expression3)
    operator;</i></pre><br/>
-   
+
         <p>The <em>for</em> operator is equivalent to the following succession of operators:</p>
         <pre class="docmql4"><i>Expression1;
 while(Expression2)
@@ -891,9 +891,9 @@ while(Expression2)
    operator;
    Expression3;
   };</i></pre><br/>
-  
-        <p>Any of the three or all three expressions can be absent in the <em>for</em> operator, but the semicolons (;) that 
-separate them must not be omitted. If Expression2 is omitted, it is considered constantly true. The <em>for</em> (;;) operator is a 
+
+        <p>Any of the three or all three expressions can be absent in the <em>for</em> operator, but the semicolons (;) that
+separate them must not be omitted. If Expression2 is omitted, it is considered constantly true. The <em>for</em> (;;) operator is a
 continuous cycle equivalent to the <em>while(1)</em> operator. Either expression 1 or 3 can consist of several expressions combined by a comma operator ','.</p>
 
         <p class="doctabhdr">Examples:</p>
@@ -914,8 +914,8 @@ for(i=0,j=n-l;i&lt;n;i++,j--) a[i]=a[j];</pre>
     tag=basis_functions
     caption=Functions
     <content>
-      <p>Function is a named part of a program that can be called from other parts of the program so many times as 
-      it is necessary. It consists of type definition for the value to be returned, name, formal parameters, and a composite operator  
+      <p>Function is a named part of a program that can be called from other parts of the program so many times as
+      it is necessary. It consists of type definition for the value to be returned, name, formal parameters, and a composite operator
       (block) of actions to be performed. Amount of passed parameters is limited and cannot exceed 64.</p>
       <p class="doctabhdr">Example:</p>
 <pre class="docmql4">double                       // type of value to be returned
@@ -924,8 +924,8 @@ linfunc (double x, double a, double b) // function name and parameters list
                              // composite operator
    return (a + b);           // returned value
  }</pre>
- 
-      <p>The "return" operator can return the value of the expression included into this operator. If necessary, the 
+
+      <p>The "return" operator can return the value of the expression included into this operator. If necessary, the
       expression value can be transformed into the type of function result. A function that does not return values must be of "void" type.</p>
       <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
@@ -958,11 +958,11 @@ int somefunc(double a, double d=0.0001, int n, bool b, string s="passed string")
         <p>If a name that has not been described before appears in an expression and is followed by the left parenthesis,
       it will be contextually considered as the name of a function.</p>
         <pre class="docmql4"><i>function_name (x1, x2,..., xn)</i></pre><br/>
-         
-        <p>Arguments (<a href="help://basis_variables_formal">formal parameters</a>) are passed by value, i.e., 
-      each expression <em>xl</em>, . . . , <em>xn</em> is calculated, and the value is passed to the function. The order of expressions calculation 
-      and that of values loading are guaranteed. During the execution, the system checks the number and type of arguments given to the function. 
-      Such way of addressing to the function is called a value call. Function call is an expression thy value of which is the value returned by the function. 
+
+        <p>Arguments (<a href="help://basis_variables_formal">formal parameters</a>) are passed by value, i.e.,
+      each expression <em>xl</em>, . . . , <em>xn</em> is calculated, and the value is passed to the function. The order of expressions calculation
+      and that of values loading are guaranteed. During the execution, the system checks the number and type of arguments given to the function.
+      Such way of addressing to the function is called a value call. Function call is an expression thy value of which is the value returned by the function.
       The function type described above must correspond with the type of the returned value. The function can be declared or described in any part of the program
       on the global scope, i.e., outside other functions. The function cannot be declared or described inside of another function.</p>
         <p class="doctabhdr">Examples:</p>
@@ -979,11 +979,11 @@ double linfunc(double x[], double a, double b)
    return (a*x[0] + b);
   }</pre><br/>
 
-        <p>At calling of a function with default parameters, the list of parameters to be passed can be limited, 
+        <p>At calling of a function with default parameters, the list of parameters to be passed can be limited,
       but not before the first default parameter.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">void somefunc(double init,double sec=0.0001,int level=10);  // function prototype
-        
+
 somefunc();                   // wrong call, the first required parameter must be presented.
 somefunc(3.14);               // proper call
 somefunc(3.14, 0.0002);       // proper call
@@ -1004,20 +1004,20 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
 
         <b>init()</b> is a function to be called during the module initialization. If it is not available, no function will be called at initialization.<br/><br/>
 
-        <b>start()</b> is the basic function. For experts, it is called after the next tick has income. For custom indicators, it is called 
-      at recalculation after the indicator has been attached to the chart, at opening of the client terminal (if the indicator is attached to the chart), 
-      and after the next tick has income, as well. For scripts, it is executed immediately after the script has been attached to the chart 
+        <b>start()</b> is the basic function. For experts, it is called after the next tick has income. For custom indicators, it is called
+      at recalculation after the indicator has been attached to the chart, at opening of the client terminal (if the indicator is attached to the chart),
+      and after the next tick has income, as well. For scripts, it is executed immediately after the script has been attached to the chart
       and initialized. If there is no start() function in the module, the module (expert, script, or custom indicator) cannot be launched.<br/><br/>
 
         <b>deinit()</b> is a function to be called during deinitialization of the module. If it is not available, no function will be called at deinitialization.</p>
 
-        <p>Pre-defined functions can have some parameters. However, no parameters will be taken from outside when these functions 
-      are called by the client terminal, but the default values will be used. Functions of <em>start()</em>, <em>init()</em>, and 
+        <p>Pre-defined functions can have some parameters. However, no parameters will be taken from outside when these functions
+      are called by the client terminal, but the default values will be used. Functions of <em>start()</em>, <em>init()</em>, and
         <em>deinit()</em> can be called from any point of the module according to the common rules, equally to other functions.</p>
-        
-        <p>It is not recommended to call <em>start()</em> function from <em>init()</em> function or to perform trade operations, 
-      as chart data, market prices, etc. can be incomplete by the moment of the module initialization. The <em>init()</em> and 
-      <em>deinit()</em> functions must finish their working as soon as possible and, in no case, shall they loop when trying to 
+
+        <p>It is not recommended to call <em>start()</em> function from <em>init()</em> function or to perform trade operations,
+      as chart data, market prices, etc. can be incomplete by the moment of the module initialization. The <em>init()</em> and
+      <em>deinit()</em> functions must finish their working as soon as possible and, in no case, shall they loop when trying to
       start its full-fledged working before the <em>start()</em> function is called.</p>
       </content>
     </text>
@@ -1028,7 +1028,7 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
     tag=basis_variables
     caption=Variables
     <content>
-      <p>Variables must be declared before they are used. Unique names are used to identify variables. Descriptions of 
+      <p>Variables must be declared before they are used. Unique names are used to identify variables. Descriptions of
       variables are used for them to be defined and for types to be declared. Description is not an operator.</p>
       <p><b>The basic types are:</b></p>
       <ul>
@@ -1047,11 +1047,11 @@ bool   bLog;
 
         <p><b>Additional types:</b></p>
         <ul><li><a href="help://basis_types_color">color</a> is an integer representing an RGB color;</li>
-            <li><a href="help://basis_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that 
+            <li><a href="help://basis_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
          have passed since 0.00 a.m. on 1 January, 1970.</li>
 
 </ul>
-        <p>Additional data types make sense only at the declaration of <a href="help://basis_variables_extern">input parameters</a> for their more convenient 
+        <p>Additional data types make sense only at the declaration of <a href="help://basis_variables_extern">input parameters</a> for their more convenient
        representation in the properties window.</p>
         <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
@@ -1062,17 +1062,17 @@ color    cModify_Color = C'0x44,0xB9,0xE6';
         <p><b>Arrays</b></p>
 <p>Array is the indexed sequence of the identical-type data.</p>
         <pre class="docmql4">int    a[50];       // A one-dimensional array of 50 integers.
-double m[7][50];    // Two-dimensional array of seven arrays, 
+double m[7][50];    // Two-dimensional array of seven arrays,
                     //each of them consisting of 50 integers.
         </pre><br/>
 
         <p>Only an integer can be an <a href="help://basis_operations_other">array index</a>. No more than four-dimensional arrays
-      are allowed. Numbering of array elements starts with 0. The last element of a one-dimensional array has the number which is 
-      1 less than the array size. This means that call for the last element of an array consisting of 50 integers will appear as 
+      are allowed. Numbering of array elements starts with 0. The last element of a one-dimensional array has the number which is
+      1 less than the array size. This means that call for the last element of an array consisting of 50 integers will appear as
       a[49]. The same concerns multidimensional arrays: A dimension is indexed from 0 to the <b>dimension size</b>-1.
         The last element of a two-dimensional array from the example will appear as m[6][49].</p>
 
-        <p>If there is an attempt to access out of the array range, the executing subsystem will generate error named 
+        <p>If there is an attempt to access out of the array range, the executing subsystem will generate error named
         <a href="help://constants_errors">ERR_ARRAY_INDEX_OUT_OF_RANGE</a> that can be got using the <a href="help://check_GetLastError">GetLastError()</a> function.</p>
       </content>
 
@@ -1081,7 +1081,7 @@ double m[7][50];    // Two-dimensional array of seven arrays,
       caption=Local variables
       <content>
        <p>A variable declared inside any function is local. The scope of a local variable is limited to the
-      function range inside which it is declared. A local variable can be initialized by outcome of any expression. Every call of 
+      function range inside which it is declared. A local variable can be initialized by outcome of any expression. Every call of
       the function initializes a local variable. Local variables are stored in memory area of the corresponding function.</p>
 <p class="doctabhdr">Example:</p>
         <pre class="docmql4">
@@ -1093,15 +1093,15 @@ int somefunc()
   }</pre><br/>
       </content>
     </text>
-        
+
     <text>
       tag=basis_variables_formal
       caption=Formal parameters
       <content>
 
-<p>Parameters <a href="help://basis_functions_call">passed to the function</a> are local. Scope is the function block. 
-Formal parameters must have names differing from those of external variables and local variables defined within one 
-function. In the block  of the function to the formal parameters some values can be assigned. Some values can be assigned to 
+<p>Parameters <a href="help://basis_functions_call">passed to the function</a> are local. Scope is the function block.
+Formal parameters must have names differing from those of external variables and local variables defined within one
+function. In the block  of the function to the formal parameters some values can be assigned. Some values can be assigned to
 formal parameters in the function block.</p>
         <p class="doctabhdr">Example:</p>
         <pre class="docmql4">
@@ -1121,13 +1121,13 @@ value. Parameters, next to the intialized one, must also be initialized.</p>
 
        <p>When calling such a function, the initialized parameters can be omitted, the defaults being substituted instead of them.</p>
        <p class="doctabhdr">Example:</p><pre class="docmql4">func(123, 0.5);</pre><br/>
-       
+
        <p>MQL4-library functions <a href="help://basis_variables_extfunctions">imported</a> within other modules cannot have parameters initialized by default values.</p>
-      
-      <p>Parameters are passed by value, i.e., modifications of the corresponding local variable inside the called function 
-      will not be shown in the calling function in any way. It is possible to pass arrays as parameters. However, for an array passed as parameter, 
+
+      <p>Parameters are passed by value, i.e., modifications of the corresponding local variable inside the called function
+      will not be shown in the calling function in any way. It is possible to pass arrays as parameters. However, for an array passed as parameter,
       it is impossible to change values of its elements.</p>
-      
+
       <p>It is also possible to pass parameters by reference. In this case, modification of such parameters will
       be shown in the corresponding variables in the called function passed by reference. Array elements cannot be passed by reference.
       Parameters can be passed by reference only within one module, such possibility being not provided for libraries.
@@ -1147,11 +1147,11 @@ void func(int&amp; x, double&amp; y, double&amp; z[])
    x=i;
    y=calculated_tp;
   }</pre><br/>
-      <p>Arrays can be passed by reference, as well, all changes being shown in the source array. Unlike 
+      <p>Arrays can be passed by reference, as well, all changes being shown in the source array. Unlike
      simple parameters, arrays can be passed by reference into library functions, as well.<br/><br/>
 
       Parameters passed by reference cannot be initialized with defaults.<br/><br/>
-      
+
       Into function cannot be passed more than 64 parameters.</p>
       </content>
     </text>
@@ -1161,7 +1161,7 @@ void func(int&amp; x, double&amp; y, double&amp; z[])
       caption=Static variables
       keywords=;static;
       <content>
-<p>The memory class of "static" defines a static variable. The specifier "static" is declared before a data type.</p> 
+<p>The memory class of "static" defines a static variable. The specifier "static" is declared before a data type.</p>
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
 int somefunc()
@@ -1170,11 +1170,11 @@ int somefunc()
    ....
    return(flag);
   }</pre><br/>
-      <p>Static variables are stored in the permanent memory, their values do not get lost when the function is exited. 
-      Any variables in a block, except for formal parameters of the function, can be defined as static. The static variable can be 
-      initialized by a constant of the corresponded type, unlike a simple local variable which can be initialized by any expression. 
-      If there is no explicit initialization, the static variable is initialized with zero. Static variables are initialized only once 
-      before calling of the "init()" function, that is at exit from the function inside which the static variable is declared, 
+      <p>Static variables are stored in the permanent memory, their values do not get lost when the function is exited.
+      Any variables in a block, except for formal parameters of the function, can be defined as static. The static variable can be
+      initialized by a constant of the corresponded type, unlike a simple local variable which can be initialized by any expression.
+      If there is no explicit initialization, the static variable is initialized with zero. Static variables are initialized only once
+      before calling of the "init()" function, that is at exit from the function inside which the static variable is declared,
       the value of this variable not getting lost.</p>
       </content>
     </text>
@@ -1192,13 +1192,13 @@ int start()
   {
    ...
   }</pre><br/>
-  
-        <p>Scope of global variables is the entire program. Global variables are accessible from all functions 
-      defined in the program. They are initialized with zero if no other initial value is explicitly defined. A global 
-      variable can be initialized only by a constant that corresponds with its type. Global variables can be initialized 
+
+        <p>Scope of global variables is the entire program. Global variables are accessible from all functions
+      defined in the program. They are initialized with zero if no other initial value is explicitly defined. A global
+      variable can be initialized only by a constant that corresponds with its type. Global variables can be initialized
       only once after program loading into client terminal memory.</p>
 
-        <p>Note: Variables declared at global level must not be mixed up with the Client Terminal global variables   
+        <p>Note: Variables declared at global level must not be mixed up with the Client Terminal global variables
         that can be accessed unsing the <a href="help://globals"><em>GlobalVariable...()</em></a> functions.</p>
       </content>
     </text>
@@ -1208,7 +1208,7 @@ int start()
       caption=Defining extern variables
       keywords=;extern;
      <content>
-        <p>The <em>extern</em> memory class defines an extern variable. The <em>extern</em> specifier 
+        <p>The <em>extern</em> memory class defines an extern variable. The <em>extern</em> specifier
       is declared before a data type. </p>
         <p class="doctabhdr">Example:</p>
 <pre class="docmql4">extern double InputParameter1 = 1.0;
@@ -1226,11 +1226,11 @@ int init()
       tag=basis_variables_initialization
       caption=Initialization of variables
       <content>
-        <p>Any variable can be initialized at its defining. Any variable is initialized with zero (0) 
-      if no other initial value is explicitly defined. Global and static variables can be initialized only by a constant 
+        <p>Any variable can be initialized at its defining. Any variable is initialized with zero (0)
+      if no other initial value is explicitly defined. Global and static variables can be initialized only by a constant
       of the corresponding type. Local variables can be initialized by any expression, not only constant.</p>
-      
-        <p>Global and static variables are initialized only once. Local variables are initialized every 
+
+        <p>Global and static variables are initialized only once. Local variables are initialized every
       time by call of the corresponded functions.</p>
       <p class="doctabhdr">Examples:</p>
       <pre class="docmql4">
@@ -1240,20 +1240,20 @@ string s       = "hello";
 double f[]     = { 0.0, 0.236, 0.382, 0.5, 0.618, 1.0 };
 int    a[4][4] = { 1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  4, 4, 4, 4 };</pre><br/>
 
-        <p>The list of array elements values must be enclosed in braces. Initializing values omitted are considered 
-      as equal to 0. If the initializing array size is not defined, it will be defined by the compiler from the size of 
+        <p>The list of array elements values must be enclosed in braces. Initializing values omitted are considered
+      as equal to 0. If the initializing array size is not defined, it will be defined by the compiler from the size of
       the initializing sequence. Multidimensional arrays are initialized by a one-dimensional sequence, i.e. sequence without additional braces.
       All arrays, including those declared in the local scope, can be initialized with constants only.</p>
       </content>
     </text>
-    
+
    <text>
       tag=basis_variables_extfunctions
       caption=External functions definition
       keywords=;import;#import;
       <content>
-        <p>The type of external functions defined in another component of a program must be explicitly described. 
-      The absence of such a definition may result in errors during the compilation, linkage, or execution of the program. 
+        <p>The type of external functions defined in another component of a program must be explicitly described.
+      The absence of such a definition may result in errors during the compilation, linkage, or execution of the program.
       While describing an external object, the keyword of <em>#import</em> must be used with the reference to the module.</p>
         <pre class="docmql4">#import "user32.dll"
   int     MessageBoxA(int hWnd ,string szText,string szCaption,int nType);
@@ -1263,8 +1263,8 @@ int    a[4][4] = { 1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  4, 4, 4, 4 };</pre><br
 #import</pre><br/>
 
         <p>Import can be used to easily describe functions called from external DLLs or compiled EX4 libraries.<br/><br/>
-        Pointers to variables can be passed to imported dll functions. Data of the <em>string</em> type are passed as a pointer 
-        to the corresponding memory block (one should keep in mind that internal representation of string data consists of two parts: 
+        Pointers to variables can be passed to imported dll functions. Data of the <em>string</em> type are passed as a pointer
+        to the corresponding memory block (one should keep in mind that internal representation of string data consists of two parts:
         the memory block length and the memory block pointer). If there is a need to pass data of the <em>int</em> or <em>double</em>
         type, then the one-dimensional array of the corresponding type should be passed by reference as a parameter.</p>
         <p class="doctabhdr">Example:</p>
@@ -1290,7 +1290,7 @@ int start()
     tag=basis_preprosessor
     caption=Preprocessor
     <content>
-    Preprocessor is a special subsystem of MQL4 compiler that is intended for preparation of the program source code immediately 
+    Preprocessor is a special subsystem of MQL4 compiler that is intended for preparation of the program source code immediately
     before the program is compiled.<br/><br/>
     Preprocessor allows enhancement of the source code readability. The code can be structured by including of specific
     files containing source codes of MQL4 programs. The possibility to assign mnemonic names to specific constants contributes to enhancement of the code readability.<br/><br/>
@@ -1303,13 +1303,13 @@ int start()
       caption=Constant declaration
       keywords=;#define;define;
       <content>
-        <p>Using the <em>#define</em> construction, one can define the symbolic name or symbolic constant 
-      at the program start to be the specific symbol string. Later on, the compiler will replace all appearances of this name 
-      without quotation marks with the corresponding string. In fact, this name can be replaced by any absolutely arbitrary text, 
+        <p>Using the <em>#define</em> construction, one can define the symbolic name or symbolic constant
+      at the program start to be the specific symbol string. Later on, the compiler will replace all appearances of this name
+      without quotation marks with the corresponding string. In fact, this name can be replaced by any absolutely arbitrary text,
       not necessary with digits:</p>
         <pre class="docmql4"><i>#define identifier value</i></pre><br/>
-        
-        <p>The constant identifier conforms to the same rules as those regulating names of variables. 
+
+        <p>The constant identifier conforms to the same rules as those regulating names of variables.
       The value can be of any type:</p>
         <pre class="docmql4">#define ABC          100
 #define PI           0.314
@@ -1335,11 +1335,11 @@ void ShowCopyright()
       ;indicator_levelcolor;indicator_levelwidth;indicator_levelstyle;show_confirm;show_inputs;
       </keywords>
       <content>
-        <p>Every MQL4 program allows to specify additional specific parameters named <em>#property</em> 
-      that help client terminal in proper servicing for programs without the necessity to launch them explicitly. 
+        <p>Every MQL4 program allows to specify additional specific parameters named <em>#property</em>
+      that help client terminal in proper servicing for programs without the necessity to launch them explicitly.
       This concerns external settings of indicators, first of all.</p>
         <pre class="docmql4"><i>#property identifier value</i></pre><br/>
-        
+
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Type</th><th width="75%">Description</th></tr>
         <tr><td>link</td><td>string</td><td>a link to the company website</td></tr>
@@ -1361,7 +1361,7 @@ void ShowCopyright()
         <tr><td>show_confirm</td><td>void</td><td>before script run message box with confirmation appears</td></tr>
         <tr><td>show_inputs</td><td>void</td><td>before script run its property sheet appears; disables show_confirm property</td></tr>
         </table><br/>
-        
+
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
 #property link        "http://www.metaquotes.net"
@@ -1387,10 +1387,10 @@ void ShowCopyright()
 #include &lt;WinUser32.mqh&gt;
 #include "mylib.mqh"</pre><br/>
 
-        <p>Preprocessor replaces this line with the content of the file WinUser32.mqh. Angle brackets mean that the <em>WinUser32.mqh</em> file will be 
+        <p>Preprocessor replaces this line with the content of the file WinUser32.mqh. Angle brackets mean that the <em>WinUser32.mqh</em> file will be
 taken from the default directory (usually <em>terminal_directory\experts\include</em>). The current directory is not searched.</p>
-        
-        <p>If the file name is enclosed in quotation marks, the search will be performed in the current directory 
+
+        <p>If the file name is enclosed in quotation marks, the search will be performed in the current directory
       (where the main file of the source code is located). The standard directory is not searched in.</p>
       </content>
     </text>
@@ -1400,10 +1400,10 @@ taken from the default directory (usually <em>terminal_directory\experts\include
       caption=Importing of functions
       keywords=;import;DLL;EX4;
       <content>
-        <p>Functions are imported from compiled MQL4 modules (*.ex4 files) and from operating system modules (*.dll 
-      files). The module name is specified in the <em>#import</em> directive. For compiler to be able to form the imported 
-      function call and pass parameters in a proper way, the full description of functions is needed. Functions descriptions 
-      follow the <em>#import &quot;module name&quot;</em> immediately. The new <em>#import</em> command (can be without 
+        <p>Functions are imported from compiled MQL4 modules (*.ex4 files) and from operating system modules (*.dll
+      files). The module name is specified in the <em>#import</em> directive. For compiler to be able to form the imported
+      function call and pass parameters in a proper way, the full description of functions is needed. Functions descriptions
+      follow the <em>#import &quot;module name&quot;</em> immediately. The new <em>#import</em> command (can be without
       parameters) completes the imported functions description block.</p>
         <pre class="docmql4"><i>#import "file_name"
     func1 define;
@@ -1411,9 +1411,9 @@ taken from the default directory (usually <em>terminal_directory\experts\include
     ...
     funcN define;
 #import</i></pre><br/>
-<p>Imported functions must have their unique names. Functions having the same names cannot be imported simultaneously 
+<p>Imported functions must have their unique names. Functions having the same names cannot be imported simultaneously
 from different modules. Imported functions names may not coincide with those of built-in functions.</p>
-<p>Since the imported functions are out of the module to be compiled, the compiler cannot check correctness of parameters 
+<p>Since the imported functions are out of the module to be compiled, the compiler cannot check correctness of parameters
 passed. This is why, to avoid runtime errors, it is necessary to declare the compliance of types and order of parameters precisely.
 The parameters passed to imported functions (both from EX4 and from DLL modules) cannot have values by default.</p>
         <p class="doctabhdr">Examples:</p>
@@ -1436,10 +1436,10 @@ The parameters passed to imported functions (both from EX4 and from DLL modules)
    int    ProcessStringArray(string&amp; arr[], int);
 #import</pre><br/>
 
-        <p>For importing of functions during execution of an mql4 program, the so-called <em>late binding</em> is used. 
+        <p>For importing of functions during execution of an mql4 program, the so-called <em>late binding</em> is used.
         This means that until the imported function has not been called, the corresponding module (ex4 or dll) will not be loaded.</p>
 
-        <p>It is not recommended to use the fully qualified name of loaded module appearing as 
+        <p>It is not recommended to use the fully qualified name of loaded module appearing as
         <em>Drive:\Directory\FileName.Ext</em>. MQL4 libraries are loaded from the <em>terminal_dir\experts\libraries</em> folder.
         If the library has not been found, there will be an attempt to load a library from the <em>terminal_dir\experts</em> folder.</p>
       </content>
@@ -1451,7 +1451,7 @@ The parameters passed to imported functions (both from EX4 and from DLL modules)
     tag=constants
     caption=Standard constants
     <content>
-     <p>To simplify the program writing and to make program texts more convenient for perception, predefined standard constants are 
+     <p>To simplify the program writing and to make program texts more convenient for perception, predefined standard constants are
      forseen in MQL4.<br/><br/>
      Standard constants are similar to <a href="help://basis_preprosessor_constant">macro substitutions</a> and are of int type.<br/><br/>
      The constants are grouped by their purposes.</p>
@@ -1462,7 +1462,7 @@ The parameters passed to imported functions (both from EX4 and from DLL modules)
       caption=Series arrays
       keywords=;MODE_OPEN;MODE_LOW;MODE_HIGH;MODE_CLOSE;MODE_TIME;MODE_VOLUME;
       <content>
-<p>Series array identifier used with <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>, 
+<p>Series array identifier used with <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>,
 <a href="help://series_iHighest">iHighest()</a> and <a href="help://series_iLowest">iLowest()</a> functions.<br/>
 It can be any of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
@@ -1517,7 +1517,7 @@ It can be any of the following values:</p>
 </table>
       </content>
     </text>
-    
+
     <text>
       tag=constants_prices
       caption=Price constants
@@ -1611,7 +1611,7 @@ It can be any of the following values:</p>
       </content>
     </text>
 
-    
+
     <text>
       tag=constants_arrows
       caption=Arrow codes
@@ -1944,7 +1944,7 @@ It can be one of the following values:</p>
         </table>
       </content>
     </text>
-    
+
     <text>
       tag=constants_lines
       caption=Indicator lines
@@ -2072,8 +2072,8 @@ To indicate the buttons displayed in the message box, specify one of the followi
 <tr><td>MB_DEFBUTTON3</td><td>0x00000200</td><td>The third button is the default button.</td></tr>
 <tr><td>MB_DEFBUTTON4</td><td>0x00000300</td><td>The fourth button is the default button.</td></tr>
 </table>
-        <p>MessageBox() function behavior flags are defined in the <em>WinUser32.mqh</em> file, this is why this heading file 
-        must be included to programs through <em>#include &lt;WinUser32.mqh&gt;</em>. Not all possible flags are listed here. For more 
+        <p>MessageBox() function behavior flags are defined in the <em>WinUser32.mqh</em> file, this is why this heading file
+        must be included to programs through <em>#include &lt;WinUser32.mqh&gt;</em>. Not all possible flags are listed here. For more
         details, please refer to Win32 API description.</p>
       </content>
     </text>
@@ -2387,17 +2387,17 @@ void SendMyMessage(string text)
       </content>
     </text>
   </group>
-  
+
 
   <group>
     tag=predefined_variables
     caption=Predefined variables
     <content>
-    For each executable MQL4 program, a number of predefined variables is supported that reflect the state of the current price chart 
+    For each executable MQL4 program, a number of predefined variables is supported that reflect the state of the current price chart
      at the launching of a program: an expert, a script, or a custom indicator.<br/><br/>
     Libraries use variables of the module that has called a library.<br/><br/>
-    To have a safe and quick access to these data, client terminal provides local copies of predefined variables for each launched 
-     program separately. These data are updated at every launch of an attached expert or a custom indicator automatically or using the 
+    To have a safe and quick access to these data, client terminal provides local copies of predefined variables for each launched
+     program separately. These data are updated at every launch of an attached expert or a custom indicator automatically or using the
     <a href="help://windows_RefreshRates">RefreshRates()</a> function call.
     </content>
     <variable>
@@ -2405,7 +2405,7 @@ void SendMyMessage(string text)
       caption=Ask
       type=double
       <content>
-      The latest known seller's price (ask price) for the current symbol. The <a href="help://windows_RefreshRates">RefreshRates()</a> function 
+      The latest known seller's price (ask price) for the current symbol. The <a href="help://windows_RefreshRates">RefreshRates()</a> function
       must be used to update.<br/>
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
@@ -2440,7 +2440,7 @@ void SendMyMessage(string text)
       caption=Bid
       type=double
       <content>
-      The latest known buyer's price (offer price, bid price) of the current symbol. The <a href="help://windows_RefreshRates">RefreshRates()</a> function must be 
+      The latest known buyer's price (offer price, bid price) of the current symbol. The <a href="help://windows_RefreshRates">RefreshRates()</a> function must be
       used to update.<br/>
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
@@ -2608,7 +2608,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       keywords=;Time;
       type=datetime
       <content>
-Series array that contains open time of each bar of the current chart. Data like datetime represent time, in seconds, that has passed 
+Series array that contains open time of each bar of the current chart. Data like datetime represent time, in seconds, that has passed
 since 00:00 a.m. of 1 January, 1970.<br/><br/>
 Series array elements are indexed in the reverse order, i.e., from the last one to the first one.
 The current bar which is the last in the array is indexed as 0. The oldest bar, the first in the chart, is indexed as <a href="help://predefined_variables_Bars">Bars</a>-1.<br/><br/>
@@ -2674,14 +2674,14 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </variable>
   </group>
 
-  
+
   <group>
     tag=runtime
     caption=Program Run
     <content>
-    For an MQL4 program to work, it must be compiled (the "Compile" button or F5). It must be compiled 
+    For an MQL4 program to work, it must be compiled (the "Compile" button or F5). It must be compiled
     without any errors (warnings are allowed, but they must be analyzed). At this, in the corresponding directory, <em>terminal_dir\experts</em>,
-    <em>terminal_dir\experts\indicators</em>, or <em>terminal_dir\experts\scripts</em>, an executable file must be created that has the same name 
+    <em>terminal_dir\experts\indicators</em>, or <em>terminal_dir\experts\scripts</em>, an executable file must be created that has the same name
     and extension EX4. It is this file that can be launched for execution.<br/><br/>
     Experts, custom indicators, and scripts are attached to one of the opened charts by dragging with the mouse from the "Navigator" window of the client
     terminal to the corresponding chart (the Drag'n'Drop technique). MQL4 programs can work only when the client terminal is on.<br/><br/>
@@ -2701,39 +2701,39 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <content>
         <p>
         Immediately after the program has been attached to the chart, it starts working with the init() function. The init()
-        function of an expert advisor or a custom indicator attached to the chart will run just after client terminal has started 
-        and history data (this concerns only experts, but not indicators) have been loaded  additionally, after the symbol and/or 
-        chart period have been changed, after the program has been recompiled in MetaEditor, after inputs have been changed from 
+        function of an expert advisor or a custom indicator attached to the chart will run just after client terminal has started
+        and history data (this concerns only experts, but not indicators) have been loaded  additionally, after the symbol and/or
+        chart period have been changed, after the program has been recompiled in MetaEditor, after inputs have been changed from
         the window of expert or custom indicator settings. An expert will also be initialized after the account has been changed.<br/><br/>
-        
-        Every program attached to a chart completes its work with the deinit() function. The deinit() function runs at the client 
-        terminal shutdown, at chart closing,  immediately before the symbol and/or chart period is changed, at successful recompiling 
-        of the program, at changing of inputs, or at changing of the account. One can see the reason of deinitialization using the 
-        <a href="help://check_UninitializeReason">UninitializeReason()</a> function during execution of the deinit() function. The deinit() 
-        function must be executed within 2.5 seconds. If the function has not completed its execution within this time period, it will 
-        be completed forcedly. Scripts are an exception to this rule, as they normally finish their working independently, without any 
-        commands from outside. If a script works very long (due to endless loop, foe example), it can be finished by an outside command 
-        (at deletion of the script from the chart context menu, at attaching of a new script to the same chart, at closing of the chart, 
+
+        Every program attached to a chart completes its work with the deinit() function. The deinit() function runs at the client
+        terminal shutdown, at chart closing,  immediately before the symbol and/or chart period is changed, at successful recompiling
+        of the program, at changing of inputs, or at changing of the account. One can see the reason of deinitialization using the
+        <a href="help://check_UninitializeReason">UninitializeReason()</a> function during execution of the deinit() function. The deinit()
+        function must be executed within 2.5 seconds. If the function has not completed its execution within this time period, it will
+        be completed forcedly. Scripts are an exception to this rule, as they normally finish their working independently, without any
+        commands from outside. If a script works very long (due to endless loop, foe example), it can be finished by an outside command
+        (at deletion of the script from the chart context menu, at attaching of a new script to the same chart, at closing of the chart,
         at changing of the symbol and/or chart period). In this case, the deinit() function is limited by 2.5 seconds, too.<br/><br/>
-        
-        At incoming of new quotes, the start() function of the attached experts and custom indicators will be executed. If the start() 
-        function launched at the preceding quote was running when a new quote came, the new quote will be skipped by the expert. All new 
-        quotes income while the program was being executed are skipped by the program until the current execution of the start() function 
+
+        At incoming of new quotes, the start() function of the attached experts and custom indicators will be executed. If the start()
+        function launched at the preceding quote was running when a new quote came, the new quote will be skipped by the expert. All new
+        quotes income while the program was being executed are skipped by the program until the current execution of the start() function
         has been completed.  After that, the start() function will be run only when a successive new quote incomes.
-        For custom indicators, the start() function will be launched for recalculation after the current chart symbol or timeframe 
+        For custom indicators, the start() function will be launched for recalculation after the current chart symbol or timeframe
         has been changed independently on new quotes incoming.
         The start() function will not be run when the expert properties window is open. The latter cannot be opened during the expert execution.<br/><br/>
-        
-        Detaching of the program from the chart, change of symbol and/or chart period, change of the account, closing of the chart, as 
-        well as shutdown of the client terminal will interrupt execution of the program. If the start() function was being executed at 
-        the moment when the stop working command was given, the time remaining for its work is limited by 2.5 seconds. The program can 
-        get to know that it is tried to shut it down with the built-in function of <a href="help://check_IsStopped">IsStopped()</a> and finish 
+
+        Detaching of the program from the chart, change of symbol and/or chart period, change of the account, closing of the chart, as
+        well as shutdown of the client terminal will interrupt execution of the program. If the start() function was being executed at
+        the moment when the stop working command was given, the time remaining for its work is limited by 2.5 seconds. The program can
+        get to know that it is tried to shut it down with the built-in function of <a href="help://check_IsStopped">IsStopped()</a> and finish
         its work correctly.<br/><br/>
-        
-        Execution of scripts does not depend on incoming quotes. At change of symbol and/or chart period, the script will finish its work 
+
+        Execution of scripts does not depend on incoming quotes. At change of symbol and/or chart period, the script will finish its work
         and be unloaded from the client terminal.<br/>
-        Scripts and experts work in their own thread. Custom indicators work in the main interface thread. If a custom indicator has been called 
-        with the <a href="help://indicators_iCustom">iCustom()</a> function, this indicator works in the thread of the program that has called it. 
+        Scripts and experts work in their own thread. Custom indicators work in the main interface thread. If a custom indicator has been called
+        with the <a href="help://indicators_iCustom">iCustom()</a> function, this indicator works in the thread of the program that has called it.
         Library (imported) functions work in the calling program thread, as well.</p>
       </content>
     </text>
@@ -2743,16 +2743,16 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       keywords=;init;deinit;start;
       <content>
         <p>
-        To <a href="help://basis_preprosessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used. 
+        To <a href="help://basis_preprosessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used.
         This means that, until the imported function is called, the corresponding module (ex4 or dll) will not be loaded.
         MQL4 and DLL libraries are executed in the calling module thread.<br/><br/>
 
-        It is not recommended to use a fully qualified name of the module to be loaded like <em>Drive:\Directory\FileName.Ext</em>. 
-      MQL4 libraries are loaded from the <em>terminal_dir\experts\libraries</em> folder. If the library has not been found, 
+        It is not recommended to use a fully qualified name of the module to be loaded like <em>Drive:\Directory\FileName.Ext</em>.
+      MQL4 libraries are loaded from the <em>terminal_dir\experts\libraries</em> folder. If the library has not been found,
       there will be made an attempt to load the library from the <em>terminal_dir\experts</em> folder.<br/><br/>
 
-        System libraries (DLLs) are loaded by the rules of the operation system. If the library has already been loaded 
-      (by another expert, for example, or from another client terminal launched at the same time), the library 
+        System libraries (DLLs) are loaded by the rules of the operation system. If the library has already been loaded
+      (by another expert, for example, or from another client terminal launched at the same time), the library
       already loaded will be referenced to. Otherwise, the searching will be preformed in the following order:<br/>
         1. The <em>terminal_dir\experts\libraries</em> directory.<br/>
         2. The directory from which the <em>terminal_dir</em> client terminal was launched.<br/>
@@ -2763,28 +2763,28 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 
         If a DLL uses another DLL in its work, the former one will not be loaded if the latter one is unavailable.<br/><br/>
 
-        Unlike system libraires, custom libraries (MQL4) are loaded for every calling module separately, independently on whether 
-        the called library has been loaded by any other module. For example, the caller.ex4 module calls functions from lib1.ex4 and 
-      lib2.ex4 libraries. The lib1.ex4 library, in its turn, calls functions from the lib2.ex4 library. In this case, 
-      one more copy of the lib1.ex4 library and two copies of the lib2.ex4 library will be loaded, regardless that all calls  
+        Unlike system libraires, custom libraries (MQL4) are loaded for every calling module separately, independently on whether
+        the called library has been loaded by any other module. For example, the caller.ex4 module calls functions from lib1.ex4 and
+      lib2.ex4 libraries. The lib1.ex4 library, in its turn, calls functions from the lib2.ex4 library. In this case,
+      one more copy of the lib1.ex4 library and two copies of the lib2.ex4 library will be loaded, regardless that all calls
         come from the same caller.ex4 module.<br/><br/>
 
         Functions imported from DLL into an mql4 program must provide linkage convention accepted for Windows API functions.
-        To provide such a convention, the key word __stdcall specific for compilers of Microsoft(r) company is used in the source codes 
+        To provide such a convention, the key word __stdcall specific for compilers of Microsoft(r) company is used in the source codes
       of programs written in C or C++ language. The above linkage convention is characterized by the following:<br/>
-         - calling function (in our case, it is an mql4 program) must "see" the called (imported from DLL) function prototype 
+         - calling function (in our case, it is an mql4 program) must "see" the called (imported from DLL) function prototype
        in order to put parameters onto the stack in a proper way;<br/>
-         - calling function (in our case, it is an mql4 program) puts parameters onto the stack in the reversed order, i.e., from right 
+         - calling function (in our case, it is an mql4 program) puts parameters onto the stack in the reversed order, i.e., from right
        to left; it is this order in which the imported function reads parameters passed to it;<br/>
          - parameters are passed by their values, except for those explicitely passed by a link (in our case, these are lines);<br/>
          - on reading the parameters passed to it, the imported function will flush the stack by itself.<br/><br/>
 
-         At describing of the imported <a href="help://basis_functions">function</a> prototype, it is useless to use parameters with 
+         At describing of the imported <a href="help://basis_functions">function</a> prototype, it is useless to use parameters with
        default values as all parameters must be passed explicitely to the imported function.<br/><br/>
 
-         If the call for an imported function failed (expert settings do not allow DLL imports, or the corresponding 
-       library could not be loaded for any reason), the expert stops working putting the corresponding message into the "expert stopped" 
-       journal. At that, the expert will not be launched until it is re-initialized. An expert can be re-initialized as a result of 
+         If the call for an imported function failed (expert settings do not allow DLL imports, or the corresponding
+       library could not be loaded for any reason), the expert stops working putting the corresponding message into the "expert stopped"
+       journal. At that, the expert will not be launched until it is re-initialized. An expert can be re-initialized as a result of
        recompiling or opening of the expert properties table and pressing of OK button.
         </p>
       </content>
@@ -2820,9 +2820,9 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       </keywords>
       <content>
         <p>
-         In the executing sub-system of the client terminal, the error code can be stored, in the case of its occurring 
+         In the executing sub-system of the client terminal, the error code can be stored, in the case of its occurring
        at an mql4 program execution. There is a specific <i>last_error</i> variable provided for every executable mql4 program.
-       Before the init function is run, the <i>last_error</i> variable has been zeroized. If an error occurs during the process of 
+       Before the init function is run, the <i>last_error</i> variable has been zeroized. If an error occurs during the process of
        calculation or that of calling the built-in function, the <i>last_error</i> variable takes the corresponding
        <a href="help://constants_errors">error code</a>. Value stored in this variable can be got using the <a href="help://check_GetLastError">GetLastError</a> function.
          At that, the <i>last_error</i> variable will be zeroized.
@@ -2984,7 +2984,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://common_PlaySound">PlaySound</a></td><td>ERR_WRONG_FILE_NAME (4101)</td></tr>
         <tr><td><a href="help://common_SendFTP">SendFTP</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
         <tr><td><a href="help://common_SendMail">SendMail</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_FUNCTION_NOT_CONFIRMED (4060), ERR_SEND_MAIL_ERROR (4061)</td></tr>
-        <tr><td><a href="help://common_SendNotification">SendNotification</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOTIFICATION_SEND_ERROR (4250), ERR_NOTIFICATION_WRONG_PARAMETER (4251), ERR_NOTIFICATION_WRONG_SETTINGS (4252), ERR_NOTIFICATION_TOO_FREQUENT (4253)</td></tr>		
+        <tr><td><a href="help://common_SendNotification">SendNotification</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOTIFICATION_SEND_ERROR (4250), ERR_NOTIFICATION_WRONG_PARAMETER (4251), ERR_NOTIFICATION_WRONG_SETTINGS (4252), ERR_NOTIFICATION_TOO_FREQUENT (4253)</td></tr>
         <tr><td><a href="help://customind_SetIndexArrow">SetIndexArrow</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://customind_SetIndexBuffer">SetIndexBuffer</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056)</td></tr>
         <tr><td><a href="help://customind_SetIndexDrawBegin">SetIndexDrawBegin</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
@@ -3102,7 +3102,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       </content>
     </text>
   </group>
-  
+
   <group>
     tag=account
     caption=Account information
@@ -3440,9 +3440,9 @@ First dimension of RateInfo array contains bars amount, second dimension has 6 e
 3 - high,<br/>
 4 - close,<br/>
 5 - volume.<br/><br/>
-If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible 
-that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case, 
-<a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed 
+If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
+that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
+<a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed
 in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
 Notes: This rates array is normally used to pass data to a DLL function.<br/>
 Memory is not really allocated for data array, and no real copying is performed. When such an array is accessed, the access will be redirected.
@@ -3476,48 +3476,48 @@ Memory is not really allocated for data array, and no real copying is performed.
       caption=ArrayCopySeries()
       type=int
       <content>
-        Copies a series array to another one and returns the count of the copied elements.<br/><br/>
+        Copies a pointer to a series array to a regular array and returns the number of the contained elements.<br/><br/>
 
-        There is no real memory allocation for data array and nothing is copied. When such an array is accessed,
-        the access is redirected. Excluded are arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>
-        in custom indicators. In this case, data are really copied.<br/><br/>
-        If data are copied from another chart with different symbol and/or timeframe, it is possible that the necessary data will lack.
-        In this case, <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - requested history data 
-        under updating) will be placed into the <a href="help://runtime_errors">last_error</a> variable, 
-        and there will be necessary to retry copying after a certain period of time.<br/><br/>
-        
-        Note: If series_index is MODE_TIME, the array to be passed to the function must be of the datetime type. 
+        Because of the copied pointer there is no real memory allocation and no data is copied. When such an array is accessed
+        this access is redirected. Excluded are arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>
+        in custom indicators. In this case the data is indeed copied.<br/><br/>
+        If data is copied from a time series with different symbol and/or timeframe, it is possible that the necessary data will lack.
+        In this case the <a href="help://constants_errors">error</a> ERS_HISTORY_UPDATE (4066 - requested history data is updated) will
+        be placed into the <a href="help://runtime_errors">last_error</a> variable and it will be necessary to repeat the copying (after some time).<br/><br/>
+
+        Note: If the parameter series_index is MODE_TIME, the array to be passed to the function must be of type datetime.
       </content>
       <example>
 datetime daytimes[];
-int      shift=10,dayshift,error;
-//---- the Time[] array was sroted in the descending order
-ArrayCopySeries(daytimes,MODE_TIME,Symbol(),PERIOD_D1);
-error=GetLastError();
-if(error==4066)
-  {
+int      shift=10, dayshift;
+
+//---- the Time[] array was sorted in descending order
+ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
+int error = GetLastError();
+if (error == 4066) {
    //---- make two more attempts to read
-   for(int i=0;i&lt;2; i++)
-     {
+   for (int i=0; i &lt; 2; i++) {
       Sleep(5000);
-      ArrayCopySeries(daytimes,MODE_TIME,Symbol(),PERIOD_D1);
-      //---- check the current daily bar time 
-      datetime last_day=daytimes[0];
-      if(Year()==TimeYear(last_day) &amp;&amp; Month()==TimeMonth(last_day) &amp;&amp; Day()==TimeDay(last_day)) break;
-     }
-  }
-if(Time[shift]&gt;=daytimes[0]) dayshift=0;
-else
-  {
-   dayshift=ArrayBsearch(daytimes,Time[shift],WHOLE_ARRAY,0,MODE_DESCEND);
-   if(Period()&lt;PERIOD_D1) dayshift++;
-  }
-Print(TimeToStr(Time[shift])," corresponds to ",dayshift," day bar opened at ", TimeToStr(daytimes[dayshift]));
+      ArrayCopySeries(daytimes, MODE_TIME, Symbol(), PERIOD_D1);
+      //---- check the current daily bar time
+      datetime last_day = daytimes[0];
+      if (Year()==TimeYear(last_day) &amp;&amp; Month()==TimeMonth(last_day) &amp;&amp; Day()==TimeDay(last_day))
+         break;
+   }
+}
+if (Time[shift] &gt;= daytimes[0])
+   dayshift = 0;
+else {
+   dayshift = ArrayBsearch(daytimes, Time[shift], WHOLE_ARRAY, 0, MODE_DESCEND);
+   if (Period() &lt; PERIOD_D1)
+      dayshift++;
+}
+Print(TimeToStr(Time[shift]), " corresponds to ", dayshift, " day bar opened at ", TimeToStr(daytimes[dayshift]));
       </example>
       <parameter>
         type=double&amp;
         name=<nobr>array[]</nobr>
-        description=Reference to the destination one-dimensional numeric array.
+        description=The one-dimensional numeric destination array.
       </parameter>
       <parameter>
         type=int
@@ -3528,13 +3528,13 @@ Print(TimeToStr(Time[shift])," corresponds to ",dayshift," day bar opened at ", 
         type=string
         name=symbol
         def_value=NULL
-        description=Symbol name (the name of the currency pair)
+        description=Symbol of the time series to copy.
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=0
-        description=Timeframe of the chart. It can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
+        description=Timeframe of the time series to copy. It can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
       </parameter>
     </function>
 
@@ -3585,7 +3585,7 @@ dim_size=ArrayDimension(num_array);
       <content>
         Sets all elements of a numeric array to the same value. Returns the count of initialized elements.<br/>
       Note: It is not recommended to initialize index buffers in the custom indicator <i>init()</i> function
-        as such functions are initialized automatically with an <a href="help://customind_SetIndexEmptyValue">&quot;empty value&quot;</a> 
+        as such functions are initialized automatically with an <a href="help://customind_SetIndexEmptyValue">&quot;empty value&quot;</a>
       at allocation and re-allocation of buffers.
       </content>
       <example>
@@ -3720,7 +3720,7 @@ dim_size=ArrayRange(num_array, 1);
       caption=ArrayResize()
       type=int
       <content>
-        Sets a new size for the first dimension. If executed successfully, it returns count of all elements contained 
+        Sets a new size for the first dimension. If executed successfully, it returns count of all elements contained
         in the array after resizing, otherwise, returns -1, and array is not resized.<br/>
         Note: A locally declared (in a function) and resized array will remain resized after the function has completed its operation.
         The next time the function is called such array will have a size different from the declared one.
@@ -3755,10 +3755,10 @@ double macd_buffer[300];
 double signal_buffer[300];
 int    i,limit=ArraySize(macd_buffer);
 ArraySetAsSeries(macd_buffer,true);
- 
+
 for(i=0; i&lt;limit; i++)
    macd_buffer[i]=iMA(NULL,0,12,0,MODE_EMA,PRICE_CLOSE,i)-iMA(NULL,0,26,0,MODE_EMA,PRICE_CLOSE,i);
-   
+
 for(i=0; i&lt;limit; i++)
    signal_buffer[i]=iMAOnArray(macd_buffer,limit,9,0,MODE_SMA,i);
       </example>
@@ -3854,8 +3854,8 @@ MODE_DESCEND - sort descending.
       caption=GetLastError()
       type=int
       <content>
-        The function returns the <a href="help://constants_errors">last occurred error</a>, then the value of special 
-      <a href="help://runtime_errors">last_error</a> variable where the last error code is stored will be zeroized. 
+        The function returns the <a href="help://constants_errors">last occurred error</a>, then the value of special
+      <a href="help://runtime_errors">last_error</a> variable where the last error code is stored will be zeroized.
       So, the next call for GetLastError() will return 0.
       </content>
       <example>
@@ -3875,7 +3875,7 @@ MODE_DESCEND - sort descending.
       caption=IsConnected()
       type=bool
       <content>
-      The function returns the status of the main connection between client terminal and server that performs data pumping. It returns TRUE if connection to the server was 
+      The function returns the status of the main connection between client terminal and server that performs data pumping. It returns TRUE if connection to the server was
      successfully established, otherwise, it returns FALSE.
       </content>
       <example>
@@ -3887,7 +3887,7 @@ MODE_DESCEND - sort descending.
   // Expert body that needs the connection opened
   // ...
       </example>
-   </function>   
+   </function>
     <function>
       tag=check_IsDemo
       caption=IsDemo()
@@ -4170,7 +4170,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=GetTickCount()
       type=int
       <content>
-        The GetTickCount() function retrieves the number of milliseconds since the system was started. 
+        The GetTickCount() function retrieves the number of milliseconds since the system was started.
       It is limited to the resolution of the system timer.
       </content>
       <example>
@@ -4186,7 +4186,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
       type=double
       <content>
       Returns various data about securities listed in the Market Watch window.
-      A part of information about the current security is stored in <a href="help://predefined_variables">predefined variables</a>. 
+      A part of information about the current security is stored in <a href="help://predefined_variables">predefined variables</a>.
       </content>
       <example>
    double bid   =MarketInfo(&quot;EURUSD&quot;,MODE_BID);
@@ -4213,20 +4213,20 @@ To output values of datetime type as strings, convert them with the <a href="hel
       type=int
       keywords=;MessageBox;
       <content>
-The MessageBox function creates, displays, and operates message box. The message box contains an application-defined message and header, 
-as well as a random combination of predefined icons and push buttons. If the function succeeds, the returned value is one of 
-the MessageBox <a href="help://constants_messagebox">return code</a> values.<br/> The function cannot be called from custom indicators since  
+The MessageBox function creates, displays, and operates message box. The message box contains an application-defined message and header,
+as well as a random combination of predefined icons and push buttons. If the function succeeds, the returned value is one of
+the MessageBox <a href="help://constants_messagebox">return code</a> values.<br/> The function cannot be called from custom indicators since
 they are <a href="help://runtime_start">executed</a> within interface thread and may not decelerate it.
       </content>
       <example>
   #include &lt;WinUser32.mqh&gt;
-  
+
   if(ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D'2004.02.20 12:30', 1.0045)==false)
     {
      int ret=MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
      if(ret==IDNO) return(false);
     }
-  // continue  
+  // continue
       </example>
       <parameter>
         type=string
@@ -4279,7 +4279,7 @@ Optional flags that determine the type and behavior of the dialog box.
       <content>
 Prints a message to the experts log. Parameters can be of any type. Amount of passed parameters cannot exceed 64.<br/><br/>
 Arrays cannot be passed to the Print() function. Arrays should be printed elementwise.<br/><br/>
-Data of double type are printed with 4 decimal digits after point. To output more precisely, 
+Data of double type are printed with 4 decimal digits after point. To output more precisely,
 use the <a href="help://convert_DoubleToStr">DoubleToStr()</a> function.<br/>
 Data of bool, datetime and color types will be printed as their numeric presentation.<br/>
 To print values of datetime type as string, convert them with the <a href="help://convert_TimeToStr">TimeToStr()</a> function.<br/>
@@ -4317,7 +4317,7 @@ It will not be sent if there is no FTP address and/or access password specified 
   if(!SendFTP("report.txt"))
     lasterror=GetLastError();
       </example>
-      <parameter>    
+      <parameter>
         type=string
         name=filename
         description=File to be sent.
@@ -4344,7 +4344,7 @@ To get the detailed error information, one has to call the <a href="help://check
   if(lastclose&lt;my_signal)
     SendMail(&quot;from your expert&quot;, &quot;Price dropped down to &quot;+DoubleToStr(lastclose,Digits));
       </example>
-      <parameter>    
+      <parameter>
         type=string
         name=subject
         description=Subject text.
@@ -4377,14 +4377,14 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
         description=Message text up to 255 symbols.
       </parameter>
     </function>
-	
+
     <function>
       tag=common_Sleep
       caption=Sleep()
       type=void
       <content>
       The Sleep() function suspends execution of the current expert within the specified interval.<br/>
-      The Sleep() function cannot be called from custom indicators since they <a href="help://runtime_start">calculate</a> in the interface 
+      The Sleep() function cannot be called from custom indicators since they <a href="help://runtime_start">calculate</a> in the interface
       thread and may not decelerate it.<br/>
       The checking of the expert <a href="help://check_IsStopped">stop flag status</a> every 0.1 second has been built into the function.
       </content>
@@ -4406,7 +4406,7 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
     caption=Conversion functions
     <content>
     A group of functions that provide conversion of data from one format into another.<br/><br/>
-    The <a href="help://convert_NormalizeDouble">NormalizeDouble()</a> function must be specially noted as it provides the necessary accuracy 
+    The <a href="help://convert_NormalizeDouble">NormalizeDouble()</a> function must be specially noted as it provides the necessary accuracy
      of the price presentation. In trading operations, no unnormalized prices may be used if their accuracy even a digit exceeds that required by the trade server.
     </content>
 
@@ -4457,7 +4457,7 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       caption=NormalizeDouble()
       <content>
       Rounds the floating point value to the given precision. Returns normalized value of the double type.<br/>
-      The calculated StopLoss and TakeProfit values, as well as <a href="help://trading_OrderSend">open</a> price of pending orders 
+      The calculated StopLoss and TakeProfit values, as well as <a href="help://trading_OrderSend">open</a> price of pending orders
       must be normalized with a precision the value of which is stored in the pre-defined variable of <a href="help://predefined_variables_Digits">Digits</a>.
       </content>
       <example>
@@ -4569,7 +4569,7 @@ TIME_SECONDS gets result as &quot;hh:mi:ss&quot;.
     A group of functions used at producing of custom indicators.<br/><br/>
     These functions cannot be used in experts and scripts.
     </content>
-  
+
     <function>
       tag=customind_IndicatorBuffers
       caption=IndicatorBuffers()
@@ -4627,10 +4627,10 @@ int init()
       <content>
 The function returns the amount of bars not changed after the indicator had been launched last. The most calculated bars do not need any recalculation.
 In most cases, same count of index values do not need for recalculation. The function is used to optimize calculating.<br/><br/>
-Note: The latest bar is not considered to be calculated and, in the most cases, it is necessary to recalculate only this bar. However, there occur 
-some boundary cases where custom indicator is called from the expert at the first tick of the new bar. It is possible that the last tick of the previous bar 
-had not been processed (because the last-but-one tick <a href="help://runtime_start">was being processed</a> when this last tick came), the custom 
-indicator was not called and it was not calculated because of this. To avoid indicator calculation errors in such situations, the IndicatorCounted() 
+Note: The latest bar is not considered to be calculated and, in the most cases, it is necessary to recalculate only this bar. However, there occur
+some boundary cases where custom indicator is called from the expert at the first tick of the new bar. It is possible that the last tick of the previous bar
+had not been processed (because the last-but-one tick <a href="help://runtime_start">was being processed</a> when this last tick came), the custom
+indicator was not called and it was not calculated because of this. To avoid indicator calculation errors in such situations, the IndicatorCounted()
 function returns the count of bars minus one.
       </content>
       <example>
@@ -4662,7 +4662,7 @@ function returns the count of bars minus one.
       caption=IndicatorDigits()
       type=void
       <content>
-      Sets precision format (the count of digits after decimal point) to visualize indicator values. 
+      Sets precision format (the count of digits after decimal point) to visualize indicator values.
       The symbol <a href="help://predefined_variables_Digits">price preicision</a> is used by default, the indicator being attached to this symbol chart.
       </content>
       <example>
@@ -4735,9 +4735,9 @@ int init()
       <example>
 int init()
   {
-//---- 2 allocated indicator buffers  
+//---- 2 allocated indicator buffers
     SetIndexBuffer(0,ExtUppperBuffer);
-    SetIndexBuffer(1,ExtLowerBuffer);   
+    SetIndexBuffer(1,ExtLowerBuffer);
 //---- drawing parameters setting
     SetIndexStyle(0,DRAW_ARROW);
     SetIndexArrow(0,217);
@@ -4768,7 +4768,7 @@ int init()
       type=bool
       <content>
 Binds the array variable declared at a global level to the custom indicator pre-defined buffer.
-The amount of buffers needed to calculate the indicator is set with the <a href="help://customind_IndicatorBuffers">IndicatorBuffers()</a> function and cannot 
+The amount of buffers needed to calculate the indicator is set with the <a href="help://customind_IndicatorBuffers">IndicatorBuffers()</a> function and cannot
 exceed 8. If it succeeds, TRUE will be returned, otherwise, it will be FALSE.
 To get the extended information about the error, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
      </content>
@@ -4797,9 +4797,9 @@ To get the extended information about the error, one has to call the <a href="he
       caption=SetIndexDrawBegin()
       type=void
       <content>
-Sets the bar number (from the data beginning) from which the drawing of the given indicator line must start. 
+Sets the bar number (from the data beginning) from which the drawing of the given indicator line must start.
 The indicators are drawn from left to right. The indicator array values that are to the left of the given bar will not be shown in the chart
-or in the DataWindow. 0 will be set as default, and all data will be drawn. 
+or in the DataWindow. 0 will be set as default, and all data will be drawn.
       </content>
       <example>
 int init()
@@ -4844,9 +4844,9 @@ int init()
       <example>
 int init()
   {
-//---- 2 allocated indicator buffers  
+//---- 2 allocated indicator buffers
     SetIndexBuffer(0,ExtUppperBuffer);
-    SetIndexBuffer(1,ExtLowerBuffer);   
+    SetIndexBuffer(1,ExtLowerBuffer);
 //---- drawing parameters setting
     SetIndexStyle(0,DRAW_ARROW);
     SetIndexArrow(0,217);
@@ -5111,8 +5111,8 @@ SetLevelValue(1,3.14);
       caption=Day()
       type=int
       <content>
-      Returns the current day of the month, i.e. the day of month of the last known server time.<br/>
-      Note: At testing the last known server time is modelled.
+      Returns the day of the month of the last known server time.<br/>
+      Note: At testing server time is modelled.
       </content>
       <example>
   if(Day()&lt;5) return(0);
@@ -5124,8 +5124,8 @@ SetLevelValue(1,3.14);
       caption=DayOfWeek()
       type=int
       <content>
-      Returns the current zero-based day of the week (0-Sunday,1,2,3,4,5,6) of the last known server time.<br/>
-      Note: At testing the last known server time is modelled.
+      Returns the zero-based day of the week (0-6, 0 is Sunday) of the last known server time.<br/>
+      Note: At testing server time is modelled.
       </content>
       <example>
   // does not work on holidays.
@@ -5138,8 +5138,8 @@ SetLevelValue(1,3.14);
       caption=DayOfYear()
       type=int
       <content>
-      Returns the current day of the year (1 means 1 January,..,365(6) does 31 December), i.e., the day of year of the last known server time.<br/>
-      Note: At testing the last known server time is modelled.
+      Returns the day of the year (1-365) of the last known server time.<br/>
+      Note: At testing server time is modelled.
       </content>
       <example>
   if(DayOfYear()==245)
@@ -5152,8 +5152,8 @@ SetLevelValue(1,3.14);
       caption=Hour()
       type=int
       <content>
-      Returns the hour (0,1,2,..23) of the last known server time by the moment of the program start (this value will not change within the time of the program execution).<br/>
-      Note: At testing the last known server time is modelled.
+      Returns the hour (0-23) of the last known server time at the moment of program start (this value will not change during program execution).<br/>
+      Note: At testing server time is modelled.
       </content>
       <example>
   bool is_siesta=false;
@@ -5167,7 +5167,7 @@ SetLevelValue(1,3.14);
       caption=Minute()
       type=int
       <content>
-      Returns the current minute (0,1,2,..59) of the last known server time by the moment of the program start (this value will not change within the time of the program execution).
+      Returns the minute (0-59) of the last known server time at the moment of program start (this value will not change during program execution).
       </content>
       <example>
   if(Minute()&lt;=15)
@@ -5180,8 +5180,8 @@ SetLevelValue(1,3.14);
       caption=Month()
       type=int
       <content>
-      Returns the current month as number (1-January,2,3,4,5,6,7,8,9,10,11,12), i.e., the number of month of the last known server time.<br/>
-      Note: At testing the last known server time is modelled.
+      Returns the month (1-12) of the last known server time.<br/>
+      Note: At testing server time is modelled.
       </content>
       <example>
   if(Month()&lt;=5)
@@ -5194,7 +5194,8 @@ SetLevelValue(1,3.14);
       caption=Seconds()
       type=int
       <content>
-      Returns the seconds since the beginning of the current minute of the last known server time at the moment of program start (this value will not change within the time of the program execution).
+      Returns the seconds of the minute of the last known server time at the moment of program start (this value will not change during program execution).
+      Note: At testing server time is modelled.
       </content>
       <example>
   if(Seconds()&lt;=15)
@@ -5208,7 +5209,7 @@ SetLevelValue(1,3.14);
       type=datetime
       <content>
       Returns the last known server time (time of the latest tick) as seconds since 00:00 January 1, 1970.<br/><br/>
-      Note: At testing the last known server time is modelled.
+      Note: At testing server time is modelled.
       </content>
       <example>
   if(TimeCurrent()-OrderOpenTime()&lt;360) return(0);
@@ -5224,7 +5225,7 @@ SetLevelValue(1,3.14);
       </content>
       <example>
   int day=TimeDay(D'2003.12.31');
-  // day is 31 
+  // day is 31
       </example>
       <parameter>
         type=datetime
@@ -5238,7 +5239,7 @@ SetLevelValue(1,3.14);
       caption=TimeDayOfWeek()
       type=int
       <content>
-      Returns the zero-based day of week (0 means Sunday,1,2,3,4,5,6) for the specified date.
+      Returns the zero-based day of the week (0 - 6, 0 is Sunday) for the specified date.
       </content>
       <example>
   int weekday=TimeDayOfWeek(D'2004.11.2');
@@ -5292,12 +5293,12 @@ SetLevelValue(1,3.14);
       <content>
       Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
       Note: At testing local time is modelled and is the same as the modelled server time.<br>
-		<br>
-		<span style="color:red">Vorsicht:</span> Dies bedeutet, daß der Tester die lokale Zeitzone auf die Server-Zeitzone setzt, Tests laufen also
-		u.U. in einer anderen als der tatsächlichen lokalen Zeitzone.
+      <br>
+      <span style="color:red">Vorsicht:</span> Dies bedeutet, daß der Tester die lokale Zeitzone auf die Server-Zeitzone setzt, Tests laufen also
+      u.U. in einer anderen als der tatsächlichen lokalen Zeitzone.
       </content>
       <example>
-if (TimeLocal()-OrderOpenTime() &lt; 360) 
+if (TimeLocal()-OrderOpenTime() &lt; 360)
    return(0);
       </example>
     </function>
@@ -5375,8 +5376,8 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=Year()
       type=int
       <content>
-      Returns the current year, i.e., the year of the last known server time.<br/>
-      Note: At testing the last known server time is modelled.
+      Returns the year of the last known server time.<br/>
+      Note: At testing server time is modelled.
       </content>
       <example>
   // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
@@ -5430,7 +5431,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <content>
         Removes specified file name.
         To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
-        Files can only be deleted if they are in the <em>terminal_dir\experts\files</em> directory 
+        Files can only be deleted if they are in the <em>terminal_dir\experts\files</em> directory
         (<em>terminal_directory\tester\files</em>, in case of testing) or its subdirectories.
         </content>
       <example>
@@ -5458,7 +5459,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <content>
       Flushes all data stored in the file buffer to the disk.<br/>
       Notes: The FileFlush() function must be called between operations of file reading and writing in the file.<br/>
-      At file closing, the data are flushed to the disk automatically, so there is no need to call the FileFlush() function 
+      At file closing, the data are flushed to the disk automatically, so there is no need to call the FileFlush() function
       before calling of the <a href="help://files_FileClose">FileClose()</a> function.
       </content>
       <example>
@@ -5490,7 +5491,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <content>
         Returns logical true if file pointer is at the end of the file, otherwise returns false.
         To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.
-        If the file end is reached during reading, the <a href="help://check_GetLastError">GetLastError()</a> function will return 
+        If the file end is reached during reading, the <a href="help://check_GetLastError">GetLastError()</a> function will return
         <a href="help://constants_errors">error</a> ERR_END_OF_FILE (4099).
       </content>
       <example>
@@ -5537,12 +5538,12 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <content>
 Opens file for input and/or output. Returns a file handle for the opened file or -1 (if the function fails).
 To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
-Notes: Files can only be opened in the <em>terminal_directory\experts\files</em> folder (<em>terminal_directory\tester\files</em> 
+Notes: Files can only be opened in the <em>terminal_directory\experts\files</em> folder (<em>terminal_directory\tester\files</em>
 if for expert testing) or in its subfolders.<br/>
 FILE_BIN and FILE_CSV modes cannot be used simultaneously.<br/>
 If FILE_WRITE does not combine with FILE_READ, a zero-length file will be opened. If even the file containd some data, they will be deleted.
 If there is a need to add data to an existing file, it must be opened using combination of FILE_READ | FILE_WRITE.<br/>
-If FILE_READ does not combine with FILE_WRITE, the file will be opened only if it already exists. If the file does not exist, it can be created 
+If FILE_READ does not combine with FILE_WRITE, the file will be opened only if it already exists. If the file does not exist, it can be created
 using the FILE_WRITE mode.<br/>
 No more than 32 files can be opened within an executable module simultaneously. Handles of files opened in the same module cannot be passed to other modules (libraries).
       </content>
@@ -5578,11 +5579,11 @@ No more than 32 files can be opened within an executable module simultaneously. 
       caption=FileOpenHistory()
       type=int
       <content>
-Opens file in the current history directory (<em>terminal_directory\history\server_name</em>) or in its subfolders. Returns the file handle 
+Opens file in the current history directory (<em>terminal_directory\history\server_name</em>) or in its subfolders. Returns the file handle
 for the opened file. If the function fails, the returned value is -1. To get the detailed error information, call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
-Notes: Client terminal can connect to servers of different brokerage companies. History data (HST files) for each brokerage company are stored in the corresponding 
+Notes: Client terminal can connect to servers of different brokerage companies. History data (HST files) for each brokerage company are stored in the corresponding
 subfolder of the <em>terminal_directory\history</em> folder.<br/>
-The function can be useful to form own history data for a non-standard symbol and/or period. The file formed in the history folder can be opened offline, 
+The function can be useful to form own history data for a non-standard symbol and/or period. The file formed in the history folder can be opened offline,
 not data pumping is needed to chart it.
       </content>
       <example>
@@ -5619,8 +5620,8 @@ not data pumping is needed to chart it.
       caption=FileReadArray()
       type=int
       <content>
-Reads the specified amount of elements from the binary file into array. Before reading, make sure that the array is large enough. 
-Returns the amount of actually read elements.<br/> 
+Reads the specified amount of elements from the binary file into array. Before reading, make sure that the array is large enough.
+Returns the amount of actually read elements.<br/>
 To get the detailed error information, call the <a href="help://check_GetLastError">GetLastError()</a> function.
       </content>
       <example>
@@ -5786,7 +5787,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=bool
       keywords=;SEEK_CUR;SEEK_SET;SEEK_END;
       <content>
-The function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the 
+The function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the
 current file position. The next reading or writing are made at a new position.<br/>
 If file pointer has been moved successfully, the function returns TRUE, otherwise, it returns FALSE.
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
@@ -5829,7 +5830,7 @@ SEEK_END - from end of file.
       caption=FileSize()
       type=int
       <content>
-The function returns file size in bytes. 
+The function returns file size in bytes.
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
       </content>
       <example>
@@ -5902,8 +5903,8 @@ To get the detailed error information, one has to call the <a href="help://check
         type=...
         name=
         <description>
-User data to write, separated by commas.  It can be up to 63 parameters.<br/> 
-Data of int and double types are automatically converted into a string, but those of color, datetime and bool types 
+User data to write, separated by commas.  It can be up to 63 parameters.<br/>
+Data of int and double types are automatically converted into a string, but those of color, datetime and bool types
 are not automatically converted and will be written to file as they are (as integers).<br/>
 Arrays cannot be passed as a parameter, they can be output elementwise.
         </description>
@@ -5915,10 +5916,10 @@ Arrays cannot be passed as a parameter, they can be output elementwise.
       caption=FileWriteArray()
       type=int
       <content>
-The function writes the array to a binary file. Arrays of int, bool, datetime and color types will be written elementwise, as 4-bytes integers. 
-Arrays of double type will be written elementwise, as 8-bytes floating point numbers. 
-Arrays of string type will be written by strings, the line end character &quot;\r\n&quot; to be added at each string automatically.<br/> 
-Returns the number of written elements or a negative value if an error occurs. 
+The function writes the array to a binary file. Arrays of int, bool, datetime and color types will be written elementwise, as 4-bytes integers.
+Arrays of double type will be written elementwise, as 8-bytes floating point numbers.
+Arrays of string type will be written by strings, the line end character &quot;\r\n&quot; to be added at each string automatically.<br/>
+Returns the number of written elements or a negative value if an error occurs.
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
       </content>
       <example>
@@ -5962,7 +5963,7 @@ To get the detailed error information, one has to call the <a href="help://check
       caption=FileWriteDouble()
       type=int
       <content>
-The function writes a double value with floating point to a binary file. 
+The function writes a double value with floating point to a binary file.
 If the format is specified as FLOAT_VALUE, the value will be written as a 4-bytes floating point number (of the float type),
 otherwise, it will be written in the 8-bytes floating point format (of the double type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
@@ -6010,7 +6011,7 @@ To get the detailed error information, one has to call the <a href="help://check
       <content>
 The function writes the integer value to a binary file.
  If the size is SHORT_VALUE, the value will be written as a 2-byte integer (the short type),
- if the size is CHAR_VALUE, the value will be written as a 1-byte integer (the char type), and 
+ if the size is CHAR_VALUE, the value will be written as a 1-byte integer (the char type), and
  if the size is LONG_VALUE, the value will be written as a 4-byte integer (the long int type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
@@ -6054,7 +6055,7 @@ CHAR_VALUE (1 byte),<br/>SHORT_VALUE (2 bytes),<br/>LONG_VALUE (4 bytes, default
       caption=FileWriteString()
       type=int
       <content>
-The function writes the string to a binary file from the current file position.<br/> 
+The function writes the string to a binary file from the current file position.<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
       </content>
@@ -6094,7 +6095,7 @@ To get the detailed error information, one has to call the <a href="help://check
     caption=Global variables
     <content>
     A group of functions intended for working with global variables.<br/><br/>
-    Global variables of the client terminal should not be mixed up with <a href="help://basis_variables_global">variables</a> declared in the global 
+    Global variables of the client terminal should not be mixed up with <a href="help://basis_variables_global">variables</a> declared in the global
     scope of the MQL4 program.<br/><br/>
     Global variables are kept in the client terminal within 4 weeks since the last access, then they will be deleted automatically.
     An access to a global variable is not only <a href="help://globals_GlobalVariableSet">setting</a> of a new value, but <a href="help://globals_GlobalVariableGet">reading</a> of the global variable value, as well.<br/><br/>
@@ -6222,7 +6223,7 @@ Sets the new value of the existing global variable if the current value
 equals to the third parameter <i>check_value</i>. If there is no global variable, the function will generate <a href="help://constants_errors">error</a> ERR_GLOBAL_VARIABLE_NOT_FOUND (4058) and return FALSE.
 When successfully executed, the function returns TRUE, otherwise, it returns FALSE. To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
 If the current value of the global variable differs from the <i>check_value</i>, the function will return FALSE.<br/>
-The function provides atomic access to the global variable, this is why it can be used 
+The function provides atomic access to the global variable, this is why it can be used
 for providing of a semaphore at interaction of several experts working simultaneously within one client terminal.
      </content>
       <example>
@@ -6232,7 +6233,7 @@ for providing of a semaphore at interaction of several experts working simultane
      GlobalVariableSet(&quot;DATAFILE_SEM&quot;,0);
      //...
     }
-  
+
   int start()
     {
      //---- try to lock common resource
@@ -6471,7 +6472,7 @@ At overflow, the function returns INF (infinity), and it returns 0 at underflow.
       caption=MathFloor()
       type=double
       <content>
-The MathFloor function returns a numeric value representing the largest integer that is less than or equal to <i>x</i>.      
+The MathFloor function returns a numeric value representing the largest integer that is less than or equal to <i>x</i>.
       </content>
       <example>
   double y;
@@ -6622,7 +6623,7 @@ The <a href="help://math_MathSrand">MathSrand</a> function must be used to seed 
   // Display 10 numbers.
   for(int i=0;i&lt;10;i++ )
     Print("random value ", MathRand());
-      </example>  
+      </example>
     </function>
 
     <function>
@@ -6713,7 +6714,7 @@ Calling MathRand before any call to MathSrand generates the same sequence as cal
   // Display 10 numbers.
   for(int i=0;i&lt;10;i++ )
     Print("random value ", MathRand());
-      </example>  
+      </example>
       <parameter>
         type=int
         name=seed
@@ -6762,7 +6763,7 @@ Count of coordinates related to the object can be from 1 to 3 depending on the o
 If the function succeeds, the returned value will be TRUE. Otherwise, it will be FALSE.
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
 Objects of the OBJ_LABEL type ignore the coordinates. Use the function of
-<a href="help://objects_ObjectSet">ObjectSet()</a> to set up the <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and 
+<a href="help://objects_ObjectSet">ObjectSet()</a> to set up the <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and
 <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
 Notes: The chart sub-windows (if there are sub-windows with indicators in the chart) are numbered starting from 1. The chart main window always exists and has the 0 index.<br/>
 Coordinates must be passed in pairs: time and price.
@@ -6840,7 +6841,7 @@ For example, the OBJ_VLINE object needs only time, but price (any value) must be
       caption=ObjectDelete()
       type=bool
       <content>
-Deletes object having the specified name. 
+Deletes object having the specified name.
 If the function succeeds, the returned value will be TRUE. Otherwise, it will be FALSE.<br/>
 To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
       </content>
@@ -7418,7 +7419,7 @@ The function returns a copy of the extracted substring if possible, otherwise, i
       caption=StringTrimLeft()
       type=string
       <content>
-The function cuts line feed characters, spaces 
+The function cuts line feed characters, spaces
 and tabs in the left part of the string.
 The function returns a copy of the trimmed string, if possible.
 Otherwise, it returns an empty string.
@@ -7440,7 +7441,7 @@ Otherwise, it returns an empty string.
       caption=StringTrimRight()
       type=string
       <content>
-The function cuts line feed characters, spaces 
+The function cuts line feed characters, spaces
 and tabs in the right part of the string.
 The function returns a copy of the trimmed string, if possible.
 Otherwise, it returns an empty string.
@@ -7467,9 +7468,9 @@ Otherwise, it returns an empty string.
     For an expert (or any other MQL4 program) to take up the value of any indicator, it is not necessary that this indicator is present in the chart.
     The requested indicator will be loaded and calculated in the thread of the module that has called it.<br/><br/>
     Any indicator can be calculated on the data of not only current chart, but also on the data of any available symbol/period.
-    If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible 
-    that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case, 
-    <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed 
+    If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
+    that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
+    <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).
     </content>
 
@@ -7799,7 +7800,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Bollinger Bands® indicator on data stored in a numeric array.
         Unlike iBands(...), the iBandsOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       example=if(iBands(ExtBuffer,total,2,0,MODE_LOWER,0)&gt;Low[0]) return(0);
@@ -7922,7 +7923,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Commodity Channel Index on data stored in a numeric array.
         Unlike iCCI(...), the iCCIOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       example=if(iCCIOnArray(ExtBuffer,total,12,0)&gt;iCCI(NULL,0,20,PRICE_TYPICAL, 0)) return(0);
@@ -7953,7 +7954,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
       caption=iCustom() - Custom Indicator
       type=double
       <content>
-      Calculates the specified custom indicator and returns its value. The custom indicator must be compiled (*.EX4 file) 
+      Calculates the specified custom indicator and returns its value. The custom indicator must be compiled (*.EX4 file)
       and be in the <em>terminal_directory\experts\indicators</em> directory.
       </content>
       <example>
@@ -8088,7 +8089,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Envelopes indicator on data stored in a numeric array.
         Unlike iEnvelopes(...), the iEnvelopesOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       <example>
@@ -8400,7 +8401,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Momentum indicator on data stored in a numeric array.
         Unlike iMomentum(...), the iMomentumOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       example=if(iMomentumOnArray(mybuffer,100,12,0)&gt;iMomentumOnArray(mubuffer,100,20,0)) return(0);
@@ -8509,7 +8510,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Moving Average on data stored in a numeric array.
         Unlike iMA(...), the iMAOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       <example>
@@ -8759,7 +8760,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Relative Strength Index on data stored in a numeric array.
         Unlike iRSI(...), the iRSIOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       example=if(iRSIOnArray(ExtBuffer,1000,14,0)&gt;iRSI(NULL,0,14,PRICE_CLOSE,1)) return(0);
@@ -8875,7 +8876,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         Calculation of the Standard Deviation indicator on data stored in a numeric array.
         Unlike iStdDev(...), the iStdDevOnArray function does not take data by symbol name,
         timeframe, the applied price. The price data must be previously prepared.
-        The indicator is calculated from left to right. To access to the array elements as to a series array 
+        The indicator is calculated from left to right. To access to the array elements as to a series array
         (i.e., from right to left), one has to use the <a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a> function.
       </content>
       example=double val=iStdDevOnArray(ExtBuffer,100,10,0,MODE_EMA,0);
@@ -9005,9 +9006,9 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
     caption=Timeseries access
     <content>
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
-    If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible 
-    that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case, 
-    <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed 
+    If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
+    that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
+    <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
     At testing price data of the same symbol but of another timeframe are modelled exactly with the exception of volume. Volume of another timeframe is not modelled.
     Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
@@ -9041,34 +9042,41 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
       caption=iBarShift()
       type=int
       <content>
-      Search for bar by open time. The function returns bar shift with the open time specified.
-      If the bar having the specified open time is missing, the function will return -1 or the nearest bar shift depending on the <i>exact</i>.<br/>
+      Searches for a bar by time. The function returns the offset of the bar covering the specified time.
+      If such a bar is not found the function will return -1 or the offset of the nearest bar depending on the parameter <i>exact</i>.<br/>
+      <br>
+      <span style="color:red">Note:</span>
+      <br>
+      exact = TRUE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
+      <br>
+      exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der vorhergehenden, älteren Bar.
+      Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
       </content>
       <example>
-  datetime some_time=D'2004.03.21 12:00';
-  int      shift=iBarShift(&quot;EUROUSD&quot;,PERIOD_M1,some_time);
-  Print(&quot;shift of bar with open time &quot;,TimeToStr(some_time),&quot; is &quot;,shift);
+  datetime some_time = D'2004.03.21 12:00';
+  int      offset    = iBarShift(&quot;EURUSD&quot;, PERIOD_M1, some_time);
+  Print(&quot;offset of bar covering time &quot;, TimeToStr(some_time), &quot; is &quot;, offset);
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. NULL means the current symbol.
+        description=Symbol of the time series. NULL means the current symbol.
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=Timeframe of the time series, can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. NULL means the current chart timeframe.
       </parameter>
       <parameter>
         type=datetime
         name=time
-        description=value to find (bar's open time).
+        description=time to find.
       </parameter>
       <parameter>
         type=bool
         name=exact
         def_value=false
-        description=Return mode when bar not found. false - iBarShift returns nearest. true - iBarShift returns -1.
+        description=Return mode when a covering bar is not found. TRUE - returns -1. FALSE - returns nearest bar.
       </parameter>
     </function>
 
@@ -9352,11 +9360,11 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
     <a href="help://trading_OrderCloseBy">OrderCloseBy</a>, <a href="help://trading_OrderDelete">OrderDelete</a>, and <a href="help://trading_OrderModify">OrderModify</a>
     cannot be called from custom indicators.<br/><br/>
     Trading functions can be used in experts and scripts. Trading functions can be called only if the "Allow live trading" property of this particular expert is checked.<br/><br/>
-    To trade from experts and scripts, only one thread was provided that was launched in the program trade context (context of 
-    automated trading from experts and scripts). This is why, if this context is occupied with an expert trading operation, 
-    another expert or script cannot call trading functions at that moment due to <a href="help://constants_errors">error</a> 146 (ERR_TRADE_CONTEXT_BUSY). 
-    To check whether it is possible to trade or not, one has to use the <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a> function. 
-    To make a clear sharing of access to the trading context, one can use a semaphore on the basis of a global variable  
+    To trade from experts and scripts, only one thread was provided that was launched in the program trade context (context of
+    automated trading from experts and scripts). This is why, if this context is occupied with an expert trading operation,
+    another expert or script cannot call trading functions at that moment due to <a href="help://constants_errors">error</a> 146 (ERR_TRADE_CONTEXT_BUSY).
+    To check whether it is possible to trade or not, one has to use the <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a> function.
+    To make a clear sharing of access to the trading context, one can use a semaphore on the basis of a global variable
     the value of which must be changed using the <a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition()</a> function.
     </content>
 
@@ -9375,7 +9383,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <p>Any trading operation (functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
         <a href="help://trading_OrderCloseBy">OrderCloseBy</a>, <a href="help://trading_OrderDelete">OrderDelete</a> or <a href="help://trading_OrderModify">OrderModify</a>)
         can fail, for a number of reasons, and return either negative <a href="help://trading_OrderSend">ticket number</a> or FALSE.
-        One can find out about the reason for fail by calling of the <a href="help://check_GetLastError">GetLastError()</a> function. 
+        One can find out about the reason for fail by calling of the <a href="help://check_GetLastError">GetLastError()</a> function.
         Every error must be processed in a special way. The most common recommendations are given below.</p>
 
         <p>Error codes returned from trade server.</p>
@@ -9385,7 +9393,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td>ERR_NO_RESULT</td><td>1</td><td><a href="help://trading_OrderModify">OrderModify</a> attempts to replace the values already set with the same values.
                                                  One or more values must be changed, then modification attempt can be repeated.</td></tr>
         <tr><td>ERR_COMMON_ERROR</td><td>2</td><td>Common error. All attempts to trade must be stopped until reasons are clarified. Restart of operation system and client terminal will possibly be needed.</td></tr>
-        <tr><td>ERR_INVALID_TRADE_PARAMETERS</td><td>3</td><td>Invalid parameters were passed to the trading function, for example, wrong symbol, unknown 
+        <tr><td>ERR_INVALID_TRADE_PARAMETERS</td><td>3</td><td>Invalid parameters were passed to the trading function, for example, wrong symbol, unknown
                                                  <a href="help://constants_trading">trade operation</a>, negative slippage, non-existing ticket number, etc.
                                                  The program logic must be changed.</td></tr>
         <tr><td>ERR_SERVER_BUSY</td><td>4</td><td>Trade server is busy. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
@@ -9396,7 +9404,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td>ERR_ACCOUNT_DISABLED</td><td>64</td><td>The account was disabled. All attempts to trade must be stopped.</td></tr>
         <tr><td>ERR_INVALID_ACCOUNT</td><td>65</td><td>The account number is invalid. All attempts to trade must be stopped.</td></tr>
         <tr><td>ERR_TRADE_TIMEOUT</td><td>128</td><td>Timeout for the trade has been reached. Before retry (at least, in 1-minute time),
-                                                 it is necessary to make sure that trading operation has not really succeeded (a new position has not been opened, or the existing order has not 
+                                                 it is necessary to make sure that trading operation has not really succeeded (a new position has not been opened, or the existing order has not
                                                  been modified or deleted, or the existing position has not been closed)</td></tr>
         <tr><td>ERR_INVALID_PRICE</td><td>129</td><td>Invalid bid or ask price, perhaps, unnormalized price. After 5-second (or more) delay, it is necessary to refresh
                                                  <a href="help://predefined_variables">data</a> using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
@@ -9408,13 +9416,13 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td>ERR_INVALID_TRADE_VOLUME</td><td>131</td><td>Invalid trade volume, error in the volume granularity. All attempts to trade must be stopped, and the program logic must be changed.</td></tr>
         <tr><td>ERR_MARKET_CLOSED</td><td>132</td><td>Market is closed. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
         <tr><td>ERR_TRADE_DISABLED</td><td>133</td><td>Trade is disabled. All attempts to trade must be stopped.</td></tr>
-        <tr><td>ERR_NOT_ENOUGH_MONEY</td><td>134</td><td>Not enough money to make an operation. The trade with the same parameters must not be repeated. After 5-second (or more) delay, the attempt can be repeated 
+        <tr><td>ERR_NOT_ENOUGH_MONEY</td><td>134</td><td>Not enough money to make an operation. The trade with the same parameters must not be repeated. After 5-second (or more) delay, the attempt can be repeated
                                                  with a smaller volume, but it is necessary to make sure that there is enough money to complete the operation.</td></tr>
         <tr><td>ERR_PRICE_CHANGED</td><td>135</td><td>The price has changed. The <a href="help://predefined_variables">data</a> can be refreshed without any delay using the
                                                  <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.</td></tr>
         <tr><td>ERR_OFF_QUOTES</td><td>136</td><td>No quotes. The broker has not supplied with prices or refused, for any reason (for example, no prices at the session start, unconfirmed prices, fast market).
                                                  After 5-second (or more) delay, it is necessary to refresh <a href="help://predefined_variables">data</a> using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.</td></tr>
-        <tr><td>ERR_REQUOTE</td><td>138</td><td>The requested price has become out of date or bid and ask prices have been mixed up. 
+        <tr><td>ERR_REQUOTE</td><td>138</td><td>The requested price has become out of date or bid and ask prices have been mixed up.
                                                  The <a href="help://predefined_variables">data</a> can be refreshed without any delay using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
                                                  If the error does not disappear, all attempts to trade must be stopped, the program logic must be changed.</td></tr>
         <tr><td>ERR_ORDER_LOCKED</td><td>139</td><td>The order has been locked and under processing. All attempts to make trading operations must be stopped, and the program logic must be changed.</td></tr>
@@ -9424,7 +9432,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td>&nbsp;</td><td>143</td><td>The order was accepted by the dealer for execution. It is an interaction code between the client terminal and the trade server. It can appear for the same reason as code 142.  This code should be processed in the same way as error 128.</td></tr>
         <tr><td>&nbsp;</td><td>144</td><td>The order was discarded by the client during manual confirmation. It is an interaction code between the client terminal and the trade server.</td></tr>
         <tr><td>ERR_TRADE_MODIFY_DENIED</td><td>145</td><td>Modifying has been denied since the order is too close to market and locked for possible soon execution.
-                                                 The <a href="help://predefined_variables">data</a> can be refreshed after more than 15 seconds using the <a href="help://windows_RefreshRates">RefreshRates</a> function, and 
+                                                 The <a href="help://predefined_variables">data</a> can be refreshed after more than 15 seconds using the <a href="help://windows_RefreshRates">RefreshRates</a> function, and
                                                  a retry can be made.</td></tr>
         <tr><td>ERR_TRADE_CONTEXT_BUSY</td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://check_IsTradeContextBusy">IsTradeContextBusy</a> function has returned FALSE.</td></tr>
         <tr><td>ERR_TRADE_EXPIRATION_DENIED</td><td>147</td><td>The use of pending order expiration date has been denied by the broker. The operation can only be repeated if the expiration parameter has been zeroized.</td></tr>
@@ -9687,13 +9695,13 @@ If the function fails, the returned value will be FALSE.
 To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
 Notes: Open price and expiration time can be changed only for pending orders.<br/>
 If unchanged values are passed as the function parameters, the <a href="help://constants_errors">error</a> 1 (ERR_NO_RESULT) will be generated.<br/>
-Pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified 
+Pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified
 in the <i>expiration</i> parameter, the <a href="help://constants_errors">error</a> 147 (ERR_TRADE_EXPIRATION_DENIED) will be generated.
       </content>
       <example>
   if(TrailingStop&gt;0)
     {
-     OrderSelect(12345,SELECT_BY_TICKET); 
+     OrderSelect(12345,SELECT_BY_TICKET);
      if(Bid-OrderOpenPrice()&gt;Point*TrailingStop)
        {
         if(OrderStopLoss()&lt;Bid-Point*TrailingStop)
@@ -9797,7 +9805,7 @@ Order must be selected by the <a href="help://trading_OrderSelect">OrderSelect()
       caption=OrderProfit()
       type=double
       <content>
-Returns the net profit value (without swaps or commissions) for the selected order. For open positions, it is the current unrealized profit. 
+Returns the net profit value (without swaps or commissions) for the selected order. For open positions, it is the current unrealized profit.
 For closed orders, it is the fixed profit.<br/>
 Returns profit for the currently selected order.<br/>
 Note: The order must be previously selected by the <a href="help://trading_OrderSelect">OrderSelect()</a> function.
@@ -9820,10 +9828,10 @@ The function selects an order for further processing. It returns TRUE if the fun
 It returns FALSE if the function fails.
 To get the error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
 The <i>pool</i> parameter is ignored if the order is selected by the ticket number. The ticket number is a unique order identifier.
-To find out from what list the order has been selected, its <a href="help://trading_OrderCloseTime">close time</a> must be analyzed. If the order close time 
+To find out from what list the order has been selected, its <a href="help://trading_OrderCloseTime">close time</a> must be analyzed. If the order close time
 equals to 0, the order is open or pending and taken from the terminal open positions list. One can distinguish an open position from a pending order
 by the <a href="help://trading_OrderType">order type</a>. If the order <a href="help://trading_OrderCloseTime">close time</a> does not equal to 0, the order is
-a <a href="help://trading_OrderClose">closed</a> order or a <a href="help://trading_OrderDelete">deleted</a> pending order and was selected from the terminal history. 
+a <a href="help://trading_OrderClose">closed</a> order or a <a href="help://trading_OrderDelete">deleted</a> pending order and was selected from the terminal history.
 They also differ from each other by their <a href="help://trading_OrderType">order types</a>.
       </content>
       <example>
@@ -9870,22 +9878,22 @@ The main function used to open a position or place a pending order.<br/>
 Returns number of the ticket assigned to the order by the trade server or -1 if it fails.
 To get additional error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
 Notes:<br/>
-At opening of a market order (OP_SELL or OP_BUY), only the latest prices of <a href="help://predefined_variables_Bid">Bid</a> (for selling) or 
-<a href="help://predefined_variables_Ask">Ask</a> (for buying) can be used as open price. If operation is performed with a security differing from 
-the current one, the <a href="help://common_MarketInfo">MarketInfo()</a> function must be used with MODE_BID or MODE_ASK parameter 
+At opening of a market order (OP_SELL or OP_BUY), only the latest prices of <a href="help://predefined_variables_Bid">Bid</a> (for selling) or
+<a href="help://predefined_variables_Ask">Ask</a> (for buying) can be used as open price. If operation is performed with a security differing from
+the current one, the <a href="help://common_MarketInfo">MarketInfo()</a> function must be used with MODE_BID or MODE_ASK parameter
 for the latest quotes for this security to be obtained. Calculated or unnormalized price cannot be applied.
-If there has not been the requested open price in the price thread or it has not been normalized according to the <a href="help://predefined_variables_Digits">amount 
+If there has not been the requested open price in the price thread or it has not been normalized according to the <a href="help://predefined_variables_Digits">amount
 of digits after decimal point</a>, the <a href="help://constants_errors">error</a> 129 (ERR_INVALID_PRICE) will be generated. If the requested
-open price is fully out of date, the <a href="help://constants_errors">error</a> 138 (ERR_REQUOTE) will be generated independently on the <i>slippage</i> 
-parameter. If the requested price is out of date, but present in the thread, the position will be opened at the current price and only if 
+open price is fully out of date, the <a href="help://constants_errors">error</a> 138 (ERR_REQUOTE) will be generated independently on the <i>slippage</i>
+parameter. If the requested price is out of date, but present in the thread, the position will be opened at the current price and only if
 the current price lies within the range of <i>price</i>+-<i>slippage</i>.<br/><br/>
-StopLoss and TakeProfit levels cannot be too close to the market. The minimal distance of stop levels in points can be obtained using the 
-<a href="help://common_MarketInfo">MarketInfo()</a> function with MODE_STOPLEVEL parameter. In the case of erroneous or unnormalized stop levels, the 
+StopLoss and TakeProfit levels cannot be too close to the market. The minimal distance of stop levels in points can be obtained using the
+<a href="help://common_MarketInfo">MarketInfo()</a> function with MODE_STOPLEVEL parameter. In the case of erroneous or unnormalized stop levels, the
 <a href="help://constants_errors">error</a> 130 (ERR_INVALID_STOPS) will be generated.<br/><br/>
 At placing of a pending order, the open price cannot be too close to the market. The minimal distance of the pending price from the current market one
 in points can be obtained using the <a href="help://common_MarketInfo">MarketInfo()</a> function with the MODE_STOPLEVEL parameter. In case of false open price
 of a pending order, the <a href="help://constants_errors">error</a> 130 (ERR_INVALID_STOPS) will be generated.<br/><br/>
-Applying of pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified 
+Applying of pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified
 in the <i>expiration</i> parameter, the <a href="help://constants_errors">error</a> 147 (ERR_TRADE_EXPIRATION_DENIED) will be generated.<br/><br/>
 On some trade servers, the <a href="help://trading_OrdersTotal">total amount</a> of open and pending orders can be limited.
 If this limit has been exceeded, no new position will be opened (or no pending order will be placed) and trade server will return <a href="help://constants_errors">error</a>
@@ -10018,7 +10026,7 @@ Returns market and pending orders count.<br/>
       <example>
   int handle=FileOpen("OrdersReport.csv",FILE_WRITE|FILE_CSV,"\t");
   if(handle&lt;0) return(0);
-  // write header 
+  // write header
   FileWrite(handle,&quot;#&quot;,&quot;open price&quot;,&quot;open time&quot;,&quot;symbol&quot;,&quot;lots&quot;);
   int total=OrdersTotal();
   // write open orders
@@ -10152,7 +10160,7 @@ Note: order must be selected by <a href="help://trading_OrderSelect">OrderSelect
         description=TRUE, if there is a need to hide indicators, or else FALSE.
       </parameter>
     </function>
-   
+
     <function>
       tag=windows_Period
       caption=Period()
@@ -10172,11 +10180,11 @@ Note: order must be selected by <a href="help://trading_OrderSelect">OrderSelect
       <content>
  Refreshing of data in <a href="help://predefined_variables">pre-defined variables and series arrays</a>.
  This function is used when expert advisor has been calculating for a long time and needs data refreshing.
- Returns TRUE if data are refreshed, otherwise returns FALSE. The only reason for data cannot be refreshed is that 
+ Returns TRUE if data are refreshed, otherwise returns FALSE. The only reason for data cannot be refreshed is that
  they are the current data of the client terminal.<br/><br/>
  Experts and scripts operate with their own copy of history data. Data of the current symbol are copied at the first launch of the expert or script.
- At each subsequent launch of the expert (remember that script is <a href="help://runtime_start">executed</a> only once and does not depend on 
- incoming ticks), the initial copy will be updated. One or more new ticks can income while the expert or script is operating, 
+ At each subsequent launch of the expert (remember that script is <a href="help://runtime_start">executed</a> only once and does not depend on
+ incoming ticks), the initial copy will be updated. One or more new ticks can income while the expert or script is operating,
  and data can become out of date.
       </content>
       <example>
@@ -10247,7 +10255,7 @@ for(int i=0; i&lt;bars_count; i++,bar--)
       caption=WindowExpertName()
       type=string
       <content>
-Returns name of the executed expert, script, custom indicator, or library, depending on the MQL4 program, from which 
+Returns name of the executed expert, script, custom indicator, or library, depending on the MQL4 program, from which
 this function has been called.
       </content>
       <example>
@@ -10277,7 +10285,7 @@ Note: WindowFind() returns -1 if custom indicator searches itself when <i>init()
       caption=WindowFirstVisibleBar()
       type=int
       <content>
-The function returns the first visible bar number in the current chart window. It must be taken into consideration that price bars are numbered 
+The function returns the first visible bar number in the current chart window. It must be taken into consideration that price bars are numbered
 in the reverse order, from the last to the first one.
 The current bar, the latest in the price array, is indexed as 0. The oldest bar is indexed as <a href="help://predefined_variables_Bars">Bars</a>-1.
 If the first visible bar number is 2 or more bars less than <a href="help://windows_WindowBarsPerChart">the amount of visible bars in the chart</a>,
@@ -10324,7 +10332,7 @@ it means that the chart window has not been fully filled out and there is a spac
       caption=WindowIsVisible()
       type=bool
       <content>
-      Returns TRUE if the chart subwindow is visible, otherwise returns FALSE. The chart subwindow can be 
+      Returns TRUE if the chart subwindow is visible, otherwise returns FALSE. The chart subwindow can be
       hidden due to the visibility properties of the indicator placed in it.
       </content>
       <example>
@@ -10349,8 +10357,8 @@ it means that the chart window has not been fully filled out and there is a spac
         Returns window index where expert, custom indicator or script was dropped.
         This value is valid if the expert, custom indicator or script was dropped by mouse.<br/>
         Note: For custom indicators being initialized (call from the <i>init()</i> function), this index is not defined.<br/>
-        The returned index is the number of window (0-chart main menu, subwindows of indicators are numbered starting from 1) where the custom indicator 
-        is working. A custom indicator can create its own new subwindow during its work, and the number of this subwindow will differ from that of the window 
+        The returned index is the number of window (0-chart main menu, subwindows of indicators are numbered starting from 1) where the custom indicator
+        is working. A custom indicator can create its own new subwindow during its work, and the number of this subwindow will differ from that of the window
         where the indicator was really dropped in.<br/>
         <b>See also</b> <a href="help://windows_WindowXOnDropped">WindowXOnDropped()</a>, <a href="help://windows_WindowYOnDropped">WindowYOnDropped()</a>
       </content>
@@ -10369,7 +10377,7 @@ if(WindowOnDropped()!=0)
       type=double
       <content>
 Returns maximal value of the vertical scale of the specified subwindow of the current chart
- (0-main chart window, the indicators' subwindows are numbered starting from 1). If the subwindow 
+ (0-main chart window, the indicators' subwindows are numbered starting from 1). If the subwindow
  index has not been specified, the maximal value of the price scale of the main chart window is returned.<br/>
  <b>See also</b> <a href="help://windows_WindowPriceMin">WindowPriceMin()</a>, <a href="help://windows_WindowFirstVisibleBar">WindowFirstVisibleBar()</a>, <a href="help://windows_WindowBarsPerChart">WindowBarsPerChart()</a>
      </content>
@@ -10400,7 +10408,7 @@ WindowRedraw();
       type=double
       <content>
 Returns minimal value of the vertical scale of the specified subwindow of the current chart
- (0-main chart window, the indicators' subwindows are numbered starting from 1). If the subwindow 
+ (0-main chart window, the indicators' subwindows are numbered starting from 1). If the subwindow
  index has not been specified, the minimal value of the price scale of the main chart window is returned.<br/>
   <b>See also</b> <a href="help://windows_WindowPriceMax">WindowPriceMax()</a>, <a href="help://windows_WindowFirstVisibleBar">WindowFirstVisibleBar()</a>, <a href="help://windows_WindowBarsPerChart">WindowBarsPerChart()</a>
      </content>
@@ -10452,10 +10460,10 @@ Note: For custom indicators, this value is undefined.
       type=void
       <content>
       Redraws the current chart forcedly. It is normally used after the objects properties have been changed.
-		<br>
-		<br>
-		<span style="color:red">Fehler:</span>
-		Funktioniert im Tester bei Aufruf durch Script nicht. Stattdessen muß das Win32-API zum Neuzeichnen des Fensters verwendet werden.
+      <br>
+      <br>
+      <span style="color:red">Fehler:</span>
+      Funktioniert im Tester bei Aufruf durch Script nicht. Stattdessen muß das Win32-API zum Neuzeichnen des Fensters verwendet werden.
       </content>
       <example>
   //---- set new properties for some objects
@@ -10489,17 +10497,17 @@ The screen shot is saved in the <em>terminal_dir\experts\files</em> (<em>termina
      ExtTradesCounter=TradesTotal();
     }
       </example>
-      <parameter>    
+      <parameter>
         type=string
         name=filename
         description=Screen shot file name.
       </parameter>
-      <parameter>    
+      <parameter>
         type=int
         name=size_x
         description=Screen shot width in pixels.
       </parameter>
-      <parameter>    
+      <parameter>
         type=int
         name=size_y
         description=Screen shot height in pixels.
@@ -10509,7 +10517,7 @@ The screen shot is saved in the <em>terminal_dir\experts\files</em> (<em>termina
         name=start_bar
         <description>
 Index of the first visible bar in the screen shot. If 0 value is set, the current <a href="help://windows_WindowFirstVisibleBar">first visible bar</a> will be shot.
- If no value or negative value has been set, the end-of-chart screen shot will be produced, indent being taken into consideration. 
+ If no value or negative value has been set, the end-of-chart screen shot will be produced, indent being taken into consideration.
         </description>
         def_value=-1
       </parameter>
@@ -10596,8 +10604,8 @@ The value will be true only if the expert or script were moved with the mouse (&
     caption=Obsolete functions
     <content>
       <p>In further development of MQL4, some functions were renamed and moved from one group to another in order
-      to systematize them better. The old function names are not highlighted or linked to the 
-      MetaEditor Dictionary. The old function names can be used since the compiler will accept them in a proper way. 
+      to systematize them better. The old function names are not highlighted or linked to the
+      MetaEditor Dictionary. The old function names can be used since the compiler will accept them in a proper way.
       However, we strongly recommend to use the new names.</p>
       <table cellspacing="0" cellpadding="4" border="0" class="docenums">
       <tr><th width="50%">Old Name</th><th width="50%">New Name</th></tr>
@@ -10618,11 +10626,11 @@ The value will be true only if the expert or script were moved with the mouse (&
       </table><br/>
     </content>
   </group>
-  
+
   <group>
-	tag=MQL5_migrate 
-	caption=Upgrade to MQL5
-	<content>
+   tag=MQL5_migrate
+   caption=Upgrade to MQL5
+   <content>
 <p>In 2010, MetaQuotes Software Corp. released the new <a href="http://www.metatrader5.com/en" title="MetaTrader 5" target="_blank">MetaTrader 5</a> online trading platform. In the new platform, we have implemented a lot of traders' wishes and added the ability to trade various exchange-traded instruments.</p>
 <p>The MetaTrader 5 Client Terminal is now equipped with a new multicurrency tester, which allows using all the available computer cores during optimization. Moreover, by connecting remote testing agents, the time of Expert Advisor optimization can be hundred times reduced. The tester provides the most convenient and easy way to add, delete and control remote agents.</p>
 <p>MetaEditor 5 allows to debug programs, contains the built-in automatic code completion function and provides many other improvements. With the new <a href="http://www.metatrader5.com/en/metaeditor/help/MQL5_wizard" title="MQL5 Wizard" target="_blank">MQL5 Wizard</a>, you need only four mouse clicks to create your own trading robot even if you don't have programming skills. You go through the required steps selecting the type of trading signals, the money management block and the Trailing Stop system, and you get an Expert Advisor ready for compilation and use.</p>
