@@ -737,11 +737,11 @@ bool UpdateOHLC() {
 
 
    // (2) Beginn und Ende der aktuellen Session ermitteln
-   datetime sessionStart = GetSessionStartServerTime(lastTickTime);              // throws ERR_MARKET_CLOSED
+   datetime sessionStart = GetSessionStartTime.server(lastTickTime);              // throws ERR_MARKET_CLOSED
    if (sessionStart == NOT_A_TIME) {
       if (SetLastError(stdlib.GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
          return(false);
-      sessionStart = GetPrevSessionStartServerTime(lastTickTime);
+      sessionStart = GetPrevSessionStartTime.server(lastTickTime);
    }
    datetime sessionEnd = sessionStart + 1*DAY;
 
@@ -1863,8 +1863,8 @@ string InputsToStr() {
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
-   datetime GetPrevSessionStartServerTime(datetime serverTime);
-   datetime GetSessionStartServerTime(datetime serverTime);
+   datetime GetPrevSessionStartTime.server(datetime serverTime);
+   datetime GetSessionStartTime.server(datetime serverTime);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();
    int      iBarShiftNext(string symbol, int period, datetime time);

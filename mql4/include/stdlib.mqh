@@ -210,29 +210,29 @@
 
    int      GetLocalToGmtTimeOffset();
 
-   datetime GetPrevSessionStartFxtTime   (datetime fxtTime   );
-   datetime GetPrevSessionStartGmtTime   (datetime gmtTime   );
-   datetime GetPrevSessionStartServerTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetPrevSessionStartTime.fxt   (datetime fxtTime   );
+   datetime GetPrevSessionStartTime.gmt   (datetime gmtTime   );
+   datetime GetPrevSessionStartTime.server(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetPrevSessionEndFxtTime     (datetime fxtTime   );
-   datetime GetPrevSessionEndGmtTime     (datetime gmtTime   );
-   datetime GetPrevSessionEndServerTime  (datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetPrevSessionEndTime.fxt     (datetime fxtTime   );
+   datetime GetPrevSessionEndTime.gmt     (datetime gmtTime   );
+   datetime GetPrevSessionEndTime.server  (datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionStartFxtTime       (datetime fxtTime   );                                             // throws ERR_MARKET_CLOSED
-   datetime GetSessionStartGmtTime       (datetime gmtTime   );                                             // throws ERR_MARKET_CLOSED
-   datetime GetSessionStartServerTime    (datetime serverTime);                                             // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetSessionStartTime.fxt       (datetime fxtTime   );                                            // throws ERR_MARKET_CLOSED
+   datetime GetSessionStartTime.gmt       (datetime gmtTime   );                                            // throws ERR_MARKET_CLOSED
+   datetime GetSessionStartTime.server    (datetime serverTime);                                            // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionEndFxtTime         (datetime fxtTime   );                                             // throws ERR_MARKET_CLOSED
-   datetime GetSessionEndGmtTime         (datetime gmtTime   );                                             // throws ERR_MARKET_CLOSED
-   datetime GetSessionEndServerTime      (datetime serverTime);                                             // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetSessionEndTime.fxt         (datetime fxtTime   );                                            // throws ERR_MARKET_CLOSED
+   datetime GetSessionEndTime.gmt         (datetime gmtTime   );                                            // throws ERR_MARKET_CLOSED
+   datetime GetSessionEndTime.server      (datetime serverTime);                                            // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetNextSessionStartFxtTime   (datetime fxtTime   );
-   datetime GetNextSessionStartGmtTime   (datetime gmtTime   );
-   datetime GetNextSessionStartServerTime(datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetNextSessionStartTime.fxt   (datetime fxtTime   );
+   datetime GetNextSessionStartTime.gmt   (datetime gmtTime   );
+   datetime GetNextSessionStartTime.server(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetNextSessionEndFxtTime     (datetime fxtTime   );
-   datetime GetNextSessionEndGmtTime     (datetime gmtTime   );
-   datetime GetNextSessionEndServerTime  (datetime serverTime);                                             // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetNextSessionEndTime.fxt     (datetime fxtTime   );
+   datetime GetNextSessionEndTime.gmt     (datetime gmtTime   );
+   datetime GetNextSessionEndTime.server  (datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
 
    datetime mql.GetLocalTime();
    datetime mql.GetSystemTime();
