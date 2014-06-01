@@ -210,29 +210,29 @@
 
    int      GetLocalToGmtTimeOffset();
 
-   datetime GetPrevSessionStartTime.fxt   (datetime fxtTime   );
-   datetime GetPrevSessionStartTime.gmt   (datetime gmtTime   );
-   datetime GetPrevSessionStartTime.server(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetPrevSessionStartTime.fxt(datetime fxtTime   );
+   datetime GetPrevSessionStartTime.gmt(datetime gmtTime   );
+   datetime GetPrevSessionStartTime.srv(datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetPrevSessionEndTime.fxt     (datetime fxtTime   );
-   datetime GetPrevSessionEndTime.gmt     (datetime gmtTime   );
-   datetime GetPrevSessionEndTime.server  (datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetPrevSessionEndTime.fxt  (datetime fxtTime   );
+   datetime GetPrevSessionEndTime.gmt  (datetime gmtTime   );
+   datetime GetPrevSessionEndTime.srv  (datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionStartTime.fxt       (datetime fxtTime   );                                            // throws ERR_MARKET_CLOSED
-   datetime GetSessionStartTime.gmt       (datetime gmtTime   );                                            // throws ERR_MARKET_CLOSED
-   datetime GetSessionStartTime.server    (datetime serverTime);                                            // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetSessionStartTime.fxt    (datetime fxtTime   );                                               // throws ERR_MARKET_CLOSED
+   datetime GetSessionStartTime.gmt    (datetime gmtTime   );                                               // throws ERR_MARKET_CLOSED
+   datetime GetSessionStartTime.srv    (datetime serverTime);                                               // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionEndTime.fxt         (datetime fxtTime   );                                            // throws ERR_MARKET_CLOSED
-   datetime GetSessionEndTime.gmt         (datetime gmtTime   );                                            // throws ERR_MARKET_CLOSED
-   datetime GetSessionEndTime.server      (datetime serverTime);                                            // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetSessionEndTime.fxt      (datetime fxtTime   );                                               // throws ERR_MARKET_CLOSED
+   datetime GetSessionEndTime.gmt      (datetime gmtTime   );                                               // throws ERR_MARKET_CLOSED
+   datetime GetSessionEndTime.srv      (datetime serverTime);                                               // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetNextSessionStartTime.fxt   (datetime fxtTime   );
-   datetime GetNextSessionStartTime.gmt   (datetime gmtTime   );
-   datetime GetNextSessionStartTime.server(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetNextSessionStartTime.fxt(datetime fxtTime   );
+   datetime GetNextSessionStartTime.gmt(datetime gmtTime   );
+   datetime GetNextSessionStartTime.srv(datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetNextSessionEndTime.fxt     (datetime fxtTime   );
-   datetime GetNextSessionEndTime.gmt     (datetime gmtTime   );
-   datetime GetNextSessionEndTime.server  (datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetNextSessionEndTime.fxt  (datetime fxtTime   );
+   datetime GetNextSessionEndTime.gmt  (datetime gmtTime   );
+   datetime GetNextSessionEndTime.srv  (datetime serverTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
 
    datetime mql.GetLocalTime();
    datetime mql.GetSystemTime();

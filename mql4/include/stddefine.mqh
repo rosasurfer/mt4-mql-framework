@@ -1725,6 +1725,17 @@ int _NOT_A_TIME(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
 
 
 /**
+ * Pseudo-Funktion, die nichts tut oder zurückgibt. Dummy-Statement
+ *
+ * @param  beliebige Parameter (werden ignoriert)
+ *
+ * @return void
+ */
+void _void(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -2033,6 +2044,7 @@ void __DummyCalls() {
    _NULL();
    _string(NULL);
    _true();
+   _void();
    Abs(NULL);
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);

@@ -5410,7 +5410,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ConvertServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
@@ -5430,8 +5430,8 @@ datetime GetPrevSessionStartTime.server(datetime serverTime) { // throws ERR_INV
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetPrevSessionStartTime.server(serverTime);
+datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime startTime = GetPrevSessionStartTime.srv(serverTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5446,14 +5446,14 @@ datetime GetPrevSessionEndTime.server(datetime serverTime) { // throws ERR_INVAL
  *
  * @return datetime - Startzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    int offset = GetServerToFxtTimeOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
 
    datetime fxtTime = serverTime - offset;
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartTime.server(1)   illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_NOT_A_TIME(catch("GetSessionStartTime.srv(1)   illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    int dayOfWeek = TimeDayOfWeek(fxtTime);
 
@@ -5471,8 +5471,8 @@ datetime GetSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime.server(serverTime);
+datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+   datetime startTime = GetSessionStartTime.srv(serverTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5487,7 +5487,7 @@ datetime GetSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_T
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ConvertServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
@@ -5507,8 +5507,8 @@ datetime GetNextSessionStartTime.server(datetime serverTime) { // throws ERR_INV
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetNextSessionStartTime.server(datetime serverTime);
+datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime startTime = GetNextSessionStartTime.srv(datetime serverTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -8792,6 +8792,13 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (time < 0)
       return(_EMPTY_VALUE(catch("iBarShiftPrevious(1)   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
+   /*
+   int iBarShift(symbol, period, time, exact=false);
+      exact = TRUE : Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
+      exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index
+                     der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
+   */
+
    // Datenreihe holen
    datetime times[];
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
@@ -8819,26 +8826,33 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
 
 
 /**
- * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
+ * Ermittelt den Chart-Offset (die Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
- * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param  int      period - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default:  NULL = aktuelles Symbol)
+ * @param  int      period - Periode der zu verwendenden Datenreihe (default: NULL = aktuelle Periode)
  * @param  datetime time   - Zeitpunkt
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // throws ERS_HISTORY_UPDATE
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) { // throws ERS_HISTORY_UPDATE
    if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
 
    if (time < 0)
       return(_EMPTY_VALUE(catch("iBarShiftNext(1)   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
+   /*
+   int iBarShift(symbol, period, time, exact=false);
+      exact = TRUE : Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
+      exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index
+                     der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
+   */
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
 
    if (!error) /*&&*/ if (bar==-1) {                        // falls die Bar nicht existiert und auch kein Update läuft
+      // exact war TRUE, keine abdeckende Bar gefunden
       // Datenreihe holen
       datetime times[];
       int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
@@ -8846,9 +8860,9 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // 
 
       if (!error) {
          // Bars überprüfen
-         if (time < times[bars-1])                          // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
+         if (time < times[bars-1]) {                        // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
             bar = bars-1;
-
+         }
          else if (time < times[0]) {                        // Kurslücke, die nächste existierende Bar zurückgeben
             bar   = iBarShift(symbol, period, time) - 1;
             error = GetLastError();                         // ERS_HISTORY_UPDATE ???
@@ -8858,9 +8872,8 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // 
    }
 
    if (error != NO_ERROR) {
-      SetLastError(error);
-      if (error != ERS_HISTORY_UPDATE)
-         catch("iBarShiftNext(2)", error);
+      if (error == ERS_HISTORY_UPDATE) SetLastError(error);
+      else                             catch("iBarShiftNext(2)", error);
       return(EMPTY_VALUE);
    }
    return(bar);
