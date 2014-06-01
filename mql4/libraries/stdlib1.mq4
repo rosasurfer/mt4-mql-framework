@@ -5410,12 +5410,12 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionStartServerTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetPrevSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   datetime startTime = GetPrevSessionStartFxtTime(fxtTime);
+   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5430,8 +5430,8 @@ datetime GetPrevSessionStartServerTime(datetime serverTime) { // throws ERR_INVA
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionEndServerTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetPrevSessionStartServerTime(serverTime);
+datetime GetPrevSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime startTime = GetPrevSessionStartTime.server(serverTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5446,14 +5446,14 @@ datetime GetPrevSessionEndServerTime(datetime serverTime) { // throws ERR_INVALI
  *
  * @return datetime - Startzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionStartServerTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+datetime GetSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    int offset = GetServerToFxtTimeOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
 
    datetime fxtTime = serverTime - offset;
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartServerTime(1)   illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_NOT_A_TIME(catch("GetSessionStartTime.server(1)   illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    int dayOfWeek = TimeDayOfWeek(fxtTime);
 
@@ -5471,8 +5471,8 @@ datetime GetSessionStartServerTime(datetime serverTime) { // throws ERR_INVALID_
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionEndServerTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartServerTime(serverTime);
+datetime GetSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
+   datetime startTime = GetSessionStartTime.server(serverTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5487,12 +5487,12 @@ datetime GetSessionEndServerTime(datetime serverTime) { // throws ERR_INVALID_TI
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionStartServerTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GetNextSessionStartTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   datetime startTime = GetNextSessionStartFxtTime(fxtTime);
+   datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5507,8 +5507,8 @@ datetime GetNextSessionStartServerTime(datetime serverTime) { // throws ERR_INVA
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionEndServerTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetNextSessionStartServerTime(datetime serverTime);
+datetime GetNextSessionEndTime.server(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime startTime = GetNextSessionStartTime.server(datetime serverTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5523,12 +5523,12 @@ datetime GetNextSessionEndServerTime(datetime serverTime) { // throws ERR_INVALI
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionStartGmtTime(datetime gmtTime) {
+datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
    datetime fxtTime = GmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   datetime startTime = GetPrevSessionStartFxtTime(fxtTime);
+   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5543,8 +5543,8 @@ datetime GetPrevSessionStartGmtTime(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionEndGmtTime(datetime gmtTime) {
-   datetime startTime = GetPrevSessionStartGmtTime(gmtTime);
+datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
+   datetime startTime = GetPrevSessionStartTime.gmt(gmtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5559,12 +5559,12 @@ datetime GetPrevSessionEndGmtTime(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionStartGmtTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
+datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    datetime fxtTime = GmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   datetime startTime = GetSessionStartFxtTime(fxtTime);
+   datetime startTime = GetSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5579,8 +5579,8 @@ datetime GetSessionStartGmtTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionEndGmtTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartGmtTime(datetime gmtTime);
+datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
+   datetime startTime = GetSessionStartTime.gmt(datetime gmtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5595,12 +5595,12 @@ datetime GetSessionEndGmtTime(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionStartGmtTime(datetime gmtTime) {
+datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
    datetime fxtTime = GmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   datetime startTime = GetNextSessionStartFxtTime(fxtTime);
+   datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5615,8 +5615,8 @@ datetime GetNextSessionStartGmtTime(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionEndGmtTime(datetime gmtTime) {
-   datetime startTime = GetNextSessionStartGmtTime(datetime gmtTime);
+datetime GetNextSessionEndTime.gmt(datetime gmtTime) {
+   datetime startTime = GetNextSessionStartTime.gmt(datetime gmtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5631,13 +5631,13 @@ datetime GetNextSessionEndGmtTime(datetime gmtTime) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionStartFxtTime(datetime fxtTime) {
+datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetPrevSessionStartFxtTime(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_NOT_A_TIME(catch("GetPrevSessionStartTime.fxt(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
    if (startTime < 0)
-      return(_NOT_A_TIME(catch("GetPrevSessionStartFxtTime(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
+      return(_NOT_A_TIME(catch("GetPrevSessionStartTime.fxt(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5655,8 +5655,8 @@ datetime GetPrevSessionStartFxtTime(datetime fxtTime) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetPrevSessionEndFxtTime(datetime fxtTime) {
-   datetime startTime = GetPrevSessionStartFxtTime(fxtTime);
+datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
+   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5671,13 +5671,13 @@ datetime GetPrevSessionEndFxtTime(datetime fxtTime) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionStartFxtTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
+datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartFxtTime(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_NOT_A_TIME(catch("GetSessionStartTime.fxt(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
    if (startTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartFxtTime(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
+      return(_NOT_A_TIME(catch("GetSessionStartTime.fxt(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5695,8 +5695,8 @@ datetime GetSessionStartFxtTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetSessionEndFxtTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartFxtTime(fxtTime);
+datetime GetSessionEndTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
+   datetime startTime = GetSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5711,9 +5711,9 @@ datetime GetSessionEndFxtTime(datetime fxtTime) { // throws ERR_MARKET_CLOSED
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionStartFxtTime(datetime fxtTime) {
+datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetNextSessionStartFxtTime()   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_NOT_A_TIME(catch("GetNextSessionStartTime.fxt()   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
@@ -5733,8 +5733,8 @@ datetime GetNextSessionStartFxtTime(datetime fxtTime) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime GetNextSessionEndFxtTime(datetime fxtTime) {
-   datetime startTime = GetNextSessionStartFxtTime(fxtTime);
+datetime GetNextSessionEndTime.fxt(datetime fxtTime) {
+   datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 

@@ -68,8 +68,8 @@ int DrawGrid() {
 
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime fromFXT = GetNextSessionStartFxtTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND);
-   datetime toFXT   = GetNextSessionStartFxtTime(GmtToFxtTime(TimeGMT())); // nicht TimeCurrent() verwenden, kann 0 sein
+   datetime fromFXT = GetNextSessionStartTime.fxt(ServerToFxtTime(Time[Bars-1]) - 1*SECOND);
+   datetime toFXT   = GetNextSessionStartTime.fxt(GmtToFxtTime(TimeGMT())); // nicht TimeCurrent() verwenden, kann 0 sein
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {                                             // fromFXT bleibt unverändert
