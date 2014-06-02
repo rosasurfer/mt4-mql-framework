@@ -65,19 +65,25 @@ int      last_error;                                        // der letzte Fehler
 
 // Zeitkonstanten
 #define SECOND                      1
-#define MINUTE                     60
-#define HOUR                     3600
-#define DAY                     86400
-#define WEEK                   604800
+#define MINUTE                     60  //  60 Sekunden
+#define HOUR                     3600  //  60 Minuten
+#define DAY                     86400  //  24 Stunden
+#define WEEK                   604800  //   7 Tage
+#define MONTH                 2678400  //  31 Tage                      // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
+#define QUARTER               8035200  //   3 Monate (3 x 31 Tage)      // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
+#define YEAR                 31622400  // 366 Tage                      // Periode garantiert ist.
 
 #define SECONDS                SECOND
 #define MINUTES                MINUTE
 #define HOURS                    HOUR
 #define DAYS                      DAY
 #define WEEKS                    WEEK
+#define MONTHS                  MONTH
+#define QUARTERS              QUARTER
+#define YEARS                    YEAR
 
 
-// Wochentage, siehe TimeDayOfWeek()
+// Wochentage, wie von DayOfWeek() und TimeDayOfWeek() zurückgegeben
 #define SUNDAY                      0
 #define MONDAY                      1
 #define TUESDAY                     2
@@ -95,6 +101,34 @@ int      last_error;                                        // der letzte Fehler
 #define SAT                  SATURDAY
 
 
+// Monate, wie von Month() und TimeMonth() zurückgegeben
+#define JANUARY                     1
+#define FEBRUARY                    2
+#define MARCH                       3
+#define APRIL                       4
+#define MAY                         5
+#define JUNE                        6
+#define JULY                        7
+#define AUGUST                      8
+#define SEPTEMBER                   9
+#define OCTOBER                    10
+#define NOVEMBER                   11
+#define DECEMBER                   12
+
+#define JAN                   JANUARY
+#define FEB                  FEBRUARY
+#define MAR                     MARCH
+#define APR                     APRIL
+#define MAY                       MAY
+#define JUN                      JUNE
+#define JUL                      JULY
+#define AUG                    AUGUST
+#define SEP                 SEPTEMBER
+#define OCT                   OCTOBER
+#define NOV                  NOVEMBER
+#define DEC                  DECEMBER
+
+
 // Account-Types
 #define ACCOUNT_TYPE_DEMO           1
 #define ACCOUNT_TYPE_REAL           2
@@ -108,15 +142,16 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Timeframe-Identifier, siehe Period()
-#define PERIOD_M1                   1           // 1 minute
-#define PERIOD_M5                   5           // 5 minutes
-#define PERIOD_M15                 15           // 15 minutes
-#define PERIOD_M30                 30           // 30 minutes
-#define PERIOD_H1                  60           // 1 hour
-#define PERIOD_H4                 240           // 4 hours
-#define PERIOD_D1                1440           // daily
-#define PERIOD_W1               10080           // weekly  (7 Tage)
-#define PERIOD_MN1              43200           // monthly (30 Tage)
+#define PERIOD_M1                   1           // 1 Minute
+#define PERIOD_M5                   5           // 5 Minuten
+#define PERIOD_M15                 15           // 15 Minuten
+#define PERIOD_M30                 30           // 30 Minuten
+#define PERIOD_H1                  60           // 1 Stunde
+#define PERIOD_H4                 240           // 4 Stunden
+#define PERIOD_D1                1440           // 1 Tag
+#define PERIOD_W1               10080           // 1 Woche (7 Tage)
+#define PERIOD_MN1              43200           // 1 Monat (30 Tage)
+#define PERIOD_Q1              129600           // 1 Quartal (3 Monate)
 
 
 // Arrayindizes für Timezone-Transitionsdaten
@@ -221,22 +256,23 @@ int      last_error;                                        // der letzte Fehler
 #define OBJ_PERIOD_D1          0x0040           //  64: object is shown on daily charts
 #define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
 #define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
-#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: OBJ_PERIOD_M1 | OBJ_PERIOD_M5 | OBJ_PERIOD_M15 | OBJ_PERIOD_M30 | OBJ_PERIOD_H1 |
-#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL  //                                         OBJ_PERIOD_H4 | OBJ_PERIOD_D1 | OBJ_PERIOD_W1  | OBJ_PERIOD_MN1
+#define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1}
+#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL
 
 
 // Timeframe-Flags, siehe EventListener.Baropen()
-#define F_PERIOD_M1            OBJ_PERIOD_M1    //   1
-#define F_PERIOD_M5            OBJ_PERIOD_M5    //   2
-#define F_PERIOD_M15           OBJ_PERIOD_M15   //   4
-#define F_PERIOD_M30           OBJ_PERIOD_M30   //   8
-#define F_PERIOD_H1            OBJ_PERIOD_H1    //  16
-#define F_PERIOD_H4            OBJ_PERIOD_H4    //  32
-#define F_PERIOD_D1            OBJ_PERIOD_D1    //  64
-#define F_PERIOD_W1            OBJ_PERIOD_W1    // 128
-#define F_PERIOD_MN1           OBJ_PERIOD_MN1   // 256
-#define F_PERIODS_ALL          OBJ_PERIODS_ALL  // 511: F_PERIOD_M1 | F_PERIOD_M5 | F_PERIOD_M15 | F_PERIOD_M30 | F_PERIOD_H1 | F_PERIOD_H4 | F_PERIOD_D1 | F_PERIOD_W1 | F_PERIOD_MN1
-#define F_ALL_PERIODS          F_PERIODS_ALL    //
+#define F_PERIOD_M1            OBJ_PERIOD_M1    //    1
+#define F_PERIOD_M5            OBJ_PERIOD_M5    //    2
+#define F_PERIOD_M15           OBJ_PERIOD_M15   //    4
+#define F_PERIOD_M30           OBJ_PERIOD_M30   //    8
+#define F_PERIOD_H1            OBJ_PERIOD_H1    //   16
+#define F_PERIOD_H4            OBJ_PERIOD_H4    //   32
+#define F_PERIOD_D1            OBJ_PERIOD_D1    //   64
+#define F_PERIOD_W1            OBJ_PERIOD_W1    //  128
+#define F_PERIOD_MN1           OBJ_PERIOD_MN1   //  256
+#define F_PERIOD_Q1            0x200            //  512
+#define F_PERIODS_ALL          0x3FF            // 1023: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1 | Q1}
+#define F_ALL_PERIODS          F_PERIODS_ALL
 
 
 // Operation-Types, siehe OrderType()

@@ -5019,7 +5019,7 @@ datetime TimeGMT() {
    if (This.IsTesting()) {
       // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
       //       nicht die modellierte sondern die aktuelle reale Zeit.
-      gmt = ConvertServerToGmtTime(TimeLocal());                                // TimeLocal() entspricht im Tester der Serverzeit
+      gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
       gmt = mql.GetSystemTime();
@@ -5411,7 +5411,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ConvertServerToFxtTime(serverTime);
+   datetime fxtTime = ServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5419,7 +5419,7 @@ datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(ConvertFxtToServerTime(startTime));
+   return(FxtToServerTime(startTime));
 }
 
 
@@ -5460,7 +5460,7 @@ datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TI
    if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
       return(_NOT_A_TIME(SetLastError(ERR_MARKET_CLOSED)));
 
-   return(fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime)*SECONDS + offset);
+   return(fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + offset);
 }
 
 
@@ -5488,7 +5488,7 @@ datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIME
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ConvertServerToFxtTime(serverTime);
+   datetime fxtTime = ServerToFxtTime(serverTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5496,7 +5496,7 @@ datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(ConvertFxtToServerTime(startTime));
+   return(FxtToServerTime(startTime));
 }
 
 
@@ -5524,7 +5524,7 @@ datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = ConvertGmtToFxtTime(gmtTime);
+   datetime fxtTime = GmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5532,7 +5532,7 @@ datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(ConvertFxtToGmtTime(startTime));
+   return(FxtToGmtTime(startTime));
 }
 
 
@@ -5560,7 +5560,7 @@ datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime fxtTime = ConvertGmtToFxtTime(gmtTime);
+   datetime fxtTime = GmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5568,7 +5568,7 @@ datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(ConvertFxtToGmtTime(startTime));
+   return(FxtToGmtTime(startTime));
 }
 
 
@@ -5596,7 +5596,7 @@ datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = ConvertGmtToFxtTime(gmtTime);
+   datetime fxtTime = GmtToFxtTime(gmtTime);
    if (fxtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
@@ -5604,7 +5604,7 @@ datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
    if (startTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(ConvertFxtToGmtTime(startTime));
+   return(FxtToGmtTime(startTime));
 }
 
 
@@ -5910,6 +5910,7 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_D1 : return(PERIOD_H4 );
       case PERIOD_W1 : return(PERIOD_D1 );
       case PERIOD_MN1: return(PERIOD_W1 );
+      case PERIOD_Q1 : return(PERIOD_MN1);
    }
    return(_NULL(catch("DecreasePeriod()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -5941,7 +5942,7 @@ string DoubleToStrTrim(double value) {
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ConvertFxtToGmtTime(datetime fxtTime) {
+datetime FxtToGmtTime(datetime fxtTime) {
    int offset = GetFxtToGmtTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
@@ -5957,7 +5958,7 @@ datetime ConvertFxtToGmtTime(datetime fxtTime) {
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ConvertFxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetFxtToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
@@ -6060,13 +6061,13 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
       if (!accountData[1]) {                          // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
-         accountData[2] = ConvertGmtToServerTime(mql.GetSystemTime());
+         accountData[2] = GmtToServerTime(mql.GetSystemTime());
          //debug("EventListener.AccountChange()   Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
-         accountData[2] = ConvertGmtToServerTime(mql.GetSystemTime());
+         accountData[2] = GmtToServerTime(mql.GetSystemTime());
          //debug("EventListener.AccountChange()   Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
          eventStatus = true;
       }
@@ -6217,7 +6218,7 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
          // neue Positionen zusätzlich anhand ihres OrderOpen-Timestamps auf ihren jeweiligen Status überprüft werden.
 
          // neue (unbekannte) Position: prüfen, ob sie nach Accountinitialisierung geöffnet wurde (= wirklich neu ist)
-         if (accountInitTime[0] <= ConvertServerToGmtTime(OrderOpenTime())) {
+         if (accountInitTime[0] <= ServerToGmtTime(OrderOpenTime())) {
             // ja, in flags angegebene Orderkriterien prüfen
             int event = 1;
             pendings = ArrayRange(knownPendings, 0);
@@ -8112,6 +8113,8 @@ int StrToPeriod(string value) {
    if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );    //
    if (str ==           "MN1") return(PERIOD_MN1);    // 1 month
    if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);    //
+   if (str ==           "Q1" ) return(PERIOD_Q1 );    // 1 quarter
+   if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );    //
 
    if (__LOG) log("StrToPeriod(1)   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(-1);
@@ -8144,15 +8147,16 @@ string PeriodToStr(int period=NULL) {
       period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return("PERIOD_M1" );     //     1  1 minute
-      case PERIOD_M5 : return("PERIOD_M5" );     //     5  5 minutes
-      case PERIOD_M15: return("PERIOD_M15");     //    15  15 minutes
-      case PERIOD_M30: return("PERIOD_M30");     //    30  30 minutes
-      case PERIOD_H1 : return("PERIOD_H1" );     //    60  1 hour
-      case PERIOD_H4 : return("PERIOD_H4" );     //   240  4 hour
-      case PERIOD_D1 : return("PERIOD_D1" );     //  1440  daily
-      case PERIOD_W1 : return("PERIOD_W1" );     // 10080  weekly
-      case PERIOD_MN1: return("PERIOD_MN1");     // 43200  monthly
+      case PERIOD_M1 : return("PERIOD_M1" );     // 1 minute
+      case PERIOD_M5 : return("PERIOD_M5" );     // 5 minutes
+      case PERIOD_M15: return("PERIOD_M15");     // 15 minutes
+      case PERIOD_M30: return("PERIOD_M30");     // 30 minutes
+      case PERIOD_H1 : return("PERIOD_H1" );     // 1 hour
+      case PERIOD_H4 : return("PERIOD_H4" );     // 4 hour
+      case PERIOD_D1 : return("PERIOD_D1" );     // 1 day
+      case PERIOD_W1 : return("PERIOD_W1" );     // 1 week
+      case PERIOD_MN1: return("PERIOD_MN1");     // 1 month
+      case PERIOD_Q1 : return("PERIOD_Q1" );     // 1 quarter
    }
    return(_empty(catch("PeriodToStr()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -8184,15 +8188,16 @@ string PeriodDescription(int period=NULL) {
       period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return("M1" );     //     1  1 minute
-      case PERIOD_M5 : return("M5" );     //     5  5 minutes
-      case PERIOD_M15: return("M15");     //    15  15 minutes
-      case PERIOD_M30: return("M30");     //    30  30 minutes
-      case PERIOD_H1 : return("H1" );     //    60  1 hour
-      case PERIOD_H4 : return("H4" );     //   240  4 hour
-      case PERIOD_D1 : return("D1" );     //  1440  daily
-      case PERIOD_W1 : return("W1" );     // 10080  weekly
-      case PERIOD_MN1: return("MN1");     // 43200  monthly
+      case PERIOD_M1 : return("M1" );     // 1 minute
+      case PERIOD_M5 : return("M5" );     // 5 minutes
+      case PERIOD_M15: return("M15");     // 15 minutes
+      case PERIOD_M30: return("M30");     // 30 minutes
+      case PERIOD_H1 : return("H1" );     // 1 hour
+      case PERIOD_H4 : return("H4" );     // 4 hour
+      case PERIOD_D1 : return("D1" );     // 1 day
+      case PERIOD_W1 : return("W1" );     // 1 week
+      case PERIOD_MN1: return("MN1");     // 1 month
+      case PERIOD_Q1 : return("Q1" );     // 1 quarter
    }
    return(_empty(catch("PeriodDescription()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -8233,6 +8238,7 @@ int PeriodFlag(int period=NULL) {
       case PERIOD_D1 : return(F_PERIOD_D1 );
       case PERIOD_W1 : return(F_PERIOD_W1 );
       case PERIOD_MN1: return(F_PERIOD_MN1);
+      case PERIOD_Q1 : return(F_PERIOD_Q1 );
    }
    return(_NULL(catch("PeriodFlag()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -8258,6 +8264,7 @@ string PeriodFlagToStr(int flags) {
    if (flags & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|D1" );
    if (flags & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|W1" );
    if (flags & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|MN1");
+   if (flags & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|Q1" );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8666,7 +8673,7 @@ string GetClassName(int hWnd) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ConvertGmtToFxtTime(datetime gmtTime) {
+datetime GmtToFxtTime(datetime gmtTime) {
    int offset = GetGmtToFxtTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
@@ -8682,7 +8689,7 @@ datetime ConvertGmtToFxtTime(datetime gmtTime) {
  *
  * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ConvertGmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    string zone = GetServerTimezone();
    if (!StringLen(zone))
       return(NOT_A_TIME);
@@ -8900,7 +8907,8 @@ int IncreasePeriod(int period = 0) {
       case PERIOD_H4 : return(PERIOD_D1 );
       case PERIOD_D1 : return(PERIOD_W1 );
       case PERIOD_W1 : return(PERIOD_MN1);
-      case PERIOD_MN1: return(PERIOD_MN1);
+      case PERIOD_MN1: return(PERIOD_Q1 );
+      case PERIOD_Q1 : return(PERIOD_Q1 );
    }
    return(_NULL(catch("IncreasePeriod()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -9006,7 +9014,7 @@ int SendSMS(string receiver, string message) {
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ConvertServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    string zone = GetServerTimezone();
    if (!StringLen(zone))
       return(NOT_A_TIME);
@@ -9015,11 +9023,11 @@ datetime ConvertServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIM
    if (zone == "FXT")
       return(serverTime);
 
-   datetime gmtTime = ConvertServerToGmtTime(serverTime);
+   datetime gmtTime = ServerToGmtTime(serverTime);
    if (gmtTime == NOT_A_TIME)
       return(NOT_A_TIME);
 
-   return(ConvertGmtToFxtTime(gmtTime));
+   return(GmtToFxtTime(gmtTime));
 }
 
 
@@ -9030,7 +9038,7 @@ datetime ConvertServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIM
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
-datetime ConvertServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    string zone = GetServerTimezone();
    if (!StringLen(zone))
       return(NOT_A_TIME);

@@ -305,7 +305,7 @@ void UpdateWeekendResumeTime(int hSeq) {
    if (sequence.status[hSeq] != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume time of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!sequence.weStop.active[hSeq])           return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
-   datetime monday, stop=ConvertServerToFxtTime(sequence.stop.time[sequence.ss.events[hSeq][I_TO]]);
+   datetime monday, stop=ServerToFxtTime(sequence.stop.time[sequence.ss.events[hSeq][I_TO]]);
 
    switch (TimeDayOfWeek(stop)) {
       case SUNDAY   : monday = stop + 1*DAYS; break;
@@ -316,7 +316,7 @@ void UpdateWeekendResumeTime(int hSeq) {
       case FRIDAY   : monday = stop + 3*DAYS; break;
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
-   sequence.weResumeTime[hSeq] = ConvertFxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
+   sequence.weResumeTime[hSeq] = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
 }
 
 
@@ -487,7 +487,7 @@ void RedrawStartStop(int hSeq) {
  * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
  */
 void UpdateWeekendStop() {
-   datetime friday, now=ConvertServerToFxtTime(TimeCurrent());
+   datetime friday, now=ServerToFxtTime(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -498,7 +498,7 @@ void UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = ConvertFxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
+   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
 }
 
 
@@ -2908,10 +2908,11 @@ bool ValidateConfiguration(bool interactive) {
       if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfiguration(23)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       elems[0] = NumberToStr(dValue, ".+");
       switch (start.trend.timeframe) {           // Timeframes > H1 auf H1 umrechnen, iCustom() soll mit maximal PERIOD_H1 geladen werden
-         case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(24)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
          case PERIOD_H4 : dValue *=   4; start.trend.timeframe = PERIOD_H1; break;
          case PERIOD_D1 : dValue *=  24; start.trend.timeframe = PERIOD_H1; break;
          case PERIOD_W1 : dValue *= 120; start.trend.timeframe = PERIOD_H1; break;
+         case PERIOD_MN1:
+         case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(24)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
       }
       start.trend.periods       = NormalizeDouble(dValue, 1);
       start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);

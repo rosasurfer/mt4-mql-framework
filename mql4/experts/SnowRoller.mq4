@@ -1272,7 +1272,7 @@ void UpdateWeekendResumeTime() {
 
    weekend.resume.triggered = false;
 
-   datetime monday, stop=ConvertServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
+   datetime monday, stop=ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
 
    switch (TimeDayOfWeek(stop)) {
       case SUNDAY   : monday = stop + 1*DAYS; break;
@@ -1283,7 +1283,7 @@ void UpdateWeekendResumeTime() {
       case FRIDAY   : monday = stop + 3*DAYS; break;
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
-   weekend.resume.time = ConvertFxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
+   weekend.resume.time = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
 }
 
 
@@ -1421,7 +1421,7 @@ bool IsWeekendStopSignal() {
 void UpdateWeekendStop() {
    weekend.stop.active = false;
 
-   datetime friday, now=ConvertServerToFxtTime(TimeCurrent());
+   datetime friday, now=ServerToFxtTime(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -1435,7 +1435,7 @@ void UpdateWeekendStop() {
    weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAY;
    if (weekend.stop.time < now)
       weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAY;    // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
-   weekend.stop.time = ConvertFxtToServerTime(weekend.stop.time);
+   weekend.stop.time = FxtToServerTime(weekend.stop.time);
 }
 
 
@@ -2850,10 +2850,11 @@ bool ValidateConfiguration(bool interactive) {
             if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfiguration(32)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[0] = NumberToStr(dValue, ".+");
             switch (start.trend.timeframe) {           // Timeframes > H1 auf H1 umrechnen, iCustom() soll maximal unter PERIOD_H1 laufen
-               case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(33)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
                case PERIOD_H4 : dValue *=   4; start.trend.timeframe = PERIOD_H1; break;
                case PERIOD_D1 : dValue *=  24; start.trend.timeframe = PERIOD_H1; break;
                case PERIOD_W1 : dValue *= 120; start.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_MN1:
+               case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(33)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             }
             start.trend.periods       = NormalizeDouble(dValue, 1);
             start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);
@@ -2971,10 +2972,11 @@ bool ValidateConfiguration(bool interactive) {
             if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfiguration(60)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             elems[0] = NumberToStr(dValue, ".+");
             switch (stop.trend.timeframe) {            // Timeframes > H1 auf H1 umrechnen, iCustom() soll unabhängig vom MA mit maximal PERIOD_H1 laufen
-               case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(61)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
                case PERIOD_H4 : dValue *=   4; stop.trend.timeframe = PERIOD_H1; break;
                case PERIOD_D1 : dValue *=  24; stop.trend.timeframe = PERIOD_H1; break;
                case PERIOD_W1 : dValue *= 120; stop.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_MN1:
+               case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(61)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
             }
             stop.trend.periods       = NormalizeDouble(dValue, 1);
             stop.trend.timeframeFlag = PeriodFlag(stop.trend.timeframe);

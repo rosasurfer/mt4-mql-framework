@@ -247,7 +247,7 @@ bool UpdateWeekendStop() {
    if (__STATUS_ERROR)
       return(false);
 
-   datetime friday, now=ConvertServerToFxtTime(TimeCurrent());
+   datetime friday, now=ServerToFxtTime(TimeCurrent());
 
    switch (TimeDayOfWeek(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -258,7 +258,7 @@ bool UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = ConvertFxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
+   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
 
    return(!last_error|catch("UpdateWeekendStop()"));
 }
@@ -595,10 +595,11 @@ bool ValidateConfiguration(bool interactive) {
             if (MathModFix(dValue, 0.5) != 0)          return(_false(ValidateConfig.HandleError("ValidateConfiguration(19)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             elems[0] = NumberToStr(dValue, ".+");
             switch (start.trend.timeframe) {           // Timeframes > H1 auf H1 umrechnen, iCustom() soll unabhängig vom MA mit maximal PERIOD_H1 laufen
-               case PERIOD_MN1:                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
                case PERIOD_H4 : dValue *=   4; start.trend.timeframe = PERIOD_H1; break;
                case PERIOD_D1 : dValue *=  24; start.trend.timeframe = PERIOD_H1; break;
                case PERIOD_W1 : dValue *= 120; start.trend.timeframe = PERIOD_H1; break;
+               case PERIOD_MN1:
+               case PERIOD_Q1 :                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(20)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
             }
             start.trend.periods       = NormalizeDouble(dValue, 1);
             start.trend.timeframeFlag = PeriodFlag(start.trend.timeframe);

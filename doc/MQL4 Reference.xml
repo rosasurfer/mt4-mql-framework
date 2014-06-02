@@ -411,51 +411,51 @@ D''                     //equal to D'[compilation date] 00:00:00'</pre>
 <pre class="docmql4">
 a++; b = 10;
 x = (y * z) /
-    (w + 2) + 127;</pre>
-        <p>An expression that ends with a semicolon (;) is an operator.</p>
+(w + 2) + 127;</pre>
       </content>
     </text>
 
     <text>
       tag=basis_operations_math
-      caption=Arithmetical operations
+      caption=Arithmetic operators
       keywords=;+;-;*;/;%;++;--;
       <content>
- <p>Arithmetical operations include additive and multiplicative operations:</p>
+ <p>Arithmetic operators:</p>
  <pre class="docmql4">
-Sum of values                           i = j + 2;
-Difference of values                    i = j - 3;
-Changing the operation sign             x = - x;
-Product of values                       z = 3 * x;
-Division quotient                       i = j / 5;
-Division remainder                      minutes = time % 60;
-Adding 1 to the variable value          i++;
-Subtracting 1 from the variable value   k--;
+addition operator                       i = j + 2;
+subtraction operator                    i = j - 3;
+inversion operator                      x = - x;
+multiplication operator                 z = 3 * x;
+division operator                       i = j / 5;
+division remainder (modulo) operator    minutes = time % 60;
+increment operator                      i++;
+decrement operator                      k--;
 </pre>
-<p>The operations of adding/subtracting 1 (increment/decrement) cannot be used in expressions.</p>
+<p>The use of increment or decrement operators in expressions is not supported.</p>
 <p class="doctabhdr">Examples:</p>
-<pre class="docmql4">int a=3;
-a++;              // valid expression
-int b=(a++)*3;    // invalid expression
+<pre class="docmql4">
+int a=3;
+a++;              // supported expression
+int b=(a++)*3;    // unsupported expression
 </pre>
       </content>
     </text>
 
     <text>
       tag=basis_operations_assign
-      caption=Assignment operation
+      caption=Assignment operators
       keywords=+=;-=;*=;/=;%=;&gt;&gt;=;&lt;&lt;=;&amp;=;|=;^=;
       <content>
         <p>The value of the expression that includes the given operation is the value of the left operand after assignment.</p>
 <pre class="docmql4">Assigning the y value to the x variable                   y = x;</pre><br/>
-<p>The following operations unite arithmetic or bitwise operations with operation of assignment:</p>
+<p>The following operations unite arithmetic or bit operations with operation of assignment:</p>
 
 <pre class="docmql4">
 Adding x to the y variable                               y += x;
 Subtracting x from the y variable                        y -= x;
 Multiplying the y variable by x                          y *= x;
 Dividing the y variable by x                             y /= x;
-Module x value of y                                      y %= x;
+Modulo x of variable y                                   y %= x;
 Logical shift of y representation to the right by x bit  y &gt;&gt;= x;
 Logical shift of y representation to the left by x bit   y &lt;&lt;= x;
 Bitwise operation AND                                    y &amp;= x;
@@ -463,20 +463,20 @@ Bitwise operation OR                                     y |= x;
 Bitwise operation exclusive OR
 of x and y binary notations                              y ^= x;</pre><br/>
 
- <p>There can be only one operation of assignment in an expression. Bitwise operations are performed with integer
+ <p>There can be only one operation of assignment in an expression. Bit operations are performed with integer
 numbers only. The logical shift operation uses values of x less than 5 binary digits. The greater digits are rejected,
-so the shift is for the range of 0 to 31 bit. By %= operation (y value by module of x), the result sign is equal to the sign of divided number.</p>
+so the shift is for the range of 0 to 31 bit. By %= operation (modulo x of y) the result sign is equal to the sign of the divisor.</p>
       </content>
     </text>
 
     <text>
       tag=basis_operations_relation
-      caption=Operations of relation
+      caption=Conditional operators
       keywords=;==;!=;&lt;;&gt;;&lt;=;&gt;=;
       <content>
 <p>The logical value FALSE is represented with an integer zero value, while the logical value TRUE is
 represented with any value differing from zero.<br/>The value of expressions
-containing operations of relation or logical operations is 0 (FALSE) or 1 (TRUE).</p>
+containing conditional or logical operators is 0 (FALSE) or 1 (TRUE).</p>
 <pre class="docmql4">
 True if a equals b                        a == b;
 True if a does not equal b                a != b;
@@ -493,7 +493,7 @@ outcome needs to be compared to null.</p>
 
     <text>
       tag=basis_operations_bool
-      caption=Boolean operations
+      caption=Boolean operators
       keywords=;||;&amp;&amp;;
       <content>
 <p>Operand of logical negation (operation NOT displayed as exclamation mark) must be of arithmetic type. The result equals TRUE (1) if the operand value is FALSE (0);
@@ -512,7 +512,7 @@ Otherwise, it is FALSE (0). </p>
 
     <text>
       tag=basis_operations_bit
-      caption=Bitwise operations
+      caption=Bit operators
       keywords=;&lt;&lt;;&gt;&gt;;~;!;^;&amp;;|;
       <content>
 <p>Complement of the variable value up to one. The value of the expression contains 1 in all digits where n contains 0,
@@ -539,13 +539,13 @@ where x or y is not equal to 0, and it contains 0 in all other digits.</p>
 in all digits where x and y have different binary values, and it contains 0 in all other digits.</p>
         <pre class="docmql4">b = x ^ y;</pre><br/>
 
-        <p>Bitwise operations are executed with integers only.</p>
+        <p>Bit operations are executed with integers only.</p>
       </content>
     </text>
 
     <text>
       tag=basis_operations_other
-      caption=Other operations
+      caption=Other operators
       <content>
 <p><b>Indexing</b><br/>
 At addressing to the i-th element of array, the expression value is the value of the variable with serial number of i.</p>
@@ -563,13 +563,13 @@ At addressing to the i-th element of array, the expression value is the value of
 Each argument can represent a constant, a variable, or an expression of the corresponding type. The arguments passed are separated by commas and must
 be inside of parentheses, the opening parenthesis to follow the name of the called function.<br/><br/>
 The expression value is the value returned by the function. If the returned value is of the void type, such function call cannot be
-placed to the right in the assignment operation. Please make sure that the expressions x1,x2,...,xn are executed exactly in this order.</p>
+placed to the right side of an assignment operator. Please make sure that the expressions x1,x2,...,xn are executed exactly in this order.</p>
 <p class="doctabhdr">Example:</p>
         <pre class="docmql4">double SL=Bid-25*Point;
 int    ticket=OrderSend(Symbol(),OP_BUY,1,Ask,3,SL,Ask+25*Point,"My comment",123,0,Red);</pre><br/>
 
 
-<p><b>Comma operation</b><br/>
+<p><b>Comma operator</b><br/>
 Expressions separated by commas are executed from left to right. All side effects of the left expression calculation can
 appear before the right expression is calculated. The result type and value coincide with those of the right expression. The list
 of parameters to be passed (see above) can be considered as an example.</p>
@@ -606,7 +606,7 @@ The precedence rules determine the grouping of operations and operands.</p>
 <pre class="docmql4">
 *      Multiplication                    From left to right
 /      Division
-%      Module division
+%      Modulo division
 </pre>
 <pre class="docmql4">
 +      Addition                          From left to right
@@ -629,7 +629,7 @@ The precedence rules determine the grouping of operations and operands.</p>
 -=     Assignment subtraction
 *=     Assignment multiplication
 /=     Assignment division
-%=     Assignment module
+%=     Assignment modulo
 &gt;&gt;=    Assignment right shift
 &lt;&lt;=    Assignment left shift
 &amp;=     Assignment bitwise AND
@@ -5325,7 +5325,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=TimeMonth()
       type=int
       <content>
-      Returns the month number for the specified time.
+      Returns the month (1-12) of the specified time.
       </content>
       <example>
   int m=TimeMonth(TimeCurrent());

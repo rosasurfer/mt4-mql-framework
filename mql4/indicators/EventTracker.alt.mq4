@@ -73,7 +73,7 @@ int onInit() {
       if (MovingAverage.Timeframe == -1)               Track.MovingAverage = _false(catch("onInit(2)   invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
-      if (MovingAverage.Timeframe == PERIOD_MN1)       Track.MovingAverage = _false(catch("onInit(3)   unsupported config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (MovingAverage.Timeframe >= PERIOD_MN1)       Track.MovingAverage = _false(catch("onInit(3)   unsupported config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
       // MovingAverage.Method
@@ -119,7 +119,7 @@ int onInit() {
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
       BollingerBands.MA.Timeframe = StrToPeriod(strValue);
       if (BollingerBands.MA.Timeframe == -1)           Track.BollingerBands = _false(catch("onInit(8)   invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (BollingerBands.MA.Timeframe == PERIOD_MN1)   Track.BollingerBands = _false(catch("onInit(9)   unsupported config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (BollingerBands.MA.Timeframe >= PERIOD_MN1)   Track.BollingerBands = _false(catch("onInit(9)   unsupported config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
@@ -569,7 +569,7 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
 
       if (period==PERIOD_D1) /*&&*/ if (TimeDayOfWeek(from)==MONDAY) /*&&*/ if (TimeDayOfWeek(to)==SATURDAY)
          period = PERIOD_W1;
-      // die weitere Prüfung auf PERIOD_MN1 ist wenig sinnvoll
+      // die weitere Prüfung auf >= PERIOD_MN1 ist nicht sinnvoll
    }
 
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
