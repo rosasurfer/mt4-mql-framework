@@ -9986,7 +9986,7 @@ string NumberToStr(double number, string mask) {
  *   s      = 1-2 digit seconds in the minute
  *   S      = 2 digit seconds in the minute
  *
- *   All other characters in the mask are output 'as is'.  You can output reserved characters by preceding
+ *   All other characters in the mask are output 'as is'. Reserved characters can be output by preceding
  *   them with an exclamation mark:
  *
  *      e.g. DateToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
