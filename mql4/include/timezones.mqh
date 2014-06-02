@@ -87,7 +87,7 @@
 
 // Europe/Kiev: GMT+0200/+0300
 int transitions.Europe_Kiev[68][6] = {
-   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
+   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,   // durchgehend Normalzeit
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,
@@ -161,7 +161,7 @@ int transitions.Europe_Kiev[68][6] = {
 
 // Europe/Minsk: GMT+0200/+0300 (ab Sommer 2011 durchgehend Sommerzeit)
 int transitions.Europe_Minsk[68][6] = {
-   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
+   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,   // durchgehend Normalzeit
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,
@@ -235,7 +235,7 @@ int transitions.Europe_Minsk[68][6] = {
 
 // Europe/Berlin: GMT+0100/+0200
 int transitions.Europe_Berlin[68][6] = {
-   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
+   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
            -1,                             -1,                     PLUS_1_H,            -1,                             -1,                     PLUS_1_H,   // durchgehend Normalzeit
            -1,                             -1,                     PLUS_1_H,            -1,                             -1,                     PLUS_1_H,
            -1,                             -1,                     PLUS_1_H,            -1,                             -1,                     PLUS_1_H,
@@ -309,7 +309,7 @@ int transitions.Europe_Berlin[68][6] = {
 
 // Europe/London: GMT+0000/+0100
 int transitions.Europe_London[68][6] = {
-   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
+   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
            -1,                             -1,                     PLUS_1_H,            INT_MAX,                        INT_MAX,                PLUS_1_H,   // Vom 18.02.1968 bis
            -1,                             -1,                     PLUS_1_H,    /*Sun*/ D'1971.10.31 02:00:00', /*Sun*/ D'1971.10.31 02:00:00', 0,          // 31.10.1971 durchgehend
    /*Sun*/ D'1972.03.19 02:00:00', /*Sun*/ D'1972.03.19 03:00:00', PLUS_1_H,    /*Sun*/ D'1972.10.29 02:00:00', /*Sun*/ D'1972.10.29 02:00:00', 0,          // Sommerzeit.
@@ -383,7 +383,7 @@ int transitions.Europe_London[68][6] = {
 
 // America/New_York: GMT-0500/-0400
 int transitions.America_New_York[68][6] = {
-   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
+   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
    /*Sun*/ D'1970.04.26 07:00:00', /*Sun*/ D'1970.04.26 03:00:00', MINUS_4_H,   /*Sun*/ D'1970.10.25 06:00:00', /*Sun*/ D'1970.10.25 01:00:00', MINUS_5_H,
    /*Sun*/ D'1971.04.25 07:00:00', /*Sun*/ D'1971.04.25 03:00:00', MINUS_4_H,   /*Sun*/ D'1971.10.31 06:00:00', /*Sun*/ D'1971.10.31 01:00:00', MINUS_5_H,
    /*Sun*/ D'1972.04.30 07:00:00', /*Sun*/ D'1972.04.30 03:00:00', MINUS_4_H,   /*Sun*/ D'1972.10.29 06:00:00', /*Sun*/ D'1972.10.29 01:00:00', MINUS_5_H,
@@ -457,7 +457,7 @@ int transitions.America_New_York[68][6] = {
 
 // FXT: GMT+0200/+0300 mit Umschaltzeiten von America/New_York = Forex Time
 int transitions.FXT[68][6] = {
-   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std.-Offset
+   // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
    /*Sun*/ D'1970.04.26 07:00:00', /*Sun*/ D'1970.04.26 10:00:00', PLUS_3_H,    /*Sun*/ D'1970.10.25 06:00:00', /*Sun*/ D'1970.10.25 08:00:00', PLUS_2_H,
    /*Sun*/ D'1971.04.25 07:00:00', /*Sun*/ D'1971.04.25 10:00:00', PLUS_3_H,    /*Sun*/ D'1971.10.31 06:00:00', /*Sun*/ D'1971.10.31 08:00:00', PLUS_2_H,
    /*Sun*/ D'1972.04.30 07:00:00', /*Sun*/ D'1972.04.30 10:00:00', PLUS_3_H,    /*Sun*/ D'1972.10.29 06:00:00', /*Sun*/ D'1972.10.29 08:00:00', PLUS_2_H,
