@@ -86,23 +86,23 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    int dims = ArrayDimension(los); if (dims > 2)   return(!catch("ShowOpenOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
    if (dims == 1) {
       // los[] ist einzelne Order
-      comment    =                            lo.Comment      (los);
-      type       =                            lo.Type         (los);
-      units      =                            lo.Units        (los);
-      openTime   = ConvertGmtToServerTime(Abs(lo.OpenTime     (los)));
-      openPrice  =                            lo.OpenPriceLfx (los);
-      stopLoss   =                            lo.StopLossLfx  (los);
-      takeProfit =                            lo.TakeProfitLfx(los);
+      comment    =                     lo.Comment      (los);
+      type       =                     lo.Type         (los);
+      units      =                     lo.Units        (los);
+      openTime   = GmtToServerTime(Abs(lo.OpenTime     (los)));
+      openPrice  =                     lo.OpenPriceLfx (los);
+      stopLoss   =                     lo.StopLossLfx  (los);
+      takeProfit =                     lo.TakeProfitLfx(los);
    }
    else {
       // los[] ist Order-Array
-      comment    =                            los.Comment      (los, index);
-      type       =                            los.Type         (los, index);
-      units      =                            los.Units        (los, index);
-      openTime   = ConvertGmtToServerTime(Abs(los.OpenTime     (los, index)));
-      openPrice  =                            los.OpenPriceLfx (los, index);
-      stopLoss   =                            los.StopLossLfx  (los, index);
-      takeProfit =                            los.TakeProfitLfx(los, index);
+      comment    =                     los.Comment      (los, index);
+      type       =                     los.Type         (los, index);
+      units      =                     los.Units        (los, index);
+      openTime   = GmtToServerTime(Abs(los.OpenTime     (los, index)));
+      openPrice  =                     los.OpenPriceLfx (los, index);
+      stopLoss   =                     los.StopLossLfx  (los, index);
+      takeProfit =                     los.TakeProfitLfx(los, index);
    }
    labelBase = StringConcatenate("lfx.open order ", comment);
 

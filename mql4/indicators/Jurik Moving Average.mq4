@@ -85,15 +85,12 @@ int onInit() {
    strValue = NumberToStr(dValue, ".+");
    if (StringEndsWith(strValue, ".5")) {                                // gebrochene Perioden in ganze Bars umrechnen
       switch (ma.timeframe) {
-         case PERIOD_M1 :
-         case PERIOD_M5 :
-         case PERIOD_M15:
-         case PERIOD_MN1:            return(catch("onInit(5)   Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
          case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
          case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
          case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
          case PERIOD_D1 : dValue *=  6; ma.timeframe = PERIOD_H4;  break;
          case PERIOD_W1 : dValue *= 30; ma.timeframe = PERIOD_H4;  break;
+         default:                    return(catch("onInit(5)   Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
       }
    }
    switch (ma.timeframe) {                                              // Timeframes > H1 auf H1 umrechnen
