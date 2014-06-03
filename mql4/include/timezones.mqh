@@ -3,7 +3,7 @@
  *
  *
  * Um die Ermittlung eines Timezone-Offsets für einen Zeitpunkt zu beschleunigen, sind für Jahre, in denen kein Wechsel stattfindet,
- * Pseudodaten angegeben, wodurch die Arrayindizes aller Jahre in allen Zeitzonen identisch sind:
+ * Platzhalter angegeben, wodurch die Arrayindizes aller Jahre in allen Zeitzonen identisch sind:
  *
  *    int index = TimeYear(datetime) - 1970;
  *
