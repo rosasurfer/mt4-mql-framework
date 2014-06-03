@@ -10,31 +10,9 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-color color.bar.up   = Green;          // Farbe der Up-Bars
+int   superTimeframe;
+color color.bar.up   = C'0,200,0';          // Farbe der Up-Bars: Green, Lime
 color color.bar.down = Red;            // Farbe der Down-Bars
-
-
-/**
- * Ausschnitt aus "core/indicator.mqh" zur besseren Übersicht
- *
- * @return int - Fehlerstatus
- */
-int x.start() {
-   if (false) {
-      // ...
-      prev_error = last_error;
-      last_error = NO_ERROR;
-
-      ValidBars = IndicatorCounted();
-      if      (prev_error == ERS_TERMINAL_NOT_READY) ValidBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE    ) ValidBars = 0;
-      ChangedBars = Bars - ValidBars;
-
-      onTick();
-      // ...
-   }
-   return(last_error);
-}
 
 
 /**
@@ -43,9 +21,33 @@ int x.start() {
  * @return int - Fehlerstatus
  */
 int onInit() {
+   // Timeframe der Superbars bestimmen
+   switch (Period()) {
+      case PERIOD_M1 :
+      case PERIOD_M5 :
+      case PERIOD_M15:
+      case PERIOD_M30:
+      case PERIOD_H1 : superTimeframe = PERIOD_D1;  break;
+      case PERIOD_H4 : superTimeframe = PERIOD_W1;  break;
+      case PERIOD_D1 : superTimeframe = PERIOD_MN1; break;
+      case PERIOD_W1 :
+      case PERIOD_MN1: superTimeframe = PERIOD_Q1;  break;
+   }
+
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
    return(catch("onInit()")); x.start();
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   RemoveChartObjects();
+   return(catch("onDeinit()"));
 }
 
 
@@ -55,33 +57,21 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   if (Period() == PERIOD_MN1)
+      return(last_error);
    /*
-   Ablauf beim Zeichnen von "jung" nach "alt"
-   ----------------------------------------------
-   - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
-   - Die erste Superbar wird nach rechts über Bar[0] hinaus bis zum zukünftigen Supersession-Ende verbreitert.
-   - Die letzte Superbar wird nach links über ChangedBars hinausreichen, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
+   - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (keine for-Schleife über alle ChangedBars).
+   - Die erste Superbar reicht nach rechts über Bar[0] bis zum zukünftigen Supersession-Ende hinaus.
+   - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
    */
-
-   // (1) Timeframe der Superbars bestimmen
-   int superTimeframe;
-   switch (Period()) {
-      case PERIOD_M1 : superTimeframe = PERIOD_D1;  break;
-      case PERIOD_M5 : superTimeframe = PERIOD_D1;  break;
-      case PERIOD_M15: superTimeframe = PERIOD_D1;  break;
-      case PERIOD_M30: superTimeframe = PERIOD_D1;  break;
-      case PERIOD_H1 : superTimeframe = PERIOD_D1;  break;
-      case PERIOD_H4 : superTimeframe = PERIOD_W1;  break;
-      case PERIOD_D1 : superTimeframe = PERIOD_MN1; break;
-      case PERIOD_W1 : superTimeframe = PERIOD_Q1;  break;
-      case PERIOD_MN1:                              return(last_error);
-   }
-
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int i,   openBar, closeBar, lastChartBar=Bars-1;
 
 
-   // (2) Schleife über die jeweils nächst-ältere Supersession
+   datetime startTime = GetTickCount();
+
+
+   // Schleife über alle Supersessions von "jung" nach "alt"
    while (true) { i++;
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(last_error);
@@ -94,14 +84,18 @@ int onTick() {
          break;
 
       if (openBar >= closeBar) {
-         if      (openBar != lastChartBar)                              if (!DrawSuperBar(openBar, closeBar)) return(last_error);   // Die Supersession auf der letzten Chartbar ist fast
-         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) if (!DrawSuperBar(openBar, closeBar)) return(last_error);   // nie vollständig, trotzdem mit (exact=TRUE) prüfen.
-      }
-      if (openBar >= ChangedBars-1)                                  // Superbars bis max. ChangedBars aktualisieren
-         break;
+         if      (openBar != lastChartBar)                              { if (!DrawSuperBar(openTime.fxt, openBar, closeBar)) return(last_error); }
+         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { if (!DrawSuperBar(openTime.fxt, openBar, closeBar)) return(last_error); }
+      }                                                              // Die Supersession auf der letzten Chartbar ist fast nie vollständig, trotzdem mit (exact=TRUE) prüfen.
+      if (openBar >= ChangedBars-1)
+         break;                                                      // Superbars bis max. ChangedBars aktualisieren
    }
 
-   //debug("onTick(0.1)   ChangedBars="+ ChangedBars +"  i="+ i);
+   datetime endTime = GetTickCount();
+
+
+   //if (ChangedBars > 1) debug("onTick(0.1)   ChangedBars="+ ChangedBars +"  i="+ i +"  time: "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+
    return(last_error);
 }
 
@@ -110,11 +104,11 @@ int onTick() {
  * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Session und schreibt das Ergebnis in die übergebenen
  * Variablen. Ist der Parameter openTime.fxt nicht gesetzt, wird die jüngste Session (also ggf. die aktuelle) zurückgegeben.
  *
- * @param  int       timeframe     - Timeframe der zu ermittelnden Session
- * @param  datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Session in FXT-Zeit
- * @param  datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Session in FXT-Zeit
- * @param  datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Session in Serverzeit
- * @param  datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Session in Serverzeit
+ * @param  int       timeframe            - Timeframe der zu ermittelnden Session
+ * @param  datetime &openTime.fxt         - Variable zur Aufnahme des Beginns der resultierenden Session in FXT-Zeit
+ * @param  datetime &closeTime.fxt        - Variable zur Aufnahme des Endes der resultierenden Session in FXT-Zeit
+ * @param  datetime &openTime.srv         - Variable zur Aufnahme des Beginns der resultierenden Session in Serverzeit
+ * @param  datetime &closeTime.srv        - Variable zur Aufnahme des Endes der resultierenden Session in Serverzeit
  *
  * @return bool - Erfolgsstatus
  */
@@ -131,7 +125,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
       // openTime.fxt auf 00:00 Uhr des vorherigen Tages setzen
       openTime.fxt -= (1*DAY + TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));
 
-      // Wochenenden überspringen
+      // Wochenenden in openTime.fxt überspringen
       dow = TimeDayOfWeek(openTime.fxt);
       if      (dow == SATURDAY) openTime.fxt -= 1*DAY;
       else if (dow == SUNDAY  ) openTime.fxt -= 2*DAYS;
@@ -170,7 +164,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
       closeTime.fxt = openTime.fxt - (dom-1)*DAYS;                                                                      // erster des aktuellen Monats
 
       // openTime.fxt auf den 1. des vorherigen Monats, 00:00 Uhr setzen
-      openTime.fxt -= dom*DAYS;                                                                                         // letzter Tag des vorherigen Monats
+      openTime.fxt  = closeTime.fxt - 1*DAYS;                                                                           // letzter Tag des vorherigen Monats
       openTime.fxt -= (TimeDay(openTime.fxt)-1)*DAYS;                                                                   // erster Tag des vorherigen Monats
 
       // Wochenenden in openTime.fxt überspringen
@@ -228,12 +222,10 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
       if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
       else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
    }
-   else {
-      return(!catch("GetPreviousSession(1) unsupported timeframe = "+ PeriodToStr(timeframe), ERR_RUNTIME_ERROR));
-   }
+   else return(!catch("GetPreviousSession(1) unsupported timeframe = "+ PeriodToStr(timeframe), ERR_RUNTIME_ERROR));
 
 
-   // (5) Serverzeiten setzen
+   // (5) entsprechende Serverzeiten ermitteln
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
 
@@ -251,14 +243,93 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 /**
  * Zeichnet eine einzelne Superbar.
  *
- * @param  int openBar  - Chartoffset der Open-Bar der Superbar
- * @param  int closeBar - Chartoffset der Close-Bar der Superbar
+ * @param  datetime openTime - Startzeit der Supersession in FXT
+ * @param  int      openBar  - Chartoffset der Open-Bar der Superbar
+ * @param  int      closeBar - Chartoffset der Close-Bar der Superbar
  *
  * @return bool - Erfolgsstatus
  */
-bool DrawSuperBar(int openBar, int closeBar) {
+bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    // High- und Low-Bar ermitteln
    int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
    int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
+
+   // Farbe bestimmen
+   color barColor = Gray;     // C'232,232,232'                                                       // Ausgangsfarbe ist hellgrau,
+   if (MathMax(Open[openBar],  Close[closeBar])/MathMin(Open[openBar], Close[closeBar]) > 1.0005) {   // ab ca. 5-8 pip Unterschied grün oder rot
+      if      (Open[openBar] < Close[closeBar]) barColor = color.bar.up;
+      else if (Open[openBar] > Close[closeBar]) barColor = color.bar.down;
+   }
+
+   // Label definieren
+   string label;
+   switch (superTimeframe) {
+      case PERIOD_D1 : label = "Bar "+  DateToStr(openTime.fxt, "w D.M.Y");                             break;    // "w D.M.Y" wird bereits vom Grid verwendet
+      case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y");                             break;
+      case PERIOD_MN1: label =          DateToStr(openTime.fxt,     "N Y");                             break;
+      case PERIOD_Q1 : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYear(openTime.fxt); break;
+   }
+
+   // Superbar zeichnen
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+      int closeBar_j = closeBar; /*endBar_justified*/                // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren
+      //if (closeBar > 0) closeBar_j--;                                // außer bei Bar[0]
+   if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
+      ObjectSet (label, OBJPROP_COLOR, barColor);
+      ObjectSet (label, OBJPROP_BACK , true);
+      PushObject(label);
+   }
+   else GetLastError();
+
+   /*
+   // (2.7) Close-Marker einzeichnen
+   int centerBar = (startBar+endBar_j)/2;
+   if (centerBar > endBar) {
+      label = StringConcatenate(StringSubstr(label, 7), " Close");
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_TREND, 0, Time[centerBar], Close[endBar], Time[endBar], Close[endBar])) {
+         ObjectSet (label, OBJPROP_RAY  , false);
+         ObjectSet (label, OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSet (label, OBJPROP_COLOR, Color.Close.Marker);
+         ObjectSet (label, OBJPROP_BACK , true);
+         PushObject(label);
+      }
+      else GetLastError();
+   }
+   */
+
+
+
+   static int i;
+   if (i <= 5) {
+      //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar);
+      //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   label=\""+ label +"\"");
+      i++;
+   }
    return(!catch("DrawSuperBar()"));
+}
+
+
+/**
+ * Ausschnitt aus "core/indicator.mqh" zur besseren Übersicht
+ *
+ * @return int - Fehlerstatus
+ */
+int x.start() {
+   if (false) {
+      // ...
+      prev_error = last_error;
+      last_error = NO_ERROR;
+
+      ValidBars = IndicatorCounted();
+      if      (prev_error == ERS_TERMINAL_NOT_READY) ValidBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE    ) ValidBars = 0;
+      ChangedBars = Bars - ValidBars;
+
+      onTick();
+      // ...
+   }
+   return(last_error);
 }

@@ -1076,15 +1076,15 @@ int LoadCursorByName(int hInstance, string cursorName) {
 
 
 /**
- * Gibt den Offset der angegebenen GMT-Zeit zu FXT (Forex Time) zurück (entgegengesetzter Wert des Offsets von FXT zu GMT).
+ * Gibt den Offset der angegebenen GMT-Zeit zu FXT (Forex Time) zurück.
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - Offset in Sekunden, es gilt: FXT + Offset = GMT (immer negative Werte)
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetGmtToFxtTimeOffset(datetime gmtTime) {
-   if (gmtTime < 0)
-      return(_EMPTY_VALUE(catch("GetGmtToFxtTimeOffset()   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (gmtTime < 0) return(_EMPTY_VALUE(catch("GetGmtToFxtTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset, year=TimeYear(gmtTime)-1970;
 
@@ -1098,27 +1098,30 @@ int GetGmtToFxtTimeOffset(datetime gmtTime) {
 
 
 /**
- * Gibt den Offset der angegebenen Serverzeit zu FXT (Forex Time) zurück (positive Werte für östlich von FXT liegende Zeitzonen).
+ * Gibt den Offset der angegebenen Serverzeit zu FXT (Forex Time) zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - Offset in Sekunden, es gilt: FXT + Offset = Serverzeit (positive Werte für östlich von FXT laufende Server)
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   if (serverTime < 0)
-      return(_EMPTY_VALUE(catch("GetServerToFxtTimeOffset()   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
-   string zone = GetServerTimezone();
-   if (!StringLen(zone))
+   string serverTimezone = GetServerTimezone();
+   if (!StringLen(serverTimezone))
       return(EMPTY_VALUE);
 
-   // schnelle Rückkehr, wenn der Server unter FXT läuft
-   if (zone == "FXT")
-      return(0);
+   // schnelle Rückkehr, wenn der Server unter einer zu FXT festen Zeitzone läuft
+   if (serverTimezone == "FXT"             ) return(       0);
+   if (serverTimezone == "FXT-0200"        ) return(-2*HOURS);
+   if (serverTimezone == "America/New_York") return(-7*HOURS);
+
+
+   if (serverTime < 0) return(_EMPTY_VALUE(catch("GetServerToFxtTimeOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
 
    // Offset Server zu GMT
-   int offset1;
-   if (zone != "GMT") {
+   int offset1 = 0;
+   if (serverTimezone != "GMT") {
       offset1 = GetServerToGmtTimeOffset(serverTime);
       if (offset1 == EMPTY_VALUE)
          return(EMPTY_VALUE);
@@ -1134,66 +1137,69 @@ int GetServerToFxtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
 
 
 /**
- * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück (positive Werte für östlich von Greenwich liegende Zeitzonen).
+ * Gibt den Offset der angegebenen Serverzeit zu GMT (Greenwich Mean Time) zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - Offset in Sekunden, es gilt: GMT + Offset = Serverzeit (positive Werte für östlich von GMT laufende Server)
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   if (serverTime < 0)
-      return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
-   string timezone = GetServerTimezone();
-   if (!StringLen(timezone))
+   string serverTimezone = GetServerTimezone();
+   if (!StringLen(serverTimezone))
       return(EMPTY_VALUE);
 
-   if (timezone == "Alpari") {
-      if (serverTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
-      else                                     timezone = "Europe/Kiev";
+   // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
+   if (serverTimezone == "GMT") return(0);
+
+
+   if (serverTime < 0) return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(1)   invalid parameter serverTime = "+ serverTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+
+   if (serverTimezone == "Alpari") {
+      if (serverTime < D'2012.04.01 00:00:00') serverTimezone = "Europe/Berlin";
+      else                                     serverTimezone = "Europe/Kiev";
    }
 
    int offset, year=TimeYear(serverTime)-1970;
 
-   if (timezone == "America/New_York") {
+   if (serverTimezone == "America/New_York") {
       if      (serverTime < transitions.America_New_York[year][TR_TO_DST.local]) offset = transitions.America_New_York[year][STD_OFFSET];
       else if (serverTime < transitions.America_New_York[year][TR_TO_STD.local]) offset = transitions.America_New_York[year][DST_OFFSET];
       else                                                                       offset = transitions.America_New_York[year][STD_OFFSET];
    }
-   else if (timezone == "Europe/Berlin") {
+   else if (serverTimezone == "Europe/Berlin") {
       if      (serverTime < transitions.Europe_Berlin   [year][TR_TO_DST.local]) offset = transitions.Europe_Berlin   [year][STD_OFFSET];
       else if (serverTime < transitions.Europe_Berlin   [year][TR_TO_STD.local]) offset = transitions.Europe_Berlin   [year][DST_OFFSET];
       else                                                                       offset = transitions.Europe_Berlin   [year][STD_OFFSET];
    }
-   else if (timezone == "Europe/Kiev") {
+   else if (serverTimezone == "Europe/Kiev") {
       if      (serverTime < transitions.Europe_Kiev     [year][TR_TO_DST.local]) offset = transitions.Europe_Kiev     [year][STD_OFFSET];
       else if (serverTime < transitions.Europe_Kiev     [year][TR_TO_STD.local]) offset = transitions.Europe_Kiev     [year][DST_OFFSET];
       else                                                                       offset = transitions.Europe_Kiev     [year][STD_OFFSET];
    }
-   else if (timezone == "Europe/London") {
+   else if (serverTimezone == "Europe/London") {
       if      (serverTime < transitions.Europe_London   [year][TR_TO_DST.local]) offset = transitions.Europe_London   [year][STD_OFFSET];
       else if (serverTime < transitions.Europe_London   [year][TR_TO_STD.local]) offset = transitions.Europe_London   [year][DST_OFFSET];
       else                                                                       offset = transitions.Europe_London   [year][STD_OFFSET];
    }
-   else if (timezone == "Europe/Minsk") {
+   else if (serverTimezone == "Europe/Minsk") {
       if      (serverTime < transitions.Europe_Minsk    [year][TR_TO_DST.local]) offset = transitions.Europe_Minsk    [year][STD_OFFSET];
       else if (serverTime < transitions.Europe_Minsk    [year][TR_TO_STD.local]) offset = transitions.Europe_Minsk    [year][DST_OFFSET];
       else                                                                       offset = transitions.Europe_Minsk    [year][STD_OFFSET];
    }
-   else if (timezone == "FXT") {
+   else if (serverTimezone == "FXT") {
       if      (serverTime < transitions.FXT             [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET];
       else if (serverTime < transitions.FXT             [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET];
       else                                                                       offset = transitions.FXT             [year][STD_OFFSET];
    }
-   else if (timezone == "FXT-0200") {
+   else if (serverTimezone == "FXT-0200") {
       datetime fxtTime = serverTime + PLUS_2_H;
       if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
       else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2_H;
       else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
    }
-   else if (timezone == "GMT")                                                   offset = 0;
-   else
-      return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(2)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+   else return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(2)   unknown server timezone \""+ serverTimezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
    return(offset);
 }
@@ -5404,11 +5410,11 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
 
 
 /**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebene Server-Zeit zurück.
+ * Gibt die Startzeit der vorherigen Handelssession für die angegebene Serverzeit zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
@@ -5424,11 +5430,11 @@ datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
 
 
 /**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene Server-Zeit zurück.
+ * Gibt die Endzeit der vorherigen Handelssession für die angegebene Serverzeit zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime startTime = GetPrevSessionStartTime.srv(serverTime);
@@ -5440,9 +5446,9 @@ datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
 
 
 /**
- * Gibt die Startzeit der Handelssession für die angegebene Server-Zeit zurück.
+ * Gibt die Startzeit der Handelssession für die angegebene Serverzeit zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
  * @return datetime - Startzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
@@ -5465,11 +5471,11 @@ datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TI
 
 
 /**
- * Gibt die Endzeit der Handelssession für die angegebene Server-Zeit zurück.
+ * Gibt die Endzeit der Handelssession für die angegebene Serverzeit zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    datetime startTime = GetSessionStartTime.srv(serverTime);
@@ -5481,11 +5487,11 @@ datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIME
 
 
 /**
- * Gibt die Startzeit der nächsten Handelssession für die angegebene Server-Zeit zurück.
+ * Gibt die Startzeit der nächsten Handelssession für die angegebene Serverzeit zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
@@ -5501,11 +5507,11 @@ datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
 
 
 /**
- * Gibt die Endzeit der nächsten Handelssession für die angegebene Server-Zeit zurück.
+ * Gibt die Endzeit der nächsten Handelssession für die angegebene Serverzeit zurück.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime startTime = GetNextSessionStartTime.srv(datetime serverTime);
@@ -5946,23 +5952,21 @@ datetime FxtToGmtTime(datetime fxtTime) {
    int offset = GetFxtToGmtTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
-
    return(fxtTime - offset);
 }
 
 
 /**
- * Konvertiert die angegebene FXT-Zeit (Forex Time) nach Server-Zeit.
+ * Konvertiert die angegebene FXT-Zeit (Forex Time) nach Serverzeit.
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetFxtToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
-
    return(fxtTime - offset);
 }
 
@@ -6941,11 +6945,11 @@ bool IsConfigKey(string section, string key) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - Offset in Sekunden, es gilt: GMT + Offset = FXT (immer positive Werte)
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetFxtToGmtTimeOffset(datetime fxtTime) {
-   if (fxtTime < 0)
-      return(_EMPTY_VALUE(catch("GetFxtToGmtTimeOffset()   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (fxtTime < 0) return(_EMPTY_VALUE(catch("GetFxtToGmtTimeOffset(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int offset, year=TimeYear(fxtTime)-1970;
 
@@ -6959,15 +6963,26 @@ int GetFxtToGmtTimeOffset(datetime fxtTime) {
 
 
 /**
- * Gibt den Offset der angegebenen FXT-Zeit (Forex Time) zu Server-Zeit zurück.
+ * Gibt den Offset der angegebenen FXT-Zeit (Forex Time) zu Serverzeit zurück.
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - Offset in Sekunden, es gilt: Serverzeit + Offset = FXT (positive Werte für westlich von FXT laufende Server)
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   if (fxtTime < 0)
-      return(_EMPTY_VALUE(catch("GetFxtToServerTimeOffset(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   string serverTimezone = GetServerTimezone();
+   if (!StringLen(serverTimezone))
+      return(EMPTY_VALUE);
+
+   // schnelle Rückkehr, wenn der Server unter einer zu FXT festen Zeitzone läuft
+   if (serverTimezone == "FXT"             ) return(      0);
+   if (serverTimezone == "FXT-0200"        ) return(2*HOURS);
+   if (serverTimezone == "America/New_York") return(7*HOURS);
+
+
+   if (fxtTime < 0) return(_EMPTY_VALUE(catch("GetFxtToServerTimeOffset(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
 
    // Offset FXT zu GMT
    int offset1 = GetFxtToGmtTimeOffset(fxtTime);
@@ -6975,10 +6990,12 @@ int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_
       return(EMPTY_VALUE);
 
    // Offset GMT zu Server
-   int offset2 = GetGmtToServerTimeOffset(fxtTime - offset1);
-   if (offset2 == EMPTY_VALUE)
-      return(EMPTY_VALUE);
-
+   int offset2 = 0;
+   if (serverTimezone != "GMT") {
+      offset2 = GetGmtToServerTimeOffset(fxtTime - offset1);
+      if (offset2 == EMPTY_VALUE)
+         return(EMPTY_VALUE);
+   }
    return(offset1 + offset2);
 }
 
@@ -7071,68 +7088,68 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
 
 
 /**
- * Gibt den Offset der angegebenen GMT-Zeit zur Server-Zeit zurück.
+ * Gibt den Offset der angegebenen GMT-Zeit zur Serverzeit zurück.
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls ein Fehler auftrat
- *
- *
- * NOTE: Das Ergebnis ist der entgegengesetzte Wert des üblichen Timezone-Offsets von Server-Zeit zu GMT.
+ * @return int - Offset in Sekunden, es gilt: Serverzeit + Offset = GMT (positive Werte für westlich von GMT laufende Server)
+ *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   if (gmtTime < 0)
-      return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
-
-   string timezone = GetServerTimezone();
-   if (!StringLen(timezone))
+   string serverTimezone = GetServerTimezone();
+   if (!StringLen(serverTimezone))
       return(EMPTY_VALUE);
 
-   if (timezone == "Alpari") {
-      if (gmtTime < D'2012.04.01 00:00:00') timezone = "Europe/Berlin";
-      else                                  timezone = "Europe/Kiev";
+   // schnelle Rückkehr, wenn der Server unter einer zu GMT festen Zeitzone läuft
+   if (serverTimezone == "GMT") return(0);
+
+
+   if (gmtTime < 0) return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(1)   invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+
+   if (serverTimezone == "Alpari") {
+      if (gmtTime < D'2012.04.01 00:00:00') serverTimezone = "Europe/Berlin";
+      else                                  serverTimezone = "Europe/Kiev";
    }
 
    int offset, year=TimeYear(gmtTime)-1970;
 
-   if (timezone == "America/New_York") {
+   if (serverTimezone == "America/New_York") {
       if      (gmtTime < transitions.America_New_York[year][TR_TO_DST.gmt]) offset = -transitions.America_New_York[year][STD_OFFSET];
       else if (gmtTime < transitions.America_New_York[year][TR_TO_STD.gmt]) offset = -transitions.America_New_York[year][DST_OFFSET];
       else                                                                  offset = -transitions.America_New_York[year][STD_OFFSET];
    }
-   else if (timezone == "Europe/Berlin") {
+   else if (serverTimezone == "Europe/Berlin") {
       if      (gmtTime < transitions.Europe_Berlin   [year][TR_TO_DST.gmt]) offset = -transitions.Europe_Berlin   [year][STD_OFFSET];
       else if (gmtTime < transitions.Europe_Berlin   [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Berlin   [year][DST_OFFSET];
       else                                                                  offset = -transitions.Europe_Berlin   [year][STD_OFFSET];
    }
-   else if (timezone == "Europe/Kiev") {
+   else if (serverTimezone == "Europe/Kiev") {
       if      (gmtTime < transitions.Europe_Kiev     [year][TR_TO_DST.gmt]) offset = -transitions.Europe_Kiev     [year][STD_OFFSET];
       else if (gmtTime < transitions.Europe_Kiev     [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Kiev     [year][DST_OFFSET];
       else                                                                  offset = -transitions.Europe_Kiev     [year][STD_OFFSET];
    }
-   else if (timezone == "Europe/London") {
+   else if (serverTimezone == "Europe/London") {
       if      (gmtTime < transitions.Europe_London   [year][TR_TO_DST.gmt]) offset = -transitions.Europe_London   [year][STD_OFFSET];
       else if (gmtTime < transitions.Europe_London   [year][TR_TO_STD.gmt]) offset = -transitions.Europe_London   [year][DST_OFFSET];
       else                                                                  offset = -transitions.Europe_London   [year][STD_OFFSET];
    }
-   else if (timezone == "Europe/Minsk") {
+   else if (serverTimezone == "Europe/Minsk") {
       if      (gmtTime < transitions.Europe_Minsk    [year][TR_TO_DST.gmt]) offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
       else if (gmtTime < transitions.Europe_Minsk    [year][TR_TO_STD.gmt]) offset = -transitions.Europe_Minsk    [year][DST_OFFSET];
       else                                                                  offset = -transitions.Europe_Minsk    [year][STD_OFFSET];
    }
-   else if (timezone == "FXT") {
+   else if (serverTimezone == "FXT") {
       if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET];
       else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET];
       else                                                                  offset = -transitions.FXT             [year][STD_OFFSET];
    }
-   else if (timezone == "FXT-0200") {
+   else if (serverTimezone == "FXT-0200") {
       if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
       else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2_H;
       else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
    }
-   else if (timezone == "GMT")                                              offset =  0;
-   else
-      return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(2)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+   else return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(2)   unknown server timezone \""+ serverTimezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
    return(offset);
 }
@@ -7632,8 +7649,8 @@ string EventToStr(int event) {
  * (1) dieser Offset der tatsächliche aktuelle Offset ist und
  * (2) die lokale Zeitzone im Tester modelliert wird und nicht mit der tatsächlichen lokalen Zeitzone übereinstimmt.
  *
- * @return int - Offset in Sekunden oder EMPTY_VALUE, falls  ein Fehler auftrat
- *               Es gilt: GMT + offset = LocalTime
+ * @return int - Offset in Sekunden oder, es gilt: GMT + Offset = LocalTime
+ *               EMPTY_VALUE, falls  ein Fehler auftrat
  */
 int GetLocalToGmtTimeOffset() {
    if (This.IsTesting())
@@ -8385,10 +8402,10 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
 
    if (!StringLen(directory))
       return("");
-   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin"
-   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //          ab 01.04.2012 "Europe/Kiev"
-   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";               //
-   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";               // (History wurde nicht aktualisiert)
+   else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin" (History wurde nicht aktualisiert)
+   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //         ab  01.04.2012 "Europe/Kiev"
+   else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";
+   else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "atcbrokers-"        )) timezone = "FXT";
    else if (StringStartsWith(directory, "atcbrokersest-"     )) timezone = "America/New_York";
@@ -8677,31 +8694,21 @@ datetime GmtToFxtTime(datetime gmtTime) {
    int offset = GetGmtToFxtTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
-
    return(gmtTime - offset);
 }
 
 
 /**
- * Konvertiert die angegebene GMT-Zeit nach Server-Zeit.
+ * Konvertiert die angegebene GMT-Zeit nach Serverzeit.
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - Server-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string zone = GetServerTimezone();
-   if (!StringLen(zone))
-      return(NOT_A_TIME);
-
-   // schnelle Rückkehr, wenn der Server unter GMT läuft
-   if (zone == "GMT")
-      return(gmtTime);
-
    int offset = GetGmtToServerTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
-
    return(gmtTime - offset);
 }
 
@@ -9008,49 +9015,31 @@ int SendSMS(string receiver, string message) {
 
 
 /**
- * Konvertiert die angegebene Server-Zeit nach FXT (Forex Time).
+ * Konvertiert die angegebene Serverzeit nach FXT (Forex Time).
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
  * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string zone = GetServerTimezone();
-   if (!StringLen(zone))
+   int offset = GetServerToFxtTimeOffset(serverTime);
+   if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
-
-   // schnelle Rückkehr, wenn der Server unter FXT läuft
-   if (zone == "FXT")
-      return(serverTime);
-
-   datetime gmtTime = ServerToGmtTime(serverTime);
-   if (gmtTime == NOT_A_TIME)
-      return(NOT_A_TIME);
-
-   return(GmtToFxtTime(gmtTime));
+   return(serverTime - offset);
 }
 
 
 /**
- * Konvertiert die angegebene Server-Zeit nach GMT.
+ * Konvertiert die angegebene Serverzeit nach GMT.
  *
- * @param  datetime serverTime - Server-Zeit
+ * @param  datetime serverTime - Serverzeit
  *
  * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
  */
 datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   string zone = GetServerTimezone();
-   if (!StringLen(zone))
-      return(NOT_A_TIME);
-
-   // schnelle Rückkehr, wenn der Server unter GMT läuft
-   if (zone == "GMT")
-      return(serverTime);
-
    int offset = GetServerToGmtTimeOffset(serverTime);
    if (offset == EMPTY_VALUE)
       return(NOT_A_TIME);
-
    return(serverTime - offset);
 }
 
