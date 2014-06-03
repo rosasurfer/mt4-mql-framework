@@ -10,9 +10,15 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-int   superTimeframe;
-color color.bar.up   = C'0,200,0';          // Farbe der Up-Bars: Green, Lime
-color color.bar.down = Red;            // Farbe der Down-Bars
+//////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
+
+extern color Color.Bar.up      = C'0,210,0';          // Farbe der Up-Bars          Green, Lime
+extern color Color.Bar.down    = C'255,47,47';        // Farbe der Down-Bars        Red
+extern color Color.CloseMarker = Black;               // Farbe der Close-Marker     C'164,164,164'
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int superTimeframe;
 
 
 /**
@@ -61,15 +67,13 @@ int onTick() {
       return(last_error);
    /*
    - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (keine for-Schleife über alle ChangedBars).
-   - Die erste Superbar reicht nach rechts über Bar[0] bis zum zukünftigen Supersession-Ende hinaus.
+   - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Sessionfortschritt und Relevanz der neuen Bar veranschaulicht.
    - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
    */
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int i,   openBar, closeBar, lastChartBar=Bars-1;
 
-
    datetime startTime = GetTickCount();
-
 
    // Schleife über alle Supersessions von "jung" nach "alt"
    while (true) { i++;
@@ -86,16 +90,13 @@ int onTick() {
       if (openBar >= closeBar) {
          if      (openBar != lastChartBar)                              { if (!DrawSuperBar(openTime.fxt, openBar, closeBar)) return(last_error); }
          else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { if (!DrawSuperBar(openTime.fxt, openBar, closeBar)) return(last_error); }
-      }                                                              // Die Supersession auf der letzten Chartbar ist fast nie vollständig, trotzdem mit (exact=TRUE) prüfen.
+      }                                                              // Die Supersession auf der letzten Chartbar ist äußerst selten vollständig, trotzdem mit (exact=TRUE) prüfen.
       if (openBar >= ChangedBars-1)
          break;                                                      // Superbars bis max. ChangedBars aktualisieren
    }
 
    datetime endTime = GetTickCount();
-
-
    //if (ChangedBars > 1) debug("onTick(0.1)   ChangedBars="+ ChangedBars +"  i="+ i +"  time: "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
-
    return(last_error);
 }
 
@@ -114,7 +115,6 @@ int onTick() {
  */
 bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
    int month, dom, dow;
-
 
    // (1) PERIOD_D1
    if (timeframe == PERIOD_D1) {
@@ -185,31 +185,31 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
       if (!openTime.fxt)                           // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
          openTime.fxt = TimeCurrent() + 1*QUARTER; // 3 Monate oder mehr sind ok, wird falls ungenau als Kurslücke interpretiert und ausgelassen
 
-      openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));    // 00:00 des aktuellen Tages
+      openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt)); // 00:00 des aktuellen Tages
 
       // closeTime.fxt auf den ersten Tag des folgenden Quartals, 00:00 setzen
       switch (TimeMonth(openTime.fxt)) {
          case JANUARY  :
          case FEBRUARY :
-         case MARCH    : closeTime.fxt = openTime.fxt - (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                    // erster Tag des aktuellen Quartals (01.01.)
+         case MARCH    : closeTime.fxt = openTime.fxt - (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.01.)
          case APRIL    : closeTime.fxt = openTime.fxt -       (TimeDay(openTime.fxt)-1)*DAYS; break;
          case MAY      : closeTime.fxt = openTime.fxt - (30+   TimeDay(openTime.fxt)-1)*DAYS; break;
-         case JUNE     : closeTime.fxt = openTime.fxt - (30+31+TimeDay(openTime.fxt)-1)*DAYS; break;                    // erster Tag des aktuellen Quartals (01.04.)
+         case JUNE     : closeTime.fxt = openTime.fxt - (30+31+TimeDay(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.04.)
          case JULY     : closeTime.fxt = openTime.fxt -       (TimeDay(openTime.fxt)-1)*DAYS; break;
          case AUGUST   : closeTime.fxt = openTime.fxt - (31+   TimeDay(openTime.fxt)-1)*DAYS; break;
-         case SEPTEMBER: closeTime.fxt = openTime.fxt - (31+31+TimeDay(openTime.fxt)-1)*DAYS; break;                    // erster Tag des aktuellen Quartals (01.07.)
+         case SEPTEMBER: closeTime.fxt = openTime.fxt - (31+31+TimeDay(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.07.)
          case OCTOBER  : closeTime.fxt = openTime.fxt -       (TimeDay(openTime.fxt)-1)*DAYS; break;
          case NOVEMBER : closeTime.fxt = openTime.fxt - (31+   TimeDay(openTime.fxt)-1)*DAYS; break;
-         case DECEMBER : closeTime.fxt = openTime.fxt - (31+30+TimeDay(openTime.fxt)-1)*DAYS; break;                    // erster Tag des aktuellen Quartals (01.10.)
+         case DECEMBER : closeTime.fxt = openTime.fxt - (31+30+TimeDay(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.10.)
       }
 
       // openTime.fxt auf den ersten Tag des vorherigen Quartals, 00:00 Uhr setzen
-      openTime.fxt = closeTime.fxt - 1*DAY;                                                                             // letzter Tag des vorherigen Quartals
+      openTime.fxt = closeTime.fxt - 1*DAY;                                                                          // letzter Tag des vorherigen Quartals
       switch (TimeMonth(openTime.fxt)) {
-         case MARCH    : openTime.fxt -= (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                                   // erster Tag des vorherigen Quartals (01.01.)
-         case JUNE     : openTime.fxt -= (30+31+TimeDay(openTime.fxt)-1)*DAYS; break;                                   // erster Tag des vorherigen Quartals (01.04.)
-         case SEPTEMBER: openTime.fxt -= (31+31+TimeDay(openTime.fxt)-1)*DAYS; break;                                   // erster Tag des vorherigen Quartals (01.07.)
-         case DECEMBER : openTime.fxt -= (31+30+TimeDay(openTime.fxt)-1)*DAYS; break;                                   // erster Tag des vorherigen Quartals (01.10.)
+         case MARCH    : openTime.fxt -= (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.01.)
+         case JUNE     : openTime.fxt -= (30+31+TimeDay(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.04.)
+         case SEPTEMBER: openTime.fxt -= (31+31+TimeDay(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.07.)
+         case DECEMBER : openTime.fxt -= (31+30+TimeDay(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.10.)
       }
 
       // Wochenenden in openTime.fxt überspringen
@@ -228,7 +228,6 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    // (5) entsprechende Serverzeiten ermitteln
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
-
 
 
    static int i;
@@ -257,16 +256,16 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    // Farbe bestimmen
    color barColor = Gray;     // C'232,232,232'                                                       // Ausgangsfarbe ist hellgrau,
    if (MathMax(Open[openBar],  Close[closeBar])/MathMin(Open[openBar], Close[closeBar]) > 1.0005) {   // ab ca. 5-8 pip Unterschied grün oder rot
-      if      (Open[openBar] < Close[closeBar]) barColor = color.bar.up;
-      else if (Open[openBar] > Close[closeBar]) barColor = color.bar.down;
+      if      (Open[openBar] < Close[closeBar]) barColor = Color.Bar.up;
+      else if (Open[openBar] > Close[closeBar]) barColor = Color.Bar.down;
    }
 
    // Label definieren
    string label;
    switch (superTimeframe) {
-      case PERIOD_D1 : label = "Bar "+  DateToStr(openTime.fxt, "w D.M.Y");                             break;    // "w D.M.Y" wird bereits vom Grid verwendet
-      case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y");                             break;
-      case PERIOD_MN1: label =          DateToStr(openTime.fxt,     "N Y");                             break;
+      case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w, D.M.Y");                            break;    // "w D.M.Y" wird bereits vom Grid verwendet
+      case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,    "D.M.Y");                            break;
+      case PERIOD_MN1: label =          DateToStr(openTime.fxt,      "N Y");                            break;
       case PERIOD_Q1 : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYear(openTime.fxt); break;
    }
 
@@ -274,7 +273,7 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
       int closeBar_j = closeBar; /*endBar_justified*/                // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren
-      //if (closeBar > 0) closeBar_j--;                                // außer bei Bar[0]
+      if (closeBar > 0) closeBar_j--;                                // nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet (label, OBJPROP_COLOR, barColor);
       ObjectSet (label, OBJPROP_BACK , true);
@@ -282,24 +281,23 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    }
    else GetLastError();
 
-   /*
-   // (2.7) Close-Marker einzeichnen
-   int centerBar = (startBar+endBar_j)/2;
-   if (centerBar > endBar) {
-      label = StringConcatenate(StringSubstr(label, 7), " Close");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_TREND, 0, Time[centerBar], Close[endBar], Time[endBar], Close[endBar])) {
-         ObjectSet (label, OBJPROP_RAY  , false);
-         ObjectSet (label, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet (label, OBJPROP_COLOR, Color.Close.Marker);
-         ObjectSet (label, OBJPROP_BACK , true);
-         PushObject(label);
+   // Close-Marker zeichnen
+   if (closeBar > 0) {                                               // nicht bei der jüngsten Bar[0], die ist niemals "closed"
+      int centerBar = (openBar+closeBar_j)/2;
+      if (centerBar > closeBar) {
+         label = label +" Close "+ DoubleToStr(Close[closeBar], PipDigits);
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
+            ObjectSet (label, OBJPROP_RAY  , false);
+            ObjectSet (label, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet (label, OBJPROP_COLOR, Color.CloseMarker);
+            ObjectSet (label, OBJPROP_BACK , true);
+            PushObject(label);
+         }
+         else GetLastError();
       }
-      else GetLastError();
    }
-   */
-
 
 
    static int i;
