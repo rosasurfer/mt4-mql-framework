@@ -8979,38 +8979,57 @@ bool ObjectDeleteSilent(string label, string location) {
  * @param  string receiver - Telefonnummer des Empfängers (internationales Format: 49123456789)
  * @param  string message  - Text der SMS
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int SendSMS(string receiver, string message) {
-   if (!StringIsDigit(receiver))
-      return(catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+bool SendSMS(string receiver, string message) {
+   if (!StringIsDigit(receiver)) return(!catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
-   // TODO: Gateway-Zugangsdaten auslagern
 
-   // Befehlszeile für Shellaufruf zusammensetzen
-   string url          = "https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to="+ receiver +"&text="+ UrlEncode(message);
+   // (1) Zugangsdaten für SMS-Gateway holen
+   // Username
+   string section = "Clickatell";
+   string key     = "username";
+   string username = GetGlobalConfigString(section, key, "");
+   if (!StringLen(username)) return(!catch("SendSMS(2)   missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
+   // Password
+   section = "Clickatell";
+   key     = "password";
+   string password = GetGlobalConfigString(section, key, "");
+   if (!StringLen(password)) return(!catch("SendSMS(3)   missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
+   // API-ID
+   section = "Clickatell";
+   key     = "api_id";
+   int api_id = GetGlobalConfigInt(section, key, 0);
+   if (api_id <= 0) {
+      string value = GetGlobalConfigString(section, key, "");
+      if (!StringLen(value)) return(!catch("SendSMS(4)   missing setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
+                             return(!catch("SendSMS(5)   invalid setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+   }
+
+
+   // (2) Befehlszeile für Shellaufruf zusammensetzen
+   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ receiver +"&text="+ UrlEncode(message);
    string filesDir     = TerminalPath() +"\\experts\\files";
-   string time         = StringReplace(StringReplace(TimeToStr(TimeLocal(), TIME_FULL), ".", "-"), ":", ".");
-   string responseFile = filesDir +"\\sms_"+ time +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocal(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmdLine      = "wget.exe -b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
 
    int error = WinExec(cmdLine, SW_HIDE);       // SW_SHOWNORMAL|SW_HIDE
    if (error < 32)
-      return(catch("SendSMS(1)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", win32.GetLastError(ERR_WIN32_ERROR)));
+      return(!catch("SendSMS(6)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorToStr(error) +")", win32.GetLastError(ERR_WIN32_ERROR)));
 
    /**
     * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
+    * TODO: Fehlerauswertung nach dem Versand:
     *
-    *
-    * TODO: Fehlerauswertung nach dem Versand
-    *
-    * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={id}&to={receiver}&text={text}
+    * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
     * Resolving api.clickatell.com... failed: Unknown host.
     * wget: unable to resolve host address `api.clickatell.com'
     */
 
-   return(catch("SendSMS(2)"));
+   return(!catch("SendSMS(7)"));
 }
 
 
