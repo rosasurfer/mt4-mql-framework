@@ -259,17 +259,16 @@ int onPositionOpen(int tickets[]) {
       string type    = OperationTypeDescription(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
       string price   = NumberToStr(OrderOpenPrice(), PriceFormat);
-      string message = StringConcatenate("Position opened: ", type, " ", lots, " ", GetSymbolName(GetStandardSymbol(OrderSymbol())), " at ", price);
+      string message = "Position opened: "+ type +" "+ lots +" "+ GetSymbolName(GetStandardSymbol(OrderSymbol())) +" at "+ price;
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-         if (IsError(error))
-            return(SetLastError(error));
-         if (__LOG) log(StringConcatenate("onPositionOpen(2)   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (!SendSMS(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+            return(SetLastError(stdlib.GetLastError()));
+         if (__LOG) log("onPositionOpen(2)   SMS sent to "+ SMS.Receiver +":  "+ message);
       }
       else {
-         if (__LOG) log(StringConcatenate("onPositionOpen(3)   ", message));
+         if (__LOG) log("onPositionOpen(3)   "+ message);
       }
    }
 
@@ -301,17 +300,16 @@ int onPositionClose(int tickets[]) {
       string lots       = NumberToStr(OrderLots(), ".+");
       string openPrice  = NumberToStr(OrderOpenPrice(), PriceFormat);
       string closePrice = NumberToStr(OrderClosePrice(), PriceFormat);
-      string message    = StringConcatenate("Position closed: ", type, " ", lots, " ", GetSymbolName(GetStandardSymbol(OrderSymbol())), " at ", openPrice, " -> ", closePrice);
+      string message    = "Position closed: "+ type +" "+ lots +" "+ GetSymbolName(GetStandardSymbol(OrderSymbol())) +" at "+ openPrice +" -> "+ closePrice;
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-         if (IsError(error))
-            return(SetLastError(error));
-         if (__LOG) log(StringConcatenate("onPositionClose(2)   SMS sent to ", SMS.Receiver, ":  ", message));
+         if (!SendSMS(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+            return(SetLastError(stdlib.GetLastError()));
+         if (__LOG) log("onPositionClose(2)   SMS sent to "+ SMS.Receiver +":  "+ message);
       }
       else {
-         if (__LOG) log(StringConcatenate("onPositionClose(3)   ", message));
+         if (__LOG) log("onPositionClose(3)   "+ message);
       }
    }
 
@@ -341,14 +339,13 @@ bool CheckBollingerBands() {
 
       // ggf. SMS verschicken
       if (SMS.Alerts) {
-         string message = StringConcatenate(GetSymbolName(StdSymbol()), ifString(crossing==CROSSING_LOW, " lower", " upper"), " ", strBollingerBands, " @ ", NumberToStr(value, PriceFormat), " crossed");
-         int error = SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message));
-         if (IsError(error))
-            return(!SetLastError(error));
-         if (__LOG) log(StringConcatenate("CheckBollingerBands(1)   SMS sent to ", SMS.Receiver, ":  ", message));
+         string message = GetSymbolName(StdSymbol()) + ifString(crossing==CROSSING_LOW, " lower", " upper") +" "+ strBollingerBands +" @ "+ NumberToStr(value, PriceFormat) +" crossed";
+         if (!SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message)))
+            return(!SetLastError(stdlib.GetLastError()));
+         if (__LOG) log("CheckBollingerBands(1)   SMS sent to "+ SMS.Receiver +":  "+ message);
       }
       else {
-         if (__LOG) log(StringConcatenate("CheckBollingerBands(2)   ", message));
+         if (__LOG) log("CheckBollingerBands(2)   "+ message);
       }
 
       // ggf. Sound abspielen

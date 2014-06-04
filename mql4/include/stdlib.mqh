@@ -451,7 +451,7 @@
 
    int      ForceMessageBox(string caption, string message, int flags);
    int      ForceSound(string soundfile);
-   int      SendSMS(string receiver, string message);
+   bool     SendSMS(string receiver, string message);
 
 
    // toString-Funktionen
