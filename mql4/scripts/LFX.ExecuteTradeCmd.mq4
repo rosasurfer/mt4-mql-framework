@@ -280,7 +280,10 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    // (8) Logmessage ausgeben
    string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-   if (__LOG) log("OpenPendingOrder(7)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
+   if (__LOG) {
+      log("OpenPendingOrder(7)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+      log("OpenPendingOrder(8)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
+   }
 
 
    // (9) Order freigeben
@@ -367,7 +370,10 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
 
    // (5) Logmessage ausgeben
    string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-   if (__LOG) log("ClosePosition(4)   "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   if (__LOG) {
+      log("ClosePosition(4)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+      log("ClosePosition(5)   "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   }
 
 
    // (6) LFX-Terminal benachrichtigen
