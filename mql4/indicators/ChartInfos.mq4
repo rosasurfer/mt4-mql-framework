@@ -356,7 +356,6 @@ int CreateLabels() {
       // LFX-Trade-Account-Label: nur in LFX-Charts, Anzeige wird sofort und nur hier gesetzt
       if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
          return(last_error);
-      name = lfxAccountName +" ("+ lfxAccountCompany +":"+ lfxAccount +", "+ lfxAccountCurrency +")";
       name = lfxAccountName +": "+ lfxAccountCompany +", "+ lfxAccount +", "+ lfxAccountCurrency;
 
       if (ObjectFind(label.lfxTradeAccount) == 0)

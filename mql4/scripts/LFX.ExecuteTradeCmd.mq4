@@ -25,10 +25,12 @@ string command = "";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-int    lfxTicket;
+int    lfxTicket;                         // geparste Details des übergebenen TradeCommands
 string action;
 double leverage;
+
+bool   sms.alerts;
+string sms.receiver;
 
 
 /**
@@ -71,7 +73,14 @@ int onInit() {
       if (leverage < 1)                             return(catch("onInit(9)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
-   return(catch("onInit(7)"));
+
+   // (4) SMS-Konfiguration einlesen
+   sms.alerts = GetLocalConfigBool("EventTracker", "SMS.Alerts", false);
+   if (sms.alerts) {
+      sms.receiver = GetConfigString("SMS", "Receiver", "");
+      if (!StringLen(sms.receiver))                 return(catch("onInit(10)   missing setting [SMS]->Receiver", ERR_INVALID_CONFIG_PARAMVALUE));
+   }
+   return(catch("onInit(11)"));
 }
 
 
@@ -286,12 +295,21 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    }
 
 
-   // (9) Order freigeben
+   // (9) ggf. SMS verschicken
+   if (sms.alerts) {
+      string message = lfxAccountAlias +": "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat);
+      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+         return(SetLastError(stdlib.GetLastError()));
+      if (__LOG) log("OpenPendingOrder(9)   SMS sent to "+ sms.receiver);
+   }
+
+
+   // (10) Order freigeben
    if (!ReleaseLock(mutex))
       return(!SetLastError(stdlib.GetLastError()));
 
 
-   // (10) Ausführungsbestätigung ans LFX-Terminal schicken
+   // (11) Ausführungsbestätigung ans LFX-Terminal schicken
    if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
       return(false);
 
@@ -376,7 +394,16 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
    }
 
 
-   // (6) LFX-Terminal benachrichtigen
+   // (6) ggf. SMS verschicken
+   if (sms.alerts) {
+      string message = lfxAccountAlias +": "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat);
+      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+         return(SetLastError(stdlib.GetLastError()));
+      if (__LOG) log("ClosePosition(6)   SMS sent to "+ sms.receiver);
+   }
+
+
+   // (7) LFX-Terminal benachrichtigen
    if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1"))
       return(false);
 
