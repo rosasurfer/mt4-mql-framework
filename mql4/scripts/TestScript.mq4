@@ -14,21 +14,5 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-
-   // Receiver
-   string section = "SMS";
-   string key     = "Receiver";
-   string receiver = GetGlobalConfigString(section, key, "");
-   if (!StringLen(receiver))   return(!catch("onStart(1)   missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-
-   // Message
-   string message = TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ "Test message from Costa Cafe";
-
-   // Versand
-   if (!SendSMS(receiver, message))
-      return(SetLastError(stdlib.GetLastError()));
-
-
-   catch("onStart(2)");
    return(last_error);
 }
