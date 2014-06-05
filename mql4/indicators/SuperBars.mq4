@@ -263,16 +263,16 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    // Label definieren
    string label;
    switch (superTimeframe) {
-      case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w, D.M.Y");                            break;    // "w D.M.Y" wird bereits vom Grid verwendet
-      case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,    "D.M.Y");                            break;
-      case PERIOD_MN1: label =          DateToStr(openTime.fxt,      "N Y");                            break;
+      case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w D.M.Y ");                            break;    // "w D.M.Y" wird bereits vom Grid verwendet
+      case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y" );                            break;
+      case PERIOD_MN1: label =          DateToStr(openTime.fxt,     "N Y" );                            break;
       case PERIOD_Q1 : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYear(openTime.fxt); break;
    }
 
    // Superbar zeichnen
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
-      int closeBar_j = closeBar; /*endBar_justified*/                // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren
+      int closeBar_j = closeBar; /*j: justified*/                    // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren
       if (closeBar > 0) closeBar_j--;                                // nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet (label, OBJPROP_COLOR, barColor);
@@ -282,7 +282,7 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    else GetLastError();
 
    // Close-Marker zeichnen
-   if (closeBar > 0) {                                               // nicht bei der jüngsten Bar[0], die ist niemals "closed"
+   if (closeBar > 0) {
       int centerBar = (openBar+closeBar_j)/2;
       if (centerBar > closeBar) {
          label = label +" Close "+ DoubleToStr(Close[closeBar], PipDigits);
