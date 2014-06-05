@@ -272,11 +272,11 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    // Superbar zeichnen
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
-      int closeBar_j = closeBar; /*j: justified*/                    // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren
-      if (closeBar > 0) closeBar_j--;                                // nicht bei der jüngsten Bar[0]
+      int closeBar_j = closeBar; /*j: justified*/                    // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
+      if (closeBar > 0) closeBar_j--;                                // jedoch nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet (label, OBJPROP_COLOR, barColor);
-      ObjectSet (label, OBJPROP_BACK , true);
+      ObjectSet (label, OBJPROP_BACK , true    );
       PushObject(label);
    }
    else GetLastError();
@@ -289,10 +289,10 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
          if (ObjectFind(label) == 0)
             ObjectDelete(label);
          if (ObjectCreate(label, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
-            ObjectSet (label, OBJPROP_RAY  , false);
-            ObjectSet (label, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet (label, OBJPROP_RAY  , false            );
+            ObjectSet (label, OBJPROP_STYLE, STYLE_SOLID      );
             ObjectSet (label, OBJPROP_COLOR, Color.CloseMarker);
-            ObjectSet (label, OBJPROP_BACK , true);
+            ObjectSet (label, OBJPROP_BACK , true             );
             PushObject(label);
          }
          else GetLastError();
