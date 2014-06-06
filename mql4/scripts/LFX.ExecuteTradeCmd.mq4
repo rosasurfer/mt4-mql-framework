@@ -288,7 +288,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    if (sms.alerts) {
       string message = lfxAccountAlias +": "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat);
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
-         return(SetLastError(stdlib.GetLastError()));
+         return(SetLastError(stdlib.GetLastError(), ReleaseLock(mutex)));
       if (__LOG) log("OpenPendingOrder(9)   SMS sent to "+ sms.receiver);
    }
 
