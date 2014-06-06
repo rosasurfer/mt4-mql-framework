@@ -8985,7 +8985,7 @@ bool SendSMS(string receiver, string message) {
    string _receiver = StringTrim(receiver);
    if (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
    if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
-   if (!StringIsDigit(receiver)) return(!catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    receiver = _receiver;
 
    // (1) Zugangsdaten für SMS-Gateway holen
