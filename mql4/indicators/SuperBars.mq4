@@ -302,8 +302,7 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
 
    static int i;
    if (i <= 5) {
-      //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar);
-      //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   label=\""+ label +"\"");
+      //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
       i++;
    }
    return(!catch("DrawSuperBar()"));
@@ -316,18 +315,19 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
  * @return int - Fehlerstatus
  */
 int x.start() {
-   if (false) {
-      // ...
-      prev_error = last_error;
-      last_error = NO_ERROR;
+   return(0);
 
-      ValidBars = IndicatorCounted();
-      if      (prev_error == ERS_TERMINAL_NOT_READY) ValidBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE    ) ValidBars = 0;
-      ChangedBars = Bars - ValidBars;
+   // ...
+   prev_error = last_error;
+   last_error = NO_ERROR;
 
-      onTick();
-      // ...
-   }
+   ValidBars = IndicatorCounted();
+   if      (prev_error == ERS_TERMINAL_NOT_READY) ValidBars = 0;
+   else if (prev_error == ERS_HISTORY_UPDATE    ) ValidBars = 0;
+   ChangedBars = Bars - ValidBars;
+
+   onTick();
+   // ...
+
    return(last_error);
 }
