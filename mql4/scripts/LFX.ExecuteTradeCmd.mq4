@@ -276,36 +276,36 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    }
    openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
-      openPrice = 1/openPrice;                     // JPY ist invers notiert
+      openPrice = 1/openPrice;                                       // JPY ist invers notiert
 
 
-   // (7) Logmessage ausgeben
-   string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-   if (__LOG) log("OpenPendingOrder(8)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
-
-
-   // (8) ggf. SMS verschicken
-   if (sms.alerts) {
-      string message = lfxAccountAlias +": "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat);
-      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
-         return(SetLastError(stdlib.GetLastError(), ReleaseLock(mutex)));
-      if (__LOG) log("OpenPendingOrder(9)   SMS sent to "+ sms.receiver);
-   }
-
-
-   // (9) Order speichern (erst nach SMS, weil Speichern fehlschlagen könnte)
+   // (7) Order speichern
    lo.setType      (lo, lfxDirection);
    lo.setUnits     (lo, realUnits   );
    lo.setOpenTime  (lo, TimeGMT()   );
    lo.setOpenPrice (lo, openPrice   );
    lo.setOpenEquity(lo, equity      );
    if (!LFX.SaveOrder(lo))
-      return(_false(ReleaseLock(mutex)));
+      return(_false(ReleaseLock(mutex)));                            // TODO: Kein Abbruch, falls Speichern wegen ERR_CONCURRENT_MODIFICATION fehlschlägt
 
 
-   // (10) Order freigeben
+   // (8) Order freigeben
    if (!ReleaseLock(mutex))
       return(!SetLastError(stdlib.GetLastError()));
+
+
+   // (9) Logmessage ausgeben
+   string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+   if (__LOG) log("OpenPendingOrder(8)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
+
+
+   // (10) ggf. SMS verschicken
+   if (sms.alerts) {
+      string message = lfxAccountAlias +": "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat);
+      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+         return(SetLastError(stdlib.GetLastError()));
+      if (__LOG) log("OpenPendingOrder(9)   SMS sent to "+ sms.receiver);
+   }
 
 
    // (11) Ausführungsbestätigung ans LFX-Terminal schicken
@@ -372,14 +372,22 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
       closePrice = 1/closePrice;                                     // JPY ist invers notiert
 
 
-   // (5) Logmessage ausgeben
-   string comment = lo.Comment(lo);                                  // letzten Counter ermitteln
-      if (StringStartsWith(comment, lo.Currency(lo))) comment = StringRight(comment, -3);
-      if (StringStartsWith(comment, "."            )) comment = StringRight(comment, -1);
-      if (StringStartsWith(comment, "#"            )) comment = StringRight(comment, -1);
-      int counter = StrToInteger(comment);
-   string sCounter = ifString(!counter, "", "."+ counter);
+   // (4) LFX-Order aktualisieren und speichern (erst nach SMS, falls Speichern fehlschlägt)
+   lo.setCloseTime (lo, TimeGMT() );
+   lo.setClosePrice(lo, closePrice);
+   lo.setProfit    (lo, profit    );
+      string oldComment = lo.Comment(lo);
+   lo.setComment   (lo, ""        );
+   if (!LFX.SaveOrder(lo))                      // TODO: Kein Abbruch, wenn Speichern wegen ERR_CONCURRENT_MODIFICATION fehlschlägt
+      return(false);
 
+
+   // (5) Logmessage ausgeben                                        // letzten Counter ermitteln
+   if (StringStartsWith(oldComment, lo.Currency(lo))) oldComment = StringRight(oldComment, -3);
+   if (StringStartsWith(oldComment, "."            )) oldComment = StringRight(oldComment, -1);
+   if (StringStartsWith(oldComment, "#"            )) oldComment = StringRight(oldComment, -1);
+   int    counter   = StrToInteger(oldComment);
+   string sCounter  = ifString(!counter, "", "."+ counter);
    string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
    if (__LOG) log("ClosePosition(5)   "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
@@ -391,15 +399,6 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
          return(SetLastError(stdlib.GetLastError()));
       if (__LOG) log("ClosePosition(6)   SMS sent to "+ sms.receiver);
    }
-
-
-   // (4) LFX-Order aktualisieren und speichern (erst nach SMS, falls Speichern fehlschlägt)
-   lo.setCloseTime (lo, TimeGMT() );
-   lo.setClosePrice(lo, closePrice);
-   lo.setProfit    (lo, profit    );
-   lo.setComment   (lo, ""        );
-   if (!LFX.SaveOrder(lo))
-      return(false);
 
 
    // (7) LFX-Terminal benachrichtigen
