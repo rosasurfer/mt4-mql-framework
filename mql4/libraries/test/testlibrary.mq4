@@ -58,3 +58,71 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);
 }
+
+
+/**
+ *
+ *
+int mql.GetIntValue(int value) {
+   int b = value + 666;
+   return(b);
+}*/
+
+
+/*
+#import "Test-DLL.dll"
+   int    GetIntValue(int value);
+   double GetDoubleValue(double value);
+   string GetStringValue(string value);
+
+#import "struct.BAR.ex4"
+   int    mql.GetIntValue(int value);
+#import
+*/
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ *
+int onStart() {
+   int    iValue = 333;
+   double dValue = 2000.0;
+   string sValue = "hello world";
+
+   GetIntValue(iValue);
+   mql.GetIntValue(iValue);
+
+   int iResult, n = 20000000;
+
+
+   // DLL:
+   int startTime = GetTickCount();
+   for (int i=0; i < n; i++) {
+      iResult = GetIntValue(i);
+   }
+   int endTime = GetTickCount();
+   debug("onStart(0.1)   dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+
+
+   // MQL
+   startTime = GetTickCount();
+   for (i=0; i < n; i++) {
+      iResult = mql.GetIntValue(i);
+   }
+   endTime = GetTickCount();
+   debug("onStart(0.2)   mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+
+
+   //                                                                     Toshiba Satellite     Toshiba Portege
+   // Build 225
+   // MetaTrader::TestScript::onStart(0.1)   dll loop(20.000.000) took     1.688 sec             0.920 sec
+   // MetaTrader::TestScript::onStart(0.2)   mql loop(20.000.000) took    61.640 sec            23.931 sec
+
+   // Build 500
+   // MetaTrader::TestScript::onStart(0.1)   dll loop(20.000.000) took     4.750 sec             3.339 sec
+   // MetaTrader::TestScript::onStart(0.2)   mql loop(20.000.000) took    73.203 sec            32.370 sec
+
+   return(last_error);
+}*/
