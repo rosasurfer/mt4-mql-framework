@@ -577,6 +577,7 @@ void DummyCalls() {
    string   StringTrim(string value);
    int      StrToOperationType(string value);
    datetime TimeGMT();
-#import "MetaQuotes2.ex4"
+
+#import "MT4Lib.dll"
    int      GetIntsAddress(int array[]);
 #import

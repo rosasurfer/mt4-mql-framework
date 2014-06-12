@@ -12640,22 +12640,12 @@ void Tester.ResetGlobalArrays() {
    string TicketsToStr.Lots(int array[], string separator);
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
-#import "MetaQuotes1.ex4"
-   int    GetBoolsAddress(bool array[]);
-
-#import "MetaQuotes2.ex4"
-   int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes3.ex4"
-   int    GetDoublesAddress(double array[]);
-
-#import "MetaQuotes4.ex4"
-   int    GetStringsAddress(string array[]);
-
-#import "MetaQuotes5.ex4"
-   int    GetStringAddress (string value);
-
 #import "MT4Lib.dll"
+   int    GetBoolsAddress(bool array[]);
+   int    GetBufferAddress(int buffer[]);
+   int    GetDoublesAddress(double array[]);
+   int    GetStringsAddress(string array[]);
+   int    GetStringAddress (string value);
    string GetString(int address);
 
 #import "struct.EXECUTION_CONTEXT.ex4"

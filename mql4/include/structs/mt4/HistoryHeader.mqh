@@ -148,10 +148,8 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) 
    string JoinStrings(string array[], string separator);
    string StringToStr(string value);
 
-#import "MetaQuotes2.ex4"
+#import "MT4Lib.dll"
    int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 #import
 

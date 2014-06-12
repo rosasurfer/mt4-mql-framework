@@ -407,10 +407,8 @@ int SetLastError(int error, int param=NULL) {
    int    SumInts(int array[]);
    string __whereamiDescription(int id);
 
-#import "MetaQuotes2.ex4"
+#import "MT4Lib.dll"
    int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes4.ex4"
    int    GetStringsAddress(string array[]);
 
 #import "user32.dll"

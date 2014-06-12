@@ -298,10 +298,8 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 
-#import "MetaQuotes2.ex4"
+#import "MT4Lib.dll"
    int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 #import
 

@@ -328,10 +328,8 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
    string OperationTypeToStr(int type);
    string StringToStr(string value);
 
-#import "MetaQuotes2.ex4"
+#import "MT4Lib.dll"
    int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 #import
 
