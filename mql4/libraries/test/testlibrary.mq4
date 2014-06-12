@@ -72,8 +72,6 @@ int mql.GetIntValue(int value) {
 /*
 #import "Test-DLL.dll"
    int    GetIntValue(int value);
-   double GetDoubleValue(double value);
-   string GetStringValue(string value);
 
 #import "struct.BAR.ex4"
    int    mql.GetIntValue(int value);

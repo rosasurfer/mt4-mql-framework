@@ -22,12 +22,12 @@
  */
 
 // Getter
-int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 0]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 1]);                       EXECUTION_CONTEXT.toStr(ec); }
-string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetStringValue(ec[ 1]));                      EXECUTION_CONTEXT.toStr(ec); }
-int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 2]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 3]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 4]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 0]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 1]);                       EXECUTION_CONTEXT.toStr(ec); }
+string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[ 1]));                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 2]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 3]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 4]);                       EXECUTION_CONTEXT.toStr(ec); }
 int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
    if (ArrayDimension(sec) != 1)               return(catch("ec.SuperContext(1)   too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
@@ -44,14 +44,14 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
    }
    return(catch("ec.SuperContext(3)"));                                                                                                               EXECUTION_CONTEXT.toStr(ec);
 }
-int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 5]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 6]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 7]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 8]);                       EXECUTION_CONTEXT.toStr(ec); }
-bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[ 9] != 0);                  EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[10]);                       EXECUTION_CONTEXT.toStr(ec); }
-string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetStringValue(ec[10]));                      EXECUTION_CONTEXT.toStr(ec); }
-int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                return(ec[11]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 5]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 6]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 7]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 8]);                       EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 9] != 0);                  EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[10]);                       EXECUTION_CONTEXT.toStr(ec); }
+string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[10]));                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[11]);                       EXECUTION_CONTEXT.toStr(ec); }
 
 
 // Setter
@@ -165,8 +165,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
 #import "MetaQuotes5.ex4"
    int    GetStringAddress(string value);
 
-#import "MetaQuotes.dll"
-   string GetStringValue(int address);
+#import "MT4Lib.dll"
+   string GetString(int address);
 #import
 
 
