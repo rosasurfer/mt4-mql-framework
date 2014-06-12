@@ -159,13 +159,9 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
    string UninitializeReasonToStr(int reason);
    string __whereamiToStr(int id);
 
-#import "MetaQuotes2.ex4"
-   int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes5.ex4"
-   int    GetStringAddress(string value);
-
 #import "MT4Lib.dll"
+   int    GetBufferAddress(int buffer[]);
+   int    GetStringAddress(string value);
    string GetString(int address);
 #import
 

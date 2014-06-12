@@ -5,7 +5,8 @@
    string ModuleTypeDescription(int type);
    int    MT4InternalMsg();
    int    win32.GetLastError(int altError);
-#import "MetaQuotes5.ex4"
+
+#import "MT4Lib.dll"
    int    GetStringAddress(string value);
 #import
 

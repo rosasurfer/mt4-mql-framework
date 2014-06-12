@@ -562,10 +562,8 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    Tester.Stop();
    int    Toolbar.Experts(bool enable);
 
-#import "MetaQuotes2.ex4"
+#import "MT4Lib.dll"
    int    GetBufferAddress(int buffer[]);
-
-#import "MetaQuotes4.ex4"
    int    GetStringsAddress(string array[]);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
