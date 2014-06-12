@@ -515,7 +515,7 @@ int SetLastError(int error, int param=NULL) {
    string IntToHexStr(int integer);
    int    SumInts(int array[]);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
 
 #import "struct.EXECUTION_CONTEXT.ex4"

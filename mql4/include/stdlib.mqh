@@ -556,7 +556,7 @@
    int      stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int      GetBoolsAddress  (bool   array[]);
    int      GetIntsAddress   (int    array[]);  int GetBufferAddress(int buffer[]); // Alias
    int      GetDoublesAddress(double array[]);

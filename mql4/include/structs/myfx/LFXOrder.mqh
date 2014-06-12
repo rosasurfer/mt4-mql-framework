@@ -298,7 +298,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugOutput=false) {
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import

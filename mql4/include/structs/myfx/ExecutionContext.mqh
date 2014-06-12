@@ -159,7 +159,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
    string UninitializeReasonToStr(int reason);
    string __whereamiToStr(int id);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
    string GetString(int address);

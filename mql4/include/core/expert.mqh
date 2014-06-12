@@ -562,7 +562,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    Tester.Stop();
    int    Toolbar.Experts(bool enable);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 
