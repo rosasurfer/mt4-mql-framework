@@ -560,7 +560,7 @@
    int      GetBoolsAddress(bool array[]);
 
 #import "MetaQuotes2.ex4"
-   int      GetIntsAddress(int array[]);     int GetBufferAddress(int buffer[]);    // Alias
+   int      GetIntsAddress(int array[]);  int GetBufferAddress(int buffer[]); // Alias
 
 #import "MetaQuotes3.ex4"
    int      GetDoublesAddress(double array[]);
@@ -571,8 +571,8 @@
 #import "MetaQuotes5.ex4"
    int      GetStringAddress(string value);
 
-#import "MetaQuotes.dll"
-   string   GetStringValue(int address);
+#import "MT4Lib.dll"
+   string   GetString(int address);
 #import
 
 
