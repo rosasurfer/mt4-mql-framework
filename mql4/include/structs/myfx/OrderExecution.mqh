@@ -328,7 +328,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugOutput=false
    string OperationTypeToStr(int type);
    string StringToStr(string value);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import

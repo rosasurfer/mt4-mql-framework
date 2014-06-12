@@ -407,7 +407,7 @@ int SetLastError(int error, int param=NULL) {
    int    SumInts(int array[]);
    string __whereamiDescription(int id);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 

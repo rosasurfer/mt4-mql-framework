@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 #import "stdlib1.ex4"
    string IntToHexStr(int integer);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBoolsAddress  (bool   array[]);
    int    GetIntsAddress   (int    array[]);  int GetBufferAddress(int buffer[]); // Alias
    int    GetDoublesAddress(double array[]);

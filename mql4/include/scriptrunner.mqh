@@ -6,7 +6,7 @@
    int    MT4InternalMsg();
    int    win32.GetLastError(int altError);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetStringAddress(string value);
 #import
 

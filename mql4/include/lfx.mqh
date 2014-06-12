@@ -578,6 +578,6 @@ void DummyCalls() {
    int      StrToOperationType(string value);
    datetime TimeGMT();
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int      GetIntsAddress(int array[]);
 #import

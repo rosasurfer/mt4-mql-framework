@@ -148,7 +148,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) 
    string JoinStrings(string array[], string separator);
    string StringToStr(string value);
 
-#import "MT4Lib.dll"
+#import "stdlib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import
