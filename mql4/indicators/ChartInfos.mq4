@@ -1893,7 +1893,4 @@ string InputsToStr() {
 #import "stdlib2.ex4"
    int      ChartInfos.CopyRemotePositions(bool direction, string symbol[], int tickets[], int types[][], double data[][]);
    int      ChartInfos.CopyLfxOrders      (bool direction, string symbol[], /*LFX_ORDER*/int los[][]);
-
-   string   IntsToStr          (int array[], string separator);
-   string   DoublesToStr    (double array[], string separator);
 #import
