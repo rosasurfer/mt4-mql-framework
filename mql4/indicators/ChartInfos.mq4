@@ -47,8 +47,8 @@ double local.position.data    [][4];                        //                  
 
 // Remote-Positionsdaten                                    // Remote-Positionsdaten sind im Gegensatz zu den lokalen Positionsdaten statisch.
 int    remote.position.tickets[];
-int    remote.position.types  [][2];
-double remote.position.data   [][4];
+int    remote.position.types  [][2];                        // Positionsdetails:           = {PositionType, DirectionType}
+double remote.position.data   [][4];                        //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
 
 #define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (local oder remote)
@@ -602,6 +602,7 @@ bool UpdatePositions() {
          else GetLastError();
       }
    }
+
    // (2.2) nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
@@ -658,6 +659,7 @@ bool UpdatePositions() {
       ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                   positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
       ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                           positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
    }
+
    return(!catch("UpdatePositions(2)"));
 }
 
@@ -1738,6 +1740,13 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
          ignoredTickets[ignoredSize][I_TIME  ] = TimeLocal();
          return(true);
       }
+      if (!lo.IsOpen(lfxOrder)) {                                             // keine offene Position: gespeicherte Orderdaten out-of-sync
+         static bool warned;
+         if (!warned) warn("ProcessTradeToLfxTerminalMsg(5)   #"+ ticket +" received profit message for an order known as pending");
+         else        debug("ProcessTradeToLfxTerminalMsg(6)   #"+ ticket +" received profit message for an order known as pending");
+         warned = true;
+         return(true);
+      }
 
       // (2.3) Orderdetails zu Remote-Positionen hinzufügen
       pos = ArraySize(remote.position.tickets);
@@ -1884,4 +1893,7 @@ string InputsToStr() {
 #import "stdlib2.ex4"
    int      ChartInfos.CopyRemotePositions(bool direction, string symbol[], int tickets[], int types[][], double data[][]);
    int      ChartInfos.CopyLfxOrders      (bool direction, string symbol[], /*LFX_ORDER*/int los[][]);
+
+   string   IntsToStr          (int array[], string separator);
+   string   DoublesToStr    (double array[], string separator);
 #import
