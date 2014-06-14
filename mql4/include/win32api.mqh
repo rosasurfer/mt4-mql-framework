@@ -671,6 +671,6 @@
 #define CS_GLOBALCLASS                           0x4000
 
 
-// Win32 error codes (für Fehlerbeschreibungen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
+// Win32 error codes (für Fehlerbeschreibungen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
 #define ERROR_SUCCESS                                 0
 #define ERROR_BAD_FORMAT                             11
