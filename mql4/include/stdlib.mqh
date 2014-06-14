@@ -26,7 +26,6 @@
    string   GetCustomLogFile(int id);
 
    bool     IsError(int value);
-   bool     IsErrorCode(int value);
    int      stdlib.GetLastError();
 
    string   GetTerminalVersion();
@@ -501,7 +500,7 @@
    string   PeriodToStr      (int period);         string TimeframeToStr      (int timeframe);        // Alias
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
-   string   ShellExecuteErrorToStr(int error);
+   string   ShellExecuteErrorDescription(int error);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
