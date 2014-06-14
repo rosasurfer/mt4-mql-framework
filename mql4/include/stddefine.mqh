@@ -822,11 +822,6 @@ int start.RelaunchInputDialog() {
 }
 
 
-#import "kernel32.dll"
-   void OutputDebugStringA(string lpMessage);
-#import
-
-
 /**
  * Sends a message to OutputDebugString() to be viewed and logged by SysInternals DebugView.
  *
@@ -843,12 +838,12 @@ int debug(string message, int error=NO_ERROR) {
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32: ", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",        error,                 " - ", ErrorDescription(error), "]");
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
-   return(error);
-   __DummyCalls();
+
+   return(error); __DummyCalls();
 }
 
 
@@ -867,8 +862,9 @@ int debug(string message, int error=NO_ERROR) {
  * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   if (!error) error = GetLastError();
-   else                GetLastError();                               // externer Fehler angegeben, letzten tatsächlichen Fehler zurücksetzen
+   if      (!error                  ) { error  =                           GetLastError(); }
+   else if (error == ERR_WIN32_ERROR) { error += win32.GetLastError(NULL); GetLastError(); }
+   else                               {                                    GetLastError(); }
 
 
    // rekursive Aufrufe abfangen
@@ -898,7 +894,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (3) Fehler loggen
-      string message = StringConcatenate(location, "  [", error, " - ", ErrorDescription(error), "]");
+      string message = StringConcatenate(location, "  [", ifString(error>=ERR_WIN32_ERROR, "win32: "+ (error-ERR_WIN32_ERROR), error), " - ", ErrorDescription(error), "]");
 
       bool logged, alerted;
       if (__LOG_CUSTOM)
@@ -933,15 +929,14 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (5) last_error setzen
-      SetLastError(error, NULL);                                                                // je nach Programmtyp unterschiedlich Implementierung
+      SetLastError(error, NULL);                                                                // je nach Moduletyp unterschiedlich implementiert
    }
 
    if (orderPop)
       OrderPop(location);
 
    recursive = false;
-   return(error);
-   __DummyCalls();
+   return(error); __DummyCalls();
 }
 
 
@@ -974,8 +969,8 @@ int warn(string message, int error=NO_ERROR) {
    }
    else              name_wId = name;
 
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32: ", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",        error,                 " - ", ErrorDescription(error), "]");
 
 
    // (3) Warnung loggen
@@ -1008,8 +1003,7 @@ int warn(string message, int error=NO_ERROR) {
       alerted = true;
    }
 
-   return(error);
-   __DummyCalls();
+   return(error); __DummyCalls();
 }
 
 
@@ -1041,8 +1035,8 @@ int log(string message, int error=NO_ERROR) {
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-   if (IsError(error))
-      message = StringConcatenate(message, "  [", error, " - ", ErrorDescription(error), "]");
+   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32: ", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",        error,                 " - ", ErrorDescription(error), "]");
 
 
    // (2) Custom-Log benutzen oder ...
@@ -1060,8 +1054,7 @@ int log(string message, int error=NO_ERROR) {
    }
    Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
 
-   return(error);
-   __DummyCalls();
+   return(error); __DummyCalls();
 }
 
 
@@ -1104,12 +1097,6 @@ private*/bool log.custom(string message) {
    return(true);
 }
 
-
-#import "user32.dll"
-   int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
-#import "winmm.dll"
-   bool PlaySoundA(string lpSound, int hMod, int fSound);
-#import
 
 #define SND_ASYNC           0x01       // play asynchronously
 #define SND_FILENAME  0x00020000       // parameter is a file name
@@ -2182,4 +2169,14 @@ void __DummyCalls() {
    string StringLeft(string value, int n);
    string StringRight(string value, int n);
    string StringRightPad(string input, int length, string pad_string);
+   int    win32.GetLastError(int altError);
+
+#import "kernel32.dll"
+   void   OutputDebugStringA(string lpMessage);
+
+#import "user32.dll"
+   int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+
+#import "winmm.dll"
+   bool   PlaySoundA(string lpSound, int hMod, int fSound);
 #import

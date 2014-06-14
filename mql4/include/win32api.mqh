@@ -620,7 +620,7 @@
 #define SE_ERR_DDEFAIL                               29     // DDE operation failed
 #define SE_ERR_DDEBUSY                               30     // DDE operation is busy
 #define SE_ERR_NOASSOC                               31     // file association not available
-#define SE_ERR_DLLNOTFOUND                           32     // dynamic-link library not found
+#define SE_ERR_DLLNOTFOUND                           32     // DLL not found
 
 
 // STARTUPINFO structure flags
@@ -671,6 +671,6 @@
 #define CS_GLOBALCLASS                           0x4000
 
 
-// Windows error codes (nur in MQL tatsächlich verwendete, für alle anderen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
+// Win32 error codes (für Fehlerbeschreibungen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, RtlGetLastWin32Error(), ...))
 #define ERROR_SUCCESS                                 0
 #define ERROR_BAD_FORMAT                             11
