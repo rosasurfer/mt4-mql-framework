@@ -558,8 +558,8 @@
    int      GetBoolsAddress  (bool   array[]);
    int      GetIntsAddress   (int    array[]);  int GetBufferAddress(int buffer[]); // Alias
    int      GetDoublesAddress(double array[]);
+   int      GetStringAddress (string value  );
    int      GetStringsAddress(string array[]);
-   int      GetStringAddress(string value);
    string   GetString(int address);
 
    int      GetLastWin32Error();
