@@ -140,5 +140,5 @@
 #define ERR_HISTORY_INSUFFICIENT                                   5013    // history insufficient for calculation
 #define ERR_CONCURRENT_MODIFICATION                                5014    // concurrent modification
 
-// pewa: Mapping von Win32- zu MQL-Fehlern: alle Fehler >= ERR_WIN32_ERROR stellen Win32-Fehler dar
-#define ERR_WIN32_ERROR                                          100000    // 100000 => win32.0 = win32.ERROR_SUCCESS
+// pewa: Mapping von Windows- zu MQL-Fehlern: alle Fehler >= ERR_WIN32_ERROR stellen Windowsfehler dar
+#define ERR_WIN32_ERROR                                          100000    // 100000 => win32:0 => ERROR_SUCCESS
