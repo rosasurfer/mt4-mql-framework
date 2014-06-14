@@ -517,7 +517,6 @@
    int      LoadCursorById(int hInstance, int resourceId);
    int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
-   int      win32.GetLastError(int altError);
 
 
    // leere Library-Stubs, bei Verwendung *müssen* diese Funktionen im Programm implementiert werden
@@ -562,6 +561,8 @@
    int      GetStringsAddress(string array[]);
    int      GetStringAddress(string value);
    string   GetString(int address);
+
+   int      GetLastWin32Error();
 #import
 
 

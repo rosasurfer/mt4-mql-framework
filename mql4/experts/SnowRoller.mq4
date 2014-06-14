@@ -2344,7 +2344,7 @@ void SS.All() {
 void SS.Sequence.Id() {
    if (IsTesting()) {
       if (!SetWindowTextA(GetTesterWindow(), StringConcatenate("Tester - SR.", sequenceId)))
-         catch("SS.Sequence.Id()->user32::SetWindowTextA()", win32.GetLastError(ERR_WIN32_ERROR));
+         catch("SS.Sequence.Id()->user32::SetWindowTextA()", ERR_WIN32_ERROR);
    }
 }
 
@@ -3726,16 +3726,18 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    string responseFile = filename +".response";
    string logFile      = filename +".log";
    string url          = "http://sub.domain.tld/uploadSRStatus.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(baseName);
-   string cmdLine      = "wget.exe -b \""+ url +"\" --post-file=\""+ filename +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+   string cmd          = "wget.exe";
+   string arguments    = "-b \""+ url +"\" --post-file=\""+ filename +"\" --header=\"Content-Type: text/plain\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+   string cmdLine      = cmd +" "+ arguments;
 
    // Existenz der Datei prüfen
    if (!IsFile(filename))
       return(catch("UploadStatus(1)   file not found \""+ filename +"\"", ERR_FILE_NOT_FOUND));
 
    // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
-   int error = WinExec(cmdLine, SW_HIDE);                            // SW_SHOWNORMAL|SW_HIDE
-   if (error < 32)
-      return(catch("UploadStatus(2)->kernel32::WinExec(cmdLine=\""+ cmdLine +"\"), error="+ error +" ("+ ShellExecuteErrorDescription(error) +")", win32.GetLastError(ERR_WIN32_ERROR)));
+   int result = WinExec(cmdLine, SW_HIDE);                           // SW_SHOWNORMAL|SW_HIDE
+   if (result < 32)
+      return(catch("UploadStatus(2)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    ArrayResize(parts, 0);
    return(catch("UploadStatus(3)"));

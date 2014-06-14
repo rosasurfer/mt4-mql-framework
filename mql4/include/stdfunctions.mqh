@@ -838,8 +838,8 @@ int debug(string message, int error=NO_ERROR) {
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32: ", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",        error,                 " - ", ErrorDescription(error), "]");
+   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",       error,                 " - ", ErrorDescription(error), "]");
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
 
@@ -862,9 +862,9 @@ int debug(string message, int error=NO_ERROR) {
  * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
-   if      (!error                  ) { error  =                           GetLastError(); }
-   else if (error == ERR_WIN32_ERROR) { error += win32.GetLastError(NULL); GetLastError(); }
-   else                               {                                    GetLastError(); }
+   if      (!error                  ) { error  =                      GetLastError(); }
+   else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
+   else                               {                               GetLastError(); }
 
 
    // rekursive Aufrufe abfangen
@@ -894,7 +894,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (3) Fehler loggen
-      string message = StringConcatenate(location, "  [", ifString(error>=ERR_WIN32_ERROR, "win32: "+ (error-ERR_WIN32_ERROR), error), " - ", ErrorDescription(error), "]");
+      string message = StringConcatenate(location, "  [", ifString(error>=ERR_WIN32_ERROR, "win32:"+ (error-ERR_WIN32_ERROR), error), " - ", ErrorDescription(error), "]");
 
       bool logged, alerted;
       if (__LOG_CUSTOM)
@@ -969,8 +969,8 @@ int warn(string message, int error=NO_ERROR) {
    }
    else              name_wId = name;
 
-   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32: ", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",        error,                 " - ", ErrorDescription(error), "]");
+   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",       error,                 " - ", ErrorDescription(error), "]");
 
 
    // (3) Warnung loggen
@@ -1035,8 +1035,8 @@ int log(string message, int error=NO_ERROR) {
    if (StringLen(__NAME__) > 0) name = __NAME__;
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32: ", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",        error,                 " - ", ErrorDescription(error), "]");
+   if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",       error,                 " - ", ErrorDescription(error), "]");
 
 
    // (2) Custom-Log benutzen oder ...
@@ -2169,7 +2169,9 @@ void __DummyCalls() {
    string StringLeft(string value, int n);
    string StringRight(string value, int n);
    string StringRightPad(string input, int length, string pad_string);
-   int    win32.GetLastError(int altError);
+
+#import "stdlib.dll"
+   int    GetLastWin32Error();
 
 #import "kernel32.dll"
    void   OutputDebugStringA(string lpMessage);

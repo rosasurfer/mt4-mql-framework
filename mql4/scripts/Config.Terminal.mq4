@@ -21,9 +21,9 @@ int onStart() {
    files[1] = GetLocalConfigPath();
 
    for (int i=0; i < 2; i++) {
-      int hInstance = ShellExecuteA(NULL, "open", files[i], sNull, sNull, SW_SHOWNORMAL);
-      if (hInstance < 33)
-         return(catch("onStart()->shell32::ShellExecuteA()   can't open \""+ files[i] +"\", error="+ hInstance +" ("+ ShellExecuteErrorDescription(hInstance) +")", win32.GetLastError(ERR_WIN32_ERROR)));
+      int result = ShellExecuteA(NULL, "open", files[i], sNull, sNull, SW_SHOWNORMAL);
+      if (result <= 32)
+         return(catch("onStart()->shell32::ShellExecuteA(file=\""+ files[i] +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
 
    return(last_error);
