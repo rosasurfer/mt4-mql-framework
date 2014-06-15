@@ -672,5 +672,55 @@
 
 
 // Win32 error codes (für Fehlerbeschreibungen @see FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastWin32Error(), ...))
-#define ERROR_SUCCESS                                 0
-#define ERROR_BAD_FORMAT                             11
+#define ERROR_SUCCESS                                 0     // The operation completed successfully.
+#define ERROR_INVALID_FUNCTION                        1     // Incorrect function.
+#define ERROR_FILE_NOT_FOUND                          2     // The system cannot find the file specified.
+#define ERROR_PATH_NOT_FOUND                          3     // The system cannot find the path specified.
+#define ERROR_TOO_MANY_OPEN_FILES                     4     // The system cannot open the file.
+#define ERROR_ACCESS_DENIED                           5     // Access is denied.
+#define ERROR_INVALID_HANDLE                          6     // The handle is invalid.
+#define ERROR_ARENA_TRASHED                           7     // The storage control blocks were destroyed.
+#define ERROR_NOT_ENOUGH_MEMORY                       8     // Not enough storage is available to process this command.
+#define ERROR_INVALID_BLOCK                           9     // The storage control block address is invalid.
+#define ERROR_BAD_ENVIRONMENT                        10     // The environment is incorrect.
+#define ERROR_BAD_FORMAT                             11     // An attempt was made to load a program with an incorrect format.
+#define ERROR_INVALID_ACCESS                         12     // The access code is invalid.
+#define ERROR_INVALID_DATA                           13     // The data is invalid.
+#define ERROR_OUTOFMEMORY                            14     // Not enough storage is available to complete this operation.
+#define ERROR_INVALID_DRIVE                          15     // The system cannot find the drive specified.
+#define ERROR_CURRENT_DIRECTORY                      16     // The directory cannot be removed.
+#define ERROR_NOT_SAME_DEVICE                        17     // The system cannot move the file to a different disk drive.
+#define ERROR_NO_MORE_FILES                          18     // There are no more files.
+#define ERROR_WRITE_PROTECT                          19     // The media is write protected.
+#define ERROR_BAD_UNIT                               20     // The system cannot find the device specified.
+#define ERROR_NOT_READY                              21     // The device is not ready.
+#define ERROR_BAD_COMMAND                            22     // The device does not recognize the command.
+#define ERROR_CRC                                    23     // Data error (cyclic redundancy check).
+#define ERROR_BAD_LENGTH                             24     // The program issued a command but the command length is incorrect.
+#define ERROR_SEEK                                   25     // The drive cannot locate a specific area or track on the disk.
+#define ERROR_NOT_DOS_DISK                           26     // The specified disk or diskette cannot be accessed.
+#define ERROR_SECTOR_NOT_FOUND                       27     // The drive cannot find the sector requested.
+#define ERROR_OUT_OF_PAPER                           28     // The printer is out of paper.
+#define ERROR_WRITE_FAULT                            29     // The system cannot write to the specified device.
+#define ERROR_READ_FAULT                             30     // The system cannot read from the specified device.
+#define ERROR_GEN_FAILURE                            31     // A device attached to the system is not functioning.
+#define ERROR_SHARING_VIOLATION                      32     // The process cannot access the file because it is being used by another process.
+#define ERROR_LOCK_VIOLATION                         33     // The process cannot access the file because another process has locked a portion of the file.
+#define ERROR_WRONG_DISK                             34     // The wrong diskette is in the drive. Insert %2 (Volume Serial Number: %3 ) into drive %1.
+#define ERROR_SHARING_BUFFER_EXCEEDED                36     // Too many files opened for sharing.
+#define ERROR_HANDLE_EOF                             38     // Reached the end of the file.
+#define ERROR_HANDLE_DISK_FULL                       39     // The disk is full.
+#define ERROR_NOT_SUPPORTED                          50     // The request is not supported.
+#define ERROR_REM_NOT_LIST                           51     // Windows cannot find the network path.
+#define ERROR_DUP_NAME                               52     // You were not connected because a duplicate name exists on the network.
+#define ERROR_BAD_NETPATH                            53     // The network path was not found.
+#define ERROR_NETWORK_BUSY                           54     // The network is busy.
+#define ERROR_DEV_NOT_EXIST                          55     // The specified network resource or device is no longer available.
+#define ERROR_TOO_MANY_CMDS                          56     // The network BIOS command limit has been reached.
+#define ERROR_ADAP_HDW_ERR                           57     // A network adapter hardware error occurred.
+#define ERROR_BAD_NET_RESP                           58     // The specified server cannot perform the requested operation.
+#define ERROR_UNEXP_NET_ERR                          59     // An unexpected network error occurred.
+#define ERROR_BAD_REM_ADAP                           60     // The remote adapter is not compatible.
+#define ERROR_PRINTQ_FULL                            61     // The printer queue is full.
+#define ERROR_NO_SPOOL_SPACE                         62     // Space to store the file waiting to be printed is not available on the server.
+#define ERROR_PRINT_CANCELLED                        63     // Your file waiting to be printed was deleted.

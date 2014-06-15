@@ -3504,7 +3504,7 @@ double SumDoubles(double values[]) {
 string BufferToStr(int buffer[]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(BuffersToStr(buffer));
+      return(__BuffersToStr(buffer));
 
    string result = "";
    int size = ArraySize(buffer);                                        // ein Integer = 4 Byte = 4 Zeichen
@@ -3535,9 +3535,9 @@ string BufferToStr(int buffer[]) {
  *
  * @return string
  *
-private*/string BuffersToStr(int buffer[][]) {
+private*/string __BuffersToStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_empty(catch("BuffersToStr()   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (dimensions > 2) return(_empty(catch("__BuffersToStr()   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
    if (dimensions == 1)
       return(BufferToStr(buffer));
@@ -3575,7 +3575,7 @@ private*/string BuffersToStr(int buffer[][]) {
 string BufferToHexStr(int buffer[]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(BuffersToHexStr(buffer));
+      return(__BuffersToHexStr(buffer));
 
    string hex, byte1, byte2, byte3, byte4, result="";
    int size = ArraySize(buffer);
@@ -3602,9 +3602,9 @@ string BufferToHexStr(int buffer[]) {
  *
  * @return string
  *
-private*/string BuffersToHexStr(int buffer[][]) {
+private*/string __BuffersToHexStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_empty(catch("BuffersToHexStr()   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (dimensions > 2) return(_empty(catch("__BuffersToHexStr()   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
    if (dimensions == 1)
       return(BufferToHexStr(buffer));
@@ -3674,7 +3674,7 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 
    int dimensions = ArrayDimension(buffer);
    if (dimensions != 1)
-      return(BuffersCharsToStr(buffer, from, length));
+      return(__BuffersCharsToStr(buffer, from, length));
 
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
@@ -3714,11 +3714,11 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  *
  * @return string - ANSI-String
  *
-private*/string BuffersCharsToStr(int buffer[][], int from, int length) {
+private*/string __BuffersCharsToStr(int buffer[][], int from, int length) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_empty(catch("BuffersCharsToStr(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
-   if (from < 0)       return(_empty(catch("BuffersCharsToStr(2)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (length < 0)     return(_empty(catch("BuffersCharsToStr(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2) return(_empty(catch("__BuffersCharsToStr(1)   too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (from < 0)       return(_empty(catch("__BuffersCharsToStr(2)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0)     return(_empty(catch("__BuffersCharsToStr(3)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length == 0)
       return("");
 
@@ -8980,6 +8980,7 @@ bool SendSMS(string receiver, string message) {
    if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    receiver = _receiver;
 
+
    // (1) Zugangsdaten für SMS-Gateway holen
    // Username
    string section = "Clickatell";
@@ -9009,23 +9010,34 @@ bool SendSMS(string receiver, string message) {
    string filesDir     = TerminalPath() +"\\experts\\files";
    string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocal(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
-   string cmd          = "wget.exe";
+   string path, cmd    = "wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
-   string cmdLine      = cmd +" "+ arguments;
 
-   int result = WinExec(cmdLine, SW_HIDE);                           // SW_SHOWNORMAL|SW_HIDE
+
+   int result = WinExec(cmd +" "+ arguments, SW_HIDE);               // erster Versuch über den Windows-Suchpfad
+   if (result == ERROR_FILE_NOT_FOUND) {
+      path   = TerminalPath() +"\\bin\\";
+      result = WinExec(path + cmd +" "+ arguments, SW_HIDE);         // zweiter Versuch mit Pfad im MetaTrader-Verzeichnis
+   }
+   if (result == ERROR_FILE_NOT_FOUND) {
+      path   = TerminalPath() +"\\..\\shared\\etc\bin\\";
+      result = WinExec(path + cmd +" "+ arguments, SW_HIDE);         // dritter Versuch mit Pfad im Projektverzeichnis
+   }
    if (result < 32)
       return(!catch("SendSMS(6)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
-    * TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
     * TODO: Fehlerauswertung nach dem Versand:
     *
     * --2011-03-23 08:32:06--  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
     * Resolving api.clickatell.com... failed: Unknown host.
     * wget: unable to resolve host address `api.clickatell.com'
+    *
+    *
+    * --2014-06-15 22:44:21--  (try:20)  https://api.clickatell.com/http/sendmsg?user={user}&password={password}&api_id={api_id}&to={receiver}&text={text}
+    * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
+    * Giving up.
     */
-
    return(!catch("SendSMS(7)"));
 }
 
@@ -10321,7 +10333,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
    // Endlosschleife, bis Order ausgeführt wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(14)   ", OrderSendEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe)));
+      if (IsStopped()) return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(14)   ", __OrderSendEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe)));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderSendEx(15)   trade context busy, retrying...");
@@ -10342,33 +10354,33 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       oe.setOpenPrice(oe, price);
 
       if (type == OP_BUYSTOP) {
-         if (LE(price, ask))                                  return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(16)   illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe)));
-         if (LT(price - stopDistance*pips, ask))              return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(17)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), " too close to market (", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
+         if (LE(price, ask))                                  return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(16)   illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe)));
+         if (LT(price - stopDistance*pips, ask))              return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(17)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), " too close to market (", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
       }
       else if (type == OP_SELLSTOP) {
-         if (GE(price, bid))                                  return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(18)   illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe)));
+         if (GE(price, bid))                                  return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(18)   illegal price ", NumberToStr(price, priceFormat), " for ", OperationTypeDescription(type), " (market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ")"), ERR_INVALID_STOP, false, oeFlags, oe)));
 
 
-         if (GT(price + stopDistance*pips, bid))              return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(19)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), " too close to market (", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
+         if (GT(price + stopDistance*pips, bid))              return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(19)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), " too close to market (", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
       }
 
       // StopLoss <> StopDistance validieren
       if (NE(stopLoss, 0)) {
          if (IsLongTradeOperation(type)) {
-            if (GE(stopLoss, price))                          return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(20)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
+            if (GE(stopLoss, price))                          return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(20)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
             if (type == OP_BUY) {
-               if (GE(stopLoss, bid))                         return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(21)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
-               if (GT(stopLoss, bid - stopDistance*pips))     return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(22)   ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
+               if (GE(stopLoss, bid))                         return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(21)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
+               if (GT(stopLoss, bid - stopDistance*pips))     return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(22)   ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
             }
-            else if (GT(stopLoss, price - stopDistance*pips)) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(23)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
+            else if (GT(stopLoss, price - stopDistance*pips)) return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(23)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
          }
          else /*short*/ {
-            if (LE(stopLoss, price))                          return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(24)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
+            if (LE(stopLoss, price))                          return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(24)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
             if (type == OP_SELL) {
-               if (LE(stopLoss, ask))                         return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(25)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
-               if (LT(stopLoss, ask + stopDistance*pips))     return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(26)   ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
+               if (LE(stopLoss, ask))                         return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(25)   illegal stoploss ", NumberToStr(stopLoss, priceFormat), " for ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat)), ERR_INVALID_STOP, false, oeFlags, oe)));
+               if (LT(stopLoss, ask + stopDistance*pips))     return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(26)   ", OperationTypeDescription(type), " at market ", NumberToStr(bid, priceFormat), "/", NumberToStr(ask, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
             }
-            else if (LT(stopLoss, price + stopDistance*pips)) return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(27)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
+            else if (LT(stopLoss, price + stopDistance*pips)) return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(27)   ", OperationTypeDescription(type), " at ", NumberToStr(price, priceFormat), ", sl=", NumberToStr(stopLoss, priceFormat), " too close (stop distance=", NumberToStr(stopDistance, ".+"), " pip)"), ERR_INVALID_STOP, false, oeFlags, oe)));
          }
       }
 
@@ -10400,7 +10412,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             else                             slippage = 0;
          oe.setSlippage  (oe, NormalizeDouble(slippage/pips, digits<<31>>31));   // Gesamtslippage nach Requotes in Pip
 
-         if (__LOG) log(StringConcatenate("OrderSendEx(30)   ", OrderSendEx.SuccessMsg(oe)));
+         if (__LOG) log(StringConcatenate("OrderSendEx(30)   ", __OrderSendEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
@@ -10432,9 +10444,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
          error = oe.setError(oe, ERR_RUNTIME_ERROR);
       if (!IsTemporaryTradeError(error))                                         // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
-      warn(StringConcatenate("OrderSendEx(33)   ", Order.TempErrorMsg(oe)), error);
+      warn(StringConcatenate("OrderSendEx(33)   ", __Order.TempErrorMsg(oe)), error);
    }
-   return(_int(-1, Order.HandleError(StringConcatenate("OrderSendEx(34)   ", OrderSendEx.PermErrorMsg(oe)), error, true, oeFlags, oe)));
+   return(_int(-1, __Order.HandleError(StringConcatenate("OrderSendEx(34)   ", __OrderSendEx.PermErrorMsg(oe)), error, true, oeFlags, oe)));
 }
 
 
@@ -10451,7 +10463,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  *
  * @return int - derselbe Fehler
  *
-private*/int Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
+private*/int __Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    oe.setError(oe, error);
 
    if (!error)
@@ -10491,7 +10503,7 @@ private*/int Order.HandleError(string message, int error, bool serverError, int 
  *
  * @return string
  *
-private*/ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
@@ -10530,7 +10542,7 @@ private*/ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote
 
    int    digits      = oe.Digits(oe);
@@ -10569,7 +10581,7 @@ private*/ string OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string Order.TempErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __Order.TempErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // temporary error after 0.345 s and 1 requote, retrying...
 
    string message = StringConcatenate("temporary error after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s");
@@ -10757,7 +10769,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
    // Endlosschleife, bis Order geändert wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderModifyEx(14)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(15)")));
+      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderModifyEx(14)   ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderModifyEx(15)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderModifyEx(16)   trade context busy, retrying...");
@@ -10787,7 +10799,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, OrderCommission());
          oe.setProfit    (oe, OrderProfit()    );
 
-         if (__LOG) log(StringConcatenate("OrderModifyEx(18)   ", OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
+         if (__LOG) log(StringConcatenate("OrderModifyEx(18)   ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
          if (!IsTesting())
             PlaySound("RFQ.wav");
 
@@ -10804,9 +10816,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          error = oe.setError(oe, ERR_RUNTIME_ERROR);
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
-      warn(StringConcatenate("OrderModifyEx(21)   ", Order.TempErrorMsg(oe)), error);
+      warn(StringConcatenate("OrderModifyEx(21)   ", __Order.TempErrorMsg(oe)), error);
    }
-   return(!catch(StringConcatenate("OrderModifyEx(22)   ", OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
+   return(!catch(StringConcatenate("OrderModifyEx(22)   ", __OrderModifyEx.PermErrorMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)), error, O_POP));
 }
 
 
@@ -10820,7 +10832,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  *
  * @return string
  *
-private*/ string OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
+private*/ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
    // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] after 0.345 s
 
    int    digits      = oe.Digits(oe);
@@ -10852,7 +10864,7 @@ private*/ string OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double or
  *
  * @return string
  *
-private*/ string OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
+private*/ string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
    // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ =>1.5520'0][ (market Bid/Ask)][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0][, stop distance=5 pip] after 0.345 s
 
    int    digits      = oe.Digits(oe);
@@ -11364,7 +11376,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
    // Endlosschleife, bis Position geschlossen wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseEx(11)   ", OrderCloseEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(12)")));
+      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderCloseEx(11)   ", __OrderCloseEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseEx(12)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseEx(13)   trade context busy, retrying...");
@@ -11443,7 +11455,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
             oe.setRemainingLots  (oe, openLots-lots);
          }
 
-         if (__LOG) log(StringConcatenate("OrderCloseEx(24)   ", OrderCloseEx.SuccessMsg(oe)));
+         if (__LOG) log(StringConcatenate("OrderCloseEx(24)   ", __OrderCloseEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
 
@@ -11467,9 +11479,9 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
-      warn(StringConcatenate("OrderCloseEx(27)   ", Order.TempErrorMsg(oe)), error);
+      warn(StringConcatenate("OrderCloseEx(27)   ", __Order.TempErrorMsg(oe)), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseEx(28)   ", OrderCloseEx.PermErrorMsg(oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseEx(28)   ", __OrderCloseEx.PermErrorMsg(oe)), error, O_POP))));
 }
 
 
@@ -11480,7 +11492,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  *
  * @return string
  *
-private*/ string OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4, remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
@@ -11525,7 +11537,7 @@ private*/ string OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);
@@ -11679,7 +11691,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
    // Endlosschleife, bis Positionen geschlossen wurden oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderCloseByEx(9)   ", OrderCloseByEx.PermErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(10)")));
+      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderCloseByEx(9)   ", __OrderCloseByEx.PermErrorMsg(first, second, oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderCloseByEx(10)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderCloseByEx(11)   trade context busy, retrying...");
@@ -11762,7 +11774,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
             oe.setRemainingLots  (oe, remainderLots);
          }
 
-         if (__LOG) log(StringConcatenate("OrderCloseByEx(16)   ", OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
+         if (__LOG) log(StringConcatenate("OrderCloseByEx(16)   ", __OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
          if (!IsTesting())
             PlaySound("OrderOk.wav");
 
@@ -11779,9 +11791,9 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
-      warn(StringConcatenate("OrderCloseByEx(19)   ", Order.TempErrorMsg(oe)), error);
+      warn(StringConcatenate("OrderCloseByEx(19)   ", __Order.TempErrorMsg(oe)), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseByEx(20)   ", OrderCloseByEx.PermErrorMsg(first, second, oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch(StringConcatenate("OrderCloseByEx(20)   ", __OrderCloseByEx.PermErrorMsg(first, second, oe)), error, O_POP))));
 }
 
 
@@ -11795,7 +11807,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
  *
  * @return string
  *
-private*/ string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
    // closed #30 by #38, remainder: #39 Buy 0.6 GBPUSD after 0.000 s
    // closed #31 by #39, no remainder after 0.000 s
 
@@ -11818,7 +11830,7 @@ private*/ string OrderCloseByEx.SuccessMsg(int first, int second, int largerType
  *
  * @return string
  *
-private*/ string OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to close #1 by #2 after 0.345 s
 
    return(StringConcatenate("permanent error while trying to close #", first, " by #", second, " after ", DoubleToStr(oe.Duration(oe)/1000.0, 3), " s"));
@@ -11897,7 +11909,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
 
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
-      if (!OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
+      if (!__OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(11)")));
       CopyMemory(GetBufferAddress(oes2), GetBufferAddress(oes), ArraySize(oes2)*4);
       ArrayResize(oes2, 0);
@@ -11942,7 +11954,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      int newTicket = OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
+      int newTicket = __OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
       if (IsLastError())                                                         //  0: Fehler oder Gesamtposition war bereits flat
          return(_false(oes.setError(oes, -1, last_error)));                      // >0: neues Ticket
 
@@ -11995,7 +12007,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      if (!OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
+      if (!__OrderMultiClose.Flattened(group, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error)));
 
       // Ausführungsdaten der Gruppe an die entsprechende Position des Funktionsparameters kopieren
@@ -12031,11 +12043,11 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  *
-private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+private*/ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
+      return(_false(oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
@@ -12048,16 +12060,16 @@ private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color m
       ArrayResize(oe, 0);
       return(true);
    }
-   if (__LOG) log(StringConcatenate("OrderMultiClose.OneSymbol(2)   closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG) log(StringConcatenate("__OrderMultiClose.OneSymbol(2)   closing ", sizeOfTickets, " ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
 
    // (2) oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "OrderMultiClose.OneSymbol(3)", O_PUSH))
+   if (!SelectTicket(tickets[0], "__OrderMultiClose.OneSymbol(3)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderMultiClose.OneSymbol(4)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "__OrderMultiClose.OneSymbol(4)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -12080,9 +12092,9 @@ private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color m
    // (4) Gesamtposition glatt stellen
    /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-   int newTicket = OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                 // -1: kein neues Ticket
-   if (IsLastError())                                                                              //  0: Fehler oder Gesamtposition war bereits flat
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(5)"))); // >0: neues Ticket
+   int newTicket = __OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                    // -1: kein neues Ticket
+   if (IsLastError())                                                                                 //  0: Fehler oder Gesamtposition war bereits flat
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.OneSymbol(5)")));  // >0: neues Ticket
 
    for (i=0; i < sizeOfTickets; i++) {
       oes.setBid       (oes, i, oes.Bid       (oes2, i));
@@ -12111,8 +12123,8 @@ private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color m
    // (5) Teilpositionen auflösen
    ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-   if (!OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
-      return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.OneSymbol(6)")));
+   if (!__OrderMultiClose.Flattened(tickets.copy, markerColor, oeFlags, oes2))
+      return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.OneSymbol(6)")));
 
    for (i=0; i < sizeOfCopy; i++) {
       int pos = SearchIntArray(tickets, tickets.copy[i]);
@@ -12124,7 +12136,7 @@ private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color m
    }
 
    ArrayResize(oes2, 0);
-   return(!oes.setError(oes, -1, catch("OrderMultiClose.OneSymbol(7)", NULL, O_POP)));
+   return(!oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(7)", NULL, O_POP)));
 }
 
 
@@ -12155,23 +12167,23 @@ private*/ bool OrderMultiClose.OneSymbol(int tickets[], double slippage, color m
  *
  *       4) Der Rückgabewert der Funktion entspricht dem in einem der Tickets gesetzten Wert von oe.RemainingTicket (siehe Note 3).
  *
-private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+private*/ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
-      return(_NULL(oes.setError(oes, -1, catch("OrderMultiClose.Flatten(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
+      return(_NULL(oes.setError(oes, -1, catch("__OrderMultiClose.Flatten(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
 
 
    // (1) oes[] vorbelegen, dabei Lotsizes und Gesamtposition ermitteln
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
-   if (!SelectTicket(tickets[0], "OrderMultiClose.Flatten(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "__OrderMultiClose.Flatten(2)", O_PUSH))
       return(_NULL(oes.setError(oes, -1, last_error)));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double totalLots, lots[]; ArrayResize(lots, 0);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderMultiClose.Flatten(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "__OrderMultiClose.Flatten(3)", NULL, O_POP))
          return(_NULL(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
@@ -12192,12 +12204,12 @@ private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlag
 
    // (2) wenn Gesamtposition bereits ausgeglichen ist
    if (EQ(totalLots, 0)) {
-      if (__LOG) log(StringConcatenate("OrderMultiClose.Flatten(4)   ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
+      if (__LOG) log(StringConcatenate("__OrderMultiClose.Flatten(4)   ", sizeOfTickets, " ", symbol, " positions ", TicketsToStr.Lots(tickets, NULL), " are already flat"));
 
       int tickets.copy[]; ArrayResize(tickets.copy, 0);                                // zuletzt geöffnetes Ticket ermitteln
       ArrayCopy(tickets.copy, tickets);
       SortTicketsChronological(tickets.copy);
-      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "OrderMultiClose.Flatten(5)", NULL, O_POP))
+      if (!SelectTicket(tickets.copy[sizeOfTickets-1], "__OrderMultiClose.Flatten(5)", NULL, O_POP))
          return(_NULL(oes.setError(oes, -1, last_error)));
 
       for (i=0; i < sizeOfTickets; i++) {
@@ -12206,13 +12218,13 @@ private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlag
          oes.setCloseTime (oes, i, OrderOpenTime()             );
          oes.setClosePrice(oes, i, OrderOpenPrice()            );
       }
-      if (!OrderPop("OrderMultiClose.Flatten(6)"))
+      if (!OrderPop("__OrderMultiClose.Flatten(6)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
    }
    else {
-      if (!OrderPop("OrderMultiClose.Flatten(7)"))
+      if (!OrderPop("__OrderMultiClose.Flatten(7)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
-      if (__LOG) log(StringConcatenate("OrderMultiClose.Flatten(8)   flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
+      if (__LOG) log(StringConcatenate("__OrderMultiClose.Flatten(8)   flattening ", sizeOfTickets, " ", symbol, " position", ifString(sizeOfTickets==1, " ", "s "), TicketsToStr.Lots(tickets, NULL)));
 
 
       // (3) Gesamtposition ist unausgeglichen
@@ -12288,7 +12300,7 @@ private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlag
    }
    ArrayResize(lots, 0);
 
-   if (!catch("OrderMultiClose.Flatten(9)"))
+   if (!catch("__OrderMultiClose.Flatten(9)"))
       return(newTicket);
    return(_NULL(oes.setError(oes, -1, last_error)));
 }
@@ -12311,20 +12323,21 @@ private*/ int OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlag
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  *
-private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+private*/ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+   // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets < 2)
-      return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
+      return(_false(oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(1)   invalid parameter tickets, size = "+ sizeOfTickets, ERR_INVALID_FUNCTION_PARAMVALUE))));
    ArrayResize(oes, sizeOfTickets); ArrayInitialize(oes, 0);
 
 
    // (1) oes[] vorbelegen
-   if (!SelectTicket(tickets[0], "OrderMultiClose.Flattened(2)", O_PUSH))
+   if (!SelectTicket(tickets[0], "__OrderMultiClose.Flattened(2)", O_PUSH))
       return(_false(oes.setError(oes, -1, last_error)));
    int digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrderMultiClose.Flattened(3)", NULL, O_POP))
+      if (!SelectTicket(tickets[i], "__OrderMultiClose.Flattened(3)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       oes.setSymbol    (oes, i, OrderSymbol()    );
       oes.setDigits    (oes, i, digits           );
@@ -12342,7 +12355,7 @@ private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int o
 
 
    // (2) Logging
-   if (__LOG) log(StringConcatenate("OrderMultiClose.Flattened(4)   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
+   if (__LOG) log(StringConcatenate("__OrderMultiClose.Flattened(4)   closing ", sizeOfTickets, " hedged ", OrderSymbol(), " positions ", TicketsToStr.Lots(tickets, NULL)));
 
 
    // (3) tickets[] wird in Folge modifiziert. Um Änderungen am übergebenen Array zu vermeiden, arbeiten wir auf einer Kopie.
@@ -12350,7 +12363,7 @@ private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int o
    int sizeOfCopy = ArrayCopy(tickets.copy, tickets);
 
    SortTicketsChronological(tickets.copy);
-   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "OrderMultiClose.Flattened(5)", NULL, O_POP))  // das zuletzt geöffnete Ticket
+   if (!SelectTicket(tickets.copy[sizeOfCopy-1], "__OrderMultiClose.Flattened(5)", NULL, O_POP))  // das zuletzt geöffnete Ticket
       return(_false(oes.setError(oes, -1, last_error)));
    for (i=0; i < sizeOfTickets; i++) {
       oes.setCloseTime (oes, i, OrderOpenTime() );
@@ -12361,12 +12374,12 @@ private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int o
    // (4) Teilpositionen nacheinander auflösen
    while (sizeOfCopy > 0) {
       int opposite, first=tickets.copy[0];
-      if (!SelectTicket(first, "OrderMultiClose.Flattened(6)", NULL, O_POP))
+      if (!SelectTicket(first, "__OrderMultiClose.Flattened(6)", NULL, O_POP))
          return(_false(oes.setError(oes, -1, last_error)));
       int firstType = OrderType();
 
       for (i=1; i < sizeOfCopy; i++) {
-         if (!SelectTicket(tickets.copy[i], "OrderMultiClose.Flattened(7)", NULL, O_POP))
+         if (!SelectTicket(tickets.copy[i], "__OrderMultiClose.Flattened(7)", NULL, O_POP))
             return(_false(oes.setError(oes, -1, last_error)));
          if (OrderType() == firstType^1) {
             opposite = tickets.copy[i];                                                   // erste Opposite-Position ermitteln
@@ -12374,12 +12387,12 @@ private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int o
          }
       }
       if (!opposite)
-         return(_false(oes.setError(oes, -1, catch("OrderMultiClose.Flattened(8)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
+         return(_false(oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(8)   cannot find opposite position for "+ OperationTypeDescription(firstType) +" #"+ first, ERR_RUNTIME_ERROR, O_POP))));
 
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseByEx(first, opposite, markerColor, oeFlags, oe))                     // erste und Opposite-Position schließen
-         return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose.Flattened(9)")));
+         return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.Flattened(9)")));
 
       sizeOfCopy -= ArraySpliceInts(tickets.copy, 0, 1);                                  // erstes und opposite Ticket löschen
       sizeOfCopy -= ArrayDropInt(tickets.copy, opposite);
@@ -12402,7 +12415,7 @@ private*/ bool OrderMultiClose.Flattened(int tickets[], color markerColor, int o
    }
 
    ArrayResize(oe, 0);
-   return(!oes.setError(oes, -1, catch("OrderMultiClose.Flattened(10)", NULL, O_POP)));
+   return(!oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(10)", NULL, O_POP)));
 }
 
 
@@ -12452,7 +12465,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
    // Endlosschleife, bis Order gelöscht wurde oder ein permanenter Fehler auftritt
    while (true) {
-      if (IsStopped()) return(_false(Order.HandleError(StringConcatenate("OrderDeleteEx(5)   ", OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(6)")));
+      if (IsStopped()) return(_false(__Order.HandleError(StringConcatenate("OrderDeleteEx(5)   ", __OrderDeleteEx.PermErrorMsg(oe)), ERS_EXECUTION_STOPPING, false, oeFlags, oe), OrderPop("OrderDeleteEx(6)")));
 
       if (IsTradeContextBusy()) {
          if (__LOG) log("OrderDeleteEx(7)   trade context busy, retrying...");
@@ -12474,7 +12487,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          if (!ChartMarker.OrderDeleted_A(ticket, oe.Digits(oe), markerColor))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(8)")));
 
-         if (__LOG) log(StringConcatenate("OrderDeleteEx(9)   ", OrderDeleteEx.SuccessMsg(oe)));
+         if (__LOG) log(StringConcatenate("OrderDeleteEx(9)   ", __OrderDeleteEx.SuccessMsg(oe)));
          if (!IsTesting())
             PlaySound("OrderOk.wav");
 
@@ -12491,9 +12504,9 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
          error = ERR_RUNTIME_ERROR;
       if (!IsTemporaryTradeError(error))                                               // TODO: ERR_MARKET_CLOSED abfangen und besser behandeln
          break;
-      warn(StringConcatenate("OrderDeleteEx(12)   ", Order.TempErrorMsg(oe)), error);
+      warn(StringConcatenate("OrderDeleteEx(12)   ", __Order.TempErrorMsg(oe)), error);
    }
-   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(13)   ", OrderDeleteEx.PermErrorMsg(oe)), error, O_POP))));
+   return(_false(oe.setError(oe, catch(StringConcatenate("OrderDeleteEx(13)   ", __OrderDeleteEx.PermErrorMsg(oe)), error, O_POP))));
 }
 
 
@@ -12504,7 +12517,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
  *
  * @return string
  *
-private*/ string OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // deleted #1 Stop Buy 0.5 GBPUSD at 1.5520'3 ("SR.12345.+3") after 0.2 s
 
    int    digits      = oe.Digits(oe);
@@ -12527,7 +12540,7 @@ private*/ string OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+private*/ string __OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);

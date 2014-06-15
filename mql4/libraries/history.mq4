@@ -142,7 +142,7 @@ int    h.periods    [] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H
  */
 int CreateHistory(string symbol, string description, int digits) {
    int size = Max(ArraySize(h.hHst), 1);                             // ersten Index überspringen (0 ist kein gültiges Handle)
-   h.ResizeArrays(size+1);
+   __h.ResizeArrays(size+1);
 
    // (1) neuen History-Datensatz erstellen
    h.hHst       [size] = size;
@@ -155,7 +155,7 @@ int CreateHistory(string symbol, string description, int digits) {
    for (int i=0; i < sizeOfPeriods; i++) {
       int hFile = HistoryFile.Open(symbol, description, digits, h.periods[i], FILE_READ|FILE_WRITE);
       if (hFile <= 0)
-         return(_NULL(h.ResizeArrays(size)));                        // interne Arrays auf Ausgangsgröße zurücksetzen
+         return(_NULL(__h.ResizeArrays(size)));                      // interne Arrays auf Ausgangsgröße zurücksetzen
       h.hFile[size][i] = hFile;
    }
 
@@ -800,7 +800,7 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
 
    // Daten zwischenspeichern
    if (hFile >= ArraySize(hf.hFile)) {
-      hf.ResizeArrays(hFile+1);
+      __hf.ResizeArrays(hFile+1);
    }
                     hf.hFile     [hFile] = hFile;
                     hf.name      [hFile] = fileName;
@@ -872,7 +872,7 @@ bool HistoryFile.Close(int hFile) {
  *
  * @return int - neue Größe der Arrays
  *
-private*/ int hf.ResizeArrays(int size) {
+private*/ int __hf.ResizeArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {
@@ -921,7 +921,7 @@ private*/ int hf.ResizeArrays(int size) {
  *
  * @return int - neue Größe der Arrays
  *
-private*/ int h.ResizeArrays(int size) {
+private*/ int __h.ResizeArrays(int size) {
    if (size != ArraySize(h.hHst)) {
       ArrayResize(h.hHst,        size);
       ArrayResize(h.symbol,      size);
