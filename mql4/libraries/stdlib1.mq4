@@ -8978,7 +8978,6 @@ bool SendSMS(string receiver, string message) {
    if (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
    if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
    if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
-   receiver = _receiver;
 
 
    // (1) Zugangsdaten für SMS-Gateway holen
@@ -9006,7 +9005,7 @@ bool SendSMS(string receiver, string message) {
 
 
    // (2) Befehlszeile für Shellaufruf zusammensetzen
-   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ receiver +"&text="+ UrlEncode(message);
+   string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = TerminalPath() +"\\experts\\files";
    string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocal(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
@@ -9015,16 +9014,19 @@ bool SendSMS(string receiver, string message) {
 
 
    int result = WinExec(cmd +" "+ arguments, SW_HIDE);               // erster Versuch über den Windows-Suchpfad
-   if (result == ERROR_FILE_NOT_FOUND) {
+   if (result==ERROR_PATH_NOT_FOUND || result==ERROR_FILE_NOT_FOUND) {
       path   = TerminalPath() +"\\bin\\";
       result = WinExec(path + cmd +" "+ arguments, SW_HIDE);         // zweiter Versuch mit Pfad im MetaTrader-Verzeichnis
    }
-   if (result == ERROR_FILE_NOT_FOUND) {
+   if (result==ERROR_PATH_NOT_FOUND || result==ERROR_FILE_NOT_FOUND) {
       path   = TerminalPath() +"\\..\\shared\\etc\bin\\";
       result = WinExec(path + cmd +" "+ arguments, SW_HIDE);         // dritter Versuch mit Pfad im Projektverzeichnis
    }
    if (result < 32)
-      return(!catch("SendSMS(6)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      return(!catch("SendSMS(6)->kernel32::WinExec(cmd=\""+ path + cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+
+
+   if (__LOG) log("SendSMS(7)   SMS sent to "+ receiver +": \""+ message +"\"");
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:
@@ -9038,7 +9040,7 @@ bool SendSMS(string receiver, string message) {
     * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
     * Giving up.
     */
-   return(!catch("SendSMS(7)"));
+   return(!catch("SendSMS(8)"));
 }
 
 
