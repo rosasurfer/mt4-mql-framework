@@ -776,10 +776,11 @@ int      last_error;                                        // der letzte Fehler
 #define IDD_TESTER_JOURNAL   IDD_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
-// Flags zur Fehlerunterdrückung                      // korrespondierende Fehler können individuell behandelt werden
+// Flags zur Fehlerbehandlung                         // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
 #define CATCH_ERR_INVALID_STOP                  1     // ERR_INVALID_STOP
 #define CATCH_ERR_ORDER_CHANGED                 2     // ERR_ORDER_CHANGED
 #define CATCH_ERS_EXECUTION_STOPPING            4     // ERS_EXECUTION_STOPPING (Status)
+#define CATCH_ERR_CONCUR_MODIFICATION           8     // ERR_CONCURRENT_MODIFICATION
 
 
 // String padding types, siehe StringPad()
@@ -898,7 +899,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
       bool logged, alerted;
       if (__LOG_CUSTOM)
-         logged = logged || log.custom(StringConcatenate("ERROR: ", name, "::", message));                  // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+         logged = logged || __log.custom(StringConcatenate("ERROR: ", name, "::", message));                // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
       if (!logged) {
          Alert("ERROR:   ", Symbol(), ",", PeriodDescription(NULL), "  ", nameInstanceId, "::", message);   // global Log: ggf. mit Instanz-ID
          logged  = true;
@@ -976,7 +977,7 @@ int warn(string message, int error=NO_ERROR) {
    // (3) Warnung loggen
    bool logged, alerted;
    if (__LOG_CUSTOM)
-      logged = logged || log.custom(StringConcatenate("WARN: ", name, "::", message));             // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      logged = logged || __log.custom(StringConcatenate("WARN: ", name, "::", message));           // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
    if (!logged) {
       Alert("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);    // global Log: ggf. mit Instanz-ID
       logged  = true;
@@ -1041,7 +1042,7 @@ int log(string message, int error=NO_ERROR) {
 
    // (2) Custom-Log benutzen oder ...
    if (__LOG_CUSTOM)
-      if (log.custom(StringConcatenate(name, "::", message)))        // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      if (__log.custom(StringConcatenate(name, "::", message)))      // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
 
 
@@ -1065,7 +1066,7 @@ int log(string message, int error=NO_ERROR) {
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
  *
-private*/bool log.custom(string message) {
+private*/bool __log.custom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
    int logId = GetCustomLogID();
    if (logId == NULL)
@@ -1077,18 +1078,18 @@ private*/bool log.custom(string message) {
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("log.custom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__log.custom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("log.custom(2)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__log.custom(2)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("log.custom(3)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__log.custom(3)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -2055,6 +2056,7 @@ void __DummyCalls() {
    Indicator.IsSuperContext();
    SetLastError(NULL, NULL);
 
+   __log.custom(NULL);
    _bool(NULL);
    _double(NULL);
    _empty();
@@ -2090,7 +2092,6 @@ void __DummyCalls() {
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
-   log.custom(NULL);
    LT(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);

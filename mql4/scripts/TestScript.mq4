@@ -27,6 +27,6 @@ int onStart() {
    if (result < 32)
       return(!catch("onStart(1)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   // TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann:  =>  error=2 [File not found]
+   // TODO: Prüfen, ob wget.exe im Pfad gefunden werden kann
    return(last_error);
 }

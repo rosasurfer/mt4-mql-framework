@@ -28,7 +28,5 @@ int onStart() {
    if (!SendSMS(receiver, message))
       return(SetLastError(stdlib.GetLastError()));
 
-
-   catch("onStart(2)");
    return(last_error);
 }
