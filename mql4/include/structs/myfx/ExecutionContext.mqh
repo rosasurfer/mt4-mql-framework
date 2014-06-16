@@ -90,12 +90,12 @@ int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError
 /**
  * Gibt die lesbare Repräsentation eines EXECUTION_CONTEXT zurück.
  *
- * @param  int  ec[]        - EXECUTION_CONTEXT
- * @param  bool debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  int  ec[]     - EXECUTION_CONTEXT
+ * @param  bool debugger - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string
  */
-string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=false) {
+string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=false) {
    if (ArrayDimension(ec) > 1)                     return(_empty(catch("EXECUTION_CONTEXT.toStr(1)   too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_empty(catch("EXECUTION_CONTEXT.toStr(2)   invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -117,7 +117,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
                                     ", logging="           ,               BoolToStr(ec.Logging           (ec)),
                                     ", logFile=\""         ,                         ec.LogFile           (ec), "\"",
                                     ", lastError="         ,              ErrorToStr(ec.LastError         (ec)), "}");
-   if (debugOutput)
+   if (debugger)
       debug("EXECUTION_CONTEXT.toStr()   "+ result);
 
    catch("EXECUTION_CONTEXT.toStr(3)");
@@ -201,5 +201,5 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugOutput=f
 //   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
 //   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
 
-//   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+//   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugger);
 //#import
