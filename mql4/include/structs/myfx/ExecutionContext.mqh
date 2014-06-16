@@ -42,7 +42,7 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
       // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
       if (ec.Signature(sec) != lpSuperContext) return(catch("ec.SuperContext(2)   invalid super-EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpSuperContext), ERR_RUNTIME_ERROR));
    }
-   return(catch("ec.SuperContext(3)"));                                                                                                               EXECUTION_CONTEXT.toStr(ec);
+   return(catch("ec.SuperContext(3)"));                                                                                                          EXECUTION_CONTEXT.toStr(ec);
 }
 int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 5]);                       EXECUTION_CONTEXT.toStr(ec); }
 int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 6]);                       EXECUTION_CONTEXT.toStr(ec); }
