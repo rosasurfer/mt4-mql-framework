@@ -8,10 +8,6 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-#import "stdlib.release.dll"
-#import
-
-
 /**
  * Main-Funktion
  *
