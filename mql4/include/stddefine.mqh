@@ -824,7 +824,7 @@ int start.RelaunchInputDialog() {
 
 
 /**
- * Sends a message to OutputDebugString() to be viewed and logged by SysInternals DebugView.
+ * Schickt eine Debug-Message an den angeschlossenen Debugger.
  *
  * @param  string message - Message
  * @param  int    error   - Fehlercode

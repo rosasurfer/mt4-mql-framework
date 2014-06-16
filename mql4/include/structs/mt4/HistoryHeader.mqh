@@ -69,12 +69,12 @@ datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int &hh[][], int i, datetime dbV
 /**
  * Gibt die lesbare Repräsentation ein oder mehrerer HISTORY_HEADER-Strukturen zurück.
  *
- * @param  int  hh[]        - HISTORY_HEADER
- * @param  bool debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  int  hh[]     - HISTORY_HEADER
+ * @param  bool debugger - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string
  */
-string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) {
+string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugger=false) {
    int dimensions = ArrayDimension(hh);
 
    if (dimensions > 2)                                         return(_empty(catch("HISTORY_HEADER.toStr(1)   too many dimensions of parameter hh = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -91,7 +91,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) 
                               ", digits="       ,                   hh.Digits       (hh),
                               ", dbVersion="    ,          ifString(hh.DbVersion    (hh), "'"+ TimeToStr(hh.DbVersion    (hh), TIME_FULL) +"'", 0),
                               ", prevDbVersion=",          ifString(hh.PrevDbVersion(hh), "'"+ TimeToStr(hh.PrevDbVersion(hh), TIME_FULL) +"'", 0), "}");
-      if (debugOutput)
+      if (debugger)
          debug("HISTORY_HEADER.toStr()   "+ line);
       ArrayPushString(lines, line);
    }
@@ -107,7 +107,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) 
                                            ", digits="       ,                   hhs.Digits       (hh, i),
                                            ", dbVersion="    ,          ifString(hhs.DbVersion    (hh, i), "'"+ TimeToStr(hhs.DbVersion    (hh, i), TIME_FULL) +"'", 0),
                                            ", prevDbVersion=",          ifString(hhs.PrevDbVersion(hh, i), "'"+ TimeToStr(hhs.PrevDbVersion(hh, i), TIME_FULL) +"'", 0), "}");
-         if (debugOutput)
+         if (debugger)
             debug("HISTORY_HEADER.toStr()   "+ line);
          ArrayPushString(lines, line);
       }
@@ -190,5 +190,5 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput=false) 
 //   datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
 //   datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int hh[][], int i, datetime dbVersion  );
 
-//   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugOutput);
+//   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugger);
 //#import

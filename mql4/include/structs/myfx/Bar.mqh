@@ -50,12 +50,12 @@ int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume) { bar[i]
 /**
  * Gibt die lesbare Repräsentation ein oder mehrerer BAR-Strukturen zurück.
  *
- * @param  double bar[]       - BAR
- * @param  bool   debugOutput - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  double bar[]    - BAR
+ * @param  bool   debugger - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
  */
-string BAR.toStr(/*BAR*/double bar[], bool debugOutput=false) {
+string BAR.toStr(/*BAR*/double bar[], bool debugger=false) {
    int dimensions = ArrayDimension(bar);
    if (dimensions > 2)                                  return(_empty(catch("BAR.toStr(1)   too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_empty(catch("BAR.toStr(2)   invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -71,7 +71,7 @@ string BAR.toStr(/*BAR*/double bar[], bool debugOutput=false) {
                               ", low="   , NumberToStr(bar.Low   (bar), ".+"),
                               ", close=" , NumberToStr(bar.Close (bar), ".+"),
                               ", volume=",             bar.Volume(bar), "}");
-      if (debugOutput)
+      if (debugger)
          debug("BAR.toStr()   "+ line);
       ArrayPushString(lines, line);
    }
@@ -86,7 +86,7 @@ string BAR.toStr(/*BAR*/double bar[], bool debugOutput=false) {
                                            ", low="   , NumberToStr(bars.Low   (bar, i), ".+"),
                                            ", close=" , NumberToStr(bars.Close (bar, i), ".+"),
                                            ", volume=",             bars.Volume(bar, i), "}");
-         if (debugOutput)
+         if (debugger)
             debug("BAR.toStr()   "+ line);
          ArrayPushString(lines, line);
       }

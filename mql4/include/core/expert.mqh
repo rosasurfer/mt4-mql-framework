@@ -582,7 +582,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
 
-   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugOutput);
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugger);
 #import
 
 
