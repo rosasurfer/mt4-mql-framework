@@ -265,11 +265,8 @@ int onPositionOpen(int tickets[]) {
       if (SMS.Alerts) {
          if (!SendSMS(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
             return(SetLastError(stdlib.GetLastError()));
-         if (__LOG) log("onPositionOpen(2)   SMS sent to "+ SMS.Receiver +":  "+ message);
       }
-      else {
-         if (__LOG) log("onPositionOpen(3)   "+ message);
-      }
+      else if (__LOG) log("onPositionOpen(3)   "+ message);
    }
 
    // ggf. Sound abspielen
@@ -306,11 +303,8 @@ int onPositionClose(int tickets[]) {
       if (SMS.Alerts) {
          if (!SendSMS(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
             return(SetLastError(stdlib.GetLastError()));
-         if (__LOG) log("onPositionClose(2)   SMS sent to "+ SMS.Receiver +":  "+ message);
       }
-      else {
-         if (__LOG) log("onPositionClose(3)   "+ message);
-      }
+      else if (__LOG) log("onPositionClose(3)   "+ message);
    }
 
    // ggf. Sound abspielen
@@ -342,11 +336,8 @@ bool CheckBollingerBands() {
          string message = GetSymbolName(StdSymbol()) + ifString(crossing==CROSSING_LOW, " lower", " upper") +" "+ strBollingerBands +" @ "+ NumberToStr(value, PriceFormat) +" crossed";
          if (!SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message)))
             return(!SetLastError(stdlib.GetLastError()));
-         if (__LOG) log("CheckBollingerBands(1)   SMS sent to "+ SMS.Receiver +":  "+ message);
       }
-      else {
-         if (__LOG) log("CheckBollingerBands(2)   "+ message);
-      }
+      else if (__LOG) log("CheckBollingerBands(2)   "+ message);
 
       // ggf. Sound abspielen
       if (Sound.Alerts)
