@@ -2356,7 +2356,7 @@ void SendMyMessage(string text)
 <tr><td>ERR_INTEGER_PARAMETER_EXPECTED</td><td>4063</td><td>Integer parameter expected.</td></tr>
 <tr><td>ERR_DOUBLE_PARAMETER_EXPECTED</td><td>4064</td><td>Double parameter expected.</td></tr>
 <tr><td>ERR_ARRAY_AS_PARAMETER_EXPECTED</td><td>4065</td><td>Array as parameter expected.</td></tr>
-<tr><td>ERR_HISTORY_WILL_UPDATED</td><td>4066</td><td>Requested history data in updating state.</td></tr>
+<tr><td>ERR_HISTORY_UPDATE</td><td>4066</td><td>Requested history data in updating state.</td></tr>
 <tr><td>ERR_TRADE_ERROR</td><td>4067</td><td>Some error in trading function.</td></tr>
 <tr><td>ERR_END_OF_FILE</td><td>4099</td><td>End of file.</td></tr>
 <tr><td>ERR_SOME_FILE_ERROR</td><td>4100</td><td>Some file error.</td></tr>
@@ -2900,7 +2900,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://array_ArrayBsearch">ArrayBsearch</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArrayCopy">ArrayCopy</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArrayCopyRates">ArrayCopyRates</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062),</td></tr>
-        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_WILL_UPDATED (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_UPDATE (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArrayDimension">ArrayDimension</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://array_ArrayGetAsSeries">ArrayGetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://array_ArrayInitialize">ArrayInitialize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
@@ -2939,7 +2939,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://globals_GlobalVariableSet">GlobalVariableSet</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLES_PROCESSING (4057), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
         <tr><td><a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
         <tr><td><a href="help://indicators_iCustom">iCustom</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://indicators">technical indicators</a>, <a href="help://series">series access functions</a></td><td>ERR_HISTORY_WILL_UPDATED (4066)</td></tr>
+        <tr><td><a href="help://indicators">technical indicators</a>, <a href="help://series">series access functions</a></td><td>ERR_HISTORY_UPDATE (4066)</td></tr>
         <tr><td><a href="help://indicators">technical indicators OnArray</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://customind_IndicatorBuffers">IndicatorBuffers</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://customind_IndicatorDigits">IndicatorDigits</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
@@ -3383,8 +3383,7 @@ MODE_DESCEND searching in backward direction.
       caption=ArrayCopy()
       type=int
       <content>
-Copies an array to another one. Arrays must be of the same type, but arrays with type double[],
-int[], datetime[], color[], and bool[] can be copied as arrays of the same type.<br/>
+Copies an array to another one. Arrays must be of the same type but arrays of type double[], int[], datetime[], color[] and bool[] can be treated of the same type.<br/>
 Returns the amount of copied elements.
       </content>
       <example>
@@ -3432,42 +3431,67 @@ Returns the amount of copied elements.
       caption=ArrayCopyRates()
       type=int
       <content>
-Copies rates to the two-dimensional array from chart RateInfo array and returns copied bars amount, or -1 if failed.
-First dimension of RateInfo array contains bars amount, second dimension has 6 elements:<br/>
-0 - time,<br/>
-1 - open,<br/>
-2 - low,<br/>
-3 - high,<br/>
-4 - close,<br/>
-5 - volume.<br/><br/>
-If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
-that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
-<a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed
-in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
-Notes: This rates array is normally used to pass data to a DLL function.<br/>
-Memory is not really allocated for data array, and no real copying is performed. When such an array is accessed, the access will be redirected.
+Copies a pointer to a wrapper of a price rates array to a two-dimensional destination array and returns the amount of contained bars or -1 on failure.
+When accessed the first dimension of the destination array holds the rates bar offset, the second dimension holds the 6 elements:<br/>
+0 - time<br/>
+1 - open<br/>
+2 - low<br/>
+3 - high<br/>
+4 - close<br/>
+5 - volume<br/>
+<br/>
+If data from another timeseries than the current chart is requested the <a href="help://constants_errors">error</a> status ERS_HISTORY_UPDATE might be triggered and
+set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
+
+<span style="color:red">Notes:</span>
+<br>
+(1) There is no additional memory allocated for the target array and no real copying is performed. Instead a pointer to a wrapper of the internal rates array is assigned to the
+target array and access is redirected.
+<br>
+<br>
+(2) Das Target-Array (type double) fungiert als Wrapper um das MT4-interne Datenarray (type struct RateInfo). Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe
+entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger auf das interne RateInfo-Array übergeben (ohne Wrapper). Dieses interne Array ist
+reverse-indexed und wird zur Laufzeit dynamisch bis MAX_CHART_BARS erweitert. Index 0 enthält die älteste Bar.
+<br>
+<br>
+(3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basis_variables_static">static</a> (wie übliche Arrays).
+Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basis_variables_static">static</a> deklariert werden.
+
       </content>
       <example>
-  double array1[][6];
-  ArrayCopyRates(array1,"EURUSD", PERIOD_H1);
-  Print("Current bar ",TimeToStr(array1[0][0]),"Open", array1[0][1]);
+  double array[][6];
+  ArrayCopyRates(array, "EURUSD", PERIOD_H1);
+  Print("Current bar: Time ", TimeToStr(array[0][0]), ", Open ", array[0][1]);
+  .
+  .
+  // interne Array-Implementierung
+  // -----------------------------
+  struct RateInfo {
+     unsigned int time;          // 4 statt 8 Bytes
+     double       open;
+     double       low;
+     double       high;
+     double       close;
+     double       volume;        // sizeof(RateInfo)     = 44
+  };                             // sizeof(double[1][6]) = 48
+
       </example>
       <parameter>
-        type=double&amp;
-        name=<nobr>dest_array[]</nobr>
-        description=Reference to the two-dimensional destination array of double type.
+        type=double
+        name=<nobr>dest_array[][6]</nobr>
+        description=destination array
       </parameter>
       <parameter>
         type=string
         name=symbol
         def_value=NULL
-        description=Symbol name (currency pair name)
+        description=Symbol name
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=0
-        description=Timeframe. It can be any of the <a href="help://constants_timeframes">listed timeframes</a> values.
+        description=Timeframe, can can be any of the <a href="help://constants_timeframes">listed timeframes</a> values.
       </parameter>
     </function>
 
@@ -7470,7 +7494,7 @@ Otherwise, it returns an empty string.
     Any indicator can be calculated on the data of not only current chart, but also on the data of any available symbol/period.
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
     that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
-    <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed
+    <a href="help://constants_errors">error</a> ERR_HISTORY_UPDATE (4066 - the requested history data are under updating) will be placed
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).
     </content>
 
@@ -9008,7 +9032,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
     that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
-    <a href="help://constants_errors">error</a> ERR_HISTORY_WILL_UPDATED (4066 - the requested history data are under updating) will be placed
+    <a href="help://constants_errors">error</a> ERR_HISTORY_UPDATE (4066 - the requested history data are under updating) will be placed
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
     At testing price data of the same symbol but of another timeframe are modelled exactly with the exception of volume. Volume of another timeframe is not modelled.
     Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
