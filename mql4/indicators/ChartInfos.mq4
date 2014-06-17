@@ -739,7 +739,7 @@ bool UpdateOHLC() {
 
    // (2) Beginn und Ende der aktuellen Session ermitteln
    datetime sessionStart = GetSessionStartTime.srv(lastTickTime);                // throws ERR_MARKET_CLOSED
-   if (sessionStart == NOT_A_TIME) {
+   if (sessionStart == NaT) {
       if (SetLastError(stdlib.GetLastError()) != ERR_MARKET_CLOSED)              // am Wochenende die letzte Session verwenden
          return(false);
       sessionStart = GetPrevSessionStartTime.srv(lastTickTime);

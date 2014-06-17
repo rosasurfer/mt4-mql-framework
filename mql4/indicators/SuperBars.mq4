@@ -79,8 +79,8 @@ int onTick() {
    while (true) { i++;
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(last_error);
-
-      openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // falls ERS_HISTORY_UPDATE auftritt, passiert das nur ein einziges mal (und genau hier)
+                                                                     // Da der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
+      openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal und genau hier.
       if (openBar == EMPTY_VALUE) return(SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
