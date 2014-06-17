@@ -362,7 +362,7 @@ int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar)
       return(SetLastError(ERS_HISTORY_UPDATE));
 
    startTime = GetSessionStartTime.srv(startTime);
-   if (startTime == NOT_A_TIME)                                         // Wochenend-Candles
+   if (startTime == NaT)                                                // Wochenend-Candles
       startTime = GetPrevSessionEndTime.srv(iTime(symbol, period, 0));
 
    int endBar=0, startBar=iBarShiftNext(symbol, period, startTime);
@@ -378,7 +378,7 @@ int GetDailyStartEndBars(string symbol, int bar, int &lpStartBar, int &lpEndBar)
       }
 
       startTime = GetSessionStartTime.srv(iTime(symbol, period, endBar));
-      while (startTime == NOT_A_TIME) {                                 // Endbar kann theoretisch wieder eine Wochenend-Candle sein
+      while (startTime == NaT) {                                        // Endbar kann theoretisch wieder eine Wochenend-Candle sein
          startBar = iBarShiftNext(symbol, period, GetPrevSessionEndTime.srv(iTime(symbol, period, endBar)));
          if (startBar == -1)
             return(catch("GetDailyStartEndBars(3:symbol="+ symbol +", bar="+ bar +")    iBarShiftNext() => -1    no history bars for "+ TimeToStr(GetPrevSessionEndTime.srv(iTime(symbol, period, endBar))), ERR_RUNTIME_ERROR));

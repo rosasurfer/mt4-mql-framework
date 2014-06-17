@@ -40,10 +40,10 @@ int      last_error;                                        // der letzte Fehler
 
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648                (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647                (datetime) INT_MAX = '2038-01-19 03:14:07'
-#define NOT_A_TIME            INT_MIN                       // ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: datetime_min = '1970-01-01 00:00:00'
-#define EMPTY_VALUE           INT_MAX                       // empty custom indicator value (Integer, kein Double)                 datetime_max = '2037-12-31 23:59:59'
+#define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648                              (datetime) INT_MIN = '1901-12-13 20:45:52'
+#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647                              (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
+#define EMPTY_VALUE           INT_MAX                       // empty custom indicator value (Integer, kein Double)                              max(datetime) = '2037-12-31 23:59:59'
 #define EMPTY                      -1
 #define CLR_NONE                   -1                       // no color
 #define WHOLE_ARRAY                 0
@@ -1736,15 +1736,15 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante NOT_A_TIME (0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante NaT (0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
  * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return int - NOT_A_TIME
+ * @return int - NaT
  */
-int _NOT_A_TIME(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
-   return(NOT_A_TIME);
+int _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+   return(NaT);
 }
 
 
@@ -2064,8 +2064,8 @@ void __DummyCalls() {
    _false();
    _int(NULL);
    _last_error();
+   _NaT();
    _NO_ERROR();
-   _NOT_A_TIME();
    _NULL();
    _string(NULL);
    _true();

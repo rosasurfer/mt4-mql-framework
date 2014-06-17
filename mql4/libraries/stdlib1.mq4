@@ -5414,16 +5414,16 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
-   if (fxtTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (fxtTime == NaT)
+      return(NaT);
 
    datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(FxtToServerTime(startTime));
 }
@@ -5434,12 +5434,12 @@ datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime startTime = GetPrevSessionStartTime.srv(serverTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5450,21 +5450,21 @@ datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Startzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Startzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    int offset = GetServerToFxtTimeOffset(datetime serverTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
 
    datetime fxtTime = serverTime - offset;
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartTime.srv(1)   illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
+      return(_NaT(catch("GetSessionStartTime.srv(1)   illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
    int dayOfWeek = TimeDayOfWeek(fxtTime);
 
    if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
-      return(_NOT_A_TIME(SetLastError(ERR_MARKET_CLOSED)));
+      return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
 
    return(fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + offset);
 }
@@ -5475,12 +5475,12 @@ datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TI
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
    datetime startTime = GetSessionStartTime.srv(serverTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5491,16 +5491,16 @@ datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIME
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
-   if (fxtTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (fxtTime == NaT)
+      return(NaT);
 
    datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(FxtToServerTime(startTime));
 }
@@ -5511,12 +5511,12 @@ datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime startTime = GetNextSessionStartTime.srv(datetime serverTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5527,16 +5527,16 @@ datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
    datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (fxtTime == NaT)
+      return(NaT);
 
    datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(FxtToGmtTime(startTime));
 }
@@ -5547,12 +5547,12 @@ datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
    datetime startTime = GetPrevSessionStartTime.gmt(gmtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5563,16 +5563,16 @@ datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (fxtTime == NaT)
+      return(NaT);
 
    datetime startTime = GetSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(FxtToGmtTime(startTime));
 }
@@ -5583,12 +5583,12 @@ datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
    datetime startTime = GetSessionStartTime.gmt(datetime gmtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5599,16 +5599,16 @@ datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
    datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (fxtTime == NaT)
+      return(NaT);
 
    datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(FxtToGmtTime(startTime));
 }
@@ -5619,12 +5619,12 @@ datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionEndTime.gmt(datetime gmtTime) {
    datetime startTime = GetNextSessionStartTime.gmt(datetime gmtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5635,15 +5635,15 @@ datetime GetNextSessionEndTime.gmt(datetime gmtTime) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetPrevSessionStartTime.fxt(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_NaT(catch("GetPrevSessionStartTime.fxt(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
    if (startTime < 0)
-      return(_NOT_A_TIME(catch("GetPrevSessionStartTime.fxt(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
+      return(_NaT(catch("GetPrevSessionStartTime.fxt(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
@@ -5659,12 +5659,12 @@ datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
    datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5675,20 +5675,20 @@ datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartTime.fxt(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_NaT(catch("GetSessionStartTime.fxt(1)   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
    if (startTime < 0)
-      return(_NOT_A_TIME(catch("GetSessionStartTime.fxt(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
+      return(_NaT(catch("GetSessionStartTime.fxt(2)   illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
    int dow = TimeDayOfWeek(startTime);
    if (dow == SATURDAY || dow == SUNDAY)
-      return(_NOT_A_TIME(SetLastError(ERR_MARKET_CLOSED)));
+      return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
 
    return(startTime);
 }
@@ -5699,12 +5699,12 @@ datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionEndTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
    datetime startTime = GetSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5715,11 +5715,11 @@ datetime GetSessionEndTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
    if (fxtTime < 0)
-      return(_NOT_A_TIME(catch("GetNextSessionStartTime.fxt()   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_NaT(catch("GetNextSessionStartTime.fxt()   invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
@@ -5737,12 +5737,12 @@ datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetNextSessionEndTime.fxt(datetime fxtTime) {
    datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
-   if (startTime == NOT_A_TIME)
-      return(NOT_A_TIME);
+   if (startTime == NaT)
+      return(NaT);
 
    return(startTime + 1*DAY);
 }
@@ -5946,12 +5946,12 @@ string DoubleToStrTrim(double value) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime FxtToGmtTime(datetime fxtTime) {
    int offset = GetFxtToGmtTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
    return(fxtTime - offset);
 }
 
@@ -5961,12 +5961,12 @@ datetime FxtToGmtTime(datetime fxtTime) {
  *
  * @param  datetime fxtTime - FXT-Zeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetFxtToServerTimeOffset(fxtTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
    return(fxtTime - offset);
 }
 
@@ -8680,12 +8680,12 @@ string GetClassName(int hWnd) {
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GmtToFxtTime(datetime gmtTime) {
    int offset = GetGmtToFxtTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
    return(gmtTime - offset);
 }
 
@@ -8695,12 +8695,12 @@ datetime GmtToFxtTime(datetime gmtTime) {
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return datetime - Serverzeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetGmtToServerTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
    return(gmtTime - offset);
 }
 
@@ -9049,12 +9049,12 @@ bool SendSMS(string receiver, string message) {
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - FXT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetServerToFxtTimeOffset(serverTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
    return(serverTime - offset);
 }
 
@@ -9064,12 +9064,12 @@ datetime ServerToFxtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
  *
  * @param  datetime serverTime - Serverzeit
  *
- * @return datetime - GMT-Zeit oder NOT_A_TIME, falls ein Fehler auftrat
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    int offset = GetServerToGmtTimeOffset(serverTime);
    if (offset == EMPTY_VALUE)
-      return(NOT_A_TIME);
+      return(NaT);
    return(serverTime - offset);
 }
 
