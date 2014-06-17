@@ -65,11 +65,11 @@ int onDeinit() {
 int onTick() {
    if (Period() == PERIOD_MN1)
       return(last_error);
-   /*
-   - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (keine for-Schleife über alle ChangedBars).
-   - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Sessionfortschritt und Relevanz der neuen Bar veranschaulicht.
-   - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
-   */
+
+   // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (keine for-Schleife über alle ChangedBars).
+   // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Sessionfortschritt und Relevanz der neuen Bar veranschaulicht.
+   // - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
+
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int i,   openBar, closeBar, lastChartBar=Bars-1;
 
@@ -79,8 +79,8 @@ int onTick() {
    while (true) { i++;
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(last_error);
-                                                                     // Da der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
-      openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal und genau hier.
+                                                                     // Da hier immer der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
+      openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal (und nur hier).
       if (openBar == EMPTY_VALUE) return(SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
@@ -105,11 +105,11 @@ int onTick() {
  * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Session und schreibt das Ergebnis in die übergebenen
  * Variablen. Ist der Parameter openTime.fxt nicht gesetzt, wird die jüngste Session (also ggf. die aktuelle) zurückgegeben.
  *
- * @param  int       timeframe            - Timeframe der zu ermittelnden Session
- * @param  datetime &openTime.fxt         - Variable zur Aufnahme des Beginns der resultierenden Session in FXT-Zeit
- * @param  datetime &closeTime.fxt        - Variable zur Aufnahme des Endes der resultierenden Session in FXT-Zeit
- * @param  datetime &openTime.srv         - Variable zur Aufnahme des Beginns der resultierenden Session in Serverzeit
- * @param  datetime &closeTime.srv        - Variable zur Aufnahme des Endes der resultierenden Session in Serverzeit
+ * @param  int       timeframe     - Timeframe der zu ermittelnden Session
+ * @param  datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Session in FXT-Zeit
+ * @param  datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Session in FXT-Zeit
+ * @param  datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Session in Serverzeit
+ * @param  datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Session in Serverzeit
  *
  * @return bool - Erfolgsstatus
  */
