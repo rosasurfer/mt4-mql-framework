@@ -9009,24 +9009,15 @@ bool SendSMS(string receiver, string message) {
    string filesDir     = TerminalPath() +"\\experts\\files";
    string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocal(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
-   string path, cmd    = "wget.exe";
+   string cmd          = TerminalPath() +"\\experts\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
+   string cmdLine      = cmd +" "+ arguments;
 
 
-   int result = WinExec(cmd +" "+ arguments, SW_HIDE);               // erster Versuch über den Windows-Suchpfad
-   if (result==ERROR_PATH_NOT_FOUND || result==ERROR_FILE_NOT_FOUND) {
-      path   = TerminalPath() +"\\bin\\";
-      result = WinExec(path + cmd +" "+ arguments, SW_HIDE);         // zweiter Versuch mit Pfad im MetaTrader-Verzeichnis
-   }
-   if (result==ERROR_PATH_NOT_FOUND || result==ERROR_FILE_NOT_FOUND) {
-      path   = TerminalPath() +"\\..\\shared\\etc\bin\\";
-      result = WinExec(path + cmd +" "+ arguments, SW_HIDE);         // dritter Versuch mit Pfad im Projektverzeichnis
-   }
+   // (3) Shellaufruf
+   int result = WinExec(cmdLine, SW_HIDE);
    if (result < 32)
-      return(!catch("SendSMS(6)->kernel32::WinExec(cmd=\""+ path + cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
-
-
-   if (__LOG) log("SendSMS(7)   SMS sent to "+ receiver +": \""+ message +"\"");
+      return(!catch("SendSMS(6)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:
@@ -9040,6 +9031,9 @@ bool SendSMS(string receiver, string message) {
     * Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
     * Giving up.
     */
+
+   if (__LOG) log("SendSMS(7)   SMS sent to "+ receiver +": \""+ message +"\"");
+
    return(!catch("SendSMS(8)"));
 }
 
