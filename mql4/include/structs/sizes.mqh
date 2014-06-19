@@ -44,7 +44,6 @@
 
 // pewa: selbst definierte Structs
 #define BAR.size                         48
-#define BAR.intSize                      12
 #define BAR.doubleSize                    6
 
 #define EXECUTION_CONTEXT.size           48
