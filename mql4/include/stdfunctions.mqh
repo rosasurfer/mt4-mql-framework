@@ -458,13 +458,13 @@ int      last_error;                                        // der letzte Fehler
 #define PRICE_ASK                      8        // Ask
 
 
-// Rates array identifier, siehe ArrayCopyRates()
-#define RATE_TIME                      0        // bar open time
-#define RATE_OPEN                      1        // open price
-#define RATE_LOW                       2        // low price
-#define RATE_HIGH                      3        // high price
-#define RATE_CLOSE                     4        // close price
-#define RATE_VOLUME                    5        // volume
+// Bar array identifier, siehe struct BAR
+#define I_BAR_TIME                     0        // bar open time
+#define I_BAR_OPEN                     1        // open price
+#define I_BAR_LOW                      2        // low price
+#define I_BAR_HIGH                     3        // high price
+#define I_BAR_CLOSE                    4        // close price
+#define I_BAR_VOLUME                   5        // volume
 
 
 // Event-Identifier siehe event()
