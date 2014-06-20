@@ -225,7 +225,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    else return(!catch("GetPreviousSession(1) unsupported timeframe = "+ PeriodToStr(timeframe), ERR_RUNTIME_ERROR));
 
 
-   // (5) entsprechende Serverzeiten ermitteln
+   // (5) den FXT-Zeiten entsprechende Serverzeiten ermitteln
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
 
