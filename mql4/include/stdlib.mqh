@@ -563,6 +563,9 @@
    string   GetString(int address);
 
    int      GetLastWin32Error();
+
+   bool     IsBuiltinTimeframe(int timeframe);
+   bool     IsCustomTimeframe(int timeframe);
 #import
 
 
