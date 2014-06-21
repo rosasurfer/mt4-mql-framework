@@ -322,8 +322,8 @@ int x.start() {
    last_error = NO_ERROR;
 
    ValidBars = IndicatorCounted();
-   if      (prev_error == ERS_TERMINAL_NOT_READY) ValidBars = 0;
-   else if (prev_error == ERS_HISTORY_UPDATE    ) ValidBars = 0;
+   if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
    ChangedBars = Bars - ValidBars;
 
    onTick();

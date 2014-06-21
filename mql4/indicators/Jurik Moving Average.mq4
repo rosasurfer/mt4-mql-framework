@@ -193,7 +193,7 @@ int onDeinit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
-      return(SetLastError(ERS_TERMINAL_NOT_READY));
+      return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen
    if (!ValidBars) {

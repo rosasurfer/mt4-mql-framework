@@ -13,7 +13,7 @@ extern int    __lpSuperContext;
  *
  * @return int - Fehlerstatus
  */
-int init() { // throws ERS_TERMINAL_NOT_READY
+int init() { // throws ERS_TERMINAL_NOT_YET_READY
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -54,19 +54,19 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                  // - synthetisches Symbol im Offline-Chart
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("init(1)", error));
       }
-      if (!TickSize) return(debug("init()   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!TickSize) return(debug("init()   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                  // siehe oben bei MODE_TICKSIZE
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("init(2)", error));
       }
-      if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
@@ -102,7 +102,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 /**
  * Globale start()-Funktion für Indikatoren.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERS_TERMINAL_NOT_READY zurück,
+ * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERS_TERMINAL_NOT_YET_READY zurück,
  *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
  *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
  *
@@ -160,7 +160,7 @@ int start() {
    // (1.1) Aufruf nach init(): prüfen, ob es erfolgreich war und *nur dann* Flag zurücksetzen.
    if (__WHEREAMI__ == FUNC_INIT) {
       if (IsLastError()) {
-         if (last_error != ERS_TERMINAL_NOT_READY)                         // init() ist mit Fehler zurückgekehrt
+         if (last_error != ERS_TERMINAL_NOT_YET_READY)                     // init() ist mit Fehler zurückgekehrt
             return(SetLastError(last_error));
          __WHEREAMI__ = FUNC_START;
          if (IsError(init())) {                                            // init() erneut aufrufen (kann Neuaufruf an __WHEREAMI__ erkennen)
@@ -176,22 +176,22 @@ int start() {
       prev_error = last_error;
       last_error = NO_ERROR;
 
-      if      (prev_error == ERS_TERMINAL_NOT_READY  ) ValidBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE      ) ValidBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE               ) ValidBars = 0;      // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
-      if      (__STATUS_HISTORY_INSUFFICIENT         ) ValidBars = 0;
+      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
+      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;    // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS_HISTORY_INSUFFICIENT           ) ValidBars = 0;
    }
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)
-      return(SetLastError(debug("start()   Bars = 0", ERS_TERMINAL_NOT_READY)));
+      return(SetLastError(debug("start()   Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
 
    /*
    // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
    if (ArraySize(buffer) == 0)
-      return(SetLastError(ERS_TERMINAL_NOT_READY));                        // kann bei Terminal-Start auftreten
+      return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                    // kann bei Terminal-Start auftreten
    */
 
    __WHEREAMI__                    = FUNC_START;
@@ -465,10 +465,10 @@ int SetLastError(int error, int param=NULL) {
    last_error = error;
 
    switch (error) {
-      case NO_ERROR              :
-      case ERS_HISTORY_UPDATE    :
-      case ERS_TERMINAL_NOT_READY:
-      case ERS_EXECUTION_STOPPING: break;
+      case NO_ERROR                  :
+      case ERS_HISTORY_UPDATE        :
+      case ERS_TERMINAL_NOT_YET_READY:
+      case ERS_EXECUTION_STOPPING    : break;
 
       default:
          __STATUS_ERROR = true;

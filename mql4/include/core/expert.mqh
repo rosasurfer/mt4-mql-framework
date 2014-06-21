@@ -19,7 +19,7 @@ int      Test.startMillis, Test.stopMillis;                          // in Milli
  *
  * @return int - Fehlerstatus
  */
-int init() { // throws ERS_TERMINAL_NOT_READY
+int init() { // throws ERS_TERMINAL_NOT_YET_READY
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -57,19 +57,19 @@ int init() { // throws ERS_TERMINAL_NOT_READY
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("init(1)", error));
       }
-      if (!TickSize) return(debug("init()   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!TickSize) return(debug("init()   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("init(2)", error));
       }
-      if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
@@ -128,7 +128,7 @@ int init() { // throws ERS_TERMINAL_NOT_READY
 /**
  * Globale start()-Funktion für Expert Adviser.
  *
- * Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_READY zurück,
+ * Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_YET_READY zurück,
  * wird init() erneut ausgeführt. Bei erneutem Fehler bricht start() ab.
  *
  * @return int - Fehlerstatus
@@ -160,7 +160,7 @@ int start() {
       __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
 
       if (IsLastError()) {
-         if (last_error != ERS_TERMINAL_NOT_READY)                         // init() ist mit hartem Fehler zurückgekehrt
+         if (last_error != ERS_TERMINAL_NOT_YET_READY)                     // init() ist mit hartem Fehler zurückgekehrt
             return(ShowStatus(last_error));
 
          if (IsError(init())) {                                            // init() ist mit weichem Fehler zurückgekehrt => erneut aufrufen
@@ -186,7 +186,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)
-      return(ShowStatus(SetLastError(debug("start()   Bars=0", ERS_TERMINAL_NOT_READY))));
+      return(ShowStatus(SetLastError(debug("start()   Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
 
    // (4) stdLib benachrichtigen
@@ -442,10 +442,10 @@ int SetLastError(int error, int param=NULL) {
    last_error = error;
 
    switch (error) {
-      case NO_ERROR              :
-      case ERS_HISTORY_UPDATE    :
-      case ERS_TERMINAL_NOT_READY:
-      case ERS_EXECUTION_STOPPING: break;
+      case NO_ERROR                  :
+      case ERS_HISTORY_UPDATE        :
+      case ERS_TERMINAL_NOT_YET_READY:
+      case ERS_EXECUTION_STOPPING    : break;
 
       default:
          __STATUS_ERROR = true;

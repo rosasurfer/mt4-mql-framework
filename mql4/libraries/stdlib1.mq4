@@ -44,7 +44,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Fehlerstatus
  */
-int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_TERMINAL_NOT_READY
+int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_TERMINAL_NOT_YET_READY
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -90,19 +90,19 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                            // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib.init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+            return(debug("stdlib.init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("stdlib.init(1)", error));
       }
-      if (!TickSize) return(debug("stdlib.init()   MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!TickSize) return(debug("stdlib.init()   MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                            // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib.init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_READY)));
+            return(debug("stdlib.init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("stdlib.init(2)", error));
       }
-      if (!tickValue) return(debug("stdlib.init()   MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_READY)));
+      if (!tickValue) return(debug("stdlib.init()   MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
       */
    }
 
@@ -118,7 +118,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
             return(catch("stdlib.init(3)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
 
          if (!GetAccountNumber()) {                                  // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
-            if (last_error == ERS_TERMINAL_NOT_READY)                // u.U. den UI-Thread blockieren kann.
+            if (last_error == ERS_TERMINAL_NOT_YET_READY)            // u.U. den UI-Thread blockieren kann.
                return(debug("stdlib.init()   GetAccountNumber() = 0", last_error));
          }
       }
@@ -153,7 +153,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
-         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
+         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_YET_READY
             return(last_error);
       }
    }
@@ -200,7 +200,7 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
-         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_READY
+         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_YET_READY
             return(last_error);
       }
    }
@@ -6608,7 +6608,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() { // throws ERS_TERMINAL_NOT_READY            // evt. während des Terminal-Starts
+int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // evt. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6624,7 +6624,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_READY            // evt. wäh
    if (!account) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
       if (!StringLen(title))                                         // benutzt SendMessage(), nicht nach Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
-         return(_NULL(SetLastError(ERS_TERMINAL_NOT_READY)));
+         return(_NULL(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
       if (pos < 1)
@@ -7436,7 +7436,7 @@ string ErrorDescription(int error) {
       case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   ); //   5000
       case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                             ); //   5001
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                               ); //   5002
-      case ERS_TERMINAL_NOT_READY         : return("terminal not yet ready"                                    ); //   5003 Status
+      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    ); //   5003 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); //   5004
       case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       ); //   5005
       case ERR_FILE_NOT_FOUND             : return("file not found"                                            ); //   5006
@@ -7569,7 +7569,7 @@ string ErrorToStr(int error) {
       case ERR_NOT_IMPLEMENTED            : return("ERR_NOT_IMPLEMENTED"            ); //   5000
       case ERR_INVALID_INPUT_PARAMVALUE   : return("ERR_INVALID_INPUT_PARAMVALUE"   ); //   5001
       case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); //   5002
-      case ERS_TERMINAL_NOT_READY         : return("ERS_TERMINAL_NOT_READY"         ); //   5003 Status
+      case ERS_TERMINAL_NOT_YET_READY     : return("ERS_TERMINAL_NOT_YET_READY"     ); //   5003 Status
       case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); //   5004
       case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); //   5005
       case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); //   5006
