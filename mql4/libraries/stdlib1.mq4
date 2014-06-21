@@ -8836,7 +8836,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
  *
  * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default:  NULL = aktuelles Symbol)
  * @param  int      period - Periode der zu verwendenden Datenreihe (default: NULL = aktuelle Periode)
- * @param  datetime time   - Zeitpunkt
+ * @param  datetime time   - Zeitpunkt (Serverzeit)
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
  *               EMPTY_VALUE, falls ein Fehler auftrat

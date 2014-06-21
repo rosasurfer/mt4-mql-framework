@@ -120,7 +120,7 @@ int onStart() {
    debug("onStart(0.3)   mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
 
-   //                                                                          Toshiba Satellite     Toshiba Portege
+   //                                                                       Toshiba Satellite     Toshiba Portege
    // Build 225
    // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took     1.711 sec             0.897 sec
    // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.312 sec             1.630 sec
