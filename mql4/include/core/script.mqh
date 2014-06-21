@@ -101,7 +101,7 @@ int start() {
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)                                                                 // TODO: kann Bars bei Scripten 0 sein???
-      return(catch("start(2)   Bars = 0", ERS_TERMINAL_NOT_READY));
+      return(catch("start(2)   Bars = 0", ERS_TERMINAL_NOT_YET_READY));
 
 
    // (3) stdLib benachrichtigen
@@ -358,7 +358,7 @@ int SetLastError(int error, int param=NULL) {
    switch (error) {
       case NO_ERROR              :
       case ERS_HISTORY_UPDATE    :
-    //case ERS_TERMINAL_NOT_READY:           // in Scripten ist ERS_TERMINAL_NOT_READY normaler Fehler
+    //case ERS_TERMINAL_NOT_YET_READY:                               // in Scripten ist ERS_TERMINAL_NOT_YET_READY normaler Fehler
       case ERS_EXECUTION_STOPPING: break;
 
       default:

@@ -127,7 +127,7 @@
 #define ERR_NOT_IMPLEMENTED                                        5000    // feature not implemented
 #define ERR_INVALID_INPUT_PARAMVALUE                               5001    // invalid input parameter
 #define ERR_INVALID_CONFIG_PARAMVALUE                              5002    // invalid configuration parameter
-#define ERS_TERMINAL_NOT_READY                                     5003    // terminal not yet ready                 // in Scripten Fehler, sonst Status
+#define ERS_TERMINAL_NOT_YET_READY                                 5003    // terminal not yet ready                 // in Scripten Fehler, sonst Status
 #define ERR_INVALID_TIMEZONE_CONFIG                                5004    // invalid or missing timezone configuration
 #define ERR_INVALID_MARKET_DATA                                    5005    // invalid MarketInfo() data
 #define ERR_FILE_NOT_FOUND                                         5006    // file not found
