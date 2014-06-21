@@ -275,6 +275,18 @@ int      last_error;                                        // der letzte Fehler
 #define F_ALL_PERIODS          F_PERIODS_ALL
 
 
+// Array-Indizes für Timeframe-Operationen
+#define I_PERIOD_M1            0
+#define I_PERIOD_M5            1
+#define I_PERIOD_M15           2
+#define I_PERIOD_M30           3
+#define I_PERIOD_H1            4
+#define I_PERIOD_H4            5
+#define I_PERIOD_D1            6
+#define I_PERIOD_W1            7
+#define I_PERIOD_MN1           8
+
+
 // Operation-Types, siehe OrderType()
 #define OP_UNDEFINED                  -1        // custom: Default-Wert für nicht initialisierte Variable
 #define OP_BUY                         0        // long position
@@ -458,13 +470,20 @@ int      last_error;                                        // der letzte Fehler
 #define PRICE_ASK                      8        // Ask
 
 
-// Bar array identifier, siehe struct BAR
-#define I_BAR_TIME                     0        // bar open time
-#define I_BAR_OPEN                     1        // open price
-#define I_BAR_LOW                      2        // low price
-#define I_BAR_HIGH                     3        // high price
-#define I_BAR_CLOSE                    4        // close price
-#define I_BAR_VOLUME                   5        // volume
+// Rates array identifier, siehe ArrayCopyRates()
+#define I_RATE_TIME                    0        // bar open time
+#define I_RATE_OPEN                    1        // open price
+#define I_RATE_LOW                     2        // low price
+#define I_RATE_HIGH                    3        // high price
+#define I_RATE_CLOSE                   4        // close price
+#define I_RATE_VOLUME                  5        // volume
+
+#define I_BAR_TIME           I_RATE_TIME
+#define I_BAR_OPEN           I_RATE_OPEN
+#define I_BAR_LOW             I_RATE_LOW
+#define I_BAR_HIGH           I_RATE_HIGH
+#define I_BAR_CLOSE         I_RATE_CLOSE
+#define I_BAR_VOLUME       I_RATE_VOLUME
 
 
 // Event-Identifier siehe event()

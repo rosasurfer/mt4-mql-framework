@@ -85,13 +85,13 @@
 #define ERR_STRING_FUNCTION_INTERNAL                               4052
 #define ERR_SOME_ARRAY_ERROR                                       4053    // some array error
 #define ERR_TIMEFRAME_NOT_AVAILABLE                                4054    // accessed timeframe not available
-#define ERR_INCORRECT_SERIESARRAY_USING     ERR_TIMEFRAME_NOT_AVAILABLE
+#define ERR_INCORRECT_SERIESARRAY_USING     ERR_TIMEFRAME_NOT_AVAILABLE    //                                        MetaQuotes-Alias
 #define ERR_CUSTOM_INDICATOR_ERROR                                 4055    // custom indicator error
 #define ERR_INCOMPATIBLE_ARRAYS                                    4056    // incompatible arrays
 #define ERR_GLOBAL_VARIABLES_PROCESSING                            4057
 #define ERR_GLOBAL_VARIABLE_NOT_FOUND                              4058
 #define ERR_FUNC_NOT_ALLOWED_IN_TESTER                             4059
-#define ERR_FUNC_NOT_ALLOWED_IN_TESTING  ERR_FUNC_NOT_ALLOWED_IN_TESTER
+#define ERR_FUNC_NOT_ALLOWED_IN_TESTING  ERR_FUNC_NOT_ALLOWED_IN_TESTER    //                                        MetaQuotes-Alias
 #define ERR_FUNCTION_NOT_CONFIRMED                                 4060
 #define ERR_SEND_MAIL_ERROR                                        4061
 #define ERR_STRING_PARAMETER_EXPECTED                              4062
@@ -99,7 +99,7 @@
 #define ERR_DOUBLE_PARAMETER_EXPECTED                              4064
 #define ERR_ARRAY_AS_PARAMETER_EXPECTED                            4065
 #define ERS_HISTORY_UPDATE                                         4066    // history update                         // Status
-#define ERR_HISTORY_WILL_UPDATED                     ERS_HISTORY_UPDATE
+#define ERR_HISTORY_WILL_UPDATED                     ERS_HISTORY_UPDATE    //                                        MetaQuotes-Alias
 #define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_END_OF_FILE                                            4099    // end of file
 #define ERR_SOME_FILE_ERROR                                        4100    // some file error
