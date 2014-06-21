@@ -1547,30 +1547,30 @@ It can be any of the following values:</p>
       ;MODE_MARGININIT;MODE_MARGINMAINTENANCE;MODE_MARGINHEDGED;MODE_MARGINREQUIRED;MODE_FREEZELEVEL;
       </keywords>
       <content>
-<p>Market information identifiers, used with <a href="help://common_MarketInfo">MarketInfo()</a> function.<br/>
-It can be any of the following values:</p>
+<p>Market information identifiers used with <a href="help://common_MarketInfo">MarketInfo()</a>.<br/>
+It can be one of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td>MODE_LOW</td><td>1</td><td>Low day price.</td></tr>
-<tr><td>MODE_HIGH</td><td>2</td><td>High day price.</td></tr>
-<tr><td>MODE_TIME</td><td>5</td><td>The last incoming tick time (last known server time).</td></tr>
-<tr><td>MODE_BID</td><td>9</td><td>Last incoming bid price. For the current symbol, it is stored in the predefined variable <a href="help://predefined_variables_Bid">Bid</a></td></tr>
-<tr><td>MODE_ASK</td><td>10</td><td>Last incoming ask price. For the current symbol, it is stored in the predefined variable <a href="help://predefined_variables_Ask">Ask</a></td></tr>
-<tr><td>MODE_POINT</td><td>11</td><td>Point size in the quote currency. For the current symbol, it is stored in the predefined variable <a href="help://predefined_variables_Point">Point</a></td></tr>
-<tr><td>MODE_DIGITS</td><td>12</td><td>Count of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable <a href="help://predefined_variables_Digits">Digits</a></td></tr>
+<tr><td>MODE_LOW</td><td>1</td><td>Session low price (since midnight server time).</td></tr>
+<tr><td>MODE_HIGH</td><td>2</td><td>Session high price (since midnight server time).</td></tr>
+<tr><td>MODE_TIME</td><td>5</td><td>Last tick time (0 as long as the file &quot;symbols.sel&quot; is missing).</td></tr>
+<tr><td>MODE_BID</td><td>9</td><td>Last bid price (the value of the current symbol is stored in the predefined variable <a href="help://predefined_variables_Bid">Bid</a>).</td></tr>
+<tr><td>MODE_ASK</td><td>10</td><td>Last ask price (the value of the current symbol is stored in the predefined variable <a href="help://predefined_variables_Ask">Ask</a>).</td></tr>
+<tr><td>MODE_POINT</td><td>11</td><td>Point size in the quote currency (the value of the current symbol is stored in the predefined variable <a href="help://predefined_variables_Point">Point</a>).</td></tr>
+<tr><td>MODE_DIGITS</td><td>12</td><td>Number of digits after the decimal point in the symbol's prices (the value of the current symbol is stored in the predefined variable <a href="help://predefined_variables_Digits">Digits</a>).</td></tr>
 <tr><td>MODE_SPREAD</td><td>13</td><td>Spread value in points.</td></tr>
 <tr><td>MODE_STOPLEVEL</td><td>14</td><td>Stop level in points.</td></tr>
 <tr><td>MODE_LOTSIZE</td><td>15</td><td>Lot size in the base currency.</td></tr>
 <tr><td>MODE_TICKVALUE</td><td>16</td><td>Tick value in the deposit currency.</td></tr>
 <tr><td>MODE_TICKSIZE</td><td>17</td><td>Tick size in the quote currency.</td></tr>
-<tr><td>MODE_SWAPLONG</td><td>18</td><td>Swap of the long position.</td></tr>
-<tr><td>MODE_SWAPSHORT</td><td>19</td><td>Swap of the short position.</td></tr>
-<tr><td>MODE_STARTING</td><td>20</td><td>Market starting date (usually used for futures).</td></tr>
-<tr><td>MODE_EXPIRATION</td><td>21</td><td>Market expiration date (usually used for futures).</td></tr>
-<tr><td>MODE_TRADEALLOWED</td><td>22</td><td>Trade is allowed for the symbol.</td></tr>
-<tr><td>MODE_MINLOT</td><td>23</td><td>Minimum permitted amount of a lot.</td></tr>
-<tr><td>MODE_LOTSTEP</td><td>24</td><td>Step for changing lots.</td></tr>
-<tr><td>MODE_MAXLOT</td><td>25</td><td>Maximum permitted amount of a lot.</td></tr>
+<tr><td>MODE_SWAPLONG</td><td>18</td><td>Swap value of a long position.</td></tr>
+<tr><td>MODE_SWAPSHORT</td><td>19</td><td>Swap value of a short position.</td></tr>
+<tr><td>MODE_STARTING</td><td>20</td><td>Market starting date (usually only used for futures).</td></tr>
+<tr><td>MODE_EXPIRATION</td><td>21</td><td>Market expiration date (usually only used for futures).</td></tr>
+<tr><td>MODE_TRADEALLOWED</td><td>22</td><td>If trading for the symbol is allowed.</td></tr>
+<tr><td>MODE_MINLOT</td><td>23</td><td>Minimum tradable lot size.</td></tr>
+<tr><td>MODE_LOTSTEP</td><td>24</td><td>Step value for tradable lot sizes.</td></tr>
+<tr><td>MODE_MAXLOT</td><td>25</td><td>Maximum tradable lot size.</td></tr>
 <tr><td>MODE_SWAPTYPE</td><td>26</td><td>Swap calculation method. 0 - in points; 1 - in the symbol base currency; 2 - by interest; 3 - in the margin currency.</td></tr>
 <tr><td>MODE_PROFITCALCMODE</td><td>27</td><td>Profit calculation mode. 0 - Forex; 1 - CFD; 2 - Futures.</td></tr>
 <tr><td>MODE_MARGINCALCMODE</td><td>28</td><td>Margin calculation mode. 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices.</td></tr>
@@ -1578,7 +1578,7 @@ It can be any of the following values:</p>
 <tr><td>MODE_MARGINMAINTENANCE</td><td>30</td><td>Margin to maintain open positions calculated for 1 lot.</td></tr>
 <tr><td>MODE_MARGINHEDGED</td><td>31</td><td>Hedged margin calculated for 1 lot.</td></tr>
 <tr><td>MODE_MARGINREQUIRED</td><td>32</td><td>Free margin required to open 1 lot for buying.</td></tr>
-<tr><td>MODE_FREEZELEVEL</td><td>33</td><td>Order freeze level in points. If the execution price lies within the range defined by the freeze level, the order cannot be modified, cancelled or closed.</td></tr>
+<tr><td>MODE_FREEZELEVEL</td><td>33</td><td>Order freeze level in points. As long as the execution price of an order is within the range defined by this value the order is blocked.</td></tr>
 </table>
       </content>
     </text>
@@ -4212,25 +4212,25 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=MarketInfo()
       type=double
       <content>
-      Returns various data about securities listed in the Market Watch window.
-      A part of information about the current security is stored in <a href="help://predefined_variables">predefined variables</a>.
+      Returns various data about instruments listed in the &quot;Market Watch&quot; window.
+      A part of information about the current instrument is stored in <a href="help://predefined_variables">predefined variables</a>.
       </content>
       <example>
-   double bid   =MarketInfo(&quot;EURUSD&quot;,MODE_BID);
-   double ask   =MarketInfo(&quot;EURUSD&quot;,MODE_ASK);
-   double point =MarketInfo(&quot;EURUSD&quot;,MODE_POINT);
-   int    digits=MarketInfo(&quot;EURUSD&quot;,MODE_DIGITS);
-   int    spread=MarketInfo(&quot;EURUSD&quot;,MODE_SPREAD);
+   double bid    = MarketInfo(&quot;EURUSD&quot;, MODE_BID   );
+   double ask    = MarketInfo(&quot;EURUSD&quot;, MODE_ASK   );
+   double point  = MarketInfo(&quot;EURUSD&quot;, MODE_POINT );
+   int    digits = MarketInfo(&quot;EURUSD&quot;, MODE_DIGITS);
+   int    spread = MarketInfo(&quot;EURUSD&quot;, MODE_SPREAD);
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Security symbol.
+        description=instrument symbol
       </parameter>
       <parameter>
         type=int
         name=type
-        description=Request identifier that defines the type of information to be returned. Can be any of values of <a href="help://constants_marketinfo">request identifiers</a>.
+        description=Request identifier that defines the type of information to be returned, can be one of the valid <a href="help://constants_marketinfo">request identifiers</a>.
       </parameter>
     </function>
 
