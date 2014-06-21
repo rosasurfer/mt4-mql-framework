@@ -1485,16 +1485,16 @@ It can be any of the following values:</p>
 <p>Timeframe of the chart (chart period). It can be any of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td>PERIOD_M1</td><td>1</td><td>1 minute.</td></tr>
-<tr><td>PERIOD_M5</td><td>5</td><td>5 minutes.</td></tr>
-<tr><td>PERIOD_M15</td><td>15</td><td>15 minutes.</td></tr>
-<tr><td>PERIOD_M30</td><td>30</td><td>30 minutes.</td></tr>
-<tr><td>PERIOD_H1</td><td>60</td><td>1 hour.</td></tr>
-<tr><td>PERIOD_H4</td><td>240</td><td>4 hour.</td></tr>
-<tr><td>PERIOD_D1</td><td>1440</td><td>Daily.</td></tr>
-<tr><td>PERIOD_W1</td><td>10080</td><td>Weekly.</td></tr>
-<tr><td>PERIOD_MN1</td><td>43200</td><td>Monthly.</td></tr>
-<tr><td>0 (zero)</td><td>0</td><td>Timeframe used on the chart.</td></tr>
+<tr><td>PERIOD_M1</td><td>1</td><td>1 minute</td></tr>
+<tr><td>PERIOD_M5</td><td>5</td><td>5 minutes</td></tr>
+<tr><td>PERIOD_M15</td><td>15</td><td>15 minutes</td></tr>
+<tr><td>PERIOD_M30</td><td>30</td><td>30 minutes</td></tr>
+<tr><td>PERIOD_H1</td><td>60</td><td>1 hour</td></tr>
+<tr><td>PERIOD_H4</td><td>240</td><td>4 hours</td></tr>
+<tr><td>PERIOD_D1</td><td>1440</td><td>daily</td></tr>
+<tr><td>PERIOD_W1</td><td>10080</td><td>weekly</td></tr>
+<tr><td>PERIOD_MN1</td><td>43200</td><td>monthly</td></tr>
+<tr><td>NULL</td><td>0 (zero)</td><td>current timeframe used on the chart</td></tr>
 </table>
       </content>
     </text>
@@ -3485,13 +3485,13 @@ Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß gg
         type=string
         name=symbol
         def_value=NULL
-        description=Symbol name
+        description=symbol name (NULL: the current symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        def_value=0
-        description=Timeframe, can can be any of the <a href="help://constants_timeframes">listed timeframes</a> values.
+        def_value=NULL
+        description=timeframe, one of the <a href="help://constants_timeframes">predefined timeframes</a> values (NULL: the current timeframe)
       </parameter>
     </function>
 
