@@ -3431,7 +3431,7 @@ Returns the amount of copied elements.
       caption=ArrayCopyRates()
       type=int
       <content>
-Copies a pointer to a wrapper of a price rates array to a two-dimensional destination array and returns the amount of contained bars or -1 on failure.
+Copies a pointer to a wrapper of a price rates array to a two-dimensional destination array and returns the number of contained bars or -1 on failure.
 When accessed the first dimension of the destination array holds the rates bar offset, the second dimension holds the 6 elements:<br/>
 0 - time<br/>
 1 - open<br/>
@@ -3440,7 +3440,7 @@ When accessed the first dimension of the destination array holds the rates bar o
 4 - close<br/>
 5 - volume<br/>
 <br/>
-If data from another timeseries than the current chart is requested the <a href="help://constants_errors">error</a> status ERS_HISTORY_UPDATE might be triggered and
+If data from another timeseries than the current chart is requested the error <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
 set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
 
 <span style="color:red">Notes:</span>
@@ -3456,6 +3456,13 @@ entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger au
 <br>
 (3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basis_variables_static">static</a> (wie übliche Arrays).
 Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basis_variables_static">static</a> deklariert werden.
+<br>
+<br>
+(4) Im <span style="color:red">Tester</span> verhält die Funktion sich teilweise fehlerhaft:<br>
+2009.08.18 22:00  EURUSD,H1: FXTradePro::EventListener.BandsCrossing(1)   ArrayCopyRates(EURUSD,M5) returned  0  [ERS_HISTORY_UPDATE] - korrekt<br>
+2009.11.11 18:00  EURUSD,H1: FXTradePro::EventListener.BandsCrossing(1)   ArrayCopyRates(EURUSD,M5) returned -1  [ERR_SOME_ARRAY_ERROR] - <span style="color:red">Fehler</span><br>
+
+
 
       </content>
       <example>
