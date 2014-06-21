@@ -3397,7 +3397,7 @@ Returns the amount of copied elements.
   // array2 is having the last 10 bars from the history now (last bar considered as current bar, bar wit index [0])
       </example>
       <parameter>
-        type=object&amp;
+        type=object
         name=<nobr>dest[]</nobr>
         description=Destination array.
       </parameter>
@@ -3445,13 +3445,13 @@ set in the <a href="help://runtime_errors">last_error</a> variable, in which cas
 
 <span style="color:red">Notes:</span>
 <br>
-(1) There is no additional memory allocated for the target array and no real copying is performed. Instead a pointer to a wrapper of the internal rates array is assigned to the
+(1) No additional memory is allocated for the target array and no real copying is performed. Instead a pointer to a wrapper of the internal rates array is assigned to the
 target array and access is redirected.
 <br>
 <br>
 (2) Das Target-Array (type double) fungiert als Wrapper um das MT4-interne Datenarray (type struct RateInfo). Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe
 entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger auf das interne RateInfo-Array übergeben (ohne Wrapper). Dieses interne Array ist
-reverse-indexed und wird zur Laufzeit dynamisch bis MAX_CHART_BARS erweitert. Index 0 enthält die älteste Bar.
+<a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit dynamisch bis MAX_CHART_BARS erweitert. Index 0 enthält die älteste Bar.
 <br>
 <br>
 (3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basis_variables_static">static</a> (wie übliche Arrays).
@@ -3539,7 +3539,7 @@ else {
 Print(TimeToStr(Time[shift]), " corresponds to ", dayshift, " day bar opened at ", TimeToStr(daytimes[dayshift]));
       </example>
       <parameter>
-        type=double&amp;
+        type=double
         name=<nobr>array[]</nobr>
         description=The one-dimensional numeric destination array.
       </parameter>
@@ -3587,18 +3587,20 @@ dim_size=ArrayDimension(num_array);
       caption=ArrayGetAsSeries()
       type=bool
       <content>
-        Returns TRUE if array is organized as a series array (array elements are indexed from the last to the first one), otherwise returns FALSE.
+        Returns TRUE if an array is organized as a series array (element storage is reverse-indexed, access to index 0 returns the last element), or FALSE otherwise.
       </content>
       <example>
-  if(ArrayGetAsSeries(array1)==true)
-    Print(&quot;array1 is indexed as a series array&quot;);
-  else
-    Print(&quot;array1 is indexed normally (from left to right)&quot;);
+  if (ArrayGetAsSeries(array) == true) {
+    Print(&quot;array is indexed as a series array&quot;);
+  }
+  else {
+    Print(&quot;array is indexed normally (from left to right)&quot;);
+  }
       </example>
       <parameter>
         type=object
         name=<nobr>array[]</nobr>
-        description=Array to be checked.
+        description=array to check
       </parameter>
     </function>
 
@@ -3607,7 +3609,7 @@ dim_size=ArrayDimension(num_array);
       caption=ArrayInitialize()
       type=int
       <content>
-        Sets all elements of a numeric array to the same value. Returns the count of initialized elements.<br/>
+        Sets all elements of a numeric array to the same value. Returns the number of initialized elements.<br/>
       Note: It is not recommended to initialize index buffers in the custom indicator <i>init()</i> function
         as such functions are initialized automatically with an <a href="help://customind_SetIndexEmptyValue">&quot;empty value&quot;</a>
       at allocation and re-allocation of buffers.
@@ -3618,7 +3620,7 @@ dim_size=ArrayDimension(num_array);
   ArrayInitialize(myarray,2.1);
       </example>
       <parameter>
-        type=double&amp;
+        type=double
         name=<nobr>array[]</nobr>
         description=Numeric array to be initialized.
       </parameter>
@@ -3719,7 +3721,7 @@ Print(&quot;Min value = &quot;, num_array[minValueIdx]);
       caption=ArrayRange()
       type=int
       <content>
-        Returns the count of elements in the given dimension of the array.
+        Returns the number of elements in the given dimension of the array.
         Since indexes are zero-based, the size of dimension is 1 greater than the largest index.
       </content>
       <example>
@@ -3755,7 +3757,7 @@ int    element_count=ArrayResize(array1, 20);
 // new size - 80 elements
       </example>
       <parameter>
-        type=object&amp;
+        type=object
         name=<nobr>array[]</nobr>
         description=Array to resize.
       </parameter>
@@ -3771,30 +3773,32 @@ int    element_count=ArrayResize(array1, 20);
       caption=ArraySetAsSeries()
       type=bool
       <content>
-        Sets indexing direction of the array. If the <i>set</i> parameter has the TRUE value, the array will be indexed in a reversed order,
-        i.e., the last element has a zero index. The FALSE value sets a standard indexing order. The function returns the previous status.
+        Sets the indexing direction of the array. If <i>reversed</i> is TRUE the array will be indexed in reversed order,
+        i.e. access to index 0 returns the last element. Setting <i>reversed</i> to FALSE sets a standard indexing order. The function returns the previous status.
       </content>
       <example>
 double macd_buffer[300];
 double signal_buffer[300];
-int    i,limit=ArraySize(macd_buffer);
-ArraySetAsSeries(macd_buffer,true);
+int    size = ArraySize(macd_buffer);
+ArraySetAsSeries(macd_buffer, true);
 
-for(i=0; i&lt;limit; i++)
-   macd_buffer[i]=iMA(NULL,0,12,0,MODE_EMA,PRICE_CLOSE,i)-iMA(NULL,0,26,0,MODE_EMA,PRICE_CLOSE,i);
+for (int i=0; i&lt;size; i++){
+   macd_buffer[i] = iMA(NULL, 0, 12, 0, MODE_EMA, PRICE_CLOSE, i) - iMA(NULL, 0, 26, 0, MODE_EMA, PRICE_CLOSE, i);
+}
 
-for(i=0; i&lt;limit; i++)
-   signal_buffer[i]=iMAOnArray(macd_buffer,limit,9,0,MODE_SMA,i);
+for (i=0; i&lt;size; i++) {
+   signal_buffer[i] = iMAOnArray(macd_buffer, limit, 9, 0, MODE_SMA, i);
+}
       </example>
       <parameter>
-        type=double&amp;
+        type=double
         name=<nobr>array[]</nobr>
-        description=The numeric array to set.
+        description=numeric array to set
       </parameter>
       <parameter>
         type=bool
-        name=set
-        description=Array indexing order.
+        name=reversed
+        description=indexing order mode
       </parameter>
     </function>
 
@@ -3803,8 +3807,7 @@ for(i=0; i&lt;limit; i++)
       caption=ArraySize()
       type=int
       <content>
-      Returns the count of elements contained in the array. For a one-dimensional array, the value to be returned by the ArraySize function
-      is equal to that of <a href="help://array_ArrayRange">ArrayRange(array,0)</a>.
+      Returns the number of elements contained in a array. For a one-dimensional array the returned value is equal to that of <a href="help://array_ArrayRange">ArrayRange(array, 0)</a>.
       </content>
       <example>
 int count=ArraySize(array1);
@@ -3837,7 +3840,7 @@ for(int i=0; i&lt;count; i++)
   // now array is sorted 9,6,4,3,1
       </example>
       <parameter>
-        type=double&amp;
+        type=double
         name=<nobr>array[]</nobr>
         description=The numeric array to be sorted.
       </parameter>
@@ -5664,7 +5667,7 @@ To get the detailed error information, call the <a href="help://check_GetLastErr
         description=File handle returned by the FileOpen() function.
       </parameter>
       <parameter>
-        type=object&amp;
+        type=object
         name=<nobr>array[]</nobr>
         description=Array where data will be stored.
       </parameter>
