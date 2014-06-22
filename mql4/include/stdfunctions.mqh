@@ -285,6 +285,7 @@ int      last_error;                                        // der letzte Fehler
 #define I_PERIOD_D1            6
 #define I_PERIOD_W1            7
 #define I_PERIOD_MN1           8
+#define I_PERIOD_Q1            9
 
 
 // Operation-Types, siehe OrderType()

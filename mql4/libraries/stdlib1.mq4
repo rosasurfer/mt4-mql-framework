@@ -2109,7 +2109,7 @@ bool ArrayPopBool(bool array[]) {
    if (ArrayDimension(array) > 1) return(!catch("ArrayPopBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
 
    int size = ArraySize(array);
-   if (size == 0)                 return(!catch("ArrayPopBool(2)   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR));
+   if (size == 0)                 return(!catch("ArrayPopBool(2)   cannot pop element from empty array = {}", ERR_ARRAY_ERROR));
 
    bool popped = array[size-1];
    ArrayResize(array, size-1);
@@ -2130,7 +2130,7 @@ int ArrayPopInt(int array[]) {
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayPopInt(2)   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_NULL(catch("ArrayPopInt(2)   cannot pop element from empty array = {}", ERR_ARRAY_ERROR)));
 
    int popped = array[size-1];
    ArrayResize(array, size-1);
@@ -2151,7 +2151,7 @@ double ArrayPopDouble(double array[]) {
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayPopDouble(2)   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_NULL(catch("ArrayPopDouble(2)   cannot pop element from empty array = {}", ERR_ARRAY_ERROR)));
 
    double popped = array[size-1];
    ArrayResize(array, size-1);
@@ -2172,7 +2172,7 @@ string ArrayPopString(string array[]) {
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_empty(catch("ArrayPopString(2)   cannot pop element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_empty(catch("ArrayPopString(2)   cannot pop element from empty array = {}", ERR_ARRAY_ERROR)));
 
    string popped = array[size-1];
    ArrayResize(array, size-1);
@@ -2246,7 +2246,7 @@ bool ArrayShiftBool(bool array[]) {
    if (ArrayDimension(array) > 1) return(!catch("ArrayShiftBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
 
    int size = ArraySize(array);
-   if (size == 0)                 return(!catch("ArrayShiftBool(2)   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR));
+   if (size == 0)                 return(!catch("ArrayShiftBool(2)   cannot shift element from empty array = {}", ERR_ARRAY_ERROR));
 
    bool shifted = array[0];
 
@@ -2270,7 +2270,7 @@ int ArrayShiftInt(int array[]) {
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayShiftInt(2)   cannot shift element from empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_NULL(catch("ArrayShiftInt(2)   cannot shift element from empty array = {}", ERR_ARRAY_ERROR)));
 
    int shifted = array[0];
 
@@ -2294,7 +2294,7 @@ double ArrayShiftDouble(double array[]) {
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_NULL(catch("ArrayShiftDouble(2)   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_NULL(catch("ArrayShiftDouble(2)   cannot shift element from an empty array = {}", ERR_ARRAY_ERROR)));
 
    double shifted = array[0];
 
@@ -2318,7 +2318,7 @@ string ArrayShiftString(string array[]) {
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_empty(catch("ArrayShiftString(2)   cannot shift element from an empty array = {}", ERR_SOME_ARRAY_ERROR)));
+      return(_empty(catch("ArrayShiftString(2)   cannot shift element from an empty array = {}", ERR_ARRAY_ERROR)));
 
    string shifted = array[0];
 
@@ -7336,7 +7336,7 @@ string ErrorDescription(int error) {
       case ERR_COMMON_ERROR               : return("trade denied"                                              ); //      2
       case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                  ); //      3
       case ERR_SERVER_BUSY                : return("trade server busy"                                         ); //      4
-      case ERR_OLD_VERSION                : return("old version of client terminal"                            ); //      5
+      case ERR_OLD_VERSION                : return("old terminal version"                                      ); //      5
       case ERR_NO_CONNECTION              : return("no connection to trade server"                             ); //      6
       case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                         ); //      7
       case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                     ); //      8
@@ -7362,8 +7362,8 @@ string ErrorDescription(int error) {
     //case 144: ???                                                                                               //    see stderror.mqh
       case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"           ); //    145
       case ERR_TRADE_CONTEXT_BUSY         : return("trade context busy"                                        ); //    146
-      case ERR_TRADE_EXPIRATION_DENIED    : return("expiration settings denied by broker"                      ); //    147
-      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open and pending orders reached the broker limit"); //    148
+      case ERR_TRADE_EXPIRATION_DENIED    : return("expiration setting denied by broker"                       ); //    147
+      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open orders reached the broker limit"            ); //    148
       case ERR_TRADE_HEDGE_PROHIBITED     : return("hedging prohibited"                                        ); //    149
       case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                  ); //    150
 
@@ -7376,8 +7376,8 @@ string ErrorDescription(int error) {
       case ERR_NOT_ENOUGH_STACK_FOR_PARAM : return("not enough stack for parameter"                            ); //   4005
       case ERR_NO_MEMORY_FOR_PARAM_STRING : return("no memory for parameter string"                            ); //   4006
       case ERR_NO_MEMORY_FOR_TEMP_STRING  : return("no memory for temp string"                                 ); //   4007
-      case ERR_NOT_INITIALIZED_STRING     : return("not initialized string"                                    ); //   4008
-      case ERR_NOT_INITIALIZED_ARRAYSTRING: return("not initialized string in array"                           ); //   4009
+      case ERR_NOT_INITIALIZED_STRING     : return("uninitialized string"                                      ); //   4008
+      case ERR_NOT_INITIALIZED_ARRAYSTRING: return("uninitialized string in array"                             ); //   4009
       case ERR_NO_MEMORY_FOR_ARRAYSTRING  : return("no memory for string in array"                             ); //   4010
       case ERR_TOO_LONG_STRING            : return("string too long"                                           ); //   4011
       case ERR_REMAINDER_FROM_ZERO_DIVIDE : return("remainder from division by zero"                           ); //   4012
@@ -7389,13 +7389,13 @@ string ErrorDescription(int error) {
       case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                       ); //   4018
       case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                      ); //   4019
       case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("library calls not allowed"                                 ); //   4020
-      case ERR_NO_MEMORY_FOR_RETURNED_STR : return("not enough memory for temp string returned from function"  ); //   4021
+      case ERR_NO_MEMORY_FOR_RETURNED_STR : return("no memory for temp string returned from function"          ); //   4021
       case ERR_SYSTEM_BUSY                : return("system busy"                                               ); //   4022
     //case 4023: ???
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                          ); //   4050 invalid parameters count
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                          ); //   4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                            ); //   4052
-      case ERR_SOME_ARRAY_ERROR           : return("array error"                                               ); //   4053 some array error
+      case ERR_ARRAY_ERROR                : return("array error"                                               ); //   4053 some array error
       case ERR_TIMEFRAME_NOT_AVAILABLE    : return("requested timeframe not available"                         ); //   4054 timeframe not available
       case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                    ); //   4055 custom indicator error
       case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                       ); //   4056 incompatible arrays
@@ -7408,10 +7408,10 @@ string ErrorDescription(int error) {
       case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                ); //   4063
       case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                 ); //   4064
       case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                  ); //   4065
-      case ERS_HISTORY_UPDATE             : return("requested history in update state"                         ); //   4066 history in update state - Status
-      case ERR_TRADE_ERROR                : return("error in trading function"                                 ); //   4067 error in trading function
+      case ERS_HISTORY_UPDATE             : return("requested history is updating"                             ); //   4066 requested history is updating   - Status
+      case ERR_TRADE_ERROR                : return("trade function error"                                      ); //   4067 trade function error
       case ERR_END_OF_FILE                : return("end of file"                                               ); //   4099 end of file
-      case ERR_SOME_FILE_ERROR            : return("file error"                                                ); //   4100 some file error
+      case ERR_FILE_ERROR                 : return("file error"                                                ); //   4100 some file error
       case ERR_WRONG_FILE_NAME            : return("wrong file name"                                           ); //   4101
       case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                     ); //   4102
       case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                          ); //   4103
@@ -7430,7 +7430,7 @@ string ErrorDescription(int error) {
       case ERR_NO_OBJECT_NAME             : return("no object name"                                            ); //   4204
       case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                  ); //   4205
       case ERR_NO_SPECIFIED_SUBWINDOW     : return("no specified subwindow"                                    ); //   4206
-      case ERR_SOME_OBJECT_ERROR          : return("object error"                                              ); //   4207 some object error
+      case ERR_OBJECT_ERROR               : return("object error"                                              ); //   4207 some object error
 
       // custom errors
       case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   ); //   5000
@@ -7528,7 +7528,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("ERR_INVALID_FUNCTION_PARAMSCNT" ); //   4050
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("ERR_INVALID_FUNCTION_PARAMVALUE"); //   4051
       case ERR_STRING_FUNCTION_INTERNAL   : return("ERR_STRING_FUNCTION_INTERNAL"   ); //   4052
-      case ERR_SOME_ARRAY_ERROR           : return("ERR_SOME_ARRAY_ERROR"           ); //   4053
+      case ERR_ARRAY_ERROR                : return("ERR_ARRAY_ERROR"                ); //   4053
       case ERR_TIMEFRAME_NOT_AVAILABLE    : return("ERR_TIMEFRAME_NOT_AVAILABLE"    ); //   4054
       case ERR_CUSTOM_INDICATOR_ERROR     : return("ERR_CUSTOM_INDICATOR_ERROR"     ); //   4055
       case ERR_INCOMPATIBLE_ARRAYS        : return("ERR_INCOMPATIBLE_ARRAYS"        ); //   4056
@@ -7544,7 +7544,7 @@ string ErrorToStr(int error) {
       case ERS_HISTORY_UPDATE             : return("ERS_HISTORY_UPDATE"             ); //   4066 Status
       case ERR_TRADE_ERROR                : return("ERR_TRADE_ERROR"                ); //   4067
       case ERR_END_OF_FILE                : return("ERR_END_OF_FILE"                ); //   4099
-      case ERR_SOME_FILE_ERROR            : return("ERR_SOME_FILE_ERROR"            ); //   4100
+      case ERR_FILE_ERROR                 : return("ERR_FILE_ERROR"                 ); //   4100
       case ERR_WRONG_FILE_NAME            : return("ERR_WRONG_FILE_NAME"            ); //   4101
       case ERR_TOO_MANY_OPENED_FILES      : return("ERR_TOO_MANY_OPENED_FILES"      ); //   4102
       case ERR_CANNOT_OPEN_FILE           : return("ERR_CANNOT_OPEN_FILE"           ); //   4103
@@ -7563,7 +7563,7 @@ string ErrorToStr(int error) {
       case ERR_NO_OBJECT_NAME             : return("ERR_NO_OBJECT_NAME"             ); //   4204
       case ERR_OBJECT_COORDINATES_ERROR   : return("ERR_OBJECT_COORDINATES_ERROR"   ); //   4205
       case ERR_NO_SPECIFIED_SUBWINDOW     : return("ERR_NO_SPECIFIED_SUBWINDOW"     ); //   4206
-      case ERR_SOME_OBJECT_ERROR          : return("ERR_SOME_OBJECT_ERROR"          ); //   4207
+      case ERR_OBJECT_ERROR               : return("ERR_OBJECT_ERROR"               ); //   4207
 
       // custom errors
       case ERR_NOT_IMPLEMENTED            : return("ERR_NOT_IMPLEMENTED"            ); //   5000
