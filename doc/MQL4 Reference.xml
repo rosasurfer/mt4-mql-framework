@@ -3458,6 +3458,9 @@ entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger au
 Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basis_variables_static">static</a> deklariert werden.
 <br>
 <br>
+(4) Das Target-Array kann nach Zuweisung nicht mehr mittels ArrayResize() oder ArrayInitialize() verändert werden.
+<br>
+<br>
 <span style="color:red">Fehler:</span>
 <br>
 Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler ERR_ARRAY_ERROR ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind. 
