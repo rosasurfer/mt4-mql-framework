@@ -2250,17 +2250,17 @@ It can be one of the following values:</p>
 ;ERR_ZERO_DIVIDE;ERR_UNKNOWN_COMMAND;ERR_WRONG_JUMP;ERR_NOT_INITIALIZED_ARRAY;ERR_DLL_CALLS_NOT_ALLOWED;
 ;ERR_CANNOT_LOAD_LIBRARY;ERR_CANNOT_CALL_FUNCTION;ERR_EXTERNAL_CALLS_NOT_ALLOWED;
 ;ERR_NO_MEMORY_FOR_RETURNED_STR;ERR_SYSTEM_BUSY;ERR_INVALID_FUNCTION_PARAMSCNT;
-;ERR_INVALID_FUNCTION_PARAMVALUE;ERR_STRING_FUNCTION_INTERNAL;ERR_SOME_ARRAY_ERROR;
+;ERR_INVALID_FUNCTION_PARAMVALUE;ERR_STRING_FUNCTION_INTERNAL;ERR_ARRAY_ERROR;
 ;ERR_INCORRECT_SERIESARRAY_USING;ERR_CUSTOM_INDICATOR_ERROR;ERR_INCOMPATIBLE_ARRAYS;
 ;ERR_GLOBAL_VARIABLES_PROCESSING;ERR_GLOBAL_VARIABLE_NOT_FOUND;ERR_FUNC_NOT_ALLOWED_IN_TESTING;
 ;ERR_FUNCTION_NOT_CONFIRMED;ERR_SEND_MAIL_ERROR;ERR_STRING_PARAMETER_EXPECTED;ERR_INTEGER_PARAMETER_EXPECTED;
-;ERR_DOUBLE_PARAMETER_EXPECTED;ERR_ARRAY_AS_PARAMETER_EXPECTED;ERR_END_OF_FILE;ERR_SOME_FILE_ERROR;
+;ERR_DOUBLE_PARAMETER_EXPECTED;ERR_ARRAY_AS_PARAMETER_EXPECTED;ERR_END_OF_FILE;ERR_FILE_ERROR;
 ;ERR_WRONG_FILE_NAME;ERR_TOO_MANY_OPENED_FILES;ERR_CANNOT_OPEN_FILE;ERR_INCOMPATIBLE_FILEACCESS;
 ;ERR_NO_ORDER_SELECTED;ERR_UNKNOWN_SYMBOL;ERR_INVALID_PRICE_PARAM;ERR_INVALID_TICKET;ERR_TRADE_NOT_ALLOWED;
 ;ERR_LONGS_NOT_ALLOWED;ERR_SHORTS_NOT_ALLOWED;ERR_OBJECT_ALREADY_EXISTS;ERR_UNKNOWN_OBJECT_PROPERTY;
 ;ERR_OBJECT_DOES_NOT_EXIST;ERR_UNKNOWN_OBJECT_TYPE;ERR_NO_OBJECT_NAME;ERR_OBJECT_COORDINATES_ERROR;
 ;ERR_NO_SPECIFIED_SUBWINDOW;ERR_TRADE_MODIFY_DENIED;ERR_TRADE_CONTEXT_BUSY;ERR_TRADE_EXPIRATION_DENIED;
-;ERR_SOME_OBJECT_ERROR,ERR_TRADE_ERROR,
+;ERR_OBJECT_ERROR,ERR_TRADE_ERROR,
       </keywords>
       <content>
 <p>The <a href="help://check_GetLastError">GetLastError()</a> function return codes.
@@ -2343,7 +2343,7 @@ void SendMyMessage(string text)
 <tr><td>ERR_INVALID_FUNCTION_PARAMSCNT</td><td>4050</td><td>Invalid function parameters count.</td></tr>
 <tr><td>ERR_INVALID_FUNCTION_PARAMVALUE</td><td>4051</td><td>Invalid function parameter value.</td></tr>
 <tr><td>ERR_STRING_FUNCTION_INTERNAL</td><td>4052</td><td>String function internal error.</td></tr>
-<tr><td>ERR_SOME_ARRAY_ERROR</td><td>4053</td><td>Some array error.</td></tr>
+<tr><td>ERR_ARRAY_ERROR</td><td>4053</td><td>Some array error.</td></tr>
 <tr><td>ERR_INCORRECT_SERIESARRAY_USING</td><td>4054</td><td>Incorrect series array using.</td></tr>
 <tr><td>ERR_CUSTOM_INDICATOR_ERROR</td><td>4055</td><td>Custom indicator error.</td></tr>
 <tr><td>ERR_INCOMPATIBLE_ARRAYS</td><td>4056</td><td>Arrays are incompatible.</td></tr>
@@ -2359,7 +2359,7 @@ void SendMyMessage(string text)
 <tr><td>ERR_HISTORY_UPDATE</td><td>4066</td><td>Requested history data in updating state.</td></tr>
 <tr><td>ERR_TRADE_ERROR</td><td>4067</td><td>Some error in trading function.</td></tr>
 <tr><td>ERR_END_OF_FILE</td><td>4099</td><td>End of file.</td></tr>
-<tr><td>ERR_SOME_FILE_ERROR</td><td>4100</td><td>Some file error.</td></tr>
+<tr><td>ERR_FILE_ERROR</td><td>4100</td><td>Some file error.</td></tr>
 <tr><td>ERR_WRONG_FILE_NAME</td><td>4101</td><td>Wrong file name.</td></tr>
 <tr><td>ERR_TOO_MANY_OPENED_FILES</td><td>4102</td><td>Too many opened files.</td></tr>
 <tr><td>ERR_CANNOT_OPEN_FILE</td><td>4103</td><td>Cannot open file.</td></tr>
@@ -2378,7 +2378,7 @@ void SendMyMessage(string text)
 <tr><td>ERR_NO_OBJECT_NAME</td><td>4204</td><td>No object name.</td></tr>
 <tr><td>ERR_OBJECT_COORDINATES_ERROR</td><td>4205</td><td>Object coordinates error.</td></tr>
 <tr><td>ERR_NO_SPECIFIED_SUBWINDOW</td><td>4206</td><td>No specified subwindow.</td></tr>
-<tr><td>ERR_SOME_OBJECT_ERROR</td><td>4207</td><td>Some error in object function.</td></tr>
+<tr><td>ERR_OBJECT_ERROR</td><td>4207</td><td>Some error in object function.</td></tr>
 <tr><td>ERR_NOTIFICATION_SEND_ERROR</td><td>4250</td><td>Error setting notification into the queue for sending</td></tr>
 <tr><td>ERR_NOTIFICATION_WRONG_PARAMETER</td><td>4251</td><td>Invalid parameter - empty string passed into the SendNotification() function</td></tr>
 <tr><td>ERR_NOTIFICATION_WRONG_SETTINGS</td><td>4252</td><td>Invalid settings for sending notifications (the ID is not specified or notifications are not enabled)</td></tr>
@@ -2806,17 +2806,17 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       ;ERR_ZERO_DIVIDE;ERR_UNKNOWN_COMMAND;ERR_WRONG_JUMP;ERR_NOT_INITIALIZED_ARRAY;ERR_DLL_CALLS_NOT_ALLOWED;
       ;ERR_CANNOT_LOAD_LIBRARY;ERR_CANNOT_CALL_FUNCTION;ERR_EXTERNAL_CALLS_NOT_ALLOWED;
       ;ERR_NO_MEMORY_FOR_RETURNED_STR;ERR_SYSTEM_BUSY;ERR_INVALID_FUNCTION_PARAMSCNT;
-      ;ERR_INVALID_FUNCTION_PARAMVALUE;ERR_STRING_FUNCTION_INTERNAL;ERR_SOME_ARRAY_ERROR;
+      ;ERR_INVALID_FUNCTION_PARAMVALUE;ERR_STRING_FUNCTION_INTERNAL;ERR_ARRAY_ERROR;
       ;ERR_INCORRECT_SERIESARRAY_USING;ERR_CUSTOM_INDICATOR_ERROR;ERR_INCOMPATIBLE_ARRAYS;
       ;ERR_GLOBAL_VARIABLES_PROCESSING;ERR_GLOBAL_VARIABLE_NOT_FOUND;ERR_FUNC_NOT_ALLOWED_IN_TESTING;
       ;ERR_FUNCTION_NOT_CONFIRMED;ERR_SEND_MAIL_ERROR;ERR_STRING_PARAMETER_EXPECTED;ERR_INTEGER_PARAMETER_EXPECTED;
-      ;ERR_DOUBLE_PARAMETER_EXPECTED;ERR_ARRAY_AS_PARAMETER_EXPECTED;ERR_END_OF_FILE;ERR_SOME_FILE_ERROR;
+      ;ERR_DOUBLE_PARAMETER_EXPECTED;ERR_ARRAY_AS_PARAMETER_EXPECTED;ERR_END_OF_FILE;ERR_FILE_ERROR;
       ;ERR_WRONG_FILE_NAME;ERR_TOO_MANY_OPENED_FILES;ERR_CANNOT_OPEN_FILE;ERR_INCOMPATIBLE_FILEACCESS;
       ;ERR_NO_ORDER_SELECTED;ERR_UNKNOWN_SYMBOL;ERR_INVALID_PRICE_PARAM;ERR_INVALID_TICKET;ERR_TRADE_NOT_ALLOWED;
       ;ERR_LONGS_NOT_ALLOWED;ERR_SHORTS_NOT_ALLOWED;ERR_OBJECT_ALREADY_EXISTS;ERR_UNKNOWN_OBJECT_PROPERTY;
       ;ERR_OBJECT_DOES_NOT_EXIST;ERR_UNKNOWN_OBJECT_TYPE;ERR_NO_OBJECT_NAME;ERR_OBJECT_COORDINATES_ERROR;
       ;ERR_NO_SPECIFIED_SUBWINDOW;ERR_TRADE_MODIFY_DENIED;ERR_TRADE_CONTEXT_BUSY;ERR_TRADE_EXPIRATION_DENIED;
-      ;ERR_SOME_OBJECT_ERROR,ERR_TRADE_ERROR,
+      ;ERR_OBJECT_ERROR,ERR_TRADE_ERROR,
       </keywords>
       <content>
         <p>
@@ -2879,7 +2879,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td>ERR_INVALID_FUNCTION_PARAMSCNT</td><td>4050</td><td>Invalid parameters count passed into built-in function</td></tr>
         <tr><td>ERR_STRING_FUNCTION_INTERNAL</td><td>4052</td><td>String function internal error</td></tr>
         <tr><td>ERR_TRADE_ERROR</td><td>4067</td><td>Trade function internal error</td></tr>
-        <tr><td>ERR_SOME_OBJECT_ERROR</td><td>4207</td><td>Object function internal error</td></tr>
+        <tr><td>ERR_OBJECT_ERROR</td><td>4207</td><td>Object function internal error</td></tr>
         </table>
         <p><br/>
          There are some functions that always change the <i>last_error</i> variable value.</p>
@@ -2897,41 +2897,41 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
          Some functions change value of the <i>last_error</i> variable only if an error occurs.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Function</th><th width="85%">Error codes</th></tr>
-        <tr><td><a href="help://array_ArrayBsearch">ArrayBsearch</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayCopy">ArrayCopy</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayCopyRates">ArrayCopyRates</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062),</td></tr>
-        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_UPDATE (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayDimension">ArrayDimension</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArrayGetAsSeries">ArrayGetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArrayInitialize">ArrayInitialize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayIsSeries">ArrayIsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArrayMaximum">ArrayMaximum</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayMinimum">ArrayMinimum</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayRange">ArrayRange</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayResize">ArrayResize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArraySize">ArraySize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArraySort">ArraySort</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayBsearch">ArrayBsearch</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayCopy">ArrayCopy</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayCopyRates">ArrayCopyRates</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062),</td></tr>
+        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_UPDATE (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayDimension">ArrayDimension</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
+        <tr><td><a href="help://array_ArrayGetAsSeries">ArrayGetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
+        <tr><td><a href="help://array_ArrayInitialize">ArrayInitialize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayIsSeries">ArrayIsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
+        <tr><td><a href="help://array_ArrayMaximum">ArrayMaximum</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayMinimum">ArrayMinimum</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayRange">ArrayRange</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayResize">ArrayResize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
+        <tr><td><a href="help://array_ArraySize">ArraySize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
+        <tr><td><a href="help://array_ArraySort">ArraySort</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileClose">FileClose</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileDelete">FileDelete</a></td><td>ERR_WRONG_FILE_NAME (4101), ERR_SOME_FILE_ERROR (4100)</td></tr>
+        <tr><td><a href="help://files_FileDelete">FileDelete</a></td><td>ERR_WRONG_FILE_NAME (4101), ERR_FILE_ERROR (4100)</td></tr>
         <tr><td><a href="help://files_FileFlush">FileFlush</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileIsEnding">FileIsEnding</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileIsLineEnding">FileIsLineEnding</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileOpen">FileOpen</a></td><td>ERR_TOO_MANY_OPENED_FILES (4102), ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_SOME_FILE_ERROR (4100), ERR_CANNOT_OPEN_FILE (4103)</td></tr>
-        <tr><td><a href="help://files_FileOpenHistory">FileOpenHistory</a></td><td>ERR_TOO_MANY_OPENED_FILES (4102), ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_SOME_FILE_ERROR (4100), ERR_CANNOT_OPEN_FILE (4103)</td></tr>
-        <tr><td><a href="help://files_FileReadArray">FileReadArray</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_ARRAY_ERROR (4053), ERR_SOME_FILE_ERROR (4100), ERR_END_OF_FILE (4099)</td></tr>
+        <tr><td><a href="help://files_FileOpen">FileOpen</a></td><td>ERR_TOO_MANY_OPENED_FILES (4102), ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_FILE_ERROR (4100), ERR_CANNOT_OPEN_FILE (4103)</td></tr>
+        <tr><td><a href="help://files_FileOpenHistory">FileOpenHistory</a></td><td>ERR_TOO_MANY_OPENED_FILES (4102), ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_FILE_ERROR (4100), ERR_CANNOT_OPEN_FILE (4103)</td></tr>
+        <tr><td><a href="help://files_FileReadArray">FileReadArray</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_ARRAY_ERROR (4053), ERR_FILE_ERROR (4100), ERR_END_OF_FILE (4099)</td></tr>
         <tr><td><a href="help://files_FileReadDouble">FileReadDouble</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_END_OF_FILE (4099)</td></tr>
         <tr><td><a href="help://files_FileReadInteger">FileReadInteger</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileReadNumber">FileReadNumber</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_FILE_ERROR (4100), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileReadString">FileReadString</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_FILE_ERROR (4100), ERR_TOO_LONG_STRING (4011), ERR_END_OF_FILE (4099)</td></tr>
+        <tr><td><a href="help://files_FileReadNumber">FileReadNumber</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100), ERR_END_OF_FILE (4099)</td></tr>
+        <tr><td><a href="help://files_FileReadString">FileReadString</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100), ERR_TOO_LONG_STRING (4011), ERR_END_OF_FILE (4099)</td></tr>
         <tr><td><a href="help://files_FileSeek">FileSeek</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileSize">FileSize</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileTell">FileTell</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileWrite">FileWrite</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_SOME_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileWriteDouble">FileWriteDouble</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileWriteInteger">FileWriteInteger</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileWriteString">FileWriteString</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_FILE_ERROR (4100), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://files_FileWriteArray">FileWriteArray</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_SOME_FILE_ERROR (4100),</td></tr>
+        <tr><td><a href="help://files_FileWrite">FileWrite</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_FILE_ERROR (4100)</td></tr>
+        <tr><td><a href="help://files_FileWriteDouble">FileWriteDouble</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100)</td></tr>
+        <tr><td><a href="help://files_FileWriteInteger">FileWriteInteger</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100)</td></tr>
+        <tr><td><a href="help://files_FileWriteString">FileWriteString</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
+        <tr><td><a href="help://files_FileWriteArray">FileWriteArray</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100),</td></tr>
         <tr><td><a href="help://globals_GlobalVariableCheck">GlobalVariableCheck</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
         <tr><td><a href="help://globals_GlobalVariableDel">GlobalVariableDel</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLES_PROCESSING (4057)</td></tr>
         <tr><td><a href="help://globals_GlobalVariableGet">GlobalVariableGet</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
@@ -2940,7 +2940,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
         <tr><td><a href="help://indicators_iCustom">iCustom</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://indicators">technical indicators</a>, <a href="help://series">series access functions</a></td><td>ERR_HISTORY_UPDATE (4066)</td></tr>
-        <tr><td><a href="help://indicators">technical indicators OnArray</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_SOME_ARRAY_ERROR (4053)</td></tr>
+        <tr><td><a href="help://indicators">technical indicators OnArray</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://customind_IndicatorBuffers">IndicatorBuffers</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://customind_IndicatorDigits">IndicatorDigits</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://customind_IndicatorShortName">IndicatorShortName</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
@@ -3458,9 +3458,13 @@ entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger au
 Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basis_variables_static">static</a> deklariert werden.
 <br>
 <br>
-(4) Im <span style="color:red">Tester</span> verhält die Funktion sich teilweise fehlerhaft:<br>
-2009.08.18 22:00  EURUSD,H1: FXTradePro::EventListener.BandsCrossing(1)   ArrayCopyRates(EURUSD,M5) returned  0  [ERS_HISTORY_UPDATE] - korrekt<br>
-2009.11.11 18:00  EURUSD,H1: FXTradePro::EventListener.BandsCrossing(1)   ArrayCopyRates(EURUSD,M5) returned -1  [ERR_SOME_ARRAY_ERROR] - <span style="color:red">Fehler</span><br>
+<span style="color:red">Fehler:</span>
+<br>
+Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler ERR_ARRAY_ERROR ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind. 
+Dies gilt auch im Tester. In diesem Fall muß der Fehler ERR_ARRAY_ERROR wie ERS_HISTORY_UPDATE interpretiert werden.<br>
+<br>
+EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [ERS_HISTORY_UPDATE] - <span style="color:green">korrekt</span><br>
+EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [ERR_ARRAY_ERROR]	- <span style="color:red">Fehler</span><br>
 
 
 
@@ -9057,7 +9061,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
       For the current chart, the information about the amount of bars is in the predefined variable named <a href="help://predefined_variables_Bars">Bars</a>.
       </content>
       <example>
-  Print(&quot;Bar count on the 'EUROUSD' symbol with PERIOD_H1 is&quot;,iBars(&quot;EUROUSD&quot;,PERIOD_H1));
+  Print(&quot;Bar count on the 'EURUSD' symbol with PERIOD_H1 is&quot;,iBars(&quot;EURUSD&quot;,PERIOD_H1));
       </example>
       <parameter>
         type=string
@@ -9094,11 +9098,13 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
       <parameter>
         type=string
         name=symbol
+        def_value=NULL
         description=Symbol of the time series. NULL means the current symbol.
       </parameter>
       <parameter>
         type=int
         name=timeframe
+        def_value=NULL
         description=Timeframe of the time series, can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. NULL means the current chart timeframe.
       </parameter>
       <parameter>

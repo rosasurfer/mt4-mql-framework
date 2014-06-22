@@ -67,7 +67,7 @@ int onTick() {
       return(last_error);
 
    // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (keine for-Schleife über alle ChangedBars).
-   // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Sessionfortschritt und Relevanz der neuen Bar veranschaulicht.
+   // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Sessionfortschritt und Relevanz der wachsenden Bar veranschaulicht.
    // - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
 
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
@@ -225,7 +225,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    else return(!catch("GetPreviousSession(1) unsupported timeframe = "+ PeriodToStr(timeframe), ERR_RUNTIME_ERROR));
 
 
-   // (5) den FXT-Zeiten entsprechende Serverzeiten ermitteln
+   // (5) entsprechende Serverzeiten ermitteln
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
 

@@ -83,7 +83,8 @@
 #define ERR_INVALID_FUNCTION_PARAMSCNT                             4050    // invalid parameters count
 #define ERR_INVALID_FUNCTION_PARAMVALUE                            4051    // invalid parameter value
 #define ERR_STRING_FUNCTION_INTERNAL                               4052
-#define ERR_SOME_ARRAY_ERROR                                       4053    // some array error
+#define ERR_ARRAY_ERROR                                            4053    // array error
+#define ERR_SOME_ARRAY_ERROR                            ERR_ARRAY_ERROR    //                                        MetaQuotes-Alias
 #define ERR_TIMEFRAME_NOT_AVAILABLE                                4054    // accessed timeframe not available
 #define ERR_INCORRECT_SERIESARRAY_USING     ERR_TIMEFRAME_NOT_AVAILABLE    //                                        MetaQuotes-Alias
 #define ERR_CUSTOM_INDICATOR_ERROR                                 4055    // custom indicator error
@@ -102,7 +103,8 @@
 #define ERR_HISTORY_WILL_UPDATED                     ERS_HISTORY_UPDATE    //                                        MetaQuotes-Alias
 #define ERR_TRADE_ERROR                                            4067    // error in trade function
 #define ERR_END_OF_FILE                                            4099    // end of file
-#define ERR_SOME_FILE_ERROR                                        4100    // some file error
+#define ERR_FILE_ERROR                                             4100    // file error
+#define ERR_SOME_FILE_ERROR                              ERR_FILE_ERROR    //                                        MetaQuotes-Alias
 #define ERR_WRONG_FILE_NAME                                        4101
 #define ERR_TOO_MANY_OPENED_FILES                                  4102
 #define ERR_CANNOT_OPEN_FILE                                       4103
@@ -121,7 +123,8 @@
 #define ERR_NO_OBJECT_NAME                                         4204
 #define ERR_OBJECT_COORDINATES_ERROR                               4205
 #define ERR_NO_SPECIFIED_SUBWINDOW                                 4206
-#define ERR_SOME_OBJECT_ERROR                                      4207
+#define ERR_OBJECT_ERROR                                           4207
+#define ERR_SOME_OBJECT_ERROR                          ERR_OBJECT_ERROR    //                                        MetaQuotes-Alias
 
 // pewa: custom errors
 #define ERR_NOT_IMPLEMENTED                                        5000    // feature not implemented
