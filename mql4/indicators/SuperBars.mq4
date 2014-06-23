@@ -311,7 +311,7 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
          case PERIOD_M5 : sRange = "5 Minutes";  break;
          case PERIOD_M15: sRange = "15 Minutes"; break;
          case PERIOD_M30: sRange = "30 Minutes"; break;
-         case PERIOD_H1 : sRange = "Hour";       break;
+         case PERIOD_H1 : sRange = "1 Hour";     break;
          case PERIOD_H4 : sRange = "4 Hours";    break;
          case PERIOD_D1 : sRange = "Day";        break;
          case PERIOD_W1 : sRange = "Week";       break;
@@ -334,7 +334,7 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
       //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
       i++;
    }
-   return(!catch("DrawSuperBar(1)"));
+   return(!catch("DrawSuperBar(2)"));
 }
 
 
