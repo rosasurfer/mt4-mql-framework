@@ -457,21 +457,21 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    // (3) Daten formatieren
    //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation, Version
    string sSymbol         =                          lo.Currency      (lo);
-   string sLabel          =                          lo.Comment       (lo);                                                                                               sLabel          = StringRightPad(sLabel         ,  9, " ");
-   string sOperationType  = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringRightPad(sOperationType , 10, " ");
-   string sUnits          =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringLeftPad (sUnits         ,  5, " ");
-   string sOpenEquity     =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringLeftPad (sOpenEquity    , 10, " ");
-   string sOpenTime       =                 ifString(lo.OpenTime      (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime       = StringLeftPad (sOpenTime      , 20, " ");
-   string sOpenPriceLfx   =              DoubleToStr(lo.OpenPriceLfx  (lo), lo.Digits(lo));                                                                               sOpenPriceLfx   = StringLeftPad (sOpenPriceLfx  ,  9, " ");
-   string sOpenPriceTime  =                ifString(!lo.OpenPriceTime (lo), "0", TimeToStr(lo.OpenPriceTime(lo), TIME_FULL));                                             sOpenPriceTime  = StringLeftPad (sOpenPriceTime , 19, " ");
-   string sStopLossLfx    =                ifString(!lo.StopLossLfx   (lo), "0", DoubleToStr(lo.StopLossLfx(lo),   lo.Digits(lo)));                                       sStopLossLfx    = StringLeftPad (sStopLossLfx   ,  7, " ");  // "StopLos"
-   string sStopLossTime   =                ifString(!lo.StopLossTime  (lo), "0", TimeToStr(lo.StopLossTime(lo), TIME_FULL));                                              sStopLossTime   = StringLeftPad (sStopLossTime  , 19, " ");
-   string sTakeProfitLfx  =                ifString(!lo.TakeProfitLfx (lo), "0", DoubleToStr(lo.TakeProfitLfx(lo), lo.Digits(lo)));                                       sTakeProfitLfx  = StringLeftPad (sTakeProfitLfx ,  7, " ");  // "TakePro"
-   string sTakeProfitTime =                ifString(!lo.TakeProfitTime(lo), "0", TimeToStr(lo.TakeProfitTime(lo), TIME_FULL));                                            sTakeProfitTime = StringLeftPad (sTakeProfitTime, 19, " ");
-   string sCloseTime      =                 ifString(lo.CloseTime     (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime      = StringLeftPad (sCloseTime     , 20, " ");
-   string sClosePriceLfx  =                ifString(!lo.ClosePriceLfx (lo), "0", DoubleToStr(lo.ClosePriceLfx(lo), lo.Digits(lo)));                                       sClosePriceLfx  = StringLeftPad (sClosePriceLfx , 10, " ");
-   string sProfit         =                ifString(!lo.Profit        (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit         = StringLeftPad (sProfit        ,  7, " ");
-   string sDeviation      =                ifString(!lo.Deviation     (lo), "0", DoubleToStr(lo.Deviation(lo), lo.Digits(lo)));                                           sDeviation      = StringLeftPad (sDeviation     ,  9, " ");
+   string sLabel          =                          lo.Comment       (lo);                                                                                               sLabel          = StringPadRight(sLabel         ,  9, " ");
+   string sOperationType  = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringPadRight(sOperationType , 10, " ");
+   string sUnits          =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringPadLeft (sUnits         ,  5, " ");
+   string sOpenEquity     =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringPadLeft (sOpenEquity    , 10, " ");
+   string sOpenTime       =                 ifString(lo.OpenTime      (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime       = StringPadLeft (sOpenTime      , 20, " ");
+   string sOpenPriceLfx   =              DoubleToStr(lo.OpenPriceLfx  (lo), lo.Digits(lo));                                                                               sOpenPriceLfx   = StringPadLeft (sOpenPriceLfx  ,  9, " ");
+   string sOpenPriceTime  =                ifString(!lo.OpenPriceTime (lo), "0", TimeToStr(lo.OpenPriceTime(lo), TIME_FULL));                                             sOpenPriceTime  = StringPadLeft (sOpenPriceTime , 19, " ");
+   string sStopLossLfx    =                ifString(!lo.StopLossLfx   (lo), "0", DoubleToStr(lo.StopLossLfx(lo),   lo.Digits(lo)));                                       sStopLossLfx    = StringPadLeft (sStopLossLfx   ,  7, " ");  // "StopLos"
+   string sStopLossTime   =                ifString(!lo.StopLossTime  (lo), "0", TimeToStr(lo.StopLossTime(lo), TIME_FULL));                                              sStopLossTime   = StringPadLeft (sStopLossTime  , 19, " ");
+   string sTakeProfitLfx  =                ifString(!lo.TakeProfitLfx (lo), "0", DoubleToStr(lo.TakeProfitLfx(lo), lo.Digits(lo)));                                       sTakeProfitLfx  = StringPadLeft (sTakeProfitLfx ,  7, " ");  // "TakePro"
+   string sTakeProfitTime =                ifString(!lo.TakeProfitTime(lo), "0", TimeToStr(lo.TakeProfitTime(lo), TIME_FULL));                                            sTakeProfitTime = StringPadLeft (sTakeProfitTime, 19, " ");
+   string sCloseTime      =                 ifString(lo.CloseTime     (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime      = StringPadLeft (sCloseTime     , 20, " ");
+   string sClosePriceLfx  =                ifString(!lo.ClosePriceLfx (lo), "0", DoubleToStr(lo.ClosePriceLfx(lo), lo.Digits(lo)));                                       sClosePriceLfx  = StringPadLeft (sClosePriceLfx , 10, " ");
+   string sProfit         =                ifString(!lo.Profit        (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit         = StringPadLeft (sProfit        ,  7, " ");
+   string sDeviation      =                ifString(!lo.Deviation     (lo), "0", DoubleToStr(lo.Deviation(lo), lo.Digits(lo)));                                           sDeviation      = StringPadLeft (sDeviation     ,  9, " ");
       datetime newVersion = TimeGMT();
    string sVersion        = TimeToStr(newVersion, TIME_FULL);
 
@@ -599,7 +599,7 @@ void DummyCalls() {
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
-   string   StringLeftPad(string input, int length, string pad_string);
+   string   StringPadLeft(string input, int length, string pad_string);
    string   StringReplace.Recursive(string object, string search, string replace);
    bool     StringStartsWith(string object, string prefix);
    string   StringToLower(string value);

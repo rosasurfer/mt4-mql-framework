@@ -5344,11 +5344,27 @@ string StringReplace.Recursive(string object, string search, string replace) {
  *
  * @return string
  */
-string StringLeftPad(string input, int pad_length, string pad_string=" ") {
+string StringPadLeft(string input, int pad_length, string pad_string=" ") {
    while (StringLen(input) < pad_length) {
       input = StringConcatenate(pad_string, input);
    }
    return(input);
+}
+
+
+/**
+ * Alias für StringPadLeft()
+ *
+ * Erweitert einen String mit einem anderen String linksseitig auf eine gewünschte Mindestlänge.
+ *
+ * @param  string input      - Ausgangsstring
+ * @param  int    pad_length - gewünschte Mindestlänge
+ * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
+ *
+ * @return string
+ */
+string StringLeftPad(string input, int pad_length, string pad_string=" ") {
+   return(StringPadLeft(input, pad_length, pad_string));
 }
 
 
@@ -5361,11 +5377,27 @@ string StringLeftPad(string input, int pad_length, string pad_string=" ") {
  *
  * @return string
  */
-string StringRightPad(string input, int pad_length, string pad_string=" ") {
+string StringPadRight(string input, int pad_length, string pad_string=" ") {
    while (StringLen(input) < pad_length) {
       input = StringConcatenate(input, pad_string);
    }
    return(input);
+}
+
+
+/**
+ * Alias für StringPadRight
+ *
+ * Erweitert einen String mit einem anderen String rechtsseitig auf eine gewünschte Mindestlänge.
+ *
+ * @param  string input      - Ausgangsstring
+ * @param  int    pad_length - gewünschte Mindestlänge
+ * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
+ *
+ * @return string
+ */
+string StringRightPad(string input, int pad_length, string pad_string=" ") {
+   return(StringPadRight(input, pad_length, pad_string));
 }
 
 
@@ -5388,8 +5420,8 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
    if (lenPadStr < 1)
       return(_empty(catch("StringPad(1)   illegal parameter pad_string = \""+ pad_string +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   if (pad_type == STR_PAD_LEFT ) return(StringLeftPad (input, pad_length, pad_string));
-   if (pad_type == STR_PAD_RIGHT) return(StringRightPad(input, pad_length, pad_string));
+   if (pad_type == STR_PAD_LEFT ) return(StringPadLeft (input, pad_length, pad_string));
+   if (pad_type == STR_PAD_RIGHT) return(StringPadRight(input, pad_length, pad_string));
 
 
    if (pad_type == STR_PAD_BOTH) {
