@@ -147,9 +147,8 @@ int onInit() {
    */
 
 
-   // (2) Anzeigeoptionen
+   // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-
    return(catch("onInit(12)"));
 }
 

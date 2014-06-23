@@ -51,10 +51,10 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","SPREAD","STOPL
  * @return int - Fehlerstatus
  */
 int onInit() {
+   CreateLabels();
+
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-
-   CreateLabels();
    return(catch("onInit()"));
 }
 

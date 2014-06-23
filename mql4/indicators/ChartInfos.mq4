@@ -29,37 +29,37 @@ string label.lfxTradeAccount = "LfxTradeAccount";
 string label.stopoutLevel    = "StopoutLevel";
 
 
-int    appliedPrice = PRICE_MEDIAN;                         // Bid | Ask | Median (default)
-double leverage;                                            // Hebel zur UnitSize-Berechnung
+int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
+double leverage;                                                     // Hebel zur UnitSize-Berechnung
 
 
-// lokale Positionsdaten                                    // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
+// lokale Positionsdaten                                             // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
 bool   positionsAnalyzed;
 bool   isLocalPosition;
-double totalPosition;                                       // Gesamtposition total
-double longPosition;                                        // Gesamtposition long
-double shortPosition;                                       // Gesamtposition short
+double totalPosition;                                                // Gesamtposition total
+double longPosition;                                                 // Gesamtposition long
+double shortPosition;                                                // Gesamtposition short
 
-double local.position.conf    [][2];                        // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
-int    local.position.types   [][2];                        // Positionsdetails:           = {PositionType, DirectionType}
-double local.position.data    [][4];                        //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
+double local.position.conf    [][2];                                 // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
+int    local.position.types   [][2];                                 // Positionsdetails:           = {PositionType, DirectionType}
+double local.position.data    [][4];                                 //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
 
-// Remote-Positionsdaten                                    // Remote-Positionsdaten sind im Gegensatz zu den lokalen Positionsdaten statisch.
+// Remote-Positionsdaten                                             // Remote-Positionsdaten sind im Gegensatz zu den lokalen Positionsdaten statisch.
 int    remote.position.tickets[];
-int    remote.position.types  [][2];                        // Positionsdetails:           = {PositionType, DirectionType}
-double remote.position.data   [][4];                        //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
+int    remote.position.types  [][2];                                 // Positionsdetails:           = {PositionType, DirectionType}
+double remote.position.data   [][4];                                 //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
 
-#define TYPE_DEFAULT       0                                // PositionTypes: normale Terminalposition (local oder remote)
-#define TYPE_CUSTOM        1                                //                individuell konfigurierte reale Position
-#define TYPE_VIRTUAL       2                                //                individuell konfigurierte virtuelle Position (existiert nicht)
+#define TYPE_DEFAULT       0                                         // PositionTypes: normale Terminalposition (local oder remote)
+#define TYPE_CUSTOM        1                                         //                individuell konfigurierte reale Position
+#define TYPE_VIRTUAL       2                                         //                individuell konfigurierte virtuelle Position (existiert nicht)
 
-#define TYPE_LONG          1                                // DirectionTypes
+#define TYPE_LONG          1                                         // DirectionTypes
 #define TYPE_SHORT         2
 #define TYPE_HEDGE         3
 
-#define I_DIRECTLOTSIZE    0                                // Arrayindizes von *.position.data[]
+#define I_DIRECTLOTSIZE    0                                         // Arrayindizes von *.position.data[]
 #define I_HEDGEDLOTSIZE    1
 #define I_BREAKEVEN        2
 #define I_PROFIT           3
@@ -68,7 +68,7 @@ double remote.position.data   [][4];                        //                  
 // Font-Settings der Positionsanzeige
 string positions.fontName     = "MS Sans Serif";
 int    positions.fontSize     = 8;
-color  positions.fontColors[] = {Blue, DeepPink, Green};    // für unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
+color  positions.fontColors[] = {Blue, DeepPink, Green};             // unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
 
 
 #include <ChartInfos/init.mqh>
@@ -94,10 +94,11 @@ int onTick() {
       if (!UpdateSpread())           return(last_error);
       if (!UpdateUnitSize())         return(last_error);
       if (!UpdateStopoutLevel())     return(last_error);
-      if (IsVisualMode())
-         if (!UpdateTime())          return(last_error);
-      if (!QC.HandleTradeCommands()) return(last_error);             // verarbeitet LfxToTradeTerminal-Messages (TradeCommands)
+      if (!QC.HandleTradeCommands()) return(last_error);             // verarbeitet LfxToTradeTerminal-Messages
    }
+
+   if (IsVisualMode())                                               // nur im Tester
+      UpdateTime();
    return(last_error);
 }
 
@@ -122,7 +123,7 @@ bool CheckPendingLfxOrders() {
    datetime triggerTime;
    int orders = ArrayRange(lfxOrders, 0);
 
-   for (int i=0; i < orders; i++) {                                                                                  // TODO: Open/Close-Error irgendwie behandeln
+   for (int i=0; i < orders; i++) {                                                                                     // TODO: Open/Close-Error irgendwie behandeln
       if (los.IsOpenError (lfxOrders, i)) { log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set" ); continue; }
       if (los.IsCloseError(lfxOrders, i)) { log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set"); continue; }
 
@@ -719,7 +720,7 @@ bool UpdateStopoutLevel() {
 
 
 /**
- * Aktualisiert die OHLC-Anzeige (trotz des 'C' im Funktionsnamen wird der Close-Preis nicht ein weiteres mal angezeigt).
+ * Aktualisiert die OHLC-Anzeige.
  *
  * @return bool - Erfolgsstatus
  */

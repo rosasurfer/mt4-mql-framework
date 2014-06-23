@@ -35,10 +35,10 @@ string symbols[] = { "USD","AUD","CAD","CHF","EUR","GBP","JPY","NZD" };
  * @return int - Fehlerstatus
  */
 int onInit() {
+   CreateLabels();
+
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-
-   CreateLabels();
    return(catch("onInit()"));
 }
 
@@ -60,9 +60,6 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (prev_error == ERS_HISTORY_UPDATE)
-      ValidBars = 0;
-
    UpdateInfos();
    return(last_error);
 }
@@ -467,7 +464,7 @@ int UpdateInfos() {
 
    // Fehlerbehandlung
    int error = GetLastError();
-   if (error == ERS_HISTORY_UPDATE)
+   if (error == ERS_HISTORY_UPDATE)                                  // TODO: ERS_HISTORY_UPDATE für welches Symbol,Timeframe ???
       return(SetLastError(error));
    if (IsError(error) && error!=ERR_UNKNOWN_SYMBOL)
       return(catch("UpdateInfos(1)", error));
