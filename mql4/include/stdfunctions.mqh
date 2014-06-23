@@ -1092,7 +1092,7 @@ private*/bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringRightPad(PeriodDescription(NULL), 3, " "), "  ", message);
+   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", message);
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -2189,7 +2189,7 @@ void __DummyCalls() {
    bool   StringContains(string object, string substring);
    string StringLeft(string value, int n);
    string StringRight(string value, int n);
-   string StringRightPad(string input, int length, string pad_string);
+   string StringPadRight(string input, int length, string pad_string);
 
 #import "stdlib.dll"
    int    GetLastWin32Error();

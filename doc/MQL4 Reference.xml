@@ -7211,40 +7211,39 @@ To get the detailed error information, one has to call the <a href="help://check
       caption=ObjectSetText()
       type=bool
       <content>
-Changes the object description. For objects of OBJ_TEXT and OBJ_LABEL, this description is shown as a text line in the chart.
-If the function succeeds, the returned value will be TRUE. Otherwise, it is FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError() function</a>.<br/>
-Parameters of <i>font_size</i>, <i>font_name</i> and <i>text_color</i> are used for objects of OBJ_TEXT and OBJ_LABEL only.
-For objects of <a href="help://constants_objects">other types</a>, these parameters are ignored.
-<br/><b>See also</b> <a href="help://objects_ObjectDescription">ObjectDescription()</a> function.
+Changes the object description. For objects of OBJ_TEXT and OBJ_LABEL the description is shown as text in the chart.
+Returns TRUE on success, otherwise FALSE. Call <a href="help://check_GetLastError">GetLastError()</a> to get detailed error information.<br/>
+The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of OBJ_TEXT and OBJ_LABEL only.
+For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.
+<br/><b>See also</b> <a href="help://objects_ObjectDescription">ObjectDescription()</a>.
       </content>
       example=ObjectSetText(&quot;text_object&quot;, &quot;Hello world!&quot;, 10, &quot;Times New Roman&quot;, Green);
       <parameter>
         type=string
         name=name
-        description=Object name.
+        description=object name
       </parameter>
       <parameter>
         type=string
         name=text
-        description=A text describing the object.
+        description=text describing the object
       </parameter>
       <parameter>
         type=int
-        name=font_size
-        description=Font size in points.
+        name=fontSize
+        description=font size in points
       </parameter>
       <parameter>
         type=string
-        name=font
+        name=fontName
         def_value=NULL
-        description=Font name.
+        description=a system font or an installed font name
       </parameter>
       <parameter>
         type=color
-        name=text_color
+        name=fontColor
         def_value=CLR_NONE
-        description=Text color.
+        description=text color
       </parameter>
     </function>
 

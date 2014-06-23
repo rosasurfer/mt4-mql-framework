@@ -2946,7 +2946,7 @@ bool ValidateConfiguration(bool interactive) {
          key   = StringTrim(elems[0]);
          value = StringTrim(StringLeft(elems[1], -1));
          if (!StringLen(value))                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(50)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
-         //debug("()   key="+ StringRightPad("\""+ key +"\"", 9, " ") +"   value=\""+ value +"\"");
+         //debug("()   key="+ StringPadRight("\""+ key +"\"", 9, " ") +"   value=\""+ value +"\"");
 
          if (key == "@trend") {
             if (stop.trend.condition)                  return(_false(ValidateConfig.HandleError("ValidateConfiguration(51)", "Invalid StopConditions = \""+ StopConditions +"\" (multiple trend conditions)", interactive)));
@@ -4770,7 +4770,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
       }
       // -----------------------------------
       sequence.totalPL = NormalizeDouble(sequence.stopsPL + sequence.closedPL + sequence.floatingPL, 2);
-      //debug("Sync.ProcessEvents()   "+ id +"  "+ ifString(ticket, "#"+ ticket, "") +"  "+ TimeToStr(time, TIME_FULL) +" ("+ time +")  "+ StringRightPad(StatusToStr(status), 20, " ") + StringRightPad(BreakevenEventToStr(type), 19, " ") +"  sequence.level="+ ifInt(direction==D_LONG, sequence.level.L, sequence.level.S) +"  index="+ index +"  closed="+ closedPositions +"  reopened="+ reopenedPositions +"  recalcBE="+recalcBreakeven +"  visibleBE="+ breakevenVisible);
+      //debug("Sync.ProcessEvents()   "+ id +"  "+ ifString(ticket, "#"+ ticket, "") +"  "+ TimeToStr(time, TIME_FULL) +" ("+ time +")  "+ StringPadRight(StatusToStr(status), 20, " ") + StringPadRight(BreakevenEventToStr(type), 19, " ") +"  sequence.level="+ ifInt(direction==D_LONG, sequence.level.L, sequence.level.S) +"  index="+ index +"  closed="+ closedPositions +"  reopened="+ reopenedPositions +"  recalcBE="+recalcBreakeven +"  visibleBE="+ breakevenVisible);
 
       lastId     = id;
       lastTime   = time;
