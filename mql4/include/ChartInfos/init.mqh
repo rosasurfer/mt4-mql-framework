@@ -4,9 +4,6 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Datenanzeige ausschalten
-   SetIndexLabel(0, NULL);
-
    // Konfiguration für Preisanzeige auswerten
    string price = "bid";
    if (!IsVisualMode())                                              // im Tester wird immer PRICE_BID verwendet (ist ausreichend und schneller)
@@ -27,6 +24,9 @@ int onInit() {
 
    // Label erzeugen
    CreateLabels();
+
+   // Datenanzeige ausschalten
+   SetIndexLabel(0, NULL);
    return(catch("onInit(2)"));
 }
 

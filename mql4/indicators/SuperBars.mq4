@@ -18,7 +18,8 @@ extern color Color.CloseMarker = Black;               // Farbe der Close-Marker 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int superTimeframe;
+int    superTimeframe;
+string label.ohlc = "OHLC";                                          // Label für Superrange-Anzeige
 
 
 /**
@@ -39,6 +40,9 @@ int onInit() {
       case PERIOD_W1 :
       case PERIOD_MN1: superTimeframe = PERIOD_Q1;  break;
    }
+
+   // Label erzeugen
+   CreateLabels();
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
@@ -96,7 +100,7 @@ int onTick() {
    }
 
    datetime endTime = GetTickCount();
-   //if (ChangedBars > 1) debug("onTick(0.1)   ChangedBars="+ ChangedBars +"  i="+ i +"  time: "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   //if (ChangedBars > 1) debug("onTick(2)   ChangedBars="+ ChangedBars +"  loop("+ i +"x"+ PeriodDescription(superTimeframe) +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
    return(last_error);
 }
 
@@ -272,8 +276,8 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    // Superbar zeichnen
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
-      int closeBar_j = closeBar; /*j: justified*/                    // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
-      if (closeBar > 0) closeBar_j--;                                // jedoch nicht bei der jüngsten Bar[0]
+      int closeBar_j = closeBar; /*j: justified*/                          // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
+      if (closeBar > 0) closeBar_j--;                                      // jedoch nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet (label, OBJPROP_COLOR, barColor);
       ObjectSet (label, OBJPROP_BACK , true    );
@@ -299,13 +303,62 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
       }
    }
 
+   // bei Superbar[0] OHL-Anzeige aktualisieren
+   if (closeBar == 0) {
+      string sRange = "";
+      switch (superTimeframe) {
+         case PERIOD_M1 : sRange = "1 Minute";   break;
+         case PERIOD_M5 : sRange = "5 Minutes";  break;
+         case PERIOD_M15: sRange = "15 Minutes"; break;
+         case PERIOD_M30: sRange = "30 Minutes"; break;
+         case PERIOD_H1 : sRange = "Hour";       break;
+         case PERIOD_H4 : sRange = "4 Hours";    break;
+         case PERIOD_D1 : sRange = "Day";        break;
+         case PERIOD_W1 : sRange = "Week";       break;
+         case PERIOD_MN1: sRange = "Month";      break;
+         case PERIOD_Q1 : sRange = "Quarter";    break;
+      }
+      //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
+      string fontName = "";
+      int    fontSize = 8;                                                 // "MS Sans Serif",8 entspricht in allen Builds der Menüschrift
+      ObjectSetText(label.ohlc, sRange, fontSize, fontName, Black);
+
+      int error = GetLastError();
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
+         return(!catch("DrawSuperBar(1)", error));
+   }
+
 
    static int i;
    if (i <= 5) {
       //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
       i++;
    }
-   return(!catch("DrawSuperBar()"));
+   return(!catch("DrawSuperBar(1)"));
+}
+
+
+/**
+ * Erzeugt Chartlabel.
+ *
+ * @return int - Fehlerstatus
+ */
+int CreateLabels() {
+   // OHLC-Label
+   label.ohlc = __NAME__ +"."+ label.ohlc;
+
+   if (ObjectFind(label.ohlc) == 0)
+      ObjectDelete(label.ohlc);
+   if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 95);
+      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4 );
+      ObjectSetText(label.ohlc, " ", 1);
+      PushObject   (label.ohlc);
+   }
+   else GetLastError();
+
+   return(catch("CreateLabels(1)"));
 }
 
 
