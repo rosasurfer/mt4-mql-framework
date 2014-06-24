@@ -6,20 +6,22 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
-#include <core/indicator.mqh>
 #include <stdlib.mqh>
 
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern color Color.Bar.up      = C'0,210,0';          // Farbe der Up-Bars          Green, Lime
-extern color Color.Bar.down    = C'255,47,47';        // Farbe der Down-Bars        Red
-extern color Color.CloseMarker = Black;               // Farbe der Close-Marker     C'164,164,164'
+extern color Color.BarUp        = C'215,255,215';     // Up-Bars              kräftiger: C'170,255,170'     // neu: C'0,210,0'      Green, Lime
+extern color Color.BarDown      = C'255,230,230';     // Down-Bars            kräftiger: C'255,193,193'     // neu: C'255,47,47'    Red
+extern color Color.BarUnchanged = C'232,232,232';     // unveränderte Bars                                  // neu: Gray
+extern color Color.CloseMarker  = C'164,164,164';     // Close-Marker                                       // neu: Black
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include <core/indicator.mqh>
+
 
 int    superTimeframe;
-string label.ohlc = "OHLC";                                          // Label für Superrange-Anzeige
+string label.superbar = "SuperBar";                                     // Label für Chartanzeige
 
 
 /**
@@ -28,7 +30,13 @@ string label.ohlc = "OHLC";                                          // Label fü
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Timeframe der Superbars bestimmen
+   // Color-Validierung
+   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // CLR_NONE kann u.U. vom Terminal falsch gesetzt worden sein.
+   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;
+   if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
+   if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
+
+   // anzuzeigenden Timeframe der Superbars bestimmen
    switch (Period()) {
       case PERIOD_M1 :
       case PERIOD_M5 :
@@ -46,7 +54,7 @@ int onInit() {
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-   return(catch("onInit()")); x.start();
+   return(catch("onInit()"));
 }
 
 
@@ -77,8 +85,6 @@ int onTick() {
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int i,   openBar, closeBar, lastChartBar=Bars-1;
 
-   datetime startTime = GetTickCount();
-
    // Schleife über alle Supersessions von "jung" nach "alt"
    while (true) { i++;
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
@@ -86,10 +92,9 @@ int onTick() {
 
       // Ab PERIOD_D1 ist die Barauflösung der Broker nur noch 1 Tag (keine Minuten mehr; praktisch fehlt der Zeitzonenoffset).
       if (Period() >= PERIOD_D1) {
-         openTime.srv  = openTime.fxt;                               // TODO: Außerdem ist hier die berüchtigte 6. Sonntags-Bar möglich (z.B. bei Forex Ltd.)
+         openTime.srv  = openTime.fxt;                               // TODO: Hier ist zusätzlich die berüchtigte 6. Sonntags-Bar möglich (z.B. bei Forex Ltd).
          closeTime.srv = closeTime.fxt;
       }
-
                                                                      // Da hier immer der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
       openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal (und nur hier).
       if (openBar == EMPTY_VALUE) return(SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
@@ -105,9 +110,6 @@ int onTick() {
       if (openBar >= ChangedBars-1)
          break;                                                      // Superbars bis max. ChangedBars aktualisieren
    }
-
-   datetime endTime = GetTickCount();
-   //if (ChangedBars > 1) debug("onTick(2)   ChangedBars="+ ChangedBars +"  loop("+ i +"x"+ PeriodDescription(superTimeframe) +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
    return(last_error);
 }
 
@@ -132,7 +134,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    if (timeframe == PERIOD_D1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Tages initialisieren
       if (!openTime.fxt)
-         openTime.fxt = TimeCurrent() + 1*DAY;     // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
+         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*DAY;
 
       // openTime.fxt auf 00:00 Uhr des vorherigen Tages setzen
       openTime.fxt -= (1*DAY + TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));
@@ -151,7 +153,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    else if (timeframe == PERIOD_W1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der nächsten Woche initialisieren
       if (!openTime.fxt)
-         openTime.fxt = TimeCurrent() + 7*DAYS;    // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
+         openTime.fxt = GmtToFxtTime(TimeGMT()) + 7*DAYS;
 
       // openTime.fxt auf Montag, 00:00 Uhr der vorherigen Woche setzen
       openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));    // 00:00 des aktuellen Tages
@@ -166,8 +168,8 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    // (3) PERIOD_MN1
    else if (timeframe == PERIOD_MN1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Monats initialisieren
-      if (!openTime.fxt)                           // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
-         openTime.fxt = TimeCurrent() + 1*MONTH;   // 31 Tage oder mehr sind ok, wird falls ungenau als Kurslücke interpretiert und ausgelassen
+      if (!openTime.fxt)                                                                                                // Sollte dies der übernächste Monat sein, wird dies
+         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*MONTH;                                                              // als Kurslücke interpretiert und übersprungen.
 
       openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));    // 00:00 des aktuellen Tages
 
@@ -194,8 +196,8 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    // (4) PERIOD_Q1
    else if (timeframe == PERIOD_Q1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Quartals initialisieren
-      if (!openTime.fxt)                           // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
-         openTime.fxt = TimeCurrent() + 1*QUARTER; // 3 Monate oder mehr sind ok, wird falls ungenau als Kurslücke interpretiert und ausgelassen
+      if (!openTime.fxt)                                                                                             // Sollte dies das übernächste Quartal sein, wird dies
+         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*QUARTER;                                                         // als Kurslücke interpretiert und übersprungen.
 
       openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt)); // 00:00 des aktuellen Tages
 
@@ -241,12 +243,11 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
 
-
-   static int i;
-   if (i <= 10) {
-      //debug("GetPreviousSession("+ PeriodDescription(timeframe) +")   "+ i +" from '"+ DateToStr(openTime.fxt, "w D.M.Y H:I:S") +"' to '"+ DateToStr(closeTime.fxt, "w D.M.Y H:I:S") +"'");
-      i++;
-   }
+   //static int i;
+   //if (i <= 10) {
+   //   debug("GetPreviousSession("+ PeriodDescription(timeframe) +")   "+ i +" from '"+ DateToStr(openTime.fxt, "w D.M.Y H:I:S") +"' to '"+ DateToStr(closeTime.fxt, "w D.M.Y H:I:S") +"'");
+   //   i++;
+   //}
    return(!catch("GetPreviousSession(2)"));
 }
 
@@ -266,10 +267,10 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
 
    // Farbe bestimmen
-   color barColor = Gray;     // C'232,232,232'                                                       // Ausgangsfarbe ist hellgrau,
+   color barColor = Color.BarUnchanged;
    if (MathMax(Open[openBar],  Close[closeBar])/MathMin(Open[openBar], Close[closeBar]) > 1.0005) {   // ab ca. 5-8 pip Unterschied grün oder rot
-      if      (Open[openBar] < Close[closeBar]) barColor = Color.Bar.up;
-      else if (Open[openBar] > Close[closeBar]) barColor = Color.Bar.down;
+      if      (Open[openBar] < Close[closeBar]) barColor = Color.BarUp;
+      else if (Open[openBar] > Close[closeBar]) barColor = Color.BarDown;
    }
 
    // Label definieren
@@ -329,66 +330,41 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
       //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
       string fontName = "";
       int    fontSize = 8;                                                 // "MS Sans Serif",8 entspricht in allen Builds der Menüschrift
-      ObjectSetText(label.ohlc, sRange, fontSize, fontName, Black);
+      ObjectSetText(label.superbar, sRange, fontSize, fontName, Black);
 
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
          return(!catch("DrawSuperBar(1)", error));
    }
 
-
-   static int i;
-   if (i <= 5) {
-      //debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
-      i++;
-   }
+   //static int i;
+   //if (i <= 5) {
+   //   debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
+   //   i++;
+   //}
    return(!catch("DrawSuperBar(2)"));
 }
 
 
 /**
- * Erzeugt Chartlabel.
+ * Erzeugt das Label für die Chartanzeige.
  *
  * @return int - Fehlerstatus
  */
 int CreateLabels() {
-   // OHLC-Label
-   label.ohlc = __NAME__ +"."+ label.ohlc;
+   // SuperBar-Label
+   label.superbar = __NAME__ +"."+ label.superbar;
 
-   if (ObjectFind(label.ohlc) == 0)
-      ObjectDelete(label.ohlc);
-   if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 115);
-      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
-      ObjectSetText(label.ohlc, " ", 1);
-      PushObject   (label.ohlc);
+   if (ObjectFind(label.superbar) == 0)
+      ObjectDelete(label.superbar);
+   if (ObjectCreate(label.superbar, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.superbar, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label.superbar, OBJPROP_XDISTANCE, 115);
+      ObjectSet    (label.superbar, OBJPROP_YDISTANCE, 4  );
+      ObjectSetText(label.superbar, " ", 1);
+      PushObject   (label.superbar);
    }
    else GetLastError();
 
-   return(catch("CreateLabels(1)"));
-}
-
-
-/**
- * Ausschnitt aus "core/indicator.mqh" zur besseren Übersicht
- *
- * @return int - Fehlerstatus
- */
-int x.start() {
-   return(0);
-
-   // ...
-   prev_error = last_error;
-   last_error = NO_ERROR;
-
-   ValidBars = IndicatorCounted();
-   if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
-   else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
-   ChangedBars = Bars - ValidBars;
-
-   onTick();
-   // ...
-
-   return(last_error);
+   return(catch("CreateLabels()"));
 }

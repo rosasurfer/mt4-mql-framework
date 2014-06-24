@@ -313,9 +313,9 @@ double GetCommission() {
  *  transition[I_TRANSITION_OFFSET] - GMT-Offset nach dem Wechsel
  *  transition[I_TRANSITION_DST   ] - ob nach dem Wechsel DST gilt oder nicht
  */
-bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], int &nextTransition[]) {
-   if (serverTime < 0)              return(!catch("GetServerTimezoneTransitions(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (serverTime >= D'2038.01.01') return(!catch("GetServerTimezoneTransitions(2)   too large parameter serverTime = '"+ DateToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_FUNCTION_PARAMVALUE));
+bool GetTimezoneTransitions(datetime serverTime, int &lastTransition[], int &nextTransition[]) {
+   if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)   invalid parameter serverTime = "+ serverTime +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)   too large parameter serverTime = '"+ DateToStr(serverTime, "w, D.M.Y H:I") +"' (unsupported)", ERR_INVALID_FUNCTION_PARAMVALUE));
    string timezone = GetServerTimezone();
    if (!StringLen(timezone))        return(false);
    /**
@@ -390,7 +390,7 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
          if (serverTime >= toDST) /*&&*/ if (toDST != -1) { lastTransition[I_TRANSITION_TIME] = toDST; lastTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; lastTransition[I_TRANSITION_DST] = true;  break; }
       }
 
-      else return(!catch("GetServerTimezoneTransitions(3)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
+      else return(!catch("GetTimezoneTransitions(3)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
       i--;                                                           // letzter Wechsel war früher
    }
@@ -448,7 +448,7 @@ bool GetServerTimezoneTransitions(datetime serverTime, int &lastTransition[], in
          if (serverTime < toSTD) /*&&*/ if (toSTD!=INT_MAX) { nextTransition[I_TRANSITION_TIME] = toSTD; nextTransition[I_TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; nextTransition[I_TRANSITION_DST] = false; break; }
       }
 
-      else return(!catch("GetServerTimezoneTransitions(4)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
+      else return(!catch("GetTimezoneTransitions(4)   unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
 
       i++;                                                           // nächster Wechsel ist später
    }
