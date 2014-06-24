@@ -83,6 +83,13 @@ int onTick() {
    while (true) { i++;
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(last_error);
+
+      // Ab PERIOD_D1 ist die Barauflösung der Broker nur noch 1 Tag (keine Minuten mehr; praktisch fehlt der Zeitzonenoffset).
+      if (Period() >= PERIOD_D1) {
+         openTime.srv  = openTime.fxt;                               // TODO: Außerdem ist hier die berüchtigte 6. Sonntags-Bar möglich (z.B. bei Forex Ltd.)
+         closeTime.srv = closeTime.fxt;
+      }
+
                                                                      // Da hier immer der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
       openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal (und nur hier).
       if (openBar == EMPTY_VALUE) return(SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
@@ -120,9 +127,10 @@ int onTick() {
 bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
    int month, dom, dow;
 
+
    // (1) PERIOD_D1
    if (timeframe == PERIOD_D1) {
-      // ist openTime.fxt nicht gesetzt, mit Zeitpunkt des nächsten Tages initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Tages initialisieren
       if (!openTime.fxt)
          openTime.fxt = TimeCurrent() + 1*DAY;     // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
 
@@ -141,7 +149,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
    // (2) PERIOD_W1
    else if (timeframe == PERIOD_W1) {
-      // ist openTime.fxt nicht gesetzt, mit Zeitpunkt der nächsten Woche initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der nächsten Woche initialisieren
       if (!openTime.fxt)
          openTime.fxt = TimeCurrent() + 7*DAYS;    // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
 
@@ -157,7 +165,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
    // (3) PERIOD_MN1
    else if (timeframe == PERIOD_MN1) {
-      // ist openTime.fxt nicht gesetzt, mit Zeitpunkt des nächsten Monats initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Monats initialisieren
       if (!openTime.fxt)                           // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
          openTime.fxt = TimeCurrent() + 1*MONTH;   // 31 Tage oder mehr sind ok, wird falls ungenau als Kurslücke interpretiert und ausgelassen
 
@@ -185,7 +193,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
    // (4) PERIOD_Q1
    else if (timeframe == PERIOD_Q1) {
-      // ist openTime.fxt nicht gesetzt, mit Zeitpunkt des nächsten Quartals initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Quartals initialisieren
       if (!openTime.fxt)                           // TODO: TimeCurrent() kann NULL sein, statt dessen Serverzeit selbst berechnen
          openTime.fxt = TimeCurrent() + 1*QUARTER; // 3 Monate oder mehr sind ok, wird falls ungenau als Kurslücke interpretiert und ausgelassen
 
@@ -235,7 +243,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
 
    static int i;
-   if (i <= 5) {
+   if (i <= 10) {
       //debug("GetPreviousSession("+ PeriodDescription(timeframe) +")   "+ i +" from '"+ DateToStr(openTime.fxt, "w D.M.Y H:I:S") +"' to '"+ DateToStr(closeTime.fxt, "w D.M.Y H:I:S") +"'");
       i++;
    }
@@ -307,16 +315,16 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    if (closeBar == 0) {
       string sRange = "";
       switch (superTimeframe) {
-         case PERIOD_M1 : sRange = "1 Minute";   break;
-         case PERIOD_M5 : sRange = "5 Minutes";  break;
-         case PERIOD_M15: sRange = "15 Minutes"; break;
-         case PERIOD_M30: sRange = "30 Minutes"; break;
-         case PERIOD_H1 : sRange = "1 Hour";     break;
-         case PERIOD_H4 : sRange = "4 Hours";    break;
-         case PERIOD_D1 : sRange = "Day";        break;
-         case PERIOD_W1 : sRange = "Week";       break;
-         case PERIOD_MN1: sRange = "Month";      break;
-         case PERIOD_Q1 : sRange = "Quarter";    break;
+         case PERIOD_M1 : sRange = "Superbars: 1 Minute";   break;
+         case PERIOD_M5 : sRange = "Superbars: 5 Minutes";  break;
+         case PERIOD_M15: sRange = "Superbars: 15 Minutes"; break;
+         case PERIOD_M30: sRange = "Superbars: 30 Minutes"; break;
+         case PERIOD_H1 : sRange = "Superbars: 1 Hour";     break;
+         case PERIOD_H4 : sRange = "Superbars: 4 Hours";    break;
+         case PERIOD_D1 : sRange = "Superbars: Days";       break;
+         case PERIOD_W1 : sRange = "Superbars: Weeks";      break;
+         case PERIOD_MN1: sRange = "Superbars: Months";     break;
+         case PERIOD_Q1 : sRange = "Superbars: Quarters";   break;
       }
       //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
       string fontName = "";
@@ -351,8 +359,8 @@ int CreateLabels() {
       ObjectDelete(label.ohlc);
    if (ObjectCreate(label.ohlc, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.ohlc, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 95);
-      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4 );
+      ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 115);
+      ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
       ObjectSetText(label.ohlc, " ", 1);
       PushObject   (label.ohlc);
    }
