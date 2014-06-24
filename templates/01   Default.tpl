@@ -8770,10 +8770,9 @@ name=SuperBars
 flags=339
 window_num=0
 <inputs>
-SuperBars=200
 </inputs>
 </expert>
-period_flags=31
+period_flags=255
 show_data=0
 </indicator>
 
