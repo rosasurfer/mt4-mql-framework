@@ -101,14 +101,14 @@
     caption=Syntax
 
     <content>
-      <p>Syntax of MQL4 is much a C-like syntax, apart from some features:</p>
-      <ul><li><p>no address arithmetic;</p></li>
-      <li><p>no operator do ... while;</p></li>
-      <li><p>no operator goto ...;</p></li>
-      <li><p>no operation of [condition]?[expression 1]:[expression 2];</p></li>
-      <li><p>no compound data types (structures);</p></li>
-      <li><p>complex assignments are impossible; for example, val1=val2=0; arr[i++]=val; cond=(cnt=OrdersTotal)>0; etc.;</p></li>
-      <li><p>evaluation of a logical expression is always completed, never early terminated.</p></li>
+      <p>Syntax of MQL4 is similar to C apart from some features:</p>
+      <ul><li><p>no pointer arithmetic</p></li>
+      <li><p>no <i>do ... while</i> operator</p></li>
+      <li><p>no <i>goto</i> operator </p></li>
+      <li><p>no ternary operator <i>[condition] ? [expression1] : [expression2]</i></p></li>
+      <li><p>no compound data types (structures)</p></li>
+      <li><p>complex assignments are not possible, none of the following will work: val1=val2=0; arr[i++]=val; cond=(cnt=OrdersTotal)>0;</p></li>
+      <li><p>evaluation of logical expressions is always completed, never early terminated</p></li>
       </ul>
     </content>
 
@@ -116,15 +116,16 @@
       tag=basis_syntax_comments
       caption=Comments
       <content>
-        <p>Multiline comments start with /* symbols and end with */ symbols. Such comments cannot be nested. Single
-        comments start with // symbols, end with the symbol of a new line and can be nested into multiline comments. Comments are
-        allowed where blank spaces are possible and tolerate any number of spaces.</p>
+        <p>
+        Single-line comments start with // symbols and end at the end of the line.<br>
+        Multiline comments start with /* symbols and end with */ symbols.<br>
+        Comments are allowed wherever white space is allowed. Leading white space before comments is allowed, too.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
 // single comment
 
 /*  multi-
-    line         // nested single comment
+    line         
     comment
 */</pre>
       </content>
