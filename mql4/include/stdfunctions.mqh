@@ -257,7 +257,8 @@ int      last_error;                                        // der letzte Fehler
 #define OBJ_PERIOD_W1          0x0080           // 128: object is shown on weekly charts
 #define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on monthly charts
 #define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes: {M1 | M5 | M15 | M30 | H1 | H4 | D1 | W1  | MN1}
-#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL
+#define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
+#define OBJ_ALL_PERIODS        OBJ_PERIODS_ALL  // MetaQuotes-Alias (zusätzlich hat NULL denselben Effekt wie OBJ_PERIODS_ALL)
 
 
 // Timeframe-Flags, siehe EventListener.Baropen()

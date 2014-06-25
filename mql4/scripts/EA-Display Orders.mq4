@@ -55,7 +55,7 @@ int onStart() {
          if (ObjectFind(label) != 0) {
             if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
                return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
-            ObjectSet(label, OBJPROP_TIMEFRAMES, EMPTY);                         // hidden on all timeframes
+            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          ObjectSetText(label, "orderdisplay", 1);
       }

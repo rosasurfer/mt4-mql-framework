@@ -2309,7 +2309,7 @@ int ShowStatus(int error=NO_ERROR) {
    if (ObjectFind(label) != 0) {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
          return(catch("ShowStatus(2)"));
-      ObjectSet(label, OBJPROP_TIMEFRAMES, EMPTY);                   // hidden on all timeframes
+      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
    if (status == STATUS_UNINITIALIZED) ObjectDelete(label);
    else                                ObjectSetText(label, StringConcatenate(Sequence.ID, "|", status), 1);
@@ -2465,7 +2465,7 @@ int StoreStickyStatus() {
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ifString(!sequenceId, "0", Sequence.ID), 1);          // String: "0" (STATUS_UNINITIALIZED) oder Sequence.ID (enthält ggf. "T")
 
    if (StringLen(StringTrim(Sequence.StatusLocation)) > 0) {
@@ -2473,7 +2473,7 @@ int StoreStickyStatus() {
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                        // hidden on all timeframes
+      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(label, Sequence.StatusLocation, 1);
    }
 
@@ -2481,35 +2481,35 @@ int StoreStickyStatus() {
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
    label = StringConcatenate(__NAME__, ".sticky.orderDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
    label = StringConcatenate(__NAME__, ".sticky.StartStop.Color");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", StartStop.Color), 1);
 
    label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
    label = StringConcatenate(__NAME__, ".sticky.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", last_error==ERR_CANCELLED_BY_USER), 1);
 
    return(catch("StoreStickyStatus()"));

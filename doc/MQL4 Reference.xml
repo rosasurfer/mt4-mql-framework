@@ -2174,25 +2174,24 @@ Objects can have 1-3 coordinates related to type.
       caption=Object visibility
       <keywords>
 ;OBJ_PERIOD_M1;OBJ_PERIOD_M5;OBJ_PERIOD_M15;OBJ_PERIOD_M30;OBJ_PERIOD_H1;OBJ_PERIOD_H4;
-;OBJ_PERIOD_D1;OBJ_PERIOD_W1;OBJ_PERIOD_MN1;OBJ_ALL_PERIODS;
+;OBJ_PERIOD_D1;OBJ_PERIOD_W1;OBJ_PERIOD_MN1;OBJ_PERIODS_ALL;
       </keywords>
       <content>
-<p>Timeframes where object may be shown. Used in <a href="help://objects_ObjectSet">ObjectSet()</a>
-function to set OBJPROP_TIMEFRAMES property.</p>
+<p>Timeframe flags where an object is shown (can be combined). Used with <a href="help://objects_ObjectSet">ObjectSet()</a> to set the <a href="help://constants_objects_properties">OBJPROP_TIMEFRAMES</a> property.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td>OBJ_PERIOD_M1</td><td>0x0001</td><td>Object shown is only on 1-minute charts.</td></tr>
-<tr><td>OBJ_PERIOD_M5</td><td>0x0002</td><td>Object shown is only on 5-minute charts.</td></tr>
-<tr><td>OBJ_PERIOD_M15</td><td>0x0004</td><td>Object shown is only on 15-minute charts.</td></tr>
-<tr><td>OBJ_PERIOD_M30</td><td>0x0008</td><td>Object shown is only on 30-minute charts.</td></tr>
-<tr><td>OBJ_PERIOD_H1</td><td>0x0010</td><td>Object shown is only on 1-hour charts.</td></tr>
-<tr><td>OBJ_PERIOD_H4</td><td>0x0020</td><td>Object shown is only on 4-hour charts.</td></tr>
-<tr><td>OBJ_PERIOD_D1</td><td>0x0040</td><td>Object shown is only on daily charts.</td></tr>
-<tr><td>OBJ_PERIOD_W1</td><td>0x0080</td><td>Object shown is only on weekly charts.</td></tr>
-<tr><td>OBJ_PERIOD_MN1</td><td>0x0100</td><td>Object shown is only on monthly charts.</td></tr>
-<tr><td>OBJ_ALL_PERIODS</td><td>0x01FF</td><td>Object shown is on all timeframes.</td></tr>
-<tr><td>NULL</td><td>0</td><td>Object shown is on all timeframes.</td></tr>
-<tr><td>EMPTY</td><td>-1</td><td>Hidden object on all timeframes.</td></tr>
+<tr><td>OBJ_PERIOD_M1</td><td>0x0001</td><td>Object is shown on 1-minute charts.</td></tr>
+<tr><td>OBJ_PERIOD_M5</td><td>0x0002</td><td>Object is shown on 5-minute charts.</td></tr>
+<tr><td>OBJ_PERIOD_M15</td><td>0x0004</td><td>Object is shown on 15-minute charts.</td></tr>
+<tr><td>OBJ_PERIOD_M30</td><td>0x0008</td><td>Object is shown on 30-minute charts.</td></tr>
+<tr><td>OBJ_PERIOD_H1</td><td>0x0010</td><td>Object is shown on 1-hour charts.</td></tr>
+<tr><td>OBJ_PERIOD_H4</td><td>0x0020</td><td>Object is shown on 4-hour charts.</td></tr>
+<tr><td>OBJ_PERIOD_D1</td><td>0x0040</td><td>Object is shown on daily charts.</td></tr>
+<tr><td>OBJ_PERIOD_W1</td><td>0x0080</td><td>Object is shown on weekly charts.</td></tr>
+<tr><td>OBJ_PERIOD_MN1</td><td>0x0100</td><td>Object is shown on monthly charts.</td></tr>
+<tr><td>OBJ_PERIODS_ALL</td><td>0x01FF</td><td>Object is shown on all timeframes.</td></tr>
+<tr><td>NULL</td><td>0</td><td>Object is shown on all timeframes.</td></tr>
+<tr><td>OBJ_PERIODS_NONE</td><td>-1</td><td>Object is hidden on all timeframes.</td></tr>
 </table>
       </content>
     </text>

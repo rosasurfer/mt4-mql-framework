@@ -672,21 +672,21 @@ int StoreStickyStatus() {
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StartConditions, 1);
 
    label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
    label = StringConcatenate(__NAME__, ".sticky.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, EMPTY);                           // hidden on all timeframes
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", (last_error==ERR_CANCELLED_BY_USER)), 1);
 
    return(catch("StoreStickyStatus()"));
