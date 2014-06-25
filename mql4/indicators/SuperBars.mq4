@@ -296,7 +296,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    else GetLastError();
 
    // Close-Marker zeichnen
-   if (closeBar > 0) {                                                     // nicht bei der jüngsten, aktuellen Bar (dort unnötig)
+   if (closeBar > 0) {                                                     // jedoch nicht bei der jüngsten Bar[0] (unnötig)
       int centerBar = (openBar+closeBar_j)/2;
       if (centerBar > closeBar) {
          label = label +" Close "+ DoubleToStr(Close[closeBar], PipDigits);
