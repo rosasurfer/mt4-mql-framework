@@ -83,10 +83,10 @@ int onTick() {
    // - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
 
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
-   int i,   openBar, closeBar, lastChartBar=Bars-1;
+   int      openBar, closeBar, lastChartBar=Bars-1, i=-1;
 
    // Schleife über alle Supersessions von "jung" nach "alt"
-   while (true) { i++;
+   while (true) {
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(last_error);
 
@@ -104,8 +104,8 @@ int onTick() {
          break;
 
       if (openBar >= closeBar) {
-         if      (openBar != lastChartBar)                              { if (!DrawSuperBar(openTime.fxt, openBar, closeBar)) return(last_error); }
-         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { if (!DrawSuperBar(openTime.fxt, openBar, closeBar)) return(last_error); }
+         if      (openBar != lastChartBar)                              { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(last_error); }
+         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(last_error); }
       }                                                              // Die Supersession auf der letzten Chartbar ist äußerst selten vollständig, trotzdem mit (exact=TRUE) prüfen.
       if (openBar >= ChangedBars-1)
          break;                                                      // Superbars bis max. ChangedBars aktualisieren
@@ -255,13 +255,14 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 /**
  * Zeichnet eine einzelne Superbar.
  *
+ * @param  int      i        - Barindex (beginnend mit 0)
  * @param  datetime openTime - Startzeit der Supersession in FXT
  * @param  int      openBar  - Chartoffset der Open-Bar der Superbar
  * @param  int      closeBar - Chartoffset der Close-Bar der Superbar
  *
  * @return bool - Erfolgsstatus
  */
-bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
+bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    // High- und Low-Bar ermitteln
    int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
    int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
@@ -295,7 +296,7 @@ bool DrawSuperBar(datetime openTime.fxt, int openBar, int closeBar) {
    else GetLastError();
 
    // Close-Marker zeichnen
-   if (closeBar > 0) {
+   if (closeBar > 0) {                                                     // nicht bei der jüngsten, aktuellen Bar (dort unnötig)
       int centerBar = (openBar+closeBar_j)/2;
       if (centerBar > closeBar) {
          label = label +" Close "+ DoubleToStr(Close[closeBar], PipDigits);
