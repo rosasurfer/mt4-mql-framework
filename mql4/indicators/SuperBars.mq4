@@ -269,15 +269,17 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
 
    // Farbe bestimmen
    color barColor = Color.BarUnchanged;
-   if (MathMax(Open[openBar],  Close[closeBar])/MathMin(Open[openBar], Close[closeBar]) > 1.0005) {   // ab ca. 5-8 pip Unterschied grün oder rot
-      if      (Open[openBar] < Close[closeBar]) barColor = Color.BarUp;
-      else if (Open[openBar] > Close[closeBar]) barColor = Color.BarDown;
+   if (openBar < Bars-1) double openPrice = Close[openBar + 1];
+   else                         openPrice = Open [openBar];                                  // Als OpenPrice wird nach Möglichkeit das Close der vorherigen Bar verwendet.
+   if (MathMax(openPrice,  Close[closeBar])/MathMin(openPrice, Close[closeBar]) > 1.0005) {  // Ab ca. 5-10 pip Preisunterschied wird Up- oder Down-Color angewendet.
+      if      (openPrice < Close[closeBar]) barColor = Color.BarUp;
+      else if (openPrice > Close[closeBar]) barColor = Color.BarDown;
    }
 
    // Label definieren
    string label;
    switch (superTimeframe) {
-      case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w D.M.Y ");                            break;    // "w D.M.Y" wird bereits vom Grid verwendet
+      case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w D.M.Y ");                            break; // "w D.M.Y" wird bereits vom Grid verwendet
       case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y" );                            break;
       case PERIOD_MN1: label =          DateToStr(openTime.fxt,     "N Y" );                            break;
       case PERIOD_Q1 : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYear(openTime.fxt); break;
@@ -286,8 +288,8 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    // Superbar zeichnen
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
-      int closeBar_j = closeBar; /*j: justified*/                          // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
-      if (closeBar > 0) closeBar_j--;                                      // jedoch nicht bei der jüngsten Bar[0]
+      int closeBar_j = closeBar; /*j: justified*/                             // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
+      if (closeBar > 0) closeBar_j--;                                         // jedoch nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet (label, OBJPROP_COLOR, barColor);
       ObjectSet (label, OBJPROP_BACK , true    );
@@ -296,20 +298,32 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    else GetLastError();
 
    // Close-Marker zeichnen
-   if (closeBar > 0) {                                                     // jedoch nicht bei der jüngsten Bar[0] (unnötig)
+   if (closeBar > 0) {                                                        // jedoch nicht bei der jüngsten Bar[0] (unnötig)
       int centerBar = (openBar+closeBar_j)/2;
       if (centerBar > closeBar) {
-         label = label +" Close "+ DoubleToStr(Close[closeBar], PipDigits);
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
-            ObjectSet (label, OBJPROP_RAY  , false            );
-            ObjectSet (label, OBJPROP_STYLE, STYLE_SOLID      );
-            ObjectSet (label, OBJPROP_COLOR, Color.CloseMarker);
-            ObjectSet (label, OBJPROP_BACK , true             );
-            PushObject(label);
+         string labelWithPrice, labelWithoutPrice=label +" Close";
+
+         if (ObjectFind(labelWithoutPrice) == 0) {                            // Jeder Marker besteht aus zwei Objekten: Ein unsichtbares Label (erstes Objekt) mit
+            labelWithPrice = ObjectDescription(labelWithoutPrice);            // festem Namen, das in der Beschreibung den veränderlichen Namen des sichtbaren Markers
+            if (ObjectFind(labelWithPrice) == 0)                              // (zweites Objekt) enthält. So kann ein bereits vorhandener Marker einer Superbar im
+               ObjectDelete(labelWithPrice);                                  // Chart gefunden und durch einen neuen ersetzt werden, obwohl sich sein dynamischer Name
+            ObjectDelete(labelWithoutPrice);                                  // geändert hat.
          }
-         else GetLastError();
+         labelWithPrice = labelWithoutPrice +" "+ DoubleToStr(Close[closeBar], PipDigits);
+
+         if (ObjectCreate(labelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
+            ObjectSet    (labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+            ObjectSetText(labelWithoutPrice, labelWithPrice);
+            PushObject   (labelWithoutPrice);
+         } else GetLastError();
+
+         if (ObjectCreate(labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
+            ObjectSet    (labelWithPrice, OBJPROP_RAY  , false            );
+            ObjectSet    (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID      );
+            ObjectSet    (labelWithPrice, OBJPROP_COLOR, Color.CloseMarker);
+            ObjectSet    (labelWithPrice, OBJPROP_BACK , true             );
+            PushObject   (labelWithPrice);
+         } else GetLastError();
       }
    }
 
@@ -330,11 +344,11 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
       }
       //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
       string fontName = "";
-      int    fontSize = 8;                                                 // "MS Sans Serif",8 entspricht in allen Builds der Menüschrift
+      int    fontSize = 8;                                                    // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
       ObjectSetText(label.superbar, sRange, fontSize, fontName, Black);
 
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)        // bei offenem Properties-Dialog oder Object::onDrag()
          return(!catch("DrawSuperBar(1)", error));
    }
 
