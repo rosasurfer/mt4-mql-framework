@@ -1679,7 +1679,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeToLfxTerminalMsg(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
@@ -1687,7 +1687,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeToLfxTerminalMsg(5)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
@@ -1695,14 +1695,14 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg()   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      debug("ProcessTradeToLfxTerminalMsg(6)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
       return(true);
    }
    else {
-      return(_true(warn("ProcessTradeToLfxTerminalMsg(4)   unknown message \""+ message +"\"")));
+      return(_true(warn("ProcessTradeToLfxTerminalMsg(7)   unknown message \""+ message +"\"")));
    }
 
 
@@ -1743,8 +1743,8 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
       }
       if (!lo.IsOpen(lfxOrder)) {                                             // keine offene Position: gespeicherte Orderdaten out-of-sync
          static bool warned;
-         if (!warned) warn("ProcessTradeToLfxTerminalMsg(5)   #"+ ticket +" received profit message for an order known as pending");
-         else        debug("ProcessTradeToLfxTerminalMsg(6)   #"+ ticket +" received profit message for an order known as pending");
+         if (!warned) warn("ProcessTradeToLfxTerminalMsg(8)   #"+ ticket +" received profit message for an order known as pending");
+         else        debug("ProcessTradeToLfxTerminalMsg(9)   #"+ ticket +" received profit message for an order known as pending");
          warned = true;
          return(true);
       }
