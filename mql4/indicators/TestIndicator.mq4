@@ -16,6 +16,5 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   catch("onTick()");
    return(last_error);
 }
