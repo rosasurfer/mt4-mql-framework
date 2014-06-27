@@ -163,14 +163,14 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
 
    for (int retry, i=0; i < symbolsSize; i++) {
       // (4.1) notwendige Daten ermitteln
-      double bid           = MarketInfo(symbols[i], MODE_BID      );
+      double bid           = MarketInfo(symbols[i], MODE_BID      );                   // TODO: bei ERR_UNKNOWN_SYMBOL Symbole laden
       double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
       double tickValue     = MarketInfo(symbols[i], MODE_TICKVALUE);
       double minLot        = MarketInfo(symbols[i], MODE_MINLOT   );
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      if (IsError(catch("OpenPendingOrder(2)   \""+ symbols[i] +"\"")))                // TODO: auf ERR_UNKNOWN_SYMBOL          prüfen
+      if (IsError(catch("OpenPendingOrder(2)   \""+ symbols[i] +"\"")))
          return(_false(lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));            // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
 
       // (4.2) auf ungültige MarketInfo()-Daten prüfen
@@ -229,8 +229,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    realUnits = NormalizeDouble(realUnits * lfxUnits, 1);
 
    // (4.8) bei Leverageüberschreitung Warnung ausgeben, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0)
-      warn("OpenPendingOrder(5)   #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, lfxUnits), " units (unchanged)", " instead of "+ DoubleToStr(lfxUnits, 1) +" units"+ ifString(LT(realUnits, lfxUnits), " (not realizable)", "")));
+   if (StringLen(overLeverageMsg) > 0) warn("OpenPendingOrder(5)   #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, lfxUnits), " units (unchanged)", " instead of "+ DoubleToStr(lfxUnits, 1) +" units"+ ifString(LT(realUnits, lfxUnits), " (not realizable)", "")));
 
 
    // (5) Directions der Teilpositionen bestimmen

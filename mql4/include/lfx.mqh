@@ -173,9 +173,9 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (2) Orderdaten validieren
-   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, (-)OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, (-)CloseTime, ClosePrice, Profit, LfxDeviation, Version
+   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, (-)OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, (-)CloseTime, ClosePrice, Profit, LfxDeviation, ModificationTime, Version
    string sValue, values[];
-   if (Explode(value, ",", values, NULL) != 17)  return(!catch("LFX.GetOrder(3)   invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Explode(value, ",", values, NULL) != 18)  return(!catch("LFX.GetOrder(3)   invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Label
    string _label = StringTrim(values[1]);
@@ -273,37 +273,44 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if (!StringIsNumeric(sValue))                 return(!catch("LFX.GetOrder(29)   invalid LFX deviation \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _lfxDeviation = StrToDouble(sValue);
 
-   // Version
+   // ModificationTime
    sValue = StringTrim(values[16]);
-   if (StringIsDigit(sValue)) datetime _version = StrToInteger(sValue);
-   else                                _version =    StrToTime(sValue);
-   if (_version <= 0)                            return(!catch("LFX.GetOrder(30)   invalid last update time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_version > mql.GetSystemTime())           return(!catch("LFX.GetOrder(31)   invalid version time \""+ TimeToStr(_version, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (StringIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
+   else                                _modificationTime =    StrToTime(sValue);
+   if (_modificationTime <= 0)                   return(!catch("LFX.GetOrder(30)   invalid modification time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_modificationTime > mql.GetSystemTime())  return(!catch("LFX.GetOrder(31)   invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+
+   // Version
+   sValue = StringTrim(values[17]);
+   if (!StringIsDigit(sValue))                   return(!catch("LFX.GetOrder(32)   invalid version \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   int _version = StrToInteger(sValue);
+   if (_version <= 0)                            return(!catch("LFX.GetOrder(33)   invalid version \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
    // (3) Orderdaten in übergebenes Array schreiben (erst nach vollständiger erfolgreicher Validierung)
    InitializeByteBuffer(lo, LFX_ORDER.size);
 
-   lo.setTicket        (lo,  ticket        );                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-   lo.setDeviation     (lo, _lfxDeviation  );                        // LFX-Deviation immer vor den Preisen
-   lo.setType          (lo, _orderType     );
-   lo.setUnits         (lo, _orderUnits    );
-   lo.setLots          (lo,  NULL          );
-   lo.setOpenEquity    (lo, _openEquity    );
-   lo.setOpenTime      (lo, _openTime      );
-   lo.setOpenPriceLfx  (lo, _openPrice     );
-   lo.setOpenPriceTime (lo, _openPriceTime );
-   lo.setStopLossLfx   (lo, _stopLoss      );
-   lo.setStopLossTime  (lo, _stopLossTime  );
-   lo.setTakeProfitLfx (lo, _takeProfit    );
-   lo.setTakeProfitTime(lo, _takeProfitTime);
-   lo.setCloseTime     (lo, _closeTime     );
-   lo.setClosePriceLfx (lo, _closePrice    );
-   lo.setProfit        (lo, _orderProfit   );
-   lo.setComment       (lo, _label         );
-   lo.setVersion       (lo, _version       );
+   lo.setTicket          (lo,  ticket          );                       // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+   lo.setDeviation       (lo, _lfxDeviation    );                       // LFX-Deviation immer vor den Preisen
+   lo.setType            (lo, _orderType       );
+   lo.setUnits           (lo, _orderUnits      );
+   lo.setLots            (lo,  NULL            );
+   lo.setOpenEquity      (lo, _openEquity      );
+   lo.setOpenTime        (lo, _openTime        );
+   lo.setOpenPriceLfx    (lo, _openPrice       );
+   lo.setOpenPriceTime   (lo, _openPriceTime   );
+   lo.setStopLossLfx     (lo, _stopLoss        );
+   lo.setStopLossTime    (lo, _stopLossTime    );
+   lo.setTakeProfitLfx   (lo, _takeProfit      );
+   lo.setTakeProfitTime  (lo, _takeProfitTime  );
+   lo.setCloseTime       (lo, _closeTime       );
+   lo.setClosePriceLfx   (lo, _closePrice      );
+   lo.setProfit          (lo, _orderProfit     );
+   lo.setComment         (lo, _label           );
+   lo.setModificationTime(lo, _modificationTime);
+   lo.setVersion         (lo, _version         );
 
-   return(!catch("LFX.GetOrder(32)"));
+   return(!catch("LFX.GetOrder(34)"));
 }
 
 
@@ -443,37 +450,37 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    }
 
 
-   // (2) Aktuell gespeicherte Version der Order holen und parallele Schreibzugriffe erkennen
-   /*LFX_ORDER*/int current[], ticket=lo.Ticket(lo);
-
-   int result = LFX.GetOrder(ticket, current);                       // +1, wenn die Order erfolgreich gelesen wurden
+   // (2) Aktuell gespeicherte Version der Order holen und konkurrierende Schreibzugriffe erkennen und behandeln
+   /*LFX_ORDER*/int stored[], ticket=lo.Ticket(lo);
+   int result = LFX.GetOrder(ticket, stored);                        // +1, wenn die Order erfolgreich gelesen wurden
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
    if (result > 0) {                                                 //  0, falls ein anderer Fehler auftrat
-      if (lo.Version(lo) < lo.Version(current))
-         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(5)   concurrent modification of #"+ ticket +" (expected version \""+ TimeToStr(lo.Version(lo), TIME_FULL) +"\", found version \""+ TimeToStr(lo.Version(current), TIME_FULL) +"\")", ERR_CONCURRENT_MODIFICATION, fCatch));
+      if (lo.Version(stored) > lo.Version(lo))
+         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(5)   concurrent modification of #"+ ticket +", expected version "+ lo.Version(lo) +" of \""+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"\", found version "+ lo.Version(stored) +" of \""+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"\"", ERR_CONCURRENT_MODIFICATION, fCatch));
    }
 
 
    // (3) Daten formatieren
-   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation, Version
-   string sSymbol         =                          lo.Currency      (lo);
-   string sLabel          =                          lo.Comment       (lo);                                                                                               sLabel          = StringPadRight(sLabel         ,  9, " ");
-   string sOperationType  = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringPadRight(sOperationType , 10, " ");
-   string sUnits          =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringPadLeft (sUnits         ,  5, " ");
-   string sOpenEquity     =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringPadLeft (sOpenEquity    , 10, " ");
-   string sOpenTime       =                 ifString(lo.OpenTime      (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime       = StringPadLeft (sOpenTime      , 20, " ");
-   string sOpenPriceLfx   =              DoubleToStr(lo.OpenPriceLfx  (lo), lo.Digits(lo));                                                                               sOpenPriceLfx   = StringPadLeft (sOpenPriceLfx  ,  9, " ");
-   string sOpenPriceTime  =                ifString(!lo.OpenPriceTime (lo), "0", TimeToStr(lo.OpenPriceTime(lo), TIME_FULL));                                             sOpenPriceTime  = StringPadLeft (sOpenPriceTime , 19, " ");
-   string sStopLossLfx    =                ifString(!lo.StopLossLfx   (lo), "0", DoubleToStr(lo.StopLossLfx(lo),   lo.Digits(lo)));                                       sStopLossLfx    = StringPadLeft (sStopLossLfx   ,  7, " ");  // "StopLos"
-   string sStopLossTime   =                ifString(!lo.StopLossTime  (lo), "0", TimeToStr(lo.StopLossTime(lo), TIME_FULL));                                              sStopLossTime   = StringPadLeft (sStopLossTime  , 19, " ");
-   string sTakeProfitLfx  =                ifString(!lo.TakeProfitLfx (lo), "0", DoubleToStr(lo.TakeProfitLfx(lo), lo.Digits(lo)));                                       sTakeProfitLfx  = StringPadLeft (sTakeProfitLfx ,  7, " ");  // "TakePro"
-   string sTakeProfitTime =                ifString(!lo.TakeProfitTime(lo), "0", TimeToStr(lo.TakeProfitTime(lo), TIME_FULL));                                            sTakeProfitTime = StringPadLeft (sTakeProfitTime, 19, " ");
-   string sCloseTime      =                 ifString(lo.CloseTime     (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime      = StringPadLeft (sCloseTime     , 20, " ");
-   string sClosePriceLfx  =                ifString(!lo.ClosePriceLfx (lo), "0", DoubleToStr(lo.ClosePriceLfx(lo), lo.Digits(lo)));                                       sClosePriceLfx  = StringPadLeft (sClosePriceLfx , 10, " ");
-   string sProfit         =                ifString(!lo.Profit        (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit         = StringPadLeft (sProfit        ,  7, " ");
-   string sDeviation      =                ifString(!lo.Deviation     (lo), "0", DoubleToStr(lo.Deviation(lo), lo.Digits(lo)));                                           sDeviation      = StringPadLeft (sDeviation     ,  9, " ");
-      datetime newVersion = TimeGMT();
-   string sVersion        = TimeToStr(newVersion, TIME_FULL);
+   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation, ModificationTime, Version
+   string sSymbol           =                          lo.Currency      (lo);
+   string sLabel            =                          lo.Comment       (lo);                                                                                               sLabel          = StringPadRight(sLabel         ,  9, " ");
+   string sOperationType    = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringPadRight(sOperationType , 10, " ");
+   string sUnits            =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringPadLeft (sUnits         ,  5, " ");
+   string sOpenEquity       =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringPadLeft (sOpenEquity    , 10, " ");
+   string sOpenTime         =                 ifString(lo.OpenTime      (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime       = StringPadLeft (sOpenTime      , 20, " ");
+   string sOpenPriceLfx     =              DoubleToStr(lo.OpenPriceLfx  (lo), lo.Digits(lo));                                                                               sOpenPriceLfx   = StringPadLeft (sOpenPriceLfx  ,  9, " ");
+   string sOpenPriceTime    =                ifString(!lo.OpenPriceTime (lo), "0", TimeToStr(lo.OpenPriceTime(lo), TIME_FULL));                                             sOpenPriceTime  = StringPadLeft (sOpenPriceTime , 19, " ");
+   string sStopLossLfx      =                ifString(!lo.StopLossLfx   (lo), "0", DoubleToStr(lo.StopLossLfx(lo),   lo.Digits(lo)));                                       sStopLossLfx    = StringPadLeft (sStopLossLfx   ,  7, " ");  // "StopLos"
+   string sStopLossTime     =                ifString(!lo.StopLossTime  (lo), "0", TimeToStr(lo.StopLossTime(lo), TIME_FULL));                                              sStopLossTime   = StringPadLeft (sStopLossTime  , 19, " ");
+   string sTakeProfitLfx    =                ifString(!lo.TakeProfitLfx (lo), "0", DoubleToStr(lo.TakeProfitLfx(lo), lo.Digits(lo)));                                       sTakeProfitLfx  = StringPadLeft (sTakeProfitLfx ,  7, " ");  // "TakePro"
+   string sTakeProfitTime   =                ifString(!lo.TakeProfitTime(lo), "0", TimeToStr(lo.TakeProfitTime(lo), TIME_FULL));                                            sTakeProfitTime = StringPadLeft (sTakeProfitTime, 19, " ");
+   string sCloseTime        =                 ifString(lo.CloseTime     (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime      = StringPadLeft (sCloseTime     , 20, " ");
+   string sClosePriceLfx    =                ifString(!lo.ClosePriceLfx (lo), "0", DoubleToStr(lo.ClosePriceLfx(lo), lo.Digits(lo)));                                       sClosePriceLfx  = StringPadLeft (sClosePriceLfx , 10, " ");
+   string sProfit           =                ifString(!lo.Profit        (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit         = StringPadLeft (sProfit        ,  7, " ");
+   string sDeviation        =                ifString(!lo.Deviation     (lo), "0", DoubleToStr(lo.Deviation(lo), lo.Digits(lo)));                                           sDeviation      = StringPadLeft (sDeviation     ,  9, " ");
+
+   datetime modified = TimeGMT();
+   int      version  = lo.Version(lo) + 1;
 
 
    // (4) Daten schreiben
@@ -482,15 +489,15 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string key     = ticket;
-   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPriceLfx, ", ", sOpenPriceTime, ", ", sStopLossLfx, ", ", sStopLossTime, ", ", sTakeProfitLfx, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", sVersion);
+   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPriceLfx, ", ", sOpenPriceTime, ", ", sStopLossLfx, ", ", sStopLossTime, ", ", sTakeProfitLfx, ", ", sTakeProfitTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", TimeToStr(modified, TIME_FULL), ", ", version);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(6)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
 
 
    // (5) Version der übergebenen Order aktualisieren
-   if (dims == 1) lo.setVersion(los,        newVersion);             // Parameter los[] ist einzelne Order
-   else          los.setVersion(los, index, newVersion);             // Parameter los[] ist Order-Array
+   if (dims == 1) {  lo.setModificationTime(los,        modified);  lo.setVersion(los,        version); }   // Parameter los[] ist einzelne Order
+   else           { los.setModificationTime(los, index, modified); los.setVersion(los, index, version); }   // Parameter los[] ist Order-Array
    return(true);
 }
 
