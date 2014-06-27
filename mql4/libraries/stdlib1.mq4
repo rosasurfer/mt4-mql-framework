@@ -5035,7 +5035,7 @@ datetime TimeGMT() {
 
 
 /**
- * Gibt die aktuelle lokale Zeit zurück (auch im Tester).  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
+ * Gibt immer die aktuelle lokale Zeit zurück (auch im Tester).  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
  * die modellierte Serverzeit zurück.
  *
  * @return datetime - lokale Zeit
@@ -5044,10 +5044,10 @@ datetime mql.GetLocalTime() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
    GetLocalTime(st);
 
-   int year  = st.Year(st);
-   int month = st.Month(st);
-   int day   = st.Day(st);
-   int hour  = st.Hour(st);
+   int year  = st.Year  (st);
+   int month = st.Month (st);
+   int day   = st.Day   (st);
+   int hour  = st.Hour  (st);
    int min   = st.Minute(st);
    int sec   = st.Second(st);
 
@@ -5064,15 +5064,12 @@ datetime mql.GetLocalTime() {
 
 
 /**
- * Gibt die aktuelle GMT-Zeit zurück (auch im Tester).
+ * Gibt immer die aktuelle GMT-Zeit zurück (auch im Tester).
  *
  * @return datetime - GMT-Zeit
  */
 datetime mql.GetSystemTime() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
-
-   datetime localTime = TimeLocal();
-
    GetSystemTime(st);
 
    int year  = st.Year  (st);

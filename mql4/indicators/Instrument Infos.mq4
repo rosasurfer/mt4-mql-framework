@@ -204,7 +204,7 @@ int UpdateInfos() {
       ObjectSetText(labels[I_SWAPLONG ], "Swap long:  "+ NumberToStr(swapLongD,  "+.1R") +" pip = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.", fg.fontSize, fg.fontName, fg.fontColor);
       ObjectSetText(labels[I_SWAPSHORT], "Swap short: "+ NumberToStr(swapShortD, "+.1R") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.", fg.fontSize, fg.fontName, fg.fontColor);
 
-   int    accountLeverage = AccountLeverage();                          ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ Round(accountLeverage)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
+   int    accountLeverage = AccountLeverage();                          ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
    int    stopoutLevel    = AccountStopoutLevel();                      ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
 
    string serverName      = GetServerDirectory();                       ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+ serverName, fg.fontSize, fg.fontName, ifInt(!StringLen(serverName), fg.fontColor.Disabled, fg.fontColor));
