@@ -86,7 +86,7 @@
     </content>
 
   <group>
-    tag=basis
+    tag=basics
     caption=Basics
 
     <content>
@@ -97,7 +97,7 @@
     </content>
 
   <group>
-    tag=basis_syntax
+    tag=basics_syntax
     caption=Syntax
 
     <content>
@@ -113,7 +113,7 @@
     </content>
 
     <text>
-      tag=basis_syntax_comments
+      tag=basics_syntax_comments
       caption=Comments
       <content>
         <p>
@@ -125,14 +125,14 @@
 // single comment
 
 /*  multi-
-    line         
+    line
     comment
 */</pre>
       </content>
     </text>
 
     <text>
-      tag=basis_syntax_identifiers
+      tag=basics_syntax_identifiers
       caption=Identifiers
       <content>
         <p>Identifiers are used as names of variables, functions, and data types.
@@ -145,7 +145,7 @@
     </text>
 
     <text>
-      tag=basis_syntax_reserved
+      tag=basics_syntax_reserved
       caption=Reserved words
       <content>
         <p>The identifiers listed below are fixed reserved words. A certain action is assigned to each
@@ -170,80 +170,63 @@
 
 
     <group>
-      tag=basis_types
+      tag=basics_types
       caption=Data types
 
     <content>
-      <p>Any program operates with data. Data can be of different types depending on their purposes. For example,
-      integer data are used to access to array components. Price data belong to those of double precision with floating point.
-      This is related to the fact that no special data type is foreseen for price data in MQL 4.</p>
-      <p>Data of different types are processed with different rates. Integer data are processed at the fastest.
-      To process the double precision data, a special co-processor is used. However, because of complicity of internal presentation
-      of data with floating point, they are processed slower than the integer ones. String data are processed at the longest because of
-      dynamic computer memory allocation/reallocation.</p>
       <p>The main data types are:</p>
-      <ul><li><a href="help://basis_types_integer">Integer (int)</a></li>
-          <li><a href="help://basis_types_bool">Boolean (bool)</a></li>
-          <li><a href="help://basis_types_literal">Literals (char)</a></li>
-          <li><a href="help://basis_types_string">Strings (string)</a></li>
-          <li><a href="help://basis_types_double">Floating-point number (double)</a></li>
-          <li><a href="help://basis_types_color">Color (color)</a></li>
-          <li><a href="help://basis_types_datetime">Date and time (datetime)</a></li>
+      <ul><li><a href="help://basics_types_integer">Integer (int)</a></li>
+          <li><a href="help://basics_types_literal">Character literals (int)</a></li>
+          <li><a href="help://basics_types_bool">Boolean (bool)</a></li>
+          <li><a href="help://basics_types_double">Floating-point number (double)</a></li>
+          <li><a href="help://basics_types_color">Color (color)</a></li>
+          <li><a href="help://basics_types_datetime">Date and time (datetime)</a></li>
+          <li><a href="help://basics_types_string">String (string)</a></li>
       </ul>
-      <p>The <em>color</em> and <em>datetime</em> types make sense only to facilitate visualization
-      and enter those parameters that had been set from expert advisor property tab or custom indicator
-      &quot;Inputs&quot; tab. The data of <em>color</em> and <em>datetime</em> types are represented
-      as integer values. <em>int</em> and <em>double</em> are called arithmetic (numeric) types.</p>
-      <p>Only implicit <a href="help://basis_types_casting">type casting</a> is used in <a href="help://basis_operations_expression">expressions</a>.</p>
+      <p>Only implicit <a href="help://basics_types_casting">type casting</a> is used in <a href="help://basics_operations_expression">expressions</a>.</p>
     </content>
 
     <text>
-      tag=basis_types_casting
+      tag=basics_types_casting
       caption=Type casting
       <content>
-        <p>Only implicit type casting is used in MQL 4 <a href="help://basis_operations_expression">expressions</a>. The type priority grows at casting:</p>
-        <pre class="docmql4">
-int  (bool,color,datetime);
-double;
-string;</pre>
-        <p>Before operations (except for the assignment ones) are performed,  the data have been conversed
-        into the maximum priority type. Before assignment operations are performed, the data have been cast into the target type.</p>
+        <p>Only implicit type casting is used in <a href="help://basics_operations_expression">expressions</a>. The type priority grows from <i>int</i>
+        (and its internal equivalent types <i>bool</i>, <i>color</i>, <i>datetime</i>) to <i>double</i> to <i>string</i>.</p>
+        <p>Before expression evaluation operands are casted into the maximum priority type. Before assignment data is casted into the target type.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
-int    i = 1 / 2;     // no types casting, the result is 0
-int    i = 1 / 2.0;   // the expression is cast to the double type, then is to the target type of int, the result is 0
-double d = 1.0 / 2.0; // no types casting, the result is 0.5
-double d = 1 / 2.0;   // the expression is cast to the double type that is the same as the target type, the result is 0.5
-double d = 1 / 2;     // the expression of the int type is cast to the target type of double, the result is 0.0
-string s = 1.0 / 8;   // the expression is cast to the double type, then is to the target type of string, the result is &quot;0.12500000&quot; (the string containing 10 characters)
-string s = NULL;      // the constant of type int is cast to the target type of string, the result is &quot;0&quot; (the string containing 1 character)
-string s = &quot;Ticket #&quot;+12345; // the expression is cast to the string type that is the same as the target type, the result is &quot;Ticket #12345&quot;
+int    i = 1 / 2;            // no casting, result: 0
+int    i = 1 / 2.0;          // the operands are casted to double, the result is casted to int, result: 0
+double d = 1.0 / 2.0;        // no casting, result: 0.5
+double d = 1 / 2.0;          // the operands are casted to double, result: 0.5
+double d = 1 / 2;            // the operands are not casted, the result is casted to double, result: 0.0
+string s = 1.0 / 8;          // the operands are casted to double, the result is casted to string, result: &quot;0.12500000&quot;
+string s = NULL;             // the constant of type int is casted to string, result: &quot;0&quot;
+string s = &quot;Ticket #&quot;+12345; // the operands are casted to string, result: &quot;Ticket #12345&quot;
 </pre>
-        <p>Type casting is applied to not only constants, but also <a href="help://basis_variables">variables</a> of corresponding types.</p>
       </content>
     </text>
 
     <text>
-      tag=basis_types_integer
+      tag=basics_types_integer
       caption=Integer constants
       keywords=;int;
       <content>
-        <p>Decimals: numbers from 0 to 9; zero must not be the first number.</p>
+        <p>Decimals: digits from 0 to 9; the first digit cannot be zero (0).</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">12, 111, -956 1007</pre>
 
-        <p>Hexadecimals: numbers from 0 to 9, letters from a to f or A to F to represent the values 10 to 15;
-        they start with 0x or 0X.</p>
+        <p>Hexadecimals: digits from 0 to 9, letters from a to f or A to F; starting with 0x or 0X.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">0x0A, 0x12, 0X12, 0x2f, 0xA3, 0Xa3, 0X7C7</pre>
 
-        <p>Its internal representation is a long 4-byte integer number. Integer constants can assume values from -2147483648 to 2147483647.
-      If the constant exceeds this range, the result is undefined.</p>
+        <p>Its internal representation is a 4-byte long integer number. Integer constants can hold values from -2147483648 to 2147483647.
+      If the constant exceeds this range the result is undefined.</p>
       </content>
     </text>
 
     <text>
-      tag=basis_types_literal
+      tag=basics_types_literal
       caption=Literal constants
       <content>
         <p>Any single character enclosed in single quotes or a hexadecimal ASCII-code of a character looking
@@ -270,7 +253,7 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
     </text>
 
    <text>
-      tag=basis_types_bool
+      tag=basics_types_bool
       caption=Boolean constants
       keywords=;bool;true;false;
       <content>
@@ -285,7 +268,7 @@ bool c = 1;</pre>
     </text>
 
     <text>
-      tag=basis_types_double
+      tag=basics_types_double
       caption=Floating-point number constants (double)
       keywords=;double;
       <content>
@@ -296,38 +279,39 @@ bool c = 1;</pre>
 double b = -956.1007;
 double c = 0.0001;
 double d = 16;</pre>
-        <p>Its internal representation is a double-precision number of 8 bytes. Floating-point constants can assume values from -1.7 * e-308 to 1.7 * e308. If a
-        constant exceeds this range, the result is undefined.</p>
+        <p>Its internal representation is a double-precision number of 8 bytes. Floating-point constants can hold values from -1.7 * e-308 to 1.7 * e308. If a
+        constant exceeds this range the result is undefined.</p>
       </content>
     </text>
 
     <text>
-      tag=basis_types_string
+      tag=basics_types_string
       caption=String constants
       keywords=;string;
       <content>
-        <p>String constant is a sequence of ASCII-code characters enclosed in double quotes: &quot;Character constant&quot;.</p>
-
-      <p>A string constant is an array of characters enclosed in quotes. It is of the string type.
-      If there is a need to insert a double quote (&quot;) into the string, a reverse slash (\) must be put before it.
-      Any special <a href="help://basis_types_literal">character constants</a> can be inserted into the string if they have a reverse slash (\) before them.
-      The length of a string constant lies between 0 and 255 characters.
-        If the string constant is longer, the superfluous characters on the right will be rejected, and compiler will alert correspondingly.</p>
+      <p>A string is a sequence of ASCII-code characters represented with enclosed double quotes: &quot;This is a string&quot;.</p>
+      <p> Special characters (like <a href="help://basics_types_literal">character constants</a>) or the double quote character itself (&quot;) can be inserted
+      into a string by escaping it with a backslash (\). The maximum length of a string literal is 255 characters.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
-"This is a character string"
-"Copyright symbol \t\xA9"
-"this line contains a line feed symbol \n"
-"C:\\Program Files\\MetaTrader 4"
-"A" "1234567890" "0" "$"
+string s1 = "This is a character string";
+string s2 = "Copyright symbol \t\xA9";
+string s3 = "this line contains a line feed symbol \n";
+string s4 = "C:\\Program Files\\MetaTrader 4";
 </pre>
-  <p>Its internal representation is a structure of 8 bytes. The first element of the structure is a long integer that contains
-        the size of the buffer distributed for the line. The second element of the structure is 32-order address of the buffer that contains the line.</p>
+  <p>A strings internal representation is a structure of 8 bytes. The first element of the structure is a long integer containing the size of the buffer allocated
+  for the string. The second element of the structure is the 32-bit address of the buffer.</p>
+        <pre class="docmql4">
+struct MqlStr {
+   int   length;
+   char* string;
+};
+</pre>
       </content>
     </text>
 
     <text>
-      tag=basis_types_color
+      tag=basics_types_color
       caption=Color constants
       keywords=;color;
       <content>
@@ -364,7 +348,7 @@ Black
     </text>
 
     <text>
-      tag=basis_types_datetime
+      tag=basics_types_datetime
       caption=Datetime constants
       keywords=;datetime;
       <content>
@@ -390,7 +374,7 @@ D''                     //equal to D'[compilation date] 00:00:00'</pre>
 
 
   <group>
-    tag=basis_operations
+    tag=basics_operations
     caption=Operations &amp; Expressions
     <content>
      Some characters and character sequences are of a special importance. These are so-called operation symbols, for example:
@@ -404,7 +388,7 @@ D''                     //equal to D'[compilation date] 00:00:00'</pre>
     </content>
 
     <text>
-      tag=basis_operations_expression
+      tag=basics_operations_expression
       caption=Expressions
       <content>
 <p>An expression consists of one or more operands and operation characters. An expression can be written in several lines.</p>
@@ -417,7 +401,7 @@ x = (y * z) /
     </text>
 
     <text>
-      tag=basis_operations_math
+      tag=basics_operations_math
       caption=Arithmetic operators
       keywords=;+;-;*;/;%;++;--;
       <content>
@@ -443,7 +427,7 @@ int b=(a++)*3;    // unsupported expression
     </text>
 
     <text>
-      tag=basis_operations_assign
+      tag=basics_operations_assign
       caption=Assignment operators
       keywords=+=;-=;*=;/=;%=;&gt;&gt;=;&lt;&lt;=;&amp;=;|=;^=;
       <content>
@@ -471,7 +455,7 @@ so the shift is for the range of 0 to 31 bit. By %= operation (modulo x of y) th
     </text>
 
     <text>
-      tag=basis_operations_relation
+      tag=basics_operations_relation
       caption=Conditional operators
       keywords=;==;!=;&lt;;&gt;;&lt;=;&gt;=;
       <content>
@@ -493,7 +477,7 @@ outcome needs to be compared to null.</p>
     </text>
 
     <text>
-      tag=basis_operations_bool
+      tag=basics_operations_bool
       caption=Boolean operators
       keywords=;||;&amp;&amp;;
       <content>
@@ -512,7 +496,7 @@ Otherwise, it is FALSE (0). </p>
     </text>
 
     <text>
-      tag=basis_operations_bit
+      tag=basics_operations_bit
       caption=Bit operators
       keywords=;&lt;&lt;;&gt;&gt;;~;!;^;&amp;;|;
       <content>
@@ -545,7 +529,7 @@ in all digits where x and y have different binary values, and it contains 0 in a
     </text>
 
     <text>
-      tag=basis_operations_other
+      tag=basics_operations_other
       caption=Other operators
       <content>
 <p><b>Indexing</b><br/>
@@ -580,7 +564,7 @@ of parameters to be passed (see above) can be considered as an example.</p>
     </text>
 
     <text>
-      tag=basis_operations_rules
+      tag=basics_operations_rules
       caption=Precedence rules
       <content>
 <p>Each group of operations in the
@@ -647,7 +631,7 @@ The precedence rules determine the grouping of operations and operands.</p>
 
 
   <group>
-    tag=basis_operators
+    tag=basics_operators
     caption=Operators
     <content>
 <p>Language operators describe some algorithmic operations that must be executed to accomplish a task. The program
@@ -661,7 +645,7 @@ if(Month() == 12)
     </content>
 
     <text>
-      tag=basis_operators_compound
+      tag=basics_operators_compound
       caption=Compound operator
       <content>
 <p>A compound operator (a block) consists of one or more operators of any type enclosed in braces {}. The closing
@@ -676,7 +660,7 @@ brace must not be followed by a semicolon (;).</p>
     </text>
 
     <text>
-      tag=basis_operators_expression
+      tag=basics_operators_expression
       caption=Expression operator
       <content>
        <p>Any expression followed by a semicolon (;) is an operator. Here are some examples of expression operators:</p>
@@ -697,13 +681,13 @@ y=x=3; // error</pre>
     </text>
 
     <text>
-      tag=basis_operators_break
+      tag=basics_operators_break
       caption=Break operator
       keywords=;break;
       <content>
 <p>A <em>break</em> operator terminates the execution of the nearest nested outward
-<a href="help://basis_operators_switch"><em>switch</em></a>, <a href="help://basis_operators_while"><em>while</em></a>, or
-<a href="help://basis_operators_for"><em>for</em></a> operator. The control is given to the operator that follows the terminated one.
+<a href="help://basics_operators_switch"><em>switch</em></a>, <a href="help://basics_operators_while"><em>while</em></a>, or
+<a href="help://basics_operators_for"><em>for</em></a> operator. The control is given to the operator that follows the terminated one.
 One of the purposes of this operator is to finish the looping execution when a certain value is assigned to a variable.</p>
 
 <p class="doctabhdr">Example:</p>
@@ -715,13 +699,13 @@ for(i=0;i&lt;array_size;i++)
     </text>
 
     <text>
-      tag=basis_operators_continue
+      tag=basics_operators_continue
       caption=Continue operator
       keywords=;continue;
       <content>
 <p>A <em>continue</em> operator gives control to the beginning of the nearest outward cycle
-<a href="help://basis_operators_while"><em>while</em></a> or <a href="help://basis_operators_for"><em>for</em></a> operator,
-the next iteration being called. The purpose of this operator is opposite to that of <a href="help://basis_operators_break"><em>break</em></a> operator.</p>
+<a href="help://basics_operators_while"><em>while</em></a> or <a href="help://basics_operators_for"><em>for</em></a> operator,
+the next iteration being called. The purpose of this operator is opposite to that of <a href="help://basics_operators_break"><em>break</em></a> operator.</p>
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">// summary of nonzero elements of array
 int func(int array[]) {
@@ -738,7 +722,7 @@ int func(int array[]) {
     </text>
 
     <text>
-      tag=basis_operators_return
+      tag=basics_operators_return
       caption=Return operator
       keywords=;return;
       <content>
@@ -761,7 +745,7 @@ must be enclosed in parentheses and should not contain an assignment operator.</
     </text>
 
     <text>
-      tag=basis_operators_if
+      tag=basics_operators_if
       caption=Conditional operator if-else
       keywords=;else;
       <content>
@@ -810,7 +794,7 @@ else Print(&quot;ERROR&quot;);</pre>
     </text>
 
     <text>
-      tag=basis_operators_switch
+      tag=basics_operators_switch
       caption=Switch operator
       keywords=;switch;case;default;
       <content>
@@ -830,7 +814,7 @@ else Print(&quot;ERROR&quot;);</pre>
 operators equals the expression value. The <em>default</em> variant must be necessarily final. If none of the constants
 corresponds to the expression value and the <em>default</em> variant is not available, no actions are executed. The keyword
 <em>case</em> and the constant are just labels, and if operators are executed for some <em>case</em> variant, the program will
-further execute the operators of all following variants until <a href="help://basis_operators_break"><em>break</em></a> operator occurs.
+further execute the operators of all following variants until <a href="help://basics_operators_break"><em>break</em></a> operator occurs.
 It makes it possible to bind a subsequence of operators with several variants.</p>
 
 <p>A constant expression is calculated during compilation. No two constants in one <em>switch</em> operator can have
@@ -854,7 +838,7 @@ the same values.</p>
     </text>
 
     <text>
-      tag=basis_operators_while
+      tag=basics_operators_while
       caption=Cycle operator while
       keywords=;while;
       <content>
@@ -874,7 +858,7 @@ the same values.</p>
     </text>
 
     <text>
-      tag=basis_operators_for
+      tag=basics_operators_for
       caption=Cycle operator for
       keywords=;for;
       <content>
@@ -912,7 +896,7 @@ for(i=0,j=n-l;i&lt;n;i++,j--) a[i]=a[j];</pre>
 
 
   <group>
-    tag=basis_functions
+    tag=basics_functions
     caption=Functions
     <content>
       <p>Function is a named part of a program that can be called from other parts of the program so many times as
@@ -953,14 +937,14 @@ int somefunc(double a, double d=0.0001, int n, bool b, string s="passed string")
     </content>
 
     <text>
-      tag=basis_functions_call
+      tag=basics_functions_call
       caption=Function call
       <content>
         <p>If a name that has not been described before appears in an expression and is followed by the left parenthesis,
       it will be contextually considered as the name of a function.</p>
         <pre class="docmql4"><i>function_name (x1, x2,..., xn)</i></pre><br/>
 
-        <p>Arguments (<a href="help://basis_variables_formal">formal parameters</a>) are passed by value, i.e.,
+        <p>Arguments (<a href="help://basics_variables_formal">formal parameters</a>) are passed by value, i.e.,
       each expression <em>xl</em>, . . . , <em>xn</em> is calculated, and the value is passed to the function. The order of expressions calculation
       and that of values loading are guaranteed. During the execution, the system checks the number and type of arguments given to the function.
       Such way of addressing to the function is called a value call. Function call is an expression thy value of which is the value returned by the function.
@@ -997,7 +981,7 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
     </text>
 
     <text>
-      tag=basis_functions_special
+      tag=basics_functions_special
       caption=Special functions
       keywords=;init;deinit;start;
       <content>
@@ -1026,16 +1010,16 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
 
 
   <group>
-    tag=basis_variables
+    tag=basics_variables
     caption=Variables
     <content>
       <p>Variables must be declared before they are used. Unique names are used to identify variables. Descriptions of
       variables are used for them to be defined and for types to be declared. Description is not an operator.</p>
       <p><b>The basic types are:</b></p>
       <ul>
-          <li><a href="help://basis_types_bool">bool</a> - boolean values of <em>true</em> and <em>false</em>;</li>
-          <li><a href="help://basis_types_string">string</a> - character strings;</li>
-          <li><a href="help://basis_types_double">double</a> - double-precision numbers with floating point.</li>
+          <li><a href="help://basics_types_bool">bool</a> - boolean values of <em>true</em> and <em>false</em>;</li>
+          <li><a href="help://basics_types_string">string</a> - character strings;</li>
+          <li><a href="help://basics_types_double">double</a> - double-precision numbers with floating point.</li>
       </ul>
 
 <p class="doctabhdr">Examples:</p>
@@ -1047,12 +1031,12 @@ bool   bLog;
 </pre><br/>
 
         <p><b>Additional types:</b></p>
-        <ul><li><a href="help://basis_types_color">color</a> is an integer representing an RGB color;</li>
-            <li><a href="help://basis_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
+        <ul><li><a href="help://basics_types_color">color</a> is an integer representing an RGB color;</li>
+            <li><a href="help://basics_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
          have passed since 0.00 a.m. on 1 January, 1970.</li>
 
 </ul>
-        <p>Additional data types make sense only at the declaration of <a href="help://basis_variables_extern">input parameters</a> for their more convenient
+        <p>Additional data types make sense only at the declaration of <a href="help://basics_variables_extern">input parameters</a> for their more convenient
        representation in the properties window.</p>
         <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
@@ -1067,7 +1051,7 @@ double m[7][50];    // Two-dimensional array of seven arrays,
                     //each of them consisting of 50 integers.
         </pre><br/>
 
-        <p>Only an integer can be an <a href="help://basis_operations_other">array index</a>. No more than four-dimensional arrays
+        <p>Only an integer can be an <a href="help://basics_operations_other">array index</a>. No more than four-dimensional arrays
       are allowed. Numbering of array elements starts with 0. The last element of a one-dimensional array has the number which is
       1 less than the array size. This means that call for the last element of an array consisting of 50 integers will appear as
       a[49]. The same concerns multidimensional arrays: A dimension is indexed from 0 to the <b>dimension size</b>-1.
@@ -1078,7 +1062,7 @@ double m[7][50];    // Two-dimensional array of seven arrays,
       </content>
 
     <text>
-      tag=basis_variables_local
+      tag=basics_variables_local
       caption=Local variables
       <content>
        <p>A variable declared inside any function is local. The scope of a local variable is limited to the
@@ -1096,11 +1080,11 @@ int somefunc()
     </text>
 
     <text>
-      tag=basis_variables_formal
+      tag=basics_variables_formal
       caption=Formal parameters
       <content>
 
-<p>Parameters <a href="help://basis_functions_call">passed to the function</a> are local. Scope is the function block.
+<p>Parameters <a href="help://basics_functions_call">passed to the function</a> are local. Scope is the function block.
 Formal parameters must have names differing from those of external variables and local variables defined within one
 function. In the block  of the function to the formal parameters some values can be assigned. Some values can be assigned to
 formal parameters in the function block.</p>
@@ -1123,7 +1107,7 @@ value. Parameters, next to the intialized one, must also be initialized.</p>
        <p>When calling such a function, the initialized parameters can be omitted, the defaults being substituted instead of them.</p>
        <p class="doctabhdr">Example:</p><pre class="docmql4">func(123, 0.5);</pre><br/>
 
-       <p>MQL4-library functions <a href="help://basis_variables_extfunctions">imported</a> within other modules cannot have parameters initialized by default values.</p>
+       <p>MQL4-library functions <a href="help://basics_variables_extfunctions">imported</a> within other modules cannot have parameters initialized by default values.</p>
 
       <p>Parameters are passed by value, i.e., modifications of the corresponding local variable inside the called function
       will not be shown in the calling function in any way. It is possible to pass arrays as parameters. However, for an array passed as parameter,
@@ -1158,7 +1142,7 @@ void func(int&amp; x, double&amp; y, double&amp; z[])
     </text>
 
     <text>
-      tag=basis_variables_static
+      tag=basics_variables_static
       caption=Static variables
       keywords=;static;
       <content>
@@ -1181,7 +1165,7 @@ int somefunc()
     </text>
 
     <text>
-      tag=basis_variables_global
+      tag=basics_variables_global
       caption=Global variables
       keywords=;static;
       <content>
@@ -1205,7 +1189,7 @@ int start()
     </text>
 
     <text>
-      tag=basis_variables_extern
+      tag=basics_variables_extern
       caption=Defining extern variables
       keywords=;extern;
      <content>
@@ -1224,7 +1208,7 @@ int init()
     </text>
 
     <text>
-      tag=basis_variables_initialization
+      tag=basics_variables_initialization
       caption=Initialization of variables
       <content>
         <p>Any variable can be initialized at its defining. Any variable is initialized with zero (0)
@@ -1249,7 +1233,7 @@ int    a[4][4] = { 1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  4, 4, 4, 4 };</pre><br
     </text>
 
    <text>
-      tag=basis_variables_extfunctions
+      tag=basics_variables_extfunctions
       caption=External functions definition
       keywords=;import;#import;
       <content>
@@ -1288,7 +1272,7 @@ int start()
 
 
   <group>
-    tag=basis_preprosessor
+    tag=basics_preprosessor
     caption=Preprocessor
     <content>
     Preprocessor is a special subsystem of MQL4 compiler that is intended for preparation of the program source code immediately
@@ -1300,7 +1284,7 @@ int start()
     A preprocessor directive ends with a line feed character.
     </content>
     <text>
-      tag=basis_preprosessor_constant
+      tag=basics_preprosessor_constant
       caption=Constant declaration
       keywords=;#define;define;
       <content>
@@ -1326,7 +1310,7 @@ void ShowCopyright()
     </text>
 
     <text>
-      tag=basis_preprosessor_compilation
+      tag=basics_preprosessor_compilation
       caption=Controlling compilation
         <keywords>
       ;#property;property;link;copyright;stacksize;indicator_chart_window;indicator_separate_window;indicator_buffers;
@@ -1374,7 +1358,7 @@ void ShowCopyright()
     </text>
 
     <text>
-      tag=basis_preprosessor_include
+      tag=basics_preprosessor_include
       caption=Including of files
       keywords=;include;
       <content>
@@ -1397,7 +1381,7 @@ taken from the default directory (usually <em>terminal_directory\experts\include
     </text>
 
     <text>
-      tag=basis_preprosessor_import
+      tag=basics_preprosessor_import
       caption=Importing of functions
       keywords=;import;DLL;EX4;
       <content>
@@ -1454,7 +1438,7 @@ The parameters passed to imported functions (both from EX4 and from DLL modules)
     <content>
      <p>To simplify the program writing and to make program texts more convenient for perception, predefined standard constants are
      forseen in MQL4.<br/><br/>
-     Standard constants are similar to <a href="help://basis_preprosessor_constant">macro substitutions</a> and are of int type.<br/><br/>
+     Standard constants are similar to <a href="help://basics_preprosessor_constant">macro substitutions</a> and are of int type.<br/><br/>
      The constants are grouped by their purposes.</p>
     </content>
 
@@ -2743,7 +2727,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       keywords=;init;deinit;start;
       <content>
         <p>
-        To <a href="help://basis_preprosessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used.
+        To <a href="help://basics_preprosessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used.
         This means that, until the imported function is called, the corresponding module (ex4 or dll) will not be loaded.
         MQL4 and DLL libraries are executed in the calling module thread.<br/><br/>
 
@@ -2779,7 +2763,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
          - parameters are passed by their values, except for those explicitely passed by a link (in our case, these are lines);<br/>
          - on reading the parameters passed to it, the imported function will flush the stack by itself.<br/><br/>
 
-         At describing of the imported <a href="help://basis_functions">function</a> prototype, it is useless to use parameters with
+         At describing of the imported <a href="help://basics_functions">function</a> prototype, it is useless to use parameters with
        default values as all parameters must be passed explicitely to the imported function.<br/><br/>
 
          If the call for an imported function failed (expert settings do not allow DLL imports, or the corresponding
@@ -3454,8 +3438,8 @@ entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger au
 <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit dynamisch bis MAX_CHART_BARS erweitert. Index 0 enthält die älteste Bar.
 <br>
 <br>
-(3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basis_variables_static">static</a> (wie übliche Arrays).
-Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basis_variables_static">static</a> deklariert werden.
+(3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
+Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß ggf. explizit als <a href="help://basics_variables_static">static</a> deklariert werden.
 <br>
 <br>
 (4) Das Target-Array kann nach Zuweisung nicht mehr mittels ArrayResize() oder ArrayInitialize() verändert werden.
@@ -3463,11 +3447,11 @@ Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß gg
 <br>
 <span style="color:red">Fehler:</span>
 <br>
-Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler ERR_ARRAY_ERROR ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind. 
+Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler ERR_ARRAY_ERROR ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind.
 Dies gilt auch im Tester. In diesem Fall muß der Fehler ERR_ARRAY_ERROR wie ERS_HISTORY_UPDATE interpretiert werden.<br>
 <br>
 EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [ERS_HISTORY_UPDATE] - <span style="color:green">korrekt</span><br>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [ERR_ARRAY_ERROR]	- <span style="color:red">Fehler</span><br>
+EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [ERR_ARRAY_ERROR] - <span style="color:red">Fehler</span><br>
 
 
 
@@ -4523,15 +4507,16 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       caption=StrToDouble()
       type=double
       <content>
-      Converts string representation of number to double type (double-precision format with floating point).
+      Converts the string representation of a number into a <a href="help://basics_types_double">floating-point number (<span style="color:blue">double</span>)</a>.
+      Leading white space is removed and conversion stops at the first non-numeric character.
       </content>
       <example>
-  double var=StrToDouble(&quot;103.2812&quot;);
+  double var = StrToDouble(&quot;-103.2812&quot;);
       </example>
       <parameter>
         type=string
         name=value
-        description=String containing the number character representation format.
+        description=string representing a number
       </parameter>
     </function>
 
@@ -4540,15 +4525,16 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       caption=StrToInteger()
       type=int
       <content>
-      Converts string containing the value character representation into a value of the int (integer) type.
+      Converts the string representation of a number into an <a href="help://basics_types_int">Integer (<span style="color:blue">int</span>)</a>.
+      Leading white space is removed and conversion stops at the first non-digit after a leading minus sign (-).
       </content>
       <example>
-  int var1=StrToInteger(&quot;1024&quot;);
+  int var1 = StrToInteger(&quot;-1024&quot;);
       </example>
       <parameter>
         type=string
         name=value
-        description=String containing the integer character representation format.
+        description=string representing a number
       </parameter>
     </function>
 
@@ -4617,7 +4603,7 @@ TIME_SECONDS gets result as &quot;hh:mi:ss&quot;.
       type=void
       <content>
         Allocates memory for buffers used for custom indicator calculations.
-        The amount of buffers cannot exceed 8 or be less than the value given in the <a href="help://basis_preprosessor_compilation">indicator_buffers</a> property.
+        The amount of buffers cannot exceed 8 or be less than the value given in the <a href="help://basics_preprosessor_compilation">indicator_buffers</a> property.
         If custom indicator requires additional buffers for counting, this function must be used for specifying of the total amount of buffers.
       </content>
       <example>
@@ -6136,7 +6122,7 @@ To get the detailed error information, one has to call the <a href="help://check
     caption=Global variables
     <content>
     A group of functions intended for working with global variables.<br/><br/>
-    Global variables of the client terminal should not be mixed up with <a href="help://basis_variables_global">variables</a> declared in the global
+    Global variables of the client terminal should not be mixed up with <a href="help://basics_variables_global">variables</a> declared in the global
     scope of the MQL4 program.<br/><br/>
     Global variables are kept in the client terminal within 4 weeks since the last access, then they will be deleted automatically.
     An access to a global variable is not only <a href="help://globals_GlobalVariableSet">setting</a> of a new value, but <a href="help://globals_GlobalVariableGet">reading</a> of the global variable value, as well.<br/><br/>

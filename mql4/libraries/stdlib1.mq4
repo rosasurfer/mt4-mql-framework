@@ -5024,7 +5024,7 @@ datetime TimeGMT() {
 
    if (This.IsTesting()) {
       // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
-      //       nicht die modellierte sondern die aktuelle reale Zeit.
+      //       nicht die modellierte, sondern die aktuelle reale Zeit.
       gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
