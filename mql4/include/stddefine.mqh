@@ -1219,7 +1219,7 @@ int ResetLastError() {
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
  *
- * NOTE: Benutze HandleEvent(), um für die Prüfung weitere, event-spezifische Parameter anzugeben.
+ * NOTE: Statt dieser Funktion HandleEvent() benutzen, um für die Prüfung weitere event-spezifische Parameter anzugeben.
  */
 bool HandleEvents(int events) {
    int status = 0;
@@ -1285,7 +1285,7 @@ int stack.orderSelections[];                                         // @see Ord
  * @return bool
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
+ * NOTE: In der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 bool IsTicket(int ticket) {
    OrderPush("IsTicket(1)");
@@ -1311,7 +1311,7 @@ bool IsTicket(int ticket) {
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
+ * NOTE: In der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false) {
    if (storeSelection) {
@@ -1338,7 +1338,7 @@ bool SelectTicket(int ticket, string location, bool storeSelection=false, bool o
  * @return int - Ticket des aktuellen Kontexts oder 0, wenn keine Order selektiert ist oder ein Fehler auftrat
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
+ * NOTE: In der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 int OrderPush(string location) {
    int error = GetLastError();
@@ -1364,7 +1364,7 @@ int OrderPush(string location) {
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
+ * NOTE: In der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 bool OrderPop(string location) {
    int ticket = ArrayPopInt(stack.orderSelections);
@@ -1390,7 +1390,7 @@ bool OrderPop(string location) {
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ * NOTE: In der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 bool WaitForTicket(int ticket, bool orderKeep=true) {
    if (ticket <= 0)
@@ -1428,7 +1428,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  *
  *
- * NOTE: Ist in der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
+ * NOTE: In der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 double PipValue(double lots=1, bool hideErrors=false) {
    if (!TickSize) {
