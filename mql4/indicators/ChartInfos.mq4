@@ -109,10 +109,10 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool CheckPendingLfxOrders() {
-   // (1) die Orders werden nur nach Preisänderung oder beim Warten auf eine Trade-Bestätigung überprüft (nach gerade verschicktem TradeCommand)
    static double lastBid, lastAsk;
    static bool   isPendingCmd;
 
+   // (1) Die Orders werden nur nach Preisänderung oder beim Warten auf eine eingehende Trade-Bestätigung überprüft.
    if (Bid==lastBid) /*&&*/ if (Ask==lastAsk) /*&&*/ if (!isPendingCmd)
       return(true);
    lastBid      = Bid;
@@ -123,9 +123,10 @@ bool CheckPendingLfxOrders() {
    datetime triggerTime;
    int result, /*LFX_ORDER*/stored[], orders=ArrayRange(lfxOrders, 0);
 
-   for (int i=0; i < orders; i++) {                                                                                     // TODO: Open/Close-Error irgendwie behandeln
-      if (los.IsOpenError (lfxOrders, i)) { log("CheckPendingLfxOrders(1)   #"+ los.Ticket(lfxOrders, i) +" open error is set" ); continue; }
-      if (los.IsCloseError(lfxOrders, i)) { log("CheckPendingLfxOrders(2)   #"+ los.Ticket(lfxOrders, i) +" close error is set"); continue; }
+   for (int i=0; i < orders; i++) {
+      // offene Orders mit Open- oder Close-Error werden ignoriert
+      if (los.IsOpenError (lfxOrders, i)) continue;
+      if (los.IsCloseError(lfxOrders, i)) continue;
 
 
       // (2) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP-Order
@@ -148,7 +149,7 @@ bool CheckPendingLfxOrders() {
             isPendingCmd = true;
          }
          else {
-            // (2.3) prüfen, ob lo.OpenError() inzwischen schon gesetzt wurde, ggf. Fehler melden und speichern
+            // (2.3) prüfen, ob inzwischen ein Open-Error gesetzt wurde, je nachdem Fehler melden und speichern
             result = LFX.GetOrder(los.Ticket(lfxOrders, i), stored);       // aktuell gespeicherte Version der Order holen
             if (result != 1) {                                             // +1, wenn die Order erfolgreich gelesen wurden
                if (!result) return(false);
@@ -186,7 +187,7 @@ bool CheckPendingLfxOrders() {
             continue;
          }
          else {
-            // (3.3) prüfen, ob lo.CloseError() inzwischen schon gesetzt wurde, ggf. Fehler melden und speichern
+            // (3.3) prüfen, ob inzwischen ein Close-Error gesetzt wurde, je nachdem Fehler melden und speichern
             result = LFX.GetOrder(los.Ticket(lfxOrders, i), stored);       // aktuell gespeicherte Version der Order holen
             if (result != 1) {                                             // +1, wenn die Order erfolgreich gelesen wurden
                if (!result) return(false);
@@ -223,7 +224,7 @@ bool CheckPendingLfxOrders() {
             isPendingCmd = true;
          }
          else {
-            // (4.3) prüfen, ob lo.CloseError() inzwischen schon gesetzt wurde, ggf. Fehler melden und speichern
+            // (4.3) prüfen, ob inzwischen ein Close-Error gesetzt wurde, je nachdem Fehler melden und speichern
             result = LFX.GetOrder(los.Ticket(lfxOrders, i), stored);       // aktuell gespeicherte Version der Order holen
             if (result != 1) {                                             // +1, wenn die Order erfolgreich gelesen wurden
                if (!result) return(false);
