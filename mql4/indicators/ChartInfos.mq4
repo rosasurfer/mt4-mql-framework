@@ -83,18 +83,20 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};             // untersch
 int onTick() {
    positionsAnalyzed = false;
 
-   if (!UpdatePrice())               return(last_error);
-   if (!UpdateOHLC())                return(last_error);
-   if (!UpdatePositions())           return(last_error);             // verarbeitet TradeToLfxTerminal-Messages
+   if (!UpdatePrice())                       return(last_error);
+   if (!UpdateOHLC())                        return(last_error);
 
    if (isLfxInstrument) {
-      if (!CheckPendingLfxOrders())  return(last_error);
+      if (!QC.HandleLfxTerminalMessages())   return(last_error);     // Listener für beim LFX-Terminal eingehende Messages
+      if (!UpdatePositions())                return(last_error);
+      if (!CheckPendingLfxOrders())          return(last_error);
    }
    else {
-      if (!UpdateSpread())           return(last_error);
-      if (!UpdateUnitSize())         return(last_error);
-      if (!UpdateStopoutLevel())     return(last_error);
-      if (!QC.HandleTradeCommands()) return(last_error);             // verarbeitet LfxToTradeTerminal-Messages
+      if (!QC.HandleTradeTerminalMessages()) return(last_error);     // Listener für beim Trade-Terminal eingehende Messages
+      if (!UpdatePositions())                return(last_error);
+      if (!UpdateSpread())                   return(last_error);
+      if (!UpdateUnitSize())                 return(last_error);
+      if (!UpdateStopoutLevel())             return(last_error);
    }
 
    if (IsVisualMode())                                               // nur im Tester
@@ -248,10 +250,12 @@ bool CheckPendingLfxOrders() {
  *
  * @param  int    type  - OrderType der entsprechenden Order: OP_BUY | OP_SELL | OP_BUYLIMIT | OP_SELLLIMIT | OP_BUYSTOP | OP_SELLSTOP
  * @param  double price - LimitPrice
+ * @param  bool   sl    - ob der angegebene LimitPrice als StopLoss geprüft soll
+ * @param  bool   tp    - ob der angegebene LimitPrice als TakeProfit geprüft soll
  *
  * @return bool
  */
-bool IsLimitTriggered(int type, bool sl, bool tp, double price) {
+bool IsLimitTriggered(int type, double price, bool sl, bool tp) {
    switch (type) {
       case OP_BUYLIMIT :
       case OP_SELLSTOP :    return(LE(Bid, price));
@@ -267,7 +271,7 @@ bool IsLimitTriggered(int type, bool sl, bool tp, double price) {
                     if (tp) return(LE(Bid, price));
                     break;
    }
-   return(!catch("IsLimitTriggered()   illegal parameter combination type="+ OperationTypeToStr(type) +", sl="+ BoolToStr(tp) +", tp="+ BoolToStr(tp), ERR_INVALID_FUNCTION_PARAMVALUE));
+   return(!catch("IsLimitTriggered()   illegal parameter combination: type="+ OperationTypeToStr(type) +", sl="+ BoolToStr(tp) +", tp="+ BoolToStr(tp), ERR_INVALID_FUNCTION_PARAMVALUE));
 }
 
 
@@ -1019,12 +1023,6 @@ bool AnalyzePositions() {
          return(false);
    }
 
-   // (3.6) keine lokalen Positionen
-   else if (isLfxInstrument) {
-      if (!QC.HandleTradeTerminalMessages())                         // eingehende TradeTerminal-Messages verarbeiten
-         return(false);
-   }
-
    positionsAnalyzed = true;
    return(!catch("AnalyzePositions(5)"));
 }
@@ -1672,6 +1670,55 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
 
 
 /**
+ * Handler für beim LFX-Terminal eingehende Messages.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.HandleLfxTerminalMessages() {
+   if (!IsChart)
+      return(true);
+
+   // (1) ggf. Receiver starten
+   if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartTradeToLfxReceiver())
+      return(false);
+
+   // (2) Channel auf neue Messages prüfen
+   int result = QC_CheckChannel(qc.TradeToLfxChannel);
+   if (result < QC_CHECK_CHANNEL_EMPTY) {
+      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")   channel doesn't exist",              ERR_WIN32_ERROR));
+                                            return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")   unexpected return value = "+ result, ERR_WIN32_ERROR));
+   }
+   if (result == QC_CHECK_CHANNEL_EMPTY)
+      return(true);
+
+   // (3) neue Messages abholen
+   result = QC_GetMessages3(hQC.TradeToLfxReceiver, qc.TradeToLfxBuffer, QC_MAX_BUFFER_SIZE);
+   if (result != QC_GET_MSG3_SUCCESS) {
+      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
+      if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleLfxTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
+                                               return(!catch("QC.HandleLfxTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
+   }
+
+   // (4) Messages verarbeiten: Da hier sehr viele Messages eingehen, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
+   string msgs = qc.TradeToLfxBuffer[0];
+   int from=0, to=StringFind(msgs, TAB, from);
+   while (to != -1) {                                                            // mind. ein TAB gefunden
+      if (to != from)
+         if (!ProcessLfxTerminalMessage(StringSubstr(msgs, from, to-from)))
+            return(false);
+      from = to+1;
+      to = StringFind(msgs, TAB, from);
+   }
+   if (from < StringLen(msgs))
+      if (!ProcessLfxTerminalMessage(StringSubstr(msgs, from)))
+         return(false);
+
+   return(true);
+}
+
+
+/**
  * Verarbeitet die übergebene "TradeToLfxChannel"-Message.
  *
  * @param  string message - QuickChannel-Message, siehe Formatbeschreibung
@@ -1685,13 +1732,13 @@ bool StorePosition.Separate(double longPosition, double shortPosition, double to
  *                 "LFX:{iTicket]:close={0|1}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
  *                 "LFX:{iTicket]:profit={dValue}" - der kumulierte P/L-Wert der angegebenen Position hat sich geändert
  */
-bool ProcessTradeToLfxTerminalMsg(string message) {
+bool ProcessLfxTerminalMessage(string message) {
    // Da hier sehr viele Messages eingehen, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessTradeToLfxTerminalMsg(1)   unknown message format \""+ message +"\"")));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(1)   unknown message format \""+ message +"\"")));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessTradeToLfxTerminalMsg(2)   unknown message \""+ message +"\" (illegal order ticket)")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessTradeToLfxTerminalMsg(3)   unknown message \""+ message +"\" (illegal order ticket)")));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessLfxTerminalMessage(2)   unknown message \""+ message +"\" (illegal order ticket)")));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessLfxTerminalMessage(3)   unknown message \""+ message +"\" (illegal order ticket)")));
    // LFX-Parameter
    double profit;
    bool   success;
@@ -1701,7 +1748,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
+      debug("ProcessLfxTerminalMessage(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
@@ -1709,7 +1756,7 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg(5)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      debug("ProcessLfxTerminalMessage(5)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
@@ -1717,14 +1764,14 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    }
    else if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      debug("ProcessTradeToLfxTerminalMsg(6)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      debug("ProcessLfxTerminalMessage(6)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
       if (success)                                                            // Pending-Orders neu einlesen
          if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
             return(false);
       return(true);
    }
    else {
-      return(_true(warn("ProcessTradeToLfxTerminalMsg(7)   unknown message \""+ message +"\"")));
+      return(_true(warn("ProcessLfxTerminalMessage(7)   unknown message \""+ message +"\"")));
    }
 
 
@@ -1765,8 +1812,8 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
       }
       if (!lo.IsOpen(lfxOrder)) {                                             // keine offene Position: gespeicherte Orderdaten out-of-sync
          static bool warned;
-         if (!warned) warn("ProcessTradeToLfxTerminalMsg(8)   #"+ ticket +" received profit message for an order known as pending");
-         else        debug("ProcessTradeToLfxTerminalMsg(9)   #"+ ticket +" received profit message for an order known as pending");
+         if (!warned) warn("ProcessLfxTerminalMessage(8)   #"+ ticket +" received profit message for an order known as pending");
+         else        debug("ProcessLfxTerminalMessage(9)   #"+ ticket +" received profit message for an order known as pending");
          warned = true;
          return(true);
       }
@@ -1788,6 +1835,52 @@ bool ProcessTradeToLfxTerminalMsg(string message) {
    // (3) P/L aktualisieren
    remote.position.data      [pos][I_PROFIT       ] = profit;
 
+   return(true);
+}
+
+
+/**
+ * Listener + Handler für beim TradeTerminal eingehende Messages.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.HandleTradeTerminalMessages() {
+   if (!IsChart)
+      return(true);
+
+   // (1) ggf. Receiver starten
+   if (!hQC.TradeCmdReceiver) /*&&*/ if (!QC.StartTradeCmdReceiver())
+      return(false);
+
+   // (2) Channel auf neue Messages prüfen
+   int result = QC_CheckChannel(qc.TradeCmdChannel);
+   if (result < QC_CHECK_CHANNEL_EMPTY) {
+      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleTradeTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.HandleTradeTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")   channel doesn't exist",              ERR_WIN32_ERROR));
+                                            return(!catch("QC.HandleTradeTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")   unexpected return value = "+ result, ERR_WIN32_ERROR));
+   }
+   if (result == QC_CHECK_CHANNEL_EMPTY)
+      return(true);
+
+   // (3) neue Messages abholen
+   result = QC_GetMessages3(hQC.TradeCmdReceiver, qc.TradeCmdBuffer, QC_MAX_BUFFER_SIZE);
+   if (result != QC_GET_MSG3_SUCCESS) {
+      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
+      if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
+                                               return(!catch("QC.HandleTradeTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
+   }
+
+   // (4) Messages verarbeiten
+   string msgs[];
+   int size = Explode(qc.TradeCmdBuffer[0], TAB, msgs, NULL);
+
+   for (int i=0; i < size; i++) {
+      if (!StringLen(msgs[i]))
+         continue;
+      log("QC.HandleTradeTerminalMessages(7)   received \""+ msgs[i] +"\"");
+      if (!RunScript("LFX.ExecuteTradeCmd", "command="+ msgs[i]))    // TODO: Scripte dürfen nicht in Schleife gestartet werden
+         return(false);
+   }
    return(true);
 }
 

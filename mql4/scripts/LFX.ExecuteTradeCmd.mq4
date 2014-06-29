@@ -577,12 +577,6 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-/*abstract*/bool ProcessTradeToLfxTerminalMsg(string s1) { return(!catch("ProcessTradeToLfxTerminalMsg()",  ERR_WRONG_JUMP)); }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 #import "struct.ORDER_EXECUTION.ex4"
    double oe.OpenPrice  (/*ORDER_EXECUTION*/int oe[]         );
    double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
