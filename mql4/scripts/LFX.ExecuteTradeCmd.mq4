@@ -103,19 +103,13 @@ int onDeinit() {
 int onStart() {
    // Order holen
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
-   if (result <= 0) { if (!result) return(last_error); return(catch("onStart(1)   LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
-
+   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)   LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
 
    // Action ausführen
-   if (action == "open") {
-      if (!OpenPendingOrder(lfxOrder)) return(last_error);
-   }
-   else if (action == "close") {
-      if (!ClosePosition(lfxOrder))    return(last_error);
-   }
-   else {
-      warn("onStart(2)   "+ action +" command not implemented");
-   }
+   if      (action == "open" ) OpenOrder    (lfxOrder);
+   else if (action == "close") ClosePosition(lfxOrder);
+   else                        warn("onStart(2)   unknown action command \""+ action +"\"");
+
    return(last_error);
 }
 
@@ -127,21 +121,48 @@ int onStart() {
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
-   if (!lo.IsPending(lo))
-      return(!catch("OpenPendingOrder(1)   #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
+bool OpenOrder(/*LFX_ORDER*/int lo[]) {
 
-   // (1) Status von LFX_ORDER.OpenError speichern, um beim Speichern ERR_CONCURRENT_MODIFICATION behandeln zu können.
-   bool lo.OpenError = lo.IsOpenError(lo);
+   // Um die Implementierung ohne Exceptions übersichtlich halten zu können, wird der Funktionsablauf in Teilschritte aufgeteilt und
+   // jeder Schritt in eine eigene Funktion ausgelagert.
+   //
+   // Schritte:
+   // ---------
+   //  - Order ausführen
+   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei wird ERR_CONCURRENT_MODIFICATION berücksichtigt
+   //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
+   //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
+
+   int  subPositions, error;
+
+   bool success.open   = OpenOrder.Execute          (lo, subPositions); error = last_error;
+   bool success.save   = OpenOrder.Save             (lo, !success.open);
+   bool success.notify = OpenOrder.NotifyLfxTerminal(lo);
+   bool success.sms    = OpenOrder.SendSMS          (lo, subPositions, error);
+
+   return(success.open && success.save && success.notify && success.sms);
+}
 
 
-   // (2) Trade-Parameter einlesen
+/**
+ * Öffnet die Order.
+ *
+ * @param  LFX_ORDER  lo[]         - LFX-Order
+ * @param  int       &subPositions - Zeiger auf Variable zur Aufnahme der Anzahl der geöffneten Subpositionen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
+   subPositions = 0;
+   if (!lo.IsPending(lo)) return(!catch("OpenOrder.Execute(1)   #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
+
+   // (1) Trade-Parameter einlesen
    string lfxCurrency  = lo.Currency(lo);
-   int    lfxDirection = IsShortTradeOperation(lo.Type(lo));
-   double lfxUnits     = lo.Units(lo);
+   int    direction    = IsShortTradeOperation(lo.Type(lo));
+   double units        = lo.Units(lo);
 
 
-   // (3) zu handelnde Pairs bestimmen                                                 // TODO: Brokerspezifische Symbole ermitteln
+   // (2) zu handelnde Pairs bestimmen                                                 // TODO: Brokerspezifische Symbole ermitteln
    string symbols    [7];
    int    symbolsSize;
    double preciseLots[7], roundedLots[7], realUnits;
@@ -157,12 +178,12 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
    else if (lfxCurrency == "USD") { symbols[0] = "AUDUSD"; symbols[1] = "EURUSD"; symbols[2] = "GBPUSD"; symbols[3] = "USDCAD"; symbols[4] = "USDCHF"; symbols[5] = "USDJPY";                        symbolsSize = 6; }
 
 
-   // (4) Lotsizes je Pair berechnen
+   // (3) Lotsizes je Pair berechnen
    double equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
    string errorMsg, overLeverageMsg;
 
    for (int retry, i=0; i < symbolsSize; i++) {
-      // (4.1) notwendige Daten ermitteln
+      // (3.1) notwendige Daten ermitteln
       double bid           = MarketInfo(symbols[i], MODE_BID      );                   // TODO: bei ERR_UNKNOWN_SYMBOL Symbole laden
       double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
       double tickValue     = MarketInfo(symbols[i], MODE_TICKVALUE);
@@ -170,10 +191,9 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      if (IsError(catch("OpenPendingOrder(2)   \""+ symbols[i] +"\"")))
-         return(_false(lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));            // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
+      if (IsError(catch("OpenOrder.Execute(2)   \""+ symbols[i] +"\""))) return(false);
 
-      // (4.2) auf ungültige MarketInfo()-Daten prüfen
+      // (3.2) auf ungültige MarketInfo()-Daten prüfen
       errorMsg = "";
       if      (LT(bid, 0.5)          || GT(bid, 300)      ) errorMsg = "Bid(\""      + symbols[i] +"\") = "+ NumberToStr(bid      , ".+");
       else if (LT(tickSize, 0.00001) || GT(tickSize, 0.01)) errorMsg = "TickSize(\"" + symbols[i] +"\") = "+ NumberToStr(tickSize , ".+");
@@ -182,7 +202,7 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       else if (LT(maxLot, 50)                             ) errorMsg = "MaxLot(\""   + symbols[i] +"\") = "+ NumberToStr(maxLot   , ".+");
       else if (LT(lotStep, 0.01)     || GT(lotStep, 0.1)  ) errorMsg = "LotStep(\""  + symbols[i] +"\") = "+ NumberToStr(lotStep  , ".+");
 
-      // (4.3) ungültige MarketInfo()-Daten behandeln
+      // (3.3) ungültige MarketInfo()-Daten behandeln
       if (StringLen(errorMsg) > 0) {
          if (retry < 3) {                                                              // 3 stille Versuche, korrekte Werte zu lesen
             Sleep(200);                                                                // bei Mißerfolg jeweils xxx Millisekunden warten
@@ -190,13 +210,13 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
             retry++;
             continue;
          }                                                                             // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-         return(_false(catch("OpenPendingOrder(3)   invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
+         return(!catch("OpenOrder.Execute(3)   invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA));
       }
 
-      // (4.4) Lotsize berechnen (dabei immer abrunden)
+      // (3.4) Lotsize berechnen (dabei immer abrunden)
       double lotValue = bid / tickSize * tickValue;                                    // Lotvalue eines Lots in Account-Currency
       double unitSize = equity / lotValue * leverage / symbolsSize;                    // equity/lotValue entspricht einem Hebel von 1, dieser Wert wird mit leverage gehebelt
-      preciseLots[i] = lfxUnits * unitSize;                                            // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
+      preciseLots[i] = units * unitSize;                                               // perfectLots zunächst auf Vielfaches von MODE_LOTSTEP abrunden
       roundedLots[i] = NormalizeDouble(MathFloor(preciseLots[i]/lotStep) * lotStep, lotStepDigits);
 
       // Schrittweite mit zunehmender Lotsize über MODE_LOTSTEP hinaus erhöhen (entspricht Algorythmus in ChartInfos-Indikator)
@@ -214,41 +234,34 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       else if (roundedLots[i] <= 1200.  ) { if (lotStep <  50.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/ 50   ) *  50      ); }   // 750-1200: Vielfaches von  50
       else                                { if (lotStep < 100.  ) roundedLots[i] = MathRound      (MathFloor(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
-      // (4.5) Lotsize validieren                                                      // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-      if (GT(roundedLots[i], maxLot)) return(_false(catch("OpenPendingOrder(4)   #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
+      // (3.5) Lotsize validieren
+      if (GT(roundedLots[i], maxLot)) return(!catch("OpenOrder.Execute(4)   #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
-      // (4.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
+      // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {
          roundedLots[i]  = minLot;
          overLeverageMsg = StringConcatenate(overLeverageMsg, ", ", symbols[i], " ", NumberToStr(roundedLots[i], ".+"), " instead of ", preciseLots[i], " lot");
       }
 
-      // (4.7) tatsächlich zu handelnde Units (nach Auf-/Abrunden) berechnen
+      // (3.7) tatsächlich zu handelnde Units (nach Auf-/Abrunden) berechnen
       realUnits += (roundedLots[i] / preciseLots[i] / symbolsSize);
    }
-   realUnits = NormalizeDouble(realUnits * lfxUnits, 1);
+   realUnits = NormalizeDouble(realUnits * units, 1);
 
-   // (4.8) bei Leverageüberschreitung Warnung ausgeben, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0) warn("OpenPendingOrder(5)   #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, lfxUnits), " units (unchanged)", " instead of "+ DoubleToStr(lfxUnits, 1) +" units"+ ifString(LT(realUnits, lfxUnits), " (not realizable)", "")));
+   // (3.8) bei Leverageüberschreitung Warnung ausgeben, jedoch nicht abbrechen
+   if (StringLen(overLeverageMsg) > 0) warn("OpenOrder.Execute(5)   #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
 
 
-   // (5) Directions der Teilpositionen bestimmen
+   // (4) Directions der Teilpositionen bestimmen
    for (i=0; i < symbolsSize; i++) {
-      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = lfxDirection;
-      else                                           directions[i]  = lfxDirection ^ 1;   // 0=>1, 1=>0
-      if (lfxCurrency == "JPY")                      directions[i] ^= 1;                  // JPY ist invers notiert
+      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = direction;
+      else                                           directions[i]  = direction ^ 1;   // 0=>1, 1=>0
+      if (lfxCurrency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
    }
 
 
-   // (6) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist
-   // TODO: system-weites Lock setzen
-   string mutex = "mutex.LFX.#"+ lfxTicket;
-   if (!AquireLock(mutex, true))                                                       // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-      return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
-
-
-   // (7) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
-   if (__LOG) log("OpenPendingOrder(6)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+   // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
+   if (__LOG) log("OpenOrder.Execute(6)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
 
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
@@ -264,73 +277,118 @@ bool OpenPendingOrder(/*LFX_ORDER*/int lo[]) {
       double   tp          = NULL;
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
-      int      oeFlags     = NULL;                                                     // TODO: 2 x auf ERR_CONCURRENT_MODIFICATION prüfen
-                                                                                       // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-      if (IsError(stdlib.GetLastError()))        return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
-      if (IsError(catch("OpenPendingOrder(7)"))) return(_false(                                     lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
+      int      oeFlags     = NULL;
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, lfxTicket, expiration, markerColor, oeFlags, oe);
-      if (tickets[i] == -1)                                                            // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-         return(_false(SetLastError(stdlib.GetLastError()), lo.setOpenTime(lo, -TimeGMT()), LFX.SaveOrder(lo), ReleaseLock(mutex)));
+      if (tickets[i] == -1)
+         return(!SetLastError(stdlib.GetLastError()));
+      subPositions++;
 
       if (StringStartsWith(symbols[i], lfxCurrency)) openPrice *= oe.OpenPrice(oe);
       else                                           openPrice /= oe.OpenPrice(oe);
    }
    openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
-      openPrice = 1/openPrice;                                       // JPY ist invers notiert
+      openPrice = 1/openPrice;                                                         // JPY ist invers notiert
 
 
-   // (8) Order speichern
-   lo.setType      (lo, lfxDirection);
-   lo.setUnits     (lo, realUnits   );
-   lo.setOpenTime  (lo, TimeGMT()   );
-   lo.setOpenPrice (lo, openPrice   );
-   lo.setOpenEquity(lo, equity      );                               // TODO: Hier SMS verschicken und zwar asynchron, damit SMS-Fehler das Script nicht stoppen.
+   // (6) LFX-Order aktualisieren
+   lo.setType      (lo, direction);
+   lo.setUnits     (lo, realUnits);
+   lo.setOpenTime  (lo, TimeGMT());
+   lo.setOpenPrice (lo, openPrice);
+   lo.setOpenEquity(lo, equity   );
 
+
+   // (7) Logmessage ausgeben
+   string priceFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
+   if (__LOG) log("OpenOrder.Execute(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), priceFormat) +")");
+
+   return(!catch("OpenOrder.Execute(8)"));
+}
+
+
+/**
+ * Speichert die Order.
+ *
+ * @param  LFX_ORDER lo[]        - LFX-Order
+ * @param  bool      isOpenError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
+   // (1) ggf. Open-Error setzen
+   if (isOpenError) /*&&*/ if (!lo.IsOpenError(lo))
+      lo.setOpenTime(lo, -TimeGMT());
+
+
+   // (2) Order speichern
    if (!LFX.SaveOrder(lo, NULL, CATCH_ERR_CONCUR_MODIFICATION)) {    // ERR_CONCURRENT_MODIFICATION abfangen
       if (last_error != ERR_CONCURRENT_MODIFICATION)
-         return(_false(ReleaseLock(mutex)));
-      // ERR_CONCURRENT_MODIFICATION kann ignoriert werden, wenn während der Orderausführung LFX_ORDER.OpenError gesetzt wurde, d.h. wenn ein Trade-Delay auftrat,
-      // der bereits als Timeout interpretiert wurde. Nur in diesem Fall kann und muß LFX_ORDER.OpenError zurückgesetzt werden.
+         return(last_error);
 
-      // (8.1) Order neu einlesen und Staus von OpenError prüfen
-      /*LFX_ORDER*/int current[];
-      int result = LFX.GetOrder(lfxTicket, current);
-      if (result <= 0) { ReleaseLock(mutex); if (!result) return(false); return(!catch("OpenPendingOrder(8)   LFX order "+ lfxTicket +" not found", ERR_RUNTIME_ERROR)); }
-      if (lo.OpenError || !lo.IsOpenError(current)) return(_false(catch("OpenPendingOrder(9)->LFX.SaveOrder(#"+ lfxTicket +")", ERR_CONCURRENT_MODIFICATION), ReleaseLock(mutex)));
+      // ERR_CONCURRENT_MODIFICATION behandeln
+      // -------------------------------------
+      //  - Kann nur dann behandelt werden, wenn diese Änderung das Setzen von LFX_ORDER.OpenError war.
+      //  - Bedeutet, daß ein Trade-Delay auftrat, der woanders bereits als Timeout (also als OpenError) interpretiert wurde.
 
-      // (8.2) ERR_CONCURRENT_MODIFICATION ignorieren und Order erneut speichern
-      if (__LOG) log("OpenPendingOrder(10)   over-writing LFX_ORDER.OpenError (was ERR_CONCURRENT_MODIFICATION)");
-      lo.setVersion(lo, lo.Version(current));
+      // (2.1) Order neu einlesen und gespeicherten OpenError-Status auswerten
+      /*LFX_ORDER*/int stored[];
+      int result = LFX.GetOrder(lo.Ticket(lo), stored);
+      if (result != 1) { if (!result) return(last_error); return(catch("OpenOrder.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsOpenError(stored))                        return(catch("OpenOrder.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+
+
+      // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
+      if (!isOpenError)
+         if (__LOG) log("OpenOrder.Save(3)   over-writing LFX_ORDER.OpenError (was ERR_CONCURRENT_MODIFICATION)");
+
+      lo.setVersion(lo, lo.Version(stored));
       if (!LFX.SaveOrder(lo))                                        // diesmal ohne irgendwelche Fehler abzufangen
-         return(_false(ReleaseLock(mutex)));
+         return(false);
    }
+   return(true);
+}
 
 
-   // (9) Order freigeben
-   if (!ReleaseLock(mutex))
-      return(!SetLastError(stdlib.GetLastError()));
+/**
+ * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung ans LFX-Terminal.
+ *
+ * @param  LFX_ORDER lo[] - LFX-Order
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OpenOrder.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
+   return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open="+ (!lo.IsOpenError(lo))));
+}
 
 
-   // (10) Logmessage ausgeben
-   string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-   if (__LOG) log("OpenPendingOrder(11)   "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
-
-
-   // (11) ggf. SMS verschicken
+/**
+ * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
+ *
+ * @param  LFX_ORDER lo[]         - LFX-Order
+ * @param  int       subPositions - Anzahl der geöffneten Subpositionen
+ * @param  int       error        - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
    if (sms.alerts) {
-      string message = lfxAccountAlias +": "+ comment +" "+ ifString(lfxDirection==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat);
+      string comment = lo.Comment(lo);
+         if (StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
+         if (StringStartsWith(comment, "."        )) comment = StringSubstr(comment, 1);
+         if (StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
+      int    counter     = StrToInteger(comment);
+      string priceFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+
+      string message = lfxAccountAlias +": ";
+      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", lo.Currency(lo), ".", counter, " ", OperationTypeDescription(lo.Type(lo)), " order at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " sub position", ifString(subPositions==1, "", "s"), " opened");
+      else                    message = StringConcatenate(message, lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
+
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
-         return(SetLastError(stdlib.GetLastError()));
+         return(!SetLastError(stdlib.GetLastError()));
    }
-
-
-   // (12) Ausführungsbestätigung ans LFX-Terminal schicken
-   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open=1"))
-      return(false);
-
    return(true);
 }
 
