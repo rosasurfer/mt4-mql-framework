@@ -123,13 +123,11 @@ int onStart() {
  */
 bool OpenOrder(/*LFX_ORDER*/int lo[]) {
 
-   // Um die Implementierung ohne Exceptions übersichtlich halten zu können, wird der Funktionsablauf in Teilschritte aufgeteilt und
-   // jeder Schritt in eine eigene Funktion ausgelagert.
+   // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
+   // in eine eigene Funktion ausgelagert:
    //
-   // Schritte:
-   // ---------
    //  - Order ausführen
-   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei wird ERR_CONCURRENT_MODIFICATION berücksichtigt
+   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berücksichtigen
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
@@ -141,6 +139,35 @@ bool OpenOrder(/*LFX_ORDER*/int lo[]) {
    bool success.sms    = OpenOrder.SendSMS          (lo, subPositions, error);
 
    return(success.open && success.save && success.notify && success.sms);
+}
+
+
+/**
+ * Schließt eine offene Position.
+ *
+ * @param  LFX_ORDER lo[] - die zu schließende Order
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ClosePosition(/*LFX_ORDER*/int lo[]) {
+
+   // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
+   // in eine eigene Funktion ausgelagert:
+   //
+   //  - Position schließen
+   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION berücksichtigen
+   //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
+   //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
+
+   string comment = lo.Comment(lo);
+   int    error;
+
+   bool success.close  = ClosePosition.Execute          (lo); error = last_error;
+   bool success.save   = ClosePosition.Save             (lo, !success.close);
+   bool success.notify = ClosePosition.NotifyLfxTerminal(lo);
+   bool success.sms    = ClosePosition.SendSMS          (lo, comment, error);
+
+   return(success.close && success.save && success.notify && success.sms);
 }
 
 
@@ -383,7 +410,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       string priceFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
 
       string message = lfxAccountAlias +": ";
-      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", lo.Currency(lo), ".", counter, " ", OperationTypeDescription(lo.Type(lo)), " order at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " sub position", ifString(subPositions==1, "", "s"), " opened");
+      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", lo.Currency(lo), ".", counter, " ", OperationTypeDescription(lo.Type(lo)), " order at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
       else                    message = StringConcatenate(message, lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
 
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
@@ -394,25 +421,21 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
 
 
 /**
- * Schleßt eine offene Position.
+ * Schließt die Position.
  *
- * @param  LFX_ORDER lo[] - die zu schließende Order
+ * @param  LFX_ORDER lo[] - LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition(/*LFX_ORDER*/int lo[]) {
-   if (!lo.IsOpen(lo))
-      return(!catch("ClosePosition(1)   #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPending(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
-
-   // (1) Status von LFX_ORDER.CloseError speichern, um beim Speichern ERR_CONCURRENT_MODIFICATION behandeln zu können.
-   bool lo.CloseError = lo.IsCloseError(lo);
+bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
+   if (!lo.IsOpen(lo)) return(!catch("ClosePosition.Execute(1)   #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPending(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
 
 
-   // (2) zu schließende Einzelpositionen selektieren
+   // (1) zu schließende Einzelpositionen selektieren
    int tickets[], orders=OrdersTotal();
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                     // FALSE: in einem anderen Thread wurde eine aktive Order geschlossen oder gestrichen
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))               // FALSE: in einem anderen Thread wurde eine aktive Order geschlossen oder gestrichen
          break;
       if (OrderType() > OP_SELL)
          continue;
@@ -420,26 +443,21 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
          ArrayPushInt(tickets, OrderTicket());
    }
    int ticketsSize = ArraySize(tickets);
-   if (!ticketsSize)                                                       // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-      return(_false(catch("ClosePosition(2)   #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR), lo.setCloseTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
+   if (!ticketsSize) return(!catch("ClosePosition.Execute(2)   #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR));
 
 
-   // (3) Positionen schließen
+   // (2) Einzelpositionen schließen
    double slippage    = 0.1;
    color  markerColor = CLR_NONE;
    int    oeFlags     = NULL;
-                                                                           // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-   if (IsError(stdlib.GetLastError()))     return(_false(SetLastError(stdlib.GetLastError()), lo.setCloseTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
-   if (IsError(catch("ClosePosition(3)"))) return(_false(lo.setCloseTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
-
-   if (__LOG) log("ClosePosition(4)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+   if (__LOG) log("ClosePosition.Execute(3)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
 
    /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
-   if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))     // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-      return(_false(SetLastError(stdlib.GetLastError()), lo.setCloseTime(lo, -TimeGMT()), LFX.SaveOrder(lo)));
+   if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
+      return(!SetLastError(stdlib.GetLastError()));
 
 
-   // (4) Gesamt-ClosePrice und -Profit berechnen
+   // (3) Gesamt-ClosePrice und -Profit berechnen
    string currency = lo.Currency(lo);
    double closePrice=1.0, profit=0;
    for (i=0; i < ticketsSize; i++) {
@@ -449,58 +467,109 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
    }
    closePrice = MathPow(closePrice, 1/7.);
    if (currency == "JPY")
-      closePrice = 1/closePrice;                                           // JPY ist invers notiert
+      closePrice = 1/closePrice;                                     // JPY ist invers notiert
 
 
-   // (5) LFX-Order aktualisieren und speichern
+   // (4) LFX-Order aktualisieren
+   string oldComment = lo.Comment(lo);
    lo.setCloseTime (lo, TimeGMT() );
    lo.setClosePrice(lo, closePrice);
    lo.setProfit    (lo, profit    );
-      string oldComment = lo.Comment(lo);                                  // TODO: Hier SMS verschicken und zwar asynchron, damit SMS-Fehler das Script nicht stoppen.
    lo.setComment   (lo, ""        );
 
-   if (!LFX.SaveOrder(lo, NULL, CATCH_ERR_CONCUR_MODIFICATION)) {          // ERR_CONCURRENT_MODIFICATION abfangen
-      if (last_error != ERR_CONCURRENT_MODIFICATION)
-         return(false);
-      // ERR_CONCURRENT_MODIFICATION kann ignoriert werden, wenn während der Orderausführung LFX_ORDER.CloseError gesetzt wurde, d.h. wenn ein Trade-Delay auftrat,
-      // der bereits als Timeout interpretiert wurde. Nur in diesem Fall kann und muß LFX_ORDER.CloseError zurückgesetzt werden.
 
-      // (5.1) Order neu einlesen und Staus von CloseError prüfen
-      /*LFX_ORDER*/int current[];
-      int result = LFX.GetOrder(lfxTicket, current);
-      if (result <= 0) { if (!result) return(false);  return(!catch("ClosePosition(5)   LFX order "+ lfxTicket +" not found", ERR_RUNTIME_ERROR)); }
-      if (lo.CloseError || !lo.IsCloseError(current)) return(!catch("ClosePosition(6)->LFX.SaveOrder(#"+ lfxTicket +")", ERR_CONCURRENT_MODIFICATION));
-
-      // (5.2) ERR_CONCURRENT_MODIFICATION ignorieren und Order erneut speichern
-      if (__LOG) log("ClosePosition(7)   over-writing LFX_ORDER.CloseError (was ERR_CONCURRENT_MODIFICATION)");
-      lo.setVersion(lo, lo.Version(current));
-      if (!LFX.SaveOrder(lo))                                              // diesmal ohne irgendwelche Fehler abzufangen
-         return(false);
-   }
-
-
-   // (6) Logmessage ausgeben                                              // letzten Counter ermitteln
+   // (5) Logmessage ausgeben                                        // letzten Counter ermitteln
    if (StringStartsWith(oldComment, lo.Currency(lo))) oldComment = StringRight(oldComment, -3);
    if (StringStartsWith(oldComment, "."            )) oldComment = StringRight(oldComment, -1);
    if (StringStartsWith(oldComment, "#"            )) oldComment = StringRight(oldComment, -1);
-   int    counter   = StrToInteger(oldComment);
-   string sCounter  = ifString(!counter, "", "."+ counter);
-   string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-   if (__LOG) log("ClosePosition(8)   "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   int    counter     = StrToInteger(oldComment);
+   string priceFormat = ifString(lo.Currency(lo)=="JPY", ".2'", ".4'");
+
+   if (__LOG) log("ClosePosition.Execute(4)   "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), priceFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+
+   return(true);
+}
 
 
-   // (7) ggf. SMS verschicken
-   if (sms.alerts) {
-      string message = lfxAccountAlias +": "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat);
-      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
-         return(SetLastError(stdlib.GetLastError()));
+/**
+ * Speichert die Order.
+ *
+ * @param  LFX_ORDER lo[]         - LFX-Order
+ * @param  bool      isCloseError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
+   // (1) ggf. CloseError setzen
+   if (isCloseError) /*&&*/ if (!lo.IsCloseError(lo))
+      lo.setCloseTime(lo, -TimeGMT());
+
+
+   // (2) Order speichern
+   if (!LFX.SaveOrder(lo, NULL, CATCH_ERR_CONCUR_MODIFICATION)) {    // ERR_CONCURRENT_MODIFICATION abfangen
+      if (last_error != ERR_CONCURRENT_MODIFICATION)
+         return(last_error);
+
+      // ERR_CONCURRENT_MODIFICATION behandeln
+      // -------------------------------------
+      //  - Kann nur dann behandelt werden, wenn diese Änderung das Setzen von LFX_ORDER.CloseError war.
+      //  - Bedeutet, daß ein Trade-Delay auftrat, der woanders bereits als Timeout (also als CloseError) interpretiert wurde.
+
+      // (2.1) Order neu einlesen und gespeicherten CloseError-Status auswerten
+      /*LFX_ORDER*/int stored[];
+      int result = LFX.GetOrder(lo.Ticket(lo), stored);
+      if (result != 1) { if (!result) return(last_error); return(catch("ClosePosition.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsCloseError(stored))                       return(catch("ClosePosition.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+
+
+      // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
+      if (!isCloseError)
+         if (__LOG) log("ClosePosition.Save(3)   over-writing LFX_ORDER.CloseError (was ERR_CONCURRENT_MODIFICATION)");
+
+      lo.setVersion(lo, lo.Version(stored));
+      if (!LFX.SaveOrder(lo))                                        // diesmal ohne irgendwelche Fehler abzufangen
+         return(false);
    }
+   return(true);
+}
 
 
-   // (8) LFX-Terminal benachrichtigen
-   if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1"))
-      return(false);
+/**
+ * Schickt eine Benachrichtigung über Erfolg/Mißerfolg der Orderausführung ans LFX-Terminal.
+ *
+ * @param  LFX_ORDER lo[] - LFX-Order
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ClosePosition.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
+   return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close="+ (!lo.IsCloseError(lo))));
+}
 
+
+/**
+ * Verschickt eine SMS über Erfolg/Mißerfolg der Orderausführung.
+ *
+ * @param  LFX_ORDER lo[]    - LFX-Order
+ * @param  string    comment - das ursprüngliche Label bzw. der Comment der Order
+ * @param  int       error   - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
+   if (sms.alerts) {
+      if (StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
+      if (StringStartsWith(comment, "."        )) comment = StringSubstr(comment, 1);
+      if (StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
+      int    counter     = StrToInteger(comment);
+      string priceFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+
+      string message = lfxAccountAlias +": ";
+      if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position failed (", ErrorToStr(error), ")");
+      else                     message = StringConcatenate(message, lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
+
+      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+         return(!SetLastError(stdlib.GetLastError()));
+   }
    return(true);
 }
 
