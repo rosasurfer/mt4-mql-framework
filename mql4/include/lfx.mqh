@@ -463,7 +463,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    // (3) Daten formatieren
    //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenPriceTime, StopLoss, StopLossTime, TakeProfit, TakeProfitTime, CloseTime, ClosePrice, Profit, LfxDeviation, ModificationTime, Version
    string sSymbol           =                          lo.Currency      (lo);
-   string sLabel            =                          lo.Comment       (lo);                                                                                               sLabel          = StringPadRight(sLabel         ,  9, " ");
+   string sLabel            =                          lo.Comment       (lo);                                                                                               sLabel          = StringPadRight(sLabel         , 13, " ");
    string sOperationType    = OperationTypeDescription(lo.Type          (lo));                                                                                              sOperationType  = StringPadRight(sOperationType , 10, " ");
    string sUnits            =              NumberToStr(lo.Units         (lo), ".+");                                                                                        sUnits          = StringPadLeft (sUnits         ,  5, " ");
    string sOpenEquity       =                ifString(!lo.OpenEquity    (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity     = StringPadLeft (sOpenEquity    , 10, " ");
