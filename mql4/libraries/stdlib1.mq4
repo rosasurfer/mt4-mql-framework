@@ -5136,7 +5136,7 @@ double MathModFix(double a, double b) {
  */
 bool StringStartsWith(string object, string prefix) {
    if (!StringLen(prefix))
-      return(!catch("StringStartsWith()   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(!catch("StringStartsWith(1)   empty prefix \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
    return(StringFind(object, prefix) == 0);
 }
 
