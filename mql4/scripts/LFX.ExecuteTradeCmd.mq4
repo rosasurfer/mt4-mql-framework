@@ -402,16 +402,16 @@ bool OpenOrder.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
  */
 bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
    if (sms.alerts) {
-      string comment = lo.Comment(lo);
-         if (StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
-         if (StringStartsWith(comment, "."        )) comment = StringSubstr(comment, 1);
-         if (StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
+      string comment=lo.Comment(lo), currency=lo.Currency(lo);
+         if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
+         if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
+         if (StringStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter     = StrToInteger(comment);
-      string priceFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+      string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
       string message = lfxAccountAlias +": ";
-      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", lo.Currency(lo), ".", counter, " ", OperationTypeDescription(lo.Type(lo)), " order at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
-      else                    message = StringConcatenate(message, lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
+      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", currency, ".", counter, " ", OperationTypeDescription(lo.Type(lo)), " order at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
+      else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
 
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
@@ -557,15 +557,16 @@ bool ClosePosition.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
  */
 bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
    if (sms.alerts) {
-      if (StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
-      if (StringStartsWith(comment, "."        )) comment = StringSubstr(comment, 1);
-      if (StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
+      string currency = lo.Currency(lo);
+      if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
+      if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
+      if (StringStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter     = StrToInteger(comment);
-      string priceFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
+      string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
       string message = lfxAccountAlias +": ";
-      if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position failed (", ErrorToStr(error), ")");
-      else                     message = StringConcatenate(message, lo.Currency(lo), ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
+      if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position failed (", ErrorToStr(error), ")");
+      else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
 
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));

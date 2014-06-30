@@ -136,7 +136,7 @@ bool CheckPendingLfxOrders() {
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
             // (2.1) Limit ist noch nicht getriggert
-            if (IsLimitTriggered(los.Type(lfxOrders, i), false, false, los.OpenPriceLfx(lfxOrders, i))) {
+            if (IsLimitTriggered(los.Type(lfxOrders, i), los.OpenPriceLfx(lfxOrders, i), false, false)) {
                log("CheckPendingLfxOrders(3)   #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
                // Auslösen speichern und TradeCommand verschicken
@@ -173,7 +173,7 @@ bool CheckPendingLfxOrders() {
          triggerTime = los.StopLossTime(lfxOrders, i);
          if (!triggerTime) {
             // (3.1) StopLoss ist noch nicht getriggert
-            if (IsLimitTriggered(los.Type(lfxOrders, i), true, false, los.StopLossLfx(lfxOrders, i))) {
+            if (IsLimitTriggered(los.Type(lfxOrders, i), los.StopLossLfx(lfxOrders, i), true, false)) {
                log("CheckPendingLfxOrders(6)   #"+ los.Ticket(lfxOrders, i) +" StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
                // Auslösen speichern und TradeCommand verschicken
@@ -211,7 +211,7 @@ bool CheckPendingLfxOrders() {
          triggerTime = los.TakeProfitTime(lfxOrders, i);
          if (!triggerTime) {
             // (4.1) TakeProfit ist noch nicht getriggert
-            if (IsLimitTriggered(los.Type(lfxOrders, i), false, true, los.TakeProfitLfx(lfxOrders, i))) {
+            if (IsLimitTriggered(los.Type(lfxOrders, i), los.TakeProfitLfx(lfxOrders, i), false, true)) {
                log("CheckPendingLfxOrders(9)   #"+ los.Ticket(lfxOrders, i) +" TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
                // Auslösen speichern und TradeCommand verschicken
@@ -1727,7 +1727,7 @@ bool QC.HandleLfxTerminalMessages() {
  *                               ein Programmabbruch von außen durch Schicken einer falschen Message ist nicht möglich. Für unerkannte Messages wird eine
  *                               Warnung ausgegeben.
  *
- *  Messageformat: "LFX:{iTicket]:pending=1"       - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
+ *  Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
  *                 "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
  *                 "LFX:{iTicket]:close={0|1}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
  *                 "LFX:{iTicket]:profit={dValue}" - der kumulierte P/L-Wert der angegebenen Position hat sich geändert
@@ -1743,39 +1743,41 @@ bool ProcessLfxTerminalMessage(string message) {
    double profit;
    bool   success;
    from = to+1;
-   if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
+
+   // :profit={dValue}
+   if (StringSubstr(message, from, 7) == "profit=") {                                           // die häufigste Message wird zuerst geprüft
       profit = StrToDouble(StringSubstr(message, from+7));
    }
+
+   // :pending={1|0}
    else if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      debug("ProcessLfxTerminalMessage(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"));
-      if (success)                                                            // Pending-Orders neu einlesen
-         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
-            return(false);
-      return(true);
+      if (success) { if (__LOG) log("ProcessLfxTerminalMessage(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
+      else         {           warn("ProcessLfxTerminalMessage(5)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
+      return(LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) >= 0);   // Pending-Orders neu einlesen (auch bei Fehler)
    }
+
+   // :open={1|0}
    else if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      debug("ProcessLfxTerminalMessage(5)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
-      if (success)                                                            // Pending-Orders neu einlesen
-         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
-            return(false);
-      return(true);
+      if (__LOG) log("ProcessLfxTerminalMessage(6)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      return(LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) >= 0);   // Pending-Orders neu einlesen (auch bei Fehler)
    }
+
+   // :close={1|0}
    else if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      debug("ProcessLfxTerminalMessage(6)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
-      if (success)                                                            // Pending-Orders neu einlesen
-         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
-            return(false);
-      return(true);
+      if (__LOG) log("ProcessLfxTerminalMessage(7)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      return(LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) >= 0);   // Pending-Orders neu einlesen (auch bei Fehler)
    }
+
+   // ???
    else {
-      return(_true(warn("ProcessLfxTerminalMessage(7)   unknown message \""+ message +"\"")));
+      return(_true(warn("ProcessLfxTerminalMessage(8)   unknown message \""+ message +"\"")));
    }
 
 
-   // (1) Ticket in vorhandenen Remote-Positionen suchen
+   // (1) hier immer Profit-Message: Ticket in vorhandenen Remote-Positionen suchen
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
 
@@ -1812,8 +1814,8 @@ bool ProcessLfxTerminalMessage(string message) {
       }
       if (!lo.IsOpen(lfxOrder)) {                                             // keine offene Position: gespeicherte Orderdaten out-of-sync
          static bool warned;
-         if (!warned) warn("ProcessLfxTerminalMessage(8)   #"+ ticket +" received profit message for an order known as pending");
-         else        debug("ProcessLfxTerminalMessage(9)   #"+ ticket +" received profit message for an order known as pending");
+         if (!warned) warn("ProcessLfxTerminalMessage(9)   #"+ ticket +" received profit message for an order known as pending");
+         else        debug("ProcessLfxTerminalMessage(10)   #"+ ticket +" received profit message for an order known as pending");
          warned = true;
          return(true);
       }
