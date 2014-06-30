@@ -410,7 +410,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
       string message = lfxAccountAlias +": ";
-      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", currency, ".", counter, " ", OperationTypeDescription(lo.Type(lo)), " order at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
+      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
       else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
 
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
@@ -565,7 +565,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
       string message = lfxAccountAlias +": ";
-      if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position failed (", ErrorToStr(error), ")");
+      if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
       else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
 
       if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))

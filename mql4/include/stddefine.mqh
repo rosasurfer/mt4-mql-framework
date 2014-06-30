@@ -861,7 +861,7 @@ int debug(string message, int error=NO_ERROR) {
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",       error,                 " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
 
@@ -916,7 +916,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (3) Fehler loggen
-      string message = StringConcatenate(location, "  [", ifString(error>=ERR_WIN32_ERROR, "win32:"+ (error-ERR_WIN32_ERROR), error), " - ", ErrorDescription(error), "]");
+      string message = StringConcatenate(location, "  [", ifString(error>=ERR_WIN32_ERROR, "win32:"+ (error-ERR_WIN32_ERROR), ErrorToStr(error)), "]");
 
       bool logged, alerted;
       if (__LOG_CUSTOM)
@@ -992,7 +992,7 @@ int warn(string message, int error=NO_ERROR) {
    else              name_wId = name;
 
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",       error,                 " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
 
    // (3) Warnung loggen
@@ -1058,7 +1058,7 @@ int log(string message, int error=NO_ERROR) {
    else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",       error,                 " - ", ErrorDescription(error), "]");
+   else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
 
    // (2) Custom-Log benutzen oder ...
@@ -2181,6 +2181,7 @@ void __DummyCalls() {
    int    Chart.Expert.Properties();
    void   DummyCalls();                                              // Library-Stub: kann lokal überschrieben werden (muß aber nicht)
    string ErrorDescription(int error);
+   string ErrorToStr(int error);
    bool   GetConfigBool(string section, string key, bool defaultValue);
    int    GetCustomLogID();
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
