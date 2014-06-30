@@ -705,8 +705,8 @@ int afterInit() {
  * @return int - Fehlerstatus
  *
 int onDeinit() {
-   double test.duration = (Test.stopMillis-Test.startMillis)/1000.0;
-   double test.days     = (Test.toDate-Test.fromDate) * 1.0 /DAYS;
+   double test.duration = (Test.stopMillis-Test.startMillis)/1000.;
+   double test.days     = (Test.toDate-Test.fromDate) * 1. /DAYS;
    debug("onDeinit()   time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
    return(last_error);
 }

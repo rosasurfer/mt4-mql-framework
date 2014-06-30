@@ -247,7 +247,7 @@ int onTick() {
       list127[i] = 1000000;
    }
 
-   double d25 = (ma.periods-1) / 2.0;
+   double d25 = (ma.periods-1) / 2.;
    double d11 = Phase/100. + 1.5;
    bool bInit = true;
 
