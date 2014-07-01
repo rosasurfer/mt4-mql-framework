@@ -47,6 +47,13 @@ bool RunScript(string scriptName, string parameters="") {
       return(!catch("RunScript(4)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(true);
+
+   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   string sNulls[];
+   GetScriptParameters(sNulls, sNulls);
+   QC.StartScriptParameterSender();
+   QC.StopScriptParameterSender();
+   SetScriptParameters(NULL);
 }
 
 
@@ -134,6 +141,12 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
       ArrayPushString(paramValues, param[1]);
    }
    return(ArraySize(paramNames));
+
+   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   QC.StartScriptParameterSender();
+   QC.StopScriptParameterSender();
+   RunScript(NULL);
+   SetScriptParameters(NULL);
 }
 
 
@@ -197,11 +210,4 @@ bool QC.StopScriptParameterSender() {
 
    //debug("QC.StopScriptParameterSender()   sender on \""+ channel +"\" stopped");
    return(true);
-
-
-   // unnütze Compilerwarnungen unterdrücken
-   string sNulls[];
-   GetScriptParameters(sNulls, sNulls);
-   RunScript(NULL, NULL);
-   SetScriptParameters(NULL);
 }
