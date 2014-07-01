@@ -14,5 +14,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   debug("onStart()");
    return(last_error);
 }
