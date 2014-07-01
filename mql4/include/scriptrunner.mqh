@@ -39,11 +39,11 @@ bool RunScript(string scriptName, string parameters="") {
    // Parameter hinterlegen
    if (!SetScriptParameters(parameters))
       return(false);
-                                                                     // Der Pointer auf 'script' muß zur Zeit der Message-Verarbeitung noch gültig sein,
-   static string script; script=StringConcatenate("", scriptName);   // was mit static im Indikator oder Expert auf jeden Fall gegeben ist.
-
+                                                                     // Der Pointer auf 'script' muß zur Zeit der Message-Verarbeitung noch gültig sein, was mit einem
+   string script[1]; script[0]=StringConcatenate("", scriptName);    // statischen String-Array im Indikator oder Expert gegeben ist. Nur ein String-Array-Element wird
+                                                                     // tatsächlich per Reference an eine DLL übergeben, ein einzelner String nicht.
    // Script starten
-   if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(script)))
+   if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(script[0])))
       return(!catch("RunScript(4)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(true);
