@@ -158,7 +158,7 @@ bool CheckPendingLfxOrders() {
                return(!catch("CheckPendingLfxOrders(4)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +")   order not found", ERR_RUNTIME_ERROR));
             }
             if (!lo.IsOpenError(stored)) {                                                                              // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-               warn("CheckPendingLfxOrders(5)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat));
+               warnSMS("CheckPendingLfxOrders(5)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat));
                los.setOpenTime(lfxOrders, i, -TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i)) return(false);
             }
@@ -196,7 +196,7 @@ bool CheckPendingLfxOrders() {
                return(!catch("CheckPendingLfxOrders(7)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +")   order not found", ERR_RUNTIME_ERROR));
             }
             if (!lo.IsCloseError(stored)) {                                                                             // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-               warn("CheckPendingLfxOrders(8)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat));
+               warnSMS("CheckPendingLfxOrders(8)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat));
                los.setCloseTime(lfxOrders, i, -TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i)) return(false);
             }
@@ -233,7 +233,7 @@ bool CheckPendingLfxOrders() {
                return(!catch("CheckPendingLfxOrders(10)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +")   order not found", ERR_RUNTIME_ERROR));
             }
             if (!lo.IsCloseError(stored)) {                                                                             // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-               warn("CheckPendingLfxOrders(11)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat));
+               warnSMS("CheckPendingLfxOrders(11)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat));
                los.setCloseTime(lfxOrders, i, -TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i)) return(false);
             }

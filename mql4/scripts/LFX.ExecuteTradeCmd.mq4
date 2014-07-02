@@ -29,9 +29,6 @@ int    lfxTicket;                         // geparste Details des übergebenen Tr
 string action;
 double leverage;
 
-bool   sms.alerts;
-string sms.receiver;
-
 
 /**
  * Initialisierung
@@ -75,10 +72,13 @@ int onInit() {
 
 
    // (4) SMS-Konfiguration einlesen
-   sms.alerts = GetLocalConfigBool("EventTracker", "SMS.Alerts", false);
-   if (sms.alerts) {
-      sms.receiver = GetConfigString("SMS", "Receiver", "");
-      if (!StringLen(sms.receiver))                 return(catch("onInit(10)   missing setting [SMS]->Receiver", ERR_INVALID_CONFIG_PARAMVALUE));
+   __SMS.alerts = GetLocalConfigBool("EventTracker", "SMS.Alerts", false);
+   if (__SMS.alerts) {
+      __SMS.receiver = GetConfigString("SMS", "Receiver", "");
+      if (!StringLen(__SMS.receiver)) {
+         __SMS.alerts = false;
+         return(catch("onInit(10)   missing setting [SMS]->Receiver", ERR_INVALID_CONFIG_PARAMVALUE));
+      }
    }
    return(catch("onInit(11)"));
 }
@@ -401,7 +401,7 @@ bool OpenOrder.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
  * @return bool - Erfolgsstatus
  */
 bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
-   if (sms.alerts) {
+   if (__SMS.alerts) {
       string comment=lo.Comment(lo), currency=lo.Currency(lo);
          if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
          if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
@@ -413,7 +413,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
       else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
 
-      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
    }
    return(true);
@@ -556,7 +556,7 @@ bool ClosePosition.NotifyLfxTerminal(/*LFX_ORDER*/int lo[]) {
  * @return bool - Erfolgsstatus
  */
 bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
-   if (sms.alerts) {
+   if (__SMS.alerts) {
       string currency = lo.Currency(lo);
       if (StringStartsWith(comment, currency)) comment = StringSubstr(comment, 3);
       if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
@@ -568,7 +568,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
       else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
 
-      if (!SendSMS(sms.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
    }
    return(true);

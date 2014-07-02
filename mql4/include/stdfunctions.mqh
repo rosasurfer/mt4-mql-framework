@@ -15,6 +15,8 @@ bool     IsChart;                                           // ob ein Chart exis
 bool     IsOfflineChart;                                    // ob der Chart ein Offline-Chart ist
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
+bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind
+string   __SMS.receiver;                                    // Empfänger-Nr. für SMS-Benachrichtigungen
 
 bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
@@ -1026,6 +1028,43 @@ int warn(string message, int error=NO_ERROR) {
    }
 
    return(error); __DummyCalls();
+}
+
+
+/**
+ * Gibt optisch und akustisch eine Warnung aus und verschickt diese Warnung per SMS, wenn SMS-Benachrichtigungen aktiv sind.
+ *
+ * @param  string message - anzuzeigende Nachricht
+ * @param  int    error   - anzuzeigender Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ */
+int warnSMS(string message, int error=NO_ERROR) {
+   int _error = warn(message, error);
+
+   if (__SMS.alerts) /*&&*/ if (!This.IsTesting()) {
+      // Programmnamen um Instanz-ID erweitern
+      string name, name_wId;
+      if (StringLen(__NAME__) > 0) name = __NAME__;
+      else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
+
+      int logId = GetCustomLogID();
+      if (logId != 0) {
+         int pos = StringFind(name, "::");
+         if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
+         else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+      }
+      else              name_wId = name;
+
+      if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+      else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
+
+      message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);
+
+      // SMS verschicken
+      SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message);
+   }
+   return(_error); __DummyCalls();
 }
 
 
@@ -2131,6 +2170,7 @@ void __DummyCalls() {
    StringIsNull(NULL);
    WaitForTicket(NULL);
    warn(NULL);
+   warnSMS(NULL);
 }
 
 
@@ -2187,6 +2227,7 @@ void __DummyCalls() {
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
    string PeriodDescription(int period);
    bool   ReverseStringArray(string array[]);
+   bool   SendSMS(string receiver, string message);
    string StdSymbol();
    bool   StringContains(string object, string substring);
    string StringLeft(string value, int n);

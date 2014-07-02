@@ -1,5 +1,5 @@
 /**
- * MQL structure EXECUTION_CONTEXT
+ * MQL structure EXECUTION_CONTEXT                                   // TODO: __SMS.alerts und __SMS.receiver integrieren
  *
  *                                    size         offset
  * struct EXECUTION_CONTEXT {         ----         ------
