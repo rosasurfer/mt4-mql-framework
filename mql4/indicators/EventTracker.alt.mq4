@@ -54,12 +54,14 @@ int onInit() {
    Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
 
    // (1.2) SMS.Alerts
-   SMS.Alerts = GetConfigBool("EventTracker", "SMS.Alerts", SMS.Alerts);
+   SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts", SMS.Alerts);
    if (SMS.Alerts) {
       // SMS.Receiver
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
       if (!StringIsDigit(SMS.Receiver))                SMS.Alerts = _false(catch("onInit(1)   invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
+   __SMS.alerts   = SMS.Alerts;
+   __SMS.receiver = SMS.Receiver;
 
    // (1.3) Track.Positions
    Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
@@ -261,8 +263,8 @@ int onPositionOpen(int tickets[]) {
       string message = "Position opened: "+ type +" "+ lots +" "+ GetSymbolName(GetStandardSymbol(OrderSymbol())) +" at "+ price;
 
       // ggf. SMS verschicken
-      if (SMS.Alerts) {
-         if (!SendSMS(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+      if (__SMS.alerts) {
+         if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
             return(SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionOpen(3)   "+ message);
@@ -299,8 +301,8 @@ int onPositionClose(int tickets[]) {
       string message    = "Position closed: "+ type +" "+ lots +" "+ GetSymbolName(GetStandardSymbol(OrderSymbol())) +" at "+ openPrice +" -> "+ closePrice;
 
       // ggf. SMS verschicken
-      if (SMS.Alerts) {
-         if (!SendSMS(SMS.Receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+      if (__SMS.alerts) {
+         if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
             return(SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionClose(3)   "+ message);
@@ -331,9 +333,9 @@ bool CheckBollingerBands() {
       debug("CheckBollingerBands(0.1)   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_FULL) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
 
       // ggf. SMS verschicken
-      if (SMS.Alerts) {
+      if (__SMS.alerts) {
          string message = GetSymbolName(StdSymbol()) + ifString(crossing==CROSSING_LOW, " lower", " upper") +" "+ strBollingerBands +" @ "+ NumberToStr(value, PriceFormat) +" crossed";
-         if (!SendSMS(SMS.Receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message)))
+         if (!SendSMS(__SMS.receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message)))
             return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("CheckBollingerBands(2)   "+ message);
