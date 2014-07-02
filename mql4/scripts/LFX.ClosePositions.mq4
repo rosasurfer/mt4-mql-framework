@@ -17,7 +17,6 @@ int __DEINIT_FLAGS__[];
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
-#include <structs/pewa/ORDER_EXECUTION.mqh>
 
 #property show_inputs
 
@@ -200,3 +199,15 @@ int onStart() {
 
 
 /*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "struct.ORDER_EXECUTION.ex4"
+   string oes.Symbol    (/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.Swap      (/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.Commission(/*ORDER_EXECUTION*/int oe[][], int i);
+   double oes.Profit    (/*ORDER_EXECUTION*/int oe[][], int i);
+#import
