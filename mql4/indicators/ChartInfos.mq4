@@ -1719,7 +1719,7 @@ bool QC.HandleLfxTerminalMessages() {
 
 
 /**
- * Verarbeitet die übergebene "TradeToLfxChannel"-Message.
+ * Verarbeitet beim LFX-Terminal eingehende Messages.
  *
  * @param  string message - QuickChannel-Message, siehe Formatbeschreibung
  *
@@ -1730,7 +1730,7 @@ bool QC.HandleLfxTerminalMessages() {
  *  Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
  *                 "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
  *                 "LFX:{iTicket]:close={0|1}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
- *                 "LFX:{iTicket]:profit={dValue}" - der kumulierte P/L-Wert der angegebenen Position hat sich geändert
+ *                 "LFX:{iTicket]:profit={dValue}" - der P/L-Wert der angegebenen Position hat sich geändert
  */
 bool ProcessLfxTerminalMessage(string message) {
    // Da hier sehr viele Messages eingehen, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
@@ -1772,17 +1772,15 @@ bool ProcessLfxTerminalMessage(string message) {
    }
 
    // ???
-   else {
-      return(_true(warn("ProcessLfxTerminalMessage(8)   unknown message \""+ message +"\"")));
-   }
+   else return(_true(warn("ProcessLfxTerminalMessage(8)   unknown message \""+ message +"\"")));
 
 
-   // (1) hier immer Profit-Message: Ticket in vorhandenen Remote-Positionen suchen
+   // (1) Profit-Message: Ticket in vorhandenen Remote-Positionen suchen
    int pos = SearchMagicNumber(remote.position.tickets, ticket);
    if (pos == -1) {
 
-      // (2.1) bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird
-      int ignoredTickets[][2], timeToIgnore=5;                                // Ignorier-Zeitdauer in Sekunden
+      // (2.1) bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird (damit die Order nicht bei jeder Message, sondern nur alle paar Sekunden neu eingelesen wird)
+      int ignoredTickets[][2], timeToIgnore=5;                                // Ignorierdauer in Sekunden
       #define I_TICKET  0
       #define I_TIME    1
 
@@ -1804,19 +1802,15 @@ bool ProcessLfxTerminalMessage(string message) {
 
       // (2.2) Order einlesen
       int result = LFX.GetOrder(ticket, lfxOrder);
-      if (!result)
-         return(false);                                                       //  0: Fehler
-      if (result < 0) {                                                       // -1: Order nicht gefunden, Ticket wird für die definierte Zeitdauer ignoriert
-         ArrayResize(ignoredTickets, ignoredSize+1);
+      if (!result) return(false);                                             //  0: Fehler
+
+      bool ignore = false;
+      if      (result < 0          ) ignore = true;                           // -1: Order (noch) nicht gefunden
+      else if (!lo.IsOpen(lfxOrder)) ignore = true;                           // oder (noch) keine offene Position
+      if (ignore) {
+         ArrayResize(ignoredTickets, ignoredSize+1);                          // Ticket wird für die definierte Zeitdauer ignoriert
          ignoredTickets[ignoredSize][I_TICKET] = ticket;
          ignoredTickets[ignoredSize][I_TIME  ] = TimeLocal();
-         return(true);
-      }
-      if (!lo.IsOpen(lfxOrder)) {                                             // keine offene Position: gespeicherte Orderdaten out-of-sync
-         static bool warned;
-         if (!warned) warn("ProcessLfxTerminalMessage(9)   #"+ ticket +" received profit message for an order known as pending");
-         else        debug("ProcessLfxTerminalMessage(10)   #"+ ticket +" received profit message for an order known as pending");
-         warned = true;
          return(true);
       }
 
@@ -1827,9 +1821,9 @@ bool ProcessLfxTerminalMessage(string message) {
       ArrayResize(remote.position.data,    pos+1);
 
       remote.position.tickets[pos]                  = ticket;
-      remote.position.types  [pos][0]               = TYPE_DEFAULT;
-      remote.position.types  [pos][1]               = lo.Type(lfxOrder) + 1;  // OP_LONG =0, TYPE_LONG =1
-      remote.position.data   [pos][I_DIRECTLOTSIZE] = lo.Units(lfxOrder);     // OP_SHORT=1, TYPE_SHORT=2
+      remote.position.types  [pos][0]               = TYPE_DEFAULT;           // OP_LONG =0, TYPE_LONG =1
+      remote.position.types  [pos][1]               = lo.Type(lfxOrder) + 1;  // OP_SHORT=1, TYPE_SHORT=2
+      remote.position.data   [pos][I_DIRECTLOTSIZE] = lo.Units(lfxOrder);
       remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
       remote.position.data   [pos][I_BREAKEVEN    ] = lo.OpenPriceLfx(lfxOrder);
    }
@@ -1842,7 +1836,7 @@ bool ProcessLfxTerminalMessage(string message) {
 
 
 /**
- * Listener + Handler für beim TradeTerminal eingehende Messages.
+ * Listener + Handler für beim Trade-Terminal eingehende Messages.
  *
  * @return bool - Erfolgsstatus
  */
