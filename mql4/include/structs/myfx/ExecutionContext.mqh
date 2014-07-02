@@ -124,7 +124,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=fals
    return(result);
 
 
-   // unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
    ec.Signature         (ec    ); ec.setSignature         (ec, NULL);
    ec.lpName            (ec    ); ec.setLpName            (ec, NULL);
    ec.Name              (ec    ); ec.setName              (ec, NULL);

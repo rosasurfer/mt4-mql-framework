@@ -120,7 +120,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugger=false) {
    return(output);
 
 
-   // unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
    hh.Version         (hh);       hhs.Version         (hh, NULL);
    hh.Description     (hh);       hhs.Description     (hh, NULL);
    hh.Symbol          (hh);       hhs.Symbol          (hh, NULL);

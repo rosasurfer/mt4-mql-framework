@@ -366,7 +366,7 @@ int SetLastError(int error, int param=NULL) {
    }
    return(ec.setLastError(__ExecutionContext, last_error));
 
-   // unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
    HandleScriptError(NULL, NULL, NULL);
 }
 
