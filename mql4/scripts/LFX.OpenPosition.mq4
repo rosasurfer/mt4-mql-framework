@@ -16,7 +16,6 @@ int __DEINIT_FLAGS__[];
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
-#include <structs/pewa/ORDER_EXECUTION.mqh>
 
 #property show_inputs
 
@@ -352,3 +351,11 @@ int GetPositionCounter() {
 
 
 /*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "struct.ORDER_EXECUTION.ex4"
+   double oe.OpenPrice(/*ORDER_EXECUTION*/int oe[]);
+#import
