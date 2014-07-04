@@ -3665,7 +3665,7 @@ int BufferGetChar(int buffer[], int pos) {
  */
 string BufferCharsToStr(int buffer[], int from, int length) {
 
-   // TODO: prüfen, ob mt4lib::GetString() schneller ist
+   // TODO: prüfen, ob StdLib.dll::GetString() schneller ist
 
    if (from < 0)                return(_empty(catch("BufferCharsToStr(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (length < 0)              return(_empty(catch("BufferCharsToStr(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
