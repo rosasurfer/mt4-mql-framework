@@ -39,9 +39,9 @@ bool RunScript(string scriptName, string parameters="") {
    // Parameter hinterlegen
    if (!SetScriptParameters(parameters))
       return(false);
-                                                                     // Der Pointer auf 'script' muß zur Zeit der Message-Verarbeitung noch gültig sein, was mit einem
-   string script[1]; script[0]=StringConcatenate("", scriptName);    // statischen String-Array im Indikator oder Expert gegeben ist. Nur ein String-Array-Element wird
-                                                                     // tatsächlich per Reference an eine DLL übergeben, ein einzelner String nicht.
+
+   string script[1]; script[0]=StringConcatenate("", scriptName);    // Der Pointer auf 'scriptName' muß zur Zeit der Message-Verarbeitung noch gültig sein,
+                                                                     // was nur mit einem String-Array im Indikator oder Expert gegeben ist.
    // Script starten
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(script[0])))
       return(!catch("RunScript(4)->user32::PostMessageA()", ERR_WIN32_ERROR));
@@ -66,7 +66,7 @@ bool RunScript(string scriptName, string parameters="") {
  */
 bool SetScriptParameters(string parameters) {
    // Script-Parameter via QuickChannel hinterlegen
-   if (!hQC.ScriptParameterSender) /*&&*/ if (!QC.StartScriptParameterSender())     // Da Laufzeit und Erfolg des folgenden Scripts unbekannt sind,
+   if (!hQC.ScriptParameterSender) /*&&*/ if (!QC.StartScriptParameterSender())     // Da Laufzeit und Erfolg des zu startenden Scripts unbekannt sind,
       return(false);                                                                // darf der Sender erst beim nächsten deinit() gestoppt werden
 
    // TODO: bei Mehrfachaufrufen vorhandene Parameter modifizieren
@@ -75,7 +75,6 @@ bool SetScriptParameters(string parameters) {
    if (!result)
       return(!catch("SetScriptParameters()->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
-   //debug("SetScriptParameters()   parameters sent: \"" + parameters +"\"");
    return(true);
 }
 
@@ -183,7 +182,6 @@ bool QC.StartScriptParameterSender() {
    if (!hQC.ScriptParameterSender)
       return(!catch("QC.StartScriptParameterSender(5)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.ScriptParameterChannel +"\")", ERR_WIN32_ERROR));
 
-   //debug("QC.StartScriptParameterSender()   sender started on \""+ qc.ScriptParameterChannel +"\"");
    return(true);
 }
 
@@ -208,6 +206,5 @@ bool QC.StopScriptParameterSender() {
    if (!QC_ReleaseSender(hTmp))
       return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")   error stopping sender", ERR_WIN32_ERROR));
 
-   //debug("QC.StopScriptParameterSender()   sender on \""+ channel +"\" stopped");
    return(true);
 }
