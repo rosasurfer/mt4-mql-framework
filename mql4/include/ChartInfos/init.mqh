@@ -4,9 +4,9 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Konfiguration für Preisanzeige auswerten
+   // Konfiguration für Preisanzeige einlesen
    string price = "bid";
-   if (!IsVisualMode())                                              // im Tester wird immer PRICE_BID verwendet (ist ausreichend und schneller)
+   if (!IsVisualMode())                                              // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
    if      (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;
