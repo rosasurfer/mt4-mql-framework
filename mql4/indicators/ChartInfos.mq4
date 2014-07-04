@@ -111,19 +111,8 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool CheckPendingLfxOrders() {
-   static double lastBid, lastAsk;
-   static bool   isPendingCmd;
-
-   // (1) Die Orders werden nur nach Preisänderung oder beim Warten auf eine eingehende Trade-Bestätigung überprüft.
-   if (Bid==lastBid) /*&&*/ if (Ask==lastAsk) /*&&*/ if (!isPendingCmd)
-      return(true);
-   lastBid      = Bid;
-   lastAsk      = Ask;
-   isPendingCmd = false;
-
-
    datetime triggerTime;
-   int result, /*LFX_ORDER*/stored[], orders=ArrayRange(lfxOrders, 0);
+   int orders=ArrayRange(lfxOrders, 0), result, /*LFX_ORDER*/stored[];
 
    for (int i=0; i < orders; i++) {
       // offene Orders mit Open- oder Close-Error werden ignoriert
@@ -131,11 +120,11 @@ bool CheckPendingLfxOrders() {
       if (los.IsCloseError(lfxOrders, i)) continue;
 
 
-      // (2) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP-Order
+      // (1) OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT oder OP_SELLSTOP-Order
       if (los.IsPending(lfxOrders, i)) {
          triggerTime = los.OpenPriceTime(lfxOrders, i);
          if (!triggerTime) {
-            // (2.1) Limit ist noch nicht getriggert
+            // (1.1) Limit ist noch nicht getriggert
             if (IsLimitTriggered(los.Type(lfxOrders, i), los.OpenPriceLfx(lfxOrders, i), false, false)) {
                log("CheckPendingLfxOrders(3)   #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
@@ -143,15 +132,13 @@ bool CheckPendingLfxOrders() {
                los.setOpenPriceTime(lfxOrders, i, TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i))                                    return(false);
                if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":open")) return(false);
-               isPendingCmd = true;
             }
          }
          else if (triggerTime + 30*SECONDS >= TimeGMT()) {
-            // (2.2) Limit war bereits getriggert, auf Orderbestätigung warten
-            isPendingCmd = true;
+            // (1.2) Limit war bereits getriggert, auf Orderbestätigung warten
          }
          else {
-            // (2.3) prüfen, ob inzwischen ein Open-Error gesetzt wurde, je nachdem Fehler melden und speichern
+            // (1.3) prüfen, ob inzwischen ein Open-Error gesetzt wurde und ggf. Fehler melden und speichern
             result = LFX.GetOrder(los.Ticket(lfxOrders, i), stored);       // aktuell gespeicherte Version der Order holen
             if (result != 1) {                                             // +1, wenn die Order erfolgreich gelesen wurden
                if (!result) return(false);
@@ -168,35 +155,41 @@ bool CheckPendingLfxOrders() {
       }
 
 
-      // (3) StopLoss
-      if (los.StopLossLfx(lfxOrders, i) != 0) {
+      // (2) StopLoss
+      bool isStopLossPrice = (los.StopLossLfx  (lfxOrders, i) != 0);
+      bool isStopLossValue = (los.StopLossValue(lfxOrders, i) != 0);
+
+      if (isStopLossPrice || isStopLossValue) {
          triggerTime = los.StopLossTime(lfxOrders, i);
          if (!triggerTime) {
-            // (3.1) StopLoss ist noch nicht getriggert
-            if (IsLimitTriggered(los.Type(lfxOrders, i), los.StopLossLfx(lfxOrders, i), true, false)) {
-               log("CheckPendingLfxOrders(6)   #"+ los.Ticket(lfxOrders, i) +" StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
+            // (2.1) StopLoss ist noch nicht getriggert
+            if (isStopLossPrice) {
+               if (IsLimitTriggered(los.Type(lfxOrders, i), los.StopLossLfx(lfxOrders, i), true, false)) {
+                  log("CheckPendingLfxOrders(6)   #"+ los.Ticket(lfxOrders, i) +" StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
-               // Auslösen speichern und TradeCommand verschicken
-               los.setStopLossTime(lfxOrders, i, TimeGMT());
-               if (!LFX.SaveOrder(lfxOrders, i))                                     return(false);
-               if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":close")) return(false);
-               isPendingCmd = true;
+                  // Auslösen speichern und TradeCommand verschicken
+                  los.setStopLossTime(lfxOrders, i, TimeGMT());
+                  if (!LFX.SaveOrder(lfxOrders, i))                                     return(false);
+                  if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":close")) return(false);
+                  continue;
+               }
+            }
+            if (isStopLossValue) {
             }
          }
          else if (triggerTime + 30*SECONDS >= TimeGMT()) {
-            // (3.2) StopLoss war bereits getriggert, auf Orderbestätigung warten
-            isPendingCmd = true;
+            // (2.2) StopLoss war bereits getriggert, auf Orderbestätigung warten
             continue;
          }
          else {
-            // (3.3) prüfen, ob inzwischen ein Close-Error gesetzt wurde, je nachdem Fehler melden und speichern
+            // (2.3) prüfen, ob inzwischen ein Close-Error gesetzt wurde und ggf. Fehler melden und speichern
             result = LFX.GetOrder(los.Ticket(lfxOrders, i), stored);       // aktuell gespeicherte Version der Order holen
             if (result != 1) {                                             // +1, wenn die Order erfolgreich gelesen wurden
                if (!result) return(false);
                return(!catch("CheckPendingLfxOrders(7)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +")   order not found", ERR_RUNTIME_ERROR));
             }
             if (!lo.IsCloseError(stored)) {                                                                             // TODO: ggf. Benachrichtigung verschicken (E-Mail, SMS etc.)
-               warnSMS("CheckPendingLfxOrders(8)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat));
+               warnSMS("CheckPendingLfxOrders(8)   #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss" + ifString(isStopLossPrice, " at "+ NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat), "") + ifString(isStopLossValue, ifString(isStopLossPrice, " or ", " of ") + DoubleToStr(los.StopLossValue(lfxOrders, i), 2), ""));
                los.setCloseTime(lfxOrders, i, -TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i)) return(false);
             }
@@ -206,11 +199,11 @@ bool CheckPendingLfxOrders() {
       }
 
 
-      // (4) TakeProfit
+      // (3) TakeProfit
       if (los.TakeProfitLfx(lfxOrders, i) != 0) {
          triggerTime = los.TakeProfitTime(lfxOrders, i);
          if (!triggerTime) {
-            // (4.1) TakeProfit ist noch nicht getriggert
+            // (3.1) TakeProfit ist noch nicht getriggert
             if (IsLimitTriggered(los.Type(lfxOrders, i), los.TakeProfitLfx(lfxOrders, i), false, true)) {
                log("CheckPendingLfxOrders(9)   #"+ los.Ticket(lfxOrders, i) +" TakeProfit at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
 
@@ -218,15 +211,13 @@ bool CheckPendingLfxOrders() {
                los.setTakeProfitTime(lfxOrders, i, TimeGMT());
                if (!LFX.SaveOrder(lfxOrders, i))                                     return(false);
                if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) +":close")) return(false);
-               isPendingCmd = true;
             }
          }
          else if (triggerTime + 30*SECONDS >= TimeGMT()) {
-            // (4.2) TakeProfit war bereits getriggert, auf Orderbestätigung warten
-            isPendingCmd = true;
+            // (3.2) TakeProfit war bereits getriggert, auf Orderbestätigung warten
          }
          else {
-            // (4.3) prüfen, ob inzwischen ein Close-Error gesetzt wurde, je nachdem Fehler melden und speichern
+            // (3.3) prüfen, ob inzwischen ein Close-Error gesetzt wurde und ggf. Fehler melden und speichern
             result = LFX.GetOrder(los.Ticket(lfxOrders, i), stored);       // aktuell gespeicherte Version der Order holen
             if (result != 1) {                                             // +1, wenn die Order erfolgreich gelesen wurden
                if (!result) return(false);
@@ -1051,6 +1042,26 @@ int SearchMagicNumber(int array[], int number) {
  * Liest die individuell konfigurierten lokalen Positionsdaten neu ein.
  *
  * @return bool - Erfolgsstatus
+ *
+ *
+ *  Notation:
+ *  ---------
+ *   0.1#123456 - O.1 Lot eines Tickets
+ *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets
+ *   0.2#L      - imaginäre, virtuelle Long-Position, muß an erster Stelle notiert sein (*)
+ *   0.3#S      - imaginäre, virtuelle Short-Position, muß an erster Stelle notiert sein (*)
+ *      L       - alle übrigen Long-Positionen
+ *      S       - alle übrigen Short-Positionen
+ *
+ *  (*) Reale Positionen, die mit einer imaginären Position kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
+ *
+ *
+ *  Beispiel:
+ *  ---------
+ *   [BreakevenCalculation]
+ *   GBPAUD.1 = #111111, 0.1#222222      ; komplettes Ticket #111111 + 0.1 Lot von #222222
+ *   GBPAUD.2 = 0.3#L, #222222           ; imaginäre Position + Rest von #222222 (*)
+ *   GBPAUD.3 = L,S                      ; alle verbleibenden Positionen (inkl. des Restes von #222222)
  */
 bool ReadLocalPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0)
@@ -1058,7 +1069,7 @@ bool ReadLocalPositionConfig() {
 
    string keys[], values[], value, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", stdSymbol=StdSymbol();
    double lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
-   int    valuesSize, detailsSize, confSize, m, n, ticket;
+   int    valuesSize, detailsSize, confSize, m, ticket;
    if (!minLotSize) return(false);                                   // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
@@ -1067,18 +1078,14 @@ bool ReadLocalPositionConfig() {
    for (int i=0; i < keysSize; i++) {
       if (StringIStartsWith(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {
-            value = GetLocalConfigString(section, keys[i], "");
-            n = StringFind(value, ";");
-            if (n != -1)
-               value = StringSubstrFix(value, 0, n);
-            value = StringTrimRight(value);
+            value      = GetLocalConfigString(section, keys[i], "");
             valuesSize = Explode(value, ",", values, NULL);
             m = 0;
-            for (n=0; n < valuesSize; n++) {
+            for (int n=0; n < valuesSize; n++) {
                detailsSize = Explode(values[n], "#", details, NULL);
                if (detailsSize != 2) {
                   if (detailsSize == 1) {
-                     if (!StringLen(StringTrim(values[n])))
+                     if (!StringLen(StringTrim(values[n])))          // zwei aufeinanderfolgende Separatoren => Leervalue überspringen
                         continue;
                      ArrayResize(details, 2);
                      details[0] = "";
@@ -1092,17 +1099,17 @@ bool ReadLocalPositionConfig() {
                // Lotsize validieren
                lotSize = 0;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
-                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
                // Ticket validieren
                if (StringIsDigit(strTicket)) ticket = StrToInteger(strTicket);
                else if (strTicket == "L")    ticket = TYPE_LONG;
                else if (strTicket == "S")    ticket = TYPE_SHORT;
-               else return(!catch("ReadLocalPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else return(!catch("ReadLocalPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Virtuelle Positionen müssen an erster Stelle notiert sein
                if (m && lotSize && ticket<=TYPE_SHORT) return(!catch("ReadLocalPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
