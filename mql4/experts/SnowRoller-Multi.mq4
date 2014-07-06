@@ -277,6 +277,8 @@ bool UpdateWeekendStop() {
  * @return int - Sequenz-Handle (Verwaltungsindex) oder -1, falls ein Fehler auftrat;
  */
 int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double lotSize, int status) {
+   test = test!=0;
+
    if (__STATUS_ERROR)                                   return(-1);
    if (sid < SID_MIN || sid > SID_MAX)                   return(_int(-1, catch("Strategy.AddSequence(1)   invalid parameter sid = "+ sid, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (IntInArray(sequence.id, sid))                     return(_int(-1, catch("Strategy.AddSequence(2)   sequence "+ sid +" already exists", ERR_RUNTIME_ERROR)));
@@ -456,6 +458,8 @@ bool IsStartSignal(int &lpSignal) {
  * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
  */
 void StoreConfiguration(bool save=true) {
+   save = save!=0;
+
    static int    _GridSize;
    static double _LotSize;
    static string _StartConditions;
@@ -522,6 +526,8 @@ void RestoreConfiguration() {
  * @return bool - ob die Konfiguration gültig ist
  */
 bool ValidateConfiguration(bool interactive) {
+   interactive = interactive!=0;
+
    if (__STATUS_ERROR)
       return(false);
 
@@ -643,6 +649,8 @@ bool ValidateConfiguration(bool interactive) {
  * @return int - der resultierende Fehlerstatus
  */
 int ValidateConfig.HandleError(string location, string message, bool interactive) {
+   interactive = interactive!=0;
+
    if (IsTesting())
       interactive = false;
    if (!interactive)

@@ -345,6 +345,8 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
  * @return bool - Erfolgsstatus
  */
 bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
+   isOpenError = isOpenError!=0;
+
    // (1) ggf. Open-Error setzen
    if (isOpenError) /*&&*/ if (!lo.IsOpenError(lo))
       lo.setOpenTime(lo, -TimeGMT());
@@ -353,7 +355,7 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
    // (2) Order speichern
    if (!LFX.SaveOrder(lo, NULL, CATCH_ERR_CONCUR_MODIFICATION)) {    // ERR_CONCURRENT_MODIFICATION abfangen
       if (last_error != ERR_CONCURRENT_MODIFICATION)
-         return(last_error);
+         return(false);
 
       // ERR_CONCURRENT_MODIFICATION behandeln
       // -------------------------------------
@@ -363,8 +365,8 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       // (2.1) Order neu einlesen und gespeicherten OpenError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(catch("OpenOrder.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsOpenError(stored))                        return(catch("OpenOrder.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("OpenOrder.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
@@ -500,6 +502,8 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
  * @return bool - Erfolgsstatus
  */
 bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
+   isCloseError = isCloseError!=0;
+
    // (1) ggf. CloseError setzen
    if (isCloseError) /*&&*/ if (!lo.IsCloseError(lo))
       lo.setCloseTime(lo, -TimeGMT());
@@ -508,7 +512,7 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
    // (2) Order speichern
    if (!LFX.SaveOrder(lo, NULL, CATCH_ERR_CONCUR_MODIFICATION)) {    // ERR_CONCURRENT_MODIFICATION abfangen
       if (last_error != ERR_CONCURRENT_MODIFICATION)
-         return(last_error);
+         return(false);
 
       // ERR_CONCURRENT_MODIFICATION behandeln
       // -------------------------------------
@@ -518,8 +522,8 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       // (2.1) Order neu einlesen und gespeicherten CloseError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(catch("ClosePosition.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsCloseError(stored))                       return(catch("ClosePosition.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("ClosePosition.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren

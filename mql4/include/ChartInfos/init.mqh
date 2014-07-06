@@ -39,8 +39,8 @@ int onInit() {
  */
 int onInitParameterChange() {
    if (isLfxInstrument) {
-      // Pending-Orders neu einlesen, da die Orders während des Input-Dialogs extern geändert worden sein können
-      if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+      // offene LFX-Orders neu einlesen, da sie während des Input-Dialogs extern geändert worden sein können
+      if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
          return(last_error);
 
       // in Library gespeicherte Remote-Positionsdaten restaurieren
@@ -61,15 +61,15 @@ int onInitParameterChange() {
  */
 int onInitChartChange() {
    if (isLfxInstrument) {
-      // in Library gespeicherte Pending-Orders restaurieren
+      // in Library gespeicherte LFX-Orders restaurieren
       string symbol[1];
       int error = ChartInfos.CopyLfxOrders(false, symbol, lfxOrders);
       if (IsError(error))
          return(SetLastError(error));
 
       if (symbol[0] != Symbol()) {
-         // bei Symbolwechsel Pending-Orders neu einlesen
-         if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+         // bei Symbolwechsel offene LFX-Orders neu einlesen
+         if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
             return(last_error);
       }
       else {
@@ -93,8 +93,8 @@ int onInitChartChange() {
  */
 int onInitUndefined() {
    if (isLfxInstrument) {
-      // Pending-Orders neu einlesen
-      if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+      // offene LFX-Orders neu einlesen
+      if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
          return(last_error);
    }
    return(NO_ERROR);
@@ -120,8 +120,8 @@ int onInitRemove() {
  */
 int onInitRecompile() {
    if (isLfxInstrument) {
-      // Pending-Orders neu einlesen
-      if (LFX.GetOrders(lfxCurrency, OF_PENDINGORDER|OF_PENDINGPOSITION, lfxOrders) < 0)
+      // offene LFX-Orders neu einlesen
+      if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
          return(last_error);
 
       // TODO: irgendwo gespeicherte Remote-Positionsdaten restaurieren (QuickChannel ?)

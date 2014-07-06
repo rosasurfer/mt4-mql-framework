@@ -720,6 +720,8 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
  * @return int - Fehlerstatus
  */
 int ChartInfos.CopyRemotePositions(bool store, string &symbol[], int tickets[], int types[][], double data[][]) {
+   store = store!=0;
+
    static string static.symbol [1];
    static int    static.tickets[];
    static int    static.types  [][2];
@@ -761,6 +763,8 @@ int ChartInfos.CopyRemotePositions(bool store, string &symbol[], int tickets[], 
  * @return int - Fehlerstatus
  */
 int ChartInfos.CopyLfxOrders(bool store, string &symbol[], /*LFX_ORDER*/int los[][]) {
+   store = store!=0;
+
    static string static.symbol[1];
    static int    static.los [][LFX_ORDER.intSize];
 

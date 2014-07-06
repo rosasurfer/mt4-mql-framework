@@ -861,6 +861,9 @@ bool ResetSequence(int hSeq) {
  * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
  */
 bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
+   takeProfitStop = takeProfitStop!=0;
+   weekendStop    = weekendStop!=0;
+
    if (__STATUS_ERROR)                    return(false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
@@ -1290,6 +1293,8 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
  *  -2: der StopLoss verletzt die StopDistance des Brokers
  */
 int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
+   clientSL = clientSL!=0;
+
    if (__STATUS_ERROR)                                                                               return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status[hSeq]!=STATUS_STARTING) /*&&*/ if (sequence.status[hSeq]!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
@@ -1385,6 +1390,8 @@ int Grid.FindOpenPosition(int hSeq, int level) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
+   lpChange = lpChange!=0;
+
    ArrayResize(stops, 0);
    if (__STATUS_ERROR)                          return(false);
    if (sequence.status[hSeq] == STATUS_WAITING) return( true);
@@ -2239,6 +2246,8 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   clientSL   = clientSL!=0;
+   closedBySL = closedBySL!=0;
    return(Grid.SetData(hSeq, -1, ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit));
 }
 
@@ -2275,6 +2284,9 @@ bool Grid.PushData(int hSeq, int ticket, int level, double gridbase, int pending
  * @return bool - Erfolgsstatus
  */
 bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   clientSL   = clientSL!=0;
+   closedBySL = closedBySL!=0;
+
    if (offset < -1)
       return(!catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -2765,6 +2777,8 @@ string GetFullStatusFileName(int hSeq) {
  * Speichert die aktuelle Konfiguration zwischen, um sie nach Fehleingaben bei Parameteränderungen daraus restaurieren zu können.
  */
 void StoreConfiguration(bool save=true) {
+   save = save!=0;
+
    static int    _GridSize;
    static double _LotSize;
    static string _StartConditions;
@@ -2834,6 +2848,8 @@ void RestoreConfiguration() {
  * @return bool - ob die Konfiguration gültig ist
  */
 bool ValidateConfiguration(bool interactive) {
+   interactive = interactive!=0;
+
    if (__STATUS_ERROR)
       return(false);
 
@@ -2968,6 +2984,8 @@ bool ValidateConfiguration(bool interactive) {
  * @return int - der resultierende Fehlerstatus
  */
 int ValidateConfig.HandleError(string location, string message, bool interactive) {
+   interactive = interactive!=0;
+
    if (IsTesting())
       interactive = false;
    if (!interactive)

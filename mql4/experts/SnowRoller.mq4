@@ -705,6 +705,8 @@ bool ResumeSequence() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatus(bool &lpChange, int stops[]) {
+   lpChange = lpChange!=0;
+
    ArrayResize(stops, 0);
    if (__STATUS_ERROR)           return(false);
    if (status == STATUS_WAITING) return(true);
@@ -1947,6 +1949,8 @@ bool Grid.AddPosition(int type, int level) {
  *  -2: der StopLoss verletzt die StopDistance des Brokers
  */
 int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
+   clientSL = clientSL!=0;
+
    if (__STATUS_ERROR)                                                 return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                              return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_STARTING) /*&&*/ if (status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
@@ -2108,6 +2112,8 @@ bool Grid.DeleteOrder(int i) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   clientSL   = clientSL!=0;
+   closedBySL = closedBySL!=0;
    return(Grid.SetData(-1, ticket, level, gridBase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit));
 }
 
@@ -2143,6 +2149,9 @@ bool Grid.PushData(int ticket, int level, double gridBase, int pendingType, date
  * @return bool - Erfolgsstatus
  */
 bool Grid.SetData(int offset, int ticket, int level, double gridBase, int pendingType, datetime pendingTime, double pendingPrice, int type, int openEvent, datetime openTime, double openPrice, int closeEvent, datetime closeTime, double closePrice, double stopLoss, bool clientSL, bool closedBySL, double swap, double commission, double profit) {
+   clientSL   = clientSL!=0;
+   closedBySL = closedBySL!=0;
+
    if (offset < -1)
       return(_false(catch("Grid.SetData(1)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -2683,6 +2692,8 @@ bool IsMyOrder(int sequenceId = NULL) {
  * @return bool - ob eine gültige Sequenz-ID gefunden und restauriert wurde
  */
 bool ValidateConfiguration.ID(bool interactive) {
+   interactive = interactive!=0;
+
    bool parameterChange = (UninitializeReason() == REASON_PARAMETERS);
    if (parameterChange)
       interactive = true;
@@ -2719,6 +2730,8 @@ bool ValidateConfiguration.ID(bool interactive) {
  * @return bool - ob die Konfiguration gültig ist
  */
 bool ValidateConfiguration(bool interactive) {
+   interactive = interactive!=0;
+
    if (__STATUS_ERROR)
       return(false);
 
@@ -3084,6 +3097,8 @@ bool ValidateConfiguration(bool interactive) {
  * @return int - der resultierende Fehlerstatus
  */
 int ValidateConfig.HandleError(string location, string message, bool interactive) {
+   interactive = interactive!=0;
+
    if (IsTesting())
       interactive = false;
    if (!interactive)
@@ -3106,6 +3121,8 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
  * Speichert die aktuelle Konfiguration zwischen, um sie bei Fehleingaben nach Parameteränderungen restaurieren zu können.
  */
 void StoreConfiguration(bool save=true) {
+   save = save!=0;
+
    static string   _Sequence.ID;
    static string   _GridDirection;
    static int      _GridSize;
@@ -4523,6 +4540,8 @@ bool SynchronizeStatus() {
  * @return bool - Erfolgsstatus
  */
 bool Sync.UpdateOrder(int i, bool &lpPermanentChange) {
+   lpPermanentChange = lpPermanentChange!=0;
+
    if (i < 0 || i > ArraySize(orders.ticket)-1) return(_false(catch("Sync.UpdateOrder(1)   illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (orders.closeTime[i] != 0)                return(_false(catch("Sync.UpdateOrder(2)   cannot update ticket #"+ orders.ticket[i] +" (marked as closed in grid arrays)", ERR_RUNTIME_ERROR)));
 
@@ -5145,6 +5164,8 @@ bool IsTest() {
  * @return int - neue Größe der Arrays
  */
 int ResizeArrays(int size, bool reset=false) {
+   reset = reset!=0;
+
    int oldSize = ArraySize(orders.ticket);
 
    if (size != oldSize) {

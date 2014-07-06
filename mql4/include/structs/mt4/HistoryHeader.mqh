@@ -75,6 +75,8 @@ datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int &hh[][], int i, datetime dbV
  * @return string
  */
 string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugger=false) {
+   debugger = debugger!=0;
+
    int dimensions = ArrayDimension(hh);
 
    if (dimensions > 2)                                         return(_empty(catch("HISTORY_HEADER.toStr(1)   too many dimensions of parameter hh = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));

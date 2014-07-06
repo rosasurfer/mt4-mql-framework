@@ -763,6 +763,8 @@ int    lock.counters[];                                              // Anzahl d
  * @return bool - Erfolgsstatus
  */
 bool AquireLock(string mutexName, bool wait) {
+   wait = wait!=0;
+
    if (!StringLen(mutexName)) return(!catch("AquireLock(1)   illegal parameter mutexName = \"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    // (1) check if we already own that lock
@@ -864,6 +866,8 @@ bool ReleaseLock(string mutexName) {
  * @return bool - Erfolgsstatus
  */
 bool ReleaseLocks(bool warn=false) {
+   warn = warn!=0;
+
    int error, size=ArraySize(lock.names);
 
    if (size > 0) {
@@ -1791,6 +1795,8 @@ int SortTicketsChronological(int &tickets[]) {
  * @return int - Fehlerstatus
  */
 int Toolbar.Experts(bool enable) {
+   enable = enable!=0;
+
    if (This.IsTesting())
       return(debug("Toolbar.Experts()   skipping in Tester", NO_ERROR));
 
@@ -2010,6 +2016,8 @@ int ArraySetIntArray(int array[][], int i, int values[]) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayPushBool(bool &array[], bool value) {
+   value = value!=0;
+
    if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayPushBool()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(array);
 
@@ -2190,6 +2198,8 @@ string ArrayPopString(string array[]) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayUnshiftBool(bool array[], bool value) {
+   value = value!=0;
+
    if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftBool()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseBoolArray(array);
@@ -2339,6 +2349,8 @@ string ArrayShiftString(string array[]) {
  * @return int - Anzahl der entfernten Elemente oder -1, falls ein Fehler auftrat
  */
 int ArrayDropBool(bool array[], bool value) {
+   value = value!=0;
+
    if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayDropBool()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
@@ -2606,6 +2618,8 @@ int ArraySpliceStrings(string array[], int offset, int length) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  */
 int ArrayInsertBool(bool &array[], int offset, bool value) {
+   value = value!=0;
+
    if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayInsertBool(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
    if (offset < 0)                return(_int(-1, catch("ArrayInsertBool(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
    int size = ArraySize(array);
@@ -2882,6 +2896,8 @@ int ArrayInsertStrings(string array[], int offset, string values[]) {
  * @return bool - Ergebnis oder FALSE, falls ein Fehler auftrat
  */
 bool BoolInArray(bool haystack[], bool needle) {
+   needle = needle!=0;
+
    if (ArrayDimension(haystack) > 1) return(!catch("BoolInArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS));
    return(SearchBoolArray(haystack, needle) > -1);
 }
@@ -2952,6 +2968,8 @@ bool StringInArrayI(string haystack[], string needle) {
  * @return int - Index des ersten Vorkommen des Wertes oder -1, wenn der Wert nicht im Array enthalten ist oder ein Fehler auftrat
  */
 int SearchBoolArray(bool haystack[], bool needle) {
+   needle = needle!=0;
+
    if (ArrayDimension(haystack) > 1) return(_int(-1, catch("SearchBoolArray()   too many dimensions of parameter haystack = "+ ArrayDimension(haystack), ERR_INCOMPATIBLE_ARRAYS)));
    int size = ArraySize(haystack);
 
@@ -4111,6 +4129,8 @@ int WM_MT4() {
  * @return int - Fehlerstatus
  */
 int Chart.Refresh(bool sound=false) {
+   sound = sound!=0;
+
    int hWnd = WindowHandle(Symbol(), NULL);
    if (!hWnd)
       return(catch("Chart.Refresh()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
@@ -4132,6 +4152,8 @@ int Chart.Refresh(bool sound=false) {
  * @return int - Fehlerstatus
  */
 int Chart.SendTick(bool sound=false) {
+   sound = sound!=0;
+
    int hWnd = WindowHandle(Symbol(), NULL);
    if (!hWnd)
       return(catch("Chart.SendTick()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
@@ -4328,6 +4350,8 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
  * @return int - Anzahl der eingelesenen Zeilen oder -1, falls ein Fehler auftrat
  */
 int FileReadLines(string filename, string result[], bool skipEmptyLines=false) {
+   skipEmptyLines = skipEmptyLines!=0;
+
    int hFile, hFileBin, fieldSeparator='\t';
 
    // Datei öffnen
@@ -5008,6 +5032,8 @@ string GetLongSymbolNameStrict(string symbol) {
  * @return string
  */
 string BoolToStr(bool value) {
+   value = value!=0;
+
    if (value)
       return("true");
    return("false");
@@ -6801,6 +6827,8 @@ string GetComputerName() {
  * @return bool - Konfigurationswert
  */
 bool GetConfigBool(string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
    string strDefault = defaultValue;
 
    int bufferSize = 255;
@@ -7039,6 +7067,8 @@ int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_
  * @return bool - Konfigurationswert
  */
 bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
    string strDefault = defaultValue;
 
    int    bufferSize = 255;
@@ -7245,6 +7275,8 @@ string GetRawIniString(string fileName, string section, string key, string defau
  * @return bool - Konfigurationswert
  */
 bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
    string strDefault = defaultValue;
 
    int    bufferSize = 255;
@@ -7332,6 +7364,8 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
  * @return string - Wochentag
  */
 string GetDayOfWeek(datetime time, bool longFormat=true) {
+   longFormat = longFormat!=0;
+
    if (time < 0)
       return(_empty(catch("GetDayOfWeek(1)   invalid parameter time = "+ time +" (not a time)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -10492,6 +10526,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  * @return int - derselbe Fehler
  *
 private*/int __Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
+   serverError = serverError!=0;
+
    oe.setError(oe, error);
 
    if (!error)

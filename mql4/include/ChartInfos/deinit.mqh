@@ -36,7 +36,7 @@ int onDeinitParameterChange() {
 int onDeinitChartChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // Pending-Orders in Library zwischenspeichern
+   // LFX-Orders in Library zwischenspeichern
    int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));

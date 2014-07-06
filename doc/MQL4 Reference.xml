@@ -257,13 +257,22 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
       caption=Boolean constants
       keywords=;bool;true;false;
       <content>
-        <p>Boolean constants may have the value of true or false, numeric representation of them is 1 or 0,
-        respectively. True or TRUE, False or FALSE can be used, as well.</p>
+        <p>Booleans can have the value of <span style="color:#980000">true</span> or <span style="color:#980000">false</span>, the numeric representation is 1 and 0.
+        <span style="color:#980000">True</span> or <span style="color:#980000">TRUE</span> and <span style="color:#980000">False</span> or
+        <span style="color:#980000">FALSE</span> can be used as well.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">bool a = true;
 bool b = false;
 bool c = 1;</pre>
-        <p>Its internal representation is a long 4-byte integer number. Boolean constants can assume the values of 0 or 1.</p>
+        <p>The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.</p>
+        <br>
+			<br>
+			<span style="color:red">Fehler:</span>
+			<br>
+         Ausdrücke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch für
+         die Übergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span style="color:#980000">TRUE</span> oder
+         <span style="color:#980000">FALSE</span> schlagen immer fehl.<br>
+         Workaround: Die Ausdrücke müssen bei der Zuweisung explizit gecastet werden.
       </content>
     </text>
 

@@ -217,7 +217,7 @@ bool ResetHistory(int hHst) {
  *
  * @return bool - Erfolgsstatus
  */
-bool History.AddTick(int hHst, datetime time, double value, bool flags=NULL) {
+bool History.AddTick(int hHst, datetime time, double value, int flags=NULL) {
    // Validierung
    if (hHst <= 0)                    return(!catch("History.AddTick(1)   invalid parameter hHst = "+ hHst, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (hHst != h.hHst.valid) {
@@ -1262,6 +1262,8 @@ int hf.PrevDbVersion(int hFile) {
  * @return bool - Erfolgsstatus
  */
 bool History.CloseFiles(bool warn=false) {
+   warn = warn!=0;
+
    int error, size=ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
