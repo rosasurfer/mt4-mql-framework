@@ -240,15 +240,15 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
 
    switch (type) {
       case OP_BUY:
-         if (slPrice >  0          ) if (LE(Bid,    slPrice)     ) return(LIMIT_STOPLOSS  );
+         if (slPrice != 0          ) if (LE(Bid,    slPrice)     ) return(LIMIT_STOPLOSS  );
          if (slValue != EMPTY_VALUE) if (LE(profit, slValue) && 0) return(LIMIT_STOPLOSS  );
-         if (tpPrice >  0          ) if (GE(Bid,    tpPrice)     ) return(LIMIT_TAKEPROFIT);
+         if (tpPrice != 0          ) if (GE(Bid,    tpPrice)     ) return(LIMIT_TAKEPROFIT);
          if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue) && 0) return(LIMIT_TAKEPROFIT);
                                                                    return(LIMIT_NONE      );
       case OP_SELL:
-         if (slPrice >  0          ) if (GE(Bid,    slPrice)     ) return(LIMIT_STOPLOSS  );
+         if (slPrice != 0          ) if (GE(Bid,    slPrice)     ) return(LIMIT_STOPLOSS  );
          if (slValue != EMPTY_VALUE) if (LE(profit, slValue) && 0) return(LIMIT_STOPLOSS  );
-         if (tpPrice >  0          ) if (LE(Bid,    tpPrice)     ) return(LIMIT_TAKEPROFIT);
+         if (tpPrice != 0          ) if (LE(Bid,    tpPrice)     ) return(LIMIT_TAKEPROFIT);
          if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue) && 0) return(LIMIT_TAKEPROFIT);
                                                                    return(LIMIT_NONE      );
    }
