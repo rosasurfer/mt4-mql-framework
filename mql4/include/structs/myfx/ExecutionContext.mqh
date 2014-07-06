@@ -96,6 +96,8 @@ int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError
  * @return string
  */
 string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=false) {
+   debugger = debugger!=0;
+
    if (ArrayDimension(ec) > 1)                     return(_empty(catch("EXECUTION_CONTEXT.toStr(1)   too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_empty(catch("EXECUTION_CONTEXT.toStr(2)   invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
 

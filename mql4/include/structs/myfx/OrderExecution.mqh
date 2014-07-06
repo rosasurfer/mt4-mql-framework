@@ -170,6 +170,8 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
  */
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugger=false) {
+   debugger = debugger!=0;
+
    int dimensions = ArrayDimension(oe);
 
    if (dimensions > 2)                                          return(_empty(catch("ORDER_EXECUTION.toStr(1)   too many dimensions of parameter oe = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));

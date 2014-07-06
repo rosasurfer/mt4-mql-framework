@@ -57,12 +57,12 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Magic characters
-#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Platzhalter für NUL-Byte in Strings,          siehe BufferToStr()
-#define PLACEHOLDER_CTL_CHAR        '•'                     // 0x95 - Platzhalter für Control-Character in Strings, siehe BufferToStr()
+#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Platzhalter zur Visualisierung von NUL-Bytes in Strings,          siehe BufferToStr()
+#define PLACEHOLDER_CTL_CHAR        '•'                     // 0x95 - Platzhalter zur Visualisierung von Control-Characters in Strings, siehe BufferToStr()
 
 
 // Mathematische Konstanten
-#define Math.PI                     3.1415926535897932384   // intern nur 15 korrekte Dezimalstellen
+#define Math.PI                     3.1415926535897932384   // intern 15 korrekte Dezimalstellen
 
 
 // Zeitkonstanten
@@ -886,6 +886,8 @@ int debug(string message, int error=NO_ERROR) {
  * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
  */
 int catch(string location, int error=NO_ERROR, bool orderPop=false) {
+   orderPop = orderPop!=0;
+
    if      (!error                  ) { error  =                      GetLastError(); }
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
    else                               {                               GetLastError(); }
@@ -1353,6 +1355,9 @@ bool IsTicket(int ticket) {
  * NOTE: In der Headerdatei implementiert, da OrderSelect() und die Orderfunktionen nur im jeweils selben Modul benutzt werden können.
  */
 bool SelectTicket(int ticket, string location, bool storeSelection=false, bool onErrorRestoreSelection=false) {
+   storeSelection          = storeSelection!=0;
+   onErrorRestoreSelection = onErrorRestoreSelection!=0;
+
    if (storeSelection) {
       OrderPush(location);
       onErrorRestoreSelection = true;
@@ -1432,6 +1437,8 @@ bool OrderPop(string location) {
  * NOTE: In der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 bool WaitForTicket(int ticket, bool orderKeep=true) {
+   orderKeep = orderKeep!=0;
+
    if (ticket <= 0)
       return(!catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
 
@@ -1470,6 +1477,8 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  * NOTE: In der Headerdatei implementiert, um Default-Parameter zu ermöglichen.
  */
 double PipValue(double lots=1, bool hideErrors=false) {
+   hideErrors = hideErrors!=0;
+
    if (!TickSize) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                   // schlägt fehl, wenn kein Tick vorhanden ist
       int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
@@ -1529,9 +1538,9 @@ bool IsLogging() {
  * @return bool
  */
 bool ifBool(bool condition, bool thenValue, bool elseValue) {
-   if (condition)
-      return(thenValue);
-   return(elseValue);
+   if (condition!=0)
+      return(thenValue!=0);
+   return(elseValue!=0);
 }
 
 
@@ -1545,7 +1554,7 @@ bool ifBool(bool condition, bool thenValue, bool elseValue) {
  * @return int
  */
 int ifInt(bool condition, int thenValue, int elseValue) {
-   if (condition)
+   if (condition!=0)
       return(thenValue);
    return(elseValue);
 }
@@ -1561,7 +1570,7 @@ int ifInt(bool condition, int thenValue, int elseValue) {
  * @return double
  */
 double ifDouble(bool condition, double thenValue, double elseValue) {
-   if (condition)
+   if (condition!=0)
       return(thenValue);
    return(elseValue);
 }
@@ -1577,7 +1586,7 @@ double ifDouble(bool condition, double thenValue, double elseValue) {
  * @return string
  */
 string ifString(bool condition, string thenValue, string elseValue) {
-   if (condition)
+   if (condition!=0)
       return(thenValue);
    return(elseValue);
 }
@@ -1829,7 +1838,7 @@ void _void(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
  * @return bool - der erste Parameter
  */
 bool _bool(bool param1, int param2=NULL, int param3=NULL, int param4=NULL) {
-   return(param1);
+   return(param1!=0);
 }
 
 

@@ -20,6 +20,9 @@ static string g.string.st.in = "";
  *
  */
 void GlobalPrimitives(bool st, bool in) {
+   st = st!=0;
+   in = in!=0;
+
    if (st) {
       if (in) {
          debug("GlobalPrimitives(static in=1)  g.int="+ g.int.st.in +"  g.double="+ DoubleToStr(g.double.st.in, 1) +"  g.string="+ StringToStr(g.string.st.in));
@@ -63,6 +66,8 @@ void GlobalPrimitives(bool st, bool in) {
  *
  */
 void LocalPrimitives(bool in) {
+   in = in!=0;
+
    static int    l.int;
    static double l.double;
    static string l.string;
@@ -127,6 +132,10 @@ static string g.strings.st.si.in[1] = {""};
  *
  */
 void GlobalArrays(bool st, bool si, bool in) {
+   st = st!=0;
+   si = si!=0;
+   in = in!=0;
+
    if (st) {
       if (si) {
          if (in) {
@@ -240,6 +249,10 @@ void GlobalArrays(bool st, bool si, bool in) {
  *
  */
 void LocalArrays(bool st, bool si, bool in) {
+   st = st!=0;
+   si = si!=0;
+   in = in!=0;
+
    int    l.ints   [];
    double l.doubles[];
    string l.strings[];

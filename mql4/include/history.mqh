@@ -6,7 +6,7 @@
    int      CreateHistory(string symbol, string description, int digits);
    int      FindHistory(string symbol);
    bool     ResetHistory(int hHst);
-   bool     History.AddTick(int hHst, datetime time, double value, bool flags=NULL);
+   bool     History.AddTick(int hHst, datetime time, double value, int flags=NULL);
    bool     History.CloseFiles(bool warn);
 
    int      HistoryFile.Open           (string symbol, string description, int digits, int timeframe, int mode);
