@@ -51,6 +51,7 @@
 
 #define LFX_ORDER.size                  116
 #define LFX_ORDER.intSize                29
+#define I_LFX_ORDER.ticket                0                          // offset(LFX_ORDER.ticket)
 
 #define ORDER_EXECUTION.size            136
 #define ORDER_EXECUTION.intSize          34
