@@ -70,7 +70,7 @@ int mql.GetIntValue(int value) {
 
 
 /*
-#import "stdlib.dll"
+#import "StdLib.dll"
    int dll_GetIntValue(int value);
 
 #import "stdlib.ex4"

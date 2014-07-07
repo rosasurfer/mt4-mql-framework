@@ -12750,7 +12750,7 @@ void Tester.ResetGlobalArrays() {
    string TicketsToStr.Lots(int array[], string separator);
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetBoolsAddress(bool array[]);
    int    GetBufferAddress(int buffer[]);
    int    GetDoublesAddress(double array[]);

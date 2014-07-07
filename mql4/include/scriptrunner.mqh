@@ -5,7 +5,7 @@
    string ModuleTypeDescription(int type);
    int    MT4InternalMsg();
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetStringAddress(string value);
 #import
 

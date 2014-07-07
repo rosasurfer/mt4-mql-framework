@@ -562,7 +562,7 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    Tester.Stop();
    int    Toolbar.Experts(bool enable);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 

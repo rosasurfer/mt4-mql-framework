@@ -2243,7 +2243,7 @@ void __DummyCalls() {
    string StringRight(string value, int n);
    string StringPadRight(string input, int length, string pad_string);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetLastWin32Error();
 
 #import "kernel32.dll"

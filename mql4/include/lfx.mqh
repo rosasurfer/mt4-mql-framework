@@ -651,6 +651,6 @@ void DummyCalls() {
    int      StrToOperationType(string value);
    datetime TimeGMT();
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int      GetIntsAddress(int array[]);
 #import
