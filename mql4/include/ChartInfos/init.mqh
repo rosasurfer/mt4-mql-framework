@@ -1,5 +1,5 @@
 /**
- * Initialisierung
+ * Initialisierung Preprocessing-Hook
  *
  * @return int - Fehlerstatus
  */
@@ -40,14 +40,8 @@ int onInit() {
 int onInitParameterChange() {
    if (isLfxInstrument) {
       // offene LFX-Orders neu einlesen, da sie während des Input-Dialogs extern geändert worden sein können
-      if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
+      if (!RefreshLfxOrders(true))
          return(last_error);
-
-      // in Library gespeicherte Remote-Positionsdaten restaurieren
-      string symbol[1];
-      int error = ChartInfos.CopyRemotePositions(false, symbol, remote.position.tickets, remote.position.types, remote.position.data);
-      if (IsError(error))
-         return(SetLastError(error));
    }
    return(NO_ERROR);
 }
@@ -68,15 +62,22 @@ int onInitChartChange() {
          return(SetLastError(error));
 
       if (symbol[0] != Symbol()) {
-         // bei Symbolwechsel offene LFX-Orders neu einlesen
-         if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
+         // bei Symbolwechsel offene LFX-Orders komplett neu einlesen
+         if (!RefreshLfxOrders(false))
             return(last_error);
       }
       else {
-         // bei Timeframe-Wechsel in Library gespeicherte Remote-Positionsdaten restaurieren
-         error = ChartInfos.CopyRemotePositions(false, symbol, remote.position.tickets, remote.position.types, remote.position.data);
-         if (IsError(error))
-            return(SetLastError(error));
+         // Zähler der offenen Positionen und Open-Indizes aktualisieren
+         int lfxOrders.size = ArrayRange(lfxOrders, 0);
+         ArrayResize(lfxOrders.isOpen, lfxOrders.size);
+
+         lfxOrders.positions.size = 0;
+
+         for (int i=0; i < lfxOrders.size; i++) {
+            lfxOrders.isOpen[i] = los.IsOpen(lfxOrders, i);
+            if (lfxOrders.isOpen[i])
+               lfxOrders.positions.size++;
+         }
       }
    }
    return(NO_ERROR);
@@ -94,7 +95,7 @@ int onInitChartChange() {
 int onInitUndefined() {
    if (isLfxInstrument) {
       // offene LFX-Orders neu einlesen
-      if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
+      if (!RefreshLfxOrders(false))
          return(last_error);
    }
    return(NO_ERROR);
@@ -121,10 +122,8 @@ int onInitRemove() {
 int onInitRecompile() {
    if (isLfxInstrument) {
       // offene LFX-Orders neu einlesen
-      if (LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) < 0)
+      if (!RefreshLfxOrders(false))
          return(last_error);
-
-      // TODO: irgendwo gespeicherte Remote-Positionsdaten restaurieren (QuickChannel ?)
    }
    return(NO_ERROR);
 }
