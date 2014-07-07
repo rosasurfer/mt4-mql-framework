@@ -29,7 +29,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
 #define MovingAverage.MODE_UPTREND     2        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
-#define MovingAverage.MODE_DOWNTREND   3        // verdeckt. Um solche kurzfristigen Up-Trends sichtbar zu machen, werden sie im Buffer MODE_UPTREND2 gespeichert, der
+#define MovingAverage.MODE_DOWNTREND   3        // verdeckt. Um solche kurzfristigen Trendwechsel sichtbar zu machen, werden sie im Buffer MODE_UPTREND2 gespeichert, der
 #define MovingAverage.MODE_UPTREND2    4        // MODE_DOWNTREND überlagert.
 #define MovingAverage.MODE_TMASMA      5
 
