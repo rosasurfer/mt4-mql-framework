@@ -58,7 +58,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int GetBufferAddress(int buffer[]);
 
 #import "struct.EXECUTION_CONTEXT.ex4"

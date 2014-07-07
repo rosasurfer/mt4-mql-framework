@@ -337,7 +337,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import

@@ -407,7 +407,7 @@ int SetLastError(int error, int param=NULL) {
    int    SumInts(int array[]);
    string __whereamiDescription(int id);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 

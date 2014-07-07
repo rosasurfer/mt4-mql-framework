@@ -150,7 +150,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugger=false) {
    string JoinStrings(string array[], string separator);
    string StringToStr(string value);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import

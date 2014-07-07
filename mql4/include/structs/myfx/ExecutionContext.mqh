@@ -161,7 +161,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=fals
    string UninitializeReasonToStr(int reason);
    string __whereamiToStr(int id);
 
-#import "stdlib.dll"
+#import "StdLib.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
    string GetString(int address);
