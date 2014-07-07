@@ -709,51 +709,6 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
 
 
 /**
- * Speichert Remote-Positionsdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
- *
- * @param  bool   store     - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
- * @param  string symbol [] - Symbol des Instruments der kopierten Daten
- * @param  int    tickets[]
- * @param  int    types  []
- * @param  double data   []
- *
- * @return int - Fehlerstatus
- */
-int ChartInfos.CopyRemotePositions(bool store, string &symbol[], int tickets[], int types[][], double data[][]) {
-   store = store!=0;
-
-   static string static.symbol [1];
-   static int    static.tickets[];
-   static int    static.types  [][2];
-   static double static.data   [][4];
-
-   if (store) {
-      static.symbol[0] = symbol[0];
-      ArrayResize(static.tickets, 0);
-      ArrayResize(static.types,   0);
-      ArrayResize(static.data,    0);
-      if (ArrayRange(tickets, 0) > 0) {
-         ArrayCopy(static.tickets, tickets);
-         ArrayCopy(static.types,   types  );
-         ArrayCopy(static.data,    data   );
-      }
-   }
-   else {
-      symbol[0] = static.symbol[0];
-      ArrayResize(tickets, 0);
-      ArrayResize(types,   0);
-      ArrayResize(data,    0);
-      if (ArrayRange(static.tickets, 0) > 0) {
-         ArrayCopy(tickets, static.tickets);
-         ArrayCopy(types,   static.types  );
-         ArrayCopy(data,    static.data   );
-      }
-   }
-   return(catch("ChartInfos.CopyRemotePositions()"));
-}
-
-
-/**
  * Speichert LFX-Orderdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
  *
  * @param  bool   store    - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
@@ -780,7 +735,7 @@ int ChartInfos.CopyLfxOrders(bool store, string &symbol[], /*LFX_ORDER*/int los[
       if (ArrayRange(static.los, 0) > 0)
          ArrayCopy(los, static.los);
    }
-   return(catch("ChartInfos.CopyLfxOrders()"));
+   return(catch("ChartInfos.CopyLfxOrders(1)"));
 }
 
 

@@ -28,6 +28,8 @@
  *
  * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
+#define I_LFX_ORDER.ticket    0                                      // offset(LFX_ORDER.ticket)
+
 
 // Getter
 int      lo.Ticket              (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[ 0]);                                                                           LFX_ORDER.toStr(lo); }

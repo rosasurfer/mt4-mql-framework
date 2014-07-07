@@ -40,20 +40,19 @@ double totalPosition;                                                // Gesamtpo
 double longPosition;                                                 // Gesamtposition long
 double shortPosition;                                                // Gesamtposition short
 
-double local.position.conf    [][2];                                 // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
-int    local.position.types   [][2];                                 // Positionsdetails:           = {PositionType, DirectionType}
-double local.position.data    [][4];                                 //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
+double local.position.conf [][2];                                    // individuelle Konfiguration: = {LotSize, Ticket|DirectionType}
+int    local.position.types[][2];                                    // Positionsdetails:           = {PositionType, DirectionType}
+double local.position.data [][4];                                    //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
 
 
-// Remote-Positionsdaten                                             // Remote-Positionsdaten sind im Gegensatz zu den lokalen Positionsdaten statisch.
-int    remote.position.tickets[];
-int    remote.position.types  [][2];                                 // Positionsdetails:           = {PositionType, DirectionType}
-double remote.position.data   [][4];                                 //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit}
+// LFX-Positionsdaten
+int    lfxOrders.positions.size;                                     // Anzahl offener Positionen in den offenen Orders
+bool   lfxOrders.isOpen[];                                           // Flag für (k)eine offene Position
 
 
 #define TYPE_DEFAULT       0                                         // PositionTypes: normale Terminalposition (local oder remote)
-#define TYPE_CUSTOM        1                                         //                individuell konfigurierte reale Position
-#define TYPE_VIRTUAL       2                                         //                individuell konfigurierte virtuelle Position (existiert nicht)
+#define TYPE_CUSTOM        1                                         //                manuell konfigurierte reale Position
+#define TYPE_VIRTUAL       2                                         //                manuell konfigurierte imaginäre Position
 
 #define TYPE_LONG          1                                         // DirectionTypes
 #define TYPE_SHORT         2
@@ -252,7 +251,8 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
          if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue) && 0) return(LIMIT_TAKEPROFIT);
                                                                    return(LIMIT_NONE      );
    }
-   return(_NULL(catch("IsLfxLimitTriggered(2)   reached unreachable code", ERR_RUNTIME_ERROR)));
+
+   return(_NULL(catch("IsLfxLimitTriggered(2)   unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -588,11 +588,10 @@ bool UpdatePositions() {
 
 
    // (2) Einzelpositionsanzeige unten links: ggf. mit Breakeven und Profit/Loss
-   // Spalten:            Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount
-   int col.xShifts[]   = {20,         59,      135, 160,     236,     268}, cols=ArraySize(col.xShifts), yDist=3;
-   int localPositions  = ArrayRange(local.position.types,  0);
-   int remotePositions = ArrayRange(remote.position.types, 0);
-   int positions       = localPositions + remotePositions;
+   // Spalten:           Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount
+   int col.xShifts[]  = {20,         59,      135, 160,     236,     268}, cols=ArraySize(col.xShifts), yDist=3;
+   int localPositions = ArrayRange(local.position.types, 0);
+   int positions      = localPositions + lfxOrders.positions.size;
 
    // (2.1) ggf. weitere Zeilen hinzufügen
    static int lines;
@@ -658,16 +657,19 @@ bool UpdatePositions() {
       }
    }
 
-   for (i=remotePositions-1; i >= 0; i--) {
-      line++;
-      ObjectSetText(label.position +".line"+ line +"_col0",   strTypes[remote.position.types[i][1]],                                                                     positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-      ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(remote.position.data[i][I_DIRECTLOTSIZE], ".+") +" units",                                       positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-      ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                       positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-      ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(remote.position.data[i][I_BREAKEVEN], SubPipPriceFormat),                                        positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-      ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                   positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-      ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(remote.position.data[i][I_PROFIT], 2),                                                           positions.fontSize, positions.fontName, positions.fontColors[remote.position.types[i][0]]);
-   }
+   int lfxOrders.size = ArrayRange(lfxOrders, 0);
 
+   for (i=lfxOrders.size-1; i >= 0; i--) {
+      if (lfxOrders.isOpen[i]) {
+         line++;
+         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[los.Type     (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                       positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                   positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(los.Profit   (lfxOrders, i), 2),                 positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+      }
+   }
    return(!catch("UpdatePositions(2)"));
 }
 
@@ -1012,6 +1014,24 @@ int SearchMagicNumber(int array[], int number) {
    int size = ArraySize(array);
    for (int i=0; i < size; i++) {
       if (array[i] == number)
+         return(i);
+   }
+   return(-1);
+}
+
+
+/**
+ * Durchsucht die geladenen LFX-Orders nach dem angegebenen Ticket.
+ *
+ * @param  int ticket - zu suchendes Ticket
+ *
+ * @return int - Index der Order oder -1, wenn keine entsprechende LFX-Order gefunden wurde
+ */
+int SearchLfxOrder(int ticket) {
+   int size = ArrayRange(lfxOrders, 0);
+
+   for (int i=0; i < size; i++) {
+      if (lfxOrders[i][I_LFX_ORDER.ticket] == ticket)
          return(i);
    }
    return(-1);
@@ -1734,92 +1754,96 @@ bool ProcessLfxTerminalMessage(string message) {
    from = to+1;
 
    // :profit={dValue}
-   if (StringSubstr(message, from, 7) == "profit=") {                                           // die häufigste Message wird zuerst geprüft
-      profit = StrToDouble(StringSubstr(message, from+7));
+   if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
+      int i = SearchLfxOrder(ticket);
+      if (i >= 0)                                                             // geladene LFX-Orders durchsuchen und P/L aktualisieren
+         los.setProfit(lfxOrders, i, StrToDouble(StringSubstr(message, from+7)));
+      return(true);
    }
 
    // :pending={1|0}
-   else if (StringSubstr(message, from, 8) == "pending=") {
+   if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
       if (success) { if (__LOG) log("ProcessLfxTerminalMessage(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
       else         {           warn("ProcessLfxTerminalMessage(5)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
-      return(LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) >= 0);            // offene LFX-Orders neu einlesen (auch bei Fehler)
+      return(RefreshLfxOrders(true));                                         // offene LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
-   else if (StringSubstr(message, from, 5) == "open=") {
+   if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(6)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
-      return(LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) >= 0);            // offene LFX-Orders neu einlesen (auch bei Fehler)
+      return(RefreshLfxOrders(true));                                         // offene LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
-   else if (StringSubstr(message, from, 6) == "close=") {
+   if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(7)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
-      return(LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders) >= 0);            // offene LFX-Orders neu einlesen (auch bei Fehler)
+      return(RefreshLfxOrders(true));                                         // offene LFX-Orders neu einlesen (auch bei Fehler)
    }
 
    // ???
-   else return(_true(warn("ProcessLfxTerminalMessage(8)   unknown message \""+ message +"\"")));
+   return(_true(warn("ProcessLfxTerminalMessage(8)   unknown message \""+ message +"\"")));
+}
 
 
-   // (1) Profit-Message: Ticket in vorhandenen Remote-Positionen suchen
-   int pos = SearchMagicNumber(remote.position.tickets, ticket);
-   if (pos == -1) {
+/**
+ * Liest alle offenen LFX-Orders neu ein.
+ *
+ * @param  bool restoreLibData - ob in der Library gespeicherte volatile Daten restauriert werden sollen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RefreshLfxOrders(bool restoreLibData) {
+   restoreLibData = restoreLibData!=0;
 
-      // (2.1) bei Mißerfolg prüfen, ob das Ticket im Moment ignoriert wird (damit die Order nicht bei jeder Message, sondern nur alle paar Sekunden neu eingelesen wird)
-      int ignoredTickets[][2], timeToIgnore=5;                                // Ignorierdauer in Sekunden
-      #define I_TICKET  0
-      #define I_TIME    1
+   string symbol[1];
 
-      int ignoredSize = ArrayRange(ignoredTickets, 0);
-      for (int i=0; i < ignoredSize; i++) {
-         if (ignoredTickets[i][I_TICKET] == ticket) {
-            if (ignoredTickets[i][I_TIME] + timeToIgnore >= TimeLocal())
-               return(true);                                                  // Ticket wurde und wird weiterhin ignoriert
-
-            for (int n=i+1; n < ignoredSize; n++) {                           // Ticket wurde ignoriert, Zeitdauer ist jedoch abgelaufen
-               ignoredTickets[n-1][I_TICKET] = ignoredTickets[n][I_TICKET];
-               ignoredTickets[n-1][I_TIME  ] = ignoredTickets[n][I_TIME  ];
-            }
-            ArrayResize(ignoredTickets, ignoredSize-1);                       // Ticket aus zu ignorierenden Tickets löschen
-            ignoredSize--;
-            break;
-         }
-      }
-
-      // (2.2) Order einlesen
-      int result = LFX.GetOrder(ticket, lfxOrder);
-      if (!result) return(false);                                             //  0: Fehler
-
-      bool ignore = false;
-      if      (result < 0          ) ignore = true;                           // -1: Order (noch) nicht gefunden
-      else if (!lo.IsOpen(lfxOrder)) ignore = true;                           // oder (noch) keine offene Position
-      if (ignore) {
-         ArrayResize(ignoredTickets, ignoredSize+1);                          // Ticket wird für die definierte Zeitdauer ignoriert
-         ignoredTickets[ignoredSize][I_TICKET] = ticket;
-         ignoredTickets[ignoredSize][I_TIME  ] = TimeLocal();
-         return(true);
-      }
-
-      // (2.3) Orderdetails zu Remote-Positionen hinzufügen
-      pos = ArraySize(remote.position.tickets);
-      ArrayResize(remote.position.tickets, pos+1);
-      ArrayResize(remote.position.types,   pos+1);
-      ArrayResize(remote.position.data,    pos+1);
-
-      remote.position.tickets[pos]                  = ticket;
-      remote.position.types  [pos][0]               = TYPE_DEFAULT;           // OP_LONG =0, TYPE_LONG =1
-      remote.position.types  [pos][1]               = lo.Type(lfxOrder) + 1;  // OP_SHORT=1, TYPE_SHORT=2
-      remote.position.data   [pos][I_DIRECTLOTSIZE] = lo.Units(lfxOrder);
-      remote.position.data   [pos][I_HEDGEDLOTSIZE] = 0;
-      remote.position.data   [pos][I_BREAKEVEN    ] = lo.OpenPriceLfx(lfxOrder);
+   if (restoreLibData) /*&&*/ if (ArrayRange(lfxOrders, 0) > 0) {
+      // kein init-Cycle: LFX-Orders vorm Überschreiben in Library zwischenspeichern, um aktuellen P/L-Status nicht zu verlieren
+      symbol[0] = Symbol();
+      int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
+      if (IsError(error))
+         return(!SetLastError(error));
    }
 
-   // (3) P/L aktualisieren
-   remote.position.data      [pos][I_PROFIT       ] = profit;
+   lfxOrders.positions.size = 0;
 
+   // offene Orders einlesen
+   int libSize, size=LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders);
+   if (size < 0)
+      return(false);
+   ArrayResize(lfxOrders.isOpen, size);
+
+
+   // ggf. in Library gespeicherte P/L-Daten restaurieren
+   if (restoreLibData) {
+      /*LFX_ORDER[]*/int lib[][LFX_ORDER.intSize];
+      error = ChartInfos.CopyLfxOrders(false, symbol, lib);
+      if (IsError(error))
+         return(!SetLastError(error));
+      libSize = ArrayRange(lib, 0);
+   }
+
+   // Zähler der offenen Positionen und ggf. P/L-Daten aktualisieren
+   for (int n, i=0; i < size; i++) {
+      lfxOrders.isOpen[i] = los.IsOpen(lfxOrders, i);
+      if (lfxOrders.isOpen[i]) {
+         lfxOrders.positions.size++;                                 // Zähler
+
+         if (restoreLibData) {
+            for (n=0; n < libSize; n++) {
+               if (los.Ticket(lfxOrders, i) == los.Ticket(lib, n)) {
+                  los.setProfit(lfxOrders, i, los.Profit(lib, n));   // P/L
+                  break;
+               }
+            }
+         }
+      }
+   }
+
+   ArrayResize(lib, 0);
    return(true);
 }
 
@@ -1992,6 +2016,5 @@ string InputsToStr() {
    string   StringToUpper(string value);
 
 #import "stdlib2.ex4"
-   int      ChartInfos.CopyRemotePositions(bool direction, string symbol[], int tickets[], int types[][], double data[][]);
-   int      ChartInfos.CopyLfxOrders      (bool direction, string symbol[], /*LFX_ORDER*/int los[][]);
+   int      ChartInfos.CopyLfxOrders(bool direction, string symbol[], /*LFX_ORDER*/int los[][]);
 #import

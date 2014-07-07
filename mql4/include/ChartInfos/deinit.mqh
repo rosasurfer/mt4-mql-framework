@@ -1,5 +1,5 @@
 /**
- * Deinitialisierung
+ * Deinitialisierung Preprocessing-Hook
  *
  * @return int - Fehlerstatus
  */
@@ -19,8 +19,8 @@ int onDeinit() {
 int onDeinitParameterChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // Remote-Positionsdaten in Library zwischenspeichern
-   int error = ChartInfos.CopyRemotePositions(true, symbol, remote.position.tickets, remote.position.types, remote.position.data);
+   // LFX-Orders in Library zwischenspeichern, um volatilen P/L-Status nicht zu verlieren
+   int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
    return(NO_ERROR);
@@ -36,13 +36,8 @@ int onDeinitParameterChange() {
 int onDeinitChartChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern
+   // LFX-Orders in Library zwischenspeichern, um volatilen P/L-Status nicht zu verlieren
    int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
-   if (IsError(error))
-      return(SetLastError(error));
-
-   // Remote-Positionsdaten in Library zwischenspeichern
-   error = ChartInfos.CopyRemotePositions(true, symbol, remote.position.tickets, remote.position.types, remote.position.data);
    if (IsError(error))
       return(SetLastError(error));
    return(NO_ERROR);
@@ -56,6 +51,7 @@ int onDeinitChartChange() {
  * @return int - Fehlerstatus
  *
 int onDeinitRemove() {
+   // TODO: LFX-Orders in Datei speichern, um volatilen Status nicht zu verlieren (Laufzeit testen)
    return(NO_ERROR);
 }
 
@@ -67,13 +63,13 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // TODO: Remote-Positionsdaten irgendwo zwischenspeichern (QuickChannel ?)
+   // TODO: LFX-Orders irgendwo zwischenspeichern, um volatilen P/L-Status nicht zu verlieren (QuickChannel ?)
    return(NO_ERROR);
 }
 
 
 /**
- * Deinitialisierung Postprocessing
+ * Deinitialisierung Postprocessing-Hook
  *
  * @return int - Fehlerstatus
  *
