@@ -19,7 +19,7 @@ int onDeinit() {
 int onDeinitParameterChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern, um aktuellen P/L nicht zu verlieren
+   // LFX-Orders in Library zwischenspeichern
    int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
@@ -36,7 +36,7 @@ int onDeinitParameterChange() {
 int onDeinitChartChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern, um aktuellen P/L nicht zu verlieren
+   // LFX-Orders in Library zwischenspeichern
    int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
@@ -51,7 +51,7 @@ int onDeinitChartChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitRemove() {
-   // LFX-Orders in Datei speichern, um aktuellen P/L nicht zu verlieren
+   // LFX-Orders in Datei speichern
    if (!LFX.SaveOrders(lfxOrders))
          return(last_error);
    return(NO_ERROR);
@@ -65,7 +65,7 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // LFX-Orders in Datei speichern, um aktuellen P/L nicht zu verlieren
+   // LFX-Orders in Datei speichern
    if (!LFX.SaveOrders(lfxOrders))
          return(last_error);
    return(NO_ERROR);
