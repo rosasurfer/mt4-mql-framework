@@ -1021,24 +1021,6 @@ int SearchMagicNumber(int array[], int number) {
 
 
 /**
- * Durchsucht die geladenen LFX-Orders nach dem angegebenen Ticket.
- *
- * @param  int ticket - zu suchendes Ticket
- *
- * @return int - Index der Order oder -1, wenn keine entsprechende LFX-Order gefunden wurde
- */
-int SearchLfxOrder(int ticket) {
-   int size = ArrayRange(lfxOrders, 0);
-
-   for (int i=0; i < size; i++) {
-      if (lfxOrders[i][I_LFX_ORDER.ticket] == ticket)
-         return(i);
-   }
-   return(-1);
-}
-
-
-/**
  * Liest die individuell konfigurierten lokalen Positionsdaten neu ein.
  *
  * @return bool - Erfolgsstatus
@@ -1755,9 +1737,13 @@ bool ProcessLfxTerminalMessage(string message) {
 
    // :profit={dValue}
    if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
-      int i = SearchLfxOrder(ticket);
-      if (i >= 0)                                                             // geladene LFX-Orders durchsuchen und P/L aktualisieren
-         los.setProfit(lfxOrders, i, StrToDouble(StringSubstr(message, from+7)));
+      int size = ArrayRange(lfxOrders, 0);
+      for (int i=0; i < size; i++) {
+         if (lfxOrders[i][I_LFX_ORDER.ticket] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
+            los.setProfit(lfxOrders, i, StrToDouble(StringSubstr(message, from+7)));
+            break;
+         }
+      }
       return(true);
    }
 
