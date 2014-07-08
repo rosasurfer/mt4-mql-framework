@@ -239,17 +239,17 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
 
    switch (type) {
       case OP_BUY:
-         if (slPrice != 0          ) if (LE(Bid,    slPrice)     ) return(LIMIT_STOPLOSS  );
-         if (slValue != EMPTY_VALUE) if (LE(profit, slValue) && 0) return(LIMIT_STOPLOSS  );
-         if (tpPrice != 0          ) if (GE(Bid,    tpPrice)     ) return(LIMIT_TAKEPROFIT);
-         if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue) && 0) return(LIMIT_TAKEPROFIT);
-                                                                   return(LIMIT_NONE      );
+         if (slPrice != 0          ) if (LE(Bid,    slPrice)) return(LIMIT_STOPLOSS  );
+         if (slValue != EMPTY_VALUE) if (LE(profit, slValue)) return(LIMIT_STOPLOSS  );
+         if (tpPrice != 0          ) if (GE(Bid,    tpPrice)) return(LIMIT_TAKEPROFIT);
+         if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue)) return(LIMIT_TAKEPROFIT);
+                                                              return(LIMIT_NONE      );
       case OP_SELL:
-         if (slPrice != 0          ) if (GE(Bid,    slPrice)     ) return(LIMIT_STOPLOSS  );
-         if (slValue != EMPTY_VALUE) if (LE(profit, slValue) && 0) return(LIMIT_STOPLOSS  );
-         if (tpPrice != 0          ) if (LE(Bid,    tpPrice)     ) return(LIMIT_TAKEPROFIT);
-         if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue) && 0) return(LIMIT_TAKEPROFIT);
-                                                                   return(LIMIT_NONE      );
+         if (slPrice != 0          ) if (GE(Bid,    slPrice)) return(LIMIT_STOPLOSS  );
+         if (slValue != EMPTY_VALUE) if (LE(profit, slValue)) return(LIMIT_STOPLOSS  );
+         if (tpPrice != 0          ) if (LE(Bid,    tpPrice)) return(LIMIT_TAKEPROFIT);
+         if (tpValue != EMPTY_VALUE) if (GE(profit, tpValue)) return(LIMIT_TAKEPROFIT);
+                                                              return(LIMIT_NONE      );
    }
 
    return(_NULL(catch("IsLfxLimitTriggered(2)   unreachable code reached", ERR_RUNTIME_ERROR)));
@@ -662,12 +662,12 @@ bool UpdatePositions() {
    for (i=lfxOrders.size-1; i >= 0; i--) {
       if (lfxOrders.isOpen[i]) {
          line++;
-         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[los.Type     (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                       positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                   positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(los.Profit   (lfxOrders, i), 2),                 positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[los.Type        (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                          positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                      positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(los.Profit      (lfxOrders, i), 2),                 positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
       }
    }
    return(!catch("UpdatePositions(2)"));

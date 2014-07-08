@@ -256,7 +256,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if      (!StringLen(sValue)) double _takeProfitValue = EMPTY_VALUE;
    else if (!StringIsNumeric(sValue))              return(!catch("LFX.GetOrder(21)   invalid takeprofit value \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {                              _takeProfitValue = NormalizeDouble(StrToDouble(sValue), 2);
-      if (_stopLossValue && _takeProfitValue)
+      if (_stopLossValue!=EMPTY_VALUE && _takeProfitValue!=EMPTY_VALUE)
          if (_stopLossValue > _takeProfitValue)    return(!catch("LFX.GetOrder(22)   stoploss/takeprofit value mis-match "+ DoubleToStr(_stopLossValue, 2) +"/"+ DoubleToStr(_takeProfitValue, 2) +" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
