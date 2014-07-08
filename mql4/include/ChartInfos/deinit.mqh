@@ -19,7 +19,7 @@ int onDeinit() {
 int onDeinitParameterChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern, um volatilen P/L-Status nicht zu verlieren
+   // LFX-Orders in Library zwischenspeichern, um aktuellen P/L nicht zu verlieren
    int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
@@ -36,7 +36,7 @@ int onDeinitParameterChange() {
 int onDeinitChartChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern, um volatilen P/L-Status nicht zu verlieren
+   // LFX-Orders in Library zwischenspeichern, um aktuellen P/L nicht zu verlieren
    int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
    if (IsError(error))
       return(SetLastError(error));
@@ -45,13 +45,15 @@ int onDeinitChartChange() {
 
 
 /**
- * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen
+ * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
  * innerhalb iCustom(): in allen deinit()-F‰llen
  *
  * @return int - Fehlerstatus
- *
+ */
 int onDeinitRemove() {
-   // TODO: LFX-Orders in Datei speichern, um volatilen Status nicht zu verlieren (Laufzeit testen)
+   // LFX-Orders in Datei speichern, um aktuellen P/L nicht zu verlieren
+   if (!LFX.SaveOrders(lfxOrders))
+         return(last_error);
    return(NO_ERROR);
 }
 
@@ -63,7 +65,9 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // TODO: LFX-Orders irgendwo zwischenspeichern, um volatilen P/L-Status nicht zu verlieren (QuickChannel ?)
+   // LFX-Orders in Datei speichern, um aktuellen P/L nicht zu verlieren
+   if (!LFX.SaveOrders(lfxOrders))
+         return(last_error);
    return(NO_ERROR);
 }
 

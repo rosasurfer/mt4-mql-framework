@@ -126,15 +126,17 @@ int onStart() {
    double deviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket       (lo, CreateMagicNumber()          );        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setDeviation    (lo, deviation                    );        // LFX-Deviation immer vor allen Preisen
-      lo.setType         (lo, OP_BUYLIMIT                  );
-      lo.setUnits        (lo, Units                        );
-      lo.setOpenTime     (lo, TimeGMT()                    );
-      lo.setOpenPriceLfx (lo, LimitPrice                   );
-      lo.setStopLossLfx  (lo, StopLossPrice                );
-      lo.setTakeProfitLfx(lo, TakeProfitPrice              );
-      lo.setComment      (lo, "#"+ (GetPositionCounter()+1));
+      lo.setTicket         (lo, CreateMagicNumber()          );      // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setDeviation      (lo, deviation                    );      // LFX-Deviation immer vor allen Preisen
+      lo.setType           (lo, OP_BUYLIMIT                  );
+      lo.setUnits          (lo, Units                        );
+      lo.setOpenTime       (lo, TimeGMT()                    );
+      lo.setOpenPriceLfx   (lo, LimitPrice                   );
+      lo.setStopLossLfx    (lo, StopLossPrice                );
+      lo.setStopLossValue  (lo, EMPTY_VALUE                  );
+      lo.setTakeProfitLfx  (lo, TakeProfitPrice              );
+      lo.setTakeProfitValue(lo, EMPTY_VALUE                  );
+      lo.setComment        (lo, "#"+ (GetPositionCounter()+1));
    if (!LFX.SaveOrder(lo))
       return(last_error);
 

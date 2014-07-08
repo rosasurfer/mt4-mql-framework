@@ -61,19 +61,21 @@ int onInitChartChange() {
       if (IsError(error))
          return(SetLastError(error));
 
+      int size = ArrayRange(lfxOrders, 0);
+
       if (symbol[0] != Symbol()) {
-         // bei Symbolwechsel offene LFX-Orders komplett neu einlesen
+         // bei Symbolwechsel LFX-Orders des alten Symbols speichern und LFX-Orders des neuen Symbols neu einlesen
+         if (!LFX.SaveOrders(lfxOrders))
+               return(last_error);
          if (!RefreshLfxOrders(false))
             return(last_error);
       }
       else {
          // Zähler der offenen Positionen und Open-Indizes aktualisieren
-         int lfxOrders.size = ArrayRange(lfxOrders, 0);
-         ArrayResize(lfxOrders.isOpen, lfxOrders.size);
-
+         ArrayResize(lfxOrders.isOpen, size);
          lfxOrders.positions.size = 0;
 
-         for (int i=0; i < lfxOrders.size; i++) {
+         for (int i=0; i < size; i++) {
             lfxOrders.isOpen[i] = los.IsOpen(lfxOrders, i);
             if (lfxOrders.isOpen[i])
                lfxOrders.positions.size++;
