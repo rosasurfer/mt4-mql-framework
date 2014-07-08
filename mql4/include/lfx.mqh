@@ -341,6 +341,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    lo.setComment            (lo, _label              );
    lo.setModificationTime   (lo, _modificationTime   );
    lo.setVersion            (lo, _version            );
+   lo.setModified           (lo, false               );
 
    return(!catch("LFX.GetOrder(37)"));
 }
@@ -457,8 +458,8 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
  * Speichert eine LFX-Order in der .ini-Datei des aktuellen Accounts.
  *
  * @param  LFX_ORDER los[]  - ein einzelnes oder ein Array von LFX_ORDER-Structs
- * @param  int       index  - Arrayindex der zu speichernden Order, wenn los[] ein Array von LFX_ORDER-Structs ist.
- *                            Der Parameter wird ignoriert, wenn los[] ein einzelnes Struct ist.
+ * @param  int       index  - Arrayindex der zu speichernden Order, wenn los[] ein LFX_ORDER[]-Array ist.
+ *                            Der Parameter wird ignoriert, wenn los[] eine einzelne LFX_ORDER ist.
  * @param  int       fCatch - Flag mit leise zu setzenden Fehler, sodaß sie vom Aufrufer behandelt werden können
  *
  * @return bool - Erfolgsstatus
@@ -470,6 +471,8 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    /*LFX_ORDER*/int lo[]; ArrayResize(lo, LFX_ORDER.intSize);
    if (dims == 1) {
       // Parameter los[] ist einzelne Order
+      if (!lo.IsModified(los))
+         return(true);
       if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       ArrayCopy(lo, los);
    }
@@ -478,6 +481,8 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
       if (ArrayRange(los, 1) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)   invalid size of parameter los["+ ArrayRange(los, 0) +"]["+ ArrayRange(los, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       int losSize = ArrayRange(los, 0);
       if (index < 0 || index > losSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
+      if (!los.IsModified(los, index))
+         return(true);
       CopyMemory(GetIntsAddress(los)+ index*LFX_ORDER.intSize*4, GetIntsAddress(lo), LFX_ORDER.intSize*4);
    }
 
@@ -487,8 +492,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    int result = LFX.GetOrder(ticket, stored);                        // +1, wenn die Order erfolgreich gelesen wurden
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
    if (result > 0) {                                                 //  0, falls ein anderer Fehler auftrat
-      if (lo.Version(stored) > lo.Version(lo))
-         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(5)   concurrent modification of #"+ ticket +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION, fCatch));
+      if (lo.Version(stored) > lo.Version(lo))     return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(5)   concurrent modification of #"+ ticket +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION, fCatch));
    }
 
 
@@ -514,8 +518,11 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string sProfit              =                ifString(!lo.Profit             (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit           = StringPadLeft (sProfit          ,  7, " ");
    string sDeviation           =                ifString(!lo.Deviation          (lo), "0", DoubleToStr(lo.Deviation(lo), lo.Digits(lo)));                                           sDeviation        = StringPadLeft (sDeviation       ,  9, " ");
 
-   datetime modified = TimeGMT();
-   int      version  = lo.Version(lo) + 1;
+     datetime modificationTime = TimeGMT();
+     int      version          = lo.Version(lo) + 1;
+
+   string sModificationTime    = TimeToStr(modificationTime, TIME_FULL);
+   string sVersion             = version;
 
 
    // (4) Daten schreiben
@@ -524,15 +531,32 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string file    = TerminalPath() +"\\experts\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
    string key     = ticket;
-   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPriceLfx, ", ", sOpenTriggerTime, ", ", sStopLossLfx, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfitLfx, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", TimeToStr(modified, TIME_FULL), ", ", version);
+   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPriceLfx, ", ", sOpenTriggerTime, ", ", sStopLossLfx, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfitLfx, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", sModificationTime, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(6)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
 
 
    // (5) Version der übergebenen Order aktualisieren
-   if (dims == 1) {  lo.setModificationTime(los,        modified);  lo.setVersion(los,        version); }   // Parameter los[] ist einzelne Order
-   else           { los.setModificationTime(los, index, modified); los.setVersion(los, index, version); }   // Parameter los[] ist Order-Array
+   if (dims == 1) {  lo.setModificationTime(los,        modificationTime);  lo.setVersion(los,        version);  lo.setModified(los,        false); }
+   else           { los.setModificationTime(los, index, modificationTime); los.setVersion(los, index, version); los.setModified(los, index, false); }
+   return(true);
+}
+
+
+/**
+ * Speichert die übergebenen LFX-Orders in der .ini-Datei des aktuellen Accounts.
+ *
+ * @param  LFX_ORDER los[] - Array von LFX_ORDER-Structs
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool LFX.SaveOrders(/*LFX_ORDER*/int los[][]) {
+   int size = ArrayRange(los, 0);
+   for (int i=0; i < size; i++) {
+      if (!LFX.SaveOrder(los, i))
+         return(false);
+   }
    return(true);
 }
 
@@ -601,7 +625,7 @@ int LFX.SaveDisplayStatus(bool status) {
 
 
 /**
- * Unterdrückt unnütze Compilerwarnungen.
+ * Dummy-Calls: unterdrücken unnütze Compilerwarnungen
  */
 void DummyCalls() {
    int    iNull, iNulls[];
@@ -616,6 +640,7 @@ void DummyCalls() {
    LFX.ReadDisplayStatus();
    LFX.SaveDisplayStatus(NULL);
    LFX.SaveOrder(iNulls, NULL);
+   LFX.SaveOrders(iNulls);
    LFX_ORDER.toStr(iNulls);
 }
 

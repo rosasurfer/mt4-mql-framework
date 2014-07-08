@@ -689,7 +689,7 @@ int onDeinitUndefined() {
 
 
 /**
- * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, w‰hrend des Ladens eines Profils oder Templates
+ * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
  * innerhalb iCustom(): in allen deinit()-F‰llen
  *
  * @return int - Fehlerstatus
