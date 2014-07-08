@@ -366,6 +366,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
 
 
 #import "stdlib1.ex4"
+   string BoolToStr(bool value);
    string BufferCharsToStr(int buffer[], int from, int length);
    void   CopyMemory(int source, int destination, int bytes);
    string GetCurrency(int id);
