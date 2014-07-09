@@ -341,7 +341,6 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    lo.setComment            (lo, _label              );
    lo.setModificationTime   (lo, _modificationTime   );
    lo.setVersion            (lo, _version            );
-   lo.setModified           (lo, false               );
 
    return(!catch("LFX.GetOrder(37)"));
 }
@@ -471,8 +470,6 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    /*LFX_ORDER*/int lo[]; ArrayResize(lo, LFX_ORDER.intSize);
    if (dims == 1) {
       // Parameter los[] ist einzelne Order
-      if (!lo.IsModified(los))
-         return(true);
       if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)   invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       ArrayCopy(lo, los);
    }
@@ -481,8 +478,6 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
       if (ArrayRange(los, 1) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)   invalid size of parameter los["+ ArrayRange(los, 0) +"]["+ ArrayRange(los, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       int losSize = ArrayRange(los, 0);
       if (index < 0 || index > losSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)   invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
-      if (!los.IsModified(los, index))
-         return(true);
       CopyMemory(GetIntsAddress(los)+ index*LFX_ORDER.intSize*4, GetIntsAddress(lo), LFX_ORDER.intSize*4);
    }
 
@@ -538,8 +533,8 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (5) Version der übergebenen Order aktualisieren
-   if (dims == 1) {  lo.setModificationTime(los,        modificationTime);  lo.setVersion(los,        version);  lo.setModified(los,        false); }
-   else           { los.setModificationTime(los, index, modificationTime); los.setVersion(los, index, version); los.setModified(los, index, false); }
+   if (dims == 1) {  lo.setModificationTime(los,        modificationTime);  lo.setVersion(los,        version); }
+   else           { los.setModificationTime(los, index, modificationTime); los.setVersion(los, index, version); }
    return(true);
 }
 
