@@ -711,31 +711,50 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
 /**
  * Speichert LFX-Orderdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
  *
- * @param  bool   store    - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
- * @param  string symbol[] - Symbol des Instruments der kopierten Daten
- * @param  int    los   []
+ * @param  bool   store       - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
+ * @param  string symbol[]    - Symbol des Instruments der kopierten Daten
+ * @param  int    orders[]    - LFX-Orders
+ * @param  int    iVolatile[] - volatile Integer-Daten
+ * @param  double dVolatile[] - volatile Double-Daten
  *
- * @return int - Fehlerstatus
+ * @return int - Anzahl der kopierten Orderdatensätze oder -1, falls ein Fehler auftrat
  */
-int ChartInfos.CopyLfxOrders(bool store, string &symbol[], /*LFX_ORDER*/int los[][]) {
+int ChartInfos.CopyLfxStatus(bool store, string &symbol[], /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]) {
    store = store!=0;
 
    static string static.symbol[1];
-   static int    static.los [][LFX_ORDER.intSize];
+   static int    static.orders   [][LFX_ORDER.intSize];
+   static int    static.iVolatile[][3];
+   static double static.dVolatile[][1];
 
    if (store) {
       static.symbol[0] = symbol[0];
-      ArrayResize(static.los, 0);
-      if (ArrayRange(los, 0) > 0)
-         ArrayCopy(static.los, los);
+      ArrayResize(static.orders,    0);
+      ArrayResize(static.iVolatile, 0);
+      ArrayResize(static.dVolatile, 0);
+
+      if (ArrayRange(orders,    0) > 0) ArrayCopy(static.orders,    orders   );
+      if (ArrayRange(iVolatile, 0) > 0) ArrayCopy(static.iVolatile, iVolatile);
+      if (ArrayRange(dVolatile, 0) > 0) ArrayCopy(static.dVolatile, dVolatile);
+
+      if (IsError(catch("ChartInfos.CopyLfxStatus(1)")))
+         return(-1);
    }
    else {
       symbol[0] = static.symbol[0];
-      ArrayResize(los, 0);
-      if (ArrayRange(static.los, 0) > 0)
-         ArrayCopy(los, static.los);
+      ArrayResize(orders,    0);
+      ArrayResize(iVolatile, 0);
+      ArrayResize(dVolatile, 0);
+
+      if (ArrayRange(static.orders,    0) > 0) ArrayCopy(orders,    static.orders   );
+      if (ArrayRange(static.iVolatile, 0) > 0) ArrayCopy(iVolatile, static.iVolatile);
+      if (ArrayRange(static.dVolatile, 0) > 0) ArrayCopy(dVolatile, static.dVolatile);
+
+      if (IsError(catch("ChartInfos.CopyLfxStatus(2)")))
+         return(-1);
    }
-   return(catch("ChartInfos.CopyLfxOrders(1)"));
+
+   return(ArrayRange(orders, 0));
 }
 
 

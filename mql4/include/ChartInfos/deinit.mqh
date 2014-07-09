@@ -19,10 +19,9 @@ int onDeinit() {
 int onDeinitParameterChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern
-   int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
-   if (IsError(error))
-      return(SetLastError(error));
+   // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
+   if (ChartInfos.CopyLfxStatus(true, symbol, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile) == -1)
+      return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
 
@@ -36,10 +35,9 @@ int onDeinitParameterChange() {
 int onDeinitChartChange() {
    string symbol[1]; symbol[0] = Symbol();
 
-   // LFX-Orders in Library zwischenspeichern
-   int error = ChartInfos.CopyLfxOrders(true, symbol, lfxOrders);
-   if (IsError(error))
-      return(SetLastError(error));
+   // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
+   if (ChartInfos.CopyLfxStatus(true, symbol, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile) == -1)
+      return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
 
@@ -51,9 +49,9 @@ int onDeinitChartChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitRemove() {
-   // LFX-Orders in Datei speichern
-   if (!LFX.SaveOrders(lfxOrders))
-         return(last_error);
+   // volatilen LFX-Status in globalen Variablen speichern
+   if (!SaveVolatileLfxStatus())
+      return(last_error);
    return(NO_ERROR);
 }
 
@@ -65,9 +63,9 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // LFX-Orders in Datei speichern
-   if (!LFX.SaveOrders(lfxOrders))
-         return(last_error);
+   // volatilen LFX-Status in globalen Variablen speichern
+   if (!SaveVolatileLfxStatus())
+      return(last_error);
    return(NO_ERROR);
 }
 

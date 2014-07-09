@@ -39,9 +39,17 @@ int onInit() {
  */
 int onInitParameterChange() {
    if (isLfxInstrument) {
-      // offene LFX-Orders neu einlesen, da sie während des Input-Dialogs extern geändert worden sein können
-      if (!RefreshLfxOrders(true))
-         return(last_error);
+      if (!Tick) {
+         // erste Parameter-Eingabe eines neuen Indikators: LFX-Status komplett neu einlesen
+         if (!RestoreLfxStatusFromFiles())
+            return(last_error);
+      }
+      else {
+         // Parameter-Wechsel eines vorhandenen Indikators: in Library gespeicherten LFX-Status restaurieren
+         string s = "";
+         if (!RestoreLfxStatusFromLib(s))
+            return(last_error);
+      }
    }
    return(NO_ERROR);
 }
@@ -55,32 +63,24 @@ int onInitParameterChange() {
  */
 int onInitChartChange() {
    if (isLfxInstrument) {
-      // in Library gespeicherte LFX-Orders restaurieren
-      string symbol[1];
-      int error = ChartInfos.CopyLfxOrders(false, symbol, lfxOrders);
-      if (IsError(error))
-         return(SetLastError(error));
+      string prevSymbol = "";
 
-      int size = ArrayRange(lfxOrders, 0);
+      // in Library gespeicherten LFX-Status restaurieren, um Symbolwechsel zu erkennen
+      if (!RestoreLfxStatusFromLib(prevSymbol))
+         return(last_error);
 
-      if (symbol[0] != Symbol()) {
-         // bei Symbolwechsel LFX-Orders des alten Symbols speichern und LFX-Orders des neuen Symbols neu einlesen
-         if (!LFX.SaveOrders(lfxOrders))
-               return(last_error);
-         if (!RefreshLfxOrders(false))
+      if (Symbol() != prevSymbol) {
+         // Symbolwechsel: volatilen LFX-Status des alten Symbols speichern und Status des aktuellen Symbols komplett neu einlesen
+         if (!SaveVolatileLfxStatus())
+            return(last_error);
+
+         if (!RestoreLfxStatusFromFiles())
             return(last_error);
       }
       else {
-         // Zähler der offenen Positionen und Open-Indizes aktualisieren
-         ArrayResize(lfxOrders.isOpen, size);
-         lfxOrders.positions.size = 0;
-
-         for (int i=0; i < size; i++) {
-            lfxOrders.isOpen[i] = los.IsOpen(lfxOrders, i);
-            if (lfxOrders.isOpen[i])
-               lfxOrders.positions.size++;
-         }
+         // Timeframe-Wechsel: in Library gespeicherter LFX-Status ist bereits restauriert
       }
+
    }
    return(NO_ERROR);
 }
@@ -96,8 +96,8 @@ int onInitChartChange() {
  */
 int onInitUndefined() {
    if (isLfxInstrument) {
-      // offene LFX-Orders neu einlesen
-      if (!RefreshLfxOrders(false))
+      // LFX-Status neu einlesen
+      if (!RestoreLfxStatusFromFiles())
          return(last_error);
    }
    return(NO_ERROR);
@@ -123,8 +123,8 @@ int onInitRemove() {
  */
 int onInitRecompile() {
    if (isLfxInstrument) {
-      // offene LFX-Orders neu einlesen
-      if (!RefreshLfxOrders(false))
+      // LFX-Status neu einlesen
+      if (!RestoreLfxStatusFromFiles())
          return(last_error);
    }
    return(NO_ERROR);
