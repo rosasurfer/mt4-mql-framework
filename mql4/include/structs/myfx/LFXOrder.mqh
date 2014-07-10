@@ -24,8 +24,7 @@
  *    szchar comment[32];           //  32         lo[19]      // Kommentar, <NUL>-terminiert
  *    int    modificationTime;      //   4         lo[27]      // Zeitpunkt der letzten Änderung, GMT
  *    int    version;               //   4         lo[28]      // Version (fortlaufender Zähler)
- *    int    reserved               //   4         lo[29]      //
- * } lo;                            // 120 byte = int[30]
+ * } lo;                            // 116 byte = int[29]
  *
  * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
@@ -114,7 +113,6 @@ double   los.Deviation          (/*LFX_ORDER*/int lo[][], int i) { int digits=lo
 string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                                 return(BufferCharsToStr(lo,i* LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4, 32));                                                   LFX_ORDER.toStr(lo); }
 datetime los.ModificationTime   (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.modificationTime   ]);                                                                   LFX_ORDER.toStr(lo); }
 int      los.Version            (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.version            ]);                                                                   LFX_ORDER.toStr(lo); }
-
 //----------------------------------------------------------------------- Helper Functions -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 int      los.Digits             (/*LFX_ORDER*/int lo[][], int i) {                  return(ifInt(LFX.CurrencyId(los.Ticket(lo, i))==CID_JPY, 3, 5));                                                                                  LFX_ORDER.toStr(lo); }
 string   los.Currency           (/*LFX_ORDER*/int lo[][], int i) {            return(GetCurrency(LFX.CurrencyId(los.Ticket(lo, i))));                                                                                                 LFX_ORDER.toStr(lo); }

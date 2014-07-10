@@ -85,6 +85,14 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};             // untersch
  * @return int - Fehlerstatus
  */
 int onTick() {
+   /*
+   if (Symbol() == "GBPCHF") {
+      static int changedBars, lastChangedBars; changedBars = Bars - IndicatorCounted();
+      if (changedBars > 1 || changedBars != lastChangedBars) debug("onTick()   ChangedBars="+ changedBars);
+      lastChangedBars = changedBars;
+   }
+   */
+
    positionsAnalyzed = false;
 
    if (!UpdatePrice())                       return(last_error);
