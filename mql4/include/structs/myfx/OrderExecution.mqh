@@ -261,7 +261,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugger=false) {
    return(output);
 
 
-   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    oe.Error             (oe);       oes.Error             (oe, NULL);
    oe.Symbol            (oe);       oes.Symbol            (oe, NULL);
    oe.Digits            (oe);       oes.Digits            (oe, NULL);

@@ -48,7 +48,7 @@ bool RunScript(string scriptName, string parameters="") {
 
    return(true);
 
-   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    string sNulls[];
    GetScriptParameters(sNulls, sNulls);
    QC.StartScriptParameterSender();
@@ -141,7 +141,7 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
    }
    return(ArraySize(paramNames));
 
-   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    QC.StartScriptParameterSender();
    QC.StopScriptParameterSender();
    RunScript(NULL);

@@ -292,7 +292,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
    return(output);
 
 
-   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    int iNulls[];
    lo.ClosePrice            (iNulls);       los.ClosePrice            (iNulls, NULL);
    lo.CloseTime             (iNulls);       los.CloseTime             (iNulls, NULL);
