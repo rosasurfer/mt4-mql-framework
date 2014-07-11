@@ -37,8 +37,9 @@ int onStart() {
    // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
    bool status = !LFX.ReadDisplayStatus();
 
+
+   // (1) Status ON: offene Orders einlesen und anzeigen
    if (status) {
-      // Status ON: offene Orders einlesen und anzeigen
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
       int orders = LFX.GetOrders(lfxCurrency, OF_OPEN, los);
 
@@ -48,8 +49,10 @@ int onStart() {
       }
       ArrayResize(los, 0);
    }
+
+
+   // (2) Status OFF: Chartobjekte offener Orders löschen
    else {
-      // Status OFF: Chartobjekte offener Orders löschen
       for (i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
          if (StringStartsWith(name, "lfx.open order "))
@@ -79,30 +82,34 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    string   comment, labelBase, label, text, sPrice;
    int      type;
    datetime openTime;
-   double   units, openPrice, stopLoss, takeProfit;
+   double   units, openPrice, slPrice, slValue, tpPrice, tpValue;
 
 
    // (1) Daten auslesen
    int dims = ArrayDimension(los); if (dims > 2)   return(!catch("ShowOpenOrder(1)   invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
    if (dims == 1) {
       // los[] ist einzelne Order
-      comment    =                     lo.Comment      (los);
-      type       =                     lo.Type         (los);
-      units      =                     lo.Units        (los);
-      openTime   = GmtToServerTime(Abs(lo.OpenTime     (los)));
-      openPrice  =                     lo.OpenPriceLfx (los);
-      stopLoss   =                     lo.StopLossLfx  (los);
-      takeProfit =                     lo.TakeProfitLfx(los);
+      comment    =                     lo.Comment        (los);
+      type       =                     lo.Type           (los);
+      units      =                     lo.Units          (los);
+      openTime   = GmtToServerTime(Abs(lo.OpenTime       (los)));
+      openPrice  =                     lo.OpenPriceLfx   (los);
+      slPrice    =                     lo.StopLossLfx    (los);
+      slValue    =                     lo.StopLossValue  (los);
+      tpPrice    =                     lo.TakeProfitLfx  (los);
+      tpValue    =                     lo.TakeProfitValue(los);
    }
    else {
       // los[] ist Order-Array
-      comment    =                     los.Comment      (los, index);
-      type       =                     los.Type         (los, index);
-      units      =                     los.Units        (los, index);
-      openTime   = GmtToServerTime(Abs(los.OpenTime     (los, index)));
-      openPrice  =                     los.OpenPriceLfx (los, index);
-      stopLoss   =                     los.StopLossLfx  (los, index);
-      takeProfit =                     los.TakeProfitLfx(los, index);
+      comment    =                     los.Comment        (los, index);
+      type       =                     los.Type           (los, index);
+      units      =                     los.Units          (los, index);
+      openTime   = GmtToServerTime(Abs(los.OpenTime       (los, index)));
+      openPrice  =                     los.OpenPriceLfx   (los, index);
+      slPrice    =                     los.StopLossLfx    (los, index);
+      slValue    =                     los.StopLossValue  (los, index);
+      tpPrice    =                     los.TakeProfitLfx  (los, index);
+      tpValue    =                     los.TakeProfitValue(los, index);
    }
    labelBase = StringConcatenate("lfx.open order ", comment);
 
@@ -111,6 +118,9 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
    sPrice = NumberToStr(openPrice, SubPipPriceFormat);
    label  = StringConcatenate(labelBase, " at ", sPrice);
    text   = StringConcatenate(" ", comment, ":  ", NumberToStr(units, ".+"), " x ", sPrice);
+   if (slValue != EMPTY_VALUE) text = StringConcatenate(text, ", sl: "+ DoubleToStr(slValue, 2));
+   if (tpValue != EMPTY_VALUE) text = StringConcatenate(text, ", tp: "+ DoubleToStr(tpValue, 2));
+
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_TREND, 0, D'1970.01.01 00:01', openPrice, openTime, openPrice)) {
@@ -123,13 +133,13 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
 
    // (3) StopLoss anzeigen
-   if (stopLoss != 0) {
+   if (slPrice != 0) {
       // Marker
-      sPrice = NumberToStr(stopLoss, SubPipPriceFormat);
+      sPrice = NumberToStr(slPrice, SubPipPriceFormat);
       label  = StringConcatenate(labelBase, " stoploss at ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrent(), stopLoss)) {
+      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrent(), slPrice)) {
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR    , Red             );
       }
@@ -137,7 +147,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       label = StringConcatenate(labelBase, " -> sl ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrent(), stopLoss)) {
+      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrent(), slPrice)) {
          ObjectSet(label, OBJPROP_RAY  , false      );
          ObjectSet(label, OBJPROP_STYLE, STYLE_DOT  );
          ObjectSet(label, OBJPROP_COLOR, DeepSkyBlue);
@@ -147,13 +157,13 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
 
    // (4) TakeProfit anzeigen
-   if (takeProfit != 0) {
+   if (tpPrice != 0) {
       // Marker
-      sPrice = NumberToStr(takeProfit, SubPipPriceFormat);
+      sPrice = NumberToStr(tpPrice, SubPipPriceFormat);
       label  = StringConcatenate(labelBase, " takeprofit at ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrent(), takeProfit)) {
+      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrent(), tpPrice)) {
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR    , LimeGreen       );
       }
@@ -161,7 +171,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       label = StringConcatenate(labelBase, " -> tp ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrent(), takeProfit)) {
+      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrent(), tpPrice)) {
          ObjectSet(label, OBJPROP_RAY  , false      );
          ObjectSet(label, OBJPROP_STYLE, STYLE_DOT  );
          ObjectSet(label, OBJPROP_COLOR, DeepSkyBlue);
