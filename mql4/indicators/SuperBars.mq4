@@ -1,5 +1,5 @@
 /**
- * Hinterlegt den Chart mit Bars oder Candles übergeordneter Timeframes.
+ * Hinterlegt den Chart mit Bars übergeordneter Timeframes.
  */
 #property indicator_chart_window
 
@@ -11,8 +11,8 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern color Color.BarUp        = C'215,255,215';     // Up-Bars              kräftiger: C'170,255,170'     // neu: C'0,210,0'      Green, Lime
-extern color Color.BarDown      = C'255,230,230';     // Down-Bars            kräftiger: C'255,193,193'     // neu: C'255,47,47'    Red
+extern color Color.BarUp        = C'215,255,215';     // Up-Bars              kräftiger: C'193,255,193'     // neu: C'0,210,0'      Green, Lime
+extern color Color.BarDown      = C'255,230,230';     // Down-Bars            kräftiger: C'255,213,213'     // neu: C'255,47,47'    Red
 extern color Color.BarUnchanged = C'232,232,232';     // unveränderte Bars                                  // neu: Gray
 extern color Color.CloseMarker  = C'164,164,164';     // Close-Marker                                       // neu: Black
 
@@ -78,22 +78,26 @@ int onTick() {
    if (Period() == PERIOD_MN1)
       return(last_error);
 
-   // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (keine for-Schleife über alle ChangedBars).
-   // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Sessionfortschritt und Relevanz der wachsenden Bar veranschaulicht.
+   // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
+   // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
    // - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
 
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int      openBar, closeBar, lastChartBar=Bars-1, i=-1;
 
-   // Schleife über alle Supersessions von "jung" nach "alt"
+   // Schleife über alle Superbars von "jung" nach "alt"
+   //
+   // Mit "Session" ist in der Folge keine reguläre 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
+   // z.B. ein Tag, eine Woche oder ein Monat.
    while (true) {
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(last_error);
 
-      // Ab PERIOD_D1 ist die Barauflösung der Broker nur noch 1 Tag (keine Minuten mehr; praktisch fehlt der Zeitzonenoffset).
-      if (Period() >= PERIOD_D1) {
-         openTime.srv  = openTime.fxt;                               // TODO: Hier ist zusätzlich die berüchtigte 6. Sonntags-Bar möglich (z.B. bei Forex Ltd).
-         closeTime.srv = closeTime.fxt;
+      // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
+      // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
+      if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe>=PERIOD_MN1) {
+         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar
+         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar (noch nie beobachtet)
       }
                                                                      // Da hier immer der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
       openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal (und nur hier).
@@ -243,11 +247,13 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
 
+
    //static int i;
-   //if (i <= 10) {
-   //   debug("GetPreviousSession("+ PeriodDescription(timeframe) +")   "+ i +" from '"+ DateToStr(openTime.fxt, "w D.M.Y H:I:S") +"' to '"+ DateToStr(closeTime.fxt, "w D.M.Y H:I:S") +"'");
-   //   i++;
+   //if (i == 2) {
+   //   debug("GetPreviousSession("+ PeriodDescription(timeframe) +")   "+ i +" fxt:  from='"+ DateToStr(openTime.fxt, "w D.M.Y H:I:S") +"' to='"+ DateToStr(closeTime.fxt, "w D.M.Y H:I:S") +"'");
+   //   debug("GetPreviousSession("+ PeriodDescription(timeframe) +")   "+ i +" srv:  from='"+ DateToStr(openTime.srv, "w D.M.Y H:I:S") +"' to='"+ DateToStr(closeTime.srv, "w D.M.Y H:I:S") +"'");
    //}
+   //i++;
    return(!catch("GetPreviousSession(2)"));
 }
 
