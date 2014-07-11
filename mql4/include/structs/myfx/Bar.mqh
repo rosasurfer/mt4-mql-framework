@@ -101,7 +101,7 @@ string BAR.toStr(/*BAR*/double bar[], bool debugger=false) {
    return(output);
 
 
-   // Dummy-Calls: unnütze Compilerwarnungen unterdrücken
+   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    bar.Time     (bar);       bars.Time     (bar, NULL);
    bar.Open     (bar);       bars.Open     (bar, NULL);
    bar.Low      (bar);       bars.Low      (bar, NULL);

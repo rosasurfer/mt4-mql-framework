@@ -755,7 +755,7 @@ int ClearStickyStatus() {
 
 
 /**
- * Unterdrückt unnütze Compilerwarnungen.
+ * Unterdrücken unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    int    iNulls[];

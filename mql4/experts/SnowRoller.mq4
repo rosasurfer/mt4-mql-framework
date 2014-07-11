@@ -5331,7 +5331,7 @@ bool RecordEquity(int flags=NULL) {
 
 
 /**
- * Unterdrückt unnütze Compilerwarnungen.
+ * Unterdrücken unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    int    iNull, iNulls[];
