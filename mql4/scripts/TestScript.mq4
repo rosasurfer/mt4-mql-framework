@@ -8,19 +8,16 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
+#import "StdLib.Release.dll"
+#import
+
+
 /**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int i_1 = 5;
-
-   string s = (i_1!=0);
-
-   int i = (i_1!=0);
-
-   debug("onStart()   s="+ s +"  i="+ i);
-
+   debug("onStart()");
    return(last_error);
 }
