@@ -10,12 +10,20 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
+#import "StdLib.Release.dll"
+   bool Test();
+#import
+
+
 /**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onTick() {
-   debug("onTick()");
+
+   bool result = Test();
+   debug("onTick()->Test() => "+ result);
+
    return(last_error);
 }

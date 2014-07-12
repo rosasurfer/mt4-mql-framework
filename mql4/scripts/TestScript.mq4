@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 
 
 #import "StdLib.Release.dll"
-   bool pw_IsCustomTimeframe(int timeframe);
+   bool Test();
 #import
 
 
@@ -20,8 +20,8 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   pw_IsCustomTimeframe(3);
+   bool result = Test();
+   debug("onStart()->Test() => "+ result);
 
-   debug("onStart()");
    return(last_error);
 }
