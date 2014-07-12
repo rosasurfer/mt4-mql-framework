@@ -9,6 +9,7 @@ int __DEINIT_FLAGS__[];
 
 
 #import "StdLib.Release.dll"
+   bool pw_IsCustomTimeframe(int timeframe);
 #import
 
 
@@ -18,6 +19,9 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+
+   pw_IsCustomTimeframe(3);
+
    debug("onStart()");
    return(last_error);
 }
