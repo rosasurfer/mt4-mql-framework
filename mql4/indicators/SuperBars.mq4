@@ -11,10 +11,10 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern color Color.BarUp        = C'215,255,215';     // Up-Bars              kräftiger: C'193,255,193'     // neu: C'0,210,0'      Green, Lime
-extern color Color.BarDown      = C'255,230,230';     // Down-Bars            kräftiger: C'255,213,213'     // neu: C'255,47,47'    Red
-extern color Color.BarUnchanged = C'232,232,232';     // unveränderte Bars                                  // neu: Gray
-extern color Color.CloseMarker  = C'164,164,164';     // Close-Marker                                       // neu: Black
+extern color Color.BarUp        = C'193,255,193';     // Up-Bars              blass: C'215,255,215'
+extern color Color.BarDown      = C'255,213,213';     // Down-Bars            blass: C'255,230,230'
+extern color Color.BarUnchanged = C'232,232,232';     // unveränderte Bars                               // oder: Gray
+extern color Color.CloseMarker  = C'164,164,164';     // Close-Marker                                    // oder: Black
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
