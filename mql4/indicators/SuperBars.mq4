@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string Timeframe          = "auto";               // anzuzeigender SuperTimeframe: D1, W1, MN1, Q1 ("" = automatisch)
+extern string Timeframe          = "auto";               // anzuzeigender SuperTimeframe: D, W, M, Q oder "" (automatisch)
 extern color  Color.BarUp        = C'193,255,193';       // Up-Bars              blass: C'215,255,215'
 extern color  Color.BarDown      = C'255,213,213';       // Down-Bars            blass: C'255,230,230'
 extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder Gray
@@ -33,28 +33,31 @@ string label.superbar = "SuperBar";                      // Label für Chartanzei
 int onInit() {
    // (1) Parametervalidierung
    // Timeframe
-   string sValue = StringToUpper(StringTrim(Timeframe));
-   if (sValue == "AUTO") sValue = "";
-   if (sValue == "") superTimeframe = EMPTY_VALUE;
-   else              superTimeframe = StrToPeriod(sValue);
-   if (superTimeframe < PERIOD_D1) return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   string value = StringToUpper(StringTrim(Timeframe));
+   if      (value==""  || value=="AUTO") { superTimeframe = NULL;       Timeframe = "auto"; }
+   else if (value=="D" || value=="D1"  ) { superTimeframe = PERIOD_D1;  Timeframe = "D";    }
+   else if (value=="W" || value=="W1"  ) { superTimeframe = PERIOD_W1;  Timeframe = "W";    }
+   else if (value=="M" || value=="MN1" ) { superTimeframe = PERIOD_MN1; Timeframe = "M";    }
+   else if (value=="Q" || value=="Q1"  ) { superTimeframe = PERIOD_Q1;  Timeframe = "Q";    }
+   else
+      return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    switch (Period()) {
       case PERIOD_M1 :
       case PERIOD_M5 :
       case PERIOD_M15:
       case PERIOD_M30:
-      case PERIOD_H1 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_D1;   // auto
+      case PERIOD_H1 : if      (!superTimeframe            ) superTimeframe = PERIOD_D1;     // auto
                        break;
-      case PERIOD_H4 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_W1;   // auto
+      case PERIOD_H4 : if      (!superTimeframe            ) superTimeframe = PERIOD_W1;     // auto
                        break;
-      case PERIOD_D1 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_MN1;  // auto
-                       else if (superTimeframe  < PERIOD_W1  ) superTimeframe = -1;          // manuell: min. W1 oder keine Anzeige
+      case PERIOD_D1 : if      (!superTimeframe            ) superTimeframe = PERIOD_MN1;    // auto
+                       else if (superTimeframe < PERIOD_W1 ) superTimeframe = NULL;          // manuell: min. W1 oder keine Anzeige
                        break;
-      case PERIOD_W1 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_Q1;   // auto
-                       else if (superTimeframe  < PERIOD_MN1 ) superTimeframe = -1;          // manuell: min. MN1 oder keine Anzeige
+      case PERIOD_W1 : if      (!superTimeframe            ) superTimeframe = PERIOD_Q1;     // auto
+                       else if (superTimeframe < PERIOD_MN1) superTimeframe = NULL;          // manuell: min. MN1 oder keine Anzeige
                        break;
-      case PERIOD_MN1: superTimeframe = -1;                                                  // auto und manuell: keine Anzeige
+      case PERIOD_MN1: superTimeframe = NULL;                                                // auto und manuell: keine Anzeige
                        break;
    }
 
@@ -92,7 +95,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (superTimeframe == -1)
+   if (!superTimeframe)
       return(NO_ERROR);
 
    // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).

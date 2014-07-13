@@ -2106,7 +2106,7 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
- * Unterdrücken unnütze Compilerwarnungen.
+ * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
    int    iNull;

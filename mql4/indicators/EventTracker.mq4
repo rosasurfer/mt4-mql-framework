@@ -674,7 +674,7 @@ string InputsToStr() {
 
 
 /**
- * Unterdrücken unnütze Compilerwarnungen.
+ * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    int    iNull;

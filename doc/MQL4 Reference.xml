@@ -7226,6 +7226,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=int
         name=fontSize
+        def_value=10
         description=font size in points
       </parameter>
       <parameter>
@@ -7237,7 +7238,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=color
         name=fontColor
-        def_value=CLR_NONE
+        def_value=Gray
         description=text color
       </parameter>
     </function>

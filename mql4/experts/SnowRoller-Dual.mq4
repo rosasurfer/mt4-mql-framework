@@ -3317,7 +3317,7 @@ bool IsTest() {
 
 
 /**
- * Unterdrücken unnütze Compilerwarnungen.
+ * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    int    iNulls[];
