@@ -81,7 +81,7 @@ int onStart() {
 
 
 /**
- * Unterdrücken unnütze Compilerwarnungen.
+ * Unterdrückt unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    ConfirmTick1Trade(NULL, NULL);
