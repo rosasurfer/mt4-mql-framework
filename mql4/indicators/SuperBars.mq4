@@ -14,8 +14,8 @@ int __DEINIT_FLAGS__[];
 extern string Timeframe          = "auto";               // anzuzeigender SuperTimeframe: D1, W1, MN1, Q1 ("" = automatisch)
 extern color  Color.BarUp        = C'193,255,193';       // Up-Bars              blass: C'215,255,215'
 extern color  Color.BarDown      = C'255,213,213';       // Down-Bars            blass: C'255,230,230'
-extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder: Gray
-extern color  Color.Close        = C'164,164,164';       // Close-Marker                                    // oder: Black
+extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder Gray
+extern color  Color.Close        = C'164,164,164';       // Close-Marker                                    // oder Black
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
