@@ -11,17 +11,18 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern color Color.BarUp        = C'193,255,193';     // Up-Bars              blass: C'215,255,215'
-extern color Color.BarDown      = C'255,213,213';     // Down-Bars            blass: C'255,230,230'
-extern color Color.BarUnchanged = C'232,232,232';     // unveränderte Bars                               // oder: Gray
-extern color Color.CloseMarker  = C'164,164,164';     // Close-Marker                                    // oder: Black
+extern string Timeframe          = "auto";               // anzuzeigender SuperTimeframe: D1, W1, MN1, Q1 ("" = automatisch)
+extern color  Color.BarUp        = C'193,255,193';       // Up-Bars              blass: C'215,255,215'
+extern color  Color.BarDown      = C'255,213,213';       // Down-Bars            blass: C'255,230,230'
+extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder: Gray
+extern color  Color.Close        = C'164,164,164';       // Close-Marker                                    // oder: Black
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 
 
 int    superTimeframe;
-string label.superbar = "SuperBar";                                     // Label für Chartanzeige
+string label.superbar = "SuperBar";                      // Label für Chartanzeige
 
 
 /**
@@ -30,31 +31,47 @@ string label.superbar = "SuperBar";                                     // Label
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Color-Validierung
-   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // CLR_NONE kann u.U. vom Terminal falsch gesetzt worden sein.
-   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;
-   if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
-   if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
+   // (1) Parametervalidierung
+   // Timeframe
+   string sValue = StringToUpper(StringTrim(Timeframe));
+   if (sValue == "AUTO") sValue = "";
+   if (sValue == "") superTimeframe = EMPTY_VALUE;
+   else              superTimeframe = StrToPeriod(sValue);
+   if (superTimeframe < PERIOD_D1) return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // anzuzeigenden Timeframe der Superbars bestimmen
    switch (Period()) {
       case PERIOD_M1 :
       case PERIOD_M5 :
       case PERIOD_M15:
       case PERIOD_M30:
-      case PERIOD_H1 : superTimeframe = PERIOD_D1;  break;
-      case PERIOD_H4 : superTimeframe = PERIOD_W1;  break;
-      case PERIOD_D1 : superTimeframe = PERIOD_MN1; break;
-      case PERIOD_W1 :
-      case PERIOD_MN1: superTimeframe = PERIOD_Q1;  break;
+      case PERIOD_H1 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_D1;   // auto
+                       break;
+      case PERIOD_H4 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_W1;   // auto
+                       break;
+      case PERIOD_D1 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_MN1;  // auto
+                       else if (superTimeframe  < PERIOD_W1  ) superTimeframe = -1;          // manuell: min. W1 oder keine Anzeige
+                       break;
+      case PERIOD_W1 : if      (superTimeframe == EMPTY_VALUE) superTimeframe = PERIOD_Q1;   // auto
+                       else if (superTimeframe  < PERIOD_MN1 ) superTimeframe = -1;          // manuell: min. MN1 oder keine Anzeige
+                       break;
+      case PERIOD_MN1: superTimeframe = -1;                                                  // auto und manuell: keine Anzeige
+                       break;
    }
 
-   // Label erzeugen
+   // Colors
+   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;                           // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
+   if (Color.BarDown      == 0xFF000000) Color.BarDown = CLR_NONE;
+   if (Color.BarUnchanged == 0xFF000000) Color.BarDown = CLR_NONE;
+   if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
+
+
+   // (2) Label erzeugen
    CreateLabels();
 
-   // Datenanzeige ausschalten
+
+   // (3) Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-   return(catch("onInit()"));
+   return(catch("onInit(2)"));
 }
 
 
@@ -75,8 +92,8 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (Period() == PERIOD_MN1)
-      return(last_error);
+   if (superTimeframe == -1)
+      return(NO_ERROR);
 
    // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
    // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
@@ -87,7 +104,7 @@ int onTick() {
 
    // Schleife über alle Superbars von "jung" nach "alt"
    //
-   // Mit "Session" ist in der Folge keine reguläre 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
+   // Mit "Session" ist in der Folge keine 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
    // z.B. ein Tag, eine Woche oder ein Monat.
    while (true) {
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
@@ -96,11 +113,10 @@ int onTick() {
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
       // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
       if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe>=PERIOD_MN1) {
-         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar
-         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar (noch nie beobachtet)
+         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar: Server-Timezone westlich von FXT
+         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
       }
-                                                                     // Da hier immer der aktuelle Timeframe benutzt wird, sollte ERS_HISTORY_UPDATE nie auftreten.
-      openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Wenn doch, dann nur ein einziges mal (und nur hier).
+      openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Da immer der aktuelle Timeframe benutzt wird, kann ERS_HISTORY_UPDATE eigentlich nie auftreten.
       if (openBar == EMPTY_VALUE) return(SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
@@ -324,10 +340,10 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
          } else GetLastError();
 
          if (ObjectCreate(labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
-            ObjectSet    (labelWithPrice, OBJPROP_RAY  , false            );
-            ObjectSet    (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID      );
-            ObjectSet    (labelWithPrice, OBJPROP_COLOR, Color.CloseMarker);
-            ObjectSet    (labelWithPrice, OBJPROP_BACK , true             );
+            ObjectSet    (labelWithPrice, OBJPROP_RAY  , false      );
+            ObjectSet    (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet    (labelWithPrice, OBJPROP_COLOR, Color.Close);
+            ObjectSet    (labelWithPrice, OBJPROP_BACK , true       );
             PushObject   (labelWithPrice);
          } else GetLastError();
       }
