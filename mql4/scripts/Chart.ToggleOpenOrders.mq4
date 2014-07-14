@@ -22,7 +22,7 @@ int onInit() {
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else
-      return(HandleScriptError("", "This script runs on LFX charts only.", ERR_RUNTIME_ERROR));
+      return(HandleScriptError("", "This script is for LFX charts only.", ERR_RUNTIME_ERROR));
 
    return(catch("onInit()"));
 }
