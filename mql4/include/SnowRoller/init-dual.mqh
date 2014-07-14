@@ -126,7 +126,7 @@ int CreateStatusBox() {
       if (ObjectFind(label) != 0) {
          if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
             return(!catch("CreateStatusBox(1)"));
-         PushObject(label);
+         ObjectRegister(label);
       }
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x   );

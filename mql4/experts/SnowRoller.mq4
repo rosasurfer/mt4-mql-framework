@@ -303,11 +303,11 @@ int onTick() {
  *
  * @param  string commands[] - die übermittelten Kommandos
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int onChartCommand(string commands[]) {
+bool onChartCommand(string commands[]) {
    if (ArraySize(commands) == 0)
-      return(catch("onChartCommand(1)   illegal parameter commands = "+ StringsToStr(commands, NULL), ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(_true(warn("onChartCommand(1)   empty parameter commands = {}")));
 
    string cmd = commands[0];
 
@@ -316,7 +316,7 @@ int onChartCommand(string commands[]) {
          case STATUS_WAITING: StartSequence();  break;
          case STATUS_STOPPED: ResumeSequence(); break;
       }
-      return(last_error);
+      return(true);
    }
 
    else if (cmd == "stop") {
@@ -328,15 +328,14 @@ int onChartCommand(string commands[]) {
             if (UpdateStatus(bNull, iNull))
                StopSequence();
       }
-      return(last_error);
+      return(true);
    }
 
-   else if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
-   else if (cmd ==     "orderdisplay") return(    ToggleOrderDisplayMode());
+   else if (cmd == "startstopdisplay") return(!ToggleStartStopDisplayMode());
+   else if (cmd ==     "orderdisplay") return(!ToggleOrderDisplayMode()    );
 
    // unbekannte Commands anzeigen, aber keinen Fehler setzen (EA soll weiterlaufen)
-   warn(StringConcatenate("onChartCommand(2)   unknown command \"", cmd, "\""));
-   return(NO_ERROR);
+   return(_true(warn("onChartCommand(2)   unknown command \""+ cmd +"\"")));
 }
 
 

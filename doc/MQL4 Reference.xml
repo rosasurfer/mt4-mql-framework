@@ -266,9 +266,9 @@ bool b = false;
 bool c = 1;</pre>
         <p>The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.</p>
         <br>
-			<br>
-			<span style="color:red">Fehler:</span>
-			<br>
+         <br>
+         <span style="color:red">Fehler:</span>
+         <br>
          Ausdrücke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch für
          die Übergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span style="color:#980000">TRUE</span> oder
          <span style="color:#980000">FALSE</span> schlagen immer fehl.<br>
@@ -3434,7 +3434,8 @@ When accessed the first dimension of the destination array holds the rates bar o
 5 - volume<br/>
 <br/>
 If data from another timeseries than the current chart is requested the error <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
-set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
+set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
+<br/>
 
 <span style="color:red">Notes:</span>
 <br>
@@ -4369,9 +4370,9 @@ It will not be sent if there is no FTP address and/or access password specified 
       caption=SendMail()
       type=void
       <content>
-Sends a message to the e-mail set in the Tools->Options->EMail tab.<br/>
+Sends a message to the e-mail address configured in the Tools->Options->E-Mail tab.<br/>
 The sending can be disabled in settings, or it can be omitted to specify the e-mail address.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   double lastclose=Close[0];
@@ -4806,7 +4807,7 @@ int init()
 Binds the array variable declared at a global level to the custom indicator pre-defined buffer.
 The amount of buffers needed to calculate the indicator is set with the <a href="help://customind_IndicatorBuffers">IndicatorBuffers()</a> function and cannot
 exceed 8. If it succeeds, TRUE will be returned, otherwise, it will be FALSE.
-To get the extended information about the error, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
      </content>
       <example>
   double ExtBufferSilver[];
@@ -5700,7 +5701,7 @@ To get the detailed error information, call the <a href="help://check_GetLastErr
       <content>
 Reads the double-precision number with floating point from the current binary file position.
 The number format size can be 8 bytes (double) or 4 bytes (float).<br/>
-To get the error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5733,7 +5734,7 @@ To get the error information, one has to call the <a href="help://check_GetLastE
         The function reads the integer from the current binary file position.
         The integer format size can be 1, 2 or 4 bytes.
         If the format size is not specified, the system tries to read the 4-bytes value.
-        To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+        To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       keywords=;CHAR_VALUE;SHORT_VALUE;LONG_VALUE;
       <example>
@@ -5765,7 +5766,7 @@ To get the error information, one has to call the <a href="help://check_GetLastE
       type=double
       <content>
 Read the number from the current file position before the delimiter. Only for CSV files.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5792,7 +5793,7 @@ To get the detailed error information, one has to call the <a href="help://check
 The function reads the string from the current file position. Applies to both CSV and binary files.
 For text files, the string will be read before the delimiter.
 For binary file, the given count of characters will be read to the string.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5826,7 +5827,7 @@ To get the detailed error information, one has to call the <a href="help://check
 The function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the
 current file position. The next reading or writing are made at a new position.<br/>
 If file pointer has been moved successfully, the function returns TRUE, otherwise, it returns FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle=FileOpen(&quot;filename.csv&quot;, FILE_CSV|FILE_READ|FILE_WRITE, ';');
@@ -5867,7 +5868,7 @@ SEEK_END - from end of file.
       type=int
       <content>
 The function returns file size in bytes.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5893,7 +5894,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=int
       <content>
         Returns the current position of the file pointer.
-        To get the detailed error information, one has to call <a href="help://check_GetLastError">GetLastError()</a> function.
+        To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5918,7 +5919,7 @@ To get the detailed error information, one has to call the <a href="help://check
 The function is intended for writing of data into a CSV file, delimiter being inserted automatically. After writing into the file, the line
 end character &quot;\r\n&quot; will be added. Numbers will be converted into a text at output (see the <a href="help://common_Print">Print()</a> function).<br/>
 Returns the count of written characters or a negative number if an error occurs.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5956,7 +5957,7 @@ The function writes the array to a binary file. Arrays of int, bool, datetime an
 Arrays of double type will be written elementwise, as 8-bytes floating point numbers.
 Arrays of string type will be written by strings, the line end character &quot;\r\n&quot; to be added at each string automatically.<br/>
 Returns the number of written elements or a negative value if an error occurs.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6003,7 +6004,7 @@ The function writes a double value with floating point to a binary file.
 If the format is specified as FLOAT_VALUE, the value will be written as a 4-bytes floating point number (of the float type),
 otherwise, it will be written in the 8-bytes floating point format (of the double type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6050,7 +6051,7 @@ The function writes the integer value to a binary file.
  if the size is CHAR_VALUE, the value will be written as a 1-byte integer (the char type), and
  if the size is LONG_VALUE, the value will be written as a 4-byte integer (the long int type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6093,7 +6094,7 @@ CHAR_VALUE (1 byte),<br/>SHORT_VALUE (2 bytes),<br/>LONG_VALUE (4 bytes, default
       <content>
 The function writes the string to a binary file from the current file position.<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6144,7 +6145,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=bool
       <content>
 Returns TRUE if the global variable exists, otherwise, returns FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   // check variable before use
@@ -6165,7 +6166,7 @@ To get the detailed error information, one has to call the <a href="help://check
       <content>
 Deletes the global variable.
 If the function succeeds, the returned value will be TRUE, otherwise, it will be FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   // deleting of the global variable named &quot;gvar_1&quot;
@@ -6184,7 +6185,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=double
       <content>
 Returns the value of an existing global variable or 0 if an error occurs.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   double v1=GlobalVariableGet(&quot;g1&quot;);
@@ -6205,7 +6206,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=string
       <content>
 The function returns the name of a global variable by its index in the list of global variables.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
      </content>
       <example>
   int    var_total=GlobalVariablesTotal();
@@ -6230,7 +6231,7 @@ To get the detailed error information, one has to call the <a href="help://check
       <content>
 Sets a new value of the global variable. If it does not exist, the system creates a new gloabl variable.
 If the function succeeds, the returned value will be the last access time. Otherwise, the returned value will be 0.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       <example>
   //---- try to set new value
@@ -6255,12 +6256,13 @@ To get the detailed error information, one has to call the <a href="help://check
       caption=GlobalVariableSetOnCondition()
       type=bool
       <content>
-Sets the new value of the existing global variable if the current value
-equals to the third parameter <i>check_value</i>. If there is no global variable, the function will generate <a href="help://constants_errors">error</a> ERR_GLOBAL_VARIABLE_NOT_FOUND (4058) and return FALSE.
-When successfully executed, the function returns TRUE, otherwise, it returns FALSE. To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+Sets the new value of the existing global variable if the current value equals to the third parameter <i>check_value</i>. If there
+is no global variable, the function will generate <a href="help://constants_errors">error</a> ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)
+and return FALSE. When successfully executed, the function returns TRUE, otherwise, it returns FALSE. To get detailed error information,
+call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 If the current value of the global variable differs from the <i>check_value</i>, the function will return FALSE.<br/>
-The function provides atomic access to the global variable, this is why it can be used
-for providing of a semaphore at interaction of several experts working simultaneously within one client terminal.
+The function provides atomic access to the global variable, this is why it can be used for providing of a semaphore at interaction of
+several experts working simultaneously within one client terminal.
      </content>
       <example>
   int init()
@@ -6794,81 +6796,79 @@ a loss of significance in the result occurs, in which case the function returns 
       caption=ObjectCreate()
       type=bool
       <content>
-Creation of an object with the specified name, type and initial coordinates in the specified window.
-Count of coordinates related to the object can be from 1 to 3 depending on the object type.
-If the function succeeds, the returned value will be TRUE. Otherwise, it will be FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
-Objects of the OBJ_LABEL type ignore the coordinates. Use the function of
-<a href="help://objects_ObjectSet">ObjectSet()</a> to set up the <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and
-<a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
-Notes: The chart sub-windows (if there are sub-windows with indicators in the chart) are numbered starting from 1. The chart main window always exists and has the 0 index.<br/>
-Coordinates must be passed in pairs: time and price.
-For example, the OBJ_VLINE object needs only time, but price (any value) must be passed, as well.
+Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates to specify ranges
+from 1 to 3 depending on the object type. Specified coordinates for objects of type OBJ_LABEL are ignored. Use <a href="help://objects_ObjectSet">ObjectSet()</a>
+to set <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
+If the function succeeds it returns TRUE, otherwise it returns FALSE. To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
+<br/>
+
+Notes:<br>
+- The main chart window always exists and has the index 0. Chart sub-windows (if there are any) are indexed starting from 1.<br/>
+- Coordinates must always be specified in pairs, a time and a price value. If an object needs only a time (for example OBJ_VLINE), a price value (any value) must be passed, as well.<br>
       </content>
-      <example>
-  // new text object
-  if(!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D'2004.02.20 12:30', 1.0045))
-    {
-     Print(&quot;error: can't create text_object! code #&quot;,GetLastError());
-     return(0);
-    }
-  // new label object
-  if(!ObjectCreate(&quot;label_object&quot;, OBJ_LABEL, 0, 0, 0))
-    {
-     Print(&quot;error: can't create label_object! code #&quot;,GetLastError());
-     return(0);
-    }
-  ObjectSet(&quot;label_object&quot;, OBJPROP_XDISTANCE, 200);
-  ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
-      </example>
+
+<example>
+// new text object
+if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D'2004.02.20 12:30', 1.0045)) {
+   Print(&quot;error: can't create text_object! error=&quot;, GetLastError());
+   return(0);
+}
+// new label object
+if (!ObjectCreate(&quot;label_object&quot;, OBJ_LABEL, 0, 0, 0)) {
+   Print(&quot;error: can't create label_object! error=&quot;, GetLastError());
+   return(0);
+}
+ObjectSet(&quot;label_object&quot;, OBJPROP_XDISTANCE, 200);
+ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
+</example>
       <parameter>
         type=string
         name=name
-        description=Object unique name.
+        description=Unique object name with a <span style="color:red">maximum length of 63 chars</span>.
       </parameter>
       <parameter>
         type=int
         name=type
-        description=Object type. It can be any of the <a href="help://constants_objects">Object type enumeration</a> values.
+        description=Object type, can be any of the <a href="help://constants_objects">Object type enumeration</a> values.
       </parameter>
       <parameter>
         type=int
         name=window
-        description=Index of the window where the object will be added. Window index must exceed or equal to 0 and be less than <a href="help://windows_WindowsTotal">WindowsTotal()</a>.
+        description=Index of the chart window to add the object to, the range is from 0 (main chart window) to one less than <a href="help://windows_WindowsTotal">WindowsTotal()</a>.
       </parameter>
       <parameter>
         type=datetime
         name=time1
-        description=Time part of the first point.
+        description=Time part of the first coordinate pair.
       </parameter>
       <parameter>
         type=double
         name=price1
-        description=Price part of the first point.
+        description=Price part of the first coordinate pair.
       </parameter>
       <parameter>
         type=datetime
         name=time2
-        def_value=0
-        description=Time part of the second point.
+        def_value=NULL
+        description=Time part of the second coordinate pair.
       </parameter>
       <parameter>
         type=double
         name=price2
-        def_value=0
-        description=Price part of the second point.
+        def_value=NULL
+        description=Price part of the second coordinate pair.
       </parameter>
       <parameter>
         type=datetime
         name=time3
-        def_value=0
-        description=Time part of the third point.
+        def_value=NULL
+        description=Time part of the third coordinate pair.
       </parameter>
       <parameter>
         type=double
         name=price3
-        def_value=0
-        description=Price part of the third point.
+        def_value=NULL
+        description=Price part of the third coordinate pair.
       </parameter>
     </function>
 
@@ -6879,7 +6879,7 @@ For example, the OBJ_VLINE object needs only time, but price (any value) must be
       <content>
 Deletes object having the specified name.
 If the function succeeds, the returned value will be TRUE. Otherwise, it will be FALSE.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       example=ObjectDelete(&quot;text_object&quot;);
       <parameter>
@@ -6895,7 +6895,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=string
       <content>
 Return object description. For objects of OBJ_TEXT and OBJ_LABEL types, the text drawn by these objects will be returned.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSetText">ObjectSetText()</a> function.
      </content>
       <example>
@@ -6928,9 +6928,9 @@ To get the detailed error information, one has to call the <a href="help://check
       caption=ObjectFind()
       type=int
       <content>
-Search for an object having the specified name. The function returns index of the windows that contains the object to be found. If it fails, the returned value will be -1.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
-The chart sub-windows (if there are sub-windows with indicators in the chart) are numbered starting from 1. The chart main window always exists and has the 0 index.
+Searches for an object having the specified name and returns the index of the windows that contains the object or -1 if no such object is found.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+The chart main window always exists and has the index 0. Chart sub-windows (if any) are numbered starting from 1.
       </content>
       example=if(ObjectFind(&quot;line_object2&quot;)!=win_idx) return(0);
       <parameter>
@@ -6946,7 +6946,7 @@ The chart sub-windows (if there are sub-windows with indicators in the chart) ar
       type=double
       <content>
 The function returns the value of the specified object property.
-To check errors, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSet">ObjectSet()</a> function.
       </content>
       example=color oldColor=ObjectGet(&quot;hline12&quot;, OBJPROP_COLOR);
@@ -6969,7 +6969,7 @@ To check errors, one has to call the <a href="help://check_GetLastError">GetLast
       <content>
 The function returns the level description of a Fibonacci object.
 The amount of Fibonacci levels depends on the <a href="help://constants_objects">object type</a>. The maximum amount of Fibonacci levels is 32.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError() function</a>.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSetFiboDescription">ObjectSetFiboDescription()</a> function.
       </content>
       <example>
@@ -7003,7 +7003,7 @@ To get the detailed error information, one has to call the <a href="help://check
       <content>
 The function calculates and returns bar index (shift related to the current bar) for the given price.
 The bar index is calculated by the first and second coordinates using a linear equation. Applied to trendlines and similar objects.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGetValueByShift">ObjectGetValueByShift()</a> function.
       </content>
       <example>
@@ -7028,7 +7028,7 @@ To get the detailed error information, one has to call the <a href="help://check
       <content>
 The function calculates and returns the price value for the specified bar (shift related to the current bar).
 The price value is calculated by the first and second coordinates using a linear equation.  Applied to trendlines and similar objects.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGetShiftByValue">ObjectGetShiftByValue()</a> function.
       </content>
       <example>
@@ -7054,7 +7054,7 @@ To get the detailed error information, one has to call the <a href="help://check
 The function moves an object coordinate in the chart. Objects can have from one to three coordinates depending on their
 <a href="help://constants_objects">types</a>.
 If the function succeeds, the returned value will be TRUE. Otherwise, it will be FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 The object coordinates are numbered starting from 0.
      </content>
       example=ObjectMove(&quot;MyTrend&quot;, 1, D'2005.02.25 12:30', 1.2345);
@@ -7086,7 +7086,7 @@ The object coordinates are numbered starting from 0.
       type=string
       <content>
 The function returns the object name by its index in the objects list.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
      </content>
       <example>
   int    obj_total=ObjectsTotal();
@@ -7110,7 +7110,7 @@ To get the detailed error information, one has to call the <a href="help://check
       type=int
       <content>
 Removes all objects of the specified type and in the specified sub-window of the chart. The function returns the count of removed objects.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 Notes: The chart sub-windows (if there are sub-windows with indicators in the chart) are numbered starting from 1. The chart main window always exists and has the 0 index.
 If the window index is missing or it has the value of -1, the objects will be removed from the entire chart.<br/>
 If the <i>type</i> value equals to -1 or this parameter is missing, all objects will be removed from the specified sub-window.
@@ -7146,7 +7146,7 @@ Optional parameter. An object type to be deleted.
       type=bool
       <content>
 Changes the value of the specified object property. If the function succeeds, the returned value will be TRUE. Otherwise, it will be FALSE.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGet">ObjectGet()</a> function.
       </content>
       <example>
@@ -7181,7 +7181,7 @@ To get the detailed error information, one has to call the <a href="help://check
       <content>
 The function assigns a new description to a level of a Fibonacci object. The amount of Fibonacci levels depends on the <a href="help://constants_objects">object type</a>.
 The maximum amount of Fibonacci levels is 32.<br/>
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       example=ObjectSetFiboDescription(&quot;MyFiboObject&quot;,2,&quot;Second line&quot;);
       <parameter>
@@ -7276,7 +7276,7 @@ Optional parameter. An object type to be counted.
       type=int
       <content>
 The function returns the <a href="help://constants_objects">object type</a> value.
-To get the detailed error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
       example=if(ObjectType(&quot;line_object2&quot;)!=OBJ_HLINE) return(0);
       <parameter>
@@ -9864,7 +9864,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       <content>
 The function selects an order for further processing. It returns TRUE if the function succeeds.
 It returns FALSE if the function fails.
-To get the error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 The <i>pool</i> parameter is ignored if the order is selected by the ticket number. The ticket number is a unique order identifier.
 To find out from what list the order has been selected, its <a href="help://trading_OrderCloseTime">close time</a> must be analyzed. If the order close time
 equals to 0, the order is open or pending and taken from the terminal open positions list. One can distinguish an open position from a pending order
@@ -9914,7 +9914,7 @@ MODE_HISTORY - order selected from history pool (closed and canceled order).
       <content>
 The main function used to open a position or place a pending order.<br/>
 Returns number of the ticket assigned to the order by the trade server or -1 if it fails.
-To get additional error information, one has to call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 Notes:<br/>
 At opening of a market order (OP_SELL or OP_BUY), only the latest prices of <a href="help://predefined_variables_Bid">Bid</a> (for selling) or
 <a href="help://predefined_variables_Ask">Ask</a> (for buying) can be used as open price. If operation is performed with a security differing from

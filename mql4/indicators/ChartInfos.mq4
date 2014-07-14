@@ -292,11 +292,11 @@ int CreateLabels() {
    if (ObjectFind(label.instrument) == 0)
       ObjectDelete(label.instrument);
    if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
          int build = GetTerminalBuild();
-      ObjectSet (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));
-      ObjectSet (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));
-      PushObject(label.instrument);
+      ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));
+      ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));
+      ObjectRegister(label.instrument);
    }
    else GetLastError();
    string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
@@ -313,7 +313,7 @@ int CreateLabels() {
       ObjectSet    (label.ohlc, OBJPROP_XDISTANCE, 110);
       ObjectSet    (label.ohlc, OBJPROP_YDISTANCE, 4  );
       ObjectSetText(label.ohlc, " ", 1);
-      PushObject   (label.ohlc);
+      ObjectRegister(label.ohlc);
    }
    else GetLastError();
 
@@ -326,7 +326,7 @@ int CreateLabels() {
       ObjectSet    (label.price, OBJPROP_XDISTANCE, 14);
       ObjectSet    (label.price, OBJPROP_YDISTANCE, 15);
       ObjectSetText(label.price, " ", 1);
-      PushObject   (label.price);
+      ObjectRegister(label.price);
    }
    else GetLastError();
 
@@ -340,7 +340,7 @@ int CreateLabels() {
          ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
          ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
          ObjectSetText(label.spread, " ", 1);
-         PushObject   (label.spread);
+         ObjectRegister(label.spread);
       }
       else GetLastError();
    }
@@ -355,7 +355,7 @@ int CreateLabels() {
          ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
          ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
          ObjectSetText(label.unitSize, " ", 1);
-         PushObject   (label.unitSize);
+         ObjectRegister(label.unitSize);
       }
       else GetLastError();
    }
@@ -370,7 +370,7 @@ int CreateLabels() {
          ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
          ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
          ObjectSetText(label.position, " ", 1);
-         PushObject   (label.position);
+         ObjectRegister(label.position);
       }
       else GetLastError();
    }
@@ -387,7 +387,7 @@ int CreateLabels() {
          ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
          ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 4);
          ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
-         PushObject   (label.lfxTradeAccount);
+         ObjectRegister(label.lfxTradeAccount);
       }
       else GetLastError();
    }
@@ -402,7 +402,7 @@ int CreateLabels() {
          ObjectSet    (label.time, OBJPROP_XDISTANCE,  9);
          ObjectSet    (label.time, OBJPROP_YDISTANCE, 49);
          ObjectSetText(label.time, " ", 1);
-         PushObject   (label.time);
+         ObjectRegister(label.time);
       }
       else GetLastError();
    }
@@ -618,7 +618,7 @@ bool UpdatePositions() {
             ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
             ObjectSet    (label, OBJPROP_YDISTANCE, yDist + (lines-1)*(positions.fontSize+8));
             ObjectSetText(label, " ", 1);
-            PushObject   (label);
+            ObjectRegister(label);
          }
          else GetLastError();
       }
@@ -731,7 +731,7 @@ bool UpdateStopoutLevel() {
          if (soMode == ASM_PERCENT) string description = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
          else                              description = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
       ObjectSetText(label.stopoutLevel, description);
-      PushObject   (label.stopoutLevel);
+      ObjectRegister(label.stopoutLevel);
    }
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
 
@@ -2030,6 +2030,7 @@ string InputsToStr() {
    int      ArrayPushDouble(double array[], double value);
    string   BoolToStr(bool value);
    string   DateToStr(datetime time, string mask);
+   int      DeleteRegisteredObjects(string prefix);
    double   GetCommission();
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    string   GetLocalConfigPath();
@@ -2043,10 +2044,9 @@ string InputsToStr() {
    bool     IsCurrency(string value);
    bool     IsGlobalConfigKey(string section, string key);
    double   MathModFix(double a, double b);
+   int      ObjectRegister(string label);
    string   PriceTypeToStr(int type);
-   int      PushObject(string label);
    bool     ReleaseLock(string mutexName);
-   int      RemoveChartObjects();
    int      SearchStringArrayI(string haystack[], string needle);
    bool     StringEndsWith(string object, string postfix);
    bool     StringIEndsWith(string object, string postfix);

@@ -4,7 +4,7 @@
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    QC.StopChannels();
    return(last_error);
 }

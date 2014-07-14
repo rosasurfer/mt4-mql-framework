@@ -96,7 +96,7 @@ int onDeinitUndefined() {
  * @return int - Fehlerstatus
  */
 int onDeinitRemove() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    return(NO_ERROR);
 }
 
