@@ -136,7 +136,7 @@ int onInit() {
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    legendName  = "JMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
    legendLabel = CreateLegendLabel(legendName);
-   PushObject(legendLabel);
+   ObjectRegister(legendLabel);
 
 
    // (3.1) Bufferverwaltung
@@ -179,7 +179,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit()"));
 }

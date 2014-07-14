@@ -65,7 +65,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    return(catch("onDeinit()"));
 }
 
@@ -98,7 +98,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, x);
       ObjectSet    (label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
-      PushObject   (label);
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -111,7 +111,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, x    );
       ObjectSet    (label, OBJPROP_YDISTANCE, y+143);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
-      PushObject   (label);
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -131,7 +131,7 @@ int CreateLabels() {
                yCoord += 8;
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", fg.fontSize, fg.fontName);
-         PushObject   (label);
+         ObjectRegister(label);
          labels[i] = label;
       }
       else GetLastError();

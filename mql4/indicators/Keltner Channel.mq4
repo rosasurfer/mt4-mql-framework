@@ -155,7 +155,7 @@ int onInit() {
    if (ATR.Timeframe != "") strAtrTimeframe = "x"+ ATR.Timeframe;
    iDescription = "Keltner Channel "+ NumberToStr(ATR.Multiplicator, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")  "+ MA.Method +"("+ MA.Periods +strMaTimeframe +")";
    legendLabel  = CreateLegendLabel(iDescription);
-   PushObject(legendLabel);
+   ObjectRegister(legendLabel);
 
 
    // (3) ggf. ALMA-Gewichtungen berechnen
@@ -200,7 +200,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit()"));
 }

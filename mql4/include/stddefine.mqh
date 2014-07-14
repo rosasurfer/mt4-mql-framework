@@ -2200,29 +2200,29 @@ void __DummyCalls() {
    int    SetLastError(int error, int param);
 */
 #import "stdlib1.ex4"
-   bool   EventListener.AccountChange(int data[], int criteria);
-   bool   EventListener.AccountPayment(int data[], int criteria);
-   bool   EventListener.BarOpen(int data[], int criteria);
-   bool   EventListener.ChartCommand(string data[], int criteria);
+   bool   EventListener.AccountChange  (int    data[], int criteria);
+   bool   EventListener.AccountPayment (int    data[], int criteria);
+   bool   EventListener.BarOpen        (int    data[], int criteria);
+   bool   EventListener.ChartCommand   (string data[], int criteria);
    bool   EventListener.ExternalCommand(string data[], int criteria);
    bool   EventListener.InternalCommand(string data[], int criteria);
-   bool   EventListener.OrderCancel(int data[], int criteria);
-   bool   EventListener.OrderChange(int data[], int criteria);
-   bool   EventListener.OrderPlace(int data[], int criteria);
-   bool   EventListener.PositionClose(int data[], int criteria);
-   bool   EventListener.PositionOpen(int data[], int criteria);
+   bool   EventListener.OrderCancel    (int    data[], int criteria);
+   bool   EventListener.OrderChange    (int    data[], int criteria);
+   bool   EventListener.OrderPlace     (int    data[], int criteria);
+   bool   EventListener.PositionClose  (int    data[], int criteria);
+   bool   EventListener.PositionOpen   (int    data[], int criteria);
 
-   int    onAccountChange(int data[]);
-   int    onAccountPayment(int data[]);
-   int    onBarOpen(int data[]);
-   int    onChartCommand(string data[]);
-   int    onExternalCommand(string data[]);
-   int    onInternalCommand(string data[]);
-   int    onOrderCancel(int data[]);
-   int    onOrderChange(int data[]);
-   int    onOrderPlace(int data[]);
-   int    onPositionClose(int data[]);
-   int    onPositionOpen(int data[]);
+   bool   onAccountChange  (int    data[]);
+   bool   onAccountPayment (int    data[]);
+   bool   onBarOpen        (int    data[]);
+   bool   onChartCommand   (string data[]);
+   bool   onExternalCommand(string data[]);
+   bool   onInternalCommand(string data[]);
+   bool   onOrderCancel    (int    data[]);
+   bool   onOrderChange    (int    data[]);
+   bool   onOrderPlace     (int    data[]);
+   bool   onPositionClose  (int    data[]);
+   bool   onPositionOpen   (int    data[]);
 
    int    ArrayPopInt(int array[]);
    int    ArrayPushInt(int array[], int value);

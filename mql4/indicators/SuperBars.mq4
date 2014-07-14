@@ -21,8 +21,15 @@ extern color  Color.Close        = C'164,164,164';       // Close-Marker        
 #include <core/indicator.mqh>
 
 
+bool   superBars.off = false;                            // Die Anzeige wird ausgeschaltet, wenn der SuperTimeframe in der aktuellen Chartauflösung unsinnig ist.
 int    superTimeframe;
+bool   superTimeframe.auto;                              // manuelle/automatische Konfiguration des SuperTimeframes
+
 string label.superbar = "SuperBar";                      // Label für Chartanzeige
+
+
+#define STF_UP        1
+#define STF_DOWN     -1
 
 
 /**
@@ -31,45 +38,49 @@ string label.superbar = "SuperBar";                      // Label für Chartanzei
  * @return int - Fehlerstatus
  */
 int onInit() {
+   superBars.off       = false;
+   superTimeframe.auto = false;
+
    // (1) Parametervalidierung
    // Timeframe
    string value = StringToUpper(StringTrim(Timeframe));
-   if      (value==""  || value=="AUTO") { superTimeframe = NULL;       Timeframe = "auto"; }
-   else if (value=="D" || value=="D1"  ) { superTimeframe = PERIOD_D1;  Timeframe = "D";    }
-   else if (value=="W" || value=="W1"  ) { superTimeframe = PERIOD_W1;  Timeframe = "W";    }
-   else if (value=="M" || value=="MN1" ) { superTimeframe = PERIOD_MN1; Timeframe = "M";    }
-   else if (value=="Q" || value=="Q1"  ) { superTimeframe = PERIOD_Q1;  Timeframe = "Q";    }
-   else
-      return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   if      (value==""  || value=="AUTO") { superTimeframe.auto = true;       Timeframe = "auto"; }
+   else if (value=="D" || value=="D1"  ) { superTimeframe      = PERIOD_D1;  Timeframe = "D";    }
+   else if (value=="W" || value=="W1"  ) { superTimeframe      = PERIOD_W1;  Timeframe = "W";    }
+   else if (value=="M" || value=="MN1" ) { superTimeframe      = PERIOD_MN1; Timeframe = "M";    }
+   else if (value=="Q" || value=="Q1"  ) { superTimeframe      = PERIOD_Q1;  Timeframe = "Q";    }
+   else return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    switch (Period()) {
       case PERIOD_M1 :
       case PERIOD_M5 :
       case PERIOD_M15:
       case PERIOD_M30:
-      case PERIOD_H1 : if      (!superTimeframe            ) superTimeframe = PERIOD_D1;     // auto
+      case PERIOD_H1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_D1;
                        break;
-      case PERIOD_H4 : if      (!superTimeframe            ) superTimeframe = PERIOD_W1;     // auto
+      case PERIOD_H4 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_W1;
                        break;
-      case PERIOD_D1 : if      (!superTimeframe            ) superTimeframe = PERIOD_MN1;    // auto
-                       else if (superTimeframe < PERIOD_W1 ) superTimeframe = NULL;          // manuell: min. W1 oder keine Anzeige
+      case PERIOD_D1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_MN1;
+                       else if (superTimeframe <= PERIOD_D1) superBars.off  = true;       // manuell: min. W1 oder keine Anzeige
                        break;
-      case PERIOD_W1 : if      (!superTimeframe            ) superTimeframe = PERIOD_Q1;     // auto
-                       else if (superTimeframe < PERIOD_MN1) superTimeframe = NULL;          // manuell: min. MN1 oder keine Anzeige
+      case PERIOD_W1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_Q1;
+                       else if (superTimeframe <= PERIOD_W1) superBars.off  =true;        // manuell: min. MN1 oder keine Anzeige
                        break;
-      case PERIOD_MN1: superTimeframe = NULL;                                                // auto und manuell: keine Anzeige
+      case PERIOD_MN1: if      (superTimeframe.auto        ) superTimeframe = PERIOD_Q1;
+                       superBars.off = true;                                              // auto und manuell: keine Anzeige
                        break;
    }
 
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;                           // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
+   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;                        // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
    if (Color.BarDown      == 0xFF000000) Color.BarDown = CLR_NONE;
    if (Color.BarUnchanged == 0xFF000000) Color.BarDown = CLR_NONE;
    if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
 
 
-   // (2) Label erzeugen
-   CreateLabels();
+   // (2) Label für Textanzeige erzeugen
+   if (__WHEREAMI__ == FUNC_INIT) label.superbar = __NAME__ +"."+ label.superbar;
+   CreateDisplayLabel();
 
 
    // (3) Datenanzeige ausschalten
@@ -84,7 +95,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    return(catch("onDeinit()"));
 }
 
@@ -95,15 +106,119 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (!superTimeframe)
-      return(NO_ERROR);
+   HandleEvent(EVENT_CHART_CMD);    // ChartCommands verarbeiten
+   UpdateSuperBars();               // SuperBars aktualisieren
+   return(last_error);
+}
 
+
+/**
+ * Handler für ChartCommands.
+ *
+ * @param  string commands[] - die eingetroffenen Commands
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onChartCommand(string commands[]) {
+   int size = ArraySize(commands);
+   if (!size) return(!warn("onChartCommand(1)   empty parameter commands = {}"));
+
+   for (int i=0; i < size; i++) {
+      if      (commands[i] == "Timeframe=1" ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
+      else if (commands[i] == "Timeframe=-1") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
+      else
+         warn("onChartCommand(2)   unknown chart command \""+ commands[i] +"\"");
+   }
+   return(!catch("onChartCommand(3)"));
+}
+
+
+/**
+ * Schaltet den Parameter superTimeframe des Indikators um.
+ *
+ * @param  int id - Timeframe-ID
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SwitchSuperTimeframe(int id) {
+   if (id == STF_UP) {
+      switch (superTimeframe) {
+         case PERIOD_D1 : superTimeframe = PERIOD_W1;  break;
+         case PERIOD_W1 : superTimeframe = PERIOD_MN1; break;
+         case PERIOD_MN1: superTimeframe = PERIOD_Q1;  break;
+      }
+   }
+   else if (id == STF_DOWN) {
+      switch (superTimeframe) {
+         case PERIOD_W1 : superTimeframe = PERIOD_D1;  break;
+         case PERIOD_MN1: superTimeframe = PERIOD_W1;  break;
+         case PERIOD_Q1 : superTimeframe = PERIOD_MN1; break;
+      }
+   }
+   else return(_true(warn("SwitchSuperTimeframe(1)   unknown parameter id = "+ id)));
+
+
+   superTimeframe.auto = false;
+
+   switch (Period()) {
+      case PERIOD_D1 : if (superTimeframe <= PERIOD_D1) superBars.off = true;    // min. W1 oder keine Anzeige
+                       break;
+      case PERIOD_W1 : if (superTimeframe <= PERIOD_W1) superBars.off = true;    // min. MN1 oder keine Anzeige
+                       break;
+      case PERIOD_MN1: superBars.off = true;                                     // keine Anzeige
+                       break;
+   }
+   return(true);
+}
+
+
+/**
+ * Aktualisiert die SuperBar-Anzeige.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateSuperBars() {
+   static bool lastSuperBars.off;
+   static int  lastSuperTimeframe;
+
+   // Wechseln SuperTimeframe oder der Status von superBars.off, müssen evt. vorhandene Bars gelöscht werden, solange
+   // dies nicht der erste Aufruf nach einem init()-Cycle ist (statische Variablen sind noch nicht initialisiert).
+
+   // (1) Konfigurationswechsel detektieren und vorhandene Bars löschen
+   bool configChange = false;
+   if (lastSuperTimeframe != 0) {                                    // 0: erster Aufruf seit init()
+      if (superTimeframe != lastSuperTimeframe) {
+         debug("UpdateSuperBars(0.1)   config change: lastStf="+ lastSuperTimeframe +"  now="+ superTimeframe);
+         configChange = true;
+      }
+      else if (superBars.off != lastSuperBars.off) {
+         debug("UpdateSuperBars(0.2)   config change: lastOff="+ lastSuperBars.off +"  now="+ superBars.off);
+         configChange = true;
+      }
+      if (configChange) {
+         DeleteRegisteredObjects(NULL);
+         CreateDisplayLabel();
+      }
+   }
+
+
+   // (2) Rückkehr bei ausgeschalteter Anzeige
+   if (superBars.off) {
+      lastSuperBars.off  = superBars.off;
+      lastSuperTimeframe = superTimeframe;
+      return(true);
+   }
+
+
+   // (3) Anzeige
    // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
    // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
    // - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
 
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
-   int      openBar, closeBar, lastChartBar=Bars-1, i=-1;
+   int      openBar, closeBar, lastChartBar=Bars-1, i=-1, changedBars=ChangedBars;
+   if (configChange)
+      changedBars = Bars;                                            // bei Konfigurationswechsel müssen alle Bars neugezeichnet werden
 
    // Schleife über alle Superbars von "jung" nach "alt"
    //
@@ -111,7 +226,7 @@ int onTick() {
    // z.B. ein Tag, eine Woche oder ein Monat.
    while (true) {
       if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
-         return(last_error);
+         return(false);
 
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
       // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
@@ -120,20 +235,23 @@ int onTick() {
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
       }
       openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Da immer der aktuelle Timeframe benutzt wird, kann ERS_HISTORY_UPDATE eigentlich nie auftreten.
-      if (openBar == EMPTY_VALUE) return(SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
+      if (openBar == EMPTY_VALUE) return(!SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
       if (closeBar == -1)                                            // closeTime ist zu alt für den Chart => Abbruch
          break;
 
       if (openBar >= closeBar) {
-         if      (openBar != lastChartBar)                              { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(last_error); }
-         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(last_error); }
+         if      (openBar != lastChartBar)                              { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(false); }
+         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(false); }
       }                                                              // Die Supersession auf der letzten Chartbar ist äußerst selten vollständig, trotzdem mit (exact=TRUE) prüfen.
-      if (openBar >= ChangedBars-1)
-         break;                                                      // Superbars bis max. ChangedBars aktualisieren
+      if (openBar >= changedBars-1)
+         break;                                                      // Superbars bis max. changedBars aktualisieren
    }
-   return(last_error);
+
+   lastSuperBars.off  = superBars.off;
+   lastSuperTimeframe = superTimeframe;
+   return(true);
 }
 
 
@@ -316,9 +434,9 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
       int closeBar_j = closeBar; /*j: justified*/                             // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
       if (closeBar > 0) closeBar_j--;                                         // jedoch nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
-      ObjectSet (label, OBJPROP_COLOR, barColor);
-      ObjectSet (label, OBJPROP_BACK , true    );
-      PushObject(label);
+      ObjectSet     (label, OBJPROP_COLOR, barColor);
+      ObjectSet     (label, OBJPROP_BACK , true    );
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -339,7 +457,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
          if (ObjectCreate(labelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet    (labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
             ObjectSetText(labelWithoutPrice, labelWithPrice);
-            PushObject   (labelWithoutPrice);
+            ObjectRegister(labelWithoutPrice);
          } else GetLastError();
 
          if (ObjectCreate(labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
@@ -347,7 +465,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
             ObjectSet    (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
             ObjectSet    (labelWithPrice, OBJPROP_COLOR, Color.Close);
             ObjectSet    (labelWithPrice, OBJPROP_BACK , true       );
-            PushObject   (labelWithPrice);
+            ObjectRegister(labelWithPrice);
          } else GetLastError();
       }
    }
@@ -367,6 +485,8 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
          case PERIOD_MN1: sRange = "Superbars: Months";     break;
          case PERIOD_Q1 : sRange = "Superbars: Quarters";   break;
       }
+      if (superTimeframe.auto) sRange = sRange +"  (auto)";
+
       //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
       string fontName = "";
       int    fontSize = 8;                                                    // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
@@ -387,24 +507,58 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
 
 
 /**
- * Erzeugt das Label für die Chartanzeige.
+ * Prüft, ob seit dem letzten Aufruf ein ChartCommand für diesen Indikator eingetroffen ist.
+ *
+ * @param  string commands[] - Array zur Aufnahme aller eingetroffenen Commands
+ * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
+   if (!IsChart)
+      return(false);
+
+   static string label="SuperBar.command", mutex="mutex.SuperBarCommand";
+
+
+   // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
+   if (ObjectFind(label) == 0) {
+
+      // (2) erst wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
+      if (!AquireLock(mutex, true))
+         return(!SetLastError(stdlib.GetLastError()));
+
+      // (3) Command auslesen und Command-Object löschen
+      ArrayResize(commands, 1);
+      commands[0] = ObjectDescription(label);
+      ObjectDelete(label);
+
+      // (4) Lock wieder freigeben
+      if (!ReleaseLock(mutex))
+         return(!SetLastError(stdlib.GetLastError()));
+
+      return(!catch("EventListener.ChartCommand(1)"));
+   }
+   return(false);
+}
+
+
+/**
+ * Erzeugt das Label für die Textanzeige im Chart.
  *
  * @return int - Fehlerstatus
  */
-int CreateLabels() {
-   // SuperBar-Label
-   label.superbar = __NAME__ +"."+ label.superbar;
-
+int CreateDisplayLabel() {
    if (ObjectFind(label.superbar) == 0)
       ObjectDelete(label.superbar);
+
    if (ObjectCreate(label.superbar, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.superbar, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label.superbar, OBJPROP_XDISTANCE, 115);
       ObjectSet    (label.superbar, OBJPROP_YDISTANCE, 4  );
       ObjectSetText(label.superbar, " ", 1);
-      PushObject   (label.superbar);
+      ObjectRegister(label.superbar);
    }
-   else GetLastError();
 
-   return(catch("CreateLabels()"));
+   return(catch("CreateDisplayLabel(1)"));
 }

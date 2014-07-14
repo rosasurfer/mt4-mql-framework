@@ -35,7 +35,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    return(catch("onDeinit()"));
 }
 
@@ -167,10 +167,10 @@ int DrawGrid() {
             sepStyle = STYLE_DASHDOTDOT;
             sepColor = C'231,192,221';
          }
-         ObjectSet (label, OBJPROP_STYLE, sepStyle);
-         ObjectSet (label, OBJPROP_COLOR, sepColor);
-         ObjectSet (label, OBJPROP_BACK , true  );
-         PushObject(label);
+         ObjectSet(label, OBJPROP_STYLE, sepStyle);
+         ObjectSet(label, OBJPROP_COLOR, sepColor);
+         ObjectSet(label, OBJPROP_BACK , true  );
+         ObjectRegister(label);
       }
       else GetLastError();
       lastChartTime = chartTime;

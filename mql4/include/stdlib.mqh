@@ -255,17 +255,17 @@
 
 
    // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
-   int      onBarOpen        (int    data[]);
-   int      onAccountChange  (int    data[]);
-   int      onAccountPayment (int    data[]);
-   int      onOrderPlace     (int    data[]);
-   int      onOrderChange    (int    data[]);
-   int      onOrderCancel    (int    data[]);
-   int      onPositionOpen   (int    data[]);
-   int      onPositionClose  (int    data[]);
-   int      onChartCommand   (string data[]);
-   int      onInternalCommand(string data[]);
-   int      onExternalCommand(string data[]);
+   bool     onBarOpen        (int    data[]);
+   bool     onAccountChange  (int    data[]);
+   bool     onAccountPayment (int    data[]);
+   bool     onOrderPlace     (int    data[]);
+   bool     onOrderChange    (int    data[]);
+   bool     onOrderCancel    (int    data[]);
+   bool     onPositionOpen   (int    data[]);
+   bool     onPositionClose  (int    data[]);
+   bool     onChartCommand   (string data[]);
+   bool     onInternalCommand(string data[]);
+   bool     onExternalCommand(string data[]);
 
 
    // Farben
@@ -440,8 +440,8 @@
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    bool     ObjectDeleteSilent(string label, string location);
-   int      PushObject(string label);
-   int      RemoveChartObjects();
+   int      ObjectRegister(string label);  int RegisterObject(string label);           // Alias
+   int      DeleteRegisteredObjects(string prefix);
 
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);

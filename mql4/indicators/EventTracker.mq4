@@ -245,17 +245,17 @@ int onTick() {
  *
  * @param  int tickets[] - Tickets der geöffneten Positionen
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int onPositionOpen(int tickets[]) {
+bool onPositionOpen(int tickets[]) {
    if (!Track.Positions)
-      return(NO_ERROR);
+      return(true);
 
    int positions = ArraySize(tickets);
 
    for (int i=0; i < positions; i++) {
       if (!SelectTicket(tickets[i], "onPositionOpen(1)"))
-         return(last_error);
+         return(false);
 
       string type    = OperationTypeDescription(OrderType());
       string lots    = NumberToStr(OrderLots(), ".+");
@@ -265,7 +265,7 @@ int onPositionOpen(int tickets[]) {
       // ggf. SMS verschicken
       if (__SMS.alerts) {
          if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
-            return(SetLastError(stdlib.GetLastError()));
+            return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionOpen(3)   "+ message);
    }
@@ -273,7 +273,7 @@ int onPositionOpen(int tickets[]) {
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Positions.SoundOnOpen);
-   return(catch("onPositionOpen(4)"));
+   return(!catch("onPositionOpen(4)"));
 }
 
 
@@ -282,11 +282,11 @@ int onPositionOpen(int tickets[]) {
  *
  * @param  int tickets[] - Tickets der geschlossenen Positionen
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int onPositionClose(int tickets[]) {
+bool onPositionClose(int tickets[]) {
    if (!Track.Positions)
-      return(NO_ERROR);
+      return(true);
 
    int positions = ArraySize(tickets);
 
@@ -303,7 +303,7 @@ int onPositionClose(int tickets[]) {
       // ggf. SMS verschicken
       if (__SMS.alerts) {
          if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
-            return(SetLastError(stdlib.GetLastError()));
+            return(!SetLastError(stdlib.GetLastError()));
       }
       else if (__LOG) log("onPositionClose(3)   "+ message);
    }
@@ -311,7 +311,7 @@ int onPositionClose(int tickets[]) {
    // ggf. Sound abspielen
    if (Sound.Alerts)
       PlaySound(Positions.SoundOnClose);
-   return(catch("onPositionClose(4)"));
+   return(!catch("onPositionClose(4)"));
 }
 
 

@@ -143,7 +143,7 @@ int onInit() {
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    legendName  = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
    legendLabel = CreateLegendLabel(legendName);
-   PushObject(legendLabel);
+   ObjectRegister(legendLabel);
 
 
    // (3) ggf. TMA-Subperioden berechnen
@@ -200,7 +200,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit()"));
 }

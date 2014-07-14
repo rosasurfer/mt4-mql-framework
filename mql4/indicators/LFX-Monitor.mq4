@@ -49,7 +49,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    return(catch("onDeinit()"));
 }
 
@@ -83,7 +83,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 114);
       ObjectSet    (label, OBJPROP_YDISTANCE,  55);
       ObjectSetText(label, "g", 114, "Webdings", bgColor);
-      PushObject   (label);
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -96,7 +96,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 13);
       ObjectSet    (label, OBJPROP_YDISTANCE, 55);
       ObjectSetText(label, "g", 114, "Webdings", bgColor);
-      PushObject   (label);
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -112,7 +112,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 59+col3width);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, "direct", fontSize, fontName, fontColor);
-      PushObject   (label);
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -125,7 +125,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_XDISTANCE, 59);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, "via USD", fontSize, fontName, fontColor);
-      PushObject   (label);
+      ObjectRegister(label);
    }
    else GetLastError();
 
@@ -142,7 +142,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 119+col3width);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, symbols[i] +":", fontSize, fontName, fontColor);
-         PushObject   (label);
+         ObjectRegister(label);
          symbols[i] = label;
       }
       else GetLastError();
@@ -156,7 +156,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 59+col3width);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         PushObject   (label);
+         ObjectRegister(label);
       }
       else GetLastError();
 
@@ -169,7 +169,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 19+col3width);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         PushObject   (label);
+         ObjectRegister(label);
       }
       else GetLastError();
 
@@ -182,7 +182,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 59);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         PushObject   (label);
+         ObjectRegister(label);
       }
       else GetLastError();
 
@@ -195,7 +195,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_XDISTANCE, 19);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ");
-         PushObject   (label);
+         ObjectRegister(label);
       }
       else GetLastError();
    }

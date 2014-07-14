@@ -134,7 +134,7 @@ int onInit() {
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    legendName  = "ALMA("+ MA.Periods + strTimeframe + strAppliedPrice +")";
    legendLabel = CreateLegendLabel(legendName);
-   PushObject(legendLabel);
+   ObjectRegister(legendLabel);
 
 
    // (3) ALMA-Gewichtungen berechnen (Laufzeit ist vernachlässigbar, siehe Performancedaten in onTick())
@@ -182,7 +182,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   RemoveChartObjects();
+   DeleteRegisteredObjects(NULL);
    RepositionLegend();
    return(catch("onDeinit()"));
 }

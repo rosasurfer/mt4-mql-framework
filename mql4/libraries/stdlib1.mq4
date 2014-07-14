@@ -6414,9 +6414,9 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
+ * Prüft, ob seit dem letzten Aufruf ein ChartCommand eingetroffen ist.
  *
- * @param  string commands[] - Array zur Aufnahme der aufgetretenen Kommandos
+ * @param  string commands[] - Array zur Aufnahme aller eingetroffenen Commands
  * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
@@ -8980,39 +8980,68 @@ string chart.objects[];
 
 
 /**
- * Fügt ein Object-Label zu den bei Programmende automatisch zu entfernenden Chartobjekten hinzu.
+ * Fügt ein Object-Label zu den bei Programmende oder Bedarf automatisch zu entfernenden Chartobjekten hinzu.
  *
  * @param  string label - Object-Label
  *
  * @return int - Anzahl der gespeicherten Label oder -1, falls ein Fehler auftrat
  */
-int PushObject(string label) {
+int ObjectRegister(string label) {
    return(ArrayPushString(chart.objects, label));
 }
 
 
 /**
- * Entfernt alle bei Programmende automatisch zu entfernenden Chartobjekte aus dem Chart.
+ * Alias für ObjectRegister()
+ */
+int RegisterObject(string label) {
+   return(ObjectRegister(label));
+}
+
+
+/**
+ * Löscht alle zum automatischen Entfernen registrierten Chartobjekte, die mit dem angegebenen Filter beginnen, aus dem Chart.
+ *
+ * @param  string prefix - Prefix des Labels der zu löschenden Objekte (default: alle Objekte)
  *
  * @return int - Fehlerstatus
  */
-int RemoveChartObjects() {
+int DeleteRegisteredObjects(string prefix/*=NULL*/) {
    int size = ArraySize(chart.objects);
-   if (size == 0)
-      return(NO_ERROR);
+   if (!size) return(NO_ERROR);
 
-   for (int i=0; i < size; i++) {
-      ObjectDeleteSilent(chart.objects[i], "RemoveChartObjects()");
+   bool filter=false, filtered=false;
+
+   if (StringLen(prefix) > 0)
+      filter = (prefix != "0");                                      // (string) NULL == "0"
+
+   if (filter) {
+      // Filter angegeben: nur die passenden Objekte löschen
+      for (int i=size-1; i >= 0; i--) {                              // wegen ArraySpliceStrings() rückwärts ierieren
+         if (StringStartsWith(chart.objects[i], prefix)) {
+            if (ObjectFind(chart.objects[i]) != -1)
+               if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(1)->ObjectDelete(label=\""+ chart.objects[i] +"\")", GetLastError());
+            ArraySpliceStrings(chart.objects, i, 1);
+         }
+      }
    }
-   ArrayResize(chart.objects, 0);
-   return(last_error);
+   else {
+      // kein Filter angegeben: alle Objekte löschen
+      for (i=0; i < size; i++) {
+         if (ObjectFind(chart.objects[i]) != -1)
+            if (!ObjectDelete(chart.objects[i])) warn("DeleteRegisteredObjects(2)->ObjectDelete(label=\""+ chart.objects[i] +"\")", GetLastError());
+      }
+      ArrayResize(chart.objects, 0);
+   }
+
+   return(catch("DeleteRegisteredObjects(3)"));
 }
 
 
 /**
  * Löscht ein Chartobjekt, ohne einen Fehler zu melden, falls das Objekt nicht gefunden wurde.
  *
- * @param  strin  label    - Object-Label
+ * @param  string label    - Object-Label
  * @param  string location - Bezeichner für evt. Fehlermeldung
  *
  * @return bool - Erfolgsstatus
@@ -12728,18 +12757,18 @@ void Tester.ResetGlobalArrays() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ int  onBarOpen        (int    data[]) { return(catch("onBarOpen()",         ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onAccountChange  (int    data[]) { return(catch("onAccountChange()",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onAccountPayment (int    data[]) { return(catch("onAccountPayment()",  ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onOrderPlace     (int    data[]) { return(catch("onOrderPlace()",      ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onOrderChange    (int    data[]) { return(catch("onOrderChange()",     ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onOrderCancel    (int    data[]) { return(catch("onOrderCancel()",     ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onPositionOpen   (int    data[]) { return(catch("onPositionOpen()",    ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onPositionClose  (int    data[]) { return(catch("onPositionClose()",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onChartCommand   (string data[]) { return(catch("onChartCommand()",    ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onInternalCommand(string data[]) { return(catch("onInternalCommand()", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ int  onExternalCommand(string data[]) { return(catch("onExternalCommand()", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                     { return(catch("DummyCalls()",        ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen        (int    data[]) { return(!catch("onBarOpen()",         ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onAccountChange  (int    data[]) { return(!catch("onAccountChange()",   ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onAccountPayment (int    data[]) { return(!catch("onAccountPayment()",  ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onOrderPlace     (int    data[]) { return(!catch("onOrderPlace()",      ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onOrderChange    (int    data[]) { return(!catch("onOrderChange()",     ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onOrderCancel    (int    data[]) { return(!catch("onOrderCancel()",     ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onPositionOpen   (int    data[]) { return(!catch("onPositionOpen()",    ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onPositionClose  (int    data[]) { return(!catch("onPositionClose()",   ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onChartCommand   (string data[]) { return(!catch("onChartCommand()",    ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onInternalCommand(string data[]) { return(!catch("onInternalCommand()", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onExternalCommand(string data[]) { return(!catch("onExternalCommand()", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ void DummyCalls()                     {         catch("DummyCalls()",        ERR_NOT_IMPLEMENTED);  }
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
