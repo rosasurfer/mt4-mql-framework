@@ -17,9 +17,8 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onDeinitParameterChange() {
-   string symbol[1]; symbol[0] = Symbol();
-
    // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
+   string symbol[1]; symbol[0] = Symbol();
    if (ChartInfos.CopyLfxStatus(true, symbol, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
@@ -33,9 +32,8 @@ int onDeinitParameterChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitChartChange() {
-   string symbol[1]; symbol[0] = Symbol();
-
    // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
+   string symbol[1]; symbol[0] = Symbol();
    if (ChartInfos.CopyLfxStatus(true, symbol, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);

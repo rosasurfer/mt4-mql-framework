@@ -560,6 +560,12 @@ int onInit() {
  * @return int - Fehlerstatus
  *
 int onInitParameterChange() {
+   if (!Tick)
+      // erste Parameter-Eingabe eines neuen Indikators
+   }
+   else {
+      // Parameter-Wechsel eines vorhandenen Indikators
+   }
    return(NO_ERROR);
 }
 

@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string Timeframe          = "auto";               // anzuzeigender SuperTimeframe: D, W, M, Q oder "" (automatisch)
+extern string Timeframe          = "D";                  // anzuzeigender SuperTimeframe: D, W, M, Q, auto oder "" (automatisch)
 extern color  Color.BarUp        = C'193,255,193';       // Up-Bars              blass: C'215,255,215'
 extern color  Color.BarDown      = C'255,213,213';       // Down-Bars            blass: C'255,230,230'
 extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder Gray
@@ -64,7 +64,7 @@ int onInit() {
                        else if (superTimeframe <= PERIOD_D1) superBars.off  = true;       // manuell: min. W1 oder keine Anzeige
                        break;
       case PERIOD_W1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_Q1;
-                       else if (superTimeframe <= PERIOD_W1) superBars.off  =true;        // manuell: min. MN1 oder keine Anzeige
+                       else if (superTimeframe <= PERIOD_W1) superBars.off  = true;       // manuell: min. MN1 oder keine Anzeige
                        break;
       case PERIOD_MN1: if      (superTimeframe.auto        ) superTimeframe = PERIOD_Q1;
                        superBars.off = true;                                              // auto und manuell: keine Anzeige
@@ -90,6 +90,46 @@ int onInit() {
 
 
 /**
+ * außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+ * innerhalb iCustom(): ?
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitChartChange() {
+   RestoreStickyStatus();
+   return(NO_ERROR);
+}
+
+
+/**
+ * Kein UninitializeReason gesetzt.
+ *
+ * außerhalb iCustom(): wenn Template mit Indikator darin geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+ * innerhalb iCustom(): in allen init()-Fällen, kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitUndefined() {
+   RestoreStickyStatus();
+   return(NO_ERROR);
+}
+
+
+/**
+ * außerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ */
+int onInitRecompile() {
+   RestoreStickyStatus();
+   return(NO_ERROR);
+}
+
+
+
+
+/**
  * Deinitialisierung
  *
  * @return int - Fehlerstatus
@@ -97,6 +137,41 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    return(catch("onDeinit()"));
+}
+
+
+/**
+ * außerhalb iCustom(): vor Symbol- oder Timeframewechsel
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitChartChange() {
+   // bei Timeframe- und auch bei Symbolwechsel wird die aktuelle Konfiguration übernommen
+   return(StoreStickyStatus());
+}
+
+
+/**
+ * außerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
+ * innerhalb iCustom(): in allen deinit()-Fällen
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRemove() {
+   // Terminal-Exit und bei Profilwechsel: beim Zurückwechseln zum selben Profil wird die letzte Konfiguration verwendet
+   return(StoreStickyStatus());
+}
+
+
+/**
+ * außerhalb iCustom(): bei Reload nach Recompilation
+ * innerhalb iCustom(): nie
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinitRecompile() {
+   return(StoreStickyStatus());
 }
 
 
@@ -561,4 +636,90 @@ int CreateDisplayLabel() {
    }
 
    return(catch("CreateDisplayLabel(1)"));
+}
+
+
+/**
+ * Speichert die volatile Konfiguration im Chart, sodaß sie im nächsten init()-Cycle daraus wiederhergestellt werden kann.
+ * Die volatile Konfiguration umfaßt alle jenen internen Parameter, die sich zur Laufzeit ohne Aufruf des Config-Dialogs ändern können:
+ *
+ *  - bool superBars.off;
+ *  - bool superTimeframe.auto;
+ *  - int  superTimeframe;
+ *
+ * @return int - Fehlerstatus
+ */
+int StoreStickyStatus() {
+   string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, StringConcatenate("", superBars.off));          // (string) bool
+
+   label = StringConcatenate(__NAME__, ".sticky.superTimeframe.auto");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, StringConcatenate("", superTimeframe.auto));    // (string) bool
+
+   label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, StringConcatenate("", superTimeframe));         // (string) int
+
+   return(catch("StoreStickyStatus(1)"));
+}
+
+
+/**
+ * Restauriert die im Chart vorhandenen volatilen Konfigurationsdaten (@see StoreStickyStatus).
+ *
+ *  - bool superBars.off;
+ *  - bool superTimeframe.auto;
+ *  - int  superTimeframe;
+ *
+ * @return bool - Erfolgsstatus (die gefundenen Daten werden nur übernommen, wenn sie vollständig gültig sind)
+ */
+bool RestoreStickyStatus() {
+   bool _superBars.off, _superTimeframe.auto;
+   int  _superTimeframe;
+
+
+   string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
+   if (ObjectFind(label) != 0)   return(false);
+   string strValue = StringTrim(ObjectDescription(label));
+   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(1)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+   _superBars.off = StrToInteger(strValue) != 0;
+
+
+   label = StringConcatenate(__NAME__, ".sticky.superTimeframe.auto");
+   if (ObjectFind(label) != 0)   return(false);
+   strValue = StringTrim(ObjectDescription(label));
+   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(2)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+   _superTimeframe.auto = StrToInteger(strValue) != 0;
+
+
+   label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
+   if (ObjectFind(label) != 0)   return(false);
+   strValue = StringTrim(ObjectDescription(label));
+   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(3)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+   int iValue = StrToInteger(strValue);
+   switch (iValue) {
+      case PERIOD_D1 :
+      case PERIOD_W1 :
+      case PERIOD_MN1:
+      case PERIOD_Q1 : break;
+      default:                   return(_false(warn("RestoreStickyStatus(4)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+   }
+   _superTimeframe = iValue;
+
+
+   superBars.off       = _superBars.off;
+   superTimeframe.auto = _superTimeframe.auto;
+   superTimeframe      = _superTimeframe;
+   return(!catch("RestoreStickyStatus(5)"));
 }
