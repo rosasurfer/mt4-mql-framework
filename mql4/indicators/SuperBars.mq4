@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string Timeframe          = "D";                  // anzuzeigender SuperTimeframe: D, W, M, Q, auto oder "" (automatisch)
+extern string Timeframe          = "W";                  // anzuzeigender SuperTimeframe: [D | W* | M | Q]
 extern color  Color.BarUp        = C'193,255,193';       // Up-Bars              blass: C'215,255,215'
 extern color  Color.BarDown      = C'255,213,213';       // Down-Bars            blass: C'255,230,230'
 extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder Gray
@@ -23,7 +23,6 @@ extern color  Color.Close        = C'164,164,164';       // Close-Marker        
 
 bool   superBars.off = false;                            // Die Anzeige wird ausgeschaltet, wenn der SuperTimeframe in der aktuellen Chartauflösung unsinnig ist.
 int    superTimeframe;
-bool   superTimeframe.auto;                              // manuelle/automatische Konfiguration des SuperTimeframes
 
 string label.superbar = "SuperBar";                      // Label für Chartanzeige
 
@@ -38,17 +37,15 @@ string label.superbar = "SuperBar";                      // Label für Chartanzei
  * @return int - Fehlerstatus
  */
 int onInit() {
-   superBars.off       = false;
-   superTimeframe.auto = false;
+   superBars.off = false;
 
    // (1) Parametervalidierung
    // Timeframe
    string value = StringToUpper(StringTrim(Timeframe));
-   if      (value==""  || value=="AUTO") { superTimeframe.auto = true;       Timeframe = "auto"; }
-   else if (value=="D" || value=="D1"  ) { superTimeframe      = PERIOD_D1;  Timeframe = "D";    }
-   else if (value=="W" || value=="W1"  ) { superTimeframe      = PERIOD_W1;  Timeframe = "W";    }
-   else if (value=="M" || value=="MN1" ) { superTimeframe      = PERIOD_MN1; Timeframe = "M";    }
-   else if (value=="Q" || value=="Q1"  ) { superTimeframe      = PERIOD_Q1;  Timeframe = "Q";    }
+   if      (value=="D" || value=="D1"  ) { superTimeframe = PERIOD_D1;  Timeframe = "D"; }
+   else if (value=="W" || value=="W1"  ) { superTimeframe = PERIOD_W1;  Timeframe = "W"; }
+   else if (value=="M" || value=="MN1" ) { superTimeframe = PERIOD_MN1; Timeframe = "M"; }
+   else if (value=="Q" || value=="Q1"  ) { superTimeframe = PERIOD_Q1;  Timeframe = "Q"; }
    else return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
    switch (Period()) {
@@ -56,30 +53,31 @@ int onInit() {
       case PERIOD_M5 :
       case PERIOD_M15:
       case PERIOD_M30:
-      case PERIOD_H1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_D1;
-                       break;
-      case PERIOD_H4 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_W1;
-                       break;
-      case PERIOD_D1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_MN1;
-                       else if (superTimeframe <= PERIOD_D1) superBars.off  = true;       // manuell: min. W1 oder keine Anzeige
-                       break;
-      case PERIOD_W1 : if      (superTimeframe.auto        ) superTimeframe = PERIOD_Q1;
-                       else if (superTimeframe <= PERIOD_W1) superBars.off  = true;       // manuell: min. MN1 oder keine Anzeige
-                       break;
-      case PERIOD_MN1: if      (superTimeframe.auto        ) superTimeframe = PERIOD_Q1;
-                       superBars.off = true;                                              // auto und manuell: keine Anzeige
-                       break;
+      case PERIOD_H1 :
+      case PERIOD_H4 :
+         break;
+
+      case PERIOD_D1 :
+         if (superTimeframe <= PERIOD_D1) superBars.off = true;      // min. W1 oder keine Anzeige
+         break;
+
+      case PERIOD_W1 :
+         if (superTimeframe <= PERIOD_W1) superBars.off = true;      // min. MN1 oder keine Anzeige
+         break;
+
+      case PERIOD_MN1:
+         superBars.off = true;                                       // keine Anzeige
+         break;
    }
 
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;                        // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
+   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;   // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
    if (Color.BarDown      == 0xFF000000) Color.BarDown = CLR_NONE;
    if (Color.BarUnchanged == 0xFF000000) Color.BarDown = CLR_NONE;
    if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
 
 
    // (2) Label für Textanzeige erzeugen
-   if (__WHEREAMI__ == FUNC_INIT) label.superbar = __NAME__ +"."+ label.superbar;
    CreateDisplayLabel();
 
 
@@ -232,16 +230,18 @@ bool SwitchSuperTimeframe(int id) {
    }
    else return(_true(warn("SwitchSuperTimeframe(1)   unknown parameter id = "+ id)));
 
-
-   superTimeframe.auto = false;
-
    switch (Period()) {
-      case PERIOD_D1 : if (superTimeframe <= PERIOD_D1) superBars.off = true;    // min. W1 oder keine Anzeige
-                       break;
-      case PERIOD_W1 : if (superTimeframe <= PERIOD_W1) superBars.off = true;    // min. MN1 oder keine Anzeige
-                       break;
-      case PERIOD_MN1: superBars.off = true;                                     // keine Anzeige
-                       break;
+      case PERIOD_D1 :
+         if (superTimeframe <= PERIOD_D1) superBars.off = true;      // min. W1 oder keine Anzeige
+         break;
+
+      case PERIOD_W1 :
+         if (superTimeframe <= PERIOD_W1) superBars.off = true;      // min. MN1 oder keine Anzeige
+         break;
+
+      case PERIOD_MN1:
+         superBars.off = true;                                       // keine Anzeige
+         break;
    }
    return(true);
 }
@@ -560,12 +560,11 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
          case PERIOD_MN1: sRange = "Superbars: Months";     break;
          case PERIOD_Q1 : sRange = "Superbars: Quarters";   break;
       }
-      if (superTimeframe.auto) sRange = sRange +"  (auto)";
-
       //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
+      label = __NAME__ +"."+ label.superbar;
       string fontName = "";
       int    fontSize = 8;                                                    // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
-      ObjectSetText(label.superbar, sRange, fontSize, fontName, Black);
+      ObjectSetText(label, sRange, fontSize, fontName, Black);
 
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)        // bei offenem Properties-Dialog oder Object::onDrag()
@@ -624,15 +623,17 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  * @return int - Fehlerstatus
  */
 int CreateDisplayLabel() {
-   if (ObjectFind(label.superbar) == 0)
-      ObjectDelete(label.superbar);
+   string label = __NAME__ +"."+ label.superbar;
 
-   if (ObjectCreate(label.superbar, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.superbar, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label.superbar, OBJPROP_XDISTANCE, 115);
-      ObjectSet    (label.superbar, OBJPROP_YDISTANCE, 4  );
-      ObjectSetText(label.superbar, " ", 1);
-      ObjectRegister(label.superbar);
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 115);
+      ObjectSet    (label, OBJPROP_YDISTANCE, 4  );
+      ObjectSetText(label, " ", 1);
+      ObjectRegister(label);
    }
 
    return(catch("CreateDisplayLabel(1)"));
@@ -657,13 +658,6 @@ int StoreStickyStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", superBars.off));          // (string) bool
 
-   label = StringConcatenate(__NAME__, ".sticky.superTimeframe.auto");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", superTimeframe.auto));    // (string) bool
-
    label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -685,41 +679,31 @@ int StoreStickyStatus() {
  * @return bool - Erfolgsstatus (die gefundenen Daten werden nur übernommen, wenn sie vollständig gültig sind)
  */
 bool RestoreStickyStatus() {
-   bool _superBars.off, _superTimeframe.auto;
-   int  _superTimeframe;
 
-
+   // superBars.off
    string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
    if (ObjectFind(label) != 0)   return(false);
    string strValue = StringTrim(ObjectDescription(label));
    if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(1)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
-   _superBars.off = StrToInteger(strValue) != 0;
+   bool _superBars.off = StrToInteger(strValue) != 0;
 
-
-   label = StringConcatenate(__NAME__, ".sticky.superTimeframe.auto");
-   if (ObjectFind(label) != 0)   return(false);
-   strValue = StringTrim(ObjectDescription(label));
-   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(2)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
-   _superTimeframe.auto = StrToInteger(strValue) != 0;
-
-
+   // superTimeframe
    label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
    if (ObjectFind(label) != 0)   return(false);
    strValue = StringTrim(ObjectDescription(label));
-   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(3)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(2)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
    int iValue = StrToInteger(strValue);
    switch (iValue) {
       case PERIOD_D1 :
       case PERIOD_W1 :
       case PERIOD_MN1:
       case PERIOD_Q1 : break;
-      default:                   return(_false(warn("RestoreStickyStatus(4)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+      default:                   return(_false(warn("RestoreStickyStatus(3)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
    }
-   _superTimeframe = iValue;
+   int _superTimeframe = iValue;
 
-
-   superBars.off       = _superBars.off;
-   superTimeframe.auto = _superTimeframe.auto;
-   superTimeframe      = _superTimeframe;
-   return(!catch("RestoreStickyStatus(5)"));
+   // globale Variablen erst nach vollständiger Validierung überschreiben
+   superBars.off  = _superBars.off;
+   superTimeframe = _superTimeframe;
+   return(!catch("RestoreStickyStatus(4)"));
 }
