@@ -455,12 +455,18 @@ int      last_error;                                        // der letzte Fehler
 #define MODE_SWAPTYPE                 26        // swap calculation method: 0 - in points; 1 - in base currency; 2 - by interest; 3 - in margin currency
 #define MODE_PROFITCALCMODE           27        // profit calculation mode: 0 - Forex; 1 - CFD; 2 - Futures
 #define MODE_MARGINCALCMODE           28        // margin calculation mode: 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices
-#define MODE_MARGININIT               29        // initial margin requirement for a position of 1 lot
-#define MODE_MARGINMAINTENANCE        30        // margin to maintain an open positions of 1 lot
-#define MODE_MARGINHEDGED             31        // units per side with margin maintenance requirement for a hedged position of 1 lot                     50.000
-#define MODE_MARGINREQUIRED           32        // free margin requirement for a position of 1 lot
+#define MODE_MARGININIT               29        // units with margin requirement for opening a position of 1 lot (0 = entsprechend MODE_MARGINREQUIRED)  100.000  @see (1)
+#define MODE_MARGINMAINTENANCE        30        // margin to maintain an open positions of 1 lot                 (0 = je nach Account-Stopoutlevel)               @see (2)
+#define MODE_MARGINHEDGED             31        // units with margin maintenance requirement for a hedged position of 1 lot                               50.000
+#define MODE_MARGINREQUIRED           32        // free margin requirement to open a position of 1 lot
 #define MODE_FREEZELEVEL              33        // order freeze level in points
-
+                                                //
+                                                // (1) MARGIN_INIT (in Units) müßte, wenn es gesetzt ist, die eigentliche Marginrate sein. MARGIN_REQUIRED (in Account-Currency)
+                                                //     könnte höher und MARGIN_MAINTENANCE niedriger sein (MARGIN_INIT wird z.B. von IC Markets gesetzt).
+                                                //
+                                                // (2) Ein Account-Stopoutlevel < 100% ist gleichbedeutend mit einem einheitlichen MARGIN_MAINTENANCE < MARGIN_INIT über alle
+                                                //     Instrumente. Eine vom Stopoutlevel des Accounts abweichende MARGIN_MAINTENANCE einzelner Instrumente ist vermutlich nur
+                                                //     bei einem Stopoutlevel von 100% sinnvoll. Beides zusammen ist ziemlich verwirrend.
 
 // Price identifiers, siehe iMA() etc.
 #define PRICE_CLOSE                    0        // C
