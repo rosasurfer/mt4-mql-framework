@@ -54,19 +54,19 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                  // - synthetisches Symbol im Offline-Chart
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         return(catch("init(1)", error));
+            return(debug("init(1)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         return(catch("init(2)", error));
       }
-      if (!TickSize) return(debug("init()   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!TickSize) return(debug("init(3)   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL)                                  // siehe oben bei MODE_TICKSIZE
-            return(debug("init()   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-         return(catch("init(2)", error));
+            return(debug("init(4)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         return(catch("init(5)", error));
       }
-      if (!tickValue) return(debug("init()   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(debug("init(6)   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
@@ -83,6 +83,8 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
       case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
       case REASON_REMOVE     : error = onInitRemove();          break;     //
       case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
+      default:
+         return(catch("init(7)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_ILLEGAL_STATE));
    }                                                                       //
    if (error == -1)                                                        // Gibt eine der Funktionen jedoch -1 zurück, bricht init() ab.
       return(last_error);                                                  //
@@ -94,7 +96,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
    if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS)
       Chart.SendTick(false);                                               // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
 
-   catch("init(3)");
+   catch("init(9)");
    return(last_error);
 }
 
@@ -253,6 +255,8 @@ int deinit() {
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
+         default:
+            return(catch("deinit(1)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_ILLEGAL_STATE));
       }                                                                          //
    }                                                                             //
    if (error != -1)                                                              //
