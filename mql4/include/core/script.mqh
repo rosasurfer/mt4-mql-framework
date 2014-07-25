@@ -56,7 +56,7 @@ int init() {
       case REASON_REMOVE     : error = onInitRemove();          break;        //
       case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
       default:
-         return(catch("init(5)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_ILLEGAL_STATE));
+         return(catch("init(5)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
    }                                                                          //
    if (error == -1)                                                           //
       return(last_error);                                                     //
@@ -146,7 +146,7 @@ int deinit() {
          case REASON_REMOVE     : error = onDeinitRemove();          break;   //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;   //
          default:
-            return(catch("deinit(1)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_ILLEGAL_STATE));
+            return(catch("deinit(1)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
       }                                                                       //
    }                                                                          //
    if (error != -1)                                                           //
