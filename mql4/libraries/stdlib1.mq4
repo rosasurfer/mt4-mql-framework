@@ -4997,12 +4997,12 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "CADLFX"  ) return("CAD (LFX)"               );
    if (symbol == "CHFLFX"  ) return("CHF (LFX)"               );
    if (symbol == "EURLFX"  ) return("EUR (LFX)"               );
-   if (symbol == "EURX"    ) return("EUR-Index (ICE)"         );
+   if (symbol == "EURX"    ) return("EUR-Index"               );
    if (symbol == "GBPLFX"  ) return("GBP (LFX)"               );
    if (symbol == "LFXJPY"  ) return("1/JPY (LFX)"             );
    if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
    if (symbol == "USDLFX"  ) return("USD (LFX)"               );
-   if (symbol == "USDX"    ) return("USD-Index (ICE)"         );
+   if (symbol == "USDX"    ) return("USD-Index"               );
    if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
    if (symbol == "XAGJPY"  ) return("Silver/JPY"              );
    if (symbol == "XAGUSD"  ) return("Silver/USD"              );
