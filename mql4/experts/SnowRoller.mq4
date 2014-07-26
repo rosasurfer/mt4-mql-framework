@@ -3386,8 +3386,10 @@ bool ResolveStatusLocation() {
    // (1) Location-Variablen zurücksetzen
    string location = StringTrim(Sequence.StatusLocation);
    InitStatusLocation();
-
-   string filesDirectory  = StringConcatenate(TerminalPath(), ifString(IsTesting(), "\\tester", "\\experts"), "\\files\\");
+      if      (IsTesting())        string mqlDir = "\\tester";
+      else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
+      else                                mqlDir = "\\mql4";
+   string filesDirectory  = StringConcatenate(TerminalPath(), mqlDir, "\\files\\");
    string statusDirectory = GetMqlStatusDirectory();
    string directory, subdirs[], subdir, file="";
 
@@ -3501,8 +3503,10 @@ string GetMqlStatusFileName() {
  * @return string
  */
 string GetFullStatusFileName() {
-   if (IsTesting()) return(StringConcatenate(TerminalPath(), "\\tester\\files\\",  GetMqlStatusFileName()));
-   else             return(StringConcatenate(TerminalPath(), "\\experts\\files\\", GetMqlStatusFileName()));
+   if      (IsTesting())        string mqlDir = "\\tester";
+   else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
+   else                                mqlDir = "\\mql4";
+   return(StringConcatenate(TerminalPath(), mqlDir, "\\files\\", GetMqlStatusFileName()));
 }
 
 
@@ -3522,8 +3526,10 @@ string GetMqlStatusDirectory() {
  * @return string - Verzeichnisname (mit einem Back-Slash endend)
  */
 string GetFullStatusDirectory() {
-   if (IsTesting()) return(StringConcatenate(TerminalPath(), "\\tester\\files\\",  GetMqlStatusDirectory()));
-   else             return(StringConcatenate(TerminalPath(), "\\experts\\files\\", GetMqlStatusDirectory()));
+   if      (IsTesting())        string mqlDir = "\\tester";
+   else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
+   else                                mqlDir = "\\mql4";
+   return(StringConcatenate(TerminalPath(), mqlDir, "\\files\\", GetMqlStatusDirectory()));
 }
 
 
@@ -3724,7 +3730,7 @@ bool SaveStatus() {
  * @param  string company  - Account-Company
  * @param  int    account  - Account-Number
  * @param  string symbol   - Symbol der Sequenz
- * @param  string filename - Dateiname, relativ zu ".\experts\"
+ * @param  string filename - Dateiname, relativ zu ".\{mql-dir}\"
  *
  * @return int - Fehlerstatus
  */
@@ -3738,7 +3744,8 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    string baseName = ArrayPopString(parts);                          // einfacher Dateiname ohne Verzeichnisse
 
    // Befehlszeile für Shellaufruf zusammensetzen
-          filename     = TerminalPath() +"\\experts\\"+ filename;    // Dateinamen mit vollständigen Pfaden
+   string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+          filename     = TerminalPath() + mqlDir +"\\"+ filename;    // Dateinamen mit vollständigen Pfaden
    string responseFile = filename +".response";
    string logFile      = filename +".log";
    string url          = "http://sub.domain.tld/uploadSRStatus.php?company="+ UrlEncode(company) +"&account="+ account +"&symbol="+ UrlEncode(symbol) +"&name="+ UrlEncode(baseName);

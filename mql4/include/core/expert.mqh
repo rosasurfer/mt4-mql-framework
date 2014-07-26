@@ -101,8 +101,12 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
          case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
          case REASON_REMOVE     : error = onInitRemove();          break;     //
          case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
-         default:
-            return(catch("init(7)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+         // build > 509
+         case REASON_TEMPLATE   : error = onInitTemplate();        break;     //
+         case REASON_INITFAILED : error = onInitFailed();          break;     //
+         case REASON_CLOSE      : error = onInitClose();           break;     //
+
+         //default: return(catch("init(7)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
       }                                                                       //
    }                                                                          //
                                                                               //
@@ -259,8 +263,12 @@ int deinit() {
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
-         default:
-            return(catch("deinit(1)   unknown UninitializeReason() = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+         // build > 509
+         case REASON_TEMPLATE   : error = onDeinitTemplate();        break;      //
+         case REASON_INITFAILED : error = onDeinitFailed();          break;      //
+         case REASON_CLOSE      : error = onDeinitClose();           break;      //
+
+         default: return(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
       }                                                                          //
    }                                                                             //
                                                                                  //
@@ -543,6 +551,10 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    onInitRecompile();
    int    onInitRemove();
    int    onInitUndefined();
+   // build > 509
+   int    onInitTemplate();
+   int    onInitFailed();
+   int    onInitClose();
    int    afterInit();
 
    int    onDeinit();
@@ -553,6 +565,10 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    onDeinitRecompile();
    int    onDeinitRemove();
    int    onDeinitUndefined();
+   // build > 509
+   int    onDeinitTemplate();
+   int    onDeinitFailed();
+   int    onDeinitClose();
    int    afterDeinit();
 
    int    ShowStatus(int error);

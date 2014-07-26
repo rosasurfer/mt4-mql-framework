@@ -2768,8 +2768,10 @@ string GetMqlStatusFileName(int hSeq) {
  * @return string
  */
 string GetFullStatusFileName(int hSeq) {
-   if (IsTesting()) return(StringConcatenate(TerminalPath(), "\\tester\\files\\",  GetMqlStatusFileName(hSeq)));
-   else             return(StringConcatenate(TerminalPath(), "\\experts\\files\\", GetMqlStatusFileName(hSeq)));
+   if      (IsTesting())        string mqlDir = "\\tester";
+   else if (GetTerminalBuild() <= 509) mqlDir = "\\experts";
+   else                                mqlDir = "\\mql4";
+   return(StringConcatenate(TerminalPath(), mqlDir, "\\files\\", GetMqlStatusFileName(hSeq)));
 }
 
 

@@ -20,8 +20,19 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   bool result = Test();
-   debug("onStart()->Test() => "+ result);
+   debug("onStart()   IsMqlDirectory(\"ATC\") = "+ IsMqlDirectory("ATC"));
 
    return(last_error);
 }
+
+/*
+todo:
+-----
+int DebugMarketInfo(string location);
+int FileReadLines(string filename, string lines[], bool skipEmptyLines);
+
+int init();
+int deinit();
+int OnInit();
+int OnDeinit();
+*/

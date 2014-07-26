@@ -22,6 +22,8 @@ extern int    iParameter = 12345;
  * @return int - Fehlerstatus
  */
 int onTick() {
-   catch("onTick()");
+
+   debug("onTick()   account="+ AccountNumber());
+
    return(last_error);
 }

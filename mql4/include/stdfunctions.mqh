@@ -579,14 +579,17 @@ int      last_error;                                        // der letzte Fehler
 #define CORNER_BOTTOM_RIGHT            3
 
 
-// UninitializeReason-Codes
-#define REASON_UNDEFINED               0        // no uninitialize reason
-#define REASON_REMOVE                  1        // program removed from chart
-#define REASON_RECOMPILE               2        // program recompiled
-#define REASON_CHARTCHANGE             3        // chart symbol or timeframe changed
-#define REASON_CHARTCLOSE              4        // chart closed or template changed
-#define REASON_PARAMETERS              5        // input parameters changed
-#define REASON_ACCOUNT                 6        // account changed
+// UninitializeReason-Codes                                                                    // MQL5: builds > 509
+#define REASON_UNDEFINED               0        // no uninitialize reason                      // REASON_PROGRAM: EA terminated by calling ExpertRemove()
+#define REASON_REMOVE                  1        // program removed from chart                  //
+#define REASON_RECOMPILE               2        // program recompiled                          //
+#define REASON_CHARTCHANGE             3        // chart symbol or timeframe changed           //
+#define REASON_CHARTCLOSE              4        // chart closed or template changed            // chart closed
+#define REASON_PARAMETERS              5        // input parameters changed                    //
+#define REASON_ACCOUNT                 6        // account changed                             // account or account settings changed
+#define REASON_TEMPLATE                7        // n/a                                         // template changed
+#define REASON_INITFAILED              8        // n/a                                         // OnInit() returned with an error
+#define REASON_CLOSE                   9        // n/a                                         // terminal closed
 
 
 // Currency-ID's
@@ -776,7 +779,7 @@ int      last_error;                                        // der letzte Fehler
 // MT4 item ids (Fenster, Controls)
 #define IDD_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
 #define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked *inside* the main application window
-#define IDD_UNDOCKED_CONTAINER              59423     // window containing undocked/floating child windows (one per undocked/floating child; multiple windows)
+#define IDD_UNDOCKED_CONTAINER              59423     // window containing one undocked/floating child window (ggf. mehrere, sind kein Top-Level-Window)
 
 #define IDD_MARKETWATCH                        80     // Market Watch
 #define IDD_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols
@@ -792,6 +795,10 @@ int      last_error;                                        // der letzte Fehler
 #define IDD_TERMINAL_NEWS                   33211     // Terminal - News
 #define IDD_TERMINAL_ALERTS                 33206     // Terminal - Alerts
 #define IDD_TERMINAL_MAILBOX                33210     // Terminal - Mailbox
+#define IDD_TERMINAL_COMPANY                 4078     // Terminal - Company
+#define IDD_TERMINAL_MARKET                  4081     // Terminal - Market
+#define IDD_TERMINAL_SIGNALS                 1405     // Terminal - Signals
+#define IDD_TERMINAL_CODEBASE               33212     // Terminal - Code Base
 #define IDD_TERMINAL_EXPERTS                35434     // Terminal - Experts
 #define IDD_TERMINAL_JOURNAL                33209     // Terminal - Journal
 
@@ -1811,12 +1818,12 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante NaT (0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante NaT (NotATime: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
  * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return int - NaT
+ * @return int - NaT (NotATime)
  */
 int _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(NaT);
@@ -2096,10 +2103,11 @@ bool StringIsNull(string value) {
  * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
  *
  *
- * NOTE: Muß global definiert werden. Die benutzte Funktion ReverseStringArray() ruft intern ArraySetAsSeries() auf, dessen Verhalten mit einem String-Parameter
- *       fehlerhaft ist. Unter ungeklärten Umständen wird das übergebene Array zerschossen, es enthält dann Zeiger auf andere im Programm existierende Strings.
- *       Dieser Fehler wurde in Indikatoren beobachtet, wenn ArrayUnshiftString() in der stdlib1 eingebettet war, nicht jedoch bei globaler Definition. Der Effekt
- *       tritt erst bei Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiten.
+ * NOTE: Muß global definiert werden. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf, dessen Verhalten mit einem
+ *       String-Parameter fehlerhaft (offiziell: nicht unterstützt) ist. Unter ungeklärten Umständen wird das übergebene Array zerschossen, es enthält dann
+ *       Zeiger auf andere im Programm existierende Strings. Dieser Fehler trat in Indikatoren auf, wenn ArrayUnshiftString() in einer MQL-Library definiert
+ *       war und über Modulgrenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Außerdem trat der Fehler nicht sofort, sondern erst nach Aufruf
+ *       anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string array[], string value) {
    if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));

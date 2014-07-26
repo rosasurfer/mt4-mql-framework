@@ -229,31 +229,39 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
 
 
 // Laufzeitfunktionen
-int    onInit()                  {                                                                             return(NO_ERROR); }
-int    onInitParameterChange()   {                                                                             return(NO_ERROR); }
-int    onInitChartChange()       {                                                                             return(NO_ERROR); }
-int    onInitAccountChange()     { if (IsExpert())                   return(catch("onInitAccountChange()",   ERR_RUNTIME_ERROR));   // mal sehen, wann hier jemand reintappt
-                                   if (IsIndicator())                        warn("onInitAccountChange()");    return(NO_ERROR); }  // ...
-int    onInitChartClose()        { if (IsIndicator())                        warn("onInitChartClose()");       return(NO_ERROR); }  // ...
-int    onInitUndefined()         {                                                                             return(NO_ERROR); }
-int    onInitRecompile()         {                                                                             return(NO_ERROR); }
-int    onInitRemove()            {                                                                             return(NO_ERROR); }
-int    afterInit()               {                                                                             return(NO_ERROR); }
+int    onInit()                  {                                                                                                                              return(NO_ERROR);  }
+int    onInitParameterChange()   {                                                                                                                              return(NO_ERROR);  }
+int    onInitChartChange()       {                                                                                                                              return(NO_ERROR);  }
+int    onInitAccountChange()     { if (IsExpert())                   return(catch("onInitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT",   ERR_RUNTIME_ERROR));
+                                   if (IsIndicator())                        warn("onInitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT");    return(NO_ERROR);  }
+int    onInitChartClose()        { if (IsIndicator())                        warn("onInitChartClose()   unexpected UninitializeReason = REASON_CHARTCLOSE");    return(NO_ERROR);  }
+int    onInitUndefined()         {                                                                                                                              return(NO_ERROR);  }
+int    onInitRemove()            {                                                                                                                              return(NO_ERROR);  }
+int    onInitRecompile()         {                                                                                                                              return(NO_ERROR);  }
+// build > 509
+int    onInitTemplate()          {                                        return(catch("onInitTemplate()   unexpected UninitializeReason = REASON_TEMPLATE", ERR_RUNTIME_ERROR));  }
+int    onInitFailed()            {                                        return(catch("onInitFailed()   unexpected UninitializeReason = REASON_INITFAILED", ERR_RUNTIME_ERROR));  }
+int    onInitClose()             {                                        return(catch("onInitClose()   unexpected UninitializeReason = REASON_CLOSE",       ERR_RUNTIME_ERROR));  }
+int    afterInit()               {                                                                                                                              return(NO_ERROR);  }
 
-int    onStart()                 {                                                                             return(NO_ERROR); }
-int    onTick()                  {                                                                             return(NO_ERROR); }
+int    onStart()                 {                                                                                                                              return(NO_ERROR);  }
+int    onTick()                  {                                                                                                                              return(NO_ERROR);  }
 
-int    onDeinit()                {                                                                             return(NO_ERROR); }
-int    onDeinitParameterChange() {                                                                             return(NO_ERROR); }
-int    onDeinitChartChange()     {                                                                             return(NO_ERROR); }
-int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()", ERR_RUNTIME_ERROR));   // ...
-                                   if (IsIndicator())                        warn("onDeinitAccountChange()");  return(NO_ERROR); }  // ...
-int    onDeinitChartClose()      { if (IsIndicator())                        warn("onDeinitChartClose()");     return(NO_ERROR); }  // ...
-int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()",     ERR_RUNTIME_ERROR));
-                                   if (IsIndicator())                        warn("onDeinitUndefined()");      return(NO_ERROR); }
-int    onDeinitRemove()          {                                                                             return(NO_ERROR); }
-int    onDeinitRecompile()       {                                                                             return(NO_ERROR); }
-int    afterDeinit()             {                                                                             return(NO_ERROR); }
+int    onDeinit()                {                                                                                                                              return(NO_ERROR);  }
+int    onDeinitParameterChange() {                                                                                                                              return(NO_ERROR);  }
+int    onDeinitChartChange()     {                                                                                                                              return(NO_ERROR);  }
+int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT", ERR_RUNTIME_ERROR));
+                                   if (IsIndicator())                        warn("onDeinitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT");  return(NO_ERROR);  }
+int    onDeinitChartClose()      { if (IsIndicator())                        warn("onDeinitChartClose()   unexpected UninitializeReason = REASON_CHARTCLOSE");  return(NO_ERROR);  }
+int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()   unexpected UninitializeReason = REASON_UNDEFINED",   ERR_RUNTIME_ERROR));
+                                   if (IsIndicator())                        warn("onDeinitUndefined()   unexpected UninitializeReason = REASON_UNDEFINED");    return(NO_ERROR);  }
+int    onDeinitRemove()          {                                                                                                                              return(NO_ERROR);  }
+int    onDeinitRecompile()       {                                                                                                                              return(NO_ERROR);  }
+// build > 509
+int    onDeinitTemplate()        {                                       return(catch("onDeinitTemplate()   unexpected UninitializeReason = REASON_TEMPLATE", ERR_RUNTIME_ERROR)); }
+int    onDeinitFailed()          {                                       return(catch("onDeinitFailed()   unexpected UninitializeReason = REASON_INITFAILED", ERR_RUNTIME_ERROR)); }
+int    onDeinitClose()           {                                       return(catch("onDeinitClose()   unexpected UninitializeReason = REASON_CLOSE",       ERR_RUNTIME_ERROR)); }
+int    afterDeinit()             {                                                                                                                              return(NO_ERROR);  }
 
 string InputsToStr()             {                                           return("InputsToStr()   function not implemented"); }
 int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(error   ); }
@@ -884,9 +892,12 @@ bool ReleaseLocks(bool warn=false) {
 
 
 /**
- * Hinterlegt in der Message-Queue des aktuellen Charts eine Nachricht zum Aufruf des Input-Dialogs des EA's.
+ * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
  *
  * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
  */
 int Chart.Expert.Properties() {
    if (This.IsTesting())
@@ -894,40 +905,12 @@ int Chart.Expert.Properties() {
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (!hWnd)
-      return(catch("Chart.Expert.Properties(2)->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.Expert.Properties(2)->WindowHandle() = 0", ERR_RUNTIME_ERROR));
 
    if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(NO_ERROR);
-}
-
-
-/**
- * Ob der Tester momentan pausiert. Der Aufruf ist nur im Tester selbst möglich.
- *
- * @return bool
- */
-bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(!catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   bool testerStopped;
-   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
-
-   if (IsScript()) {
-      // VisualMode = true;
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
-   }
-   else {
-      if (!IsVisualMode())                                                                         // EA/Indikator aus iCustom()
-         return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA:deinit() ausgeführt,
-      testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
-   }
-
-   if (testerStopped)
-      return(false);
-
-   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_PAUSERESUME)) == ">>");
 }
 
 
@@ -949,6 +932,34 @@ int Tester.Pause() {
 
    SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
    return(NO_ERROR);
+}
+
+
+/**
+ * Ob der Tester momentan pausiert. Der Aufruf ist nur im Tester selbst möglich.
+ *
+ * @return bool
+ */
+bool Tester.IsPaused() {
+   if (!This.IsTesting()) return(!catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   bool testerStopped;
+   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
+
+   if (IsScript()) {
+      // VisualMode = true;
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
+   }
+   else {
+      if (!IsVisualMode())                                                                         // EA/Indikator aus iCustom()
+         return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
+      testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
+   }
+
+   if (testerStopped)
+      return(false);
+
+   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_PAUSERESUME)) == ">>");
 }
 
 
@@ -986,7 +997,7 @@ bool Tester.IsStopped() {
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start");            // muß im Script reichen
    }
    return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                                                  // zeitgleich zu EA:deinit() ausgeführt, der EA stoppt(e) also auch.
+}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
 /**
@@ -1041,41 +1052,6 @@ string __whereamiDescription(int id) {
       case FUNC_DEINIT: return("deinit()");
    }
    return(_empty(catch("__whereamiDescription()   unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
-}
-
-
-/**
- * Lädt einen Cursor anhand einer Resource-ID und gibt sein Handle zurück.
- *
- * @param  int hInstance  - Application instance handle
- * @param  int resourceId - cursor ID
- *
- * @return int - Cursor-Handle oder NULL, falls ein Fehler auftrat
- */
-int LoadCursorById(int hInstance, int resourceId) {
-   if (resourceId & 0xFFFF0000 && 1)                                 // High-Word testen, @see  MAKEINTRESOURCE(wInteger)
-      return(_NULL(catch("LoadCursorById(1)   illegal parameter resourceId = 0x"+ IntToHexStr(resourceId) +" (must be smaller then 0x00010000)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-
-   int hCursor = LoadCursorW(hInstance, resourceId);
-   if (!hCursor)
-      catch("LoadCursorById(2)->user32::LoadCursorW()", ERR_WIN32_ERROR);
-   return(hCursor);
-}
-
-
-/**
- * Lädt einen Cursor anhand seines Namens und gibt sein Handle zurück.
- *
- * @param  int    hInstance  - Application instance handle
- * @param  string cursorName - Name
- *
- * @return int - Cursor-Handle oder NULL, falls ein Fehler auftrat
- */
-int LoadCursorByName(int hInstance, string cursorName) {
-   int hCursor = LoadCursorA(hInstance, cursorName);
-   if (!hCursor)
-      catch("LoadCursorByName(1)->user32::LoadCursorA()", ERR_WIN32_ERROR);
-   return(hCursor);
 }
 
 
@@ -1316,8 +1292,7 @@ string GetTerminalVersion() {
 
    int    iNull[], bufferSize=MAX_PATH;
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
-   int chars = GetModuleFileNameA(NULL, fileName[0], bufferSize);
-   if (!chars)
+   if (!GetModuleFileNameA(NULL, fileName[0], bufferSize))
       return(_empty(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()", ERR_WIN32_ERROR)));
 
    int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
@@ -1329,22 +1304,22 @@ string GetTerminalVersion() {
       return(_empty(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()", ERR_WIN32_ERROR)));
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
-   //infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………………
+   //     infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………
    string Z                  = CharToStr(PLACEHOLDER_NUL_CHAR);
    string C                  = CharToStr(PLACEHOLDER_CTL_CHAR);
    string key.ProductVersion = StringConcatenate(C,Z,"P",Z,"r",Z,"o",Z,"d",Z,"u",Z,"c",Z,"t",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
    string key.FileVersion    = StringConcatenate(C,Z,"F",Z,"i",Z,"l",Z,"e",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
 
    int pos = StringFind(infoString, key.ProductVersion);             // zuerst nach ProductVersion suchen...
-   if (pos != -1) {
+   if (pos > -1) {
       pos += StringLen(key.ProductVersion);
    }
    else {
-      //debug("GetTerminalVersion()->GetFileVersionInfoA()   ProductVersion not found");
+      //debug("GetTerminalVersion(4)->GetFileVersionInfoA()   ProductVersion not found");
       pos = StringFind(infoString, key.FileVersion);                 // ...dann nach FileVersion
       if (pos == -1) {
-         //debug("GetTerminalVersion()->GetFileVersionInfoA()   FileVersion not found");
-         return(_empty(catch("GetTerminalVersion(4)   terminal version info not found", ERR_RUNTIME_ERROR)));
+         //debug("GetTerminalVersion(5)->GetFileVersionInfoA()   FileVersion not found");
+         return(_empty(catch("GetTerminalVersion(6)   terminal version info not found", ERR_RUNTIME_ERROR)));
       }
       pos += StringLen(key.FileVersion);
    }
@@ -1354,15 +1329,13 @@ string GetTerminalVersion() {
       if (BufferGetChar(infoBuffer, pos) != 0x00)
          break;
    }
-   if (pos == infoSize) {
-      //debug("GetTerminalVersion()   no non-NULL byte after version key found");
-      return(_empty(catch("GetTerminalVersion(5)   terminal version info value not found", ERR_RUNTIME_ERROR)));
-   }
+   if (pos == infoSize)                                              // no non-NULL byte found after version key
+      return(_empty(catch("GetTerminalVersion(7)   terminal version info value not found", ERR_RUNTIME_ERROR)));
 
    // Unicode-String auslesen und konvertieren
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
 
-   if (IsError(catch("GetTerminalVersion(6)")))
+   if (IsError(catch("GetTerminalVersion(8)")))
       return("");
 
    static.result[0] = version;
@@ -1525,7 +1498,7 @@ string CreateString(int length) {
  * @return string - Dateiname
  */
 string GetLocalConfigPath() {
-   static string static.result[1];                                   // ohne Initializer ...
+   static string static.result[1];                                   // ohne Initializer, @see MQL.doc
    if (StringLen(static.result[0]) > 0)
       return(static.result[0]);
 
@@ -3649,7 +3622,7 @@ private*/string __BuffersToHexStr(int buffer[][]) {
 
 
 /**
- * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position des Buffers zurück.
+ * Gibt ein einzelnes Zeichen (ein Byte) von der angegebenen Position eines Buffers zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int pos      - Zeichen-Position
@@ -3676,8 +3649,8 @@ int BufferGetChar(int buffer[], int pos) {
  * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NUL-Byte terminierte ANSI-Charactersequenz zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- * @param  int from     - Index des ersten Bytes des für die Charactersequenz reservierten Bereichs, beginnend mit 0
- * @param  int length   - Anzahl der im Buffer für die Charactersequenz reservierten Bytes
+ * @param  int from     - Index des ersten Bytes der Zeichensequenz
+ * @param  int length   - Anzahl der für die Zeichensequenz reservierten Bytes
  *
  * @return string - ANSI-String
  */
@@ -3727,8 +3700,8 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NUL-Byte terminierte ANSI-Charactersequenz zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann ein- oder zwei-dimensional sein)
- * @param  int from     - Index des ersten Bytes des für die Charactersequenz reservierten Bereichs, beginnend mit 0
- * @param  int length   - Anzahl der im Buffer für die Charactersequenz reservierten Bytes
+ * @param  int from     - Index des ersten Bytes der Zeichensequenz
+ * @param  int length   - Anzahl der für die Zeichensequenz reservierten Bytes
  *
  * @return string - ANSI-String
  *
@@ -3756,37 +3729,35 @@ private*/string __BuffersCharsToStr(int buffer[][], int from, int length) {
  * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-Characters) zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
- * @param  int from     - Index des ersten Integers der Charactersequenz
- * @param  int length   - Anzahl der Integers des im Buffer für die Charactersequenz reservierten Bereiches
+ * @param  int from     - Index des ersten Integers der Zeichensequenz
+ * @param  int length   - Anzahl der für die Zeichensequenz reservierten Integers
  *
  * @return string - ANSI-String
  *
  *
- * NOTE: Zur Zeit arbeitet diese Funktion nur mit Charactersequenzen, die an Integer-Boundaries beginnen und enden.
+ * TODO: Zur Zeit kann diese Funktion nur mit Integer-Boundaries, nicht mit WCHAR-Boundaries (words) umgehen.
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
-   if (from < 0)
-      return(catch("BufferWCharsToStr(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0)  return(catch("BufferWCharsToStr(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
    int to = from+length, size=ArraySize(buffer);
-   if (to > size)
-      return(catch("BufferWCharsToStr(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to > size) return(catch("BufferWCharsToStr(2)   invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string result = "";
 
    for (int i=from; i < to; i++) {
-      string strChar;
+      string sChar;
       int word, shift=0, integer=buffer[i];
 
       for (int n=0; n < 2; n++) {
          word = integer >> shift & 0xFFFF;
-         if (word == 0)                                        // termination character (0x00)
+         if (word == 0)                                              // termination character (0x00)
             break;
          int byte1 = word      & 0xFF;
          int byte2 = word >> 8 & 0xFF;
 
-         if (byte1!=0 && byte2==0) strChar = CharToStr(byte1);
-         else                      strChar = "?";              // multi-byte character
-         result = StringConcatenate(result, strChar);
+         if (byte1 && !byte2) sChar = CharToStr(byte1);
+         else                 sChar = "?";                           // multi-byte character
+         result = StringConcatenate(result, sChar);
          shift += 16;
       }
       if (word == 0)
@@ -4092,7 +4063,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
  * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
  */
 int MT4InternalMsg() {
-   static int static.messageId;                                      // ohne Initializer (@see MQL.doc)
+   static int static.messageId;                                      // ohne Initializer, @see MQL.doc
 
    if (!static.messageId) {
       static.messageId = RegisterWindowMessageA("MetaTrader4_Internal_Message");
@@ -4133,7 +4104,7 @@ int Chart.Refresh(bool sound=false) {
 
    int hWnd = WindowHandle(Symbol(), NULL);
    if (!hWnd)
-      return(catch("Chart.Refresh()->WindowHandle() = "+ hWnd, ERR_RUNTIME_ERROR));
+      return(catch("Chart.Refresh()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
 
    PostMessageA(hWnd, WM_COMMAND, IDC_CHART_REFRESH, 0);
 
@@ -4219,11 +4190,11 @@ string GetServerDirectory() {
                pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
                if (hFindFile != INVALID_HANDLE_VALUE) {
-                  //debug("GetServerDirectory()   file = "+ pattern +"   found");
+                  //debug("GetServerDirectory(2)   file = "+ pattern +"   found");
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_empty(catch("GetServerDirectory(2)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_empty(catch("GetServerDirectory(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
@@ -4231,19 +4202,19 @@ string GetServerDirectory() {
          next = FindNextFileA(hFindDir, wfd);
       }
       if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_empty(catch("GetServerDirectory(3) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+         return(_empty(catch("GetServerDirectory(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
 
       FindClose(hFindDir);
       ArrayResize(wfd, 0);
-      //debug("GetServerDirectory()   resolved directory = \""+ directory +"\"");
+      //debug("GetServerDirectory(5)   resolved directory = \""+ directory +"\"");
    }
 
    int error = GetLastError();
    if (IsError(error))
-      return(_empty(catch("GetServerDirectory(4)", error)));
+      return(_empty(catch("GetServerDirectory(6)", error)));
 
    if (!StringLen(directory))
-      return(_empty(catch("GetServerDirectory(5)   cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      return(_empty(catch("GetServerDirectory(7)   cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    static.result[0] = directory;
    return(static.result[0]);
@@ -6659,11 +6630,11 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
 
 /**
- * Gibt unabhängig von einer Server-Verbindung die Nummer des aktuellen Accounts zurück.
+ * Gibt den aktuellen Account unabhängig von einer Server-Verbindung zurück.
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  */
-int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // evt. während des Terminal-Starts
+int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // ggf. während des Terminal-Starts
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6672,7 +6643,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // evt. wäh
 
    if (account == 0x4000) {                                          // beim Test ohne Server-Verbindung
       if (!IsTesting())
-         return(_NULL(catch("GetAccountNumber(1)->AccountNumber() got illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+         return(_NULL(catch("GetAccountNumber(1)->AccountNumber()   illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
@@ -6695,7 +6666,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // evt. wäh
    if (IsError(catch("GetAccountNumber(4)")))
       return(0);
 
-   // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage() in _DEINIT_.
+   // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage() in deinit().
    if (This.IsTesting())
       static.result = account;
 
@@ -8520,15 +8491,17 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetApplicationWindow() {
-   static int hWnd;                                                  // ohne Initializer (@see MQL.doc)
+   static int hWnd;                                                  // ohne Initializer, @see MQL.doc
    if (hWnd != 0)
       return(hWnd);
 
+   // ClassName des Terminal-Hauptfensters (alle Builds)
    string terminalClassName = "MetaQuotes::MetaTrader::4.00";
 
-   // WindowHandle()
+
+   // (1) mittels WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
    if (IsChart) {
-      hWnd = WindowHandle(Symbol(), NULL);                           // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Terminalstart, im Tester)
+      hWnd = WindowHandle(Symbol(), NULL);
       if (hWnd != 0) {
          hWnd = GetAncestor(hWnd, GA_ROOT);
          if (GetClassName(hWnd) != terminalClassName) {
@@ -8541,7 +8514,8 @@ int GetApplicationWindow() {
       }
    }
 
-   // alle Top-Level-Windows durchlaufen
+
+   // (2) ohne WindowHandle() alle Top-Level-Windows durchlaufen
    int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
 
    while (hWndNext != 0) {
@@ -8567,7 +8541,7 @@ int GetApplicationWindow() {
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTesterWindow() {
-   static int hWndTester;                                                  // ohne Initializer (@see MQL.doc)
+   static int hWndTester;                                                  // ohne Initializer, @see MQL.doc
    if (hWndTester != 0)
       return(hWndTester);
 
@@ -8626,7 +8600,7 @@ int GetTesterWindow() {
  * @return int - Thread-ID (nicht das Pseudo-Handle) oder 0, falls ein Fehler auftrat
  */
 int GetUIThreadId() {
-   static int threadId;                                              // ohne Initializer (@see MQL.doc)
+   static int threadId;                                              // ohne Initializer, @see MQL.doc
    if (threadId != 0)
       return(threadId);
 
@@ -8648,14 +8622,22 @@ int GetUIThreadId() {
  * @return string
  */
 string UninitializeReasonDescription(int reason) {
+   int build = GetTerminalBuild();
+
    switch (reason) {
-      case REASON_UNDEFINED  : return("undefined"                        );
-      case REASON_CHARTCLOSE : return("chart closed or template changed" );
-      case REASON_REMOVE     : return("program removed from chart"       );
-      case REASON_RECOMPILE  : return("program recompiled"               );
-      case REASON_PARAMETERS : return("input parameters changed"         );
-      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed");
-      case REASON_ACCOUNT    : return("account changed"                  );
+      case REASON_UNDEFINED  :                   return("undefined"                          );
+      case REASON_REMOVE     :                   return("program removed from chart"         );
+      case REASON_RECOMPILE  :                   return("program recompiled"                 );
+      case REASON_CHARTCHANGE:                   return("chart symbol or timeframe changed"  );
+      case REASON_CHARTCLOSE : if (build <= 509) return("chart closed or template changed"   );
+                                                 return("chart closed" );
+      case REASON_PARAMETERS :                   return("input parameters changed"           );
+      case REASON_ACCOUNT    : if (build <= 509) return("account changed"                    );
+                                                 return("account or account settings changed");
+      // build > 509
+      case REASON_TEMPLATE   :                   return("template changed"                   );
+      case REASON_INITFAILED :                   return("OnInit() failed"                    );
+      case REASON_CLOSE      :                   return("terminal closed"                    );
    }
    return(_empty(catch("UninitializeReasonDescription()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -8671,12 +8653,16 @@ string UninitializeReasonDescription(int reason) {
 string UninitializeReasonToStr(int reason) {
    switch (reason) {
       case REASON_UNDEFINED  : return("REASON_UNDEFINED"  );
-      case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
       case REASON_REMOVE     : return("REASON_REMOVE"     );
       case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
-      case REASON_PARAMETERS : return("REASON_PARAMETERS" );
       case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
+      case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
+      case REASON_PARAMETERS : return("REASON_PARAMETERS" );
       case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
+      // builds > 509
+      case REASON_TEMPLATE   : return("REASON_TEMPLATE"   );
+      case REASON_INITFAILED : return("REASON_INITFAILED" );
+      case REASON_CLOSE      : return("REASON_CLOSE"      );
    }
    return(_empty(catch("UninitializeReasonToStr()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -9098,10 +9084,11 @@ bool SendSMS(string receiver, string message) {
 
    // (2) Befehlszeile für Shellaufruf zusammensetzen
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
-   string filesDir     = TerminalPath() +"\\experts\\files";
+   string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string filesDir     = TerminalPath() + mqlDir +"\\files";
    string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocal(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
-   string cmd          = TerminalPath() +"\\experts\\libraries\\wget.exe";
+   string cmd          = TerminalPath() +"\\"+ mqlDir +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
 
@@ -9468,30 +9455,30 @@ bool IsDirectory(string filename) {
 
 
 /**
- * Prüft, ob der angegebene Name eine existierende und normale MQL-Datei ist (kein Verzeichnis).
+ * Prüft, ob der angegebene Name eine existierende MQL-Datei ist (kein Verzeichnis).
  *
- * @return string filename - zu ".\files\" relativer Dateiname (für MQL-Dateifunktionen)
+ * @return string filename - zu ".\{mql-dir}\files\" relativer Dateiname (für MQL-Dateifunktionen)
  *
  * @return bool
  */
 bool IsMqlFile(string filename) {
-   if (IsScript() || !This.IsTesting()) filename = StringConcatenate(TerminalPath(), "\\experts\\files\\", filename);
-   else                                 filename = StringConcatenate(TerminalPath(), "\\tester\\files\\",  filename);
-   return(IsFile(filename));
+   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   else                                        mqlDir = "\\tester";
+   return(IsFile(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  filename)));
 }
 
 
 /**
- * Prüft, ob der angegebene Name ein existierendes MQL-Verzeichnis ist (keine normale Datei).
+ * Prüft, ob der angegebene Name ein existierendes MQL-Verzeichnis ist (keine Datei).
  *
- * @return string filename - zu ".\files\" relativer Dateiname (für MQL-Dateifunktionen)
+ * @return string dirname - zu ".\{mql-dir}\files\" relativer Verzeichnisname (für MQL-Dateifunktionen)
  *
  * @return bool
  */
-bool IsMqlDirectory(string filename) {
-   if (IsScript() || !This.IsTesting()) filename = StringConcatenate(TerminalPath(), "\\experts\\files\\", filename);
-   else                                 filename = StringConcatenate(TerminalPath(), "\\tester\\files\\",  filename);
-   return(IsDirectory(filename));
+bool IsMqlDirectory(string dirname) {
+   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   else                                        mqlDir = "\\tester";
+   return(IsDirectory(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  dirname)));
 }
 
 
