@@ -72,8 +72,6 @@
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
-   int  LoadCursorA(int hInstance, string lpCursorName);
-   int  LoadCursorW(int hInstance, int resourceId);
    int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    int  MessageBoxExA(int hWnd, string lpText, string lpCaption, int style, int wLanguageId);
    bool PostMessageA(int hWnd, int msg, int wParam, int lParam);

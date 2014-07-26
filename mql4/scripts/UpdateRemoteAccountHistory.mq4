@@ -202,9 +202,9 @@ int onStart() {
 
 
 /**
- * Lädt die angegebene Datei per HTTP-Post-Request auf den Server und gibt die Antwort des Servers zurück.
+ * Lädt die angegebene Datei per HTTP-POST-Request auf den Server und gibt die Antwort des Servers zurück.
  *
- * @param  string  filename   - Dateiname relativ zu ".\experts\files\"
+ * @param  string  filename   - Dateiname relativ zu ".\{mql-dir}\files\"
  * @param  string &lpErrorMsg - Zeiger auf einen String zur Aufnahme einer Fehlermeldung
  *
  * @return int - Serverresponse-Code (< ERR_RUNTIME_ERROR) oder MQL-Fehlerstatus (>= ERR_RUNTIME_ERROR)
@@ -212,7 +212,8 @@ int onStart() {
 int UploadDataFile(string filename, string &lpErrorMsg) {
    // Befehlszeile für Shellaufruf zusammensetzen
    string url          = "http://sub.domain.tld/uploadAccountHistory.php";
-   string filesDir     = TerminalPath() +"\\experts\\files";
+   string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string filesDir     = TerminalPath() + mqlDir +"\\files";
    string dataFile     = filesDir +"\\"+ filename;
    string responseFile = filesDir +"\\"+ filename +".response";
    string logFile      = filesDir +"\\"+ filename +".log";

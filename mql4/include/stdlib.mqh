@@ -288,7 +288,7 @@
    bool     IsFile(string filename);
    bool     IsDirectory(string filename);
    bool     IsMqlFile(string filename);
-   bool     IsMqlDirectory(string filename);
+   bool     IsMqlDirectory(string dirname);
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
@@ -514,8 +514,6 @@
    string   GetComputerName();
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
-   int      LoadCursorById(int hInstance, int resourceId);
-   int      LoadCursorByName(int hInstance, string cursorName);
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
 
@@ -528,6 +526,10 @@
    int      onInitUndefined();
    int      onInitRemove();
    int      onInitRecompile();
+   // build > 509
+   int      onInitTemplate();
+   int      onInitFailed();
+   int      onInitClose();
    int      afterInit();
 
    int      onStart();                                               // Scripte
@@ -541,6 +543,10 @@
    int      onDeinitUndefined();
    int      onDeinitRemove();
    int      onDeinitRecompile();
+   // build > 509
+   int      onDeinitTemplate();
+   int      onDeinitFailed();
+   int      onDeinitClose();
    int      afterDeinit();
 
    string   InputsToStr();
