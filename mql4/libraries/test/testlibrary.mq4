@@ -131,5 +131,10 @@ int onStart() {
    // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.231 sec             1.642 sec
    // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    73.203 sec            32.370 sec
 
+   // Build 670
+   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took
+   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took
+   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took
+
    return(last_error);
 }*/

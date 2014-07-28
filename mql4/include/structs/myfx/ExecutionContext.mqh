@@ -1,5 +1,5 @@
 /**
- * MQL structure EXECUTION_CONTEXT                                   // TODO: __SMS.alerts und __SMS.receiver integrieren
+ * MQL structure EXECUTION_CONTEXT                             // TODO: __SMS.alerts und __SMS.receiver integrieren
  *
  *                                    size         offset
  * struct EXECUTION_CONTEXT {         ----         ------
@@ -142,6 +142,33 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=fals
    ec.lpLogFile         (ec    ); ec.setLpLogFile         (ec, NULL);
    ec.LogFile           (ec    ); ec.setLogFile           (ec, NULL);
    ec.LastError         (ec    ); ec.setLastError         (ec, NULL);
+   lpEXECUTION_CONTEXT.toStr(NULL);
+}
+
+
+/**
+ * Gibt die lesbare Repräsentation eines an einer Adresse gespeicherten EXECUTION_CONTEXT zurück.
+ *
+ * @param  int  lpContext - Adresse des EXECUTION_CONTEXT
+ * @param  bool debugger  - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ *
+ * @return string
+ */
+string lpEXECUTION_CONTEXT.toStr(int lpContext, bool debugger=false) {
+   debugger = debugger!=0;
+
+   // TODO: prüfen, ob lpContext ein gültiger Zeiger ist
+   if (lpContext <= 0)                return(_empty(catch("lpEXECUTION_CONTEXT.toStr(1)   invalid parameter lpContext = "+ lpContext, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   int ec[EXECUTION_CONTEXT.intSize];
+   CopyMemory(lpContext, GetBufferAddress(ec), EXECUTION_CONTEXT.size);
+
+   // primitive Validierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
+   if (ec.Signature(ec) != lpContext) return(_empty(catch("lpEXECUTION_CONTEXT.toStr(2)   invalid EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpContext), ERR_RUNTIME_ERROR)));
+
+   string result = EXECUTION_CONTEXT.toStr(ec, debugger);
+   ArrayResize(ec, 0);
+   return(result);
 }
 
 
@@ -204,4 +231,5 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=fals
 //   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
 
 //   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugger);
+//   string lpEXECUTION_CONTEXT.toStr(int lpContext, bool debugger);
 //#import
