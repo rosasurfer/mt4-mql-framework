@@ -1,6 +1,6 @@
 /**
- * Je Modultyp implementierte Statusfunktionen (core), dürfen NICHT exportiert werden:
- * -----------------------------------------------------------------------------------
+ * Je Modultyp implementierte Statusfunktionen (core):
+ * ---------------------------------------------------
  *  bool IsExpert();
  *  bool IsScript();
  *  bool IsIndicator();
@@ -11,8 +11,10 @@
  *  bool Indicator.IsTesting();
  *  bool This.IsTesting();
  *
+ *  int  InitReason();
+ *  int  DeinitReason();
  *  int  InitExecutionContext();                                     // nicht in Libraries (dort nicht notwendig)
- *  bool Indicator.IsSuperContext();
+ *  bool IsSuperContext();
  *
  *  int  SetLastError(int error, int param);
  */
@@ -20,6 +22,10 @@
 #import "stdlib1.ex4"
 
    // Status- und Laufzeit-Informationen
+   bool     Init.IsNoTick();
+   bool     Init.IsNewSymbol(string symbol);
+   void     Init.StoreSymbol(string symbol);
+
    bool     IsLogging();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
@@ -503,6 +509,8 @@
    string   ShellExecuteErrorDescription(int error);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);
+   string   InitReasonDescription(int reason);
+   string   InitReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
    string   __whereamiDescription(int id);
    string   __whereamiToStr(int id);
@@ -517,8 +525,22 @@
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
 
-   // leere Library-Stubs, bei Verwendung *müssen* diese Funktionen im Programm implementiert werden
+   // leere Library-Stubs, können wenn nötig im Hauptmodul "überschrieben" werden
    int      onInit();
+   int      onInit.User();
+   int      onInit.Template();
+   int      onInit.Program();
+   int      onInit.ProgramClearTest();
+   int      onInit.Parameters();
+   int      onInit.TimeframeChange();
+   int      onInit.SymbolChange();
+   int      onInit.Recompile();
+   int      afterInit();
+
+   int      onStart();                                               // Scripte
+   int      onTick();                                                // EA's + Indikatoren
+
+   // alt
    int      onInitParameterChange();
    int      onInitChartChange();
    int      onInitAccountChange();
@@ -526,14 +548,9 @@
    int      onInitUndefined();
    int      onInitRemove();
    int      onInitRecompile();
-   // build > 509
-   int      onInitTemplate();
-   int      onInitFailed();
-   int      onInitClose();
-   int      afterInit();
-
-   int      onStart();                                               // Scripte
-   int      onTick();                                                // EA's + Indikatoren
+   int      onInitTemplate();                                        // build > 509
+   int      onInitFailed();                                          // build > 509
+   int      onInitClose();                                           // build > 509
 
    int      onDeinit();
    int      onDeinitParameterChange();
@@ -543,10 +560,9 @@
    int      onDeinitUndefined();
    int      onDeinitRemove();
    int      onDeinitRecompile();
-   // build > 509
-   int      onDeinitTemplate();
-   int      onDeinitFailed();
-   int      onDeinitClose();
+   int      onDeinitTemplate();                                      // build > 509
+   int      onDeinitFailed();                                        // build > 509
+   int      onDeinitClose();                                         // build > 509
    int      afterDeinit();
 
    string   InputsToStr();

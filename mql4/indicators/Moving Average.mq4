@@ -237,7 +237,7 @@ int onTick() {
       ma.ChangedBars = Max.Values;
    int ma.startBar = Min(ma.ChangedBars-1, Bars-ma.periods);
    if (ma.startBar < 0) {
-      if (Indicator.IsSuperContext())
+      if (IsSuperContext())
          return(catch("onTick()", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }

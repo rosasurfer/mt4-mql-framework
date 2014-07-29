@@ -9,9 +9,9 @@ int __lpSuperContext = NULL;
  * @return int - Fehlerstatus
  */
 int init() {
-   // Im Tester globale Arrays eines EA's zurücksetzen (zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests).
-   if (IsTesting()) {
-      Tester.ResetGlobalArrays();                                    // Fehler tritt nur in EA's auf, IsTesting() reicht aus und ist fehler-resistenter.
+   // Im Tester globale Arrays eines EA's zurücksetzen.
+   if (IsTesting()) {                                             // Zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
+      Tester.ResetGlobalArrays();                                 // Könnte ein Feature für die Optimization sein, um Daten testübergreifend verwalten zu können.
    }
    return(catch("init()"));
 }
@@ -49,13 +49,33 @@ int deinit() {
 
 
 /**
+ * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int InitReason() {
+   return(_NULL(catch("InitReason()", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
+ * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int DeinitReason() {
+   return(_NULL(catch("DeinitReason()", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
  * Ob das aktuell ausgeführte Programm ein Expert ist.
  *
  * @return bool
  */
 bool IsExpert() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsExpert()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("IsExpert()   library not initialized", ERR_RUNTIME_ERROR));
    return(__TYPE__ & T_EXPERT != 0);
 }
 
@@ -67,7 +87,7 @@ bool IsExpert() {
  */
 bool IsScript() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsScript()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("IsScript()   library not initialized", ERR_RUNTIME_ERROR));
    return(__TYPE__ & T_SCRIPT);
 }
 
@@ -79,7 +99,7 @@ bool IsScript() {
  */
 bool IsIndicator() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsIndicator()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("IsIndicator()   library not initialized", ERR_RUNTIME_ERROR));
    return(__TYPE__ & T_INDICATOR != 0);
 }
 
@@ -101,7 +121,7 @@ bool IsLibrary() {
  */
 bool Expert.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("Expert.IsTesting()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("Expert.IsTesting()   library not initialized", ERR_RUNTIME_ERROR));
 
    if (IsTesting()) /*&&*/ if (IsExpert())                           // IsTesting() allein reicht nicht, da auch in Indikatoren TRUE zurückgeben werden kann.
       return(true);
@@ -116,7 +136,7 @@ bool Expert.IsTesting() {
  */
 bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("Script.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR));
 
    if (!IsScript())
       return(false);
@@ -143,7 +163,7 @@ bool Script.IsTesting() {
  */
 bool Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("Indicator.IsTesting(1)   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("Indicator.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR));
 
    if (!IsIndicator())
       return(false);
@@ -183,7 +203,7 @@ bool Indicator.IsTesting() {
  */
 bool This.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("This.IsTesting()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("This.IsTesting()   library not initialized", ERR_RUNTIME_ERROR));
 
    if (   IsExpert()) return(   Expert.IsTesting());
    if (   IsScript()) return(   Script.IsTesting());
@@ -198,9 +218,9 @@ bool This.IsTesting() {
  *
  * @return bool
  */
-bool Indicator.IsSuperContext() {
+bool IsSuperContext() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("Indicator.IsSuperContext()   function must not be called before library initialization", ERR_RUNTIME_ERROR));
+      return(!catch("IsSuperContext()   library not initialized", ERR_RUNTIME_ERROR));
    return(__lpSuperContext != 0);
 }
 

@@ -32,69 +32,26 @@ int onInit() {
 
 
 /**
- * außerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei VisualMode=On), Input-Dialog
- * innerhalb iCustom(): nie
+ * Nach manuellem Laden des Indikators durch den User. Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitParameterChange() {
+int onInit.User() {
    if (isLfxInstrument) {
-      if (!Tick) {
-         // erste Parameter-Eingabe eines neuen Indikators: LFX-Status komplett neu einlesen
-         if (!RestoreLfxStatusFromFiles())
-            return(last_error);
-      }
-      else {
-         // Parameter-Wechsel eines vorhandenen Indikators: in Library gespeicherten LFX-Status restaurieren
-         string s = "";
-         if (!RestoreLfxStatusFromLib(s))
-            return(last_error);
-      }
-   }
-   return(NO_ERROR);
-}
-
-
-/**
- * außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
- * innerhalb iCustom(): ?
- *
- * @return int - Fehlerstatus
- */
-int onInitChartChange() {
-   if (isLfxInstrument) {
-      string prevSymbol = "";
-
-      // in Library gespeicherten LFX-Status restaurieren, um Symbolwechsel zu erkennen
-      if (!RestoreLfxStatusFromLib(prevSymbol))
+      // LFX-Status einlesen
+      if (!RestoreLfxStatusFromFiles())
          return(last_error);
-
-      if (Symbol() != prevSymbol) {
-         // Symbolwechsel: volatilen LFX-Status des alten Symbols speichern und Status des aktuellen Symbols komplett neu einlesen
-         if (!SaveVolatileLfxStatus())
-            return(last_error);
-
-         if (!RestoreLfxStatusFromFiles())
-            return(last_error);
-      }
-      else {
-         // Timeframe-Wechsel: in Library gespeicherter LFX-Status ist bereits restauriert
-      }
-
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Kein UninitializeReason gesetzt.
- *
- * außerhalb iCustom(): wenn Template mit Indikator darin geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
- * innerhalb iCustom(): in allen init()-Fällen, kein Input-Dialog
+ * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitUndefined() {
+int onInit.Template() {
    if (isLfxInstrument) {
       // LFX-Status neu einlesen
       if (!RestoreLfxStatusFromFiles())
@@ -105,26 +62,14 @@ int onInitUndefined() {
 
 
 /**
- * außerhalb iCustom(): ???
- * innerhalb iCustom(): im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
- *
- * @return int - Fehlerstatus
- *
-int onInitRemove() {
-   return(NO_ERROR);
-}
-
-
-/**
- * außerhalb iCustom(): nach Recompilation, vorhandener Indikator, kein Input-Dialog
- * innerhalb iCustom(): nie
+ * Nach manueller Änderung der Indikatorparameter. Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitRecompile() {
+int onInit.Parameters() {
    if (isLfxInstrument) {
-      // LFX-Status neu einlesen
-      if (!RestoreLfxStatusFromFiles())
+      // in Library gespeicherten LFX-Status restaurieren
+      if (!RestoreLfxStatusFromLib())
          return(last_error);
    }
    return(NO_ERROR);
@@ -132,11 +77,48 @@ int onInitRecompile() {
 
 
 /**
- * Initialisierung Postprocessing
+ * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
- *
-int afterInit() {
+ */
+int onInit.TimeframeChange() {
+   if (isLfxInstrument) {
+      // in Library gespeicherten LFX-Status restaurieren
+      if (!RestoreLfxStatusFromLib())
+         return(last_error);
+   }
    return(NO_ERROR);
 }
-*/
+
+
+/**
+ * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit.SymbolChange() {
+   if (isLfxInstrument) {
+      // in Library gespeicherten LFX-Status des alten Symbols restaurieren und speichern
+      if (!RestoreLfxStatusFromLib())   return(last_error);
+      if (!SaveVolatileLfxStatus())     return(last_error);
+
+      // LFX-Status des aktuellen Symbols einlesen
+      if (!RestoreLfxStatusFromFiles()) return(last_error);
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Bei Reload des Indikators nach Neukompilierung. Kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit.Recompile() {
+   if (isLfxInstrument) {
+      // LFX-Status neu einlesen
+      if (!RestoreLfxStatusFromFiles())
+         return(last_error);
+   }
+   return(NO_ERROR);
+}

@@ -72,10 +72,9 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
 
 
    // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
-   if (!GetApplicationWindow())                                      // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
-      return(last_error);                                            // bei Shutdown). Die Funktion GetUIThreadId() ist jedoch auf ein gültiges Hauptfenster-Handle angewiesen,
-   if (!GetUIThreadId())                                             // das Handle muß deshalb vorher (also hier) ermittelt werden.
-      return(last_error);
+   if (!GetApplicationWindow()) return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
+   if (!GetUIThreadId())        return(last_error);                  // bei Shutdown). Die Funktion GetUIThreadId() ist jedoch auf ein gültiges Hauptfenster-Handle angewiesen,
+                                                                     // das Handle muß deshalb vorher (also hier) ermittelt werden.
 
 
    // (4) user-spezifische Init-Tasks ausführen
@@ -163,12 +162,12 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
 
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
-      // vorher: Tick.prevTime = 0;                danach: Tick.prevTime = 0;
-      //         Tick.Time     = 0;                        Tick.Time     = time[0];
-      // --------------------------------------------------------------------------
+      // vorher: Tick.prevTime = 0;                   danach: Tick.prevTime = 0;
+      //         Tick.Time     = 0;                           Tick.Time     = tickTime[0];
+      // ---------------------------------------------------------------------------------
       // (2) ... oder erster Aufruf bei weiterem Tick
-      // vorher: Tick.prevTime = time[2]|0;        danach: Tick.prevTime = time[1];
-      //         Tick.Time     = time[1];                  Tick.Time     = time[0];
+      // vorher: Tick.prevTime = 0|tickTime[2];       danach: Tick.prevTime = tickTime[1];
+      //         Tick.Time     =   tickTime[1];               Tick.Time     = tickTime[0];
       Tick.prevTime = Tick.Time;
       Tick.Time     = tickTime;
    }
@@ -219,7 +218,7 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    // (2) EXECUTION_CONTEXT von Indikatoren zwischenspeichern
    if (IsIndicator()) {
       ArrayCopy(__ExecutionContext, ec);
-      if (IsError(catch("stdlib.deinit"))) {
+      if (IsError(catch("stdlib.deinit(1)"))) {
          ArrayInitialize(__ExecutionContext, 0);
          error = last_error;
       }
@@ -228,43 +227,113 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
 }
 
 
-// Laufzeitfunktionen
-int    onInit()                  {                                                                                                                              return(NO_ERROR);  }
-int    onInitParameterChange()   {                                                                                                                              return(NO_ERROR);  }
-int    onInitChartChange()       {                                                                                                                              return(NO_ERROR);  }
-int    onInitAccountChange()     { if (IsExpert())                   return(catch("onInitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT",   ERR_RUNTIME_ERROR));
-                                   if (IsIndicator())                        warn("onInitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT");    return(NO_ERROR);  }
-int    onInitChartClose()        { if (IsIndicator())                        warn("onInitChartClose()   unexpected UninitializeReason = REASON_CHARTCLOSE");    return(NO_ERROR);  }
-int    onInitUndefined()         {                                                                                                                              return(NO_ERROR);  }
-int    onInitRemove()            {                                                                                                                              return(NO_ERROR);  }
-int    onInitRecompile()         {                                                                                                                              return(NO_ERROR);  }
-// build > 509
-int    onInitTemplate()          {                                        return(catch("onInitTemplate()   unexpected UninitializeReason = REASON_TEMPLATE", ERR_RUNTIME_ERROR));  }
-int    onInitFailed()            {                                        return(catch("onInitFailed()   unexpected UninitializeReason = REASON_INITFAILED", ERR_RUNTIME_ERROR));  }
-int    onInitClose()             {                                        return(catch("onInitClose()   unexpected UninitializeReason = REASON_CLOSE",       ERR_RUNTIME_ERROR));  }
-int    afterInit()               {                                                                                                                              return(NO_ERROR);  }
+/**
+ * Ob in der Library Ticks gespeichert sind oder nicht.
+ *
+ * @return bool - TRUE, wenn in der Library noch keine Ticks gespeichert sind; FALSE andererseits
+ *
+ * NOTE: nur für Aufruf in Indicator::init() oder Indicator::InitReason()
+ */
+bool Init.IsNoTick() {
+   return(!Tick);
+}
 
-int    onStart()                 {                                                                                                                              return(NO_ERROR);  }
-int    onTick()                  {                                                                                                                              return(NO_ERROR);  }
 
-int    onDeinit()                {                                                                                                                              return(NO_ERROR);  }
-int    onDeinitParameterChange() {                                                                                                                              return(NO_ERROR);  }
-int    onDeinitChartChange()     {                                                                                                                              return(NO_ERROR);  }
-int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT", ERR_RUNTIME_ERROR));
-                                   if (IsIndicator())                        warn("onDeinitAccountChange()   unexpected UninitializeReason = REASON_ACCOUNT");  return(NO_ERROR);  }
-int    onDeinitChartClose()      { if (IsIndicator())                        warn("onDeinitChartClose()   unexpected UninitializeReason = REASON_CHARTCLOSE");  return(NO_ERROR);  }
-int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()   unexpected UninitializeReason = REASON_UNDEFINED",   ERR_RUNTIME_ERROR));
-                                   if (IsIndicator())                        warn("onDeinitUndefined()   unexpected UninitializeReason = REASON_UNDEFINED");    return(NO_ERROR);  }
-int    onDeinitRemove()          {                                                                                                                              return(NO_ERROR);  }
-int    onDeinitRecompile()       {                                                                                                                              return(NO_ERROR);  }
-// build > 509
-int    onDeinitTemplate()        {                                       return(catch("onDeinitTemplate()   unexpected UninitializeReason = REASON_TEMPLATE", ERR_RUNTIME_ERROR)); }
-int    onDeinitFailed()          {                                       return(catch("onDeinitFailed()   unexpected UninitializeReason = REASON_INITFAILED", ERR_RUNTIME_ERROR)); }
-int    onDeinitClose()           {                                       return(catch("onDeinitClose()   unexpected UninitializeReason = REASON_CLOSE",       ERR_RUNTIME_ERROR)); }
-int    afterDeinit()             {                                                                                                                              return(NO_ERROR);  }
+string static.currentSymbol[1];
 
-string InputsToStr()             {                                           return("InputsToStr()   function not implemented"); }
-int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");            return(error   ); }
+
+/**
+ * Speichert das aktuelle Chartsymbol in der Library, um init()-Cycles eines Indikators überdauern und Symbolwechsel erkennen zu können.
+ *
+ * @param  string symbol - aktuelles Chartsymbol
+ *
+ * NOTE: nur für Aufruf in Indicator::init() oder Indicator::InitReason()
+ */
+void Init.StoreSymbol(string symbol) {
+   static.currentSymbol[0] = symbol;
+}
+
+
+/**
+ * Vergleicht das übergebene mit dem intern gespeicherten Symbol, um nach init()-Cycles eines Indikators einen Symbolwechsel erkennen zu können.
+ *
+ * @param  string symbol - Symbol
+ *
+ * @result bool - TRUE, wenn das in der Library gespeicherte Symbol nicht mit dem übergebenen Symbol übereinstimmt;
+ *                FALSE, wenn die Symbole übereinstimmen oder in der Library noch kein Symbol gespeichert ist
+ *
+ * NOTE: nur für Aufruf in Indicator::init() oder Indicator::InitReason()
+ */
+bool Init.IsNewSymbol(string symbol) {
+   if (StringLen(static.currentSymbol[0]) > 0)
+      return(static.currentSymbol[0] != symbol);
+   return(false);
+}
+
+
+/**
+ * Gibt optisch und akustisch eine Warnung aus.
+ *
+ * @param  string message - anzuzeigende Nachricht
+ * @param  int    error   - anzuzeigender Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ *
+ *
+ * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
+ */
+int _warn(string message, int error=NO_ERROR) {
+   ForceSound("alert.wav");
+   log(message, error);
+   return(error);
+}
+
+
+// virtuelle Init/Deinit-Handler und Main-Funktionen, können je nach Bedarf überschrieben werden
+int    onInit()                  { return(NO_ERROR); }
+int    onInit.User()             { return(NO_ERROR); }
+int    onInit.Template()         { return(NO_ERROR); }
+int    onInit.Program()          { return(NO_ERROR); }
+int    onInit.ProgramClearTest() { return(      -1); }               // default: weitere Ausführung sofort abbrechen
+int    onInit.Parameters()       { return(NO_ERROR); }
+int    onInit.TimeframeChange()  { return(NO_ERROR); }
+int    onInit.SymbolChange()     { return(NO_ERROR); }
+int    onInit.Recompile()        { return(NO_ERROR); }
+int    afterInit()               { return(NO_ERROR); }
+
+int    onStart()                 { return(NO_ERROR); }
+int    onTick()                  { return(NO_ERROR); }
+
+
+// alt
+int    onInitParameterChange()   {                                                                                                             return(NO_ERROR);  }
+int    onInitChartChange()       {                                                                                                             return(NO_ERROR);  }
+int    onInitAccountChange()     {                                   return(catch("onInitAccountChange()   unexpected UninitializeReason",   ERR_RUNTIME_ERROR)); }
+int    onInitChartClose()        {                                                                                                             return(NO_ERROR);  }
+int    onInitUndefined()         {                                                                                                             return(NO_ERROR);  }
+int    onInitRemove()            {                                                                                                             return(NO_ERROR);  }
+int    onInitRecompile()         {                                                                                                             return(NO_ERROR);  }
+int    onInitTemplate()          { /*build > 509*/                   return(catch("onInitTemplate()   unexpected UninitializeReason",        ERR_RUNTIME_ERROR)); }
+int    onInitFailed()            { /*build > 509*/                   return(catch("onInitFailed()   unexpected UninitializeReason",          ERR_RUNTIME_ERROR)); }
+int    onInitClose()             { /*build > 509*/                   return(catch("onInitClose()   unexpected UninitializeReason",           ERR_RUNTIME_ERROR)); }
+
+int    onDeinit()                {                                                                                                             return(NO_ERROR);  }
+int    onDeinitParameterChange() {                                                                                                             return(NO_ERROR);  }
+int    onDeinitChartChange()     {                                                                                                             return(NO_ERROR);  }
+int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()   unexpected UninitializeReason", ERR_RUNTIME_ERROR));
+                                   /*if (IsIndicator()) _warn("onDeinitAccountChange()   unexpected UninitializeReason");*/                    return(NO_ERROR);  }
+int    onDeinitChartClose()      { /*if (IsIndicator()) _warn("onDeinitChartClose()   unexpected UninitializeReason");*/                       return(NO_ERROR);  }
+int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()   unexpected UninitializeReason",     ERR_RUNTIME_ERROR));
+                                   /*if (IsIndicator()) _warn("onDeinitUndefined()   unexpected UninitializeReason");*/                        return(NO_ERROR);  }
+int    onDeinitRemove()          {                                                                                                             return(NO_ERROR);  }
+int    onDeinitRecompile()       {                                                                                                             return(NO_ERROR);  }
+int    onDeinitTemplate()        { /*build > 509*/                     /*_warn("onDeinitTemplate()   unexpected UninitializeReason");*/        return(NO_ERROR);  }
+int    onDeinitFailed()          { /*build > 509*/                     /*_warn("onDeinitFailed()   unexpected UninitializeReason");  */        return(NO_ERROR);  }
+int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()   unexpected UninitializeReason");   */        return(NO_ERROR);  }
+int    afterDeinit()             {                                                                                                             return(NO_ERROR);  }
+
+string InputsToStr()             {                                       return("InputsToStr()   function not implemented"); }
+int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");        return(error); }
 
 
 /**
@@ -716,7 +785,7 @@ M15::Moving Average::stdlib::onTick()   MODE_FREEZELEVEL       = 0
 
 
 /**
- * Kopiert einen Speicherbereich. Korrekterweise als MoveMemory() implementiert (die betroffenen Speicherblöcke können sich überlappen).
+ * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblöcke können sich also überlappen.
  *
  * @param  int source      - Quelladdrese
  * @param  int destination - Zieladresse
@@ -6010,7 +6079,7 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!Indicator.IsSuperContext())   // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
+   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())          // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(!catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)
@@ -7352,275 +7421,6 @@ string GetDayOfWeek(datetime time, bool longFormat=true) {
 
 
 /**
- * Gibt die Beschreibung eines Fehlercodes zurück.
- *
- * @param  int error - MQL- oder gemappter Win32-Fehlercode
- *
- * @return string
- */
-string ErrorDescription(int error) {
-   if (error >= ERR_WIN32_ERROR)                                                                                  // 100000
-      return(StringConcatenate("win32 error (", error-ERR_WIN32_ERROR, ")"));
-
-   switch (error) {
-      case NO_ERROR                       : return("no error"                                                  ); //      0
-
-      // trade server errors
-      case ERR_NO_RESULT                  : return("no result"                                                 ); //      1
-      case ERR_COMMON_ERROR               : return("trade denied"                                              ); //      2
-      case ERR_INVALID_TRADE_PARAMETERS   : return("invalid trade parameters"                                  ); //      3
-      case ERR_SERVER_BUSY                : return("trade server busy"                                         ); //      4
-      case ERR_OLD_VERSION                : return("old terminal version"                                      ); //      5
-      case ERR_NO_CONNECTION              : return("no connection to trade server"                             ); //      6
-      case ERR_NOT_ENOUGH_RIGHTS          : return("not enough rights"                                         ); //      7
-      case ERR_TOO_FREQUENT_REQUESTS      : return("too frequent requests"                                     ); //      8
-      case ERR_MALFUNCTIONAL_TRADE        : return("malfunctional trade operation"                             ); //      9
-      case ERR_ACCOUNT_DISABLED           : return("account disabled"                                          ); //     64
-      case ERR_INVALID_ACCOUNT            : return("invalid account"                                           ); //     65
-      case ERR_TRADE_TIMEOUT              : return("trade timeout"                                             ); //    128
-      case ERR_INVALID_PRICE              : return("invalid price"                                             ); //    129 Kurs bewegt sich zu schnell (aus dem Fenster)
-      case ERR_INVALID_STOP               : return("invalid stop"                                              ); //    130
-      case ERR_INVALID_TRADE_VOLUME       : return("invalid trade volume"                                      ); //    131
-      case ERR_MARKET_CLOSED              : return("market closed"                                             ); //    132
-      case ERR_TRADE_DISABLED             : return("trading disabled"                                          ); //    133
-      case ERR_NOT_ENOUGH_MONEY           : return("not enough money"                                          ); //    134
-      case ERR_PRICE_CHANGED              : return("price changed"                                             ); //    135
-      case ERR_OFF_QUOTES                 : return("off quotes"                                                ); //    136
-      case ERR_BROKER_BUSY                : return("broker busy"                                               ); //    137
-      case ERR_REQUOTE                    : return("requote"                                                   ); //    138
-      case ERR_ORDER_LOCKED               : return("order locked"                                              ); //    139
-      case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("long positions only allowed"                               ); //    140
-      case ERR_TOO_MANY_REQUESTS          : return("too many requests"                                         ); //    141
-    //case 142: ???                                                                                               //    see stderror.mqh
-    //case 143: ???                                                                                               //    see stderror.mqh
-    //case 144: ???                                                                                               //    see stderror.mqh
-      case ERR_TRADE_MODIFY_DENIED        : return("modification denied because too close to market"           ); //    145
-      case ERR_TRADE_CONTEXT_BUSY         : return("trade context busy"                                        ); //    146
-      case ERR_TRADE_EXPIRATION_DENIED    : return("expiration setting denied by broker"                       ); //    147
-      case ERR_TRADE_TOO_MANY_ORDERS      : return("number of open orders reached the broker limit"            ); //    148
-      case ERR_TRADE_HEDGE_PROHIBITED     : return("hedging prohibited"                                        ); //    149
-      case ERR_TRADE_PROHIBITED_BY_FIFO   : return("prohibited by FIFO rules"                                  ); //    150
-
-      // runtime errors
-      case ERR_RUNTIME_ERROR              : return("runtime error"                                             ); //   4000 common runtime error (no mql error)
-      case ERR_WRONG_FUNCTION_POINTER     : return("wrong function pointer"                                    ); //   4001
-      case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("array index out of range"                                  ); //   4002
-      case ERR_NO_MEMORY_FOR_CALL_STACK   : return("no memory for function call stack"                         ); //   4003
-      case ERR_RECURSIVE_STACK_OVERFLOW   : return("recursive stack overflow"                                  ); //   4004
-      case ERR_NOT_ENOUGH_STACK_FOR_PARAM : return("not enough stack for parameter"                            ); //   4005
-      case ERR_NO_MEMORY_FOR_PARAM_STRING : return("no memory for parameter string"                            ); //   4006
-      case ERR_NO_MEMORY_FOR_TEMP_STRING  : return("no memory for temp string"                                 ); //   4007
-      case ERR_NOT_INITIALIZED_STRING     : return("uninitialized string"                                      ); //   4008
-      case ERR_NOT_INITIALIZED_ARRAYSTRING: return("uninitialized string in array"                             ); //   4009
-      case ERR_NO_MEMORY_FOR_ARRAYSTRING  : return("no memory for string in array"                             ); //   4010
-      case ERR_TOO_LONG_STRING            : return("string too long"                                           ); //   4011
-      case ERR_REMAINDER_FROM_ZERO_DIVIDE : return("remainder from division by zero"                           ); //   4012
-      case ERR_ZERO_DIVIDE                : return("division by zero"                                          ); //   4013
-      case ERR_UNKNOWN_COMMAND            : return("unknown command"                                           ); //   4014
-      case ERR_WRONG_JUMP                 : return("wrong jump"                                                ); //   4015
-      case ERR_NOT_INITIALIZED_ARRAY      : return("array not initialized"                                     ); //   4016
-      case ERR_DLL_CALLS_NOT_ALLOWED      : return("DLL calls not allowed"                                     ); //   4017
-      case ERR_CANNOT_LOAD_LIBRARY        : return("cannot load library"                                       ); //   4018
-      case ERR_CANNOT_CALL_FUNCTION       : return("cannot call function"                                      ); //   4019
-      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("library calls not allowed"                                 ); //   4020
-      case ERR_NO_MEMORY_FOR_RETURNED_STR : return("no memory for temp string returned from function"          ); //   4021
-      case ERR_SYSTEM_BUSY                : return("system busy"                                               ); //   4022
-    //case 4023: ???
-      case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                          ); //   4050 invalid parameters count
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                          ); //   4051 invalid parameter value
-      case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                            ); //   4052
-      case ERR_ARRAY_ERROR                : return("array error"                                               ); //   4053 some array error
-      case ERR_TIMEFRAME_NOT_AVAILABLE    : return("requested timeframe not available"                         ); //   4054 timeframe not available
-      case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                    ); //   4055 custom indicator error
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                       ); //   4056 incompatible arrays
-      case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                         ); //   4057
-      case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                 ); //   4058
-      case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("function not allowed in tester"                            ); //   4059
-      case ERR_FUNCTION_NOT_CONFIRMED     : return("function not confirmed"                                    ); //   4060
-      case ERR_SEND_MAIL_ERROR            : return("send mail error"                                           ); //   4061
-      case ERR_STRING_PARAMETER_EXPECTED  : return("string parameter expected"                                 ); //   4062
-      case ERR_INTEGER_PARAMETER_EXPECTED : return("integer parameter expected"                                ); //   4063
-      case ERR_DOUBLE_PARAMETER_EXPECTED  : return("double parameter expected"                                 ); //   4064
-      case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("array parameter expected"                                  ); //   4065
-      case ERS_HISTORY_UPDATE             : return("requested history is updating"                             ); //   4066 requested history is updating   - Status
-      case ERR_TRADE_ERROR                : return("trade function error"                                      ); //   4067 trade function error
-      case ERR_END_OF_FILE                : return("end of file"                                               ); //   4099 end of file
-      case ERR_FILE_ERROR                 : return("file error"                                                ); //   4100 some file error
-      case ERR_WRONG_FILE_NAME            : return("wrong file name"                                           ); //   4101
-      case ERR_TOO_MANY_OPENED_FILES      : return("too many opened files"                                     ); //   4102
-      case ERR_CANNOT_OPEN_FILE           : return("cannot open file"                                          ); //   4103
-      case ERR_INCOMPATIBLE_FILEACCESS    : return("incompatible file access"                                  ); //   4104
-      case ERR_NO_ORDER_SELECTED          : return("no order selected"                                         ); //   4105
-      case ERR_UNKNOWN_SYMBOL             : return("unknown symbol"                                            ); //   4106
-      case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"                ); //   4107
-      case ERR_INVALID_TICKET             : return("invalid ticket"                                            ); //   4108
-      case ERR_TRADE_NOT_ALLOWED          : return("live trading not enabled"                                  ); //   4109
-      case ERR_LONGS_NOT_ALLOWED          : return("long trades not enabled"                                   ); //   4110
-      case ERR_SHORTS_NOT_ALLOWED         : return("short trades not enabled"                                  ); //   4111
-      case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                     ); //   4200
-      case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                   ); //   4201
-      case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                      ); //   4202
-      case ERR_UNKNOWN_OBJECT_TYPE        : return("unknown object type"                                       ); //   4203
-      case ERR_NO_OBJECT_NAME             : return("no object name"                                            ); //   4204
-      case ERR_OBJECT_COORDINATES_ERROR   : return("object coordinates error"                                  ); //   4205
-      case ERR_NO_SPECIFIED_SUBWINDOW     : return("no specified subwindow"                                    ); //   4206
-      case ERR_OBJECT_ERROR               : return("object error"                                              ); //   4207 some object error
-
-      // custom errors
-      case ERR_NOT_IMPLEMENTED            : return("feature not implemented"                                   ); //   5000
-      case ERR_INVALID_INPUT_PARAMVALUE   : return("invalid input parameter value"                             ); //   5001
-      case ERR_INVALID_CONFIG_PARAMVALUE  : return("invalid configuration value"                               ); //   5002
-      case ERS_TERMINAL_NOT_YET_READY     : return("terminal not yet ready"                                    ); //   5003 Status
-      case ERR_INVALID_TIMEZONE_CONFIG    : return("invalid or missing timezone configuration"                 ); //   5004
-      case ERR_INVALID_MARKET_DATA        : return("invalid market data"                                       ); //   5005
-      case ERR_FILE_NOT_FOUND             : return("file not found"                                            ); //   5006
-      case ERR_CANCELLED_BY_USER          : return("cancelled by user"                                         ); //   5007
-      case ERR_FUNC_NOT_ALLOWED           : return("function not allowed"                                      ); //   5008
-      case ERR_INVALID_COMMAND            : return("invalid or unknow command"                                 ); //   5009
-      case ERR_ILLEGAL_STATE              : return("illegal runtime state"                                     ); //   5010
-      case ERS_EXECUTION_STOPPING         : return("program execution stopping"                                ); //   5011 Status
-      case ERR_ORDER_CHANGED              : return("order status changed"                                      ); //   5012
-      case ERR_HISTORY_INSUFFICIENT       : return("insufficient history for calculation"                      ); //   5013
-      case ERR_CONCURRENT_MODIFICATION    : return("concurrent modification"                                   ); //   5014
-   }
-   return(StringConcatenate("unknown error (", error, ")"));
-}
-
-
-/**
- * Gibt die lesbare Konstante eines MQL-Fehlercodes zurück.
- *
- * @param  int error - MQL-Fehlercode
- *
- * @return string
- */
-string ErrorToStr(int error) {
-   if (error >= ERR_WIN32_ERROR)                                                       // 100000
-      return(StringConcatenate("ERR_WIN32_ERROR+", error-ERR_WIN32_ERROR));
-
-   switch (error) {
-      case NO_ERROR                       : return("NO_ERROR"                       ); //      0
-
-      // trade server errors
-      case ERR_NO_RESULT                  : return("ERR_NO_RESULT"                  ); //      1
-      case ERR_COMMON_ERROR               : return("ERR_COMMON_ERROR"               ); //      2
-      case ERR_INVALID_TRADE_PARAMETERS   : return("ERR_INVALID_TRADE_PARAMETERS"   ); //      3
-      case ERR_SERVER_BUSY                : return("ERR_SERVER_BUSY"                ); //      4
-      case ERR_OLD_VERSION                : return("ERR_OLD_VERSION"                ); //      5
-      case ERR_NO_CONNECTION              : return("ERR_NO_CONNECTION"              ); //      6
-      case ERR_NOT_ENOUGH_RIGHTS          : return("ERR_NOT_ENOUGH_RIGHTS"          ); //      7
-      case ERR_TOO_FREQUENT_REQUESTS      : return("ERR_TOO_FREQUENT_REQUESTS"      ); //      8
-      case ERR_MALFUNCTIONAL_TRADE        : return("ERR_MALFUNCTIONAL_TRADE"        ); //      9
-      case ERR_ACCOUNT_DISABLED           : return("ERR_ACCOUNT_DISABLED"           ); //     64
-      case ERR_INVALID_ACCOUNT            : return("ERR_INVALID_ACCOUNT"            ); //     65
-      case ERR_TRADE_TIMEOUT              : return("ERR_TRADE_TIMEOUT"              ); //    128
-      case ERR_INVALID_PRICE              : return("ERR_INVALID_PRICE"              ); //    129
-      case ERR_INVALID_STOP               : return("ERR_INVALID_STOP"               ); //    130
-      case ERR_INVALID_TRADE_VOLUME       : return("ERR_INVALID_TRADE_VOLUME"       ); //    131
-      case ERR_MARKET_CLOSED              : return("ERR_MARKET_CLOSED"              ); //    132
-      case ERR_TRADE_DISABLED             : return("ERR_TRADE_DISABLED"             ); //    133
-      case ERR_NOT_ENOUGH_MONEY           : return("ERR_NOT_ENOUGH_MONEY"           ); //    134
-      case ERR_PRICE_CHANGED              : return("ERR_PRICE_CHANGED"              ); //    135
-      case ERR_OFF_QUOTES                 : return("ERR_OFF_QUOTES"                 ); //    136
-      case ERR_BROKER_BUSY                : return("ERR_BROKER_BUSY"                ); //    137
-      case ERR_REQUOTE                    : return("ERR_REQUOTE"                    ); //    138
-      case ERR_ORDER_LOCKED               : return("ERR_ORDER_LOCKED"               ); //    139
-      case ERR_LONG_POSITIONS_ONLY_ALLOWED: return("ERR_LONG_POSITIONS_ONLY_ALLOWED"); //    140
-      case ERR_TOO_MANY_REQUESTS          : return("ERR_TOO_MANY_REQUESTS"          ); //    141
-      case ERR_TRADE_MODIFY_DENIED        : return("ERR_TRADE_MODIFY_DENIED"        ); //    145
-      case ERR_TRADE_CONTEXT_BUSY         : return("ERR_TRADE_CONTEXT_BUSY"         ); //    146
-      case ERR_TRADE_EXPIRATION_DENIED    : return("ERR_TRADE_EXPIRATION_DENIED"    ); //    147
-      case ERR_TRADE_TOO_MANY_ORDERS      : return("ERR_TRADE_TOO_MANY_ORDERS"      ); //    148
-      case ERR_TRADE_HEDGE_PROHIBITED     : return("ERR_TRADE_HEDGE_PROHIBITED"     ); //    149
-      case ERR_TRADE_PROHIBITED_BY_FIFO   : return("ERR_TRADE_PROHIBITED_BY_FIFO"   ); //    150
-
-      // runtime errors
-      case ERR_RUNTIME_ERROR              : return("ERR_RUNTIME_ERROR"              ); //   4000
-      case ERR_WRONG_FUNCTION_POINTER     : return("ERR_WRONG_FUNCTION_POINTER"     ); //   4001
-      case ERR_ARRAY_INDEX_OUT_OF_RANGE   : return("ERR_ARRAY_INDEX_OUT_OF_RANGE"   ); //   4002
-      case ERR_NO_MEMORY_FOR_CALL_STACK   : return("ERR_NO_MEMORY_FOR_CALL_STACK"   ); //   4003
-      case ERR_RECURSIVE_STACK_OVERFLOW   : return("ERR_RECURSIVE_STACK_OVERFLOW"   ); //   4004
-      case ERR_NOT_ENOUGH_STACK_FOR_PARAM : return("ERR_NOT_ENOUGH_STACK_FOR_PARAM" ); //   4005
-      case ERR_NO_MEMORY_FOR_PARAM_STRING : return("ERR_NO_MEMORY_FOR_PARAM_STRING" ); //   4006
-      case ERR_NO_MEMORY_FOR_TEMP_STRING  : return("ERR_NO_MEMORY_FOR_TEMP_STRING"  ); //   4007
-      case ERR_NOT_INITIALIZED_STRING     : return("ERR_NOT_INITIALIZED_STRING"     ); //   4008
-      case ERR_NOT_INITIALIZED_ARRAYSTRING: return("ERR_NOT_INITIALIZED_ARRAYSTRING"); //   4009
-      case ERR_NO_MEMORY_FOR_ARRAYSTRING  : return("ERR_NO_MEMORY_FOR_ARRAYSTRING"  ); //   4010
-      case ERR_TOO_LONG_STRING            : return("ERR_TOO_LONG_STRING"            ); //   4011
-      case ERR_REMAINDER_FROM_ZERO_DIVIDE : return("ERR_REMAINDER_FROM_ZERO_DIVIDE" ); //   4012
-      case ERR_ZERO_DIVIDE                : return("ERR_ZERO_DIVIDE"                ); //   4013
-      case ERR_UNKNOWN_COMMAND            : return("ERR_UNKNOWN_COMMAND"            ); //   4014
-      case ERR_WRONG_JUMP                 : return("ERR_WRONG_JUMP"                 ); //   4015
-      case ERR_NOT_INITIALIZED_ARRAY      : return("ERR_NOT_INITIALIZED_ARRAY"      ); //   4016
-      case ERR_DLL_CALLS_NOT_ALLOWED      : return("ERR_DLL_CALLS_NOT_ALLOWED"      ); //   4017
-      case ERR_CANNOT_LOAD_LIBRARY        : return("ERR_CANNOT_LOAD_LIBRARY"        ); //   4018
-      case ERR_CANNOT_CALL_FUNCTION       : return("ERR_CANNOT_CALL_FUNCTION"       ); //   4019
-      case ERR_EXTERNAL_CALLS_NOT_ALLOWED : return("ERR_EXTERNAL_CALLS_NOT_ALLOWED" ); //   4020
-      case ERR_NO_MEMORY_FOR_RETURNED_STR : return("ERR_NO_MEMORY_FOR_RETURNED_STR" ); //   4021
-      case ERR_SYSTEM_BUSY                : return("ERR_SYSTEM_BUSY"                ); //   4022
-    //case 4023                           : // ???
-      case ERR_INVALID_FUNCTION_PARAMSCNT : return("ERR_INVALID_FUNCTION_PARAMSCNT" ); //   4050
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("ERR_INVALID_FUNCTION_PARAMVALUE"); //   4051
-      case ERR_STRING_FUNCTION_INTERNAL   : return("ERR_STRING_FUNCTION_INTERNAL"   ); //   4052
-      case ERR_ARRAY_ERROR                : return("ERR_ARRAY_ERROR"                ); //   4053
-      case ERR_TIMEFRAME_NOT_AVAILABLE    : return("ERR_TIMEFRAME_NOT_AVAILABLE"    ); //   4054
-      case ERR_CUSTOM_INDICATOR_ERROR     : return("ERR_CUSTOM_INDICATOR_ERROR"     ); //   4055
-      case ERR_INCOMPATIBLE_ARRAYS        : return("ERR_INCOMPATIBLE_ARRAYS"        ); //   4056
-      case ERR_GLOBAL_VARIABLES_PROCESSING: return("ERR_GLOBAL_VARIABLES_PROCESSING"); //   4057
-      case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("ERR_GLOBAL_VARIABLE_NOT_FOUND"  ); //   4058
-      case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("ERR_FUNC_NOT_ALLOWED_IN_TESTER" ); //   4059
-      case ERR_FUNCTION_NOT_CONFIRMED     : return("ERR_FUNCTION_NOT_CONFIRMED"     ); //   4060
-      case ERR_SEND_MAIL_ERROR            : return("ERR_SEND_MAIL_ERROR"            ); //   4061
-      case ERR_STRING_PARAMETER_EXPECTED  : return("ERR_STRING_PARAMETER_EXPECTED"  ); //   4062
-      case ERR_INTEGER_PARAMETER_EXPECTED : return("ERR_INTEGER_PARAMETER_EXPECTED" ); //   4063
-      case ERR_DOUBLE_PARAMETER_EXPECTED  : return("ERR_DOUBLE_PARAMETER_EXPECTED"  ); //   4064
-      case ERR_ARRAY_AS_PARAMETER_EXPECTED: return("ERR_ARRAY_AS_PARAMETER_EXPECTED"); //   4065
-      case ERS_HISTORY_UPDATE             : return("ERS_HISTORY_UPDATE"             ); //   4066 Status
-      case ERR_TRADE_ERROR                : return("ERR_TRADE_ERROR"                ); //   4067
-      case ERR_END_OF_FILE                : return("ERR_END_OF_FILE"                ); //   4099
-      case ERR_FILE_ERROR                 : return("ERR_FILE_ERROR"                 ); //   4100
-      case ERR_WRONG_FILE_NAME            : return("ERR_WRONG_FILE_NAME"            ); //   4101
-      case ERR_TOO_MANY_OPENED_FILES      : return("ERR_TOO_MANY_OPENED_FILES"      ); //   4102
-      case ERR_CANNOT_OPEN_FILE           : return("ERR_CANNOT_OPEN_FILE"           ); //   4103
-      case ERR_INCOMPATIBLE_FILEACCESS    : return("ERR_INCOMPATIBLE_FILEACCESS"    ); //   4104
-      case ERR_NO_ORDER_SELECTED          : return("ERR_NO_ORDER_SELECTED"          ); //   4105
-      case ERR_UNKNOWN_SYMBOL             : return("ERR_UNKNOWN_SYMBOL"             ); //   4106
-      case ERR_INVALID_PRICE_PARAM        : return("ERR_INVALID_PRICE_PARAM"        ); //   4107
-      case ERR_INVALID_TICKET             : return("ERR_INVALID_TICKET"             ); //   4108
-      case ERR_TRADE_NOT_ALLOWED          : return("ERR_TRADE_NOT_ALLOWED"          ); //   4109
-      case ERR_LONGS_NOT_ALLOWED          : return("ERR_LONGS_NOT_ALLOWED"          ); //   4110
-      case ERR_SHORTS_NOT_ALLOWED         : return("ERR_SHORTS_NOT_ALLOWED"         ); //   4111
-      case ERR_OBJECT_ALREADY_EXISTS      : return("ERR_OBJECT_ALREADY_EXISTS"      ); //   4200
-      case ERR_UNKNOWN_OBJECT_PROPERTY    : return("ERR_UNKNOWN_OBJECT_PROPERTY"    ); //   4201
-      case ERR_OBJECT_DOES_NOT_EXIST      : return("ERR_OBJECT_DOES_NOT_EXIST"      ); //   4202
-      case ERR_UNKNOWN_OBJECT_TYPE        : return("ERR_UNKNOWN_OBJECT_TYPE"        ); //   4203
-      case ERR_NO_OBJECT_NAME             : return("ERR_NO_OBJECT_NAME"             ); //   4204
-      case ERR_OBJECT_COORDINATES_ERROR   : return("ERR_OBJECT_COORDINATES_ERROR"   ); //   4205
-      case ERR_NO_SPECIFIED_SUBWINDOW     : return("ERR_NO_SPECIFIED_SUBWINDOW"     ); //   4206
-      case ERR_OBJECT_ERROR               : return("ERR_OBJECT_ERROR"               ); //   4207
-
-      // custom errors
-      case ERR_NOT_IMPLEMENTED            : return("ERR_NOT_IMPLEMENTED"            ); //   5000
-      case ERR_INVALID_INPUT_PARAMVALUE   : return("ERR_INVALID_INPUT_PARAMVALUE"   ); //   5001
-      case ERR_INVALID_CONFIG_PARAMVALUE  : return("ERR_INVALID_CONFIG_PARAMVALUE"  ); //   5002
-      case ERS_TERMINAL_NOT_YET_READY     : return("ERS_TERMINAL_NOT_YET_READY"     ); //   5003 Status
-      case ERR_INVALID_TIMEZONE_CONFIG    : return("ERR_INVALID_TIMEZONE_CONFIG"    ); //   5004
-      case ERR_INVALID_MARKET_DATA        : return("ERR_INVALID_MARKET_DATA"        ); //   5005
-      case ERR_FILE_NOT_FOUND             : return("ERR_FILE_NOT_FOUND"             ); //   5006
-      case ERR_CANCELLED_BY_USER          : return("ERR_CANCELLED_BY_USER"          ); //   5007
-      case ERR_FUNC_NOT_ALLOWED           : return("ERR_FUNC_NOT_ALLOWED"           ); //   5008
-      case ERR_INVALID_COMMAND            : return("ERR_INVALID_COMMAND"            ); //   5009
-      case ERR_ILLEGAL_STATE              : return("ERR_ILLEGAL_STATE"              ); //   5010
-      case ERS_EXECUTION_STOPPING         : return("ERS_EXECUTION_STOPPING"         ); //   5011 Status
-      case ERR_ORDER_CHANGED              : return("ERR_ORDER_CHANGED"              ); //   5012
-      case ERR_HISTORY_INSUFFICIENT       : return("ERR_HISTORY_INSUFFICIENT"       ); //   5013
-      case ERR_CONCURRENT_MODIFICATION    : return("ERR_CONCURRENT_MODIFICATION"    ); //   5014
-   }
-   return(error);
-}
-
-
-/**
  * Gibt die lesbare Beschreibung eines ShellExecute()/ShellExecuteEx()-Fehlercodes zurück.
  *
  * @param  int error - ShellExecute-Fehlercode
@@ -8220,33 +8020,6 @@ string TimeframeToStr(int timeframe=NULL) {
 
 
 /**
- * Gibt die Beschreibung eines Timeframe-Codes zurück.
- *
- * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
- *
- * @return string
- */
-string PeriodDescription(int period=NULL) {
-   if (period == NULL)
-      period = Period();
-
-   switch (period) {
-      case PERIOD_M1 : return("M1" );     // 1 minute
-      case PERIOD_M5 : return("M5" );     // 5 minutes
-      case PERIOD_M15: return("M15");     // 15 minutes
-      case PERIOD_M30: return("M30");     // 30 minutes
-      case PERIOD_H1 : return("H1" );     // 1 hour
-      case PERIOD_H4 : return("H4" );     // 4 hour
-      case PERIOD_D1 : return("D1" );     // 1 day
-      case PERIOD_W1 : return("W1" );     // 1 week
-      case PERIOD_MN1: return("MN1");     // 1 month
-      case PERIOD_Q1 : return("Q1" );     // 1 quarter
-   }
-   return(_empty(catch("PeriodDescription()   invalid parameter period = "+ period, ERR_INVALID_FUNCTION_PARAMVALUE)));
-}
-
-
-/**
  * Alias
  *
  * Gibt die Beschreibung eines Timeframe-Codes zurück.
@@ -8625,19 +8398,17 @@ string UninitializeReasonDescription(int reason) {
    int build = GetTerminalBuild();
 
    switch (reason) {
-      case REASON_UNDEFINED  :                   return("undefined"                          );
-      case REASON_REMOVE     :                   return("program removed from chart"         );
-      case REASON_RECOMPILE  :                   return("program recompiled"                 );
-      case REASON_CHARTCHANGE:                   return("chart symbol or timeframe changed"  );
-      case REASON_CHARTCLOSE : if (build <= 509) return("chart closed or template changed"   );
-                                                 return("chart closed" );
-      case REASON_PARAMETERS :                   return("input parameters changed"           );
-      case REASON_ACCOUNT    : if (build <= 509) return("account changed"                    );
-                                                 return("account or account settings changed");
+      case REASON_UNDEFINED  : return("undefined"                          );
+      case REASON_REMOVE     : return("program removed from chart"         );
+      case REASON_RECOMPILE  : return("program recompiled"                 );
+      case REASON_CHARTCHANGE: return("chart symbol or timeframe changed"  );
+      case REASON_CHARTCLOSE : return("chart closed"                       );
+      case REASON_PARAMETERS : return("input parameters changed"           );
+      case REASON_ACCOUNT    : return("account or account settings changed");
       // build > 509
-      case REASON_TEMPLATE   :                   return("template changed"                   );
-      case REASON_INITFAILED :                   return("OnInit() failed"                    );
-      case REASON_CLOSE      :                   return("terminal closed"                    );
+      case REASON_TEMPLATE   : return("template changed"                   );
+      case REASON_INITFAILED : return("OnInit() failed"                    );
+      case REASON_CLOSE      : return("terminal closed"                    );
    }
    return(_empty(catch("UninitializeReasonDescription()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -8665,6 +8436,50 @@ string UninitializeReasonToStr(int reason) {
       case REASON_CLOSE      : return("REASON_CLOSE"      );
    }
    return(_empty(catch("UninitializeReasonToStr()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
+ *
+ * @param  int reason - Code
+ *
+ * @return string
+ */
+string InitReasonDescription(int reason) {
+   switch (reason) {
+      case INIT_REASON_USER             : return("program loaded by user"    );
+      case INIT_REASON_TEMPLATE         : return("program loaded by template");
+      case INIT_REASON_PROGRAM          : return("program loaded by program" );
+      case INIT_REASON_PROGRAM_CLEARTEST: return("program clear after test"  );
+      case INIT_REASON_PARAMETERS       : return("input parameters changed"  );
+      case INIT_REASON_TIMEFRAMECHANGE  : return("chart timeframe changed"   );
+      case INIT_REASON_SYMBOLCHANGE     : return("chart symbol changed"      );
+      case INIT_REASON_RECOMPILE        : return("program recompiled"        );
+   }
+   return(_empty(catch("InitReasonDescription()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines InitReason-Codes zurück (siehe InitReason()).
+ *
+ * @param  int reason - Code
+ *
+ * @return string
+ */
+string InitReasonToStr(int reason) {
+   switch (reason) {
+      case INIT_REASON_USER             : return("INIT_REASON_USER"             );
+      case INIT_REASON_TEMPLATE         : return("INIT_REASON_TEMPLATE"         );
+      case INIT_REASON_PROGRAM          : return("INIT_REASON_PROGRAM"          );
+      case INIT_REASON_PROGRAM_CLEARTEST: return("INIT_REASON_PROGRAM_CLEARTEST");
+      case INIT_REASON_PARAMETERS       : return("INIT_REASON_PARAMETERS"       );
+      case INIT_REASON_TIMEFRAMECHANGE  : return("INIT_REASON_TIMEFRAMECHANGE"  );
+      case INIT_REASON_SYMBOLCHANGE     : return("INIT_REASON_SYMBOLCHANGE"     );
+      case INIT_REASON_RECOMPILE        : return("INIT_REASON_RECOMPILE"        );
+   }
+   return(_empty(catch("InitReasonToStr()   invalid parameter reason = "+ reason, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -12086,7 +11901,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       sizeOfGroup = ArraySize(group);
       ArrayResize(oes2, sizeOfGroup); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-      int newTicket = __OrderMultiClose.Flatten(group, slippage, oeFlags, oes2);   // -1: kein neues Ticket
+      int newTicket = __OrderMultiClose.Flatten(group, slippage, oeFlags, oes2); // -1: kein neues Ticket
       if (IsLastError())                                                         //  0: Fehler oder Gesamtposition war bereits flat
          return(_false(oes.setError(oes, -1, last_error)));                      // >0: neues Ticket
 
@@ -12224,7 +12039,7 @@ private*/ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color
    // (4) Gesamtposition glatt stellen
    /*ORDER_EXECUTION*/int oes2[][ORDER_EXECUTION.intSize]; ArrayResize(oes2, sizeOfCopy); InitializeByteBuffer(oes2, ORDER_EXECUTION.size);
 
-   int newTicket = __OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                    // -1: kein neues Ticket
+   int newTicket = __OrderMultiClose.Flatten(tickets.copy, slippage, oeFlags, oes2);                  // -1: kein neues Ticket
    if (IsLastError())                                                                                 //  0: Fehler oder Gesamtposition war bereits flat
       return(_false(oes.setError(oes, -1, last_error), OrderPop("__OrderMultiClose.OneSymbol(5)")));  // >0: neues Ticket
 

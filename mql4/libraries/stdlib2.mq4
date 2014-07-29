@@ -712,23 +712,20 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
  * Speichert LFX-Orderdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
  *
  * @param  bool   store       - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
- * @param  string symbol[]    - Symbol des Instruments der kopierten Daten
  * @param  int    orders[]    - LFX-Orders
  * @param  int    iVolatile[] - volatile Integer-Daten
  * @param  double dVolatile[] - volatile Double-Daten
  *
  * @return int - Anzahl der kopierten Orderdatensätze oder -1, falls ein Fehler auftrat
  */
-int ChartInfos.CopyLfxStatus(bool store, string &symbol[], /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]) {
+int ChartInfos.CopyLfxStatus(bool store, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]) {
    store = store!=0;
 
-   static string static.symbol[1];
    static int    static.orders   [][LFX_ORDER.intSize];
    static int    static.iVolatile[][3];
    static double static.dVolatile[][1];
 
    if (store) {
-      static.symbol[0] = symbol[0];
       ArrayResize(static.orders,    0);
       ArrayResize(static.iVolatile, 0);
       ArrayResize(static.dVolatile, 0);
@@ -741,7 +738,6 @@ int ChartInfos.CopyLfxStatus(bool store, string &symbol[], /*LFX_ORDER*/int orde
          return(-1);
    }
    else {
-      symbol[0] = static.symbol[0];
       ArrayResize(orders,    0);
       ArrayResize(iVolatile, 0);
       ArrayResize(dVolatile, 0);

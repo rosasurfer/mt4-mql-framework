@@ -88,43 +88,47 @@ int onInit() {
 
 
 /**
- * außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
- * innerhalb iCustom(): ?
+ * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitChartChange() {
+int onInit.TimeframeChange() {
    RestoreStickyStatus();
    return(NO_ERROR);
 }
 
 
 /**
- * Kein UninitializeReason gesetzt.
- *
- * außerhalb iCustom(): wenn Template mit Indikator darin geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
- * innerhalb iCustom(): in allen init()-Fällen, kein Input-Dialog
+ * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitUndefined() {
+int onInit.SymbolChange() {
    RestoreStickyStatus();
    return(NO_ERROR);
 }
 
 
 /**
- * außerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
- * innerhalb iCustom(): nie
+ * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start. Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  */
-int onInitRecompile() {
-   RestoreStickyStatus();
+int onInit.Template() {
+   RestoreStickyStatus();        // Beim Umschalten zwischen Profilen wird so die letzte jeweilige Konfiguration reaktiviert.
    return(NO_ERROR);
 }
 
 
+/**
+ * Bei Reload des Indikators nach Neukompilierung. Kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit.Recompile() {
+   RestoreStickyStatus();
+   return(NO_ERROR);
+}
 
 
 /**

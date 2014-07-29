@@ -177,6 +177,26 @@ int deinit() {
 
 
 /**
+ * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int InitReason() {
+   return(_NULL(catch("InitReason()", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
+ * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int DeinitReason() {
+   return(_NULL(catch("DeinitReason()", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
  * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
  *
  * @return bool
@@ -329,7 +349,7 @@ int InitExecutionContext() {
  *
  * @return bool
  */
-bool Indicator.IsSuperContext() {
+bool IsSuperContext() {
    return(false);
 }
 
