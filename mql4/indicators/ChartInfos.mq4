@@ -1840,13 +1840,10 @@ bool RestoreLfxStatusFromFiles() {
 /**
  * Restauriert den LFX-Status aus den in der Library zwischengespeicherten Daten.
  *
- * @param  string &symbol - Zeiger auf Variable, die nach Rückkehr das Symbol der in der Library gespeicherten Daten enthält
- *
  * @return bool - Erfolgsstatus
  */
-bool RestoreLfxStatusFromLib(string &symbol) {
-   string _symbol[1];
-   int size = ChartInfos.CopyLfxStatus(false, _symbol, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile);
+bool RestoreLfxStatusFromLib() {
+   int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile);
    if (size == -1)
       return(!SetLastError(ERR_RUNTIME_ERROR));
 
@@ -1857,8 +1854,6 @@ bool RestoreLfxStatusFromLib(string &symbol) {
       if (lfxOrders.iVolatile[i][I_ISOPEN] != 0)
          lfxOrders.openPositions++;
    }
-
-   symbol = _symbol[0];
    return(true);
 }
 
@@ -2052,7 +2047,8 @@ string InputsToStr() {
    bool     StringIEndsWith(string object, string postfix);
    string   StringSubstrFix(string object, int start, int length);
    string   StringToUpper(string value);
+   string   UninitializeReasonToStr(int reason);
 
 #import "stdlib2.ex4"
-   int      ChartInfos.CopyLfxStatus(bool direction, string symbol[], /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
+   int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
 #import

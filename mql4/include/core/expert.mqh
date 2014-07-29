@@ -35,6 +35,13 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
       if (IsError(InitExecutionContext()))
          return(last_error);
 
+   /*
+   if (StringStartsWith(WindowExpertName(), "Test")) {
+      int currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
+      debug("init(1)       "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  ec="+ GetBufferAddress(__ExecutionContext) +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
+   }
+   */
+
 
    // (2) stdlib (re-)initialisieren
    int iNull[];
@@ -106,7 +113,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
          case REASON_INITFAILED : error = onInitFailed();          break;     //
          case REASON_CLOSE      : error = onInitClose();           break;     //
 
-         //default: return(catch("init(7)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+         default: return(catch("init(7)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
       }                                                                       //
    }                                                                          //
                                                                               //
@@ -292,6 +299,26 @@ int deinit() {
 
 
 /**
+ * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int InitReason() {
+   return(_NULL(catch("InitReason()", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
+ * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int DeinitReason() {
+   return(_NULL(catch("DeinitReason()", ERR_NOT_IMPLEMENTED)));
+}
+
+
+/**
  * Ob das aktuell ausgeführte Programm ein Expert Adviser ist.
  *
  * @return bool
@@ -435,7 +462,7 @@ int InitExecutionContext() {
  *
  * @return bool
  */
-bool Indicator.IsSuperContext() {
+bool IsSuperContext() {
    return(false);
 }
 

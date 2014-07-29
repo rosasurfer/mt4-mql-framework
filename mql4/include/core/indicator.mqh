@@ -14,6 +14,15 @@ extern int    __lpSuperContext;
  * @return int - Fehlerstatus
  */
 int init() { // throws ERS_TERMINAL_NOT_YET_READY
+   if (StringStartsWith(WindowExpertName(), "Test")) {
+      int build=GetTerminalBuild(), currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
+      debug("init(1)   "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  sc="+ __lpSuperContext +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
+         int iInitReason = InitReason();
+         if (!iInitReason) string sInitReason = "";
+         else                     sInitReason = InitReasonToStr(iInitReason);
+      debug("init(2)     "+ build +"  "+ StringPadRight(UninitializeReasonToStr(UninitializeReason()), 18, " ") +"  "+ sInitReason);
+   }
+
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -42,7 +51,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
 
 
    // (3) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
-   if (__LOG) /*&&*/ if (Indicator.IsSuperContext())
+   if (__LOG) /*&&*/ if (IsSuperContext())
       log(InputsToStr());
 
 
@@ -71,36 +80,62 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
 
-   // (5) user-spezifische init()-Routinen aufrufen                        // User-Routinen *können*, müssen aber nicht implementiert werden.
-   if (onInit() == -1)                                                     //
-      return(last_error);                                                  // Preprocessing-Hook
-                                                                           //
-   switch (UninitializeReason()) {                                         //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;     // Gibt eine der Funktionen einen normalen Fehler zurück, bricht init() nicht ab
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;     // (um Postprocessing-Hook auch bei Fehlern ausführen zu können).
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
-      case REASON_REMOVE     : error = onInitRemove();          break;     //
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
-      // build > 509
-      case REASON_TEMPLATE   : error = onInitTemplate();        break;     //
-      case REASON_INITFAILED : error = onInitFailed();          break;     //
-      case REASON_CLOSE      : error = onInitClose();           break;     //
+   /*
+   (5) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen jedoch nicht implementiert sein.
 
-      default: return(catch("init(7)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
-   }                                                                       //
-   if (error == -1)                                                        // Gibt eine der Funktionen jedoch -1 zurück, bricht init() ab.
-      return(last_error);                                                  //
-                                                                           //
-   afterInit();                                                            // Postprocessing-Hook
+   Da sich die verfügbaren UninitializeReasons und ihre Bedeutung in den einzelnen Terminalversionen ändern, wird der
+   UninitializeReason in ein im aktuellen Kontext in allen Terminalversionen einheitliches Init-Szenario "übersetzt".
+
+   Init-Szenarien:
+   ---------------
+   - onInit.User()             - bei Laden durch den User                               -      Input-Dialog
+   - onInit.Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+   - onInit.Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
+   - onInit.ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+   - onInit.Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
+   - onInit.TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
+   - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
+   - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+
+   Gibt eine dieser Funktionen einen normalen Fehler zurück, führt init() einen evt. Postprocessing-Hook aus und bricht danach ab.
+   Gibt eine dieser Funktionen -1 zurück, bricht init() sofort ab und ein evt. Postprocessing-Hook wird nicht ausgeführt.
+   */
+   int initReason = InitReason();
+   if (!initReason)
+      return(last_error);
+
+   if (onInit() == -1) {                                                                  // Preprocessing-Hook
+      if (!last_error) SetLastError(ERR_RUNTIME_ERROR);                                   //
+      return(last_error);                                                                 //
+   }                                                                                      //
+                                                                                          //
+   switch (initReason) {                                                                  //
+      case INIT_REASON_USER             : error = onInit.User();             break;       //
+      case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;       //
+      case INIT_REASON_PROGRAM          : error = onInit.Program();          break;       //
+      case INIT_REASON_PROGRAM_CLEARTEST: error = onInit.ProgramClearTest(); break;       //
+      case INIT_REASON_PARAMETERS       : error = onInit.Parameters();       break;       //
+      case INIT_REASON_TIMEFRAMECHANGE  : error = onInit.TimeframeChange();  break;       //
+      case INIT_REASON_SYMBOLCHANGE     : error = onInit.SymbolChange();     break;       //
+      case INIT_REASON_RECOMPILE        : error = onInit.Recompile();        break;       //
+      default:                                                                            //
+         return(catch("init(7)   unknown InitReason = "+ initReason, ERR_RUNTIME_ERROR)); //
+   }                                                                                      //
+   if (error == -1) {                                                                     //
+      if (!last_error) SetLastError(ERR_RUNTIME_ERROR);                                   //
+      return(last_error);                                                                 //
+   }                                                                                      //
+                                                                                          //
+   afterInit();                                                                           // Postprocessing-Hook
+   if (__STATUS_ERROR)
+      return(last_error);
 
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (!__STATUS_ERROR) /*&&*/ if (UninitializeReason()==REASON_PARAMETERS)
-      Chart.SendTick(false);                                               // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
+   if (initReason == INIT_REASON_PARAMETERS)
+      Chart.SendTick(false);                                         // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
 
-   catch("init(9)");
+   catch("init(8)");
    return(last_error);
 }
 
@@ -117,6 +152,9 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
  * @return int - Fehlerstatus
  */
 int start() {
+   if (StringStartsWith(WindowExpertName(), "Test")) {
+      debug("start(1)");
+   }
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -242,9 +280,21 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   /*
+   if (StringStartsWith(WindowExpertName(), "Test")) {
+      int build=GetTerminalBuild(), currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
+      debug("deinit(1) "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  sc="+ __lpSuperContext +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
+      //int iInitReason = InitReason();
+      //if (!iInitReason) string sInitReason = "";
+      //else                     sInitReason = InitReasonToStr(iInitReason);
+      //debug("deinit()   "+ GetTerminalBuild() +"  "+ StringPadRight(UninitializeReasonToStr(UninitializeReason()), 18, " ") +"  "+ sInitReason);
+   }
+   */
+
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+   Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
 
    // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -277,10 +327,13 @@ int deinit() {
    }
 
 
-   // (3) stdlib deinitialisieren und Context speichern
-   error = stdlib.deinit(__ExecutionContext);
-   if (IsError(error))
-      SetLastError(error);
+
+   //if (!StringStartsWith(WindowExpertName(), "Test") || GetTerminalBuild() <= 509) {
+      // (3) stdlib deinitialisieren und Context speichern
+      error = stdlib.deinit(__ExecutionContext);
+      if (IsError(error))
+         SetLastError(error);
+   //}
 
    return(last_error);
 }
@@ -363,6 +416,142 @@ bool Indicator.IsTesting() {
  */
 bool This.IsTesting() {
    return(Indicator.IsTesting());
+}
+
+
+/**
+ * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int InitReason() {
+   /*
+   Init-Szenarien:
+   ---------------
+   - onInit.User()             - bei Laden durch den User                               -      Input-Dialog
+   - onInit.Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+   - onInit.Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
+   - onInit.ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+   - onInit.Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
+   - onInit.TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
+   - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
+   - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+
+   History:
+   --------------------------------------------------------------------------------------------------------------------------------------------------
+   - Build 547-551: onInit.User()             - Broken: Wird zwei mal aufgerufen, beim zweiten mal ist der EXECUTION_CONTEXT ungültig.
+   - Build  >= 654: onInit.User()             - UninitializeReason() ist REASON_UNDEFINED.
+   --------------------------------------------------------------------------------------------------------------------------------------------------
+   - Build 577-583: onInit.Template()         - Broken: Kein Aufruf bei Terminal-Start, der Indikator wird aber geladen.
+   --------------------------------------------------------------------------------------------------------------------------------------------------
+   - Build 556-569: onInit.Program()          - Broken: Wird in- und außerhalb des Testers bei jedem Tick aufgerufen.
+   --------------------------------------------------------------------------------------------------------------------------------------------------
+   - Build  <= 229: onInit.ProgramClearTest() - UninitializeReason() ist REASON_UNDEFINED.
+   - Build     387: onInit.ProgramClearTest() - Broken: Wird nie aufgerufen.
+   - Build 388-628: onInit.ProgramClearTest() - UninitializeReason() ist REASON_REMOVE.
+   - Build  <= 577: onInit.ProgramClearTest() - Wird nur nach einem automatisiertem Test aufgerufen (VisualMode=Off), der Aufruf erfolgt vorm Start
+                                                des nächsten Tests.
+   - Build  >= 578: onInit.ProgramClearTest() - Wird auch nach einem manuellen Test aufgerufen (VisualMode=On), nur in diesem Fall erfolgt der Aufruf
+                                                sofort nach Testende.
+   - Build  >= 633: onInit.ProgramClearTest() - UninitializeReason() ist REASON_CHARTCLOSE.
+   --------------------------------------------------------------------------------------------------------------------------------------------------
+   - Build 577:     onInit.TimeframeChange()  - Broken: Bricht mit der Logmessage "WARN: expert stopped" ab.
+   --------------------------------------------------------------------------------------------------------------------------------------------------
+   */
+
+   int uninitializeReason = UninitializeReason();
+   int build              = GetTerminalBuild(); if (!build) return(_NULL(SetLastError(stdlib.GetLastError())));
+   int currentThread      = GetCurrentThreadId();
+   int uiThread           = GetUIThreadId();
+
+
+   // (1) REASON_PARAMETERS
+   if (uninitializeReason == REASON_PARAMETERS) {
+      // innerhalb iCustom(): nie
+      if (IsSuperContext()) return(!catch("InitReason(1)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      // außerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator oder Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei VisualMode=On), Input-Dialog
+      if (Init.IsNoTick())  return(INIT_REASON_USER      );             // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators
+      else                  return(INIT_REASON_PARAMETERS);             // Parameter-Wechsel eines vorhandenen Indikators
+   }
+
+
+   // (2) REASON_CHARTCHANGE
+   if (uninitializeReason == REASON_CHARTCHANGE) {
+      // innerhalb iCustom(): nie
+      if (IsSuperContext())           return(!catch("InitReason(2)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      // außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
+      if (Init.IsNewSymbol(Symbol())) return(INIT_REASON_SYMBOLCHANGE   );
+      else                            return(INIT_REASON_TIMEFRAMECHANGE);
+   }
+
+
+   // (3) REASON_UNDEFINED
+   if (uninitializeReason == REASON_UNDEFINED) {
+      // außerhalb iCustom(): je nach Umgebung
+      if (!IsSuperContext()) {
+         if (build < 654)             return(INIT_REASON_TEMPLATE);     // wenn Template mit Indikator geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+         if (WindowOnDropped() >= 0)  return(INIT_REASON_TEMPLATE);
+         else                         return(INIT_REASON_USER    );     // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators, Input-Dialog
+      }
+      // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
+      if (IsTesting() && !IsVisualMode() && currentThread==uiThread) {  // versionsunabhängig
+         if (build <= 229)   return(INIT_REASON_PROGRAM_CLEARTEST);
+                             return(!catch("InitReason(3)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      }
+      return(INIT_REASON_PROGRAM);
+   }
+
+
+   // (4) REASON_REMOVE
+   if (uninitializeReason == REASON_REMOVE) {
+      // außerhalb iCustom(): nie
+      if (!IsSuperContext())                               return(!catch("InitReason(4)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
+      if (!IsTesting() || currentThread!=uiThread)         return(!catch("InitReason(5)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsVisualMode()) { if (388<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
+      else                 { if (578<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
+      return(!catch("InitReason(6)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+   }
+
+
+   // (5) REASON_RECOMPILE
+   if (uninitializeReason == REASON_RECOMPILE) {
+      // innerhalb iCustom(): nie
+      if (IsSuperContext())  return(!catch("InitReason(7)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      // außerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
+      return(INIT_REASON_RECOMPILE);
+   }
+
+
+   // (6) REASON_CHARTCLOSE
+   if (uninitializeReason == REASON_CHARTCLOSE) {
+      // außerhalb iCustom(): nie
+      if (!IsSuperContext())  return(!catch("InitReason(8)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
+      if (!IsTesting() || currentThread!=uiThread) return(!catch("InitReason(9)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (build >= 633)                            return(INIT_REASON_PROGRAM_CLEARTEST);
+      return(!catch("InitReason(10)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+   }
+
+
+   switch (uninitializeReason) {
+      case REASON_ACCOUNT:       // nie
+      case REASON_TEMPLATE:      // build > 509
+      case REASON_INITFAILED:    // ...
+      case REASON_CLOSE:         // ...
+         return(!catch("InitReason(11)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+   }
+   return(!catch("InitReason(12)   unknown UninitializeReason = "+ uninitializeReason +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+}
+
+
+/**
+ * Gibt die ID des aktuellen Deinit()-Szenarios zurück. Kann nur in deinit() aufgerufen werden.
+ *
+ * @return int - ID oder NULL, falls ein Fehler auftrat
+ */
+int DeinitReason() {
+   return(NULL);
 }
 
 
@@ -458,7 +647,7 @@ int InitExecutionContext() {
  *
  * @return bool
  */
-bool Indicator.IsSuperContext() {
+bool IsSuperContext() {
    return(__lpSuperContext != 0);
 }
 
@@ -499,17 +688,14 @@ int SetLastError(int error, int param=NULL) {
    int    stdlib.GetLastError();
 
    int    onInit();
-   int    onInitAccountChange();
-   int    onInitChartChange();
-   int    onInitChartClose();
-   int    onInitParameterChange();
-   int    onInitRecompile();
-   int    onInitRemove();
-   int    onInitUndefined();
-   // build > 509
-   int    onInitTemplate();
-   int    onInitFailed();
-   int    onInitClose();
+   int    onInit.User();
+   int    onInit.Template();
+   int    onInit.Program();
+   int    onInit.ProgramClearTest();
+   int    onInit.Parameters();
+   int    onInit.TimeframeChange();
+   int    onInit.SymbolChange();
+   int    onInit.Recompile();
    int    afterInit();
 
    int    onDeinit();
@@ -526,12 +712,17 @@ int SetLastError(int error, int param=NULL) {
    int    onDeinitClose();
    int    afterDeinit();
 
+   bool   Init.IsNoTick();
+   bool   Init.IsNewSymbol(string symbol);
+   void   Init.StoreSymbol(string symbol);
    int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
    bool __Indicator.IsTesting();
    string InputsToStr();
 
    int    Chart.SendTick(bool sound);
    void   CopyMemory(int source, int destination, int bytes);
+   int    GetUIThreadId();
+   string InitReasonToStr(int reason);
    string IntToHexStr(int integer);
    int    SumInts(int array[]);
 
@@ -557,6 +748,9 @@ int SetLastError(int error, int param=NULL) {
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
 
    string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugger);
+
+#import "kernel32.dll"
+   int    GetCurrentThreadId();
 #import
 
 
@@ -564,7 +758,7 @@ int SetLastError(int error, int param=NULL) {
 
 
 /**
- * Initialisierung Preprocessing
+ * Initialisierung Preprocessing-Hook
  *
  * @return int - Fehlerstatus
  *
@@ -574,70 +768,90 @@ int onInit() {
 
 
 /**
- * außerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator, Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei ViualMode=On), Input-Dialog
- * innerhalb iCustom(): nie
+ * Nach manuellem Laden des Indikators durch den User. Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
-int onInitParameterChange() {
-   if (!Tick)
-      // erste Parameter-Eingabe eines neuen Indikators
-   }
-   else {
-      // Parameter-Wechsel eines vorhandenen Indikators
-   }
+int onInit.User() {
    return(NO_ERROR);
 }
 
 
 /**
- * außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
- * innerhalb iCustom(): ?
+ * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start und im Tester bei VisualMode=On|Off. Bei VisualMode=Off
+ * werden bei jedem Teststart init() und deinit() der Indikatoren in Tester.tpl aufgerufen, nicht jedoch deren start()-Funktion.
+ * Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
-int onInitChartChange() {
+int onInit.Template() {
    return(NO_ERROR);
 }
 
 
 /**
- * Kein UninitializeReason gesetzt.
- *
- * außerhalb iCustom(): wenn Template mit Indikator darin geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
- * innerhalb iCustom(): in allen init()-Fällen, kein Input-Dialog
+ * Nach Laden des Indikators mittels iCustom(). Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
-int onInitUndefined() {
+int onInit.Program() {
    return(NO_ERROR);
 }
 
 
 /**
- * außerhalb iCustom(): ?
- * innerhalb iCustom(): im Tester nach Test-Restart bei VisualMode=Off, kein Input-Dialog
+ * Nach Testende bei Laden des Indikators mittels iCustom(). Der SuperContext des Indikators ist bei diesem Aufruf bereits nicht mehr gültig.
+ * Kein Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
-int onInitRemove() {
+int onInit.ProgramClearTest() {
    return(NO_ERROR);
 }
 
 
 /**
- * außerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
- * innerhalb iCustom(): nie
+ * Nach manueller Änderung der Indikatorparameter. Input-Dialog.
  *
  * @return int - Fehlerstatus
  *
-int onInitRecompile() {
+int onInit.Parameters() {
    return(NO_ERROR);
 }
 
 
 /**
- * Initialisierung Postprocessing
+ * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ *
+int onInit.TimeframeChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
+ *
+ * @return int - Fehlerstatus
+ *
+int onInit.SymbolChange() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Bei Reload des Indikators nach Neukompilierung. Kein Input-Dialog
+ *
+ * @return int - Fehlerstatus
+ *
+int onInit.Recompile() {
+   return(NO_ERROR);
+}
+
+
+/**
+ * Initialisierung Postprocessing-Hook
  *
  * @return int - Fehlerstatus
  *
