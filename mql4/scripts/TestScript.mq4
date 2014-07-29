@@ -19,20 +19,23 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-
-   debug("onStart()   IsMqlDirectory(\"ATC\") = "+ IsMqlDirectory("ATC"));
-
+   debug("onStart()");
    return(last_error);
 }
 
 /*
 todo:
 -----
-int DebugMarketInfo(string location);
-int FileReadLines(string filename, string lines[], bool skipEmptyLines);
+UnintializeReason()
+-------------------
+- wird in EXECUTION_CONTEXT gespeichert
+- in InitReason und DeinitReason auftrennen
 
 int init();
 int deinit();
-int OnInit();
-int OnDeinit();
+int OnInit(int reason);
+int OnDeinit(int reason);
+
+int DebugMarketInfo(string location);
+int FileReadLines(string filename, string lines[], bool skipEmptyLines);
 */

@@ -63,18 +63,16 @@ void Tester.ResetGlobalArrays() {
 /**
  *
  *
-int mql.GetIntValue(int value) {
+int mql_GetIntValue(int value) {
    int b = value + 666;
    return(b);
-}*/
-
+}
 
 /*
-#import "StdLib.dll"
+#import "StdLib.Release.dll"
    int dll_GetIntValue(int value);
-
-#import "stdlib.ex4"
-   int ex4.GetIntValue(int value);
+#import "stdlib1.ex4"
+   int ex4_GetIntValue(int value);
 #import
 */
 
@@ -117,24 +115,24 @@ int onStart() {
       result = ex4.GetIntValue(i);
    }
    endTime = GetTickCount();
-   debug("onStart(0.3)   mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   debug("onStart(0.3)   lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
 
    //                                                                       Toshiba Satellite     Toshiba Portege
    // Build 225
    // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took     1.711 sec             0.897 sec
-   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.312 sec             1.630 sec
-   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    61.640 sec            23.931 sec
+   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.312 sec             1.607 sec
+   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    61.640 sec            23.931 sec      29.281
 
    // Build 500
-   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took     4.738 sec             3.315 sec
-   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.231 sec             1.642 sec
-   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    73.203 sec            32.370 sec
+   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took     4.738 sec             3.198 sec
+   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.231 sec             1.981 sec
+   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    73.203 sec            27.472 sec      37.034
 
    // Build 670
-   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took
-   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took
-   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took
+   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took                           3.479 sec
+   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took                           1.888 sec
+   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took                          28.783 sec      31.809
 
    return(last_error);
 }*/
