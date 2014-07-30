@@ -6517,8 +6517,8 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
       ArrayResize(results, 1);
       results[0] = _input;
    }
-   else if (!StringLen(separator)) {         // NUL-Separator: String in einzelne Zeichen zerlegen
-      if (limit==NULL || limit > lenInput)
+   else if (!StringLen(separator)) {         // Separator ist Leerstring: String in einzelne Zeichen zerlegen
+      if (!limit || limit > lenInput)
          limit = lenInput;
       ArrayResize(results, limit);
 
@@ -6583,7 +6583,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
    // nach Möglichkeit die gecachten Daten liefern
    if (account == static.account[0]) {
       ArrayCopy(results, static.results);
-      if (__LOG) log("GetAccountHistory(2)   delivering "+ ArrayRange(results, 0) +" history entries for account "+ account +" from cache");
+      //if (__LOG) log("GetAccountHistory(2)   delivering "+ ArrayRange(results, 0) +" history entries for account "+ account +" from cache");
       return(catch("GetAccountHistory(3)"));
    }
 
