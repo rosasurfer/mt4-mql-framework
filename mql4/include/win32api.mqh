@@ -209,6 +209,7 @@
 #define OF_SHARE_DENY_NONE                         0x40
 
 #define HFILE_ERROR                          0xFFFFFFFF     // -1
+#define INVALID_FILE_SIZE                    0xFFFFFFFF     // -1
 
 
 // GetAncestor() constants

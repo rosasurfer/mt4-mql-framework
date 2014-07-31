@@ -1070,7 +1070,10 @@ bool ReadLocalPositionConfig() {
    if (!minLotSize) return(false);                                   // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
-   int keysSize = GetIniKeys(GetLocalConfigPath(), section, keys);
+   string localConfigPath = GetLocalConfigPath();
+   if (localConfigPath=="") return(!SetLastError(stdlib.GetLastError()));
+
+   int keysSize = GetIniKeys(localConfigPath, section, keys);
 
    for (int i=0; i < keysSize; i++) {
       if (StringIStartsWith(keys[i], stdSymbol)) {
@@ -1088,7 +1091,7 @@ bool ReadLocalPositionConfig() {
                      details[0] = "";
                      details[1] = values[n];
                   }
-                  else return(!catch("ReadLocalPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  else return(!catch("ReadLocalPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
                details[0] =               StringTrim(details[0]);  strLotSize = details[0];
                details[1] = StringToUpper(StringTrim(details[1])); strTicket  = details[1];
@@ -1096,20 +1099,20 @@ bool ReadLocalPositionConfig() {
                // Lotsize validieren
                lotSize = 0;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
-                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
                // Ticket validieren
                if (StringIsDigit(strTicket)) ticket = StrToInteger(strTicket);
                else if (strTicket == "L")    ticket = TYPE_LONG;
                else if (strTicket == "S")    ticket = TYPE_SHORT;
-               else return(!catch("ReadLocalPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else return(!catch("ReadLocalPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Virtuelle Positionen müssen an erster Stelle notiert sein
-               if (m && lotSize && ticket<=TYPE_SHORT) return(!catch("ReadLocalPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ GetLocalConfigPath() +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (m && lotSize && ticket<=TYPE_SHORT) return(!catch("ReadLocalPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                confSize = ArrayRange(local.position.conf, 0);
                ArrayResize(local.position.conf, confSize+1);

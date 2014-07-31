@@ -1564,7 +1564,7 @@ string CreateString(int length) {
  * Gibt den vollständigen Dateinamen der lokalen Konfigurationsdatei zurück.
  * Existiert die Datei nicht, wird sie angelegt.
  *
- * @return string - Dateiname
+ * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
  */
 string GetLocalConfigPath() {
    static string static.result[1];                                   // ohne Initializer, @see MQL.doc
@@ -1580,6 +1580,8 @@ string GetLocalConfigPath() {
 
       if (IsFile(lnkFile)) {
          iniFile = GetWindowsShortcutTarget(lnkFile);
+         if (!StringLen(iniFile))
+            return("");
          createIniFile = !IsFile(iniFile);
       }
       else {
@@ -1622,6 +1624,8 @@ string GetGlobalConfigPath() {
 
       if (IsFile(lnkFile)) {
          iniFile = GetWindowsShortcutTarget(lnkFile);
+         if (!StringLen(iniFile))
+            return("");
          createIniFile = !IsFile(iniFile);
       }
       else {
@@ -3922,37 +3926,37 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    //
    //   We need to parse the file manually. The path can be found like shown
    //   here.  If the shell item id list is not present (as signaled in flags),
-   //   we have to assume A = -6.
+   //   we have to assume: var $A = -6
    //
-   //  +-----------------+----------------------------------------------------+
-   //  |     Byte-Offset | Description                                        |
-   //  +-----------------+----------------------------------------------------+
-   //  |               0 | 'L' (magic value)                                  |
-   //  +-----------------+----------------------------------------------------+
-   //  |            4-19 | GUID                                               |
-   //  +-----------------+----------------------------------------------------+
-   //  |           20-23 | shortcut flags                                     |
-   //  +-----------------+----------------------------------------------------+
-   //  |             ... | ...                                                |
-   //  +-----------------+----------------------------------------------------+
-   //  |           76-77 | A (16 bit): size of shell item id list, if present |
-   //  +-----------------+----------------------------------------------------+
-   //  |             ... | shell item id list, if present                     |
-   //  +-----------------+----------------------------------------------------+
-   //  |      78 + 4 + A | B (32 bit): size of file location info             |
-   //  +-----------------+----------------------------------------------------+
-   //  |             ... | file location info                                 |
-   //  +-----------------+----------------------------------------------------+
-   //  |      78 + A + B | C (32 bit): size of local volume table             |
-   //  +-----------------+----------------------------------------------------+
-   //  |             ... | local volume table                                 |
-   //  +-----------------+----------------------------------------------------+
-   //  |  78 + A + B + C | target path string (ending with 0x00)              |
-   //  +-----------------+----------------------------------------------------+
-   //  |             ... | ...                                                |
-   //  +-----------------+----------------------------------------------------+
-   //  |             ... | 0x00                                               |
-   //  +-----------------+----------------------------------------------------+
+   //  +-------------------+---------------------------------------------------------------+
+   //  |       Byte-Offset | Description                                                   |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |                 0 | 'L' (magic value)                                             |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |              4-19 | GUID                                                          |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |             20-23 | shortcut flags                                                |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |               ... | ...                                                           |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |             76-77 | var $A (word, 16 bit): size of shell item id list, if present |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |               ... | shell item id list, if present                                |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |       78 + 4 + $A | var $B (dword, 32 bit): size of file location info            |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |               ... | file location info                                            |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |      78 + $A + $B | var $C (dword, 32 bit): size of local volume table            |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |               ... | local volume table                                            |
+   //  +-------------------+---------------------------------------------------------------+
+   //  | 78 + $A + $B + $C | target path string (ending with 0x00)                         |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |               ... | ...                                                           |
+   //  +-------------------+---------------------------------------------------------------+
+   //  |               ... | 0x00                                                          |
+   //  +-------------------+---------------------------------------------------------------+
    //
    // @see http://www.codeproject.com/KB/shell/ReadLnkFile.aspx
    // --------------------------------------------------------------------------
@@ -3968,7 +3972,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
       return(_empty(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")", ERR_WIN32_ERROR)));
 
    int iNull[], fileSize=GetFileSize(hFile, iNull);
-   if (fileSize == 0xFFFFFFFF) {
+   if (fileSize == INVALID_FILE_SIZE) {
       catch("GetWindowsShortcutTarget(3)->kernel32::GetFileSize(\""+ lnkFilename +"\")", ERR_WIN32_ERROR);
       _lclose(hFile);
       return("");
@@ -3983,8 +3987,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    }
    _lclose(hFile);
 
-   if (bytes < 24)
-      return(_empty(catch("GetWindowsShortcutTarget(5)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   if (bytes < 24) return(_empty(catch("GetWindowsShortcutTarget(5)   unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int integers  = ArraySize(buffer);
    int charsSize = bytes;
@@ -3997,7 +4000,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    }
 
    // --------------------------------------------------------------------------
-   // Check the magic value (first byte) and the GUID (16 byte from 5th byte):
+   // Check the magic value (offset 0) and the GUID (16 byte from offset 4):
    // --------------------------------------------------------------------------
    // The GUID is telling the version of the .lnk-file format. We expect the
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
@@ -4025,7 +4028,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    }
 
    // --------------------------------------------------------------------------
-   // Get the flags (4 byte from 21st byte) and
+   // Get the flags (4 byte from offset 20) and
    // --------------------------------------------------------------------------
    // Check if it points to a file or directory.
    // --------------------------------------------------------------------------
@@ -6874,9 +6877,12 @@ bool GetConfigBool(string section, string key, bool defaultValue=false) {
    int bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(false);
+   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return(false);
+
    // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0],  buffer[0], bufferSize, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, globalConfigPath);
+   GetPrivateProfileStringA(section, key, buffer[0],  buffer[0], bufferSize, localConfigPath );
 
    buffer[0] = StringToLower(buffer[0]);
 
@@ -6907,15 +6913,18 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
    int bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(NULL);
+   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return(NULL);
+
    // zuerst globale, dann lokale Config auslesen                    // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
-   GetPrivateProfileStringA(section, key, buffer[0],                    buffer[0], bufferSize, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, globalConfigPath);
+   GetPrivateProfileStringA(section, key, buffer[0],                    buffer[0], bufferSize, localConfigPath );
 
    double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
 
    if (!catch("GetConfigDouble()"))
       return(result);
-   return(0);
+   return(NULL);
 }
 
 
@@ -6930,13 +6939,16 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
  * @return int - Konfigurationswert
  */
 int GetConfigInt(string section, string key, int defaultValue=0) {
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(NULL);
+   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return(NULL);
+
    // zuerst globale, dann lokale Config auslesen
-   int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
-       result = GetPrivateProfileIntA(section, key, result,       GetLocalConfigPath());
+   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigPath);      // gibt auch negative Werte richtig zurück
+       result = GetPrivateProfileIntA(section, key, result,       localConfigPath );
 
    if (!catch("GetConfigInt()"))
       return(result);
-   return(0);
+   return(NULL);
 }
 
 
@@ -6951,9 +6963,12 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetConfigString(string section, string key, string defaultValue="") {
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
+   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return("");
+
    // zuerst globale, dann lokale Config auslesen
-   string value = GetIniString(GetGlobalConfigPath(), section, key, defaultValue);
-          value = GetIniString(GetLocalConfigPath() , section, key, value       );
+   string value = GetIniString(globalConfigPath, section, key, defaultValue);
+          value = GetIniString(localConfigPath , section, key, value       );
    return(value);
 }
 
@@ -6967,8 +6982,10 @@ string GetConfigString(string section, string key, string defaultValue="") {
  * @return bool
  */
 bool IsLocalConfigKey(string section, string key) {
+   string localConfigPath = GetLocalConfigPath();  if (localConfigPath=="") return(false);
    string keys[];
-   GetIniKeys(GetLocalConfigPath(), section, keys);
+
+   GetIniKeys(localConfigPath, section, keys);
 
    bool result;
    int size = ArraySize(keys);
@@ -6999,8 +7016,10 @@ bool IsLocalConfigKey(string section, string key) {
  * @return bool
  */
 bool IsGlobalConfigKey(string section, string key) {
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(false);
    string keys[];
-   GetIniKeys(GetGlobalConfigPath(), section, keys);
+
+   GetIniKeys(globalConfigPath, section, keys);
 
    bool result;
    int size = ArraySize(keys);
@@ -7113,8 +7132,9 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(false);
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, globalConfigPath);
 
    buffer[0] = StringToLower(buffer[0]);
 
@@ -7143,14 +7163,15 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(NULL);
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetGlobalConfigPath());
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, globalConfigPath);
 
    double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten nicht-numerischen Zeichen
 
    if (!catch("GetGlobalConfigDouble(1)"))
       return(result);
-   return(0);
+   return(NULL);
 }
 
 
@@ -7164,11 +7185,13 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
  * @return int - Konfigurationswert
  */
 int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
-   int result = GetPrivateProfileIntA(section, key, defaultValue, GetGlobalConfigPath());    // gibt auch negative Werte richtig zurück
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(NULL);
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigPath);      // gibt auch negative Werte richtig zurück
 
    if (!catch("GetGlobalConfigInt(1)"))
       return(result);
-   return(0);
+   return(NULL);
 }
 
 
@@ -7182,7 +7205,9 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   return(GetIniString(GetGlobalConfigPath(), section, key, defaultValue));
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
+
+   return(GetIniString(globalConfigPath, section, key, defaultValue));
 }
 
 
@@ -7321,8 +7346,9 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(false);
 
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, localConfigPath);
 
    buffer[0] = StringToLower(buffer[0]);
 
@@ -7351,14 +7377,15 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
 double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(NULL);
 
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, GetLocalConfigPath());
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, localConfigPath);
 
    double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
 
    if (!catch("GetLocalConfigDouble()"))
       return(result);
-   return(0);
+   return(NULL);
 }
 
 
@@ -7372,11 +7399,13 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
  * @return int - Konfigurationswert
  */
 int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-   int result = GetPrivateProfileIntA(section, key, defaultValue, GetLocalConfigPath());     // gibt auch negative Werte richtig zurück
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(NULL);
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, localConfigPath);     // gibt auch negative Werte richtig zurück
 
    if (!catch("GetLocalConfigInt()"))
       return(result);
-   return(0);
+   return(NULL);
 }
 
 
@@ -7390,7 +7419,9 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
  * @return string - Konfigurationswert
  */
 string GetLocalConfigString(string section, string key, string defaultValue="") {
-   return(GetIniString(GetLocalConfigPath(), section, key, defaultValue));
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return("");
+
+   return(GetIniString(localConfigPath, section, key, defaultValue));
 }
 
 

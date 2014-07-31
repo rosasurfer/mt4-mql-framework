@@ -17,8 +17,8 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
    string sNull, files[2];
-   files[0] = GetGlobalConfigPath();
-   files[1] = GetLocalConfigPath();
+   files[0] = GetGlobalConfigPath(); if (!StringLen(files[0])) return(SetLastError(stdlib.GetLastError()));
+   files[1] = GetLocalConfigPath();  if (!StringLen(files[1])) return(SetLastError(stdlib.GetLastError()));
 
    for (int i=0; i < 2; i++) {
       int result = ShellExecuteA(NULL, "open", files[i], sNull, sNull, SW_SHOWNORMAL);
