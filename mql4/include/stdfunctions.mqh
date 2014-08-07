@@ -871,7 +871,7 @@ int start.RelaunchInputDialog() {
 
 
 /**
- * Schickt eine Debug-Message an den angeschlossenen Debugger.
+ * Schickt eine Debug-Message an den angeschlossenen Debugger. OutputDebugString() funktioniert nur für Admins zuverlässig.
  *
  * @param  string message - Message
  * @param  int    error   - Fehlercode
@@ -2579,7 +2579,7 @@ void __DummyCalls() {
    int    GetLastWin32Error();
 
 #import "kernel32.dll"
-   void   OutputDebugStringA(string lpMessage);
+   void   OutputDebugStringA(string lpMessage);                      // funktioniert nur für Admins zuverlässig
 
 #import "user32.dll"
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
