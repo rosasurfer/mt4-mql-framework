@@ -4344,6 +4344,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "sig-"               )) return("LiteForex"       );
    else if (StringStartsWith(server, "sts-"               )) return("STS"             );
    else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
+   else if (StringStartsWith(server, "teletradecy-"       )) return("TeleTrade"       );
 
    return(AccountCompany());
 }
@@ -8273,6 +8274,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "sig-"               )) timezone = "Europe/Minsk";
    else if (StringStartsWith(directory, "sts-"               )) timezone = "Europe/Kiev";
    else if (StringStartsWith(directory, "teletrade-"         )) timezone = "Europe/Berlin";
+   else if (StringStartsWith(directory, "teletradecy-"       )) timezone = "Europe/Berlin";
    else {
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
