@@ -649,25 +649,38 @@ int CreateDisplayLabel() {
  * Die volatile Konfiguration umfaßt alle jenen internen Parameter, die sich zur Laufzeit ohne Aufruf des Config-Dialogs ändern können:
  *
  *  - bool superBars.off;
- *  - bool superTimeframe.auto;
  *  - int  superTimeframe;
  *
  * @return int - Fehlerstatus
  */
 int StoreStickyStatus() {
+   // Die Konfiguration wird nur dann im Chart gespeichert, wenn sie gültig ist (z.B. nicht, wenn init() mit Fehler zurückkehrte).
+   // TODO: Solange die Validierung nicht ausgelagert ist, muß superTimeframe hier nochmal manuell validiert werden.
+   //
+   // superBars.off                                                  // immer gültig
+   // superTimeframe
+   switch (superTimeframe) {
+      case PERIOD_D1 :
+      case PERIOD_W1 :
+      case PERIOD_MN1:
+      case PERIOD_Q1 : break;
+      default:         return(NO_ERROR);
+   }
+
+   // Daten speichern
    string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", superBars.off));          // (string) bool
+   ObjectSetText(label, StringConcatenate("", superBars.off));       // (string) bool
 
    label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", superTimeframe));         // (string) int
+   ObjectSetText(label, StringConcatenate("", superTimeframe));      // (string) int
 
    return(catch("StoreStickyStatus(1)"));
 }
@@ -677,13 +690,11 @@ int StoreStickyStatus() {
  * Restauriert die im Chart vorhandenen volatilen Konfigurationsdaten (@see StoreStickyStatus).
  *
  *  - bool superBars.off;
- *  - bool superTimeframe.auto;
  *  - int  superTimeframe;
  *
  * @return bool - Erfolgsstatus (die gefundenen Daten werden nur übernommen, wenn sie vollständig gültig sind)
  */
 bool RestoreStickyStatus() {
-
    // superBars.off
    string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
    if (ObjectFind(label) != 0)   return(false);
