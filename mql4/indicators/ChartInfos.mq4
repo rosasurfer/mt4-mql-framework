@@ -30,7 +30,7 @@ string label.stopoutLevel    = "StopoutLevel";
 
 
 int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
-double leverage;                                                     // Hebel zur UnitSize-Berechnung
+double unleveragedLots;                                              // aktuelle Lotsize bei Hebel 1:1
 
 
 // lokale Positionsdaten                                             // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
@@ -105,9 +105,9 @@ int onTick() {
    }
    else {
       if (!QC.HandleTradeTerminalMessages()) return(last_error);     // Listener für beim Trade-Terminal eingehende Messages
-      if (!UpdatePositions())                return(last_error);
       if (!UpdateSpread())                   return(last_error);
       if (!UpdateUnitSize())                 return(last_error);
+      if (!UpdatePositions())                return(last_error);
       if (!UpdateStopoutLevel())             return(last_error);
    }
 
@@ -472,109 +472,57 @@ bool UpdateUnitSize() {
    if (IsTesting())
       return(true);                             // Anzeige wird im Tester nicht benötigt
 
-   static double leverage;
-   static int    soDistance;
-
-
-   // (1) Konfiguration einlesen
-   if (!leverage) /*&&*/ if (!soDistance) {
-      string section="Leverage", key="Pair", sValue;
-      if (IsGlobalConfigKey(section, key)) {
-         sValue = GetGlobalConfigString(section, key, "");
-
-         if (StringIsNumeric(sValue)) {
-            // (1.1) numerischer Wert des Hebels
-            double dValue = StrToDouble(sValue);
-            if (dValue < 1)                      return(!catch("UpdateUnitSize(1)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
-            leverage = dValue;
-         }
-         else {
-            // (1.2) nicht-numerisch, Stopout-Distanz parsen
-            sValue = StringToLower(sValue);
-            if (!StringStartsWith(sValue, "so")) return(!catch("UpdateUnitSize(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            sValue = StringTrimLeft(StringRight(sValue, -2));
-            if (!StringStartsWith(sValue, ":"))  return(!catch("UpdateUnitSize(3)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            sValue = StringTrimLeft(StringRight(sValue, -1));
-            if (!StringEndsWith(sValue, "p"))    return(!catch("UpdateUnitSize(4)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            sValue = StringTrimRight(StringLeft(sValue, -1));
-            if (!StringIsInteger(sValue))        return(!catch("UpdateUnitSize(5)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            int iValue = StrToInteger(sValue);
-            if (iValue >= 0)                     return(!catch("UpdateUnitSize(6)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            soDistance = -iValue;
-         }
-      }
-      else {
-         leverage = -1;
-      }
-   }
-
-
-   // (2) Anzeige berechnen
-   string strUnitSize = "UnitSize:  -";
-
-   if (leverage > 0 || soDistance) {
-      bool   tradeAllowed   = (MarketInfo(Symbol(), MODE_TRADEALLOWED  ) && 1);
-      double tickSize       =  MarketInfo(Symbol(), MODE_TICKSIZE      );
-      double tickValue      =  MarketInfo(Symbol(), MODE_TICKVALUE     );
-      double marginRequired =  MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
-
+   // (1) Ausgangsdaten bestimmen
+   bool   tradeAllowed   = (MarketInfo(Symbol(), MODE_TRADEALLOWED  ) && 1);
+   double tickSize       =  MarketInfo(Symbol(), MODE_TICKSIZE      );
+   double tickValue      =  MarketInfo(Symbol(), MODE_TICKVALUE     );
+   double marginRequired =  MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
+   double equity         =  MathMin(AccountBalance(), AccountEquity()-AccountCredit());
       int error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)
-            return(true);
-         return(!catch("UpdateUnitSize(7)", error));
+         if (error == ERR_UNKNOWN_SYMBOL) return(true);
+         return(!catch("UpdateUnitSize(1)", error));
       }
+   unleveragedLots = 0;
 
-      if (tradeAllowed) {                                                     // bei Start oder Accountwechsel können Werte noch ungesetzt sein
-         double unitSize, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
 
-         if (tickSize && tickValue && marginRequired && equity > 0) {
-            double unitLeverage, lotValue=Close[0]/tickSize * tickValue;      // Lotvalue eines Lots in Account-Currency
+   // (2) UnitSize berechnen
+   string strUnitSize = "-";
 
-            if (leverage > 0) {
-               // (2.1) Hebel angegeben
-               unitSize     = equity / lotValue * leverage;                   // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
-               unitLeverage = leverage;
-            }
-            else /*(soDistance > 0)*/ {
-               // (2.2) Stopout-Distanz in Pip angegeben
-               double pointValue = tickValue/(tickSize/Point);
-               double pipValue   = PipPoints * pointValue;                    // Pipvalue eines Lots in Account-Currency
-               unitSize     = equity / (marginRequired + soDistance*pipValue);
-               unitLeverage = unitSize * lotValue / equity;                   // Hebel dieser UnitSize
-            }
+   if (tradeAllowed && tickSize && tickValue && marginRequired && equity > 0) {  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+      double leverage = 2.5;
+      double lotValue = Close[0]/tickSize * tickValue;                           // Lotvalue eines Lots in Account-Currency
+      unleveragedLots = equity / lotValue;                                       // maximal mögliche Lotsize ohne Hebel (1:1)
+      double unitSize = unleveragedLots * leverage;                              // Equity wird mit 'leverage' gehebelt (max. ca. 20-30)
 
-            // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
-            if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
-            else if (unitSize <=   0.075) unitSize = NormalizeDouble(MathFloor(unitSize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
-            else if (unitSize <=    0.1 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   //  0.075-0.1: Vielfaches von   0.005
-            else if (unitSize <=    0.3 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: Vielfaches von   0.01
-            else if (unitSize <=    0.75) unitSize = NormalizeDouble(MathFloor(unitSize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
-            else if (unitSize <=    1.2 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
-            else if (unitSize <=    3.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
-            else if (unitSize <=    7.5 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
-            else if (unitSize <=   12.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
-            else if (unitSize <=   30.  ) unitSize = MathRound      (MathFloor(unitSize/  1    ) *   1       );   //      12-30: Vielfaches von   1
-            else if (unitSize <=   75.  ) unitSize = MathRound      (MathFloor(unitSize/  2    ) *   2       );   //      30-75: Vielfaches von   2
-            else if (unitSize <=  120.  ) unitSize = MathRound      (MathFloor(unitSize/  5    ) *   5       );   //     75-120: Vielfaches von   5
-            else if (unitSize <=  300.  ) unitSize = MathRound      (MathFloor(unitSize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
-            else if (unitSize <=  750.  ) unitSize = MathRound      (MathFloor(unitSize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
-            else if (unitSize <= 1200.  ) unitSize = MathRound      (MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
-            else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
+      // UnitSize immer ab-, niemals aufrunden                                                                                            Abstufung max. 6.7% je Schritt
+      if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
+      else if (unitSize <=   0.075) unitSize = NormalizeDouble(MathFloor(unitSize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
+      else if (unitSize <=    0.1 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.005) *   0.005, 3);   //  0.075-0.1: Vielfaches von   0.005
+      else if (unitSize <=    0.3 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: Vielfaches von   0.01
+      else if (unitSize <=    0.75) unitSize = NormalizeDouble(MathFloor(unitSize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
+      else if (unitSize <=    1.2 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
+      else if (unitSize <=    3.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
+      else if (unitSize <=    7.5 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
+      else if (unitSize <=   12.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
+      else if (unitSize <=   30.  ) unitSize = MathRound      (MathFloor(unitSize/  1    ) *   1       );   //      12-30: Vielfaches von   1
+      else if (unitSize <=   75.  ) unitSize = MathRound      (MathFloor(unitSize/  2    ) *   2       );   //      30-75: Vielfaches von   2
+      else if (unitSize <=  120.  ) unitSize = MathRound      (MathFloor(unitSize/  5    ) *   5       );   //     75-120: Vielfaches von   5
+      else if (unitSize <=  300.  ) unitSize = MathRound      (MathFloor(unitSize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
+      else if (unitSize <=  750.  ) unitSize = MathRound      (MathFloor(unitSize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
+      else if (unitSize <= 1200.  ) unitSize = MathRound      (MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
+      else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-            strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
-            strUnitSize = StringConcatenate("(1:", NumberToStr(NormalizeDouble(unitLeverage, 1), ".+"), ")    ", strUnitSize);
-         }
-      }
+      strUnitSize = StringConcatenate("1:", NumberToStr(leverage, ".+"), "  =  ", NumberToStr(unitSize, ", .+"), " lot");
    }
 
 
-   // (3) Anzeige setzen
+   // (3) Anzeige aktualisieren
    ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
 
    error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateUnitSize(8)", error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateUnitSize(2)", error));
    return(true);
 }
 
@@ -590,10 +538,14 @@ bool UpdatePositions() {
 
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string strPosition;
+   string strPosition, strUsedLeverage;
    if      (!isLocalPosition) strPosition = " ";
    else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
-   else                       strPosition = StringConcatenate("Position:  " , NumberToStr(totalPosition, "+, .+"), " lot");
+   else {
+      if (unleveragedLots != 0)
+         strUsedLeverage = StringConcatenate("1:", NumberToStr(NormalizeDouble(MathAbs(totalPosition)/unleveragedLots, 1), ".+"), "  =  ");
+      strPosition = StringConcatenate("Position:  " , strUsedLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+   }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -2012,10 +1964,9 @@ bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ti
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()   config: ",                     // 'config' statt 'inputs', da alle Laufzeitparameter per .ini-Konfiguration gesetzt werden
+   return(StringConcatenate("init()   config: ",                     // 'config' statt 'inputs', da die Laufzeitparameter extern konfiguriert werden
 
-                            "appliedPrice=", PriceTypeToStr(appliedPrice), "; ",
-                            "leverage=",     DoubleToStr(leverage, 1)    , "; ")
+                            "appliedPrice=", PriceTypeToStr(appliedPrice), "; ")
    );
 }
 
