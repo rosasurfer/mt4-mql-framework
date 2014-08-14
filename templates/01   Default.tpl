@@ -34,7 +34,7 @@ askline_color=15130800
 stops_color=17919
 
 <window>
-height=100
+height=300
 
 <indicator>
 name=main
@@ -8778,7 +8778,7 @@ show_data=0
 </window>
 
 <window>
-height=5
+height=1
 <indicator>
 name=Average True Range
 period=14
