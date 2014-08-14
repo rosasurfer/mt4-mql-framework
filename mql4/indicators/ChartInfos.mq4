@@ -472,10 +472,11 @@ bool UpdateUnitSize() {
    if (IsTesting())
       return(true);                             // Anzeige wird im Tester nicht benötigt
 
-   // (1) Konfiguration einlesen
    static double leverage;
    static int    soDistance;
 
+
+   // (1) Konfiguration einlesen
    if (!leverage) /*&&*/ if (!soDistance) {
       string section="Leverage", key="Pair", sValue;
       if (IsGlobalConfigKey(section, key)) {
@@ -528,20 +529,19 @@ bool UpdateUnitSize() {
          double unitSize, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
 
          if (tickSize && tickValue && marginRequired && equity > 0) {
-            double lotValue = Close[0]/tickSize * tickValue;                  // Lotvalue eines Lots in Account-Currency
-            int iLeverage;
+            double rLeverage, lotValue=Close[0]/tickSize * tickValue;         // Lotvalue eines Lots in Account-Currency
 
             if (leverage > 0) {
                // (2.1) Hebel angegeben
                unitSize  = equity / lotValue * leverage;                      // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
-               iLeverage = MathRound(leverage);
+               rLeverage = RoundEx(leverage, 1);
             }
             else /*(soDistance > 0)*/ {
                // (2.2) Stopout-Distanz in Pip angegeben
                double pointValue = tickValue/(tickSize/Point);
                double pipValue   = PipPoints * pointValue;                    // Pipvalue eines Lots in Account-Currency
                unitSize  = equity / (marginRequired + soDistance*pipValue);
-               iLeverage = MathRound(unitSize * lotValue / equity);           // effektiver Hebel dieser UnitSize
+               rLeverage = RoundEx(unitSize * lotValue / equity, 1);          // effektiver Hebel dieser UnitSize
             }
 
             // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
@@ -563,7 +563,7 @@ bool UpdateUnitSize() {
             else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
             strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
-            strUnitSize = StringConcatenate("(1:", iLeverage, ")    ", strUnitSize);
+            strUnitSize = StringConcatenate("(1:", NumberToStr(rLeverage, ".+"), ")    ", strUnitSize);
          }
       }
    }
