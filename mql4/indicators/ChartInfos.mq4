@@ -529,19 +529,19 @@ bool UpdateUnitSize() {
          double unitSize, equity=MathMin(AccountBalance(), AccountEquity()-AccountCredit());
 
          if (tickSize && tickValue && marginRequired && equity > 0) {
-            double rLeverage, lotValue=Close[0]/tickSize * tickValue;         // Lotvalue eines Lots in Account-Currency
+            double unitLeverage, lotValue=Close[0]/tickSize * tickValue;      // Lotvalue eines Lots in Account-Currency
 
             if (leverage > 0) {
                // (2.1) Hebel angegeben
-               unitSize  = equity / lotValue * leverage;                      // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
-               rLeverage = RoundEx(leverage, 1);
+               unitSize     = equity / lotValue * leverage;                   // Equity wird mit 'leverage' gehebelt (equity/lotValue entspricht Hebel 1)
+               unitLeverage = leverage;
             }
             else /*(soDistance > 0)*/ {
                // (2.2) Stopout-Distanz in Pip angegeben
                double pointValue = tickValue/(tickSize/Point);
                double pipValue   = PipPoints * pointValue;                    // Pipvalue eines Lots in Account-Currency
-               unitSize  = equity / (marginRequired + soDistance*pipValue);
-               rLeverage = RoundEx(unitSize * lotValue / equity, 1);          // effektiver Hebel dieser UnitSize
+               unitSize     = equity / (marginRequired + soDistance*pipValue);
+               unitLeverage = unitSize * lotValue / equity;                   // Hebel dieser UnitSize
             }
 
             // (2.3) UnitSize immer ab-, niemals aufrunden                                                                                      Abstufung max. 6.7% je Schritt
@@ -563,7 +563,7 @@ bool UpdateUnitSize() {
             else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
             strUnitSize = StringConcatenate("UnitSize:  ", NumberToStr(unitSize, ", .+"), " lot");
-            strUnitSize = StringConcatenate("(1:", NumberToStr(rLeverage, ".+"), ")    ", strUnitSize);
+            strUnitSize = StringConcatenate("(1:", NumberToStr(NormalizeDouble(unitLeverage, 1), ".+"), ")    ", strUnitSize);
          }
       }
    }
