@@ -513,7 +513,7 @@ bool UpdateUnitSize() {
       else if (unitSize <= 1200.  ) unitSize = MathRound      (MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
       else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-      strUnitSize = StringConcatenate("1:", NumberToStr(leverage, ".+"), "  =  ", NumberToStr(unitSize, ", .+"), " lot");
+      strUnitSize = StringConcatenate("1:", NumberToStr(leverage, ".+"), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
    }
 
 
