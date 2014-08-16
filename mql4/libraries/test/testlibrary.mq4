@@ -62,19 +62,28 @@ void Tester.ResetGlobalArrays() {
 
 /**
  *
- *
-int mql_GetIntValue(int value) {
+ */
+int ex4_GetIntValue(int value) {
    int b = value + 666;
    return(b);
 }
 
+
 /*
 #import "StdLib.Release.dll"
    int dll_GetIntValue(int value);
-#import "stdlib1.ex4"
+#import "test/testlibrary.ex4"
    int ex4_GetIntValue(int value);
 #import
-*/
+
+
+/**
+ *
+ *
+int mql_GetIntValue(int value) {
+   int b = value + 333;
+   return(b);
+}
 
 
 /**
@@ -87,8 +96,8 @@ int onStart() {
    int result, n=20000000;
 
    dll_GetIntValue(0);
-   mql.GetIntValue(0);
-   ex4.GetIntValue(0);
+   mql_GetIntValue(0);
+   ex4_GetIntValue(0);
 
 
    // DLL
@@ -103,7 +112,7 @@ int onStart() {
    // MQL
    startTime = GetTickCount();
    for (i=0; i < n; i++) {
-      result = mql.GetIntValue(i);
+      result = mql_GetIntValue(i);
    }
    endTime = GetTickCount();
    debug("onStart(0.2)   mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
@@ -112,27 +121,28 @@ int onStart() {
    // MQL-Library
    startTime = GetTickCount();
    for (i=0; i < n; i++) {
-      result = ex4.GetIntValue(i);
+      result = ex4_GetIntValue(i);
    }
    endTime = GetTickCount();
    debug("onStart(0.3)   lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
 
-   //                                                                       Toshiba Satellite     Toshiba Portege
-   // Build 225
-   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took     1.711 sec             0.897 sec
-   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.312 sec             1.607 sec
-   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    61.640 sec            23.931 sec      29.281
-
-   // Build 500
-   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took     4.738 sec             3.198 sec
-   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took     3.231 sec             1.981 sec
-   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took    73.203 sec            27.472 sec      37.034
-
-   // Build 670
-   // MetaTrader::TestScript::onStart(0.1)   dll      loop(20.000.000) took                           3.479 sec
-   // MetaTrader::TestScript::onStart(0.2)   mql      loop(20.000.000) took                           1.888 sec
-   // MetaTrader::TestScript::onStart(0.3)   mql::lib loop(20.000.000) took                          28.783 sec      31.809
+   // 20.000.000 Durchläufe:
+   // +-----------+----------+-------------------+-------------------------+-----------------+
+   // |           |          | Toshiba Satellite |     Toshiba Portege     | VPS             |
+   // +-----------+----------+-------------------+------------+------------+-----------------+
+   // | Build 225 | dll      |         1.711 sec |  0.897 sec |            |                 |
+   // |           | mql      |         3.312 sec |  1.607 sec |            |                 |
+   // |           | mql::lib |        61.640 sec | 23.931 sec | 29.281 sec |                 |
+   // +-----------+----------+-------------------+------------+------------+-----------------+
+   // | Build 500 | dll      |         4.738 sec |  3.198 sec |  3.323 sec |                 |
+   // |           | mql      |         3.231 sec |  1.981 sec |  2.074 sec |                 |
+   // |           | mql::lib |        73.203 sec | 27.472 sec | 35.959 sec |                 |
+   // +-----------+----------+-------------------+------------+------------+-----------------+
+   // | Build 670 | dll      |                   |  3.479 sec |            |                 |
+   // |           | mql      |                   |  1.888 sec |            |                 |
+   // |           | mql::lib |                   | 28.783 sec | 31.809 sec |                 |
+   // +-----------+----------+-------------------+------------+------------+-----------------+
 
    return(last_error);
 }*/
