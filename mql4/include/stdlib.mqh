@@ -1,5 +1,5 @@
 /**
- * Je Modultyp implementierte Statusfunktionen (core):
+ * je Modultyp implementierte Statusfunktionen (core):
  * ---------------------------------------------------
  *  bool IsExpert();
  *  bool IsScript();
@@ -13,7 +13,7 @@
  *
  *  int  InitReason();
  *  int  DeinitReason();
- *  int  InitExecutionContext();                                     // nicht in Libraries (dort nicht notwendig)
+ *  int  InitExecutionContext();                                     // auﬂer in Libraries (dort nicht notwendig)
  *  bool IsSuperContext();
  *
  *  int  SetLastError(int error, int param);

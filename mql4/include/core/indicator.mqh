@@ -97,8 +97,8 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
    - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
    - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
 
-   Gibt eine dieser Funktionen einen normalen Fehler zurück, führt init() einen evt. Postprocessing-Hook aus und bricht danach ab.
-   Gibt eine dieser Funktionen -1 zurück, bricht init() sofort ab und ein evt. Postprocessing-Hook wird nicht ausgeführt.
+   Gibt eine dieser Funktionen einen normalen Fehler zurück, führt init() einen vorhandenen Postprocessing-Hook aus und bricht danach ab.
+   Gibt eine dieser Funktionen -1 zurück, bricht init() sofort ab und ein vorhandener Postprocessing-Hook wird nicht ausgeführt.
    */
    int initReason = InitReason();
    if (!initReason)
