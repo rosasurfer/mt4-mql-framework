@@ -368,7 +368,7 @@ int HandleScriptError(string location, string message, int error) {
       location = " :: "+ location;
 
    PlaySound("chord.wav");
-   MessageBox(message, __NAME__ + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ __NAME__ + location, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }
