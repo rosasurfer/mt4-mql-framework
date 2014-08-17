@@ -10,7 +10,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////// Externe Parameter //////////////////////////////////////////////////////////////////////////////
 
-extern color Grid.Color = LightGray;
+extern color Color.RegularGrid = Gainsboro;                          // C'220,220,220'
+extern color Color.SuperGrid   = LightGray;                          // C'211,211,211'
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -156,16 +157,16 @@ int DrawGrid() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0)) {
          sepStyle = STYLE_DOT;
-         sepColor = Grid.Color;
+         sepColor = Color.RegularGrid;
          if (Period() < PERIOD_H4) {
             if (dow == MONDAY) {
                sepStyle = STYLE_DASHDOTDOT;
-               sepColor = C'231,192,221';
+               sepColor = Color.SuperGrid;
             }
          }
          else if (Period() == PERIOD_H4) {
             sepStyle = STYLE_DASHDOTDOT;
-            sepColor = C'231,192,221';
+            sepColor = Color.SuperGrid;
          }
          ObjectSet(label, OBJPROP_STYLE, sepStyle);
          ObjectSet(label, OBJPROP_COLOR, sepColor);
