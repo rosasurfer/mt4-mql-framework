@@ -267,11 +267,11 @@ bool UpdateSuperBars() {
    bool configChange = false;
    if (lastSuperTimeframe != 0) {                                    // 0: erster Aufruf seit init()
       if (superTimeframe != lastSuperTimeframe) {
-         debug("UpdateSuperBars(0.1)   config change: lastStf="+ lastSuperTimeframe +"  now="+ superTimeframe);
+         //debug("UpdateSuperBars(0.1)   config change: lastStf="+ lastSuperTimeframe +"  now="+ superTimeframe);
          configChange = true;
       }
       else if (superBars.off != lastSuperBars.off) {
-         debug("UpdateSuperBars(0.2)   config change: lastOff="+ lastSuperBars.off +"  now="+ superBars.off);
+         //debug("UpdateSuperBars(0.2)   config change: lastOff="+ lastSuperBars.off +"  now="+ superBars.off);
          configChange = true;
       }
       if (configChange) {

@@ -40,11 +40,11 @@ datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i) {            
 int      hh.setVersion       (/*HISTORY_HEADER*/int &hh[],          int      version    ) { hh[ 0] = version;                                            return(version    ); HISTORY_HEADER.toStr(hh); }
 string   hh.setDescription   (/*HISTORY_HEADER*/int &hh[],          string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(description) > 63)          return(_empty(catch("hh.setDescription(1)   too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if ( StringLen(description) > 63)          return(_emptyStr(catch("hh.setDescription(1)   too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+4, StringLen(description)+1); /*terminierendes <NUL> wird mitkopiert*/                 return(description); HISTORY_HEADER.toStr(hh); }
 string   hh.setSymbol        (/*HISTORY_HEADER*/int &hh[],          string   symbol     ) {
-   if (!StringLen(symbol))                    return(_empty(catch("hh.setSymbol(1)   invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("hh.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!StringLen(symbol))                    return(_emptyStr(catch("hh.setSymbol(1)   invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_emptyStr(catch("hh.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+68, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/                          return(symbol     ); HISTORY_HEADER.toStr(hh); }
 int      hh.setPeriod        (/*HISTORY_HEADER*/int &hh[],          int      period     ) { hh[20] = period;                                             return(period     ); HISTORY_HEADER.toStr(hh); }
 int      hh.setDigits        (/*HISTORY_HEADER*/int &hh[],          int      digits     ) { hh[21] = digits;                                             return(digits     ); HISTORY_HEADER.toStr(hh); }
@@ -54,11 +54,11 @@ datetime hh.setPrevDbVersion (/*HISTORY_HEADER*/int &hh[],          datetime dbV
 int      hhs.setVersion      (/*HISTORY_HEADER*/int &hh[][], int i, int      version    ) { hh[i][ 0] = version;                                         return(version    ); HISTORY_HEADER.toStr(hh); }
 string   hhs.setDescription  (/*HISTORY_HEADER*/int &hh[][], int i, string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(description) > 63)          return(_empty(catch("hhs.setDescription(1)   too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if ( StringLen(description) > 63)          return(_emptyStr(catch("hhs.setDescription(1)   too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + 4, StringLen(description)+1); /*term. <NUL> wird mitkopiert*/ return(description); HISTORY_HEADER.toStr(hh); }
 string   hhs.setSymbol       (/*HISTORY_HEADER*/int &hh[][], int i, string   symbol     ) {
-   if (!StringLen(symbol))                    return(_empty(catch("hhs.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_empty(catch("hhs.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!StringLen(symbol))                    return(_emptyStr(catch("hhs.setSymbol(1)   invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_emptyStr(catch("hhs.setSymbol(2)   too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
    CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + 68, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/ return(symbol     ); HISTORY_HEADER.toStr(hh); }
 int      hhs.setPeriod       (/*HISTORY_HEADER*/int &hh[][], int i, int      period     ) { hh[i][20] = period;                                          return(period     ); HISTORY_HEADER.toStr(hh); }
 int      hhs.setDigits       (/*HISTORY_HEADER*/int &hh[][], int i, int      digits     ) { hh[i][21] = digits;                                          return(digits     ); HISTORY_HEADER.toStr(hh); }
@@ -79,8 +79,8 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool debugger=false) {
 
    int dimensions = ArrayDimension(hh);
 
-   if (dimensions > 2)                                         return(_empty(catch("HISTORY_HEADER.toStr(1)   too many dimensions of parameter hh = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayRange(hh, dimensions-1) != HISTORY_HEADER.intSize) return(_empty(catch("HISTORY_HEADER.toStr(2)   invalid size of parameter hh ("+ ArrayRange(hh, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2)                                         return(_emptyStr(catch("HISTORY_HEADER.toStr(1)   too many dimensions of parameter hh = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayRange(hh, dimensions-1) != HISTORY_HEADER.intSize) return(_emptyStr(catch("HISTORY_HEADER.toStr(2)   invalid size of parameter hh ("+ ArrayRange(hh, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string line, lines[]; ArrayResize(lines, 0);
 

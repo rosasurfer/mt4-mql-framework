@@ -9,20 +9,28 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdlib.mqh>
 
-#include <MT4iQuickChannel.mqh>
-#include <win32api.mqh>
-
-
-#import "StdLib.Release.dll"
-   bool Test();
-#import
-
 
 /**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
+int onTick() {
+
+   double atr = iATR(NULL, PERIOD_W1, 14, 0);
+
+   debug("onTick()   atr(14xW1)="+ NumberToStr(atr, ".+"));
+
+   return(last_error);
+}
+
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ *
 int onTick() {
    //debug("onTick(1)");
 
@@ -48,5 +56,6 @@ int onTick() {
 
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
+   int ec.LastError(int ec[]);
 #import
+*/

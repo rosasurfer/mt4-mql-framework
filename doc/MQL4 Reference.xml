@@ -1281,7 +1281,7 @@ int start()
 
 
   <group>
-    tag=basics_preprosessor
+    tag=basics_preprocessor
     caption=Preprocessor
     <content>
     Preprocessor is a special subsystem of MQL4 compiler that is intended for preparation of the program source code immediately
@@ -1293,7 +1293,7 @@ int start()
     A preprocessor directive ends with a line feed character.
     </content>
     <text>
-      tag=basics_preprosessor_constant
+      tag=basics_preprocessor_constant
       caption=Constant declaration
       keywords=;#define;define;
       <content>
@@ -1319,7 +1319,7 @@ void ShowCopyright()
     </text>
 
     <text>
-      tag=basics_preprosessor_compilation
+      tag=basics_preprocessor_compilation
       caption=Controlling compilation
         <keywords>
       ;#property;property;link;copyright;stacksize;indicator_chart_window;indicator_separate_window;indicator_buffers;
@@ -1367,7 +1367,7 @@ void ShowCopyright()
     </text>
 
     <text>
-      tag=basics_preprosessor_include
+      tag=basics_preprocessor_include
       caption=Including of files
       keywords=;include;
       <content>
@@ -1390,7 +1390,7 @@ taken from the default directory (usually <em>terminal_directory\experts\include
     </text>
 
     <text>
-      tag=basics_preprosessor_import
+      tag=basics_preprocessor_import
       caption=Importing of functions
       keywords=;import;DLL;EX4;
       <content>
@@ -1443,11 +1443,11 @@ The parameters passed to imported functions (both from EX4 and from DLL modules)
 
   <group>
     tag=constants
-    caption=Standard constants
+    caption=Predefined constants
     <content>
-     <p>To simplify the program writing and to make program texts more convenient for perception, predefined standard constants are
+     <p>To simplify the program writing and to make program texts more convenient for perception, predefined constants are
      forseen in MQL4.<br/><br/>
-     Standard constants are similar to <a href="help://basics_preprosessor_constant">macro substitutions</a> and are of int type.<br/><br/>
+     Predefined constants are similar to <a href="help://basics_preprocessor_constant">macro substitutions</a> and are of int type.<br/><br/>
      The constants are grouped by their purposes.</p>
     </content>
 
@@ -2736,7 +2736,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       keywords=;init;deinit;start;
       <content>
         <p>
-        To <a href="help://basics_preprosessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used.
+        To <a href="help://basics_preprocessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used.
         This means that, until the imported function is called, the corresponding module (ex4 or dll) will not be loaded.
         MQL4 and DLL libraries are executed in the calling module thread.<br/><br/>
 
@@ -4613,7 +4613,7 @@ TIME_SECONDS gets result as &quot;hh:mi:ss&quot;.
       type=void
       <content>
         Allocates memory for buffers used for custom indicator calculations.
-        The amount of buffers cannot exceed 8 or be less than the value given in the <a href="help://basics_preprosessor_compilation">indicator_buffers</a> property.
+        The amount of buffers cannot exceed 8 or be less than the value given in the <a href="help://basics_preprocessor_compilation">indicator_buffers</a> property.
         If custom indicator requires additional buffers for counting, this function must be used for specifying of the total amount of buffers.
       </content>
       <example>

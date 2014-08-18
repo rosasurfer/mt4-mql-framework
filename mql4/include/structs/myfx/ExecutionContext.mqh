@@ -58,10 +58,10 @@ int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                   
 int    ec.setSignature         (/*EXECUTION_CONTEXT*/int &ec[], int    signature         ) { ec[ 0] = signature;          return(signature         ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpName            (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) { ec[ 1] = lpName;             return(lpName            ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setName              (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
-   if (!StringLen(name))           return(_empty(catch("ec.setName(1)   invalid parameter name = "+ StringToStr(name), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(name) > MAX_PATH) return(_empty(catch("ec.setName(2)   illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
+   if (!StringLen(name))           return(_emptyStr(catch("ec.setName(1)   invalid parameter name = "+ StringToStr(name), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(name) > MAX_PATH) return(_emptyStr(catch("ec.setName(2)   illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpName = ec.lpName(ec);
-   if (!lpName)                    return(_empty(catch("ec.setName(3)   no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
+   if (!lpName)                    return(_emptyStr(catch("ec.setName(3)   no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
    CopyMemory(GetStringAddress(name), lpName, StringLen(name)+1); /*terminierendes <NUL> wird mitkopiert*/                return(name              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setType              (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[ 2] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int &ec[], int    chartProperties   ) { ec[ 3] = chartProperties;    return(chartProperties   ); EXECUTION_CONTEXT.toStr(ec); }
@@ -73,10 +73,10 @@ int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami 
 bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[ 9] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) { ec[10] = lpLogFile;          return(lpLogFile         ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
-   if (!StringLen(logFile))           return(_empty(catch("ec.setLogFile(1)   invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (StringLen(logFile) > MAX_PATH) return(_empty(catch("ec.setLogFile(2)   illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
+   if (!StringLen(logFile))           return(_emptyStr(catch("ec.setLogFile(1)   invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (StringLen(logFile) > MAX_PATH) return(_emptyStr(catch("ec.setLogFile(2)   illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpLogFile = ec.lpLogFile(ec);
-   if (!lpLogFile)                    return(_empty(catch("ec.setLogFile(3)   no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
+   if (!lpLogFile)                    return(_emptyStr(catch("ec.setLogFile(3)   no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
    CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/       return(logFile           ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) {
    ec[11] = lastError;
@@ -98,8 +98,8 @@ int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError
 string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool debugger=false) {
    debugger = debugger!=0;
 
-   if (ArrayDimension(ec) > 1)                     return(_empty(catch("EXECUTION_CONTEXT.toStr(1)   too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_empty(catch("EXECUTION_CONTEXT.toStr(2)   invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(ec) > 1)                     return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(1)   too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(2)   invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string result = StringConcatenate("{signature="         ,               ifString(!ec.Signature         (ec), "0", "0x"+ IntToHexStr(ec.Signature(ec))),
                                     ", name=\""            ,                         ec.Name              (ec), "\"");
@@ -158,13 +158,13 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool debugger=false) {
    debugger = debugger!=0;
 
    // TODO: prüfen, ob lpContext ein gültiger Zeiger ist
-   if (lpContext <= 0)                return(_empty(catch("lpEXECUTION_CONTEXT.toStr(1)   invalid parameter lpContext = "+ lpContext, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (lpContext <= 0)                return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(1)   invalid parameter lpContext = "+ lpContext, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int ec[EXECUTION_CONTEXT.intSize];
    CopyMemory(lpContext, GetBufferAddress(ec), EXECUTION_CONTEXT.size);
 
    // primitive Validierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-   if (ec.Signature(ec) != lpContext) return(_empty(catch("lpEXECUTION_CONTEXT.toStr(2)   invalid EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpContext), ERR_RUNTIME_ERROR)));
+   if (ec.Signature(ec) != lpContext) return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(2)   invalid EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpContext), ERR_RUNTIME_ERROR)));
 
    string result = EXECUTION_CONTEXT.toStr(ec, debugger);
    ArrayResize(ec, 0);

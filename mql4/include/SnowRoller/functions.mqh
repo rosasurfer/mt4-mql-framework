@@ -160,7 +160,7 @@ string StatusToStr(int status) {
       case STATUS_STOPPING     : return("STATUS_STOPPING"     );
       case STATUS_STOPPED      : return("STATUS_STOPPED"      );
    }
-   return(_empty(catch("StatusToStr()   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("StatusToStr()   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 

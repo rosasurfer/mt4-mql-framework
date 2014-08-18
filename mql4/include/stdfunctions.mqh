@@ -2108,15 +2108,27 @@ int _last_error(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NU
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als "" (Leerstring) zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
- * und Lesbarkeit verwendet werden.
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante EMPTY (0xFFFFFFFF = -1) zurückzugeben.
+ * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return string - Leerstring
+ * @return int - EMPTY
  */
-string _empty(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
-   return("");
+int _EMPTY(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+   return(EMPTY);
+}
+
+
+/**
+ * Ob der angegebene Wert die Konstante EMPTY darstellt.
+ *
+ * @param  double value
+ *
+ * @return bool
+ */
+bool IsEmpty(double value) {
+   return(value == EMPTY);
 }
 
 
@@ -2134,6 +2146,43 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
 
 
 /**
+ * Ob der angegebene Wert die Konstante EMPTY_VALUE darstellt.
+ *
+ * @param  double value
+ *
+ * @return bool
+ */
+bool IsEmptyValue(double value) {
+   return(value == EMPTY_VALUE);
+}
+
+
+/**
+ * Pseudo-Funktion, die nichts weiter tut, als einen Leerstring ("") zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
+ * und Lesbarkeit verwendet werden.
+ *
+ * @param  beliebige Parameter (werden ignoriert)
+ *
+ * @return string - Leerstring
+ */
+string _emptyStr(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+   return("");
+}
+
+
+/**
+ * Ob der angegebene Wert einen Leerstring darstellt.
+ *
+ * @param  string value
+ *
+ * @return bool
+ */
+bool IsEmptyString(string value) {
+   return(value == "");
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als die Konstante NaT (NotATime: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
  * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
@@ -2143,6 +2192,18 @@ int _EMPTY_VALUE(int param1=NULL, int param2=NULL, int param3=NULL, int param4=N
  */
 int _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(NaT);
+}
+
+
+/**
+ * Ob der angegebene Wert die Konstante NaT (Not-A-Time) darstellt.
+ *
+ * @param  datetime value
+ *
+ * @return bool
+ */
+bool IsNaT(datetime value) {
+   return(value == NaT);
 }
 
 
@@ -2493,7 +2554,8 @@ void __DummyCalls() {
    __log.custom(NULL);
    _bool(NULL);
    _double(NULL);
-   _empty();
+   _emptyStr();
+   _EMPTY();
    _EMPTY_VALUE();
    _false();
    _int(NULL);
@@ -2521,9 +2583,13 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   IsEmpty(NULL);
+   IsEmptyString(NULL);
+   IsEmptyValue(NULL);
    IsError(NULL);
    IsLastError();
    IsLogging();
+   IsNaT(NULL);
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
