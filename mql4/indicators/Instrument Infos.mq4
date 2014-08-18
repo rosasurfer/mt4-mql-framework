@@ -152,7 +152,7 @@ int UpdateInfos() {
 
                                                                              ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ ifString(tradeAllowed, "yes", "no"),                 fg.fontSize, fg.fontName, fg.fontColor);
                                                                              ObjectSetText(labels[I_POINT         ], "Point size:  "    + NumberToStr(Point, PriceFormat),                     fg.fontSize, fg.fontName, fg.fontColor);
-   double tickSize         = MarketInfo(symbol, MODE_TICKSIZE);              ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat),                  fg.fontSize, fg.fontName, fg.fontColor);
+   double tickSize         = MarketInfo(symbol, MODE_TICKSIZE );             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:   "    + NumberToStr(tickSize, PriceFormat),                  fg.fontSize, fg.fontName, fg.fontColor);
    double tickValue        = MarketInfo(symbol, MODE_TICKVALUE);
    double pointValue       = tickValue/(tickSize/Point);
    double pipValue         = PipPoints * pointValue;                         ObjectSetText(labels[I_TICKVALUE     ], "Pip value:  "     + NumberToStr(pipValue, ".2+R") +" "+ accountCurrency, fg.fontSize, fg.fontName, fg.fontColor);
@@ -160,10 +160,10 @@ int UpdateInfos() {
    double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   + DoubleToStr(stopLevel,   Digits<<31>>31) +" pip",    fg.fontSize, fg.fontName, fg.fontColor);
    double freezeLevel      = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   + DoubleToStr(freezeLevel, Digits<<31>>31) +" pip",    fg.fontSize, fg.fontName, fg.fontColor);
 
-   double lotSize          = MarketInfo(symbol, MODE_LOTSIZE       );        ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + NumberToStr(lotSize, ", .+") +" units",              fg.fontSize, fg.fontName, fg.fontColor);
-   double minLot           = MarketInfo(symbol, MODE_MINLOT        );        ObjectSetText(labels[I_MINLOT        ], "Min lot:    "     + NumberToStr(minLot, ", .+"),                         fg.fontSize, fg.fontName, fg.fontColor);
-   double lotStep          = MarketInfo(symbol, MODE_LOTSTEP       );        ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + NumberToStr(lotStep, ", .+"),                        fg.fontSize, fg.fontName, fg.fontColor);
-   double maxLot           = MarketInfo(symbol, MODE_MAXLOT        );        ObjectSetText(labels[I_MAXLOT        ], "Max lot:   "      + NumberToStr(maxLot, ", .+"),                         fg.fontSize, fg.fontName, fg.fontColor);
+   double lotSize          = MarketInfo(symbol, MODE_LOTSIZE);               ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + NumberToStr(lotSize, ", .+") +" units",              fg.fontSize, fg.fontName, fg.fontColor);
+   double minLot           = MarketInfo(symbol, MODE_MINLOT );               ObjectSetText(labels[I_MINLOT        ], "Min lot:    "     + NumberToStr(minLot, ", .+"),                         fg.fontSize, fg.fontName, fg.fontColor);
+   double lotStep          = MarketInfo(symbol, MODE_LOTSTEP);               ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + NumberToStr(lotStep, ", .+"),                        fg.fontSize, fg.fontName, fg.fontColor);
+   double maxLot           = MarketInfo(symbol, MODE_MAXLOT );               ObjectSetText(labels[I_MAXLOT        ], "Max lot:   "      + NumberToStr(maxLot, ", .+"),                         fg.fontSize, fg.fontName, fg.fontColor);
 
    double marginRequired   = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = NULL;
    double lotValue         = Close[0]/tickSize * tickValue;
