@@ -51,7 +51,7 @@ int      last_error;                                        // der letzte Fehler
 #define WHOLE_ARRAY                 0
 #define MAX_SYMBOL_LENGTH          11
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
-#define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-character-path-string<NUL>"
+#define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
 #define NL                          "\n"                    // new line (MQL schreibt 0x0D0A)
 #define TAB                         "\t"                    // tab
 
@@ -2391,6 +2391,38 @@ int Ceil(double value) {
 
 
 /**
+ * Dividiert zwei Doubles und fängt dabei eine Division durch 0 ab.
+ *
+ * @param  double a      - Divident
+ * @param  double b      - Divisor
+ * @param  double onZero - Ergebnis für den Fall, das der Divisor 0 ist (default: 0)
+ *
+ * @return double
+ */
+double MathDiv(double a, double b, double onZero=0) {
+   if (!b)
+      return(onZero);
+   return(a/b);
+}
+
+
+/**
+ * Integer-Version von MathDiv(). Dividiert zwei Integers und fängt dabei eine Division durch 0 ab.
+ *
+ * @param  int a      - Divident
+ * @param  int b      - Divisor
+ * @param  int onZero - Ergebnis für den Fall, das der Divisor 0 ist (default: 0)
+ *
+ * @return int
+ */
+int Div(int a, int b, int onZero=0) {
+   if (!b)
+      return(onZero);
+   return(a/b);
+}
+
+
+/**
  * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (NULL-Pointer) ist.
  *
  * @param  string value - zu prüfende Stringvariable
@@ -2477,6 +2509,7 @@ void __DummyCalls() {
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    debug(NULL);
+   Div(NULL, NULL);
    DummyCalls();
    EQ(NULL, NULL);
    Floor(NULL);
@@ -2495,6 +2528,7 @@ void __DummyCalls() {
    LE(NULL, NULL);
    log(NULL);
    LT(NULL, NULL);
+   MathDiv(NULL, NULL);
    Max(NULL, NULL);
    Min(NULL, NULL);
    NE(NULL, NULL);
@@ -2503,9 +2537,9 @@ void __DummyCalls() {
    PipValue();
    ResetLastError();
    Round(NULL);
+   RoundCeil(NULL);
    RoundEx(NULL);
    RoundFloor(NULL);
-   RoundCeil(NULL);
    SelectTicket(NULL, NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
