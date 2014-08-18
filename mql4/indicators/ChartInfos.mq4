@@ -470,7 +470,7 @@ bool UpdateSpread() {
  */
 bool UpdateUnitSize() {
    if (IsTesting())
-      return(true);                             // Anzeige wird im Tester nicht benötigt
+      return(true);                                                              // Anzeige wird im Tester nicht benötigt
 
    // (1) Ausgangsdaten bestimmen
    bool   tradeAllowed   = (MarketInfo(Symbol(), MODE_TRADEALLOWED  ) && 1);
@@ -487,12 +487,12 @@ bool UpdateUnitSize() {
 
 
    // (2) UnitSize berechnen
-   string strUnitSize = "-";
+   string strUnitSize = " ";
 
    if (tradeAllowed && tickSize && tickValue && marginRequired && equity > 0) {  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       double leverage = 2.5;
-      double lotValue = Close[0]/tickSize * tickValue;                           // Lotvalue eines Lots in Account-Currency
-      unleveragedLots = equity / lotValue;                                       // maximal mögliche Lotsize ohne Hebel (1:1)
+      double lotValue = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
+      unleveragedLots = equity / lotValue;                                       // maximal mögliche Lotsize ohne Leverage (Hebel 1:1)
       double unitSize = unleveragedLots * leverage;                              // Equity wird mit 'leverage' gehebelt (max. ca. 20-30)
 
       // UnitSize immer ab-, niemals aufrunden                                                                                            Abstufung max. 6.7% je Schritt
@@ -505,13 +505,13 @@ bool UpdateUnitSize() {
       else if (unitSize <=    3.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
       else if (unitSize <=    7.5 ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
       else if (unitSize <=   12.  ) unitSize = NormalizeDouble(MathFloor(unitSize/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
-      else if (unitSize <=   30.  ) unitSize = MathRound      (MathFloor(unitSize/  1    ) *   1       );   //      12-30: Vielfaches von   1
-      else if (unitSize <=   75.  ) unitSize = MathRound      (MathFloor(unitSize/  2    ) *   2       );   //      30-75: Vielfaches von   2
-      else if (unitSize <=  120.  ) unitSize = MathRound      (MathFloor(unitSize/  5    ) *   5       );   //     75-120: Vielfaches von   5
-      else if (unitSize <=  300.  ) unitSize = MathRound      (MathFloor(unitSize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
-      else if (unitSize <=  750.  ) unitSize = MathRound      (MathFloor(unitSize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
-      else if (unitSize <= 1200.  ) unitSize = MathRound      (MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
-      else                          unitSize = MathRound      (MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
+      else if (unitSize <=   30.  ) unitSize =       MathRound(MathFloor(unitSize/  1    ) *   1       );   //      12-30: Vielfaches von   1
+      else if (unitSize <=   75.  ) unitSize =       MathRound(MathFloor(unitSize/  2    ) *   2       );   //      30-75: Vielfaches von   2
+      else if (unitSize <=  120.  ) unitSize =       MathRound(MathFloor(unitSize/  5    ) *   5       );   //     75-120: Vielfaches von   5
+      else if (unitSize <=  300.  ) unitSize =       MathRound(MathFloor(unitSize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
+      else if (unitSize <=  750.  ) unitSize =       MathRound(MathFloor(unitSize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
+      else if (unitSize <= 1200.  ) unitSize =       MathRound(MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
+      else                          unitSize =       MathRound(MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
       strUnitSize = StringConcatenate("1:", NumberToStr(leverage, ".+"), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
    }
