@@ -323,8 +323,9 @@
    bool     GT(double a, double b, int digits);
    bool     GE(double a, double b, int digits);
 
+   int      Div       (int    a, int    b, int    onZero);
+   double   MathDiv   (double a, double b, double onZero);
    double   MathModFix(double a, double b);
-   int      CountDecimals(double value);
 
    int      Abs(int value);
    int      Min(int a, int b);
@@ -336,6 +337,8 @@
    double   RoundEx   (double value, int decimals);
    double   RoundFloor(double value, int decimals);
    double   RoundCeil (double value, int decimals);
+
+   int      CountDecimals(double value);
 
 
    // Strings
