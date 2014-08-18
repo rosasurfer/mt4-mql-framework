@@ -182,32 +182,26 @@ int UpdateInfos() {
    double swapLong         = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort        = MarketInfo(symbol, MODE_SWAPSHORT);
       double swapLongDaily, swapShortDaily, swapLongYearly, swapShortYearly;
+      string strSwapLong, strSwapShort;
+
       if (swapMethod == SCM_POINTS) {
          // typisch für Forex
          swapLongDaily  = swapLong *Point/Pip; swapLongYearly  = swapLongDaily *Pip*365/Close[0] * 100;
          swapShortDaily = swapShort*Point/Pip; swapShortYearly = swapShortDaily*Pip*365/Close[0] * 100;
       }
       else {
-         static bool alert.swapMethod;
-         if (!alert.swapMethod) {
-            warn("UpdateInfos(1)   irregular swap calculation method = "+ SwapCalculationMethodToStr(swapMethod));
-            alert.swapMethod = true;
-         }
-         swapMethod = -1;
          if (swapMethod == SCM_INTEREST) {                           // ist dies durch ein Beispiel bestätigt???
             //swapLongDaily  = swapLong *Close[0]/100/365/Pip; swapLongY  = swapLong;
             //swapShortDaily = swapShort*Close[0]/100/365/Pip; swapShortY = swapShort;
          }
          else if (swapMethod == SCM_BASE_CURRENCY  ) {}
          else if (swapMethod == SCM_MARGIN_CURRENCY) {}              // Stringo: non-standard calculation (vom Broker abhängig)
-      }
 
-      string strSwapLong, strSwapShort;
-      if (swapMethod == -1) {
-         strSwapLong  = "n/a";
-         strSwapShort = "n/a";
+         strSwapLong  = SwapCalculationMethodToStr(swapMethod) +"  "+ NumberToStr(swapLong,  ".+");
+         strSwapShort = SwapCalculationMethodToStr(swapMethod) +"  "+ NumberToStr(swapShort, ".+");
+         swapMethod = -1;
       }
-      else {
+      if (swapMethod != -1) {
          if (!swapLong)  strSwapLong  = "none";
          else {
             if (MathAbs(swapLongDaily ) <= 0.05) swapLongDaily  = Sign(swapLongDaily ) * 0.1;
@@ -220,7 +214,6 @@ int UpdateInfos() {
          }
       }                                            ObjectSetText(labels[I_SWAPLONG        ], "Swap long:  "+ strSwapLong,                fg.fontSize, fg.fontName, fg.fontColor);
                                                    ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+ strSwapShort,               fg.fontSize, fg.fontName, fg.fontColor);
-
 
    int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
    int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
