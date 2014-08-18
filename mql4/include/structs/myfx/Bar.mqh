@@ -59,8 +59,8 @@ string BAR.toStr(/*BAR*/double bar[], bool debugger=false) {
    debugger = debugger!=0;
 
    int dimensions = ArrayDimension(bar);
-   if (dimensions > 2)                                  return(_empty(catch("BAR.toStr(1)   too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_empty(catch("BAR.toStr(2)   invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2)                                  return(_emptyStr(catch("BAR.toStr(1)   too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_emptyStr(catch("BAR.toStr(2)   invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string line, lines[]; ArrayResize(lines, 0);
 

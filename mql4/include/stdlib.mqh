@@ -415,6 +415,11 @@
 
 
    // sonstiges
+   bool     IsEmpty      (double   value);
+   bool     IsEmptyString(string   value);
+   bool     IsEmptyValue (double   value);
+   bool     IsNaT        (datetime value);
+
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
    double   PipValue(double lots, bool hideErrors);

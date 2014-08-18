@@ -152,7 +152,7 @@ double   lo.setProfit              (/*LFX_ORDER*/int &lo[],          double   pr
 double   lo.setDeviation           (/*LFX_ORDER*/int &lo[],          double   deviation          ) { int v=MathRound(deviation     * MathPow(10, lo.Digits(lo)));                             lo[I_LFX_ORDER.deviation          ] = v;    return(deviation               ); LFX_ORDER.toStr(lo); }
 string   lo.setComment             (/*LFX_ORDER*/int &lo[],          string   comment            ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if (StringLen(comment) > 31) return(_empty(catch("lo.setComment()   too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (StringLen(comment) > 31) return(_emptyStr(catch("lo.setComment()   too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
    CopyMemory(GetStringAddress(comment), GetBufferAddress(lo)+I_LFX_ORDER.comment*4, StringLen(comment)+1);                                                                                                                               return(comment                 ); LFX_ORDER.toStr(lo); }
 datetime lo.setModificationTime    (/*LFX_ORDER*/int &lo[],          datetime modificationTime   ) { int v=modificationTime;                                                                  lo[I_LFX_ORDER.modificationTime   ] = v;    return(modificationTime        ); LFX_ORDER.toStr(lo); }
 int      lo.setVersion             (/*LFX_ORDER*/int &lo[],          int      version            ) { int v=version;                                                                           lo[I_LFX_ORDER.version            ] = v;    return(version                 ); LFX_ORDER.toStr(lo); }
@@ -184,7 +184,7 @@ double   los.setProfit             (/*LFX_ORDER*/int &lo[][], int i, double   pr
 double   los.setDeviation          (/*LFX_ORDER*/int &lo[][], int i, double   deviation          ) { int v=MathRound(deviation     * MathPow(10, los.Digits(lo, i)));                         lo[i][I_LFX_ORDER.deviation          ] = v; return(deviation               ); LFX_ORDER.toStr(lo); }
 string   los.setComment            (/*LFX_ORDER*/int &lo[][], int i, string   comment            ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > 31) return(_empty(catch("los.setComment()   too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if ( StringLen(comment) > 31) return(_emptyStr(catch("los.setComment()   too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_FUNCTION_PARAMVALUE));
    CopyMemory(GetStringAddress(comment), GetBufferAddress(lo)+ i*LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4, StringLen(comment)+1);                                                                                                      return(comment                 ); LFX_ORDER.toStr(lo); }
 datetime los.setModificationTime   (/*LFX_ORDER*/int &lo[][], int i, datetime modificationTime   ) { int v=modificationTime;                                                                  lo[i][I_LFX_ORDER.modificationTime   ] = v; return(modificationTime        ); LFX_ORDER.toStr(lo); }
 int      los.setVersion            (/*LFX_ORDER*/int &lo[][], int i, int      version            ) { int v=version;                                                                           lo[i][I_LFX_ORDER.version            ] = v; return(version                 ); LFX_ORDER.toStr(lo); }
@@ -209,8 +209,8 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
 
    int dimensions = ArrayDimension(lo);
 
-   if (dimensions > 2)                                    return(_empty(catch("LFX_ORDER.toStr(1)   too many dimensions of parameter lo = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayRange(lo, dimensions-1) != LFX_ORDER.intSize) return(_empty(catch("LFX_ORDER.toStr(2)   invalid size of parameter lo ("+ ArrayRange(lo, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2)                                    return(_emptyStr(catch("LFX_ORDER.toStr(1)   too many dimensions of parameter lo = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayRange(lo, dimensions-1) != LFX_ORDER.intSize) return(_emptyStr(catch("LFX_ORDER.toStr(2)   invalid size of parameter lo ("+ ArrayRange(lo, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int    digits, pipDigits;
    string priceFormat, line, lines[]; ArrayResize(lines, 0);

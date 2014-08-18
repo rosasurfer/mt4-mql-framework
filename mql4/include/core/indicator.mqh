@@ -14,6 +14,7 @@ extern int    __lpSuperContext;
  * @return int - Fehlerstatus
  */
 int init() { // throws ERS_TERMINAL_NOT_YET_READY
+   /*
    if (StringStartsWith(WindowExpertName(), "Test")) {
       int build=GetTerminalBuild(), currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
       debug("init(1)   "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  sc="+ __lpSuperContext +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
@@ -22,7 +23,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
          else                     sInitReason = InitReasonToStr(iInitReason);
       debug("init(2)     "+ build +"  "+ StringPadRight(UninitializeReasonToStr(UninitializeReason()), 18, " ") +"  "+ sInitReason);
    }
-
+   */
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -152,9 +153,11 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
  * @return int - Fehlerstatus
  */
 int start() {
+   /*
    if (StringStartsWith(WindowExpertName(), "Test")) {
       debug("start(1)");
    }
+   */
    if (__STATUS_ERROR)
       return(last_error);
 
@@ -290,7 +293,6 @@ int deinit() {
       //debug("deinit()   "+ GetTerminalBuild() +"  "+ StringPadRight(UninitializeReasonToStr(UninitializeReason()), 18, " ") +"  "+ sInitReason);
    }
    */
-
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
