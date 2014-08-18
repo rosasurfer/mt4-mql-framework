@@ -7529,6 +7529,24 @@ int GetLocalToGmtTimeOffset() {
 
 
 /**
+ * Gibt die lesbare Konstante einer SwapCalculation-Methode zurück.
+ *
+ * @param  int method - SwapCalculation-Methode
+ *
+ * @return string
+ */
+string SwapCalculationMethodToStr(int method) {
+   switch (method) {
+      case SCM_POINTS         : return("SCM_POINTS"         );
+      case SCM_BASE_CURRENCY  : return("SCM_BASE_CURRENCY"  );
+      case SCM_INTEREST       : return("SCM_INTEREST"       );
+      case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
+   }
+   return(_empty(catch("SwapCalculationMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
  * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
  *
  * @param  int type - MA-Methode
