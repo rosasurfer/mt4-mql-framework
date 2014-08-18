@@ -111,7 +111,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
                                                                                           //
    switch (initReason) {                                                                  //
       case INIT_REASON_USER             : error = onInit.User();             break;       //
-      case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;       //
+      case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;       // falsche Werte für Point und Digits in neuem Chartfenster
       case INIT_REASON_PROGRAM          : error = onInit.Program();          break;       //
       case INIT_REASON_PROGRAM_CLEARTEST: error = onInit.ProgramClearTest(); break;       //
       case INIT_REASON_PARAMETERS       : error = onInit.Parameters();       break;       //
@@ -119,7 +119,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
       case INIT_REASON_SYMBOLCHANGE     : error = onInit.SymbolChange();     break;       //
       case INIT_REASON_RECOMPILE        : error = onInit.Recompile();        break;       //
       default:                                                                            //
-         return(catch("init(7)   unknown InitReason = "+ initReason, ERR_RUNTIME_ERROR)); //
+         return(catch("init(7)   unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)); //
    }                                                                                      //
    if (error == -1) {                                                                     //
       if (!last_error) SetLastError(ERR_RUNTIME_ERROR);                                   //
