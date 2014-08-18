@@ -510,6 +510,7 @@
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorDescription(int error);
+   string   SwapCalculationMethodToStr(int method);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);
    string   InitReasonDescription(int reason);

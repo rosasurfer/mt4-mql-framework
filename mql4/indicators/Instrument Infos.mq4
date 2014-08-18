@@ -168,34 +168,59 @@ int UpdateInfos() {
    double marginRequired   = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = NULL;
    double lotValue         = Close[0]/tickSize * tickValue;
    double leverage         = MathDiv(lotValue, marginRequired);              ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(!marginRequired, "", NumberToStr(marginRequired, ", .2+R") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fg.fontSize, fg.fontName, ifInt(!marginRequired, fg.fontColor.Disabled, fg.fontColor));
-   double marginHedged     = MarketInfo(symbol, MODE_MARGINHEDGED  );
+   double marginHedged     = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged     = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", Round(marginHedged) +"%"),                                                                   fg.fontSize, fg.fontName, ifInt(!marginRequired, fg.fontColor.Disabled, fg.fontColor));
 
-   double spread           = MarketInfo(symbol, MODE_SPREAD     )/PipPoints; ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits<<31>>31) +" pip",    fg.fontSize, fg.fontName, fg.fontColor);
+   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits<<31>>31) +" pip",    fg.fontSize, fg.fontName, fg.fontColor);
    double commission       = GetCommission();
    double commissionUSD    = ConvertCurrency(commission, accountCurrency, "USD");
    double commissionUSDLot = GetCommissionUSDLot(commissionUSD);
    double commissionPip    = NormalizeDouble(commission/pipValue, Digits+1-PipDigits);
                                                                              ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +"/lot = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
                                                                            //ObjectSetText(labels[I_COMMISSION    ], "Commission:  $"   + NumberToStr(commission, ".2R") +"/USD-lot = "+ NumberToStr(commissionPip, ".1+") +" pip",                   fg.fontSize, fg.fontName, fg.fontColor);
-   int    swapType         = MarketInfo(symbol, MODE_SWAPTYPE      );
-   double swapLong         = MarketInfo(symbol, MODE_SWAPLONG      );
-   double swapShort        = MarketInfo(symbol, MODE_SWAPSHORT     );
-      double swapLongD, swapShortD, swapLongY, swapShortY;
-      if (swapType == SCM_POINTS) {
-         swapLongD  = swapLong *Point/Pip;            swapLongY  = swapLongD *Pip*360*100/Close[0];
-         swapShortD = swapShort*Point/Pip;            swapShortY = swapShortD*Pip*360*100/Close[0];
-      }
-      else if (swapType == SCM_INTEREST) {
-         swapLongD  = swapLong *Close[0]/100/360/Pip; swapLongY  = swapLong;
-         swapShortD = swapShort*Close[0]/100/360/Pip; swapShortY = swapShort;
+   int    swapMethod       = MarketInfo(symbol, MODE_SWAPTYPE );
+   double swapLong         = MarketInfo(symbol, MODE_SWAPLONG );
+   double swapShort        = MarketInfo(symbol, MODE_SWAPSHORT);
+      double swapLongDaily, swapShortDaily, swapLongYearly, swapShortYearly;
+      if (swapMethod == SCM_POINTS) {
+         // typisch für Forex
+         swapLongDaily  = swapLong *Point/Pip; swapLongYearly  = swapLongDaily *Pip*365/Close[0] * 100;
+         swapShortDaily = swapShort*Point/Pip; swapShortYearly = swapShortDaily*Pip*365/Close[0] * 100;
       }
       else {
-         if      (swapType == SCM_BASE_CURRENCY  ) {}
-         else if (swapType == SCM_MARGIN_CURRENCY) {} // Deposit-Currency
+         static bool alert.swapMethod;
+         if (!alert.swapMethod) {
+            warn("UpdateInfos(1)   irregular swap calculation method = "+ SwapCalculationMethodToStr(swapMethod));
+            alert.swapMethod = true;
+         }
+         swapMethod = -1;
+         if (swapMethod == SCM_INTEREST) {                           // ist dies durch ein Beispiel bestätigt???
+            //swapLongDaily  = swapLong *Close[0]/100/365/Pip; swapLongY  = swapLong;
+            //swapShortDaily = swapShort*Close[0]/100/365/Pip; swapShortY = swapShort;
+         }
+         else if (swapMethod == SCM_BASE_CURRENCY  ) {}
+         else if (swapMethod == SCM_MARGIN_CURRENCY) {}              // Stringo: non-standard calculation (vom Broker abhängig)
       }
-      ObjectSetText(labels[I_SWAPLONG ], "Swap long:  "+ NumberToStr(swapLongD,  "+.1R") +" pip = "+ NumberToStr(swapLongY,  "+.1R") +"% p.a.", fg.fontSize, fg.fontName, fg.fontColor);
-      ObjectSetText(labels[I_SWAPSHORT], "Swap short: "+ NumberToStr(swapShortD, "+.1R") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.", fg.fontSize, fg.fontName, fg.fontColor);
+
+      string strSwapLong, strSwapShort;
+      if (swapMethod == -1) {
+         strSwapLong  = "n/a";
+         strSwapShort = "n/a";
+      }
+      else {
+         if (!swapLong)  strSwapLong  = "none";
+         else {
+            if (MathAbs(swapLongDaily ) <= 0.05) swapLongDaily  = Sign(swapLongDaily ) * 0.1;
+            strSwapLong  = NumberToStr(swapLongDaily,  "+.1R") +" pip = "+ NumberToStr(swapLongYearly,  "+.1R") +"% p.a.";
+         }
+         if (!swapShort) strSwapShort = "none";
+         else {
+            if (MathAbs(swapShortDaily) <= 0.05) swapShortDaily = Sign(swapShortDaily) * 0.1;
+            strSwapShort = NumberToStr(swapShortDaily, "+.1R") +" pip = "+ NumberToStr(swapShortYearly, "+.1R") +"% p.a.";
+         }
+      }                                            ObjectSetText(labels[I_SWAPLONG        ], "Swap long:  "+ strSwapLong,                fg.fontSize, fg.fontName, fg.fontColor);
+                                                   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "+ strSwapShort,               fg.fontSize, fg.fontName, fg.fontColor);
+
 
    int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:       "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
    int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: " + ifString(!accountLeverage, "",  NumberToStr(NormalizeDouble(stopoutLevel, 2), ", .+") + ifString(AccountStopoutMode()==ASM_PERCENT, "%", " "+ accountCurrency)), fg.fontSize, fg.fontName, ifInt(!accountLeverage, fg.fontColor.Disabled, fg.fontColor));
@@ -220,7 +245,7 @@ int UpdateInfos() {
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);
-   return(catch("UpdateInfos()", error));
+   return(catch("UpdateInfos(2)", error));
 }
 
 
@@ -275,7 +300,6 @@ MODE_DIGITS             Count of digits after decimal point in the symbol prices
 MODE_POINT              Point size in the quote currency.   => Auflösung des Preises
 MODE_TICKSIZE           Tick size in the quote currency.    => kleinste Änderung des Preises, Vielfaches von MODE_POINT
 
-MODE_SPREAD             Spread value in points.
 MODE_STOPLEVEL          Stop level in points.
 MODE_FREEZELEVEL        Order freeze level in points. If the execution price is within the defined range, the order cannot be modified, cancelled or closed.
 
@@ -291,7 +315,9 @@ MODE_MARGININIT         Initial margin requirements for 1 lot.
 MODE_MARGINMAINTENANCE  Margin to maintain open positions calculated for 1 lot.
 MODE_MARGINHEDGED       Hedged margin calculated for 1 lot.
 
-MODE_SWAPTYPE           Swap calculation method. 0 - in points; 1 - in the symbol base currency; 2 - by interest; 3 - in the margin currency.
+MODE_SPREAD             Spread value in points.
+
+MODE_SWAPTYPE           Swap calculation method. 0 - in points; 1 - in symbol base currency; 2 - by interest; 3 - in the margin currency.
 MODE_SWAPLONG           Swap of the long position.
 MODE_SWAPSHORT          Swap of the short position.
 

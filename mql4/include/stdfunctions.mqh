@@ -551,14 +551,14 @@ int      last_error;                                        // der letzte Fehler
 #define MCM_CFD                        1
 #define MCM_CFDFUTURES                 2
 #define MCM_CFDINDEX                   3
-#define MCM_CFDLEVERAGE                4        // erst seit MQLv5 dokumentiert
+#define MCM_CFDLEVERAGE                4        // erst seit MQL5 dokumentiert
 
 
 // Swap calculation modes, siehe MarketInfo(symbol, MODE_SWAPTYPE)
-#define SCM_POINTS                     0
+#define SCM_POINTS                     0        // Points je Lot und Tag
 #define SCM_BASE_CURRENCY              1
 #define SCM_INTEREST                   2
-#define SCM_MARGIN_CURRENCY            3        // Deposit-Currency
+#define SCM_MARGIN_CURRENCY            3        // Stringo: non-standard calculation (vom Broker abhängig)
 
 
 // Profit calculation modes, siehe MarketInfo(symbol, MODE_PROFITCALCMODE)
