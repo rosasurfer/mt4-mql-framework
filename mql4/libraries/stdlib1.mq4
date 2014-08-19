@@ -357,6 +357,66 @@ bool __Indicator.IsTesting() {
 
 
 /**
+ * Öffnet eine einzelne Datei im Texteditor.
+ *
+ * @param  string filename - Dateiname
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EditFile(string filename) {
+   if (!StringLen(filename))
+      return(!catch("EditFile(1)   invalid parameter filename = "+ StringToStr(filename), ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   string file[1]; file[0] = filename;
+   return(EditFiles(file));
+}
+
+
+/**
+ * Öffnet eine oder mehrere Dateien im Texteditor.
+ *
+ * @param  string filenames[] - Dateinamen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EditFiles(string filenames[]) {
+   int size = ArraySize(filenames);
+   if (!size)                       return(!catch("EditFiles(1)   invalid parameter filenames = {}", ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   for (int i=0; i < size; i++) {
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)   invalid file name at filenames["+ i +"] = "+ StringToStr(filenames[i]), ERR_INVALID_FUNCTION_PARAMVALUE));
+   }
+
+
+   // prüfen, ob ein Editor konfiguriert ist
+   string section = "System";
+   string key     = "Editor";
+   string editor  = GetGlobalConfigString(section, key, "");
+
+
+   if (StringLen(editor) > 0) {
+      // ja: konfigurierten Editor benutzen
+      string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
+      debug("EditFiles(0.1)   cmd = "+ cmd);
+
+      int result = WinExec(cmd, SW_SHOWNORMAL);
+      if (result < 32)
+         return(!catch("EditFiles(3)->kernel32::WinExec(cmd=\""+ editor +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   }
+   else {
+      // nein: ShellExecute() mit Default-Open-Methode benutzen
+      string sNull;
+      for (i=0; i < size; i++) {
+         result = ShellExecuteA(NULL, "open", filenames[i], sNull, sNull, SW_SHOWNORMAL);
+         if (result <= 32)
+            return(!catch("EditFiles(4)->shell32::ShellExecuteA(file=\""+ filenames[i] +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      }
+   }
+   return(!catch("EditFiles(5)"));
+}
+
+
+/**
  * Gibt die Commission-Rate des Accounts in der Accountwährung zurück.
  *
  * @return double

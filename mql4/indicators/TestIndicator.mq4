@@ -16,10 +16,9 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
+   double atr = iATR(NULL, PERIOD_W1, 14, 0);// throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
-   double atr = iATR(NULL, PERIOD_W1, 14, 0);
-
-   debug("onTick()   atr(14xW1)="+ NumberToStr(atr, ".+"));
+   debug("onTick()   atr(14xW)="+ NumberToStr(atr, ".+"));
 
    return(last_error);
 }

@@ -3760,7 +3760,7 @@ int UploadStatus(string company, int account, string symbol, string filename) {
    // Datei hochladen, WinExec() kehrt ohne zu warten zurück, wget -b beschleunigt zusätzlich
    int result = WinExec(cmdLine, SW_HIDE);                           // SW_SHOWNORMAL|SW_HIDE
    if (result < 32)
-      return(catch("UploadStatus(2)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR));
+      return(catch("UploadStatus(2)->kernel32::WinExec(cmd=\""+ cmd +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    ArrayResize(parts, 0);
    return(catch("UploadStatus(3)"));

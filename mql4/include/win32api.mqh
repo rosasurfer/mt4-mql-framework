@@ -2,7 +2,6 @@
  *
  */
 #import "kernel32.dll"
-
    int  _lclose(int hFile);
    int  _lcreat(string lpPathName, int attributes);
    int  _llseek(int hFile, int offset, int origin);
@@ -53,15 +52,12 @@
    bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib::FlushIniCache()
 
 #import "ntdll.dll"
-
    int  RtlGetLastWin32Error();
 
 #import "shell32.dll"
-
    int  ShellExecuteA(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
 
 #import "user32.dll"
-
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
@@ -80,14 +76,11 @@
    bool SetWindowTextA(int hWnd, string lpString);
 
 #import "version.dll"
-
    bool GetFileVersionInfoA(string lpFilename, int handle, int bufferSize, int lpBuffer[]);
    int  GetFileVersionInfoSizeA(string lpFilename, int lpHandle[]);
 
 #import "winmm.dll"
-
    bool PlaySoundA(string lpSound, int hMod, int fSound);
-
 #import
 
 

@@ -306,6 +306,9 @@
    bool     IsIniKey(string fileName, string section, string key);
    int      DeleteIniKey(string fileName, string section, string key);
 
+   bool     EditFile (string filename   );
+   bool     EditFiles(string filenames[]);
+
 
    // Locks
    bool     AquireLock(string mutexName, bool wait);
