@@ -397,8 +397,6 @@ bool EditFiles(string filenames[]) {
    if (StringLen(editor) > 0) {
       // ja: konfigurierten Editor benutzen
       string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
-      debug("EditFiles(0.1)   cmd = "+ cmd);
-
       int result = WinExec(cmd, SW_SHOWNORMAL);
       if (result < 32)
          return(!catch("EditFiles(3)->kernel32::WinExec(cmd=\""+ editor +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
