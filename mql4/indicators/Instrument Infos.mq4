@@ -184,18 +184,17 @@ int UpdateInfos() {
       double swapLongDaily, swapShortDaily, swapLongYearly, swapShortYearly;
       string strSwapLong, strSwapShort;
 
-      if (swapMethod == SCM_POINTS) {
-         // typisch für Forex
+      if (swapMethod == SCM_POINTS) {                                // in points of quote currency
          swapLongDaily  = swapLong *Point/Pip; swapLongYearly  = MathDiv(swapLongDaily *Pip*365, Close[0]) * 100;
          swapShortDaily = swapShort*Point/Pip; swapShortYearly = MathDiv(swapShortDaily*Pip*365, Close[0]) * 100;
       }
       else {
-         if (swapMethod == SCM_INTEREST) {                           // ist dies durch ein Beispiel bestätigt???
+         if (swapMethod == SCM_INTEREST) {                           // überprüfen: "in percentage terms" z.B. LiteForex Aktien-CFDs
             //swapLongDaily  = swapLong *Close[0]/100/365/Pip; swapLongY  = swapLong;
             //swapShortDaily = swapShort*Close[0]/100/365/Pip; swapShortY = swapShort;
          }
-         else if (swapMethod == SCM_BASE_CURRENCY  ) {}
-         else if (swapMethod == SCM_MARGIN_CURRENCY) {}              // Stringo: non-standard calculation (vom Broker abhängig)
+         else if (swapMethod == SCM_BASE_CURRENCY  ) {}              // as amount of base currency   (see "symbols.raw")
+         else if (swapMethod == SCM_MARGIN_CURRENCY) {}              // as amount of margin currency (see "symbols.raw")
 
          strSwapLong  = SwapCalculationMethodToStr(swapMethod) +"  "+ NumberToStr(swapLong,  ".+");
          strSwapShort = SwapCalculationMethodToStr(swapMethod) +"  "+ NumberToStr(swapShort, ".+");
