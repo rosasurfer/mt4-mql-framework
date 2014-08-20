@@ -57,14 +57,10 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool Strategy(int hTrade) {
-   if (__STATUS_ERROR)
-      return(false);
-
    //UpdateStatus(hTrade);
    //...
    //RecordEquity(hTrade);                                           // Trade-Equity
-
-   return(!__STATUS_ERROR);
+   return(false);
 }
 
 
@@ -74,8 +70,6 @@ bool Strategy(int hTrade) {
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStartSignal() {
-   if (__STATUS_ERROR)
-      return(false);
    return(false);
 }
 
@@ -86,7 +80,5 @@ bool IsStartSignal() {
  * @return bool - Erfolgsstatus
  */
 bool Strategy.StartTrade() {
-   if (__STATUS_ERROR)
-      return(false);
-   return(!__STATUS_ERROR);
+   return(false);
 }

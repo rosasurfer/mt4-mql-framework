@@ -69,7 +69,7 @@ int onStart() {
       return(catch("onStart(2)"));                                               // regular exit
    }
 
-   if (!__STATUS_ERROR) {
+   if (!last_error) {
       if (sizeOfIds == 0) {
          ForceSound("chord.wav");
          ForceMessageBox(__NAME__, "No sequence found.", MB_ICONEXCLAMATION|MB_OK);

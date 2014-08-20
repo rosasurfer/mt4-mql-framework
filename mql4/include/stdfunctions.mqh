@@ -23,7 +23,8 @@ bool     __STATUS_HISTORY_UPDATE;                           // History-Update wu
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
-bool     __STATUS_ERROR;                                    // Ausführung wegen unbehandeltem oder selbst gesetztem Programmfehler abgebrochen
+bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
+int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -850,9 +851,6 @@ int      last_error;                                        // der letzte Fehler
  * @return int - Fehlerstatus
  */
 int start.RelaunchInputDialog() {
-   if (__STATUS_ERROR)
-      return(last_error);
-
    int error;
 
    if (IsExpert()) {
@@ -1745,9 +1743,6 @@ bool OrderPop(string location) {
    if (ticket > 0)
       return(SelectTicket(ticket, StringConcatenate(location, "->OrderPop()")));
 
-   if (!ticket) /*&&*/ if (IsLastError())    // nicht __STATUS_ERROR (Datei wird in Libraries eingebunden)
-      return(false);
-
    OrderSelect(0, SELECT_BY_TICKET);
    return(true);
 }
@@ -2509,7 +2504,7 @@ bool StringIsNull(string value) {
  * @param  string array[] - String-Array
  * @param  string value   - hinzuzufügendes Element
  *
- * @return int - neue Größe des Arrays oder -1, falls ein Fehler auftrat
+ * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
  *
  *
  * NOTE: Muß global definiert werden. Die intern benutzte Funktion ReverseStringArray() ruft ihrerseits ArraySetAsSeries() auf, dessen Verhalten mit einem
@@ -2519,7 +2514,7 @@ bool StringIsNull(string value) {
  *       anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_int(-1, catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -2550,6 +2545,7 @@ void __DummyCalls() {
 
    IsSuperContext();
    SetLastError(NULL, NULL);
+   CheckProgramStatus();
 
    __log.custom(NULL);
    _bool(NULL);

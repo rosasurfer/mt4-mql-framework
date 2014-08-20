@@ -139,7 +139,7 @@ int onInitUndefined() {
    if (RestoreStickyStatus())
       return(onInitRecompile());    // ja:   vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
 
-   if (__STATUS_ERROR)
+   if (IsLastError())
       return(last_error);
 
    return(onInitChartClose());      // nein: neuer EA      -> Input-Dialog:      Funktionalität entspricht onInitChartClose()

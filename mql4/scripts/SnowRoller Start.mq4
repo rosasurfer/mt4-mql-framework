@@ -78,7 +78,7 @@ int onStart() {
       }
    }
 
-   if (!__STATUS_ERROR) {
+   if (!last_error) {
       if (sizeOfIds == 0) {
          ForceSound("chord.wav");
          ForceMessageBox(__NAME__, "No stopped sequence found.", MB_ICONEXCLAMATION|MB_OK);

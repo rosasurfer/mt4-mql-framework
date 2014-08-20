@@ -9,7 +9,7 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   if (__STATUS_ERROR)
+   if (__STATUS_OFF)
       return(last_error);
 
    __WHEREAMI__ = FUNC_INIT;
@@ -18,14 +18,14 @@ int init() {
    // (1) EXECUTION_CONTEXT initialisieren
    if (!ec.Signature(__ExecutionContext))
       if (IsError(InitExecutionContext()))
-         return(last_error);
+         return(CheckProgramStatus(last_error));
 
 
    // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);
    if (IsError(error))
-      return(SetLastError(error));                                            // #define INIT_TIMEZONE               in stdlib.init()
+      return(CheckProgramStatus(SetLastError(error)));                        // #define INIT_TIMEZONE               in stdlib.init()
                                                                               // #define INIT_PIPVALUE
                                                                               // #define INIT_BARS_ON_HIST_UPDATE
    // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
@@ -33,19 +33,19 @@ int init() {
 
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(1)"))) return(last_error);
-      if (!TickSize)                 return(catch("init(2)   MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA));
+      if (IsError(catch("init(1)"))) return(CheckProgramStatus(last_error));
+      if (!TickSize)                 return(CheckProgramStatus(catch("init(2)   MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(3)"))) return(last_error);
-      if (!tickValue)                return(catch("init(4)   MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA));
+      if (IsError(catch("init(3)"))) return(CheckProgramStatus(last_error));
+      if (!tickValue)                return(CheckProgramStatus(catch("init(4)   MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
    if (onInit() == -1)                                                        //
-      return(last_error);                                                     // Preprocessing-Hook
+      return(CheckProgramStatus(last_error));                                 // Preprocessing-Hook
                                                                               //
    switch (UninitializeReason()) {                                            //
       case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück, bricht init() *nicht* ab.
@@ -60,18 +60,15 @@ int init() {
       case REASON_INITFAILED : error = onInitFailed();          break;        //
       case REASON_CLOSE      : error = onInitClose();           break;        //
 
-      default: return(catch("init(5)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+      default: return(CheckProgramStatus(catch("init(5)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
    }                                                                          //
    if (error == -1)                                                           //
-      return(last_error);                                                     //
+      return(CheckProgramStatus(last_error));                                 //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
                                                                               //
-   if (__STATUS_ERROR)
-      return(last_error);
-
    catch("init(6)");
-   return(last_error);
+   return(CheckProgramStatus(last_error));
 }
 
 
@@ -81,8 +78,12 @@ int init() {
  * @return int - Fehlerstatus
  */
 int start() {
-   if (__STATUS_ERROR)                                                        // init()-Fehler abfangen
+   if (__STATUS_OFF) {                                                        // init()-Fehler abfangen
+      string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
+      Comment(NL + NL + NL + msg);                                            // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+      debug("start(1)   "+ msg);
       return(last_error);
+   }
 
    int error;
 
@@ -96,7 +97,7 @@ int start() {
    if (!Tick.Time) {
       error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL)              // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
-         return(catch("start(1)", error));                                    // nicht sicher detektiert werden kann
+         return(CheckProgramStatus(catch("start(2)", error)));                // nicht sicher detektiert werden kann
    }
 
 
@@ -107,12 +108,12 @@ int start() {
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)                                                                 // TODO: kann Bars bei Scripten 0 sein???
-      return(catch("start(2)   Bars = 0", ERS_TERMINAL_NOT_YET_READY));
+      return(CheckProgramStatus(catch("start(3)   Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
 
 
    // (3) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(SetLastError(stdlib.GetLastError()));
+      return(CheckProgramStatus(SetLastError(stdlib.GetLastError())));
 
 
    // (4) Main-Funktion aufrufen
@@ -120,9 +121,9 @@ int start() {
 
    error = GetLastError();
    if (error != NO_ERROR)
-      catch("start(3)", error);
+      catch("start(4)", error);
 
-   return(last_error);
+   return(CheckProgramStatus(last_error));
 }
 
 
@@ -154,7 +155,7 @@ int deinit() {
          case REASON_INITFAILED : error = onDeinitFailed();          break;   //
          case REASON_CLOSE      : error = onDeinitClose();           break;   //
 
-         default: return(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR));
+         default: return(CheckProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error != -1)                                                           //
@@ -172,7 +173,7 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   return(last_error);
+   return(CheckProgramStatus(last_error));
 }
 
 
@@ -386,21 +387,34 @@ int HandleScriptError(string location, string message, int error) {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
+   return(ec.setLastError(__ExecutionContext, last_error));
+}
 
-   switch (error) {
-      case NO_ERROR              :
-      case ERS_HISTORY_UPDATE    :
+
+/**
+ * Überprüft und aktualisiert den aktuellen Programmstatus des Scripts. Setzt je nach Kontext das Flag __STATUS_OFF.
+ *
+ * @param  int value - zurückzugebender Wert, wird intern ignoriert (default: NULL)
+ *
+ * @return int - der übergebene Wert
+ */
+int CheckProgramStatus(int value=NULL) {
+   switch (last_error) {
+      case NO_ERROR                  :
+      case ERS_HISTORY_UPDATE        :
     //case ERS_TERMINAL_NOT_YET_READY:                               // in Scripten ist ERS_TERMINAL_NOT_YET_READY normaler Fehler
-      case ERS_EXECUTION_STOPPING: break;
+      case ERS_EXECUTION_STOPPING    : break;
 
       default:
-         __STATUS_ERROR = true;
+         __STATUS_OFF        = true;
+         __STATUS_OFF.reason = last_error;
    }
-   return(ec.setLastError(__ExecutionContext, last_error));
+   return(value);
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
    HandleScriptError(NULL, NULL, NULL);
 }
+
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------

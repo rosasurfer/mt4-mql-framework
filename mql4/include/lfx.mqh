@@ -367,7 +367,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
  *                             OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem StopLoss oder TakeProfit zurück
  * @param  int    los[]      - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
  *
- * @return int - Anzahl der zurückgegebenen Orders oder -1, falls ein Fehler auftrat
+ * @return int - Anzahl der zurückgegebenen Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
    // (1) Parametervaliderung
@@ -378,7 +378,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
    if (StringLen(currency) > 0) {
       currencyId = GetCurrencyId(currency);
       if (!currencyId)
-         return(_int(-1, SetLastError(stdlib.GetLastError())));
+         return(_EMPTY(SetLastError(stdlib.GetLastError())));
    }
 
    if (!fSelection)                                                        // ohne Angabe wird alles zurückgeben
@@ -389,12 +389,12 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
    ArrayResize(los, 0);
    int error = InitializeByteBuffer(los, LFX_ORDER.size);                  // validiert Dimensionierung
    if (IsError(error))
-      return(_int(-1, SetLastError(error)));
+      return(_EMPTY(SetLastError(error)));
 
 
    // (2) alle Tickets einlesen
    if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
-      return(-1);
+      return(EMPTY);
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\LiteForex\\remote_positions.ini";
    string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
@@ -415,8 +415,8 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
       int result = LFX.GetOrder(ticket, lo);
       if (result != 1) {
          if (!result)                                                      // -1, wenn das Ticket nicht gefunden wurde
-            return(-1);                                                    //  0, falls ein anderer Fehler auftrat
-         return(_int(-1, catch("LFX.GetOrders(1)->LFX.GetOrder(ticket="+ ticket +")   order not found", ERR_RUNTIME_ERROR)));
+            return(EMPTY);                                                 //  0, falls ein anderer Fehler auftrat
+         return(_EMPTY(catch("LFX.GetOrders(1)->LFX.GetOrder(ticket="+ ticket +")   order not found", ERR_RUNTIME_ERROR)));
       }
 
       bool match = false;
@@ -451,7 +451,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
    if (!catch("LFX.GetOrders(2)"))
       return(ArrayRange(los, 0));
-   return(-1);
+   return(EMPTY);
 }
 
 

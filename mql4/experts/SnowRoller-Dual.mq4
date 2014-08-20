@@ -174,8 +174,7 @@ int onTick() {
  * @return bool - Erfolgsstatus
  */
 bool Strategy(int hSeq) {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    bool changes, takeProfit, weekend;
    int  stops[];
@@ -198,7 +197,7 @@ bool Strategy(int hSeq) {
          if (changes)                              UpdatePendingOrders(hSeq);
       }
    }
-   return(!__STATUS_ERROR);
+   return(!last_error);
 }
 
 
@@ -210,8 +209,7 @@ bool Strategy(int hSeq) {
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStartSignal(int direction) {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    int iNull[];
 
@@ -259,7 +257,7 @@ bool IsResumeSignal(int hSeq) {
  * @return bool
  */
 bool IsWeekendResumeSignal(int hSeq) {
-   if (__STATUS_ERROR)                        return(false);
+   if (IsLastError())                         return(false);
    if (sequence.status[hSeq]!=STATUS_STOPPED) return(false);
    if (!sequence.weStop.active[hSeq])         return(false);
 
@@ -301,7 +299,7 @@ bool IsWeekendResumeSignal(int hSeq) {
  * @param  int hSeq - Sequenz: D_LONG | D_SHORT
  */
 void UpdateWeekendResumeTime(int hSeq) {
-   if (__STATUS_ERROR)                          return;
+   if (IsLastError())                           return;
    if (sequence.status[hSeq] != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume time of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
    if (!sequence.weStop.active[hSeq])           return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
@@ -330,7 +328,7 @@ void UpdateWeekendResumeTime(int hSeq) {
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStopSignal(int hSeq, bool &lpTakeProfitStop, bool &lpWeekendStop) {
-   if (__STATUS_ERROR || sequence.status[hSeq]!=STATUS_PROGRESSING)
+   if (IsLastError() || sequence.status[hSeq]!=STATUS_PROGRESSING)
       return(false);
 
    lpTakeProfitStop = false;
@@ -359,7 +357,7 @@ bool IsStopSignal(int hSeq, bool &lpTakeProfitStop, bool &lpWeekendStop) {
  * @return bool
  */
 bool IsWeekendStopSignal() {
-   if (__STATUS_ERROR)     return(false);
+   if (IsLastError())      return(false);
    if (!weekend.stop.time) return(false);
 
    datetime now = TimeCurrent();
@@ -382,7 +380,7 @@ bool IsWeekendStopSignal() {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence(int hSeq) {
-   if (__STATUS_ERROR)      return(false);
+   if (IsLastError())       return(false);
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new "+ StringToLower(directionDescr[hSeq]) +" sequence now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
    if (!InitSequence(hSeq)) return(false);
@@ -512,8 +510,7 @@ void UpdateWeekendStop() {
  * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
  */
 double GridBase.Reset(int hSeq, datetime time, double value) {
-   if (__STATUS_ERROR)
-      return(0);
+   if (IsLastError()) return(0);
 
    int from=gridbase.events[hSeq][I_FROM], size=gridbase.events[hSeq][I_SIZE];
 
@@ -602,8 +599,7 @@ double GridBase.Change(int hSeq, datetime time, double value) {
  * @return int - Event-ID oder 0, falls ein Fehler auftrat
  */
 int AddStartEvent(int hSeq, datetime time, double price, double profit) {
-   if (__STATUS_ERROR)
-      return(0);
+   if (IsLastError()) return(0);
 
    int offset, event=CreateEventId();
 
@@ -653,7 +649,7 @@ int AddStartEvent(int hSeq, datetime time, double price, double profit) {
  * @return bool - Erfolgsstatus
  */
 bool InitSequence(int hSeq) {
-   if (__STATUS_ERROR)                                return(false);
+   if (IsLastError())                                 return(false);
    if (sequence.status[hSeq] != STATUS_UNINITIALIZED) return(!catch("InitSequence(1)   cannot initialize "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (!ResetSequence(hSeq))                          return(false);
 
@@ -864,7 +860,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    takeProfitStop = takeProfitStop!=0;
    weekendStop    = weekendStop!=0;
 
-   if (__STATUS_ERROR)                    return(false);
+   if (IsLastError())                     return(false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("StopSequence(1)", ERR_ILLEGAL_STATE));
 
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPING)
@@ -1006,7 +1002,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
  * @return bool - Erfolgsstatus
  */
 bool StopSequence.LimitStopPrice(int hSeq) {
-   if (__STATUS_ERROR)                                                                           return(false);
+   if (IsLastError())                                                                            return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(!catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq]!=STATUS_STOPPING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STOPPED) return(!catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -1036,7 +1032,7 @@ bool StopSequence.LimitStopPrice(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool ResumeSequence(int hSeq) {
-   if (__STATUS_ERROR)                                                                           return(false);
+   if (IsLastError())                                                                            return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                        return(!catch("ResumeSequence(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq]!=STATUS_STOPPED) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(!catch("ResumeSequence(2)   cannot resume "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -1139,7 +1135,7 @@ bool ResumeSequence(int hSeq) {
  * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
-   if (__STATUS_ERROR)                           return(false);
+   if (IsLastError())                            return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -1203,7 +1199,7 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.AddPosition(int hSeq, int type, int level) {
-   if (__STATUS_ERROR)                           return(false);
+   if (IsLastError())                            return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("Grid.AddPosition(2)   cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (!level)                                   return(!catch("Grid.AddPosition(3)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -1295,7 +1291,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
 int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
    clientSL = clientSL!=0;
 
-   if (__STATUS_ERROR)                                                                               return(0);
+   if (IsLastError())                                                                                return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status[hSeq]!=STATUS_STARTING) /*&&*/ if (sequence.status[hSeq]!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -1356,10 +1352,10 @@ int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXEC
  * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
  * @param  int level - Level der zu suchenden Position
  *
- * @return int - Index der gefundenen Position oder -1, wenn keine offene Position des angegebenen Levels gefunden wurde
+ * @return int - Index der gefundenen Position oder -1 (EMPTY), wenn keine offene Position des angegebenen Levels gefunden wurde
  */
 int Grid.FindOpenPosition(int hSeq, int level) {
-   if (!level) return(_int(-1, catch("Grid.FindOpenPosition()   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!level) return(_EMPTY(catch("Grid.FindOpenPosition()   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int from = orders[hSeq][I_FROM];
    int to   = orders[hSeq][I_TO  ];
@@ -1376,7 +1372,7 @@ int Grid.FindOpenPosition(int hSeq, int level) {
          return(i);
       }
    }
-   return(-1);
+   return(EMPTY);
 }
 
 
@@ -1393,7 +1389,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
    lpChange = lpChange!=0;
 
    ArrayResize(stops, 0);
-   if (__STATUS_ERROR)                          return(false);
+   if (IsLastError())                           return(false);
    if (sequence.status[hSeq] == STATUS_WAITING) return( true);
 
    sequence.floatingPL[hSeq] = 0;
@@ -1766,7 +1762,7 @@ string UpdateStatus.PositionCloseMsg(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatusLocation(int hSeq) {
-   if (__STATUS_ERROR)     return(false);
+   if (IsLastError())      return(false);
    if (!sequence.id[hSeq]) return(!catch("UpdateStatusLocation(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
    // TODO: Prüfen, ob status.file existiert und ggf. aktualisieren
@@ -1918,7 +1914,7 @@ bool ChartMarker.PositionClosed(int i) {
  * @return bool - Erfolgsstatus
  */
 bool ProcessClientStops(int hSeq, int stops[]) {
-   if (__STATUS_ERROR)                              return(false);
+   if (IsLastError())                               return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("ProcessClientStops(2)   cannot process client-side stops of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -2023,7 +2019,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePendingOrders(int hSeq) {
-   if (__STATUS_ERROR)                              return(false);
+   if (IsLastError())                               return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -2072,7 +2068,7 @@ bool UpdatePendingOrders(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.TrailPendingOrder(int hSeq, int i) {
-   if (__STATUS_ERROR)                              return(false);
+   if (IsLastError())                               return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (orders.type[i] != OP_UNDEFINED)              return(!catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR));
@@ -2117,7 +2113,7 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.DeleteOrder(int hSeq, int i) {
-   if (__STATUS_ERROR)                              return(false);
+   if (IsLastError())                               return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) /*&&*/
       if (sequence.status[hSeq] != STATUS_STOPPING) /*&&*/
@@ -2154,7 +2150,7 @@ bool Grid.DeleteOrder(int hSeq, int i) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.AddOrder(int hSeq, int type, int level) {
-   if (__STATUS_ERROR)                              return(false);
+   if (IsLastError())                               return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())           return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING) return(!catch("Grid.AddOrder(2)   cannot add order to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -2472,7 +2468,7 @@ bool Grid.DropData(int i) {
  *  -2: der StopPrice verletzt die StopDistance des Brokers
  */
 int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
-   if (__STATUS_ERROR)                                                                               return(0);
+   if (IsLastError())                                                                                return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                                                            return(_NULL(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_NULL(catch("SubmitStopOrder(2)   cannot submit stop order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -2530,11 +2526,11 @@ int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
  * @param  int hSeq  - Sequenz: D_LONG | D_SHORT
  * @param  int level - Gridlevel
  *
- * @return int - MagicNumber oder -1, falls ein Fehler auftrat
+ * @return int - MagicNumber oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int CreateMagicNumber(int hSeq, int level) {
-   if (sequence.id[hSeq] < SID_MIN) return(_int(-1, catch("CreateMagicNumber(1)   illegal sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
-   if (!level)                      return(_int(-1, catch("CreateMagicNumber(2)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (sequence.id[hSeq] < SID_MIN) return(_EMPTY(catch("CreateMagicNumber(1)   illegal sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
+   if (!level)                      return(_EMPTY(catch("CreateMagicNumber(2)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // Für bessere Obfuscation ist die Reihenfolge der Werte [ea,level,sequence] und nicht [ea,sequence,level], was aufeinander folgende Werte wären.
    int ea       = STRATEGY_ID & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern)  | Position in MagicNumber: Bits 23-32
@@ -2555,7 +2551,7 @@ int CreateMagicNumber(int hSeq, int level) {
  * @return bool - Erfolgsstatus
  */
 bool SaveStatus(int hSeq) {
-   if (__STATUS_ERROR)                    return(false);
+   if (IsLastError())                     return(false);
    if (!sequence.id[hSeq])                return(!catch("SaveStatus(1)   illegal value of sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
@@ -2852,8 +2848,7 @@ void RestoreConfiguration() {
 bool ValidateConfiguration(bool interactive) {
    interactive = interactive!=0;
 
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    bool reasonParameters = (UninitializeReason() == REASON_PARAMETERS);
    if (reasonParameters)
@@ -3154,7 +3149,7 @@ int ShowStatus(int error=NO_ERROR) {
    string str.error, l.msg, s.msg;
 
    if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT_PARAMVALUE), "]");
-   else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error                  ), "]");
+   else if (__STATUS_OFF          ) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason         ), "]");
 
    switch (sequence.status[D_LONG]) {
       case STATUS_UNINITIALIZED:

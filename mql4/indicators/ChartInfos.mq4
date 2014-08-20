@@ -975,7 +975,7 @@ bool AnalyzePositions() {
  * @param  int array[] - zu durchsuchendes Array
  * @param  int number  - zu suchende MagicNumber
  *
- * @return int - Index der MagicNumber oder -1, wenn der Wert nicht im Array enthalten ist
+ * @return int - Index der MagicNumber oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist
  */
 int SearchMagicNumber(int array[], int number) {
    int size = ArraySize(array);
@@ -983,7 +983,7 @@ int SearchMagicNumber(int array[], int number) {
       if (array[i] == number)
          return(i);
    }
-   return(-1);
+   return(EMPTY);
 }
 
 

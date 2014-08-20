@@ -38,7 +38,7 @@ int onDeinitChartChange() {
 int onDeinitChartClose() {
    // (1) Im Tester
    if (IsTesting()) {
-      if (!__STATUS_ERROR)
+      if (!last_error)
          SetLastError(ERR_CANCELLED_BY_USER);
       return(last_error);
    }
@@ -56,7 +56,7 @@ int onDeinitChartClose() {
  */
 int onDeinitUndefined() {
    if (IsTesting()) {
-      if (__STATUS_ERROR)
+      if (IsLastError())
          return(onDeinitChartClose());                               // entspricht gewaltsamen Ende
       return(last_error);
    }

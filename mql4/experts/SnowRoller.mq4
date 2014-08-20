@@ -345,7 +345,7 @@ bool onChartCommand(string commands[]) {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence() {
-   if (__STATUS_ERROR)           return( false);
+   if (IsLastError())            return( false);
    if (status != STATUS_WAITING) return(_false(catch("StartSequence(1)   cannot start "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start a new sequence now?"))
@@ -415,7 +415,7 @@ bool StartSequence() {
  * @return bool - Erfolgsstatus: ob die Sequenz erfolgreich gestoppt wurde
  */
 bool StopSequence() {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("StopSequence(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_WAITING) /*&&*/ if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || status!=STATUS_STOPPED)         // ggf. wird nach Testende nur aufgeräumt
@@ -565,7 +565,7 @@ bool StopSequence() {
  * @return bool - Erfolgsstatus
  */
 bool StopSequence.LimitStopPrice() {
-   if (__STATUS_ERROR)                                             return( false);
+   if (IsLastError())                                              return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())                          return(_false(catch("StopSequence.LimitStopPrice(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_STOPPING) /*&&*/ if (status!=STATUS_STOPPED) return(_false(catch("StopSequence.LimitStopPrice(2)   cannot limit stop price of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -593,7 +593,7 @@ bool StopSequence.LimitStopPrice() {
  * @return bool - Erfolgsstatus
  */
 bool ResumeSequence() {
-   if (__STATUS_ERROR)                                             return( false);
+   if (IsLastError())                                              return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())                          return(_false(catch("ResumeSequence(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_STOPPED) /*&&*/ if (status!=STATUS_STARTING) return(_false(catch("ResumeSequence(2)   cannot resume "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -707,7 +707,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
    lpChange = lpChange!=0;
 
    ArrayResize(stops, 0);
-   if (__STATUS_ERROR)           return(false);
+   if (IsLastError())            return(false);
    if (status == STATUS_WAITING) return(true);
 
    sequence.floatingPL = 0;
@@ -1131,7 +1131,7 @@ bool IsOrderClosedBySL() {
  * @return bool - ob die konfigurierten Startbedingungen erfüllt sind
  */
 bool IsStartSignal() {
-   if (__STATUS_ERROR)                                            return(false);
+   if (IsLastError())                                             return(false);
    if (status!=STATUS_WAITING) /*&&*/ if (status!=STATUS_STOPPED) return(false);
 
    if (start.conditions) {
@@ -1210,7 +1210,7 @@ bool IsStartSignal() {
  * @return bool
  */
 bool IsResumeSignal() {
-   if (__STATUS_ERROR || status!=STATUS_STOPPED)
+   if (IsLastError() || status!=STATUS_STOPPED)
       return(false);
 
    if (start.conditions)
@@ -1226,7 +1226,7 @@ bool IsResumeSignal() {
  * @return bool
  */
 bool IsWeekendResumeSignal() {
-   if (__STATUS_ERROR)                                                                                    return(false);
+   if (IsLastError())                                                                                     return(false);
    if (status!=STATUS_STOPPED) /*&&*/ if (status!=STATUS_STARTING) /*&&*/ if (status!=STATUS_PROGRESSING) return(false);
 
    if (weekend.resume.triggered) return( true);
@@ -1267,7 +1267,7 @@ bool IsWeekendResumeSignal() {
  * Aktualisiert die Bedingungen für ResumeSequence() nach der Wochenend-Pause.
  */
 void UpdateWeekendResumeTime() {
-   if (__STATUS_ERROR)           return;
+   if (IsLastError())            return;
    if (status != STATUS_STOPPED) return(_NULL(catch("UpdateWeekendResumeTime(1)   cannot update weekend resume conditions of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
    if (!IsWeekendStopSignal())   return(_NULL(catch("UpdateWeekendResumeTime(2)   cannot update weekend resume conditions without weekend stop", ERR_RUNTIME_ERROR)));
 
@@ -1294,7 +1294,7 @@ void UpdateWeekendResumeTime() {
  * @return bool - ob die konfigurierten Stopbedingungen erfüllt sind
  */
 bool IsStopSignal() {
-   if (__STATUS_ERROR || status!=STATUS_PROGRESSING)
+   if (IsLastError() || status!=STATUS_PROGRESSING)
       return(false);
 
    // (1) User-definierte StopConditions prüfen
@@ -1397,7 +1397,7 @@ bool IsStopSignal() {
  * @return bool
  */
 bool IsWeekendStopSignal() {
-   if (__STATUS_ERROR)                                                                                    return(false);
+   if (IsLastError())                                                                                     return(false);
    if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STOPPING) /*&&*/ if (status!=STATUS_STOPPED) return(false);
 
    if (weekend.stop.active)    return( true);
@@ -1449,7 +1449,7 @@ void UpdateWeekendStop() {
  * @return bool - Erfolgsstatus
  */
 bool ProcessClientStops(int stops[]) {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("ProcessClientStops(1)", ERR_ILLEGAL_STATE)));
    if (status != STATUS_PROGRESSING)      return(_false(catch("ProcessClientStops(2)   cannot process client-side stops of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -1548,7 +1548,7 @@ bool ProcessClientStops(int stops[]) {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePendingOrders() {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("UpdatePendingOrders(1)", ERR_ILLEGAL_STATE)));
    if (status != STATUS_PROGRESSING)      return(_false(catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -1597,7 +1597,7 @@ bool UpdatePendingOrders() {
  * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
  */
 bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("UpdateOpenPositions(1)", ERR_ILLEGAL_STATE)));
    if (status != STATUS_STARTING)         return(_false(catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -1660,8 +1660,7 @@ bool UpdateOpenPositions(datetime &lpOpenTime, double &lpOpenPrice) {
  * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
  */
 double GridBase.Reset(datetime time, double value) {
-   if (__STATUS_ERROR)
-      return(0);
+   if (IsLastError()) return(0);
 
    ArrayResize(grid.base.event, 0);
    ArrayResize(grid.base.time,  0);
@@ -1722,7 +1721,7 @@ double GridBase.Change(datetime time, double value) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.AddOrder(int type, int level) {
-   if (__STATUS_ERROR)                    return(false);
+   if (IsLastError())                     return(false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(!catch("Grid.AddOrder(1)", ERR_ILLEGAL_STATE));
    if (status != STATUS_PROGRESSING)      return(!catch("Grid.AddOrder(2)   cannot add order to "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR));
 
@@ -1799,7 +1798,7 @@ bool Grid.AddOrder(int type, int level) {
  *  -2: der StopPrice verletzt die StopDistance des Brokers
  */
 int SubmitStopOrder(int type, int level, int oe[]) {
-   if (__STATUS_ERROR)                                                 return(0);
+   if (IsLastError())                                                  return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                              return(_NULL(catch("SubmitStopOrder(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STARTING) return(_NULL(catch("SubmitStopOrder(2)   cannot submit stop order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -1859,7 +1858,7 @@ int SubmitStopOrder(int type, int level, int oe[]) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.AddPosition(int type, int level) {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE)));
    if (status != STATUS_STARTING)         return(_false(catch("Grid.AddPosition(2)   cannot add market position to "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
    if (!level)                            return(_false(catch("Grid.AddPosition(3)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
@@ -1950,7 +1949,7 @@ bool Grid.AddPosition(int type, int level) {
 int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int oe[]) {
    clientSL = clientSL!=0;
 
-   if (__STATUS_ERROR)                                                 return(0);
+   if (IsLastError())                                                  return(0);
    if (IsTest()) /*&&*/ if (!IsTesting())                              return(_NULL(catch("SubmitMarketOrder(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_STARTING) /*&&*/ if (status!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)   cannot submit market order for "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
 
@@ -2013,7 +2012,7 @@ int SubmitMarketOrder(int type, int level, bool clientSL, /*ORDER_EXECUTION*/int
  * @return bool - Erfolgsstatus
  */
 bool Grid.TrailPendingOrder(int i) {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (IsTest()) /*&&*/ if (!IsTesting()) return(_false(catch("Grid.TrailPendingOrder(1)", ERR_ILLEGAL_STATE)));
    if (status != STATUS_PROGRESSING)      return(_false(catch("Grid.TrailPendingOrder(2)   cannot trail order of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
    if (orders.type[i] != OP_UNDEFINED)    return(_false(catch("Grid.TrailPendingOrder(3)   cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_RUNTIME_ERROR)));
@@ -2057,7 +2056,7 @@ bool Grid.TrailPendingOrder(int i) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.DeleteOrder(int i) {
-   if (__STATUS_ERROR)                                                         return( false);
+   if (IsLastError())                                                          return( false);
    if (IsTest()) /*&&*/ if (!IsTesting())                                      return(_false(catch("Grid.DeleteOrder(1)", ERR_ILLEGAL_STATE)));
    if (status!=STATUS_PROGRESSING) /*&&*/ if (status!=STATUS_STOPPING)
       if (!IsTesting() || __WHEREAMI__!=FUNC_DEINIT || status!=STATUS_STOPPED) return(_false(catch("Grid.DeleteOrder(2)   cannot delete order of "+ sequenceStatusDescr[status] +" sequence", ERR_RUNTIME_ERROR)));
@@ -2229,10 +2228,10 @@ bool Grid.DropData(int i) {
  *
  * @param  int level - Level der zu suchenden Position
  *
- * @return int - Index der gefundenen Position oder -1, wenn keine offene Position des angegebenen Levels gefunden wurde
+ * @return int - Index der gefundenen Position oder -1 (EMPTY), wenn keine offene Position des angegebenen Levels gefunden wurde
  */
 int Grid.FindOpenPosition(int level) {
-   if (!level) return(_int(-1, catch("Grid.FindOpenPosition()   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!level) return(_EMPTY(catch("Grid.FindOpenPosition()   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int size = ArraySize(orders.ticket);
 
@@ -2245,7 +2244,7 @@ int Grid.FindOpenPosition(int level) {
          continue;                                                   // Position darf nicht geschlossen sein
       return(i);
    }
-   return(-1);
+   return(EMPTY);
 }
 
 
@@ -2254,11 +2253,11 @@ int Grid.FindOpenPosition(int level) {
  *
  * @param  int level - Gridlevel
  *
- * @return int - MagicNumber oder -1, falls ein Fehler auftrat
+ * @return int - MagicNumber oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int CreateMagicNumber(int level) {
-   if (sequenceId < SID_MIN) return(_int(-1, catch("CreateMagicNumber(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
-   if (!level)               return(_int(-1, catch("CreateMagicNumber(2)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (sequenceId < SID_MIN) return(_EMPTY(catch("CreateMagicNumber(1)   illegal sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
+   if (!level)               return(_EMPTY(catch("CreateMagicNumber(2)   illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // Für bessere Obfuscation ist die Reihenfolge der Werte [ea,level,sequence] und nicht [ea,sequence,level], was aufeinander folgende Werte wären.
    int ea       = STRATEGY_ID & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern)  | Position in MagicNumber: Bits 23-32
@@ -2284,7 +2283,7 @@ int ShowStatus(int error=NO_ERROR) {
    string msg, str.error;
 
    if      (__STATUS_INVALID_INPUT) str.error = StringConcatenate("  [", ErrorDescription(ERR_INVALID_INPUT_PARAMVALUE), "]");
-   else if (__STATUS_ERROR        ) str.error = StringConcatenate("  [", ErrorDescription(last_error                  ), "]");
+   else if (__STATUS_OFF          ) str.error = StringConcatenate("  [", ErrorDescription(__STATUS_OFF.reason         ), "]");
 
    switch (status) {
       case STATUS_UNINITIALIZED: msg =                                      " not initialized";                                                       break;
@@ -2731,8 +2730,7 @@ bool ValidateConfiguration.ID(bool interactive) {
 bool ValidateConfiguration(bool interactive) {
    interactive = interactive!=0;
 
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    bool reasonParameters = (UninitializeReason() == REASON_PARAMETERS);
    if (reasonParameters)
@@ -3330,8 +3328,8 @@ void RestoreConfiguration() {
  * @return bool - Erfolgsstatus
  */
 bool InitStatusLocation() {
-   if (__STATUS_ERROR) return( false);
-   if (!sequenceId)    return(_false(catch("InitStatusLocation(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
+   if (IsLastError()) return( false);
+   if (!sequenceId)   return(_false(catch("InitStatusLocation(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
    if      (IsTesting()) status.directory = "presets\\";
    else if (IsTest())    status.directory = "presets\\tester\\";
@@ -3350,8 +3348,8 @@ bool InitStatusLocation() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatusLocation() {
-   if (__STATUS_ERROR) return( false);
-   if (!sequenceId)    return(_false(catch("UpdateStatusLocation(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
+   if (IsLastError()) return( false);
+   if (!sequenceId)   return(_false(catch("UpdateStatusLocation(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
    // TODO: Prüfen, ob status.file existiert und ggf. aktualisieren
 
@@ -3379,8 +3377,7 @@ bool UpdateStatusLocation() {
  * @return bool - Erfolgsstatus
  */
 bool ResolveStatusLocation() {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
 
    // (1) Location-Variablen zurücksetzen
@@ -3400,15 +3397,15 @@ bool ResolveStatusLocation() {
          directory = StringConcatenate(filesDirectory, statusDirectory, StdSymbol(), "\\", location, "\\");
          if (ResolveStatusLocation.FindFile(directory, file))
             break;
-         if (__STATUS_ERROR) return( false);
-                             return(_false(catch("ResolveStatusLocation(1)   invalid Sequence.StatusLocation = \""+ location +"\" (status file not found)", ERR_FILE_NOT_FOUND)));
+         if (IsLastError()) return( false);
+                            return(_false(catch("ResolveStatusLocation(1)   invalid Sequence.StatusLocation = \""+ location +"\" (status file not found)", ERR_FILE_NOT_FOUND)));
       }
 
       // (2.2) ohne StatusLocation: zuerst Basisverzeichnis durchsuchen...
       directory = StringConcatenate(filesDirectory, statusDirectory);
       if (ResolveStatusLocation.FindFile(directory, file))
          break;
-      if (__STATUS_ERROR) return(false);
+      if (IsLastError()) return(false);
 
 
       // (2.3) ohne StatusLocation: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
@@ -3425,7 +3422,7 @@ bool ResolveStatusLocation() {
             location  = subdirs[i];
             break;
          }
-         if (__STATUS_ERROR) return(false);
+         if (IsLastError()) return(false);
       }
       if (StringLen(file) > 0)
          break;
@@ -3450,8 +3447,8 @@ bool ResolveStatusLocation() {
  * @return bool - Erfolgsstatus
  */
 bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
-   if (__STATUS_ERROR) return( false);
-   if (!sequenceId)    return(_false(catch("ResolveStatusLocation.FindFile(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
+   if (IsLastError()) return( false);
+   if (!sequenceId)   return(_false(catch("ResolveStatusLocation.FindFile(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
    if (!StringEndsWith(directory, "\\"))
       directory = StringConcatenate(directory, "\\");
@@ -3540,7 +3537,7 @@ string GetFullStatusDirectory() {
  * @return bool - Erfolgsstatus
  */
 bool SaveStatus() {
-   if (__STATUS_ERROR)                    return( false);
+   if (IsLastError())                     return( false);
    if (!sequenceId)                       return(_false(catch("SaveStatus(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
    if (IsTest()) /*&&*/ if (!IsTesting()) return(true);
 
@@ -3735,8 +3732,8 @@ bool SaveStatus() {
  * @return int - Fehlerstatus
  */
 int UploadStatus(string company, int account, string symbol, string filename) {
-   if (__STATUS_ERROR) return(last_error);
-   if (IsTest())       return(NO_ERROR);
+   if (IsLastError()) return(last_error);
+   if (IsTest())      return(NO_ERROR);
 
    // TODO: Existenz von wget.exe prüfen
 
@@ -3774,8 +3771,8 @@ int UploadStatus(string company, int account, string symbol, string filename) {
  * @return bool - ob der Status erfolgreich restauriert wurde
  */
 bool RestoreStatus() {
-   if (__STATUS_ERROR) return( false);
-   if (!sequenceId)    return(_false(catch("RestoreStatus(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
+   if (IsLastError()) return( false);
+   if (!sequenceId)   return(_false(catch("RestoreStatus(1)   illegal value of sequenceId = "+ sequenceId, ERR_RUNTIME_ERROR)));
 
 
    // (1) Pfade und Dateinamen bestimmen
@@ -3964,8 +3961,7 @@ bool RestoreStatus() {
  * @return bool - Erfolgsstatus
  */
 bool RestoreStatus.Runtime(string file, string line, string key, string value, string keys[]) {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
    /*
    double   rt.sequence.startEquity=7801.13
    string   rt.sequence.starts=1|1328701713|1.32677|1000,2|1329999999|1.33215|1200
@@ -4344,8 +4340,7 @@ bool RestoreStatus.Runtime(string file, string line, string key, string value, s
  * @return bool - Erfolgsstatus
  */
 bool SynchronizeStatus() {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    bool permanentStatusChange, permanentTicketChange, pendingOrder, openPosition;
 
@@ -4696,7 +4691,7 @@ bool Sync.ProcessEvents(datetime &sequenceStopTime, double &sequenceStopPrice) {
             Sync.PushEvent(events, orders.closeEvent[i], orders.closeTime[i], EV_POSITION_CLOSE, NULL, i);
          }
       }
-      if (__STATUS_ERROR) return(false);
+      if (IsLastError()) return(false);
    }
    if (ArraySize(openLevels) != 0) {
       int min = openLevels[ArrayMinimum(openLevels)];
@@ -5307,8 +5302,8 @@ bool RecordEquity(int flags=NULL) {
    | Laptop v419 - mit Tick-Collector    |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (__STATUS_ERROR) return(false);
-   if (!IsTesting())   return( true);
+   if (IsLastError()) return(false);
+   if (!IsTesting())  return(true );
 
    static int hHst;
    if (!hHst) {

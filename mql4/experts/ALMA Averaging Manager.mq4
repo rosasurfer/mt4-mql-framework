@@ -90,9 +90,6 @@ int onTick() {
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStartSignal() {
-   if (__STATUS_ERROR)
-      return(false);
-
    int iNull[];
    if (EventListener.BarOpen(iNull, start.trend.timeframeFlag)) {    // Prüfung nur bei onBarOpen, nicht bei jedem Tick
       int    timeframe   = start.trend.timeframe;
@@ -129,8 +126,6 @@ bool IsStartSignal() {
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStopSignal() {
-   if (__STATUS_ERROR)
-      return(false);
    return(false);
 }
 
@@ -141,9 +136,7 @@ bool IsStopSignal() {
  * @return bool - Erfolgsstatus
  */
 bool StartTrade() {
-   if (__STATUS_ERROR)
-      return(false);
-   return(!__STATUS_ERROR);
+   return(false);
 }
 
 
@@ -153,9 +146,7 @@ bool StartTrade() {
  * @return bool - Erfolgsstatus
  */
 bool StopTrade() {
-   if (__STATUS_ERROR)
-      return(false);
-   return(!__STATUS_ERROR);
+   return(false);
 }
 
 
@@ -165,9 +156,7 @@ bool StopTrade() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStatus() {
-   if (__STATUS_ERROR)
-      return(false);
-   return(!__STATUS_ERROR);
+   return(false);
 }
 
 
@@ -177,7 +166,5 @@ bool UpdateStatus() {
  * @return bool - Erfolgsstatus
  */
 bool RecordEquity() {
-   if (__STATUS_ERROR)
-      return(false);
-   return(!__STATUS_ERROR);
+   return(false);
 }

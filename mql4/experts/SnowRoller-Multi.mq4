@@ -113,7 +113,7 @@ int onTick() {
  *               0, falls ein Fehler auftrat
  */
 int Strategy.CreateSequence(int direction) {
-   if (__STATUS_ERROR)                                   return(0);
+   if (IsLastError())                                    return(0);
    if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_NULL(catch("Strategy.CreateSequence(1)   illegal parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // (1) Sequenz erzeugen
@@ -153,7 +153,7 @@ int Strategy.CreateSequence(int direction) {
  * @return bool - Erfolgsstatus
  */
 bool StartSequence(int hSeq) {
-   if (__STATUS_ERROR)                             return(false);
+   if (IsLastError())                              return(false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (sequence.status[hSeq] != STATUS_WAITING)    return(!catch("StartSequence(2)   cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
@@ -230,7 +230,7 @@ bool StartSequence(int hSeq) {
  * @param  int hSeq - Sequenz-Handle
  */
 void RedrawStartStop(int hSeq) {
-   if (__STATUS_ERROR)                             return;
+   if (IsLastError())                              return;
    if (!IsChart)                                   return;
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
@@ -244,8 +244,7 @@ void RedrawStartStop(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateWeekendStop() {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    datetime friday, now=ServerToFxtTime(TimeCurrent());
 
@@ -274,19 +273,19 @@ bool UpdateWeekendStop() {
  * @param  double lotSize   - Lotsize der Sequenz
  * @param  int    status    - Laufzeit-Status der Sequenz
  *
- * @return int - Sequenz-Handle (Verwaltungsindex) oder -1, falls ein Fehler auftrat;
+ * @return int - Sequenz-Handle (Verwaltungsindex) oder -1 (EMPTY), falls ein Fehler auftrat;
  */
 int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double lotSize, int status) {
    test = test!=0;
 
-   if (__STATUS_ERROR)                                   return(-1);
-   if (sid < SID_MIN || sid > SID_MAX)                   return(_int(-1, catch("Strategy.AddSequence(1)   invalid parameter sid = "+ sid, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (IntInArray(sequence.id, sid))                     return(_int(-1, catch("Strategy.AddSequence(2)   sequence "+ sid +" already exists", ERR_RUNTIME_ERROR)));
-   if (BoolInArray(sequence.test, !test))                return(_int(-1, catch("Strategy.AddSequence(3)   illegal mix of test/non-test sequences: tried to add "+ sid +" (test="+ test +"), found "+ sequence.id[SearchBoolArray(sequence.test, !test)] +" (test="+ (!test) +")", ERR_RUNTIME_ERROR)));
-   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_int(-1, catch("Strategy.AddSequence(4)   invalid parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (gridSize <= 0)                                    return(_int(-1, catch("Strategy.AddSequence(5)   invalid parameter gridSize = "+ gridSize, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (lotSize <= 0)                                     return(_int(-1, catch("Strategy.AddSequence(6)   invalid parameter lotSize = "+ NumberToStr(lotSize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (!IsValidSequenceStatus(status))                   return(_int(-1, catch("Strategy.AddSequence(7)   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (IsLastError())                                    return( EMPTY);
+   if (sid < SID_MIN || sid > SID_MAX)                   return(_EMPTY(catch("Strategy.AddSequence(1)   invalid parameter sid = "+ sid, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (IntInArray(sequence.id, sid))                     return(_EMPTY(catch("Strategy.AddSequence(2)   sequence "+ sid +" already exists", ERR_RUNTIME_ERROR)));
+   if (BoolInArray(sequence.test, !test))                return(_EMPTY(catch("Strategy.AddSequence(3)   illegal mix of test/non-test sequences: tried to add "+ sid +" (test="+ test +"), found "+ sequence.id[SearchBoolArray(sequence.test, !test)] +" (test="+ (!test) +")", ERR_RUNTIME_ERROR)));
+   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_EMPTY(catch("Strategy.AddSequence(4)   invalid parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (gridSize <= 0)                                    return(_EMPTY(catch("Strategy.AddSequence(5)   invalid parameter gridSize = "+ gridSize, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (lotSize <= 0)                                     return(_EMPTY(catch("Strategy.AddSequence(6)   invalid parameter lotSize = "+ NumberToStr(lotSize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsValidSequenceStatus(status))                   return(_EMPTY(catch("Strategy.AddSequence(7)   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int size=ArraySize(sequence.id), hSeq=size;
    Strategy.ResizeArrays(size+1);
@@ -314,7 +313,7 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
  * @return double - neue Gridbasis (for chaining) oder 0, falls ein Fehler auftrat
  */
 double GridBase.Reset(int hSeq, datetime time, double value) {
-   if (__STATUS_ERROR)                             return(0);
+   if (IsLastError())                              return(0);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("GridBase.Reset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    return(_NULL(catch("GridBase.Reset(2)", ERR_NOT_IMPLEMENTED)));
@@ -334,7 +333,7 @@ double GridBase.Reset(int hSeq, datetime time, double value) {
  * NOTE: Im Level 0 (keine Positionen zu öffnen) werden die Variablen, auf die die übergebenen Pointer zeigen, nicht modifiziert.
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
-   if (__STATUS_ERROR)                               return(false);
+   if (IsLastError())                                return(false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdateOpenPositions(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (sequence.status[hSeq] != STATUS_STARTING)     return(!catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE));
@@ -351,7 +350,7 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePendingOrders(int hSeq) {
-   if (__STATUS_ERROR)                               return(false);
+   if (IsLastError())                                return(false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdatePendingOrders(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(!catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE));
@@ -368,7 +367,7 @@ bool UpdatePendingOrders(int hSeq) {
  * @return bool - Erfolgsstatus
  */
 bool InitStatusLocation(int hSeq) {
-   if (__STATUS_ERROR)                             return(false);
+   if (IsLastError())                              return(false);
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("InitStatusLocation(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if      (IsTesting())         sequence.statusFile[hSeq][0] = "presets\\";
@@ -420,8 +419,7 @@ int Strategy.ResizeArrays(int size) {
  * @return bool - ob ein Signal aufgetreten ist
  */
 bool IsStartSignal(int &lpSignal) {
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    lpSignal = 0;
 
@@ -528,8 +526,7 @@ void RestoreConfiguration() {
 bool ValidateConfiguration(bool interactive) {
    interactive = interactive!=0;
 
-   if (__STATUS_ERROR)
-      return(false);
+   if (IsLastError()) return(false);
 
    bool reasonParameters = (UninitializeReason() == REASON_PARAMETERS);
    if (reasonParameters)

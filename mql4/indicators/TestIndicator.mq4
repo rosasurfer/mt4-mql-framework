@@ -16,13 +16,46 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   double atr = iATR(NULL, PERIOD_W1, 14, 0);// throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
 
-   debug("onTick()   atr(14xW)="+ NumberToStr(atr, ".+"));
+   double atr = ixATR(NULL, PERIOD_W1, 14, 0);// throws ERS_HISTORY_UPDATE
+      if (atr == EMPTY)                                                   return(last_error);
+      if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
+   debug("onTick(1)   Tick="+ Tick +"  atr="+ NumberToStr(atr, ".+"));
 
    return(last_error);
 }
 
+
+/**
+ * Ermittelt einen ATR-Value. Diese Funktion setzt immer den internen Fehlercode, setzt ihn bei Erfolg also zurück.
+ *
+ * @param  string symbol
+ * @param  int    timeframe
+ * @param  int    periods
+ * @param  int    offset
+ *
+ * @return double - ATR-Value oder -1 (EMPTY), falls ein Fehler auftrat
+ */
+double ixATR(string symbol, int timeframe, int periods, int offset) {// throws ERS_HISTORY_UPDATE
+   if (symbol == "0")         // (string) NULL
+      symbol = Symbol();
+
+   double atr = iATR(symbol, timeframe, periods, offset);// throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+
+   int error = GetLastError();
+   if (IsError(error)) {
+      if      (timeframe == Period()               ) {                                     return(_EMPTY(catch("ixATR(1)", error))); }    // sollte niemals auftreten
+      if      (error == ERR_TIMEFRAME_NOT_AVAILABLE) { if (!IsBuiltinTimeframe(timeframe)) return(_EMPTY(catch("ixATR(2)", error))); }
+      else if (error != ERS_HISTORY_UPDATE         ) {                                     return(_EMPTY(catch("ixATR(3)", error))); }
+
+      debug("ixATR(4)", error);
+      atr   = 0;
+      error = ERS_HISTORY_UPDATE;
+   }
+
+   SetLastError(error);
+   return(atr);
+}
 
 
 /**

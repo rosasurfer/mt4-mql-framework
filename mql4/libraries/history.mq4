@@ -380,17 +380,17 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
  *                                   TRUE:  Bar existiert       (zum Aktualisieren dieser Bar ist HistoryFile.UpdateBar() zu verwenden)
  *                                   FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar ist HistoryFile.InsertBar() zu verwenden)
  *
- * @return int - Bar-Offset oder -1, falls ein Fehler auftrat
+ * @return int - Bar-Offset oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
-   if (hFile <= 0)                      return(_int(-1, catch("HistoryFile.FindBar(1)   invalid parameter hFile = "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("HistoryFile.FindBar(1)   invalid parameter hFile = "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("HistoryFile.FindBar(2)   invalid parameter hFile = "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
-      if (hf.hFile[hFile] == 0)         return(_int(-1, catch("HistoryFile.FindBar(3)   invalid parameter hFile = "+ hFile +" (unknown handle)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-      if (hf.hFile[hFile] <  0)         return(_int(-1, catch("HistoryFile.FindBar(4)   invalid parameter hFile = "+ hFile +" (closed handle)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("HistoryFile.FindBar(2)   invalid parameter hFile = "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hf.hFile[hFile] == 0)         return(_EMPTY(catch("HistoryFile.FindBar(3)   invalid parameter hFile = "+ hFile +" (unknown handle)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hf.hFile[hFile] <  0)         return(_EMPTY(catch("HistoryFile.FindBar(4)   invalid parameter hFile = "+ hFile +" (closed handle)", ERR_INVALID_FUNCTION_PARAMVALUE)));
       hf.hFile.valid = hFile;
    }
-   if (time <= 0)                       return(_int(-1, catch("HistoryFile.FindBar(5)   invalid parameter time = "+ time, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (time <= 0)                       return(_EMPTY(catch("HistoryFile.FindBar(5)   invalid parameter time = "+ time, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (ArraySize(lpBarExists) == 0)
       ArrayResize(lpBarExists, 1);
 
@@ -429,11 +429,11 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
 
    // (6) Zeitpunkt liegt irgendwo innerhalb der Zeitreihe
    int offset;
-   return(_int(-1, catch("HistoryFile.FindBar(6)   Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
+   return(_EMPTY(catch("HistoryFile.FindBar(6)   Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
 
    if (!last_error|catch("HistoryFile.FindBar(7)", ERR_NOT_IMPLEMENTED))
       return(offset);
-   return(-1);
+   return(EMPTY);
 }
 
 
@@ -1001,15 +1001,15 @@ bool hf.Write(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return int - Größe oder -1, falls ein Fehler auftrat
+ * @return int - Größe oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int hf.Size(int hFile) {
-   if (hFile <= 0)                      return(_int(-1, catch("hf.Size(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.Size(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.Size(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.Size(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.Size(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.Size(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.Size(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.Size(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1022,15 +1022,15 @@ int hf.Size(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return int - Anzahl oder -1, falls ein Fehler auftrat
+ * @return int - Anzahl oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int hf.Bars(int hFile) {
-   if (hFile <= 0)                      return(_int(-1, catch("hf.Bars(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.Bars(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.Bars(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.Bars(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.Bars(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.Bars(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.Bars(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.Bars(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1043,15 +1043,15 @@ int hf.Bars(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Zeitpunkt oder -1, falls ein Fehler auftrat
+ * @return datetime - Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
  */
 datetime hf.From(int hFile) {
-   if (hFile <= 0)                      return(_int(-1, catch("hf.From(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.From(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.From(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.From(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.From(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.From(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.From(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.From(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1064,15 +1064,15 @@ datetime hf.From(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Zeitpunkt oder -1, falls ein Fehler auftrat
+ * @return datetime - Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
  */
 datetime hf.To(int hFile) {
-   if (hFile <= 0)                      return(_int(-1, catch("hf.To(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.To(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.To(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.To(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.To(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.To(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.To(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.To(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1195,15 +1195,15 @@ int hf.Period(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return int - Digits oder -1, falls ein Fehler auftrat
+ * @return int - Digits oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int hf.Digits(int hFile) {
-   if (hFile <= 0)                      return(_int(-1, catch("hf.Digits(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.Digits(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.Digits(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.Digits(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.Digits(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.Digits(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.Digits(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.Digits(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1216,15 +1216,15 @@ int hf.Digits(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Versions-Zeitpunkt oder -1, falls ein Fehler auftrat
+ * @return datetime - Versions-Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int hf.DbVersion(int hFile) {
-   if (hFile <= 0)                      return(_int(-1, catch("hf.DbVersion(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.DbVersion(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.DbVersion(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.DbVersion(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.DbVersion(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.DbVersion(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.DbVersion(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.DbVersion(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1237,16 +1237,16 @@ int hf.DbVersion(int hFile) {
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Versions-Zeitpunkt oder -1, falls ein Fehler auftrat
+ * @return datetime - Versions-Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int hf.PrevDbVersion(int hFile) {
    // 2 oder mehr Tests
-   if (hFile <= 0)                      return(_int(-1, catch("hf.PrevDbVersion(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.PrevDbVersion(1)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_int(-1, catch("hf.PrevDbVersion(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.PrevDbVersion(2)   invalid or unknown file handle "+ hFile, ERR_INVALID_FUNCTION_PARAMVALUE)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_int(-1, catch("hf.PrevDbVersion(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_int(-1, catch("hf.PrevDbVersion(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.PrevDbVersion(3)   unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.PrevDbVersion(4)   closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
