@@ -85,17 +85,17 @@ bool SetScriptParameters(string parameters) {
  * @param  string paramNames [] - Array zur Aufnahme der Parameternamen
  * @param  string paramValues[] - Array zur Aufnahme der Parameterwerte
  *
- * @return int - Anzahl der übergebenen Parameter oder -1, falls ein Fehler auftrat
+ * @return int - Anzahl der übergebenen Parameter oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int GetScriptParameters(string paramNames[], string paramValues[]) {
    if (!IsScript())
-      return(_int(-1, catch("GetScriptParameters(1)   invalid calling context (not a script)", ERR_RUNTIME_ERROR)));
+      return(_EMPTY(catch("GetScriptParameters(1)   invalid calling context (not a script)", ERR_RUNTIME_ERROR)));
 
    string parameters = "";
 
    // Um für den QC-Receiver kein Fenster registrieren zu müssen (löst unnötige Ticks aus), benutzen wir zum Lesen des Channels einen weiteren Sender.
    if (!hQC.ScriptParameterSender) /*&&*/ if (!QC.StartScriptParameterSender())
-      return(-1);
+      return(EMPTY);
 
    // TODO: Channel zuerst prüfen, erst dann Sender starten
 
@@ -121,9 +121,9 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
 
    // stop sender
    if (!QC.StopScriptParameterSender())
-      return(-1);
+      return(EMPTY);
    if (IsLastError())
-      return(-1);
+      return(EMPTY);
 
 
    // Parameter parsen

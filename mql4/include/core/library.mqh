@@ -237,10 +237,21 @@ bool IsSuperContext() {
  */
 int SetLastError(int error, int param=NULL) {
    last_error = error;
-
-   // __STATUS_ERROR ist ein Status des Hauptprogramms und wird in Libraries nicht gesetzt
-
    return(ec.setLastError(__ExecutionContext, last_error));
+}
+
+
+/**
+ * Überprüft und aktualisiert den aktuellen Programmstatus. Darf in Libraries nicht verwendet werden, dort kann der Programmstatus aus dem
+ * EXECUTION_CONTEXT ausgelesen, jedoch nicht modifiziert werden.
+ *
+ * @param  int value - zurückzugebender Wert, wird intern ignoriert (default: NULL)
+ *
+ * @return int - der übergebene Wert
+ */
+int CheckProgramStatus(int value=NULL) {
+   catch("CheckProgramStatus()", ERR_FUNC_NOT_ALLOWED);
+   return(value);
 }
 
 

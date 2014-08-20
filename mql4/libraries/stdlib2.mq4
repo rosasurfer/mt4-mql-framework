@@ -25,7 +25,7 @@ int __DEINIT_FLAGS__[];
  * @param  string section  - Name des Abschnitts
  * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüsselnamen
  *
- * @return int - Anzahl der gefundenen Schlüssel oder -1, falls ein Fehler auftrat
+ * @return int - Anzahl der gefundenen Schlüssel oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int GetIniKeys.2(string fileName, string section, string keys[]) {
    string sNull;
@@ -47,7 +47,7 @@ int GetIniKeys.2(string fileName, string section, string keys[]) {
    else        length = ExplodeStrings(buffer, keys);
 
    if (catch("GetIniKeys.2()") != NO_ERROR)
-      return(-1);
+      return(EMPTY);
    return(length);
 }
 
@@ -716,7 +716,7 @@ private*/string __BoolsToStr(bool values2[][], bool values3[][][], string separa
  * @param  int    iVolatile[] - volatile Integer-Daten
  * @param  double dVolatile[] - volatile Double-Daten
  *
- * @return int - Anzahl der kopierten Orderdatensätze oder -1, falls ein Fehler auftrat
+ * @return int - Anzahl der kopierten Orderdatensätze oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int ChartInfos.CopyLfxStatus(bool store, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]) {
    store = store!=0;
@@ -735,7 +735,7 @@ int ChartInfos.CopyLfxStatus(bool store, /*LFX_ORDER*/int orders[][], int iVolat
       if (ArrayRange(dVolatile, 0) > 0) ArrayCopy(static.dVolatile, dVolatile);
 
       if (IsError(catch("ChartInfos.CopyLfxStatus(1)")))
-         return(-1);
+         return(EMPTY);
    }
    else {
       ArrayResize(orders,    0);
@@ -747,7 +747,7 @@ int ChartInfos.CopyLfxStatus(bool store, /*LFX_ORDER*/int orders[][], int iVolat
       if (ArrayRange(static.dVolatile, 0) > 0) ArrayCopy(dVolatile, static.dVolatile);
 
       if (IsError(catch("ChartInfos.CopyLfxStatus(2)")))
-         return(-1);
+         return(EMPTY);
    }
 
    return(ArrayRange(orders, 0));

@@ -17,6 +17,7 @@
  *  bool IsSuperContext();
  *
  *  int  SetLastError(int error, int param);
+ *  int  CheckProgramStatus(int value);
  */
 
 #import "stdlib1.ex4"
