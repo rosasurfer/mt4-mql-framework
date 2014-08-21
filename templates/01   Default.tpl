@@ -8776,18 +8776,4 @@ period_flags=255
 show_data=0
 </indicator>
 </window>
-
-<window>
-height=1
-<indicator>
-name=Average True Range
-period=14
-apply=0
-color=16711680
-style=0
-weight=1
-period_flags=128
-show_data=1
-</indicator>
-</window>
 </chart>
