@@ -16,21 +16,24 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
+   int periods = 3;
+   int bar     = 1;
 
-   double atr = ixATR(NULL, PERIOD_W1, 14, 0);// throws ERS_HISTORY_UPDATE
+   double atr = ixATR(NULL, PERIOD_W1, periods, bar);// throws ERS_HISTORY_UPDATE
       if (atr == EMPTY)                                                   return(last_error);
       if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
-   debug("onTick(1)   Tick="+ Tick +"  atr="+ NumberToStr(atr, ".+"));
+
+   debug("onTick(1)   Tick="+ Tick +"  atr("+ periods +")["+ bar +"]="+ NumberToStr(atr, ".+"));
 
    return(last_error);
 }
 
 
 /**
- * Ermittelt einen ATR-Value. Diese Funktion setzt immer den internen Fehlercode, setzt ihn bei Erfolg also zurück.
+ * Ermittelt einen ATR-Value. Die Funktion setzt immer den internen Fehlercode, bei Erfolg also zurück.
  *
- * @param  string symbol
- * @param  int    timeframe
+ * @param  string symbol    - Symbol    (default: NULL = das aktuelle Symbol   )
+ * @param  int    timeframe - Timeframe (default: NULL = der aktuelle Timeframe)
  * @param  int    periods
  * @param  int    offset
  *

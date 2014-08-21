@@ -20,7 +20,7 @@ color  fg.fontColor.Disabled = Gray;
 string fg.fontName           = "Tahoma";
 int    fg.fontSize           = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
@@ -36,13 +36,14 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","TICKVALUE","STOPLEVEL","FR
 #define I_MARGINHEDGED        11
 #define I_SPREAD              12
 #define I_COMMISSION          13
-#define I_SWAPLONG            14
-#define I_SWAPSHORT           15
-#define I_ACCOUNT_LEVERAGE    16
-#define I_STOPOUT_LEVEL       17
-#define I_SERVER_NAME         18
-#define I_SERVER_TIMEZONE     19
-#define I_SERVER_SESSION      20
+#define I_TOTALFEES           14
+#define I_SWAPLONG            15
+#define I_SWAPSHORT           16
+#define I_ACCOUNT_LEVERAGE    17
+#define I_STOPOUT_LEVEL       18
+#define I_SERVER_NAME         19
+#define I_SERVER_TIMEZONE     20
+#define I_SERVER_SESSION      21
 
 
 /**
@@ -108,7 +109,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x    );
-      ObjectSet    (label, OBJPROP_YDISTANCE, y+143);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y+160);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       ObjectRegister(label);
    }
@@ -171,13 +172,14 @@ int UpdateInfos() {
    double marginHedged     = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged     = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", Round(marginHedged) +"%"),                            fg.fontSize, fg.fontName, ifInt(!marginRequired, fg.fontColor.Disabled, fg.fontColor));
 
-   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  +                               DoubleToStr(spread,      Digits<<31>>31) +" pip",     fg.fontSize, fg.fontName, fg.fontColor);
+   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;
+   double atr              = ixATR(NULL, PERIOD_W1, 14, 1); if (atr == EMPTY) return(last_error);
+                                                                             ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits<<31>>31) +" pip"+ ifString(!atr, "", " = "+ DoubleToStr(MathDiv(spread*Point, atr) * 100, 2) +"% ATR(w)"), fg.fontSize, fg.fontName, fg.fontColor);
    double commission       = GetCommission();
-   double commissionUSD    = ConvertCurrency(commission, accountCurrency, "USD");
-   double commissionUSDLot = GetCommissionUSDLot(commissionUSD);
    double commissionPip    = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
-                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +"/lot = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
-                                                                           //ObjectSetText(labels[I_COMMISSION    ], "Commission:  $"   + NumberToStr(commission, ".2R") +"/USD-lot = "+ NumberToStr(commissionPip, ".1+") +" pip",                   fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
+   double totalFees        = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:       "                                                                                                                , fg.fontSize, fg.fontName, fg.fontColor);
+
    int    swapMethod       = MarketInfo(symbol, MODE_SWAPTYPE );
    double swapLong         = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort        = MarketInfo(symbol, MODE_SWAPSHORT);
@@ -241,6 +243,73 @@ int UpdateInfos() {
 }
 
 
+/*
+MODE_TRADEALLOWED       Trade is allowed for the symbol.
+MODE_DIGITS             Count of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable Digits
+
+MODE_POINT              Point size in the quote currency.   => Auflösung des Preises
+MODE_TICKSIZE           Tick size in the quote currency.    => kleinste Änderung des Preises, Vielfaches von MODE_POINT
+
+MODE_STOPLEVEL          Stop level in points.
+MODE_FREEZELEVEL        Order freeze level in points. If the execution price is within the defined range, the order cannot be modified, cancelled or closed.
+
+MODE_LOTSIZE            Lot size in the base currency.
+MODE_TICKVALUE          Tick value in the deposit currency.
+MODE_MINLOT             Minimum permitted amount of a lot.
+MODE_MAXLOT             Maximum permitted amount of a lot.
+MODE_LOTSTEP            Step for changing lots.
+
+MODE_MARGINCALCMODE     Margin calculation mode. 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices.
+MODE_MARGINREQUIRED     Free margin required to open 1 lot
+MODE_MARGININIT         Initial margin requirements for 1 lot.
+MODE_MARGINMAINTENANCE  Margin to maintain open positions calculated for 1 lot.
+MODE_MARGINHEDGED       Hedged margin calculated for 1 lot.
+
+MODE_SPREAD             Spread value in points.
+
+MODE_SWAPTYPE           Swap calculation method. 0 - in points; 1 - in symbol base currency; 2 - by interest; 3 - in the margin currency.
+MODE_SWAPLONG           Swap of the long position.
+MODE_SWAPSHORT          Swap of the short position.
+
+MODE_TIME               The last incoming tick server time.
+*/
+
+
+/**
+ * Ermittelt einen ATR-Value. Die Funktion setzt immer den internen Fehlercode, bei Erfolg also zurück.
+ *
+ * @param  string symbol    - Symbol    (default: NULL = das aktuelle Symbol   )
+ * @param  int    timeframe - Timeframe (default: NULL = der aktuelle Timeframe)
+ * @param  int    periods
+ * @param  int    offset
+ *
+ * @return double - ATR-Value oder -1 (EMPTY), falls ein Fehler auftrat
+ */
+double ixATR(string symbol, int timeframe, int periods, int offset) {// throws ERS_HISTORY_UPDATE
+   if (symbol == "0")         // (string) NULL
+      symbol = Symbol();
+
+   double atr = iATR(symbol, timeframe, periods, offset);// throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+
+   int error = GetLastError();
+   if (IsError(error)) {
+      if      (timeframe == Period()               ) {                                     return(_EMPTY(catch("ixATR(1)", error))); }    // sollte niemals auftreten
+      if      (error == ERR_TIMEFRAME_NOT_AVAILABLE) { if (!IsBuiltinTimeframe(timeframe)) return(_EMPTY(catch("ixATR(2)", error))); }
+      else if (error != ERS_HISTORY_UPDATE         ) {                                     return(_EMPTY(catch("ixATR(3)", error))); }
+
+      debug("ixATR(4)", error);
+      atr   = 0;
+      error = ERS_HISTORY_UPDATE;
+   }
+
+   SetLastError(error);
+   return(atr);
+
+   ConvertCurrency(NULL, NULL, NULL);
+   GetCommissionUSDLot(NULL);
+}
+
+
 /**
  * Gibt die Commission-Rate des Accounts in USD je gehandelte USD-Lot zurück.
  *
@@ -283,35 +352,3 @@ double ConvertCurrency(double amount, string from, string to) {
    }
    return(result);
 }
-
-
-/*
-MODE_TRADEALLOWED       Trade is allowed for the symbol.
-MODE_DIGITS             Count of digits after decimal point in the symbol prices. For the current symbol, it is stored in the predefined variable Digits
-
-MODE_POINT              Point size in the quote currency.   => Auflösung des Preises
-MODE_TICKSIZE           Tick size in the quote currency.    => kleinste Änderung des Preises, Vielfaches von MODE_POINT
-
-MODE_STOPLEVEL          Stop level in points.
-MODE_FREEZELEVEL        Order freeze level in points. If the execution price is within the defined range, the order cannot be modified, cancelled or closed.
-
-MODE_LOTSIZE            Lot size in the base currency.
-MODE_TICKVALUE          Tick value in the deposit currency.
-MODE_MINLOT             Minimum permitted amount of a lot.
-MODE_MAXLOT             Maximum permitted amount of a lot.
-MODE_LOTSTEP            Step for changing lots.
-
-MODE_MARGINCALCMODE     Margin calculation mode. 0 - Forex; 1 - CFD; 2 - Futures; 3 - CFD for indices.
-MODE_MARGINREQUIRED     Free margin required to open 1 lot
-MODE_MARGININIT         Initial margin requirements for 1 lot.
-MODE_MARGINMAINTENANCE  Margin to maintain open positions calculated for 1 lot.
-MODE_MARGINHEDGED       Hedged margin calculated for 1 lot.
-
-MODE_SPREAD             Spread value in points.
-
-MODE_SWAPTYPE           Swap calculation method. 0 - in points; 1 - in symbol base currency; 2 - by interest; 3 - in the margin currency.
-MODE_SWAPLONG           Swap of the long position.
-MODE_SWAPSHORT          Swap of the short position.
-
-MODE_TIME               The last incoming tick server time.
-*/
