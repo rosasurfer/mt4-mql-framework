@@ -483,11 +483,11 @@ bool UpdateUnitSize() {
          if (error == ERR_UNKNOWN_SYMBOL) return(true);
          return(!catch("UpdateUnitSize(1)", error));
       }
-   unleveragedLots = 0;
+   unleveragedLots = 0;                                                          // global, wird auch in UpdatePositions() benötigt
 
 
    // (2) UnitSize berechnen
-   string strUnitSize = " ";
+   string strATR, strUnitSize=" ";
 
    if (tradeAllowed && tickSize && tickValue && marginRequired && equity > 0) {  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       double leverage = 2.5;                                                     // Orientierungswert für eine einzelne neue Position
@@ -513,7 +513,12 @@ bool UpdateUnitSize() {
       else if (unitSize <= 1200.  ) unitSize =       MathRound(MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
       else                          unitSize =       MathRound(MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-      strUnitSize = StringConcatenate("1:", DoubleToStr(leverage, 1), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
+      double atr = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
+         if (atr == EMPTY)                                                   return(false);
+         if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
+      if (atr!=NULL) strATR = StringConcatenate("ATRw = ", DoubleToStr(atr/Close[0] * 100, 1), "%     ");
+
+      strUnitSize = StringConcatenate(strATR, "1:", DoubleToStr(leverage, 1), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
    }
 
 
