@@ -30,38 +30,6 @@ int onTick() {
 
 
 /**
- * Ermittelt einen ATR-Value. Die Funktion setzt immer den internen Fehlercode, bei Erfolg also zurück.
- *
- * @param  string symbol    - Symbol    (default: NULL = das aktuelle Symbol   )
- * @param  int    timeframe - Timeframe (default: NULL = der aktuelle Timeframe)
- * @param  int    periods
- * @param  int    offset
- *
- * @return double - ATR-Value oder -1 (EMPTY), falls ein Fehler auftrat
- */
-double ixATR(string symbol, int timeframe, int periods, int offset) {// throws ERS_HISTORY_UPDATE
-   if (symbol == "0")         // (string) NULL
-      symbol = Symbol();
-
-   double atr = iATR(symbol, timeframe, periods, offset);// throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
-
-   int error = GetLastError();
-   if (IsError(error)) {
-      if      (timeframe == Period()               ) {                                     return(_EMPTY(catch("ixATR(1)", error))); }    // sollte niemals auftreten
-      if      (error == ERR_TIMEFRAME_NOT_AVAILABLE) { if (!IsBuiltinTimeframe(timeframe)) return(_EMPTY(catch("ixATR(2)", error))); }
-      else if (error != ERS_HISTORY_UPDATE         ) {                                     return(_EMPTY(catch("ixATR(3)", error))); }
-
-      debug("ixATR(4)", error);
-      atr   = 0;
-      error = ERS_HISTORY_UPDATE;
-   }
-
-   SetLastError(error);
-   return(atr);
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
