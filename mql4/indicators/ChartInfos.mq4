@@ -490,10 +490,10 @@ bool UpdateUnitSize() {
    string strUnitSize = " ";
 
    if (tradeAllowed && tickSize && tickValue && marginRequired && equity > 0) {  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
-      double leverage = 2.5;
+      double leverage = 2.5;                                                     // Orientierungswert für eine einzelne neue Position
       double lotValue = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
       unleveragedLots = equity / lotValue;                                       // maximal mögliche Lotsize ohne Leverage (Hebel 1:1)
-      double unitSize = unleveragedLots * leverage;                              // Equity wird mit 'leverage' gehebelt (max. ca. 20-30)
+      double unitSize = unleveragedLots * leverage;                              // Equity wird mit 'leverage' gehebelt
 
       // UnitSize immer ab-, niemals aufrunden                                                                                            Abstufung max. 6.7% je Schritt
       if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
@@ -513,7 +513,7 @@ bool UpdateUnitSize() {
       else if (unitSize <= 1200.  ) unitSize =       MathRound(MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
       else                          unitSize =       MathRound(MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-      strUnitSize = StringConcatenate("1:", NumberToStr(leverage, ".+"), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
+      strUnitSize = StringConcatenate("1:", DoubleToStr(leverage, 1), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
    }
 
 
@@ -543,7 +543,7 @@ bool UpdatePositions() {
    else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       if (unleveragedLots != 0)
-         strUsedLeverage = StringConcatenate("1:", NumberToStr(NormalizeDouble(MathAbs(totalPosition)/unleveragedLots, 1), ".+"), "  =  ");
+         strUsedLeverage = StringConcatenate("1:", DoubleToStr(MathAbs(totalPosition)/unleveragedLots, 1), "  =  ");
       strPosition = StringConcatenate("Position:  " , strUsedLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
