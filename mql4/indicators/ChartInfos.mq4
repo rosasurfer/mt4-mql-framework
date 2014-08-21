@@ -516,9 +516,9 @@ bool UpdateUnitSize() {
       double atr = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
          if (atr == EMPTY)                                                   return(false);
          if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
-      if (atr!=NULL) strATR = StringConcatenate("ATRw = ", DoubleToStr(atr/Close[0] * 100, 1), "%     ");
+      if (atr!=NULL) strATR = StringConcatenate("ATRw=", DoubleToStr(atr/Close[0] * 100, 1), "%     ");
 
-      strUnitSize = StringConcatenate(strATR, "1:", DoubleToStr(leverage, 1), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
+      strUnitSize = StringConcatenate(strATR, "L", DoubleToStr(leverage, 1), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
    }
 
 
@@ -548,7 +548,7 @@ bool UpdatePositions() {
    else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       if (unleveragedLots != 0)
-         strUsedLeverage = StringConcatenate("1:", DoubleToStr(MathAbs(totalPosition)/unleveragedLots, 1), "  =  ");
+         strUsedLeverage = StringConcatenate("L", DoubleToStr(MathAbs(totalPosition)/unleveragedLots, 1), "  =  ");
       strPosition = StringConcatenate("Position:  " , strUsedLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
