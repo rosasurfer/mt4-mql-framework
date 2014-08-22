@@ -30,7 +30,14 @@ string label.stopoutLevel    = "StopoutLevel";
 
 
 int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
-double unleveragedLots;                                              // aktuelle Lotsize bei Hebel 1:1
+
+
+// Money-Management
+double mm.ATRwAbs;                                                   // wöchentliche ATR, absoluter Wert
+double mm.ATRwPct;                                                   // wöchentliche ATR, prozentualer Wert
+double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
+double mm.stdLeverage = 2.5;                                         // Ausgangsgröße für Hebel (Erfahrungswert)
+double mm.stdLots;                                                   // Standard-Lotsize für eine wöchentliche Volatilität von {stdLeverage} %
 
 
 // lokale Positionsdaten                                             // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
@@ -472,6 +479,10 @@ bool UpdateUnitSize() {
    if (IsTesting())
       return(true);                                                              // Anzeige wird im Tester nicht benötigt
 
+   if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions())
+      return(false);
+
+
    // (1) Ausgangsdaten bestimmen
    bool   tradeAllowed   = (MarketInfo(Symbol(), MODE_TRADEALLOWED  ) && 1);
    double tickSize       =  MarketInfo(Symbol(), MODE_TICKSIZE      );
@@ -483,17 +494,16 @@ bool UpdateUnitSize() {
          if (error == ERR_UNKNOWN_SYMBOL) return(true);
          return(!catch("UpdateUnitSize(1)", error));
       }
-   unleveragedLots = 0;                                                          // global, wird auch in UpdatePositions() benötigt
+   mm.unleveragedLots = 0;                                                       // für globales Moneymanagement
 
 
    // (2) UnitSize berechnen
    string strATR, strUnitSize=" ";
 
    if (tradeAllowed && tickSize && tickValue && marginRequired && equity > 0) {  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
-      double leverage = 2.5;                                                     // Orientierungswert für eine einzelne neue Position
       double lotValue = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
-      unleveragedLots = equity / lotValue;                                       // maximal mögliche Lotsize ohne Leverage (Hebel 1:1)
-      double unitSize = unleveragedLots * leverage;                              // Equity wird mit 'leverage' gehebelt
+      mm.unleveragedLots = equity/lotValue;                                      // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
+      double unitSize = mm.unleveragedLots * mm.stdLeverage;                     // Equity wird mit 'leverage' gehebelt
 
       // UnitSize immer ab-, niemals aufrunden                                                                                            Abstufung max. 6.7% je Schritt
       if      (unitSize <=    0.03) unitSize = NormalizeDouble(MathFloor(unitSize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
@@ -513,12 +523,15 @@ bool UpdateUnitSize() {
       else if (unitSize <= 1200.  ) unitSize =       MathRound(MathFloor(unitSize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
       else                          unitSize =       MathRound(MathFloor(unitSize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-      double atr = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
-         if (atr == EMPTY)                                                   return(false);
-         if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
-      if (atr!=NULL) strATR = StringConcatenate("ATRw=", DoubleToStr(atr/Close[0] * 100, 1), "%     ");
 
-      strUnitSize = StringConcatenate(strATR, "L", DoubleToStr(leverage, 1), "  =    ", NumberToStr(unitSize, ", .+"), " lot");
+      // ATR-Anzeige
+      if (!mm.ATRwPct) if (!CalculateATR())
+         return(false);
+      if (mm.ATRwPct!=NULL) strATR = StringConcatenate("ATRw=", DoubleToStr(mm.ATRwPct * 100, 1), "%     ");
+
+
+      // gesamte Anzeige ggf. mit offener Position ausrichten
+      strUnitSize = StringConcatenate(strATR, "RL", DoubleToStr(mm.stdLeverage, 1), "=", NumberToStr(unitSize, ", .+"), " lot");
    }
 
 
@@ -543,13 +556,16 @@ bool UpdatePositions() {
 
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string strPosition, strUsedLeverage;
+   string strPosition, strCurrentRisk;
    if      (!isLocalPosition) strPosition = " ";
    else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
-      if (unleveragedLots != 0)
-         strUsedLeverage = StringConcatenate("L", DoubleToStr(MathAbs(totalPosition)/unleveragedLots, 1), "  =  ");
-      strPosition = StringConcatenate("Position:  " , strUsedLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      // aktuelles Risiko = aktueller Leverage * ATRwPct
+      if (!mm.ATRwPct) if (!CalculateATR())
+         return(false);
+      if (mm.ATRwPct && mm.unleveragedLots)
+         strCurrentRisk = StringConcatenate(DoubleToStr(mm.ATRwPct * 100 * MathAbs(totalPosition)/mm.unleveragedLots, 1), "%               ");
+      strPosition = StringConcatenate("Position:  " , strCurrentRisk, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
@@ -970,6 +986,24 @@ bool AnalyzePositions() {
 
    positionsAnalyzed = true;
    return(!catch("AnalyzePositions(5)"));
+}
+
+
+/**
+ * Ermittelt die aktuellen ATR-Werte und speichert sie in den globalen Moneymanagement-Variablen.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CalculateATR() {
+   mm.ATRwAbs = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
+   if (mm.ATRwAbs == EMPTY)
+      return(false);
+
+   if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1)
+      SetLastError(NO_ERROR);
+
+   mm.ATRwPct = mm.ATRwAbs/Close[0];
+   return(true);
 }
 
 

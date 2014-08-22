@@ -1,5 +1,5 @@
 /**
- * Hinterlegt den Chart mit Bars übergeordneter Timeframes.
+ * Hinterlegt den Chart mit Bars übergeordneter Timeframes und markiert die jeweilige ATR-Projection.
  */
 #property indicator_chart_window
 
@@ -11,11 +11,13 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string Timeframe          = "W";                  // anzuzeigender SuperTimeframe: [D | W* | M | Q]
-extern color  Color.BarUp        = C'193,255,193';       // Up-Bars              blass: C'215,255,215'
-extern color  Color.BarDown      = C'255,213,213';       // Down-Bars            blass: C'255,230,230'
-extern color  Color.BarUnchanged = C'232,232,232';       // unveränderte Bars                               // oder Gray
-extern color  Color.Close        = C'164,164,164';       // Close-Marker                                    // oder Black
+extern string Timeframe            = "W";                // anzuzeigender SuperTimeframe: [D | W* | M | Q]
+extern int    ATR.Periods          = 14;                 // MovingAverage-Perioden des ATR
+extern color  Color.BarUp          = C'193,255,193';     // Up-Bars              blass: C'215,255,215'
+extern color  Color.BarDown        = C'255,213,213';     // Down-Bars            blass: C'255,230,230'
+extern color  Color.BarUnchanged   = C'232,232,232';     // unveränderte Bars                               // oder Gray
+extern color  Color.Close          = C'164,164,164';     // Close-Marker                                    // oder Black
+extern color  Color.ATR.Projection = C'164,164,164';     // default zunächst wie Close-Marker
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
@@ -70,11 +72,15 @@ int onInit() {
          break;
    }
 
+   // ATR.Periods
+   if (ATR.Periods < 1) return(catch("onInit(2)   Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;   // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
-   if (Color.BarDown      == 0xFF000000) Color.BarDown = CLR_NONE;
-   if (Color.BarUnchanged == 0xFF000000) Color.BarDown = CLR_NONE;
-   if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
+   if (Color.BarUp          == 0xFF000000) Color.BarUp          = CLR_NONE;   // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
+   if (Color.BarDown        == 0xFF000000) Color.BarDown        = CLR_NONE;
+   if (Color.BarUnchanged   == 0xFF000000) Color.BarDown        = CLR_NONE;
+   if (Color.Close          == 0xFF000000) Color.Close          = CLR_NONE;
+   if (Color.ATR.Projection == 0xFF000000) Color.ATR.Projection = CLR_NONE;
 
 
    // (2) Label für Textanzeige erzeugen
@@ -83,7 +89,7 @@ int onInit() {
 
    // (3) Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-   return(catch("onInit(2)"));
+   return(catch("onInit(3)"));
 }
 
 
