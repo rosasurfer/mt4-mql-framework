@@ -782,6 +782,7 @@ int      last_error;                                        // der letzte Fehler
 #define IDC_CHART_STEPFORWARD               33197     //        eine Bar vorwärts                      F12
 #define IDC_CHART_STEPBACKWARD              33198     //        eine Bar rückwärts               Shift+F12
 #define IDC_CHART_EXPERT_PROPERTIES         33048     //        Expert Properties-Dialog                F7
+#define IDC_CHART_OBJECTS_UNSELECTALL       35462     //        Objects: Unselect All
 
 #define IDC_MARKETWATCH_SYMBOLS             33171     // Market Watch: Symbols
 

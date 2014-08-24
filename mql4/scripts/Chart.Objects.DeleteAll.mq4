@@ -1,5 +1,5 @@
 /**
- * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
+ * Löscht alle sich im aktuellen Chart befindenden Objekte.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -14,5 +14,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   return(Chart.Refresh());
+   ObjectsDeleteAll();
+   return(last_error);
 }

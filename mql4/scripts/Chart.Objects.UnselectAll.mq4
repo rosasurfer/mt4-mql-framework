@@ -1,5 +1,5 @@
 /**
- * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
+ * Ruft den Hauptmenü-Befehl Charts->Objects->Delete All auf.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -14,5 +14,5 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   return(Chart.Refresh());
+   return(Chart.Objects.UnselectAll());
 }

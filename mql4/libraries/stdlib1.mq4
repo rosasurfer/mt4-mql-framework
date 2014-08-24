@@ -4223,24 +4223,31 @@ int WM_MT4() {
 
 
 /**
- * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
- *
- * @param  bool sound - ob die Ausführung akustisch bestätigt werden soll oder nicht (default: nein)
+ * Ruft den Hauptmenü-Befehl Charts->Objects-Unselect All auf.
  *
  * @return int - Fehlerstatus
  */
-int Chart.Refresh(bool sound=false) {
-   sound = sound!=0;
+int Chart.Objects.UnselectAll() {
+   int hWnd = WindowHandle(Symbol(), NULL);
+   if (!hWnd)
+      return(catch("Chart.Objects.UnselectAll()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
 
+   PostMessageA(hWnd, WM_COMMAND, IDC_CHART_OBJECTS_UNSELECTALL, 0);
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
+ *
+ * @return int - Fehlerstatus
+ */
+int Chart.Refresh() {
    int hWnd = WindowHandle(Symbol(), NULL);
    if (!hWnd)
       return(catch("Chart.Refresh()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
 
    PostMessageA(hWnd, WM_COMMAND, IDC_CHART_REFRESH, 0);
-
-   if (sound)
-      PlaySound("newalert.wav");
-
    return(NO_ERROR);
 }
 
