@@ -34,11 +34,13 @@ int    appliedPrice = PRICE_MEDIAN;                                  // Bid | As
 
 // Money-Management
 bool   mm.done;
-double mm.ATRwAbs;                                                   // wöchentliche ATR, absoluter Wert
-double mm.ATRwPct;                                                   // wöchentliche ATR, prozentualer Wert
 double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
-double mm.stdRisk = 2.5;                                             // Ausgangsrisiko je Unit in Prozent Equity je Woche (Erfahrungswert)
-double mm.stdLots;                                                   // Ausgangs-Lotsize für eine wöchentliche Volatilität von {mm.stdRisk} Prozent
+double mm.leverage = 2.5;                                            // Leverage je Unit für leveraged Lotsize (Erfahrungswert, keine Berücksichtigung der Volatilität)
+double mm.ATRwAbs;                                                   // wöchentliche ATR, absolut
+double mm.ATRwPct;                                                   // wöchentliche ATR, prozentual
+double mm.stdRisk  = 2.5;                                            // Risiko je Unit in Prozent Equity je Woche (Erfahrungswert)
+double mm.stdRiskLots;                                               // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
+double mm.stdRiskLeverage;                                           // effektiver Hebel für eine {mm.stdRiskLots} Unit
 
 
 // lokale Positionsdaten                                             // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
@@ -480,34 +482,33 @@ bool UpdateUnitSize() {
    if (IsTesting())                                   return(true );             // Anzeige wird im Tester nicht benötigt
    if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(false);
 
-   string strATR, strUnitSize=" ";
+   string strUnitSize;
 
 
    // (1) StdLots runden (immer ab-, niemals aufrunden)
-   if (mm.stdLots > 0) {
-      double lotsize;                                                                                          // Abstufung max. 6.7% je Schritt
-      if      (mm.stdLots <=    0.03) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
-      else if (mm.stdLots <=   0.075) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
-      else if (mm.stdLots <=    0.1 ) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.005) *   0.005, 3);   //  0.075-0.1: Vielfaches von   0.005
-      else if (mm.stdLots <=    0.3 ) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.01 ) *   0.01 , 2);   //    0.1-0.3: Vielfaches von   0.01
-      else if (mm.stdLots <=    0.75) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
-      else if (mm.stdLots <=    1.2 ) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
-      else if (mm.stdLots <=    3.  ) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
-      else if (mm.stdLots <=    7.5 ) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
-      else if (mm.stdLots <=   12.  ) lotsize = NormalizeDouble(MathFloor(mm.stdLots/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
-      else if (mm.stdLots <=   30.  ) lotsize =       MathRound(MathFloor(mm.stdLots/  1    ) *   1       );   //      12-30: Vielfaches von   1
-      else if (mm.stdLots <=   75.  ) lotsize =       MathRound(MathFloor(mm.stdLots/  2    ) *   2       );   //      30-75: Vielfaches von   2
-      else if (mm.stdLots <=  120.  ) lotsize =       MathRound(MathFloor(mm.stdLots/  5    ) *   5       );   //     75-120: Vielfaches von   5
-      else if (mm.stdLots <=  300.  ) lotsize =       MathRound(MathFloor(mm.stdLots/ 10    ) *  10       );   //    120-300: Vielfaches von  10
-      else if (mm.stdLots <=  750.  ) lotsize =       MathRound(MathFloor(mm.stdLots/ 20    ) *  20       );   //    300-750: Vielfaches von  20
-      else if (mm.stdLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdLots/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
-      else                            lotsize =       MathRound(MathFloor(mm.stdLots/100    ) * 100       );   //   1200-...: Vielfaches von 100
+   if (mm.stdRiskLots > 0) {
+      double lotsize;                                                                                                   // Abstufung max. 6.7% je Schritt
+      if      (mm.stdRiskLots <=    0.03) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
+      else if (mm.stdRiskLots <=   0.075) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
+      else if (mm.stdRiskLots <=    0.1 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
+      else if (mm.stdRiskLots <=    0.3 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
+      else if (mm.stdRiskLots <=    0.75) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
+      else if (mm.stdRiskLots <=    1.2 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
+      else if (mm.stdRiskLots <=    3.  ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
+      else if (mm.stdRiskLots <=    7.5 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
+      else if (mm.stdRiskLots <=   12.  ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
+      else if (mm.stdRiskLots <=   30.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/  1    ) *   1       );    //      12-30: Vielfaches von   1
+      else if (mm.stdRiskLots <=   75.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/  2    ) *   2       );    //      30-75: Vielfaches von   2
+      else if (mm.stdRiskLots <=  120.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/  5    ) *   5       );    //     75-120: Vielfaches von   5
+      else if (mm.stdRiskLots <=  300.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 10    ) *  10       );    //    120-300: Vielfaches von  10
+      else if (mm.stdRiskLots <=  750.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 20    ) *  20       );    //    300-750: Vielfaches von  20
+      else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
+      else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
-      // ATR-Anzeige erstellen
-      if (mm.ATRwPct!=NULL) strATR = StringConcatenate("ATRw=", DoubleToStr(mm.ATRwPct * 100, 1), "%     ");
-
-      // Gesamtanzeige erstellen
-      strUnitSize = StringConcatenate(strATR, "R", DoubleToStr(mm.stdRisk, 1), "% = ", NumberToStr(lotsize, ", .+"), " lot");
+      strUnitSize = StringConcatenate("R", DoubleToStr(mm.stdRisk, 1), "% = L"+ DoubleToStr(mm.stdRiskLeverage, 1) +" = ", NumberToStr(lotsize, ", .+"), " lot");
+   }
+   else {
+      strUnitSize = " ";
    }
 
 
@@ -538,7 +539,7 @@ bool UpdatePositions() {
    else {
       // aktuelles Risiko = aktueller Leverage * ATRwPct
       if (mm.ATRwPct && mm.unleveragedLots)
-         strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * MathAbs(totalPosition)/mm.unleveragedLots, 1), "%               ");
+         strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * MathAbs(totalPosition)/mm.unleveragedLots, 1), "%             ");
       strPosition = StringConcatenate("Position:  " , strCurrentRisk, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
@@ -972,17 +973,14 @@ bool UpdateMoneyManagement() {
    if (mm.done)
       return(true);
 
-   // (1) ATR
-   mm.ATRwAbs = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
-      if (mm.ATRwAbs==EMPTY)                                              return(false);
-      if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
-   mm.ATRwPct = mm.ATRwAbs/Close[0];
+   mm.unleveragedLots = 0;                                                       // Lotsize bei Hebel 1:1
+   mm.ATRwAbs         = 0;                                                       // wöchentliche ATR, absolut
+   mm.ATRwPct         = 0;                                                       // wöchentliche ATR, prozentual
+   mm.stdRiskLeverage = 0;
+   mm.stdRiskLots     = 0;                                                       // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
 
 
-   // (2) unleveraged Lots
-   mm.unleveragedLots = 0;
-   mm.stdLots         = 0;
-
+   // (1) unleveraged Lots
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
    double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
@@ -999,10 +997,18 @@ bool UpdateMoneyManagement() {
    mm.unleveragedLots = equity/lotValue;                                         // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
 
 
-   // (3) stdLots (ehem. UnitSize)
+   // (2) ATR
+   mm.ATRwAbs = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
+      if (mm.ATRwAbs==EMPTY)                                              return(false);
+      if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
+   mm.ATRwPct = mm.ATRwAbs/Close[0];
+
+
+   // (3) stdRiskLots
    if (!mm.ATRwPct)
       return(false);
-   mm.stdLots = mm.unleveragedLots * mm.stdRisk/(mm.ATRwPct*100);                // auf eine wöchentliche Volatilität von {mm.stdRisk} gehebelte Lotsize
+   mm.stdRiskLeverage = mm.stdRisk/(mm.ATRwPct*100);
+   mm.stdRiskLots     = mm.unleveragedLots * mm.stdRiskLeverage;                 // auf wöchentliche Volatilität von {mm.stdRisk} gehebelte Lotsize
 
 
    mm.done = true;
