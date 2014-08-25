@@ -929,14 +929,14 @@ bool AnalyzePositions() {
       bool   isVirtual;
 
 
-      // (3.3) individuell konfigurierte Position extrahieren
+      // (3.3) individuell konfigurierte Positionen extrahieren
       int confSize = ArrayRange(local.position.conf, 0);
 
       for (i=0; i < confSize; i++) {
          lotSize = local.position.conf[i][0];
          ticket  = local.position.conf[i][1];
 
-         if (!ticket) {                                              // bei Zeilenende (ticket=NULL)
+         if (!ticket) {                                              // Zeilenende (ticket=NULL)
             // (3.4) eine individuell konfigurierte Position zusammengefaßt (Long+Short+Hedged) speichern
             if (ArraySize(customTickets) > 0) {
                if (!StoreMixedPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits))
@@ -1049,20 +1049,20 @@ int SearchMagicNumber(int array[], int number) {
  *
  *
  * Füllt das Array local.position.conf[][2] mit den Konfigurationsdaten des aktuellen Instruments. Im Array sind die einzelnen Elemente im Format
- * {LotSize, Ticket|DirectionType} gespeichert. Ein Leerelement {NULL, NULL} markiert ein Zeilenende oder eine leere Konfiguration (woran die Logik
+ * {LotSize, Ticket|DirectionType} gespeichert. Ein Leerelement {..., NULL} markiert ein Zeilenende oder eine leere Konfiguration (woran die Logik
  * eine bereits eingelesene Konfiguration erkennt: sizeOf(local.position.conf) > 0).
  *
  *
- *  Notation:                                                                                         Arraydarstellung:                Konstanten:
- *  ---------                                                                                         -----------------                -----------
- *   0.1#123456 - O.1 Lot eines Tickets (1)                                                           {  0.1, 123456    }              EMPTY:     -1
- *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets                             {EMPTY, 123456    }              NULL:       0
- *   0.2#L      - imaginäre Long-Position, immer mit Größenangabe, an erster Stelle (2)               {  0.2, TYPE_LONG }              TYPE_LONG:  1
- *   0.3#S      - imaginäre Short-Position, immer mit Größenangabe, an erster Stelle (2)              {  0.3, TYPE_SHORT}              TYPE_SHORT: 2
- *       L      - alle verbleibenden Long-Positionen, niemals mit Größenangabe                        {EMPTY, TYPE_LONG }
- *       S      - alle verbleibenden Short-Positionen, niemals mit Größenangabe                       {EMPTY, TYPE_SHORT}              DirectionType = [TYPE_LONG|TYPE_SHORT]
- *                                                                                                    {EMPTY, EMPTY     } = Zeilenende
- *
+ *  Notation:                                                                                      Arraydarstellung:                     Konstanten:
+ *  ---------                                                                                      -----------------                     -----------
+ *   0.1#123456 - O.1 Lot eines Tickets (1)                                                        {  0.1, 123456    }                   EMPTY:     -1
+ *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets                          {EMPTY, 123456    }                   NULL:       0
+ *   0.2{#}L    - imaginäre Long-Position, immer mit Größenangabe, an erster Stelle (2)            {  0.2, TYPE_LONG }                   TYPE_LONG:  1
+ *   0.3{#}S    - imaginäre Short-Position, immer mit Größenangabe, an erster Stelle (2)           {  0.3, TYPE_SHORT}                   TYPE_SHORT: 2
+ *         L    - alle verbleibenden Long-Positionen, niemals mit Größenangabe                     {EMPTY, TYPE_LONG }
+ *         S    - alle verbleibenden Short-Positionen, niemals mit Größenangabe                    {EMPTY, TYPE_SHORT}
+ *                                                                                                 {...  , NULL      } = Zeilenende
+ *                                                                                                                       DirectionType = [TYPE_LONG|TYPE_SHORT]
  *  Beispiel:
  *  ---------
  *   [BreakevenCalculation]
@@ -1073,15 +1073,15 @@ int SearchMagicNumber(int array[], int number) {
  *
  *  Resultierendes Array:
  *  ---------------------
- *  local.position.conf = {{EMPTY, 111111 }, {  0.1, 222222  }, {NULL, NULL},
- *                         {  0.3, OP_LONG}, {EMPTY, 222222  }, {NULL, NULL},
- *                         {EMPTY, OP_LONG}, {EMPTY, OP_SHORT}, {NULL, NULL}
+ *  local.position.conf = {{EMPTY, 111111   }, {  0.1, 222222  }, {..., NULL},
+ *                         {  0.3, TYPE_LONG}, {EMPTY, 222222  }, {..., NULL},
+ *                         {EMPTY, TYPE_LONG}, {EMPTY, OP_SHORT}, {..., NULL}
  *                        }
  *
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition ignoriert.
  *  (2) Reale Positionen, die mit einer imaginären Position kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
- *      Damit dies zuverlässig funktioniert,muß die imaginäre Position zur Zeit noch an erster Stelle der Zeile notiert sein.
+ *      Eine imaginäre Position muß immer an erster Stelle der Zeile notiert sein.
  */
 bool ReadLocalPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0)
@@ -1089,7 +1089,8 @@ bool ReadLocalPositionConfig() {
 
    string keys[], values[], value, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", stdSymbol=StdSymbol();
    double lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
-   int    valuesSize, detailsSize, confSize, m, ticket;
+   int    valuesSize, detailsSize, confSize, ticket;
+   bool   lineEmpty;
    if (!minLotSize) return(false);                                   // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
@@ -1100,53 +1101,68 @@ bool ReadLocalPositionConfig() {
 
    for (int i=0; i < keysSize; i++) {
       if (StringIStartsWith(keys[i], stdSymbol)) {
-         if (SearchStringArrayI(keys, keys[i]) == i) {
+         if (SearchStringArrayI(keys, keys[i]) == i) {               // Existieren gleichnamige Schlüssel, wird nur der erste berücksichtigt und alle weiteren ignoriert.
             value      = GetLocalConfigString(section, keys[i], "");
             valuesSize = Explode(value, ",", values, NULL);
-            m = 0;
+            lineEmpty  = true;                                       // ob die Konfigurationszeile leer ist oder mindestens einen gültigen Wert enthält
+
             for (int n=0; n < valuesSize; n++) {
-               detailsSize = Explode(values[n], "#", details, NULL);
-               if (detailsSize != 2) {
-                  if (detailsSize == 1) {
-                     if (!StringLen(StringTrim(values[n])))          // zwei aufeinanderfolgende Separatoren => Leervalue => überspringen
-                        continue;
-                     ArrayResize(details, 2);
-                     details[0] = "";
-                     details[1] = values[n];
+               detailsSize = Explode(StringToUpper(values[n]), "#", details, NULL);
+               if (detailsSize == 1) {
+                  details[0] = StringTrim(details[0]);
+                  if (!StringLen(details[0]))                        // zwei aufeinanderfolgende Separatoren: Leervalue => überspringen
+                     continue;
+                  ArrayResize(details, 2);
+                  int pos = StringFind(details[0], "L");             // "...L..."
+                  if (pos >= 0) {
+                     details[1] = StringSubstr(details[0], pos);
+                     details[0] = StringLeft  (details[0], pos);
                   }
-                  else return(!catch("ReadLocalPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  else {
+                     pos = StringFind(details[0], "S");              // "...S..."
+                     if (pos >= 0) {
+                        details[1] = StringSubstr(details[0], pos);
+                        details[0] = StringLeft  (details[0], pos);
+                     }
+                     else                                   return(!catch("ReadLocalPositionConfig(1)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (no ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  }
                }
-               details[0] =               StringTrim(details[0]);  strLotSize = details[0];
-               details[1] = StringToUpper(StringTrim(details[1])); strTicket  = details[1];
+               else if (detailsSize != 2)                   return(!catch("ReadLocalPositionConfig(2)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               strLotSize = StringTrim(details[0]);
+               strTicket  = StringTrim(details[1]);
 
                // Lotsize validieren
-               lotSize = 0;
+               lotSize = EMPTY;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))         return(!catch("ReadLocalPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
-                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (lotSize != 0) {
+                     if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  }
                }
 
                // Ticket validieren
+               if (!StringLen(strTicket))                   return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (no ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                if (StringIsDigit(strTicket)) ticket = StrToInteger(strTicket);
                else if (strTicket == "L")    ticket = TYPE_LONG;
                else if (strTicket == "S")    ticket = TYPE_SHORT;
-               else return(!catch("ReadLocalPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else                                         return(!catch("ReadLocalPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Virtuelle Positionen müssen an erster Stelle notiert sein
-               if (m && lotSize && ticket<=TYPE_SHORT) return(!catch("ReadLocalPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (!lineEmpty) /*&&*/ if (lotSize!=EMPTY) /*&&*/ if (ticket<=TYPE_SHORT)
+                                                            return(!catch("ReadLocalPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                confSize = ArrayRange(local.position.conf, 0);
                ArrayResize(local.position.conf, confSize+1);
                local.position.conf[confSize][0] = lotSize;
                local.position.conf[confSize][1] = ticket;
-               m++;
+               lineEmpty = false;
             }
-            if (m > 0) {                                             // Zeilenende mit Leerelement {NULL, NULL} markieren
+            if (!lineEmpty) {                                        // Zeilenende mit Leerelement {..., NULL} markieren
                confSize = ArrayRange(local.position.conf, 0);
                ArrayResize(local.position.conf, confSize+1);
-               local.position.conf[confSize][0] = NULL;
+               local.position.conf[confSize][0] = NULL;              // beliebiger Wert
                local.position.conf[confSize][1] = NULL;
             }
          }
@@ -1154,9 +1170,9 @@ bool ReadLocalPositionConfig() {
    }
 
    confSize = ArrayRange(local.position.conf, 0);
-   if (!confSize) {                                                  // leere Konfiguration mit Leerelement {NULL, NULL} markieren
+   if (!confSize) {                                                  // leere Konfiguration mit Leerelement {..., NULL} markieren
       ArrayResize(local.position.conf, 1);
-      local.position.conf[confSize][0] = NULL;
+      local.position.conf[confSize][0] = NULL;                       // beliebiger Wert
       local.position.conf[confSize][1] = NULL;
    }
    return(true);
@@ -1166,21 +1182,23 @@ bool ReadLocalPositionConfig() {
 /**
  * Extrahiert eine Teilposition aus den übergebenen Positionen.
  *
- * @param  double lotSize    - zu extrahierende LotSize
- * @param  int    ticket     - zu extrahierendes Ticket
+ * @param  _in_     double lotSize    - zu extrahierende LotSize
+ * @param  _in_     int    ticket     - zu extrahierendes Ticket
  *
- * @param  mixed  vars       - Variablen, aus denen die Position extrahiert wird
- * @param  bool   isVirtual  - ob die extrahierte Position virtuell ist
- * @param  mixed  customVars - Variablen, denen die extrahierte Position hinzugefügt wird
+ * @param  _in_out_ mixed  vars       - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
+ * @param  _in_out_ bool   isVirtual  - ob die extrahierte Position virtuell ist
+ * @param  _in_out_ mixed  customVars - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
  *
  * @return bool - Erfolgsstatus
  */
-bool ExtractPosition(double lotSize, int ticket, double       &longPosition, double       &shortPosition, double       &totalPosition, int       &tickets[], int       &types[], double       &lotSizes[], double       &openPrices[], double       &commissions[], double       &swaps[], double       &profits[],
-                                bool &isVirtual, double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLotSizes[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
+bool ExtractPosition(double lotSize, int ticket,
+                     double       &longPosition, double       &shortPosition, double       &totalPosition, int       &tickets[], int       &types[], double       &lotSizes[], double       &openPrices[], double       &commissions[], double       &swaps[], double       &profits[],
+                     bool            &isVirtual,
+                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLotSizes[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
    int sizeTickets = ArraySize(tickets);
 
    if (ticket == TYPE_LONG) {
-      if (!lotSize) {
+      if (lotSize == EMPTY) {
          // alle Long-Positionen
          if (longPosition > 0) {
             for (int i=0; i < sizeTickets; i++) {
@@ -1208,20 +1226,25 @@ bool ExtractPosition(double lotSize, int ticket, double       &longPosition, dou
       }
       else {
          // virtuelle Long-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
-         ArrayPushInt   (customTickets,     TYPE_LONG                                     );
-         ArrayPushInt   (customTypes,       OP_BUY                                        );
-         ArrayPushDouble(customLotSizes,    lotSize                                       );
-         ArrayPushDouble(customOpenPrices,  Ask                                           );
-         ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotSize, 2));
-         ArrayPushDouble(customSwaps,       0                                             );
-         ArrayPushDouble(customProfits,     (Bid-Ask)/Pips * PipValue(lotSize, true)      ); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         customLongPosition  = NormalizeDouble(customLongPosition + lotSize,             2);
-         customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 2);
-         isVirtual           = true;
+         if (!lotSize) {
+            // 0-lots-Position wird ignoriert
+         }
+         else {
+            ArrayPushInt   (customTickets,     TYPE_LONG                                     );
+            ArrayPushInt   (customTypes,       OP_BUY                                        );
+            ArrayPushDouble(customLotSizes,    lotSize                                       );
+            ArrayPushDouble(customOpenPrices,  Ask                                           );
+            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotSize, 2));
+            ArrayPushDouble(customSwaps,       0                                             );
+            ArrayPushDouble(customProfits,     (Bid-Ask)/Pips * PipValue(lotSize, true)      ); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            customLongPosition  = NormalizeDouble(customLongPosition + lotSize,             2);
+            customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 2);
+         }
+         isVirtual = true;
       }
    }
    else if (ticket == TYPE_SHORT) {
-      if (!lotSize) {
+      if (lotSize == EMPTY) {
          // alle Short-Positionen
          if (shortPosition > 0) {
             for (i=0; i < sizeTickets; i++) {
@@ -1249,20 +1272,25 @@ bool ExtractPosition(double lotSize, int ticket, double       &longPosition, dou
       }
       else {
          // virtuelle Short-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
-         ArrayPushInt   (customTickets,     TYPE_SHORT                                    );
-         ArrayPushInt   (customTypes,       OP_SELL                                       );
-         ArrayPushDouble(customLotSizes,    lotSize                                       );
-         ArrayPushDouble(customOpenPrices,  Bid                                           );
-         ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotSize, 2));
-         ArrayPushDouble(customSwaps,       0                                             );
-         ArrayPushDouble(customProfits,     (Bid-Ask)/Pips * PipValue(lotSize, true)      ); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         customShortPosition = NormalizeDouble(customShortPosition + lotSize,            2);
-         customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 2);
-         isVirtual           = true;
+         if (!lotSize) {
+            // 0-lots-Position wird ignoriert
+         }
+         else {
+            ArrayPushInt   (customTickets,     TYPE_SHORT                                    );
+            ArrayPushInt   (customTypes,       OP_SELL                                       );
+            ArrayPushDouble(customLotSizes,    lotSize                                       );
+            ArrayPushDouble(customOpenPrices,  Bid                                           );
+            ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotSize, 2));
+            ArrayPushDouble(customSwaps,       0                                             );
+            ArrayPushDouble(customProfits,     (Bid-Ask)/Pips * PipValue(lotSize, true)      ); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            customShortPosition = NormalizeDouble(customShortPosition + lotSize,            2);
+            customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 2);
+         }
+         isVirtual = true;
       }
    }
    else {
-      if (!lotSize) {
+      if (lotSize == EMPTY) {
          // komplettes Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == ticket) {
@@ -1287,14 +1315,19 @@ bool ExtractPosition(double lotSize, int ticket, double       &longPosition, dou
             }
          }
       }
+      else if (!lotSize) {
+         // 0-lots-Position wird ignoriert
+      }
       else {
          // partielles Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == ticket) {
                if (GT(lotSize, lotSizes[i])) return(!catch("ExtractPosition(1)   illegal partial lotsize "+ NumberToStr(lotSize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lotSizes[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotSize, lotSizes[i])) {
-                  if (!ExtractPosition(0, ticket, longPosition,       shortPosition,       totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
-                                 isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits))
+                  if (!ExtractPosition(0, ticket,
+                                       longPosition,       shortPosition,       totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
+                                       isVirtual,
+                                       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits))
                      return(false);
                }
                else {
