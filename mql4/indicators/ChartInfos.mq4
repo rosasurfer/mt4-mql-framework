@@ -533,14 +533,20 @@ bool UpdatePositions() {
 
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string strPosition, strCurrentRisk;
+   string strCurrentRisk, strCurrentLeverage,strPosition;
    if      (!isLocalPosition) strPosition = " ";
    else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
-      // aktuelles Risiko = aktueller Leverage * ATRwPct
-      if (mm.ATRwPct && mm.unleveragedLots)
-         strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * MathAbs(totalPosition)/mm.unleveragedLots, 1), "%             ");
-      strPosition = StringConcatenate("Position:  " , strCurrentRisk, NumberToStr(totalPosition, "+, .+"), " lot");
+      // aktueller Leverage = MathAbs(totalPosition)/mm.unleveragedLots
+      if (mm.unleveragedLots != 0) {
+         double currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
+         strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "    ");
+
+         // aktuelles Risiko = aktueller Leverage * ATRwPct
+         if (mm.ATRwPct != 0)
+            strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%    ");
+      }
+      strPosition = StringConcatenate("Position:  " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
@@ -1047,8 +1053,8 @@ int SearchMagicNumber(int array[], int number) {
  *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets
  *   0.2#L      - imaginäre Long-Position, muß an erster Stelle notiert sein (*)
  *   0.3#S      - imaginäre Short-Position, muß an erster Stelle notiert sein (*)
- *      L       - alle übrigen Long-Positionen
- *      S       - alle übrigen Short-Positionen
+ *       L      - alle verbleibenden Long-Positionen
+ *       S      - alle verbleibenden Short-Positionen
  *
  *  (*) Reale Positionen, die mit einer imaginären Position kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
  *
@@ -1085,7 +1091,7 @@ bool ReadLocalPositionConfig() {
                detailsSize = Explode(values[n], "#", details, NULL);
                if (detailsSize != 2) {
                   if (detailsSize == 1) {
-                     if (!StringLen(StringTrim(values[n])))          // zwei aufeinanderfolgende Separatoren => Leervalue überspringen
+                     if (!StringLen(StringTrim(values[n])))          // zwei aufeinanderfolgende Separatoren => Leervalue => überspringen
                         continue;
                      ArrayResize(details, 2);
                      details[0] = "";
@@ -1099,10 +1105,12 @@ bool ReadLocalPositionConfig() {
                // Lotsize validieren
                lotSize = 0;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))         return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
-                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (lotSize != 0) {
+                     if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  }
                }
 
                // Ticket validieren
@@ -1267,7 +1275,7 @@ bool ExtractPosition(double lotSize, int ticket, double       &longPosition, dou
          // partielles Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == ticket) {
-               if (GT(lotSize, lotSizes[i])) return(!catch("ExtractPosition(1)   illegal partial lotsize "+ NumberToStr(lotSize, ".+") +" for ticket #"+ tickets[i] +" ("+ NumberToStr(lotSizes[i], ".+") +" lot)", ERR_RUNTIME_ERROR));
+               if (GT(lotSize, lotSizes[i])) return(!catch("ExtractPosition(1)   illegal partial lotsize "+ NumberToStr(lotSize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lotSizes[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotSize, lotSizes[i])) {
                   if (!ExtractPosition(0, ticket, longPosition,       shortPosition,       totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
                                  isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits))
