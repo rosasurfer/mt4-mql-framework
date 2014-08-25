@@ -895,11 +895,13 @@ bool AnalyzePositions() {
    }
 
    if (isLocalPosition) {
-      // (3.1) offene lokale Position, individuelle Konfiguration einlesen (Remote-Positionen werden ignoriert)
+      // (3.1) individuelle Konfiguration einlesen (im Fall von lokalen Positionen werden Remote-Positionen ignoriert)
       if (ArrayRange(local.position.conf, 0)==0) /*&&*/ if (!ReadLocalPositionConfig()) {
+         //debug("AnalyzePositions()->ReadLocalPositionConfig() = false");
          positionsAnalyzed = !last_error;                            // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
          return(positionsAnalyzed);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
       }
+      //debug("AnalyzePositions()   local.position.conf="+ DoublesToStr(local.position.conf, NULL));
 
       // (3.2) offene Tickets sortieren und einlesen
       if (orders > 1) /*&&*/ if (!SortTickets(sortKeys))
@@ -1047,14 +1049,19 @@ int SearchMagicNumber(int array[], int number) {
  * @return bool - Erfolgsstatus
  *
  *
+ * Füllt das Array local.position.conf[][2] mit den konfigurierten Daten des aktuellen Instruments. Die einzelnen Elemente sind im Format
+ * {LotSize, Ticket|DirectionType} gespeichert. Zeilenwechsel und das Ende der Konfiguration sind mit einem Leerelement {NULL, NULL} markiert.
+ *
+ *
+ *
  *  Notation:
  *  ---------
  *   0.1#123456 - O.1 Lot eines Tickets
  *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets
  *   0.2#L      - imaginäre Long-Position, muß an erster Stelle notiert sein (*)
  *   0.3#S      - imaginäre Short-Position, muß an erster Stelle notiert sein (*)
- *       L      - alle verbleibenden Long-Positionen
- *       S      - alle verbleibenden Short-Positionen
+ *       L      - alle verbleibenden Long-Positionen, keine Größenangabe
+ *       S      - alle verbleibenden Short-Positionen, keine Größenangabe
  *
  *  (*) Reale Positionen, die mit einer imaginären Position kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
  *
@@ -1065,6 +1072,11 @@ int SearchMagicNumber(int array[], int number) {
  *   GBPAUD.1 = #111111, 0.1#222222      ; komplettes Ticket #111111 und 0.1 Lot von Ticket #222222
  *   GBPAUD.2 = 0.3#L, #222222           ; imaginäre 0.3 Lot Long-Position und Rest von #222222 (*)
  *   GBPAUD.3 = L,S                      ; alle verbleibenden Positionen (inkl. des Restes von #222222)
+ *
+ *
+ *  Resultierenden Array local.position.conf[][]:
+ *  ---------------------------------------------
+ *  local.position.conf = {{0, 111111}, {0.1, 222222}, {0, 0}, {0.3, V_LONG}, {0, 222222}, {0, 0}, {0, LONG}, {0, SHORT}}
  */
 bool ReadLocalPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0)
@@ -1105,12 +1117,10 @@ bool ReadLocalPositionConfig() {
                // Lotsize validieren
                lotSize = 0;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))         return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))      return(!catch("ReadLocalPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
-                  if (lotSize != 0) {
-                     if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                     if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  }
+                  if (LT(lotSize, minLotSize))           return(!catch("ReadLocalPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadLocalPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
                // Ticket validieren
@@ -2061,4 +2071,5 @@ string InputsToStr() {
 
 #import "stdlib2.ex4"
    int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
+   string   DoublesToStr(double array[], string separator);
 #import

@@ -156,7 +156,6 @@ int start() {
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                         // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
-      debug("start(1)   "+ msg);
       return(last_error);
    }
 
