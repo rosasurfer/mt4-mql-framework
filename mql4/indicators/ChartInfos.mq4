@@ -505,7 +505,7 @@ bool UpdateUnitSize() {
       else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
       else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
-      strUnitSize = StringConcatenate("R", DoubleToStr(mm.stdRisk, 1), "% = L"+ DoubleToStr(mm.stdRiskLeverage, 1) +" = ", NumberToStr(lotsize, ", .+"), " lot");
+      strUnitSize = StringConcatenate("Lotsize:   R", DoubleToStr(mm.stdRisk, 1), "% = L"+ DoubleToStr(mm.stdRiskLeverage, 1) +" = ", NumberToStr(lotsize, ", .+"), " lot");
    }
    else {
       strUnitSize = " ";
@@ -535,7 +535,7 @@ bool UpdatePositions() {
    // (1) Gesamtpositionsanzeige unten rechts
    string strCurrentRisk, strCurrentLeverage,strPosition;
    if      (!isLocalPosition) strPosition = " ";
-   else if (!totalPosition  ) strPosition = StringConcatenate("Position:  ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   else if (!totalPosition  ) strPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       // aktueller Leverage = MathAbs(totalPosition)/mm.unleveragedLots
       if (mm.unleveragedLots != 0) {
@@ -546,7 +546,7 @@ bool UpdatePositions() {
          if (mm.ATRwPct != 0)
             strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%    ");
       }
-      strPosition = StringConcatenate("Position:  " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      strPosition = StringConcatenate("Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
@@ -1049,21 +1049,21 @@ int SearchMagicNumber(int array[], int number) {
  * @return bool - Erfolgsstatus
  *
  *
- * Füllt das Array local.position.conf[][2] mit den konfigurierten Daten des aktuellen Instruments. Die einzelnen Elemente sind im Format
- * {LotSize, Ticket|DirectionType} gespeichert. Zeilenwechsel und das Ende der Konfiguration sind mit einem Leerelement {NULL, NULL} markiert.
+ * Füllt das Array local.position.conf[][2] mit den konfigurierten Daten des aktuellen Instruments. Intern sind die einzelnen Elemente im Format
+ * {LotSize, Ticket|DirectionType} gespeichert. Zeilenwechsel und eine leere Konfiguration werden als Leerelement {NULL, NULL} dargestellt.
  *
  *
+ *  Notation:                                                                                         interne Repräsentation:
+ *  ---------                                                                                         -----------------------
+ *   0.1#123456 - O.1 Lot eines Tickets (1)                                                           {  0.1, 123456  }
+ *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets                             {EMPTY, 123456  }
+ *   0.2#L      - imaginäre Long-Position, immer mit Größenangabe, immer an erster Stelle (2)         {  0.2, OP_LONG }
+ *   0.3#S      - imaginäre Short-Position, immer mit Größenangabe, immer an erster Stelle (2)        {  0.3, OP_SHORT}
+ *       L      - alle verbleibenden Long-Positionen, niemals mit Größenangabe                        {EMPTY, OP_LONG }
+ *       S      - alle verbleibenden Short-Positionen, niemals mit Größenangabe                       {EMPTY, OP_SHORT}
  *
- *  Notation:
- *  ---------
- *   0.1#123456 - O.1 Lot eines Tickets
- *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets
- *   0.2#L      - imaginäre Long-Position, muß an erster Stelle notiert sein (*)
- *   0.3#S      - imaginäre Short-Position, muß an erster Stelle notiert sein (*)
- *       L      - alle verbleibenden Long-Positionen, keine Größenangabe
- *       S      - alle verbleibenden Short-Positionen, keine Größenangabe
- *
- *  (*) Reale Positionen, die mit einer imaginären Position kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
+ *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition ignoriert.
+ *  (2) Reale Positionen, die mit einer imaginären Position kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
  *
  *
  *  Beispiel:
@@ -1074,9 +1074,11 @@ int SearchMagicNumber(int array[], int number) {
  *   GBPAUD.3 = L,S                      ; alle verbleibenden Positionen (inkl. des Restes von #222222)
  *
  *
- *  Resultierenden Array local.position.conf[][]:
- *  ---------------------------------------------
- *  local.position.conf = {{0, 111111}, {0.1, 222222}, {0, 0}, {0.3, V_LONG}, {0, 222222}, {0, 0}, {0, LONG}, {0, SHORT}}
+ *  Resultierenden Array:
+ *  ---------------------
+ *  local.position.conf = {{EMPTY, 111111 }, {  0.1, 222222  }, {NULL, NULL},
+ *                         {  0.3, OP_LONG}, {EMPTY, 222222  }, {NULL, NULL},
+ *                         {EMPTY, OP_LONG}, {EMPTY, OP_SHORT}}
  */
 bool ReadLocalPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0)
