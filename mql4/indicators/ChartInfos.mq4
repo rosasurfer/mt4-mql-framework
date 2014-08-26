@@ -507,7 +507,7 @@ bool UpdateUnitSize() {
       else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
       else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
-      strUnitSize = StringConcatenate("Lotsize:   R", DoubleToStr(mm.stdRisk, 1), "% = L"+ DoubleToStr(mm.stdRiskLeverage, 1) +" = ", NumberToStr(lotsize, ", .+"), " lot");
+      strUnitSize = StringConcatenate("Lotsize:   R", DoubleToStr(mm.stdRisk, 1), "  =  L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
    else {
       strUnitSize = " ";
@@ -542,11 +542,11 @@ bool UpdatePositions() {
       // aktueller Leverage = MathAbs(totalPosition)/mm.unleveragedLots
       if (mm.unleveragedLots != 0) {
          double currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
-         strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "    ");
+         strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
          // aktuelles Risiko = aktueller Leverage * ATRwPct
          if (mm.ATRwPct != 0)
-            strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%    ");
+            strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "      ");
       }
       strPosition = StringConcatenate("Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
