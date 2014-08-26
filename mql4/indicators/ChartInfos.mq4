@@ -1209,6 +1209,7 @@ bool ExtractPosition(double lotSize, int ticket,
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLotSizes[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &customAmounts[]) {
    int sizeTickets = ArraySize(tickets);
 
+
    if (ticket == TYPE_LONG) {
       if (lotSize == EMPTY) {
          // alle Long-Positionen
@@ -1254,6 +1255,7 @@ bool ExtractPosition(double lotSize, int ticket,
          isVirtual = true;
       }
    }
+
    else if (ticket == TYPE_SHORT) {
       if (lotSize == EMPTY) {
          // alle Short-Positionen
@@ -1299,6 +1301,7 @@ bool ExtractPosition(double lotSize, int ticket,
          isVirtual = true;
       }
    }
+
    else if (ticket == TYPE_AMOUNT) {
       // individuellen Betrag zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
       if (lotSize != 0) {                                            // 0.00-Beträge werden ignoriert
@@ -1312,6 +1315,7 @@ bool ExtractPosition(double lotSize, int ticket,
          ArrayPushDouble(customAmounts,     lotSize    );
       }
    }
+
    else {
       if (lotSize == EMPTY) {
          // komplettes Ticket
@@ -1345,7 +1349,8 @@ bool ExtractPosition(double lotSize, int ticket,
             if (tickets[i] == ticket) {
                if (GT(lotSize, lotSizes[i])) return(!catch("ExtractPosition(1)   illegal partial lotsize "+ NumberToStr(lotSize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lotSizes[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotSize, lotSizes[i])) {
-                  if (!ExtractPosition(0, ticket,
+                  // komplettes Ticket übernehmen
+                  if (!ExtractPosition(EMPTY, ticket,
                                        longPosition,       shortPosition,       totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
                                        isVirtual,
                                        customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
@@ -2153,4 +2158,6 @@ string InputsToStr() {
 
 #import "stdlib2.ex4"
    int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
+
+   string   DoublesToStr    (double array[], string separator);
 #import
