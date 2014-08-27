@@ -98,10 +98,11 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};             // untersch
  */
 int onTick() {
    /*
-   if (Symbol() == "GBPCHF") {
-      static int changedBars, lastChangedBars; changedBars = Bars - IndicatorCounted();
-      if (changedBars > 1 || changedBars != lastChangedBars) debug("onTick()   ChangedBars="+ changedBars);
-      lastChangedBars = changedBars;
+   if (Symbol() == "CADLFX") {
+      //static int changedBars, lastChangedBars; changedBars = Bars - IndicatorCounted();
+      //if (changedBars > 1 || changedBars != lastChangedBars) debug("onTick()   ChangedBars="+ changedBars);
+      //lastChangedBars = changedBars;
+      //debug("onTick()   ChangedBars="+ ChangedBars);
    }
    */
    mm.done           = false;
