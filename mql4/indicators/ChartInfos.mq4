@@ -300,22 +300,26 @@ int CreateLabels() {
    label.lfxTradeAccount = __NAME__ +"."+ label.lfxTradeAccount;
    label.stopoutLevel    = __NAME__ +"."+ label.stopoutLevel;
 
+   int build = GetTerminalBuild();
+   string name;
+
 
    // Instrument-Label: Anzeige wird sofort und nur hier gesetzt
-   if (ObjectFind(label.instrument) == 0)
-      ObjectDelete(label.instrument);
-   if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         int build = GetTerminalBuild();
-      ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));
-      ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));
-      ObjectRegister(label.instrument);
+   if (build <= 509) {                                                                    // Builds ab 510 haben oben links eine {Symbol,Period}-Anzeige, die das
+      if (ObjectFind(label.instrument) == 0)                                              // Label überlagert und sich nicht ohne weiteres ausblenden läßt.
+         ObjectDelete(label.instrument);
+      if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
+         ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // Builds ab 479 haben oben links einen Pfeil fürs One-Click-Trading,
+         ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));   // das Instrument-Label wird dort entsprechend versetzt positioniert.
+         ObjectRegister(label.instrument);
+      }
+      else GetLastError();
+      name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
+      if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
+      else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+      ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
-   else GetLastError();
-   string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-   if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
-   else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
-   ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
 
 
    // OHLC-Label
@@ -508,7 +512,8 @@ bool UpdateUnitSize() {
       else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
       else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
-      strUnitSize = StringConcatenate("MM:   R", DoubleToStr(mm.stdRisk, 1), "  =  L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
+      //                                     V - Volatility          R - Risk          L - Leverage
+      strUnitSize = StringConcatenate("MM:   V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
    else {
       strUnitSize = " ";
@@ -541,12 +546,12 @@ bool UpdatePositions() {
    else if (!totalPosition  ) strPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       // aktueller Leverage = MathAbs(totalPosition)/mm.unleveragedLots
-      if (mm.unleveragedLots != 0) {
+      if (mm.unleveragedLots != 0) {         //  L - Leverage
          double currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
          strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
          // aktuelles Risiko = aktueller Leverage * ATRwPct
-         if (mm.ATRwPct != 0)
+         if (mm.ATRwPct != 0)                // R - Risk
             strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "      ");
       }
       strPosition = StringConcatenate("Open Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
@@ -990,8 +995,8 @@ bool UpdateMoneyManagement() {
       return(true);
 
    mm.unleveragedLots = 0;                                                       // Lotsize bei Hebel 1:1
-   mm.ATRwAbs         = 0;                                                       // wöchentliche ATR, absolut
-   mm.ATRwPct         = 0;                                                       // wöchentliche ATR, prozentual
+   mm.ATRwAbs         = 0;                                                       // ATR wöchentlich, absolut
+   mm.ATRwPct         = 0;                                                       // ATR wöchentlich, prozentual
    mm.stdRiskLeverage = 0;
    mm.stdRiskLots     = 0;                                                       // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
 
