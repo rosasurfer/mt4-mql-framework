@@ -4709,6 +4709,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "AUDPLN")) return("AUDPLN");
                 if (StringStartsWith(symbol, "AUDSGD")) return("AUDSGD");
                 if (StringStartsWith(symbol, "AUDUSD")) return("AUDUSD");
+                if (                 symbol=="AUS200" ) return("#ASX.X");
                 break;
 
       case 'B': break;
@@ -4726,7 +4727,8 @@ string GetStandardSymbolStrict(string symbol) {
 
       case 'D': break;
 
-      case 'E': if (StringStartsWith(symbol, "EURAUD")) return("EURAUD");
+      case 'E': if (                 symbol=="ECX"   )  return("EURX"  );
+                if (StringStartsWith(symbol, "EURAUD")) return("EURAUD");
                 if (StringStartsWith(symbol, "EURCAD")) return("EURCAD");
                 if (StringStartsWith(symbol, "EURCCK")) return("EURCZK");
                 if (StringStartsWith(symbol, "EURCZK")) return("EURCZK");
@@ -4749,8 +4751,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "EURTRY")) return("EURTRY");
                 if (StringStartsWith(symbol, "EURUSD")) return("EURUSD");
                 if (StringStartsWith(symbol, "EURZAR")) return("EURZAR");
-                if (symbol == "ECX" )                   return("EURX"  );
-                if (symbol == "EURX")                   return("EURX"  );
+                if (                 symbol=="EURX"  )  return("EURX"  );
                 break;
 
       case 'F': break;
@@ -4812,7 +4813,8 @@ string GetStandardSymbolStrict(string symbol) {
       case 'T': break;
                 if (StringStartsWith(symbol, "TRYJPY")) return("TRYJPY");
 
-      case 'U': if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
+      case 'U': if (                 symbol=="US500"  ) return("#SPX.X");
+                if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
                 if (StringStartsWith(symbol, "USDCHF")) return("USDCHF");
                 if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
                 if (StringStartsWith(symbol, "USDCNY")) return("USDCNY");
@@ -4838,7 +4840,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "USDTRY")) return("USDTRY");
                 if (StringStartsWith(symbol, "USDTWD")) return("USDTWD");
                 if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
-                if (symbol == "USDX")                   return("USDX"  );
+                if (                 symbol=="USDX"   ) return("USDX"  );
                 break;
 
       case 'V':
@@ -5096,6 +5098,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return("");
 
+   if (symbol == "#ASX.X"  ) return("ASX 200"                 );
    if (symbol == "#DJI.X"  ) return("Dow Jones Industrial"    );
    if (symbol == "#DJT.X"  ) return("Dow Jones Transportation");
    if (symbol == "#N100.X" ) return("Nasdaq 100"              );
