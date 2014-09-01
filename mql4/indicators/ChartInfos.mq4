@@ -2140,7 +2140,9 @@ string InputsToStr() {
    string   DateToStr(datetime time, string mask);
    int      DeleteRegisteredObjects(string prefix);
    double   GetCommission();
+   string   GetConfigString(string section, string key, string defaultValue);
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
+   string   GetGlobalConfigString(string section, string key, string defaultValue);
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
@@ -2165,5 +2167,5 @@ string InputsToStr() {
 #import "stdlib2.ex4"
    int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
 
-   string   DoublesToStr    (double array[], string separator);
+   string   DoublesToStr(double array[], string separator);
 #import

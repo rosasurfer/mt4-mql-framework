@@ -24,14 +24,14 @@ int onInit() {
 
    // Moneymanagement: Leverage und Risk einlesen
    if (!isLfxInstrument) {
-      string section="Moneymanagement", key="DefaultLeverage", sValue=GetGlobalConfigString(section, key, DoubleToStr(mm.leverage, 2));
+      string section="Moneymanagement", key="DefaultLeverage", sValue=GetConfigString(section, key, DoubleToStr(mm.leverage, 2));
       if (!StringIsNumeric(sValue)) return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       double dValue = StrToDouble(sValue);
       if (dValue < 1)               return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
       mm.leverage = dValue;
 
       key    = "DefaultRisk";
-      sValue = GetGlobalConfigString(section, key, DoubleToStr(mm.stdRisk, 2));
+      sValue = GetConfigString(section, key, DoubleToStr(mm.stdRisk, 2));
       if (!StringIsNumeric(sValue)) return(catch("onInit(4)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       if (dValue <= 0)              return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
