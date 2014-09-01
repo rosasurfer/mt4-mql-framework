@@ -59,11 +59,12 @@ int onInit() {
 
 
    // (2) Leverage-Konfiguration einlesen und validieren
-   if (!IsGlobalConfigKey("Leverage", "Basket")) return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
-   value = GetGlobalConfigString("Leverage", "Basket", "");
-   if (!StringIsNumeric(value))                  return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value [Leverage]->Basket = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
+                                                 return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
+   value = GetGlobalConfigString("MoneyManagement", "BasketLeverage", "");
+   if (!StringIsNumeric(value))                  return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1)                             return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1)                             return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    // (3) offene Orders einlesen
