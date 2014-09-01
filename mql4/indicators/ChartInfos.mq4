@@ -32,7 +32,7 @@ string label.stopoutLevel    = "StopoutLevel";
 int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
 
 
-// Money-Management
+// Moneymanagement
 bool   mm.done;
 double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
 double mm.leverage = 2.5;                                            // Leverage je Unit für leveraged Lotsize (Erfahrungswert, keine Berücksichtigung der Volatilität)
@@ -513,7 +513,7 @@ bool UpdateUnitSize() {
       else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
       //                                     V - Volatility          R - Risk          L - Leverage
-      strUnitSize = StringConcatenate("MM:   V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
+      strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
    else {
       strUnitSize = " ";
