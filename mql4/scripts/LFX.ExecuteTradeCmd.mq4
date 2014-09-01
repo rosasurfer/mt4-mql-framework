@@ -63,11 +63,12 @@ int onInit() {
 
    // (3) ggf. Leverage-Konfiguration einlesen und validieren
    if (action == "open") {
-      if (!IsGlobalConfigKey("Leverage", "Basket")) return(catch("onInit(7)   Missing global MetaTrader config value [Leverage]->Basket", ERR_INVALID_CONFIG_PARAMVALUE));
-      sValue = GetGlobalConfigString("Leverage", "Basket", "");
-      if (!StringIsNumeric(sValue))                 return(catch("onInit(8)   Invalid MetaTrader config value [Leverage]->Basket = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
+                                                    return(catch("onInit(7)   Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
+      sValue = GetGlobalConfigString("MoneyManagement", "BasketLeverage", "");
+      if (!StringIsNumeric(sValue))                 return(catch("onInit(8)   Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       leverage = StrToDouble(sValue);
-      if (leverage < 1)                             return(catch("onInit(9)   Invalid MetaTrader config value [Leverage]->Basket = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (leverage < 1)                             return(catch("onInit(9)   Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
 
