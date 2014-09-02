@@ -553,7 +553,7 @@ bool UpdatePositions() {
          if (mm.ATRwPct != 0)                // R - Risk
             strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "      ");
       }
-      strPosition = StringConcatenate("Open Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      strPosition = StringConcatenate("Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
