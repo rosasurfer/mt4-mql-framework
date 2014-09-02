@@ -301,7 +301,6 @@ int CreateLabels() {
    label.stopoutLevel    = __NAME__ +"."+ label.stopoutLevel;
 
    int build = GetTerminalBuild();
-   string name;
 
 
    // Instrument-Label: Anzeige wird sofort und nur hier gesetzt
@@ -315,7 +314,7 @@ int CreateLabels() {
          ObjectRegister(label.instrument);
       }
       else GetLastError();
-      name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
+      string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
       if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
       else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
@@ -1014,7 +1013,7 @@ bool UpdateMoneyManagement() {
    if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)   // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
-   double lotValue = Close[0]/tickSize * tickValue;                              // Value eines Lots in Account-Currency
+   double lotValue    = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
    mm.unleveragedLots = equity/lotValue;                                         // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
 
 
