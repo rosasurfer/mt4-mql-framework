@@ -20,32 +20,33 @@ color  fg.fontColor.Disabled = Gray;
 string fg.fontName           = "Tahoma";
 int    fg.fontSize           = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ATRVALUE_W","ATRVALUE_M","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ATR_D","ATR_W","ATR_M","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
 #define I_TICKSIZE             2
 #define I_PIPVALUE             3
-#define I_ATRVALUE_W           4
-#define I_ATRVALUE_M           5
-#define I_STOPLEVEL            6
-#define I_FREEZELEVEL          7
-#define I_LOTSIZE              8
-#define I_MINLOT               9
-#define I_LOTSTEP             10
-#define I_MAXLOT              11
-#define I_MARGINREQUIRED      12
-#define I_MARGINHEDGED        13
-#define I_SPREAD              14
-#define I_COMMISSION          15
-#define I_TOTALFEES           16
-#define I_SWAPLONG            17
-#define I_SWAPSHORT           18
-#define I_ACCOUNT_LEVERAGE    19
-#define I_STOPOUT_LEVEL       20
-#define I_SERVER_NAME         21
-#define I_SERVER_TIMEZONE     22
-#define I_SERVER_SESSION      23
+#define I_ATR_D                4
+#define I_ATR_W                5
+#define I_ATR_M                6
+#define I_STOPLEVEL            7
+#define I_FREEZELEVEL          8
+#define I_LOTSIZE              9
+#define I_MINLOT              10
+#define I_LOTSTEP             11
+#define I_MAXLOT              12
+#define I_MARGINREQUIRED      13
+#define I_MARGINHEDGED        14
+#define I_SPREAD              15
+#define I_COMMISSION          16
+#define I_TOTALFEES           17
+#define I_SWAPLONG            18
+#define I_SWAPSHORT           19
+#define I_ACCOUNT_LEVERAGE    20
+#define I_STOPOUT_LEVEL       21
+#define I_SERVER_NAME         22
+#define I_SERVER_TIMEZONE     23
+#define I_SERVER_SESSION      24
 
 
 /**
@@ -111,7 +112,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x    );
-      ObjectSet    (label, OBJPROP_YDISTANCE, y+199);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y+215);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       ObjectRegister(label);
    }
@@ -128,7 +129,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet    (label, OBJPROP_XDISTANCE, x+6);
             // größerer Zeilenabstand vor den folgenden Labeln
-            static int fields[] = {I_POINT, I_ATRVALUE_W, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
+            static int fields[] = {I_POINT, I_ATR_D, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
             if (IntInArray(fields, i))
                yCoord += 8;
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
@@ -160,10 +161,12 @@ int UpdateInfos() {
    double pointValue       = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue         = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue,       "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fg.fontSize, fg.fontName, fg.fontColor);
 
+   double atr_d            = ixATR(NULL, PERIOD_D1,  14, 1); if (atr_d == EMPTY) return(last_error);
+                                                                             ObjectSetText(labels[I_ATR_D         ], "ATR(d):     "     + ifString(!atr_d,          "", Round(atr_d/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_d, Close[0])*100, 2) +"%"), fg.fontSize, fg.fontName, fg.fontColor);
    double atr_w            = ixATR(NULL, PERIOD_W1,  14, 1); if (atr_w == EMPTY) return(last_error);
-                                                                             ObjectSetText(labels[I_ATRVALUE_W    ], "ATR(w):   "       + ifString(!atr_w,          "", Round(atr_w/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_w, Close[0])*100, 2) +"%"), fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_ATR_W         ], "ATR(w):   "       + ifString(!atr_w,          "", Round(atr_w/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_w, Close[0])*100, 2) +"%"), fg.fontSize, fg.fontName, fg.fontColor);
    double atr_m            = ixATR(NULL, PERIOD_MN1, 14, 1); if (atr_m == EMPTY) return(last_error);
-                                                                             ObjectSetText(labels[I_ATRVALUE_M    ], "ATR(m):   "       + ifString(!atr_m,          "", Round(atr_m/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_m, Close[0])*100, 2) +"%"+ ifString(!atr_w, "", " = "+ DoubleToStr(MathDiv(atr_m, atr_w), 1) +" ATR(w)")), fg.fontSize, fg.fontName, fg.fontColor);
+                                                                             ObjectSetText(labels[I_ATR_M         ], "ATR(m):   "       + ifString(!atr_m,          "", Round(atr_m/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_m, Close[0])*100, 2) +"%"+ ifString(!atr_w, "", " = "+ DoubleToStr(MathDiv(atr_m, atr_w), 1) +" ATR(w)")), fg.fontSize, fg.fontName, fg.fontColor);
 
    double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   +                               DoubleToStr(stopLevel,   Digits<<31>>31) +" pip",     fg.fontSize, fg.fontName, fg.fontColor);
    double freezeLevel      = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                               DoubleToStr(freezeLevel, Digits<<31>>31) +" pip",     fg.fontSize, fg.fontName, fg.fontColor);
