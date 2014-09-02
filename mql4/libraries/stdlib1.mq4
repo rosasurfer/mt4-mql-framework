@@ -4683,10 +4683,10 @@ string GetStandardSymbolStrict(string symbol) {
    else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
-      case '#': if (symbol == "#DAX.XEI" ) return("#DAX.X");
-                if (symbol == "#DJI.XDJ" ) return("#DJI.X");
-                if (symbol == "#DJT.XDJ" ) return("#DJT.X");
-                if (symbol == "#SPX.X.XP") return("#SPX.X");
+      case '#': if (symbol == "#DAX.XEI" ) return("DAX.X"  );
+                if (symbol == "#DJI.XDJ" ) return("DJI.X"  );
+                if (symbol == "#DJT.XDJ" ) return("DJT.X"  );
+                if (symbol == "#SPX.X.XP") return("SP500.X");
                 break;
 
       case '0':
@@ -4709,7 +4709,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "AUDPLN")) return("AUDPLN");
                 if (StringStartsWith(symbol, "AUDSGD")) return("AUDSGD");
                 if (StringStartsWith(symbol, "AUDUSD")) return("AUDUSD");
-                if (                 symbol=="AUS200" ) return("#ASX.X");
+                if (                 symbol=="AUS200" ) return("ASX.X" );
                 break;
 
       case 'B': break;
@@ -4813,7 +4813,7 @@ string GetStandardSymbolStrict(string symbol) {
       case 'T': break;
                 if (StringStartsWith(symbol, "TRYJPY")) return("TRYJPY");
 
-      case 'U': if (                 symbol=="US500"  ) return("#SPX.X");
+      case 'U': if (                 symbol=="US500"  ) return("SP500.X");
                 if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
                 if (StringStartsWith(symbol, "USDCHF")) return("USDCHF");
                 if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
@@ -4858,12 +4858,12 @@ string GetStandardSymbolStrict(string symbol) {
 
       case 'Z': if (StringStartsWith(symbol, "ZARJPY")) return("ZARJPY");
 
-      case '_': if (symbol == "_DJI"   ) return("#DJI.X"  );
-                if (symbol == "_DJT"   ) return("#DJT.X"  );
-                if (symbol == "_N225"  ) return("#NIK.X"  );
-                if (symbol == "_NQ100" ) return("#N100.X" );
-                if (symbol == "_NQCOMP") return("#NCOMP.X");
-                if (symbol == "_SP500" ) return("#SPX.X"  );
+      case '_': if (symbol == "_DJI"   ) return("DJI.X"  );
+                if (symbol == "_DJT"   ) return("DJT.X"  );
+                if (symbol == "_N225"  ) return("NIK.X"  );
+                if (symbol == "_NQ100" ) return("N100.X" );
+                if (symbol == "_NQCOMP") return("NCOMP.X");
+                if (symbol == "_SP500" ) return("SP500.X");
                 break;
    }
 
@@ -4929,13 +4929,13 @@ string GetSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return("");
 
-   if (symbol == "#DAX.X"  ) return("DAX"      );
-   if (symbol == "#DJI.X"  ) return("DJIA"     );
-   if (symbol == "#DJT.X"  ) return("DJTA"     );
-   if (symbol == "#N100.X" ) return("N100"     );
-   if (symbol == "#NCOMP.X") return("NCOMP"    );
-   if (symbol == "#NIK.X"  ) return("Nikkei"   );
-   if (symbol == "#SPX.X"  ) return("SP500"    );
+   if (symbol == "DAX.X"   ) return("DAX"      );
+   if (symbol == "DJI.X"   ) return("DJIA"     );
+   if (symbol == "DJT.X"   ) return("DJTA"     );
+   if (symbol == "N100.X"  ) return("N100"     );
+   if (symbol == "NCOMP.X" ) return("NCOMP"    );
+   if (symbol == "NIK.X"   ) return("Nikkei"   );
+   if (symbol == "SP500.X" ) return("SP500"    );
    if (symbol == "AUDCAD"  ) return("AUD/CAD"  );
    if (symbol == "AUDCHF"  ) return("AUD/CHF"  );
    if (symbol == "AUDDKK"  ) return("AUD/DKK"  );
@@ -5098,13 +5098,13 @@ string GetLongSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return("");
 
-   if (symbol == "#ASX.X"  ) return("ASX 200"                 );
-   if (symbol == "#DJI.X"  ) return("Dow Jones Industrial"    );
-   if (symbol == "#DJT.X"  ) return("Dow Jones Transportation");
-   if (symbol == "#N100.X" ) return("Nasdaq 100"              );
-   if (symbol == "#NCOMP.X") return("Nasdaq Composite"        );
-   if (symbol == "#NIK.X"  ) return("Nikkei 225"              );
-   if (symbol == "#SPX.X"  ) return("S&P 500"                 );
+   if (symbol == "ASX.X"   ) return("ASX 200"                 );
+   if (symbol == "DJI.X"   ) return("Dow Jones Industrial"    );
+   if (symbol == "DJT.X"   ) return("Dow Jones Transportation");
+   if (symbol == "N100.X"  ) return("Nasdaq 100"              );
+   if (symbol == "NCOMP.X" ) return("Nasdaq Composite"        );
+   if (symbol == "NIK.X"   ) return("Nikkei 225"              );
+   if (symbol == "SP500.X" ) return("S&P 500"                 );
    if (symbol == "AUDLFX"  ) return("AUD (LFX)"               );
    if (symbol == "CADLFX"  ) return("CAD (LFX)"               );
    if (symbol == "CHFLFX"  ) return("CHF (LFX)"               );
@@ -5125,12 +5125,12 @@ string GetLongSymbolNameStrict(string symbol) {
    string prefix = StringLeft(symbol, -3);
    string suffix = StringRight(symbol, 3);
 
-   if      (suffix == ".AB") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Balance" ));
-   else if (suffix == ".EQ") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Equity"  ));
-   else if (suffix == ".LV") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Leverage"));
-   else if (suffix == ".PL") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Profit/Loss"     ));
-   else if (suffix == ".FM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Free Margin"     ));
-   else if (suffix == ".UM") if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Used Margin"     ));
+   if      (suffix == ".AB") { if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Balance" )); }
+   else if (suffix == ".EQ") { if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Equity"  )); }
+   else if (suffix == ".LV") { if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Account Leverage")); }
+   else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Profit/Loss"     )); }
+   else if (suffix == ".FM") { if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Free Margin"     )); }
+   else if (suffix == ".UM") { if (StringIsDigit(prefix)) return(StringConcatenate("#", prefix, " Used Margin"     )); }
 
    return("");
 }
