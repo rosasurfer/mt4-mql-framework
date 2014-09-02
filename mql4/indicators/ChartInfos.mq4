@@ -1101,7 +1101,7 @@ bool ReadLocalPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0)
       ArrayResize(local.position.conf, 0);
 
-   string keys[], values[], value, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", stdSymbol=StdSymbol();
+   string keys[], values[], value, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", symbol=Symbol(), stdSymbol=StdSymbol();
    double lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int    valuesSize, detailsSize, confSize, ticket;
    bool   lineEmpty;
@@ -1114,7 +1114,7 @@ bool ReadLocalPositionConfig() {
    int keysSize = GetIniKeys(localConfigPath, section, keys);
 
    for (int i=0; i < keysSize; i++) {
-      if (StringIStartsWith(keys[i], stdSymbol)) {
+      if (StringIStartsWith(keys[i], symbol) || StringIStartsWith(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {               // Existieren gleichnamige Schlüssel, wird nur der erste berücksichtigt und alle weiteren ignoriert.
             value      = GetLocalConfigString(section, keys[i], "");
             valuesSize = Explode(value, ",", values, NULL);

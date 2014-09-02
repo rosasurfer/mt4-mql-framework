@@ -4683,10 +4683,10 @@ string GetStandardSymbolStrict(string symbol) {
    else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
-      case '#': if (symbol == "#DAX.XEI" ) return("DAX.X"  );
-                if (symbol == "#DJI.XDJ" ) return("DJI.X"  );
-                if (symbol == "#DJT.XDJ" ) return("DJT.X"  );
-                if (symbol == "#SPX.X.XP") return("SP500.X");
+      case '#': if (symbol == "#DAX.XEI" ) return("DAX"  );
+                if (symbol == "#DJI.XDJ" ) return("DJIA" );
+                if (symbol == "#DJT.XDJ" ) return("DJTA" );
+                if (symbol == "#SPX.X.XP") return("SP500");
                 break;
 
       case '0':
@@ -4709,7 +4709,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "AUDPLN")) return("AUDPLN");
                 if (StringStartsWith(symbol, "AUDSGD")) return("AUDSGD");
                 if (StringStartsWith(symbol, "AUDUSD")) return("AUDUSD");
-                if (                 symbol=="AUS200" ) return("ASX.X" );
+                if (                 symbol=="AUS200" ) return("ASX200");
                 break;
 
       case 'B': break;
@@ -4770,8 +4770,8 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "GBPSEK")) return("GBPSEK");
                 if (StringStartsWith(symbol, "GBPUSD")) return("GBPUSD");
                 if (StringStartsWith(symbol, "GBPZAR")) return("GBPZAR");
-                if (symbol == "GOLD"    )               return("XAUUSD");
-                if (symbol == "GOLDEURO")               return("XAUEUR");
+                if (                symbol=="GOLD"    ) return("XAUUSD");
+                if (                symbol=="GOLDEURO") return("XAUEUR");
                 break;
 
       case 'H': if (StringStartsWith(symbol, "HKDJPY")) return("HKDJPY");
@@ -4806,14 +4806,14 @@ string GetStandardSymbolStrict(string symbol) {
 
       case 'S': if (StringStartsWith(symbol, "SEKJPY")) return("SEKJPY");
                 if (StringStartsWith(symbol, "SGDJPY")) return("SGDJPY");
-                if (symbol == "SILVER"    )             return("XAGUSD");
-                if (symbol == "SILVEREURO")             return("XAGEUR");
+                if (              symbol=="SILVER"    ) return("XAGUSD");
+                if (              symbol=="SILVEREURO") return("XAGEUR");
                 break;
 
-      case 'T': break;
-                if (StringStartsWith(symbol, "TRYJPY")) return("TRYJPY");
+      case 'T': if (StringStartsWith(symbol, "TRYJPY")) return("TRYJPY");
+                break;
 
-      case 'U': if (                 symbol=="US500"  ) return("SP500.X");
+      case 'U': if (                 symbol=="US500"  ) return("SP500" );
                 if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
                 if (StringStartsWith(symbol, "USDCHF")) return("USDCHF");
                 if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
@@ -4839,8 +4839,8 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "USDTHB")) return("USDTHB");
                 if (StringStartsWith(symbol, "USDTRY")) return("USDTRY");
                 if (StringStartsWith(symbol, "USDTWD")) return("USDTWD");
-                if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
                 if (                 symbol=="USDX"   ) return("USDX"  );
+                if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
                 break;
 
       case 'V':
@@ -4857,13 +4857,14 @@ string GetStandardSymbolStrict(string symbol) {
       case 'Y': break;
 
       case 'Z': if (StringStartsWith(symbol, "ZARJPY")) return("ZARJPY");
+                break;
 
-      case '_': if (symbol == "_DJI"   ) return("DJI.X"  );
-                if (symbol == "_DJT"   ) return("DJT.X"  );
-                if (symbol == "_N225"  ) return("NIK.X"  );
-                if (symbol == "_NQ100" ) return("N100.X" );
-                if (symbol == "_NQCOMP") return("NCOMP.X");
-                if (symbol == "_SP500" ) return("SP500.X");
+      case '_': if (symbol == "_DJI"   ) return("DJIA"   );
+                if (symbol == "_DJT"   ) return("DJTA"   );
+                if (symbol == "_N225"  ) return("NIK225" );
+                if (symbol == "_NQ100" ) return("NAS100" );
+                if (symbol == "_NQCOMP") return("NASCOMP");
+                if (symbol == "_SP500" ) return("SP500"  );
                 break;
    }
 
@@ -4929,113 +4930,161 @@ string GetSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return("");
 
-   if (symbol == "DAX.X"   ) return("DAX"      );
-   if (symbol == "DJI.X"   ) return("DJIA"     );
-   if (symbol == "DJT.X"   ) return("DJTA"     );
-   if (symbol == "N100.X"  ) return("N100"     );
-   if (symbol == "NCOMP.X" ) return("NCOMP"    );
-   if (symbol == "NIK.X"   ) return("Nikkei"   );
-   if (symbol == "SP500.X" ) return("SP500"    );
-   if (symbol == "AUDCAD"  ) return("AUD/CAD"  );
-   if (symbol == "AUDCHF"  ) return("AUD/CHF"  );
-   if (symbol == "AUDDKK"  ) return("AUD/DKK"  );
-   if (symbol == "AUDJPY"  ) return("AUD/JPY"  );
-   if (symbol == "AUDLFX"  ) return("AUD"      );
-   if (symbol == "AUDNZD"  ) return("AUD/NZD"  );
-   if (symbol == "AUDPLN"  ) return("AUD/PLN"  );
-   if (symbol == "AUDSGD"  ) return("AUD/SGD"  );
-   if (symbol == "AUDUSD"  ) return("AUD/USD"  );
-   if (symbol == "CADCHF"  ) return("CAD/CHF"  );
-   if (symbol == "CADJPY"  ) return("CAD/JPY"  );
-   if (symbol == "CADLFX"  ) return("CAD"      );
-   if (symbol == "CADSGD"  ) return("CAD/SGD"  );
-   if (symbol == "CHFJPY"  ) return("CHF/JPY"  );
-   if (symbol == "CHFLFX"  ) return("CHF"      );
-   if (symbol == "CHFPLN"  ) return("CHF/PLN"  );
-   if (symbol == "CHFSGD"  ) return("CHF/SGD"  );
-   if (symbol == "CHFZAR"  ) return("CHF/ZAR"  );
-   if (symbol == "EURAUD"  ) return("EUR/AUD"  );
-   if (symbol == "EURCAD"  ) return("EUR/CAD"  );
-   if (symbol == "EURCHF"  ) return("EUR/CHF"  );
-   if (symbol == "EURCZK"  ) return("EUR/CZK"  );
-   if (symbol == "EURDKK"  ) return("EUR/DKK"  );
-   if (symbol == "EURGBP"  ) return("EUR/GBP"  );
-   if (symbol == "EURHKD"  ) return("EUR/HKD"  );
-   if (symbol == "EURHUF"  ) return("EUR/HUF"  );
-   if (symbol == "EURJPY"  ) return("EUR/JPY"  );
-   if (symbol == "EURLFX"  ) return("EUR"      );
-   if (symbol == "EURLVL"  ) return("EUR/LVL"  );
-   if (symbol == "EURMXN"  ) return("EUR/MXN"  );
-   if (symbol == "EURNOK"  ) return("EUR/NOK"  );
-   if (symbol == "EURNZD"  ) return("EUR/NZD"  );
-   if (symbol == "EURPLN"  ) return("EUR/PLN"  );
-   if (symbol == "EURRUB"  ) return("EUR/RUB"  );
-   if (symbol == "EURSEK"  ) return("EUR/SEK"  );
-   if (symbol == "EURSGD"  ) return("EUR/SGD"  );
-   if (symbol == "EURTRY"  ) return("EUR/TRY"  );
-   if (symbol == "EURUSD"  ) return("EUR/USD"  );
-   if (symbol == "EURX"    ) return("EUR-Index");
-   if (symbol == "EURZAR"  ) return("EUR/ZAR"  );
-   if (symbol == "GBPAUD"  ) return("GBP/AUD"  );
-   if (symbol == "GBPCAD"  ) return("GBP/CAD"  );
-   if (symbol == "GBPCHF"  ) return("GBP/CHF"  );
-   if (symbol == "GBPDKK"  ) return("GBP/DKK"  );
-   if (symbol == "GBPJPY"  ) return("GBP/JPY"  );
-   if (symbol == "GBPLFX"  ) return("GBP"      );
-   if (symbol == "GBPNOK"  ) return("GBP/NOK"  );
-   if (symbol == "GBPNZD"  ) return("GBP/NZD"  );
-   if (symbol == "GBPPLN"  ) return("GBP/PLN"  );
-   if (symbol == "GBPRUB"  ) return("GBP/RUB"  );
-   if (symbol == "GBPSEK"  ) return("GBP/SEK"  );
-   if (symbol == "GBPUSD"  ) return("GBP/USD"  );
-   if (symbol == "GBPZAR"  ) return("GBP/ZAR"  );
-   if (symbol == "HKDJPY"  ) return("HKD/JPY"  );
-   if (symbol == "LFXJPY"  ) return("JPY"      );
-   if (symbol == "MXNJPY"  ) return("MXN/JPY"  );
-   if (symbol == "NOKJPY"  ) return("NOK/JPY"  );
-   if (symbol == "NOKSEK"  ) return("NOK/SEK"  );
-   if (symbol == "NZDCAD"  ) return("NZD/CAD"  );
-   if (symbol == "NZDCHF"  ) return("NZD/CHF"  );
-   if (symbol == "NZDJPY"  ) return("NZD/JPY"  );
-   if (symbol == "NZDLFX"  ) return("NZD"      );
-   if (symbol == "NZDSGD"  ) return("NZD/SGD"  );
-   if (symbol == "NZDUSD"  ) return("NZD/USD"  );
-   if (symbol == "PLNJPY"  ) return("PLN/JPY"  );
-   if (symbol == "SEKJPY"  ) return("SEK/JPY"  );
-   if (symbol == "SGDJPY"  ) return("SGD/JPY"  );
-   if (symbol == "TRYJPY"  ) return("TRY/JPY"  );
-   if (symbol == "USDCAD"  ) return("USD/CAD"  );
-   if (symbol == "USDCHF"  ) return("USD/CHF"  );
-   if (symbol == "USDCNY"  ) return("USD/CNY"  );
-   if (symbol == "USDCZK"  ) return("USD/CZK"  );
-   if (symbol == "USDDKK"  ) return("USD/DKK"  );
-   if (symbol == "USDHKD"  ) return("USD/HKD"  );
-   if (symbol == "USDHRK"  ) return("USD/HRK"  );
-   if (symbol == "USDHUF"  ) return("USD/HUF"  );
-   if (symbol == "USDINR"  ) return("USD/INR"  );
-   if (symbol == "USDJPY"  ) return("USD/JPY"  );
-   if (symbol == "USDLFX"  ) return("USD"      );
-   if (symbol == "USDLTL"  ) return("USD/LTL"  );
-   if (symbol == "USDLVL"  ) return("USD/LVL"  );
-   if (symbol == "USDMXN"  ) return("USD/MXN"  );
-   if (symbol == "USDNOK"  ) return("USD/NOK"  );
-   if (symbol == "USDPLN"  ) return("USD/PLN"  );
-   if (symbol == "USDRUB"  ) return("USD/RUB"  );
-   if (symbol == "USDSAR"  ) return("USD/SAR"  );
-   if (symbol == "USDSEK"  ) return("USD/SEK"  );
-   if (symbol == "USDSGD"  ) return("USD/SGD"  );
-   if (symbol == "USDTHB"  ) return("USD/THB"  );
-   if (symbol == "USDTRY"  ) return("USD/TRY"  );
-   if (symbol == "USDTWD"  ) return("USD/TWD"  );
-   if (symbol == "USDX"    ) return("USD-Index");
-   if (symbol == "USDZAR"  ) return("USD/ZAR"  );
-   if (symbol == "XAGEUR"  ) return("XAG/EUR"  );
-   if (symbol == "XAGJPY"  ) return("XAG/JPY"  );
-   if (symbol == "XAGUSD"  ) return("XAG/USD"  );
-   if (symbol == "XAUEUR"  ) return("XAU/EUR"  );
-   if (symbol == "XAUJPY"  ) return("XAU/JPY"  );
-   if (symbol == "XAUUSD"  ) return("XAU/USD"  );
-   if (symbol == "ZARJPY"  ) return("ZAR/JPY"  );
+   switch (StringGetChar(symbol, 0)) {
+      case 'A': if (symbol == "AUDCAD" ) return("AUD/CAD"  );
+                if (symbol == "AUDCHF" ) return("AUD/CHF"  );
+                if (symbol == "AUDDKK" ) return("AUD/DKK"  );
+                if (symbol == "AUDJPY" ) return("AUD/JPY"  );
+                if (symbol == "AUDLFX" ) return("AUD"      );
+                if (symbol == "AUDNZD" ) return("AUD/NZD"  );
+                if (symbol == "AUDPLN" ) return("AUD/PLN"  );
+                if (symbol == "AUDSGD" ) return("AUD/SGD"  );
+                if (symbol == "AUDUSD" ) return("AUD/USD"  );
+                break;
+
+      case 'B': break;
+
+      case 'C': if (symbol == "CADCHF" ) return("CAD/CHF"  );
+                if (symbol == "CADJPY" ) return("CAD/JPY"  );
+                if (symbol == "CADLFX" ) return("CAD"      );
+                if (symbol == "CADSGD" ) return("CAD/SGD"  );
+                if (symbol == "CHFJPY" ) return("CHF/JPY"  );
+                if (symbol == "CHFLFX" ) return("CHF"      );
+                if (symbol == "CHFPLN" ) return("CHF/PLN"  );
+                if (symbol == "CHFSGD" ) return("CHF/SGD"  );
+                if (symbol == "CHFZAR" ) return("CHF/ZAR"  );
+                break;
+
+      case 'D': if (symbol == "DAX"    ) return("DAX"      );
+                if (symbol == "DJIA"   ) return("DJIA"     );
+                if (symbol == "DJTA"   ) return("DJTA"     );
+                break;
+
+      case 'E': if (symbol == "EURAUD" ) return("EUR/AUD"  );
+                if (symbol == "EURCAD" ) return("EUR/CAD"  );
+                if (symbol == "EURCHF" ) return("EUR/CHF"  );
+                if (symbol == "EURCZK" ) return("EUR/CZK"  );
+                if (symbol == "EURDKK" ) return("EUR/DKK"  );
+                if (symbol == "EURGBP" ) return("EUR/GBP"  );
+                if (symbol == "EURHKD" ) return("EUR/HKD"  );
+                if (symbol == "EURHUF" ) return("EUR/HUF"  );
+                if (symbol == "EURJPY" ) return("EUR/JPY"  );
+                if (symbol == "EURLFX" ) return("EUR"      );
+                if (symbol == "EURLVL" ) return("EUR/LVL"  );
+                if (symbol == "EURMXN" ) return("EUR/MXN"  );
+                if (symbol == "EURNOK" ) return("EUR/NOK"  );
+                if (symbol == "EURNZD" ) return("EUR/NZD"  );
+                if (symbol == "EURPLN" ) return("EUR/PLN"  );
+                if (symbol == "EURRUB" ) return("EUR/RUB"  );
+                if (symbol == "EURSEK" ) return("EUR/SEK"  );
+                if (symbol == "EURSGD" ) return("EUR/SGD"  );
+                if (symbol == "EURTRY" ) return("EUR/TRY"  );
+                if (symbol == "EURUSD" ) return("EUR/USD"  );
+                if (symbol == "EURX"   ) return("EUR-Index");
+                if (symbol == "EURZAR" ) return("EUR/ZAR"  );
+                break;
+
+      case 'F': break;
+
+      case 'G': if (symbol == "GBPAUD" ) return("GBP/AUD"  );
+                if (symbol == "GBPCAD" ) return("GBP/CAD"  );
+                if (symbol == "GBPCHF" ) return("GBP/CHF"  );
+                if (symbol == "GBPDKK" ) return("GBP/DKK"  );
+                if (symbol == "GBPJPY" ) return("GBP/JPY"  );
+                if (symbol == "GBPLFX" ) return("GBP"      );
+                if (symbol == "GBPNOK" ) return("GBP/NOK"  );
+                if (symbol == "GBPNZD" ) return("GBP/NZD"  );
+                if (symbol == "GBPPLN" ) return("GBP/PLN"  );
+                if (symbol == "GBPRUB" ) return("GBP/RUB"  );
+                if (symbol == "GBPSEK" ) return("GBP/SEK"  );
+                if (symbol == "GBPUSD" ) return("GBP/USD"  );
+                if (symbol == "GBPZAR" ) return("GBP/ZAR"  );
+                break;
+
+      case 'H': if (symbol == "HKDJPY" ) return("HKD/JPY"  );
+                break;
+
+      case 'I':
+      case 'J':
+      case 'K': break;
+
+      case 'L': if (symbol == "LFXJPY" ) return("JPY"      );
+                break;
+
+      case 'M': if (symbol == "MXNJPY" ) return("MXN/JPY"  );
+                break;
+
+      case 'N': if (symbol == "NAS100" ) return("Nasdaq 100");
+                if (symbol == "NASCOMP") return("Nasdaq Composite");
+                if (symbol == "NIK225" ) return("Nikkei 225");
+                if (symbol == "NOKJPY" ) return("NOK/JPY"  );
+                if (symbol == "NOKSEK" ) return("NOK/SEK"  );
+                if (symbol == "NZDCAD" ) return("NZD/CAD"  );
+                if (symbol == "NZDCHF" ) return("NZD/CHF"  );
+                if (symbol == "NZDJPY" ) return("NZD/JPY"  );
+                if (symbol == "NZDLFX" ) return("NZD"      );
+                if (symbol == "NZDSGD" ) return("NZD/SGD"  );
+                if (symbol == "NZDUSD" ) return("NZD/USD"  );
+                break;
+
+      case 'O': break;
+
+      case 'P': if (symbol == "PLNJPY" ) return("PLN/JPY"  );
+                break;
+
+      case 'Q': break;
+
+      case 'S': if (symbol == "SEKJPY" ) return("SEK/JPY"  );
+                if (symbol == "SGDJPY" ) return("SGD/JPY"  );
+                if (symbol == "SP500"  ) return("S&P 500"  );
+                break;
+
+      case 'T': if (symbol == "TRYJPY" ) return("TRY/JPY"  );
+                break;
+
+      case 'U': if (symbol == "USDCAD" ) return("USD/CAD"  );
+                if (symbol == "USDCHF" ) return("USD/CHF"  );
+                if (symbol == "USDCNY" ) return("USD/CNY"  );
+                if (symbol == "USDCZK" ) return("USD/CZK"  );
+                if (symbol == "USDDKK" ) return("USD/DKK"  );
+                if (symbol == "USDHKD" ) return("USD/HKD"  );
+                if (symbol == "USDHRK" ) return("USD/HRK"  );
+                if (symbol == "USDHUF" ) return("USD/HUF"  );
+                if (symbol == "USDINR" ) return("USD/INR"  );
+                if (symbol == "USDJPY" ) return("USD/JPY"  );
+                if (symbol == "USDLFX" ) return("USD"      );
+                if (symbol == "USDLTL" ) return("USD/LTL"  );
+                if (symbol == "USDLVL" ) return("USD/LVL"  );
+                if (symbol == "USDMXN" ) return("USD/MXN"  );
+                if (symbol == "USDNOK" ) return("USD/NOK"  );
+                if (symbol == "USDPLN" ) return("USD/PLN"  );
+                if (symbol == "USDRUB" ) return("USD/RUB"  );
+                if (symbol == "USDSAR" ) return("USD/SAR"  );
+                if (symbol == "USDSEK" ) return("USD/SEK"  );
+                if (symbol == "USDSGD" ) return("USD/SGD"  );
+                if (symbol == "USDTHB" ) return("USD/THB"  );
+                if (symbol == "USDTRY" ) return("USD/TRY"  );
+                if (symbol == "USDTWD" ) return("USD/TWD"  );
+                if (symbol == "USDX"   ) return("USD-Index");
+                if (symbol == "USDZAR" ) return("USD/ZAR"  );
+                break;
+
+      case 'V':
+      case 'W': break;
+
+      case 'X': if (symbol == "XAGEUR" ) return("XAG/EUR"  );
+                if (symbol == "XAGJPY" ) return("XAG/JPY"  );
+                if (symbol == "XAGUSD" ) return("XAG/USD"  );
+                if (symbol == "XAUEUR" ) return("XAU/EUR"  );
+                if (symbol == "XAUJPY" ) return("XAU/JPY"  );
+                if (symbol == "XAUUSD" ) return("XAU/USD"  );
+                break;
+
+      case 'Y': break;
+
+      case 'Z': if (symbol == "ZARJPY" ) return("ZAR/JPY"  );
+                break;
+   }
 
    return("");
 }
@@ -5098,13 +5147,13 @@ string GetLongSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return("");
 
-   if (symbol == "ASX.X"   ) return("ASX 200"                 );
-   if (symbol == "DJI.X"   ) return("Dow Jones Industrial"    );
-   if (symbol == "DJT.X"   ) return("Dow Jones Transportation");
-   if (symbol == "N100.X"  ) return("Nasdaq 100"              );
-   if (symbol == "NCOMP.X" ) return("Nasdaq Composite"        );
-   if (symbol == "NIK.X"   ) return("Nikkei 225"              );
-   if (symbol == "SP500.X" ) return("S&P 500"                 );
+   if (symbol == "ASX200"  ) return("ASX 200"                 );
+   if (symbol == "DJIA"    ) return("Dow Jones Industrial"    );
+   if (symbol == "DJTA"    ) return("Dow Jones Transportation");
+   if (symbol == "NAS100"  ) return("Nasdaq 100"              );
+   if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
+   if (symbol == "NIK225"  ) return("Nikkei 225"              );
+   if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "AUDLFX"  ) return("AUD (LFX)"               );
    if (symbol == "CADLFX"  ) return("CAD (LFX)"               );
    if (symbol == "CHFLFX"  ) return("CHF (LFX)"               );
