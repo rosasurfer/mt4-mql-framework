@@ -7221,7 +7221,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=string
         name=text
-        description=text describing the object
+        description=text describing the object (max. 63 chars)
       </parameter>
       <parameter>
         type=int
