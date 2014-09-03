@@ -41,6 +41,7 @@ double mm.ATRwPct;                                                   // wöchentl
 double mm.stdRisk  = 2.5;                                            // Risiko je Unit in Prozent Equity je Woche (Erfahrungswert)
 double mm.stdRiskLots;                                               // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
 double mm.stdRiskLeverage;                                           // effektiver Hebel für eine {mm.stdRiskLots} Unit
+string mm.notice = "";                                               // beliebiger anzuzeigender Text
 
 
 // lokale Positionsdaten                                             // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
@@ -488,7 +489,7 @@ bool UpdateUnitSize() {
    if (IsTesting())                                   return(true );             // Anzeige wird im Tester nicht benötigt
    if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(false);
 
-   string strUnitSize;
+   string strMM = "";
 
 
    // (1) StdLots runden (immer ab-, niemals aufrunden)
@@ -511,16 +512,16 @@ bool UpdateUnitSize() {
       else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
       else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
-      //                                     V - Volatility          R - Risk          L - Leverage
-      strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
+      //                                                        V - Volatility                            L - Leverage
+      strMM = StringConcatenate(mm.notice, "                    V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
    else {
-      strUnitSize = " ";
+      strMM = StringConcatenate(mm.notice, " ");
    }
 
 
    // (2) Gesamtanzeige aktualisieren
-   ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.unitSize, strMM, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()

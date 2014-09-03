@@ -22,20 +22,26 @@ int onInit() {
       lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
    }
 
-   // Moneymanagement: Leverage und Risk einlesen
+   // Moneymanagement: Konfigurationsdaten einlesen
    if (!isLfxInstrument) {
+      // Leverage
       string section="Moneymanagement", key="DefaultLeverage", sValue=GetConfigString(section, key, DoubleToStr(mm.leverage, 2));
       if (!StringIsNumeric(sValue)) return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       double dValue = StrToDouble(sValue);
       if (dValue < 1)               return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
       mm.leverage = dValue;
 
+      // Risk
       key    = "DefaultRisk";
       sValue = GetConfigString(section, key, DoubleToStr(mm.stdRisk, 2));
       if (!StringIsNumeric(sValue)) return(catch("onInit(4)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
       if (dValue <= 0)              return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
       mm.stdRisk = dValue;
+
+      // Notice (nur local)
+      key = StdSymbol() +".Notice";
+      mm.notice = GetLocalConfigString(section, key, "");
    }
 
    // Label erzeugen
