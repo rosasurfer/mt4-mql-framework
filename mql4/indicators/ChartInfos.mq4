@@ -492,25 +492,25 @@ bool UpdateUnitSize() {
    string strMM = "";
 
 
-   // (1) StdLots runden (immer ab-, niemals aufrunden)
+   // (1) StdLots runden
    if (mm.stdRiskLots > 0) {
       double lotsize;                                                                                                   // Abstufung max. 6.7% je Schritt
-      if      (mm.stdRiskLots <=    0.03) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
-      else if (mm.stdRiskLots <=   0.075) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
-      else if (mm.stdRiskLots <=    0.1 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
-      else if (mm.stdRiskLots <=    0.3 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
-      else if (mm.stdRiskLots <=    0.75) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
-      else if (mm.stdRiskLots <=    1.2 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
-      else if (mm.stdRiskLots <=    3.  ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
-      else if (mm.stdRiskLots <=    7.5 ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
-      else if (mm.stdRiskLots <=   12.  ) lotsize = NormalizeDouble(MathFloor(mm.stdRiskLots/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
-      else if (mm.stdRiskLots <=   30.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/  1    ) *   1       );    //      12-30: Vielfaches von   1
-      else if (mm.stdRiskLots <=   75.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/  2    ) *   2       );    //      30-75: Vielfaches von   2
-      else if (mm.stdRiskLots <=  120.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/  5    ) *   5       );    //     75-120: Vielfaches von   5
-      else if (mm.stdRiskLots <=  300.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 10    ) *  10       );    //    120-300: Vielfaches von  10
-      else if (mm.stdRiskLots <=  750.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 20    ) *  20       );    //    300-750: Vielfaches von  20
-      else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathFloor(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
-      else                                lotsize =       MathRound(MathFloor(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
+      if      (mm.stdRiskLots <=    0.03) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
+      else if (mm.stdRiskLots <=   0.075) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
+      else if (mm.stdRiskLots <=    0.1 ) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
+      else if (mm.stdRiskLots <=    0.3 ) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
+      else if (mm.stdRiskLots <=    0.75) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
+      else if (mm.stdRiskLots <=    1.2 ) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
+      else if (mm.stdRiskLots <=    3.  ) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
+      else if (mm.stdRiskLots <=    7.5 ) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
+      else if (mm.stdRiskLots <=   12.  ) lotsize = NormalizeDouble(MathRound(mm.stdRiskLots/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
+      else if (mm.stdRiskLots <=   30.  ) lotsize =       MathRound(MathRound(mm.stdRiskLots/  1    ) *   1       );    //      12-30: Vielfaches von   1
+      else if (mm.stdRiskLots <=   75.  ) lotsize =       MathRound(MathRound(mm.stdRiskLots/  2    ) *   2       );    //      30-75: Vielfaches von   2
+      else if (mm.stdRiskLots <=  120.  ) lotsize =       MathRound(MathRound(mm.stdRiskLots/  5    ) *   5       );    //     75-120: Vielfaches von   5
+      else if (mm.stdRiskLots <=  300.  ) lotsize =       MathRound(MathRound(mm.stdRiskLots/ 10    ) *  10       );    //    120-300: Vielfaches von  10
+      else if (mm.stdRiskLots <=  750.  ) lotsize =       MathRound(MathRound(mm.stdRiskLots/ 20    ) *  20       );    //    300-750: Vielfaches von  20
+      else if (mm.stdRiskLots <= 1200.  ) lotsize =       MathRound(MathRound(mm.stdRiskLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
+      else                                lotsize =       MathRound(MathRound(mm.stdRiskLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
 
       // !!! max. 63 Zeichen                              V - Volatility                            L - Leverage
       strMM = StringConcatenate(mm.notice, "              V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(mm.stdRiskLeverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
