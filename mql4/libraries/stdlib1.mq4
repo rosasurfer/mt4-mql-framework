@@ -9049,14 +9049,12 @@ bool SendSMS(string receiver, string message) {
    if (!StringLen(username)) return(!catch("SendSMS(2)   missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Password
-   section = "Clickatell";
-   key     = "password";
+   key = "password";
    string password = GetGlobalConfigString(section, key, "");
    if (!StringLen(password)) return(!catch("SendSMS(3)   missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // API-ID
-   section = "Clickatell";
-   key     = "api_id";
+   key = "api_id";
    int api_id = GetGlobalConfigInt(section, key, 0);
    if (api_id <= 0) {
       string value = GetGlobalConfigString(section, key, "");
