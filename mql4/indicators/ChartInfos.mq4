@@ -61,7 +61,7 @@ double shortPosition;                                                // Gesamtpo
 
 double local.position.conf [][2];                                    // individuelle Konfiguration: = {LotSize|Amount, Ticket|DirectionType|AmountType}
 int    local.position.types[][2];                                    // Positionsdetails:           = {PositionType, DirectionType}
-double local.position.data [][5];                                    //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, Profit, Amount}
+double local.position.data [][6];                                    //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, StopLoss, Profit, Amount}
 
 #define TYPE_DEFAULT       0                                         // PositionTypes: normale Terminalposition (local oder remote)
 #define TYPE_CUSTOM        1                                         //                individuell konfigurierte reale Position
@@ -75,8 +75,9 @@ double local.position.data [][5];                                    //         
 #define I_DIRECT_LOTSIZE   0                                         // Arrayindizes von local.position.data[]
 #define I_HEDGED_LOTSIZE   1
 #define I_BREAKEVEN        2
-#define I_PROFIT           3
-#define I_CUSTOM_AMOUNT    4
+#define I_STOPLOSS         3
+#define I_PROFIT           4
+#define I_CUSTOM_AMOUNT    5
 
 
 // LFX-Positionsdaten
@@ -106,14 +107,6 @@ color  positions.fontColors[] = {Blue, DeepPink, Green};             // untersch
  * @return int - Fehlerstatus
  */
 int onTick() {
-   /*
-   if (Symbol() == "CADLFX") {
-      //static int changedBars, lastChangedBars; changedBars = Bars - IndicatorCounted();
-      //if (changedBars > 1 || changedBars != lastChangedBars) debug("onTick()   ChangedBars="+ changedBars);
-      //lastChangedBars = changedBars;
-      //debug("onTick()   ChangedBars="+ ChangedBars);
-   }
-   */
    mm.done           = false;
    positionsAnalyzed = false;
 
@@ -572,9 +565,9 @@ bool UpdatePositions() {
       return(!catch("UpdatePositions(1)", error));
 
 
-   // (2) Einzelpositionsanzeige unten links: ggf. mit Breakeven und Profit/Loss
-   // Spalten:           Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount
-   int col.xShifts[]  = {20,         59,      135, 160,     236,     268}, cols=ArraySize(col.xShifts), yDist=3;
+   // (2) Einzelpositionsanzeige unten links: mit Breakeven, StopLoss und Profit/Loss
+   // Spalten:           Direction:, LotSize, BE:, BePrice, SL:, SlPrice, Profit:, ProfitAmount
+   int col.xShifts[]  = {20,         59,      135, 160,     231, 252,     323,     355}, cols=ArraySize(col.xShifts), yDist=3;
    int localPositions = ArrayRange(local.position.types, 0);
    int positions      = localPositions + lfxOrders.openPositions;
 
@@ -605,7 +598,7 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   Profit: {ProfitAmount}"
+   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}"
    string strLotSize, strCustomAmount, strTypes[]={"", "Long:", "Short:", "Hedge:"};  // DirectionTypes (1, 2, 3) werden als Indizes benutzt
    int line;
 
@@ -620,12 +613,16 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             else
          ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(local.position.data[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", "-",                                                                                                      positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             if (!local.position.data[i][I_PROFIT])
-         ObjectSetText(label.position +".line"+ line +"_col5", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             else { if (!local.position.data[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
                    else                                          strCustomAmount = "   ("+ DoubleToStr(local.position.data[i][I_CUSTOM_AMOUNT], 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             }
       }
       else {
@@ -633,6 +630,8 @@ bool UpdatePositions() {
             if (!local.position.data[i][I_HEDGED_LOTSIZE]) strLotSize = NumberToStr(local.position.data [i][I_DIRECT_LOTSIZE], ".+");
             else                                           strLotSize = NumberToStr(local.position.data [i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(local.position.data[i][I_HEDGED_LOTSIZE], ".+");
          ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+
+
          ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             if (!local.position.data[i][I_BREAKEVEN])
          ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
@@ -640,10 +639,12 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil (local.position.data[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             else
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(local.position.data[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(RoundEx(local.position.data[i][I_STOPLOSS], Digits), PriceFormat),                            positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
             if (!local.position.data[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
             else                                          strCustomAmount = "   ("+ DoubleToStr(local.position.data[i][I_CUSTOM_AMOUNT], 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
       }
    }
 
@@ -656,8 +657,10 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
          ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                          positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                      positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(lfxOrders.dVolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                          positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                      positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(lfxOrders.dVolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
       }
    }
    return(!catch("UpdatePositions(2)"));
@@ -808,7 +811,7 @@ bool UpdateTime() {
 
 
 /**
- * Ermittelt die momentane Marktpositionierung im aktuellen Instrument.
+ * Ermittelt die momentane Marktpositionierung und berechnet Breakeven-, Stoploss- und Profit-Werte
  *
  * @return bool - Erfolgsstatus
  */
@@ -958,7 +961,7 @@ bool AnalyzePositions() {
          lotSize = local.position.conf[i][0];
          ticket  = local.position.conf[i][1];
 
-         if (!ticket) {                                              // Zeilenende (ticket=NULL)
+         if (!ticket) {                                              // ticket=NULL => "Zeilenende"
             // (3.4) eine individuell konfigurierte Position zusammengefaßt (Long+Short+Hedged) speichern
             if (ArraySize(customTickets) > 0) {
                if (!StoreMixedPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
