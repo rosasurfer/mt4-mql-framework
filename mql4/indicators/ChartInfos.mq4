@@ -1509,6 +1509,7 @@ bool StoreMixedPosition(bool isVirtual, double longPosition, double shortPositio
          local.position.data [size][I_DIRECT_LOTSIZE] = 0;
          local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          local.position.data [size][I_BREAKEVEN     ] = pipDistance;
+         local.position.data [size][I_STOPLOSS      ] = 0;
          local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount;
          local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
          return(!catch("StoreMixedPosition(3)"));
@@ -1563,8 +1564,10 @@ bool StoreMixedPosition(bool isVirtual, double longPosition, double shortPositio
       local.position.data [size][I_DIRECT_LOTSIZE] = totalPosition;
       local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         if (pipValue != 0)
+         if (pipValue != 0) {
       local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - 0.05*(AccountEquity()-AccountCredit())/pipValue*Pips;
+         }
       local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
    }
@@ -1615,11 +1618,13 @@ bool StoreMixedPosition(bool isVirtual, double longPosition, double shortPositio
       local.position.types[size][1]                = TYPE_SHORT;
       local.position.data [size][I_DIRECT_LOTSIZE] = -totalPosition;
       local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
-         pipValue = PipValue(-totalPosition, true);                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         if (pipValue != 0)
+         pipValue = PipValue(-totalPosition, true);                                                                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         if (pipValue != 0) {                                                                                        // Default-Stoploss ist -5% Equity
       local.position.data [size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
-      local.position.data [size][I_PROFIT        ] =  hedgedProfit + customAmount + commission + swap + profit;
-      local.position.data [size][I_CUSTOM_AMOUNT ] =  customAmount;
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + 0.05*(AccountEquity()-AccountCredit())/pipValue*Pips;
+         }
+      local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
+      local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
    }
 
    return(!catch("StoreMixedPosition(6)"));
@@ -1687,9 +1692,11 @@ bool StoreSimplePositions(double longPosition, double shortPosition, double tota
       local.position.types[size][1]                = TYPE_LONG;
       local.position.data [size][I_DIRECT_LOTSIZE] = totalPosition;
       local.position.data [size][I_HEDGED_LOTSIZE] = 0;
-         pipValue = PipValue(totalPosition, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         if (pipValue != 0)
-      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
+         pipValue = PipValue(totalPosition, true);                                                                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         if (pipValue != 0) {
+      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;      // Default-Stoploss ist -5% Equity
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - 0.05*(AccountEquity()-AccountCredit())/pipValue*Pips;
+         }
       local.position.data [size][I_PROFIT        ] = commission + swap + profit;
       local.position.data [size][I_CUSTOM_AMOUNT ] = 0;
    }
@@ -1742,9 +1749,11 @@ bool StoreSimplePositions(double longPosition, double shortPosition, double tota
       local.position.types[size][1]                = TYPE_SHORT;
       local.position.data [size][I_DIRECT_LOTSIZE] = -totalPosition;
       local.position.data [size][I_HEDGED_LOTSIZE] = 0;
-         pipValue = PipValue(-totalPosition, true);                  // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         if (pipValue != 0)
-      local.position.data [size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
+         pipValue = PipValue(-totalPosition, true);                                                                  // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         if (pipValue != 0) {
+      local.position.data [size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;      // Default-Stoploss ist -5% Equity
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + 0.05*(AccountEquity()-AccountCredit())/pipValue*Pips;
+         }
       local.position.data [size][I_PROFIT        ] = commission + swap + profit;
       local.position.data [size][I_CUSTOM_AMOUNT ] = 0;
    }
@@ -1800,6 +1809,7 @@ bool StoreSimplePositions(double longPosition, double shortPosition, double tota
          pipValue = PipValue(hedgedLotSize, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
       local.position.data [size][I_BREAKEVEN     ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
+      local.position.data [size][I_STOPLOSS      ] = 0;
       local.position.data [size][I_PROFIT        ] = local.position.data[size][I_BREAKEVEN] * pipValue;
       local.position.data [size][I_CUSTOM_AMOUNT ] = 0;
    }
