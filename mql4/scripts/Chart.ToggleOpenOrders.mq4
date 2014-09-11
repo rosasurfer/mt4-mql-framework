@@ -1,5 +1,5 @@
 /**
- * Aktiviert/deaktiviert die Anzeige der offenen LFX-Orders des aktuellen LFX-TradeAccounts.
+ * Schaltet die Anzeige der offenen Orders des aktuellen oder eines Remote-Accounts ein/aus.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -18,11 +18,11 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // LFX-Currency setzen
+   // Prüfen, ob wir auf einem LFX-Instrument laufen
+   lfxCurrency = "";
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   else
-      return(HandleScriptError("", "This script is for LFX charts only.", ERR_RUNTIME_ERROR));
+   isLfxInstrument = StringLen(lfxCurrency) > 0;
 
    return(catch("onInit()"));
 }

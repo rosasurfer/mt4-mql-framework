@@ -1,5 +1,5 @@
 /**
- * Aktiviert/deaktiviert die Anzeige der geschlossenen LFX-Orders des aktuellen LFX-TradeAccounts.
+ * Schaltet die Anzeige der geschlossenen Orders des aktuellen oder eines Remote-Accounts ein/aus.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];

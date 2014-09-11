@@ -4,14 +4,18 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
+   string section="", key="", stdSymbol=StdSymbol();
+
    // Konfiguration für Preisanzeige einlesen
    string price = "bid";
-   if (!IsVisualMode())                                              // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
-      price = StringToLower(GetGlobalConfigString("AppliedPrice", StdSymbol(), "median"));
+   if (!IsVisualMode()) {// im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
+      section="AppliedPrice"; key=stdSymbol;
+      price = StringToLower(GetGlobalConfigString(section, key, "median"));
+   }
    if      (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(1)   invalid configuration value [AppliedPrice], "+ StdSymbol() +" = \""+ price +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(1)   invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Prüfen, ob wir auf einem LFX-Instrument laufen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
@@ -25,12 +29,12 @@ int onInit() {
    // Moneymanagement: Konfigurationsdaten einlesen
    if (!isLfxInstrument) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
-      string section="Moneymanagement", stdSymbol=StdSymbol(), key=stdSymbol +".Leverage";
+      section="Moneymanagement"; key=stdSymbol +".Leverage";
       string sValue = GetConfigString(section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue)) return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue < 1)               return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue < 0.1)             return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.customLeverage = dValue;
          mm.defaultLeverage = false;
       }
@@ -42,9 +46,9 @@ int onInit() {
       // Risk
       key    = "DefaultRisk";
       sValue = GetConfigString(section, key, DoubleToStr(DEFAULT_RISK, 2));
-      if (!StringIsNumeric(sValue))    return(catch("onInit(4)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsNumeric(sValue))    return(catch("onInit(4)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
       dValue = StrToDouble(sValue);
-      if (dValue <= 0)                 return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue, ERR_INVALID_CONFIG_PARAMVALUE));
+      if (dValue <= 0)                 return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
       mm.stdRisk = dValue;
 
       // Notice: nur lokale Konfiguration
