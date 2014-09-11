@@ -553,8 +553,8 @@ bool UpdatePositions() {
          strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
          // aktuelles Risiko = aktueller Leverage * ATRwPct
-         if (mm.ATRwPct != 0)                // R - Risk
-            strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "      ");
+         //if (mm.ATRwPct != 0)                // R - Risk
+         //   strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "      ");
       }
       strPosition = StringConcatenate("Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
