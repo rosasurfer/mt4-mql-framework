@@ -29,7 +29,7 @@ string label.lfxTradeAccount = "LfxTradeAccount";
 string label.stopoutLevel    = "StopoutLevel";
 
 
-int    appliedPrice = PRICE_MEDIAN;                                  // Bid | Ask | Median (default)
+int appliedPrice = PRICE_MEDIAN;                                     // Preis in Chartanzeige: Bid | Ask | Median (default)
 
 
 // Moneymanagement
