@@ -755,6 +755,44 @@ int ChartInfos.CopyLfxStatus(bool store, /*LFX_ORDER*/int orders[][], int iVolat
 
 
 /**
+ * Fügt an einem Offset eines zwei-dimensionalen Double-Arrays ein anderes Double-Array ein.
+ *
+ * @param  double array[][] - zu vergrößerndes zwei-dimensionales Ausgangs-Array
+ * @param  int    offset    - Position im Ausgangs-Array, an dem das andere Array eingefügt werden soll
+ * @param  double values[]  - einzufügendes Array (muß in seiner ersten Dimension der zweiten Dimension des Ausgangsarrays entsprechen)
+ *
+ * @return int - neue Größe des Ausgangsarrays oder -1 (EMPTY), falls ein Fehler auftrat
+ */
+int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
+   if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)   illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   int array.dim1   = ArrayRange(array, 0);
+   int array.dim2   = ArrayRange(array, 1);
+   if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)   array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)   illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+
+   // Ausgangsarray vergrößern
+   int newSize = array.dim1 + 1;
+   ArrayResize(array, newSize);
+
+   // Inhalt des Ausgangsarrays von offset nach hinten verschieben
+   int array.dim2.size = array.dim2 * DOUBLE_VALUE;
+   int srcAddr = GetDoublesAddress(array) + offset * array.dim2.size;
+   int dstAddr =                           srcAddr + array.dim2.size;
+   int bytes   =               (array.dim1-offset) * array.dim2.size;
+   CopyMemory(srcAddr, dstAddr, bytes);
+
+   // Inhalt des anderen Arrays an den gewünschten Offset schreiben
+   dstAddr = srcAddr;
+   srcAddr = GetDoublesAddress(values);
+   bytes   = array.dim2.size;
+   CopyMemory(srcAddr, dstAddr, bytes);
+
+   return(newSize);
+}
+
+
+/**
  * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
