@@ -8,7 +8,7 @@ int onInit() {
 
    // Konfiguration für Preisanzeige einlesen
    string price = "bid";
-   if (!IsVisualMode()) {// im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
+   if (!IsVisualMode()) {                                            // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       section="AppliedPrice"; key=stdSymbol;
       price = StringToLower(GetGlobalConfigString(section, key, "median"));
    }
@@ -35,12 +35,12 @@ int onInit() {
          if (!StringIsNumeric(sValue)) return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
          if (dValue < 0.1)             return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
-         mm.customLeverage = dValue;
-         mm.defaultLeverage = false;
+         mm.customLeverage    = dValue;
+         mm.isDefaultLeverage = false;
       }
       else {
-         // allgemeine Konfiguration: der anzuwendende Hebel ist nicht vorgegeben, er ergibt sich aus dem konfigurierten Risiko
-         mm.defaultLeverage = true;
+         // allgemeine Konfiguration: der (Default-)Hebel ergibt sich aus dem konfigurierten (Default-)Risiko
+         mm.isDefaultLeverage = true;
       }
 
       // Risk
@@ -50,6 +50,15 @@ int onInit() {
       dValue = StrToDouble(sValue);
       if (dValue <= 0)                 return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
       mm.stdRisk = dValue;
+
+      // StopLoss
+      key    = "DefaultStopLoss";
+      sValue = GetConfigString(section, key, DoubleToStr(DEFAULT_STOPLOSS, 2));
+      if (!StringIsNumeric(sValue))    return(catch("onInit(6)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+      dValue = StrToDouble(sValue);
+      if (dValue <=   0)               return(catch("onInit(7)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (dValue >= 100)               return(catch("onInit(8)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too high)", ERR_INVALID_CONFIG_PARAMVALUE));
+      mm.stoploss = dValue;
 
       // Notice: nur lokale Konfiguration
       key = stdSymbol +".Notice";
