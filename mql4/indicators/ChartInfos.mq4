@@ -1095,15 +1095,15 @@ int SearchMagicNumber(int array[], int number) {
  *
  *  Notation:                                                                                      Arraydarstellung:                      Konstanten:
  *  ---------                                                                                      -----------------                      -----------
- *   0.1#123456              - O.1 Lot eines Tickets (1)                                           {  0.1, 123456       }                 EMPTY:        -1
- *      #123456              - komplettes Ticket oder verbleibender Rest eines Tickets             {EMPTY, 123456       }                 NULL:          0
- *   0.2{#}L                 - virtuelle Long-Position, immer mit Größenangabe (2)                 {  0.2, TYPE_LONG    }                 TYPE_LONG:     1
- *   0.3[#]S                 - virtuelle Short-Position, immer mit Größenangabe (2)                {  0.3, TYPE_SHORT   }                 TYPE_SHORT:    2
- *         L                 - alle verbleibenden Long-Positionen, niemals mit Größenangabe        {EMPTY, TYPE_LONG    }                 TYPE_STOPLOSS: 3
- *         S                 - alle verbleibenden Short-Positionen, niemals mit Größenangabe       {EMPTY, TYPE_SHORT   }                 TYPE_EQUITY:   4
- *   SL5.0[%]                - StopLoss-Prozentsatz (unabhängig von DEFAULT_STOPLOSS)              {  0.5, TYPE_STOPLOSS}                 TYPE_AMOUNT:   5
- *   EQ[123.00[[+-/*]456.00] - für Equityberechnungen zu verwendender Wert (3)                     {  0.5, TYPE_EQUITY  }
- *   12.34                   - dem P/L einer Position zuzuschlagender Betrag                       {12.34, TYPE_AMOUNT  }
+ *   0.1#123456               - O.1 Lot eines Tickets (1)                                          {  0.1, 123456       }                 EMPTY:        -1
+ *      #123456               - komplettes Ticket oder verbleibender Rest eines Tickets            {EMPTY, 123456       }                 NULL:          0
+ *   0.2{#}L                  - virtuelle Long-Position, immer mit Größenangabe (2)                {  0.2, TYPE_LONG    }                 TYPE_LONG:     1
+ *   0.3{#}S                  - virtuelle Short-Position, immer mit Größenangabe (2)               {  0.3, TYPE_SHORT   }                 TYPE_SHORT:    2
+ *         L                  - alle verbleibenden Long-Positionen, niemals mit Größenangabe       {EMPTY, TYPE_LONG    }                 TYPE_STOPLOSS: 3
+ *         S                  - alle verbleibenden Short-Positionen, niemals mit Größenangabe      {EMPTY, TYPE_SHORT   }                 TYPE_EQUITY:   4
+ *   SL5.0{%}                 - StopLoss-Prozentsatz (unabhängig von DEFAULT_STOPLOSS)             {  0.5, TYPE_STOPLOSS}                 TYPE_AMOUNT:   5
+ *   EQ{123.00}{[+-/*]456.00} - für Equityberechnungen zu verwendender Wert (3)                    {  0.5, TYPE_EQUITY  }
+ *   12.34                    - dem P/L einer Position zuzuschlagender Betrag                      {12.34, TYPE_AMOUNT  }
  *
  *   Kommentare (alles nach ";")                    - werden als Beschreibung angezeigt
  *   Kommentare in Kommentaren (alles nach ";...;") - werden ignoriert
@@ -1160,9 +1160,11 @@ bool ReadCustomPositionConfig() {
             // Kommentar auswerten
             pos = StringFind(value, ";");
             if (pos >= 0) {
-               comment = StringTrimLeft(StringSubstr(value, pos+1));
-               if (!StringFind(comment, ";")) comment = "";                // pos == 0
-               value = StringTrimRight(StringSubstrFix(value, 0, pos));
+               comment = StringSubstr(value, pos+1);
+               value   = StringTrimRight(StringSubstrFix(value, 0, pos));
+               pos = StringFind(comment, ";");
+               if (pos == -1) comment = StringTrimLeft(comment);
+               else           comment = StringTrim(StringLeft(comment, pos));
             }
             else comment = "";
 
