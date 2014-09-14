@@ -1114,6 +1114,7 @@ int SearchMagicNumber(int array[], int number) {
  *   GBPAUD.2 = 0.2#L, #222222           ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
  *   GBPAUD.3 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines P/L's von -34.45
  *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel bereits vorher angegeben wurde
+ *   GBPAUD.0 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (3)
  *
  *
  *  Resultierendes Array:
@@ -1128,6 +1129,7 @@ int SearchMagicNumber(int array[], int number) {
  *  (2) Reale Positionen, die mit virtuellen Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
  *      Dies kann in Verbindung mit (1) benutzt werden, um auf die Schnelle eine virtuelle Position zu konfigurieren, die keinen Einfluß
  *      auf später folgende Positionen hat (z.B. "0L" innerhalb der Konfiguration).
+ *  (3) Die einzelnen Einträge werden unsortiert ausgewertet.
  */
 bool ReadCustomPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0) {
@@ -1137,8 +1139,8 @@ bool ReadCustomPositionConfig() {
 
    string keys[], values[], value, comment, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", symbol=Symbol(), stdSymbol=StdSymbol();
    double lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
-   int    valuesSize, detailsSize, confSize, pos, ticket;
-   bool   lineEmpty;
+   int    valuesSize, detailsSize, confSize, pos, ticket, offsetStartOfPosition=0;
+   bool   isConfigEmpty, isConfigVirtual;
    if (!minLotSize) return(false);                                         // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
@@ -1162,8 +1164,9 @@ bool ReadCustomPositionConfig() {
             else comment = "";
 
             // Konfiguration auswerten
-            valuesSize = Explode(value, ",", values, NULL);
-            lineEmpty  = true;                                             // ob die Konfigurationszeile leer ist oder mindestens einen gültigen Wert enthält
+            isConfigEmpty   = true;                                        // ob der Parser für diese Zeile bereits gültige Konfigurationsdaten erkannt hat oder nicht
+            isConfigVirtual = false;                                       // ob diese Zeile virtuelle Konfigurationsdaten enthält oder nicht
+            valuesSize      = Explode(value, ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
                detailsSize = Explode(StringToUpper(values[n]), "#", details, NULL);
@@ -1211,20 +1214,28 @@ bool ReadCustomPositionConfig() {
                else if (strTicket == "S")         ticket = TYPE_SHORT;
                else                                         return(!catch("ReadCustomPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
-               // virtuelle Positionen müssen an erster Stelle notiert sein
-               if (!lineEmpty) /*&&*/ if (lotSize!=EMPTY) /*&&*/ if (ticket<=TYPE_SHORT)
-                                                            return(!catch("ReadCustomPositionConfig(8)   illegal configuration, virtual positions must be noted first in \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               // Virtuelle Konfigurationen müssen mit einer virtuellen Position beginnen, damit die virtuellen Lots später nicht von den realen Lots abgezogen werden, siehe (2).
+               if (lotSize!=EMPTY && ticket<=TYPE_SHORT) {
+                  if (!isConfigEmpty && !isConfigVirtual) {
+                     double tmp[2] = {NULL, TYPE_LONG};                    // am Anfang der Zeile virtuelle 0-Position einfügen
+                     ArrayInsertDoubleArray(local.position.conf, offsetStartOfPosition, tmp);
+                  }
+                  isConfigVirtual = true;
+               }
 
+               // Konfiguration hinzufügen
                confSize = ArrayRange(local.position.conf, 0);
                ArrayResize(local.position.conf, confSize+1);
                local.position.conf[confSize][0] = lotSize;
                local.position.conf[confSize][1] = ticket;
-               lineEmpty = false;
+               isConfigEmpty = false;
             }
-            if (!lineEmpty) {                                              // Zeilenende mit Leerelement {NULL, NULL} markieren
+
+            if (!isConfigEmpty) {                                          // Zeilenende mit Leerelement markieren
                confSize = ArrayRange(local.position.conf, 0);
                ArrayResize(local.position.conf, confSize+1);               // initialisiert Element mit {NULL, NULL}
                ArrayPushString(local.position.conf.comments, comment);
+               offsetStartOfPosition = confSize + 1;                       // Start-Offset der nächsten Position (falls zutreffend)
             }
          }
       }
@@ -2205,6 +2216,7 @@ string InputsToStr() {
 
 #import "stdlib1.ex4"
    bool     AquireLock(string mutexName, bool wait);
+   int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble(double array[], double value);
    string   BoolToStr(bool value);
    string   DateToStr(datetime time, string mask);
@@ -2235,6 +2247,7 @@ string InputsToStr() {
    string   UninitializeReasonToStr(int reason);
 
 #import "stdlib2.ex4"
+   int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
    int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
 
    string   DoublesToStr(double array[], string separator);
