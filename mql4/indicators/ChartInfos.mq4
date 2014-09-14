@@ -62,15 +62,14 @@ double totalPosition;                                                // Gesamtpo
 double longPosition;                                                 // Gesamtposition long
 double shortPosition;                                                // Gesamtposition short
 
-double local.position.conf [][2];                                    // individuelle Konfiguration: = {LotSize|Amount, Ticket|DirectionType|AmountType}
-string local.position.conf.cmt[];                                    //                             =  Comment
-int    local.position.types[][2];                                    // Positionsdetails:           = {PositionType, DirectionType}
-double local.position.data [][6];                                    //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, StopLoss, Profit, Amount}
-string local.position.comments[];                                    //                             =  Comment
+double local.position.conf      [][2];                               // individuelle Konfiguration: = {LotSize|Amount, Ticket|DirectionType|AmountType}
+string local.position.conf.comments[];                               //                             =  Comment
+int    local.position.types     [][3];                               // Positionsdetails:           = {PositionType, DirectionType, iComment}
+double local.position.data      [][6];                               //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, StopLoss, Profit, Amount}
 
 #define TYPE_DEFAULT       0                                         // PositionTypes: normale Terminalposition (local oder remote)
 #define TYPE_CUSTOM        1                                         //                individuell konfigurierte reale Position
-#define TYPE_VIRTUAL       2                                         //                individuell konfigurierte imaginäre Position
+#define TYPE_VIRTUAL       2                                         //                individuell konfigurierte virtuelle Position
 
 #define TYPE_LONG          1                                         // DirectionTypes
 #define TYPE_SHORT         2
@@ -604,7 +603,7 @@ bool UpdatePositions() {
    }
 
    // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}   {Comment}"
-   string strLotSize, strCustomAmount, strTypes[]={"", "Long:", "Short:", "Hedge:"};  // DirectionTypes (1, 2, 3) werden als Indizes benutzt
+   string strLotSize, strCustomAmount, comment, strTypes[]={"", "Long:", "Short:", "Hedge:"};  // DirectionTypes (1, 2, 3) werden als Indizes benutzt
    int line;
 
    // lokale Positionsdaten
@@ -649,7 +648,10 @@ bool UpdatePositions() {
             else                                          strCustomAmount = "   ("+ DoubleToStr(local.position.data[i][I_CUSTOM_AMOUNT], 2) +")";
          ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
       }
-         ObjectSetText(label.position +".line"+ line +"_col8", local.position.comments[i],                                                                               positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+
+         if (local.position.types[i][2] > -1) comment = local.position.conf.comments[local.position.types[i][2]];
+         else                                 comment = "";
+         ObjectSetText(label.position +".line"+ line +"_col8", comment +" ",                                                                                             positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
    }
 
 
@@ -954,21 +956,21 @@ bool AnalyzePositions() {
          profits    [i] = OrderProfit();
       }
       double lotSize, customLongPosition, customShortPosition, customTotalPosition, local.longPosition=longPosition, local.shortPosition=shortPosition, local.totalPosition=totalPosition;
-      int    ticket, line;
+      int    ticket, confLine;
       bool   isVirtual;
 
 
       // (3.3) individuell konfigurierte Positionen extrahieren
       int confSize = ArrayRange(local.position.conf, 0);
 
-      for (i=0, line=0; i < confSize; i++) {
+      for (i=0, confLine=0; i < confSize; i++) {
          lotSize = local.position.conf[i][0];
          ticket  = local.position.conf[i][1];
 
          if (!ticket) {                                              // ticket==NULL => "Zeilenende"
             // (3.4) individuell konfigurierte Position speichern (zusammengefaßt: Long+Short+Hedged)
             if (ArraySize(customTickets) > 0) {
-               if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, local.position.conf.cmt[line], customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
+               if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, confLine, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
                   return(false);
                isVirtual           = false;
                customLongPosition  = 0;
@@ -983,7 +985,7 @@ bool AnalyzePositions() {
                ArrayResize(customProfits    , 0);
                ArrayResize(customAmounts    , 0);
             }
-            line++;
+            confLine++;
             continue;
          }
          if (!ExtractPosition(lotSize, ticket, local.longPosition, local.shortPosition, local.totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
@@ -1095,8 +1097,8 @@ int SearchMagicNumber(int array[], int number) {
  *  ---------                                                                                -----------------                      -----------
  *   0.1#123456 - O.1 Lot eines Tickets (1)                                                  {  0.1, 123456     }                   EMPTY:      -1
  *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets                    {EMPTY, 123456     }                   NULL:        0
- *   0.2{#}L    - imaginäre Long-Position, immer mit Größenangabe (2)                        {  0.2, TYPE_LONG  }                   TYPE_LONG:   1
- *   0.3{#}S    - imaginäre Short-Position, immer mit Größenangabe (2)                       {  0.3, TYPE_SHORT }                   TYPE_SHORT:  2
+ *   0.2{#}L    - virtuelle Long-Position, immer mit Größenangabe (2)                        {  0.2, TYPE_LONG  }                   TYPE_LONG:   1
+ *   0.3{#}S    - virtuelle Short-Position, immer mit Größenangabe (2)                       {  0.3, TYPE_SHORT }                   TYPE_SHORT:  2
  *         L    - alle verbleibenden Long-Positionen, niemals mit Größenangabe               {EMPTY, TYPE_LONG  }                   TYPE_AMOUNT: 3
  *         S    - alle verbleibenden Short-Positionen, niemals mit Größenangabe              {EMPTY, TYPE_SHORT }                   DirectionType = [TYPE_LONG|TYPE_SHORT]
  *     12.34    - dem P/L der individuellen Position zuzuschlagender Betrag                  {12.34, TYPE_AMOUNT}
@@ -1109,7 +1111,7 @@ int SearchMagicNumber(int array[], int number) {
  *  ---------
  *   [BreakevenCalculation]
  *   GBPAUD.1 = #111111, 0.1#222222      ;; komplettes Ticket #111111 und 0.1 Lot von Ticket #222222
- *   GBPAUD.2 = 0.2#L, #222222           ;; imaginäre 0.2 Lot Long-Position und Rest von #222222 (2)
+ *   GBPAUD.2 = 0.2#L, #222222           ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
  *   GBPAUD.3 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines P/L's von -34.45
  *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel bereits vorher angegeben wurde
  *
@@ -1123,14 +1125,14 @@ int SearchMagicNumber(int array[], int number) {
  *
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
- *  (2) Reale Positionen, die mit imaginären Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
- *      Dies kann in Verbindung mit (1) benutzt werden, um auf die Schnelle eine imaginäre Position zu konfigurieren, die keinen Einfluß
+ *  (2) Reale Positionen, die mit virtuellen Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
+ *      Dies kann in Verbindung mit (1) benutzt werden, um auf die Schnelle eine virtuelle Position zu konfigurieren, die keinen Einfluß
  *      auf später folgende Positionen hat (z.B. "0L" innerhalb der Konfiguration).
  */
 bool ReadCustomPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0) {
-      ArrayResize(local.position.conf,     0);
-      ArrayResize(local.position.conf.cmt, 0);
+      ArrayResize(local.position.conf,          0);
+      ArrayResize(local.position.conf.comments, 0);
    }
 
    string keys[], values[], value, comment, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", symbol=Symbol(), stdSymbol=StdSymbol();
@@ -1222,7 +1224,7 @@ bool ReadCustomPositionConfig() {
             if (!lineEmpty) {                                              // Zeilenende mit Leerelement {NULL, NULL} markieren
                confSize = ArrayRange(local.position.conf, 0);
                ArrayResize(local.position.conf, confSize+1);               // initialisiert Element mit {NULL, NULL}
-               ArrayPushString(local.position.conf.cmt, comment);
+               ArrayPushString(local.position.conf.comments, comment);
             }
          }
       }
@@ -1231,7 +1233,7 @@ bool ReadCustomPositionConfig() {
    confSize = ArrayRange(local.position.conf, 0);
    if (!confSize) {                                                        // leere Konfiguration mit Leerelement {NULL, NULL} markieren
       ArrayResize(local.position.conf,     1);                             // initialisiert Element mit {NULL, NULL}
-      ArrayPushString(local.position.conf.cmt, "");
+      ArrayPushString(local.position.conf.comments, "");
    }
    return(true);
 }
@@ -1437,7 +1439,7 @@ bool ExtractPosition(double lotSize, int ticket,
  *
  * @return bool - Erfolgsstatus
  */
-bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, string comment, int &tickets[], int &types[], double &lotSizes[], double &openPrices[], double &commissions[], double &swaps[], double &profits[], double &amounts[]) {
+bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int iCommentLine, int &tickets[], int &types[], double &lotSizes[], double &openPrices[], double &commissions[], double &swaps[], double &profits[], double &amounts[]) {
    isVirtual = isVirtual!=0;
 
    double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, hedgedProfit, customAmount, pipDistance, pipValue;
@@ -1522,19 +1524,18 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       // (1.1) Kein direktionaler Anteil: Position speichern und Rückkehr
       if (!totalPosition) {
          size = ArrayRange(local.position.types, 0);
-         ArrayResize(local.position.types,    size+1);
-         ArrayResize(local.position.data,     size+1);
-         ArrayResize(local.position.comments, size+1);
+         ArrayResize(local.position.types, size+1);
+         ArrayResize(local.position.data,  size+1);
 
-         local.position.types   [size][0]                = TYPE_CUSTOM + isVirtual;
-         local.position.types   [size][1]                = TYPE_HEDGE;
-         local.position.data    [size][I_DIRECT_LOTSIZE] = 0;
-         local.position.data    [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
-         local.position.data    [size][I_BREAKEVEN     ] = pipDistance;
-         local.position.data    [size][I_STOPLOSS      ] = 0;
-         local.position.data    [size][I_PROFIT        ] = hedgedProfit + customAmount;
-         local.position.data    [size][I_CUSTOM_AMOUNT ] = customAmount;
-         local.position.comments[size]                   = comment;
+         local.position.types[size][0]                = TYPE_CUSTOM + isVirtual;
+         local.position.types[size][1]                = TYPE_HEDGE;
+         local.position.types[size][2]                = iCommentLine;
+         local.position.data [size][I_DIRECT_LOTSIZE] = 0;
+         local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+         local.position.data [size][I_BREAKEVEN     ] = pipDistance;
+         local.position.data [size][I_STOPLOSS      ] = 0;
+         local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount;
+         local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
          return(!catch("StoreCustomPosition(3)"));
       }
    }
@@ -1579,27 +1580,26 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       // Position speichern
       size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types,    size+1);
-      ArrayResize(local.position.data,     size+1);
-      ArrayResize(local.position.comments, size+1);
+      ArrayResize(local.position.types, size+1);
+      ArrayResize(local.position.data,  size+1);
 
-      local.position.types   [size][0]                = TYPE_CUSTOM + isVirtual;
-      local.position.types   [size][1]                = TYPE_LONG;
-      local.position.data    [size][I_DIRECT_LOTSIZE] = totalPosition;
-      local.position.data    [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+      local.position.types[size][0]                = TYPE_CUSTOM + isVirtual;
+      local.position.types[size][1]                = TYPE_LONG;
+      local.position.types[size][2]                = iCommentLine;
+      local.position.data [size][I_DIRECT_LOTSIZE] = totalPosition;
+      local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      local.position.data    [size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
+      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
          if (AccountNumber()=={account-no}) {
-      local.position.data    [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit()-500)/pipValue*Pips;
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit()-500)/pipValue*Pips;
          }
          else {
-      local.position.data    [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
          }
-      local.position.data    [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
-      local.position.data    [size][I_CUSTOM_AMOUNT ] = customAmount;
-      local.position.comments[size]                   = comment;
+      local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
+      local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
       return(!catch("StoreCustomPosition(5)"));
    }
 
@@ -1642,27 +1642,26 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       // Position speichern
       size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types,    size+1);
-      ArrayResize(local.position.data,     size+1);
-      ArrayResize(local.position.comments, size+1);
+      ArrayResize(local.position.types, size+1);
+      ArrayResize(local.position.data,  size+1);
 
-      local.position.types   [size][0]                = TYPE_CUSTOM + isVirtual;
-      local.position.types   [size][1]                = TYPE_SHORT;
-      local.position.data    [size][I_DIRECT_LOTSIZE] = -totalPosition;
-      local.position.data    [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+      local.position.types[size][0]                = TYPE_CUSTOM + isVirtual;
+      local.position.types[size][1]                = TYPE_SHORT;
+      local.position.types[size][2]                = iCommentLine;
+      local.position.data [size][I_DIRECT_LOTSIZE] = -totalPosition;
+      local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(-totalPosition, true);                                                                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {                                                                                        // Default-Stoploss ist -5% Equity
-      local.position.data    [size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
+      local.position.data [size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
          if (AccountNumber()=={account-no}) {
-      local.position.data    [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit()-500)/pipValue*Pips;
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit()-500)/pipValue*Pips;
          }
          else {
-      local.position.data    [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
+      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
          }
-      local.position.data    [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
-      local.position.data    [size][I_CUSTOM_AMOUNT ] = customAmount;
-      local.position.comments[size]                   = comment;
+      local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
+      local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
       return(!catch("StoreCustomPosition(7)"));
    }
 
@@ -1729,11 +1728,12 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
       local.position.types[size][0]                = TYPE_DEFAULT;
       local.position.types[size][1]                = TYPE_LONG;
+      local.position.types[size][2]                = -1;                   // kein Kommentar
       local.position.data [size][I_DIRECT_LOTSIZE] = totalPosition;
       local.position.data [size][I_HEDGED_LOTSIZE] = 0;
-         pipValue = PipValue(totalPosition, true);                                                                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         pipValue = PipValue(totalPosition, true);                         // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;      // Default-Stoploss ist -5% Equity
+      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
       local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
       local.position.data [size][I_PROFIT        ] = commission + swap + profit;
@@ -1749,7 +1749,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       commission     = 0;
       profit         = 0;
 
-      for (i=ticketsSize-1; i >= 0; i--) {                           // jüngstes Ticket zuerst
+      for (i=ticketsSize-1; i >= 0; i--) {                                 // jüngstes Ticket zuerst
          if (!tickets[i]    ) continue;
          if (!remainingShort) continue;
 
@@ -1786,11 +1786,12 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
       local.position.types[size][0]                = TYPE_DEFAULT;
       local.position.types[size][1]                = TYPE_SHORT;
+      local.position.types[size][2]                = -1;                   // kein Kommentar
       local.position.data [size][I_DIRECT_LOTSIZE] = -totalPosition;
       local.position.data [size][I_HEDGED_LOTSIZE] = 0;
-         pipValue = PipValue(-totalPosition, true);                                                                  // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         pipValue = PipValue(-totalPosition, true);                        // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      local.position.data [size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;      // Default-Stoploss ist -5% Equity
+      local.position.data [size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
       local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
       local.position.data [size][I_PROFIT        ] = commission + swap + profit;
@@ -1799,8 +1800,8 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
 
    // (3) verbleibende Hedgeposition selektieren
-   if (longPosition && shortPosition) {                        // 3  5
-      hedgedLotSize  = MathMin(longPosition, shortPosition);   // 3
+   if (longPosition && shortPosition) {
+      hedgedLotSize  = MathMin(longPosition, shortPosition);
       remainingLong  = hedgedLotSize;
       remainingShort = hedgedLotSize;
       openPrice      = 0;
@@ -1808,7 +1809,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       swap           = 0;
       commission     = 0;
 
-      for (i=ticketsSize-1; i >= 0; i--) {                           // jüngstes Ticket zuerst
+      for (i=ticketsSize-1; i >= 0; i--) {                                 // jüngstes Ticket zuerst
          if (!tickets[i]) continue;
          lotSizes[i] = NormalizeDouble(lotSizes[i], 2);
 
@@ -1830,7 +1831,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
             // Daten komplett übernehmen, Ticket auf NULL setzen
             closePrice    += lotSizes   [i] * openPrices[i];
             swap          += swaps      [i];
-            //commission  += commissions[i];                         // Commissions nur für eine Seite übernehmen
+            //commission  += commissions[i];                               // Commissions nur für eine Seite übernehmen
             remainingShort = NormalizeDouble(remainingShort - lotSizes[i], 2);
             tickets[i]     = NULL;
          }
@@ -1843,9 +1844,10 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
       local.position.types[size][0]                = TYPE_DEFAULT;
       local.position.types[size][1]                = TYPE_HEDGE;
+      local.position.types[size][2]                = -1;                   // kein Kommentar
       local.position.data [size][I_DIRECT_LOTSIZE] = 0;
       local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
-         pipValue = PipValue(hedgedLotSize, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         pipValue = PipValue(hedgedLotSize, true);                         // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
       local.position.data [size][I_BREAKEVEN     ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
       local.position.data [size][I_STOPLOSS      ] = 0;
