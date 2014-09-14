@@ -1093,18 +1093,20 @@ int SearchMagicNumber(int array[], int number) {
  * Nach einer eingelesenen und ausgewerteten Konfiguration ist sizeOf(local.position.conf) also immer größer 0.
  *
  *
- *  Notation:                                                                                Arraydarstellung:                      Konstanten:
- *  ---------                                                                                -----------------                      -----------
- *   0.1#123456 - O.1 Lot eines Tickets (1)                                                  {  0.1, 123456     }                   EMPTY:      -1
- *      #123456 - komplettes Ticket oder verbleibender Rest eines Tickets                    {EMPTY, 123456     }                   NULL:        0
- *   0.2{#}L    - virtuelle Long-Position, immer mit Größenangabe (2)                        {  0.2, TYPE_LONG  }                   TYPE_LONG:   1
- *   0.3{#}S    - virtuelle Short-Position, immer mit Größenangabe (2)                       {  0.3, TYPE_SHORT }                   TYPE_SHORT:  2
- *         L    - alle verbleibenden Long-Positionen, niemals mit Größenangabe               {EMPTY, TYPE_LONG  }                   TYPE_AMOUNT: 3
- *         S    - alle verbleibenden Short-Positionen, niemals mit Größenangabe              {EMPTY, TYPE_SHORT }                   DirectionType = [TYPE_LONG|TYPE_SHORT]
- *     12.34    - dem P/L der individuellen Position zuzuschlagender Betrag                  {12.34, TYPE_AMOUNT}
- *                                                                                           {...  , NULL       } Zeilenende
- *   Kommentare                (alles nach ";")  - werden als Beschreibung angezeigt
- *   Kommentare in Kommentaren (alles nach ";;") - werden ignoriert
+ *  Notation:                                                                                      Arraydarstellung:                      Konstanten:
+ *  ---------                                                                                      -----------------                      -----------
+ *   0.1#123456              - O.1 Lot eines Tickets (1)                                           {  0.1, 123456       }                 EMPTY:        -1
+ *      #123456              - komplettes Ticket oder verbleibender Rest eines Tickets             {EMPTY, 123456       }                 NULL:          0
+ *   0.2{#}L                 - virtuelle Long-Position, immer mit Größenangabe (2)                 {  0.2, TYPE_LONG    }                 TYPE_LONG:     1
+ *   0.3[#]S                 - virtuelle Short-Position, immer mit Größenangabe (2)                {  0.3, TYPE_SHORT   }                 TYPE_SHORT:    2
+ *         L                 - alle verbleibenden Long-Positionen, niemals mit Größenangabe        {EMPTY, TYPE_LONG    }                 TYPE_STOPLOSS: 3
+ *         S                 - alle verbleibenden Short-Positionen, niemals mit Größenangabe       {EMPTY, TYPE_SHORT   }                 TYPE_EQUITY:   4
+ *   SL5.0[%]                - StopLoss-Prozentsatz (unabhängig von DEFAULT_STOPLOSS)              {  0.5, TYPE_STOPLOSS}                 TYPE_AMOUNT:   5
+ *   EQ[123.00[[+-/*]456.00] - für Equityberechnungen zu verwendender Wert (3)                     {  0.5, TYPE_EQUITY  }
+ *   12.34                   - dem P/L einer Position zuzuschlagender Betrag                       {12.34, TYPE_AMOUNT  }
+ *
+ *   Kommentare (alles nach ";")                    - werden als Beschreibung angezeigt
+ *   Kommentare in Kommentaren (alles nach ";...;") - werden ignoriert
  *
  *
  *  Beispiel:
@@ -1114,22 +1116,23 @@ int SearchMagicNumber(int array[], int number) {
  *   GBPAUD.2 = 0.2#L, #222222           ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
  *   GBPAUD.3 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines P/L's von -34.45
  *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel bereits vorher angegeben wurde
- *   GBPAUD.0 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (3)
+ *   GBPAUD.0 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (4)
  *
  *
  *  Resultierendes Array:
  *  ---------------------
- *  local.position.conf = {{EMPTY, 111111   }, {  0.1, 222222    }, {...   , NULL       },
- *                         {  0.2, TYPE_LONG}, {EMPTY, 222222    }, {...   , NULL       },
- *                         {EMPTY, TYPE_LONG}, {EMPTY, TYPE_SHORT}, {-34.45, TYPE_AMOUNT}, {..., NULL}
+ *  local.position.conf = {{EMPTY, 111111    }, {  0.1, 222222    }, {...   , NULL       },
+ *                         {  0.2, TYPE_LONG }, {EMPTY, 222222    }, {...   , NULL       },
+ *                         {EMPTY, TYPE_LONG }, {EMPTY, TYPE_SHORT}, {-34.45, TYPE_AMOUNT}, {..., NULL},
+ *                         {  0.3, TYPE_SHORT}, {...   , NULL     }
  *                        }
- *
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
  *  (2) Reale Positionen, die mit virtuellen Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
  *      Dies kann in Verbindung mit (1) benutzt werden, um auf die Schnelle eine virtuelle Position zu konfigurieren, die keinen Einfluß
  *      auf später folgende Positionen hat (z.B. "0L" innerhalb der Konfiguration).
- *  (3) Die einzelnen Einträge werden unsortiert ausgewertet.
+ *  (3) Der Equitywert kann aus einer Formel in der Form "numValueA operator numValueB" bestehen.
+ *  (4) Die einzelnen Einträge werden unsortiert ausgewertet.
  */
 bool ReadCustomPositionConfig() {
    if (ArrayRange(local.position.conf, 0) > 0) {
