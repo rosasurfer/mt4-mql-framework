@@ -7071,8 +7071,8 @@ int GetConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
- * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ * Gibt einen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.  Dabei werden die globale als auch die lokale
+ * Konfiguration der MetaTrader-Installation durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7087,6 +7087,27 @@ string GetConfigString(string section, string key, string defaultValue="") {
    // zuerst globale, dann lokale Config auslesen
    string value = GetIniString(globalConfigPath, section, key, defaultValue);
           value = GetIniString(localConfigPath , section, key, value       );
+   return(value);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.  Dabei werden die globale als auch die lokale
+ * Konfiguration der MetaTrader-Installation durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetRawConfigString(string section, string key, string defaultValue="") {
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
+   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return("");
+
+   // zuerst globale, dann lokale Config auslesen
+   string value = GetRawIniString(globalConfigPath, section, key, defaultValue);
+          value = GetRawIniString(localConfigPath , section, key, value       );
    return(value);
 }
 
@@ -7314,7 +7335,7 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen globalen Konfigurationswert als String zurück.
+ * Gibt einen globalen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7326,6 +7347,22 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
    string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
 
    return(GetIniString(globalConfigPath, section, key, defaultValue));
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetRawGlobalConfigString(string section, string key, string defaultValue="") {
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
+
+   return(GetRawIniString(globalConfigPath, section, key, defaultValue));
 }
 
 
@@ -7528,7 +7565,7 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als String zurück.
+ * Gibt einen lokalen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -7540,6 +7577,22 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
    string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return("");
 
    return(GetIniString(localConfigPath, section, key, defaultValue));
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return string - Konfigurationswert
+ */
+string GetRawLocalConfigString(string section, string key, string defaultValue="") {
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return("");
+
+   return(GetRawIniString(localConfigPath, section, key, defaultValue));
 }
 
 
