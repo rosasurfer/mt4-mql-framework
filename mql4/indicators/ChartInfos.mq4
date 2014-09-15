@@ -285,7 +285,7 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
                                                                                 return(LIMIT_NONE      );
    }
 
-   return(_NULL(catch("IsLfxLimitTriggered(2)   unreachable code reached", ERR_WRONG_JUMP)));
+   return(_NULL(catch("IsLfxLimitTriggered(2)   unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -1458,6 +1458,11 @@ bool ExtractPosition(double lotSize, int ticket,
 bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int iCommentLine, int &tickets[], int &types[], double &lotSizes[], double &openPrices[], double &commissions[], double &swaps[], double &profits[], double &amounts[]) {
    isVirtual = isVirtual!=0;
 
+   // Existieren zu dieser Position keine offenen Tickets mehr, wird sie übersprungen
+   if (!totalPosition) /*&&*/ if (!longPosition) /*&&*/ if (!shortPosition)
+      return(true);
+
+
    double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, hedgedProfit, customAmount, pipDistance, pipValue;
    int size, ticketsSize=ArraySize(tickets);
 
@@ -1681,7 +1686,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       return(!catch("StoreCustomPosition(7)"));
    }
 
-   return(!catch("StoreCustomPosition(8)   unreachable code reached", ERR_WRONG_JUMP));
+   return(!catch("StoreCustomPosition(8)   unreachable code reached", ERR_RUNTIME_ERROR));
 }
 
 
