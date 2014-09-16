@@ -1612,12 +1612,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
       local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
-         if (AccountNumber()=={account-no}) {
-      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit()-500)/pipValue*Pips;
-         }
-         else {
       local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
-         }
          }
       local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
@@ -1674,12 +1669,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          pipValue = PipValue(-totalPosition, true);                                                                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {                                                                                        // Default-Stoploss ist -5% Equity
       local.position.data [size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
-         if (AccountNumber()=={account-no}) {
-      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit()-500)/pipValue*Pips;
-         }
-         else {
       local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
-         }
          }
       local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
