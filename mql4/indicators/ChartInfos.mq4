@@ -98,7 +98,7 @@ int    lfxOrders.openPositions;                                      // Anzahl d
 // Font-Settings der detaillierten Positionsanzeige (lokal und LFX)
 string positions.fontName     = "MS Sans Serif";
 int    positions.fontSize     = 8;
-color  positions.fontColors[] = {Blue, DeepPink, Green};             // unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
+color  positions.fontColors[] = {Blue, Blue, Green};                 // unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
 
 
 #include <ChartInfos/init.mqh>
