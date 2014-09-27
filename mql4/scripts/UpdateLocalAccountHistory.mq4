@@ -41,24 +41,23 @@ int onStart() {
 
 
    // (2) Tickets sortiert einlesen
-   int      tickets        [];
-   int      types          [];
-   string   symbols        [];
-   double   lotSizes       [];
-   datetime openTimes      [];
-   datetime closeTimes     [];
-   double   openPrices     [];
-   double   closePrices    [];
-   double   stopLosses     [];
-   double   takeProfits    [];
-   datetime expirationTimes[];
-   double   commissions    [];
-   double   swaps          [];
-   double   netProfits     [];
-   double   grossProfits   [];
-   double   balances       [];
-   int      magicNumbers   [];
-   string   comments       [];
+   int      tickets     [];
+   int      types       [];
+   string   symbols     [];
+   double   lotSizes    [];
+   datetime openTimes   [];
+   datetime closeTimes  [];
+   double   openPrices  [];
+   double   closePrices [];
+   double   stopLosses  [];
+   double   takeProfits [];
+   double   commissions [];
+   double   swaps       [];
+   double   netProfits  [];
+   double   grossProfits[];
+   double   balances    [];
+   int      magicNumbers[];
+   string   comments    [];
 
    for (i=0; i < orders; i++) {
       int ticket = sortKeys[i][2];
@@ -67,24 +66,23 @@ int onStart() {
       int type = OrderType();                                                       // gecancelte Orders und Margin Credits überspringen
       if (type==OP_BUYLIMIT || type==OP_SELLLIMIT || type==OP_BUYSTOP || type==OP_SELLSTOP || type==OP_CREDIT)
          continue;
-      ArrayPushInt   (tickets        , ticket            );
-      ArrayPushInt   (types          , type              );
-      ArrayPushString(symbols        , OrderSymbol()     ); if (type != OP_BALANCE) symbols[ArraySize(symbols)-1] = GetStandardSymbol(OrderSymbol());
-      ArrayPushDouble(lotSizes       , ifDouble(type==OP_BALANCE, 0, OrderLots())); // OP_BALANCE: OrderLots() enthält fälschlich 0.01
-      ArrayPushInt   (openTimes      , OrderOpenTime()   );
-      ArrayPushInt   (closeTimes     , OrderCloseTime()  );
-      ArrayPushDouble(openPrices     , OrderOpenPrice()  );
-      ArrayPushDouble(closePrices    , OrderClosePrice() );
-      ArrayPushDouble(stopLosses     , OrderStopLoss()   );
-      ArrayPushDouble(takeProfits    , OrderTakeProfit() );
-      ArrayPushInt   (expirationTimes, OrderExpiration() );
-      ArrayPushDouble(commissions    , OrderCommission() );
-      ArrayPushDouble(swaps          , OrderSwap()       );
-      ArrayPushDouble(netProfits     , OrderProfit()     );
-      ArrayPushDouble(grossProfits   , 0                 );
-      ArrayPushDouble(balances       , 0                 );
-      ArrayPushInt   (magicNumbers   , OrderMagicNumber());
-      ArrayPushString(comments       , OrderComment()    );
+      ArrayPushInt   (tickets     , ticket            );
+      ArrayPushInt   (types       , type              );
+      ArrayPushString(symbols     , OrderSymbol()     ); if (type != OP_BALANCE) symbols[ArraySize(symbols)-1] = GetStandardSymbol(OrderSymbol());
+      ArrayPushDouble(lotSizes    , ifDouble(type==OP_BALANCE, 0, OrderLots()));    // OP_BALANCE: OrderLots() enthält fälschlich 0.01
+      ArrayPushInt   (openTimes   , OrderOpenTime()   );
+      ArrayPushInt   (closeTimes  , OrderCloseTime()  );
+      ArrayPushDouble(openPrices  , OrderOpenPrice()  );
+      ArrayPushDouble(closePrices , OrderClosePrice() );
+      ArrayPushDouble(stopLosses  , OrderStopLoss()   );
+      ArrayPushDouble(takeProfits , OrderTakeProfit() );
+      ArrayPushDouble(commissions , OrderCommission() );
+      ArrayPushDouble(swaps       , OrderSwap()       );
+      ArrayPushDouble(netProfits  , OrderProfit()     );
+      ArrayPushDouble(grossProfits, 0                 );
+      ArrayPushDouble(balances    , 0                 );
+      ArrayPushInt   (magicNumbers, OrderMagicNumber());
+      ArrayPushString(comments    , OrderComment()    );
    }
    orders = ArraySize(tickets);
 
@@ -126,7 +124,7 @@ int onStart() {
 
 
    // (4) letztes gespeichertes Ticket und entsprechende AccountBalance ermitteln
-   string history[][HISTORY_COLUMNS];
+   string history[][AH_COLUMNS];
 
    int error = GetAccountHistory(account, history);
    if (IsError(error)) /*&&*/ if (error!=ERR_CANNOT_OPEN_FILE)                // ERR_CANNOT_OPEN_FILE ignorieren => History ist leer
@@ -137,8 +135,8 @@ int onStart() {
    int    histSize = ArrayRange(history, 0);
 
    if (histSize > 0) {
-      lastTicket  = StrToInteger(history[histSize-1][AH_TICKET ]);
-      lastBalance = StrToDouble (history[histSize-1][AH_BALANCE]);
+      lastTicket  = StrToInteger(history[histSize-1][I_AH_TICKET ]);
+      lastBalance = StrToDouble (history[histSize-1][I_AH_BALANCE]);
       //debug("onStart()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (!orders) {
@@ -170,7 +168,6 @@ int onStart() {
       MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
    }
-   //if (__LOG) log("onStart(10)   firstTicketToSave = "+ tickets[iFirstTicketToSave]);
 
 
    // (6) GrossProfit und Balance berechnen und mit dem letzten gespeicherten Wert abgleichen
@@ -193,27 +190,28 @@ int onStart() {
    string filename = ShortAccountCompany() +"/"+ account +"_account_history.csv";
 
    if (ArrayRange(history, 0) == 0) {
-      // Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
+      // (7.1) Datei erzeugen (und ggf. auf Länge 0 zurücksetzen)
       int hFile = FileOpen(filename, FILE_CSV|FILE_WRITE, '\t');
       if (hFile < 0)
          return(catch("onStart(13)->FileOpen()"));
 
       // Header schreiben
-      string header = "# Account history for "+ ifString(IsDemo(), "demo", "live")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetServerDirectory() +")\n"
+      string header = "# Account history for "+ ifString(IsDemo(), "demo", "real")  +" account #"+ account +" (name: "+ AccountName() +") at "+ AccountCompany() +" (server: "+ GetServerDirectory() +")\n"
                     + "#";
       if (FileWrite(hFile, header) < 0) {
          catch("onStart(14)->FileWrite()");
          FileClose(hFile);
          return(last_error);
       }
-      if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
+      if (FileWrite(hFile, "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment") < 0) {
          catch("onStart(15)->FileWrite()");
          FileClose(hFile);
          return(last_error);
       }
    }
-   // CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
+
    else {
+      // (7.2) CSV-Datei enthält bereits Daten, öffnen und FilePointer ans Ende setzen
       hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, '\t');
       if (hFile < 0)
          return(catch("onStart(16)->FileOpen()"));
@@ -230,29 +228,26 @@ int onStart() {
       if (!tickets[i])                                               // verworfene Hedge-Orders überspringen
          continue;
 
-      string strType         = OperationTypeDescription(types[i]);
-      string strSize         = ifString(EQ(lotSizes[i], 0), "", NumberToStr(lotSizes[i], ".+"));
+      string strType        = OperationTypeDescription(types[i]);
+      string strSize        = ifString(EQ(lotSizes[i], 0), "", NumberToStr(lotSizes[i], ".+"));
 
-      string strOpenTime     = TimeToStr(openTimes [i], TIME_FULL);
-      string strCloseTime    = TimeToStr(closeTimes[i], TIME_FULL);
+      string strOpenTime    = TimeToStr(openTimes [i], TIME_FULL);
+      string strCloseTime   = TimeToStr(closeTimes[i], TIME_FULL);
 
-      string strOpenPrice    = ifString(EQ(openPrices [i], 0), "", NumberToStr(openPrices [i], ".2+"));
-      string strClosePrice   = ifString(EQ(closePrices[i], 0), "", NumberToStr(closePrices[i], ".2+"));
-      string strStopLoss     = ifString(EQ(stopLosses [i], 0), "", NumberToStr(stopLosses [i], ".2+"));
-      string strTakeProfit   = ifString(EQ(takeProfits[i], 0), "", NumberToStr(takeProfits[i], ".2+"));
+      string strOpenPrice   = ifString(EQ(openPrices [i], 0), "", NumberToStr(openPrices [i], ".2+"));
+      string strClosePrice  = ifString(EQ(closePrices[i], 0), "", NumberToStr(closePrices[i], ".2+"));
+      string strStopLoss    = ifString(EQ(stopLosses [i], 0), "", NumberToStr(stopLosses [i], ".2+"));
+      string strTakeProfit  = ifString(EQ(takeProfits[i], 0), "", NumberToStr(takeProfits[i], ".2+"));
 
-      string strExpTime      = ifString(!expirationTimes[i], "", TimeToStr(expirationTimes[i], TIME_FULL));
-      string strExpTimestamp = ifString(!expirationTimes[i], "", expirationTimes[i]);
+      string strCommission  = DoubleToStr(commissions [i], 2);
+      string strSwap        = DoubleToStr(swaps       [i], 2);
+      string strNetProfit   = DoubleToStr(netProfits  [i], 2);
+      string strGrossProfit = DoubleToStr(grossProfits[i], 2);
+      string strBalance     = DoubleToStr(balances    [i], 2);
 
-      string strCommission   = DoubleToStr(commissions [i], 2);
-      string strSwap         = DoubleToStr(swaps       [i], 2);
-      string strNetProfit    = DoubleToStr(netProfits  [i], 2);
-      string strGrossProfit  = DoubleToStr(grossProfits[i], 2);
-      string strBalance      = DoubleToStr(balances    [i], 2);
+      string strMagicNumber = ifString(!magicNumbers[i], "", magicNumbers[i]);
 
-      string strMagicNumber  = ifString(!magicNumbers[i], "", magicNumbers[i]);
-
-      if (FileWrite(hFile, tickets[i],strOpenTime,openTimes[i],strType,types[i],strSize,symbols[i],strOpenPrice,strStopLoss,strTakeProfit,strCloseTime,closeTimes[i],strClosePrice,strExpTime,strExpTimestamp,strMagicNumber,strCommission,strSwap,strNetProfit,strGrossProfit,strBalance,comments[i]) < 0) {
+      if (FileWrite(hFile, tickets[i], strOpenTime, openTimes[i], strType, types[i], strSize, symbols[i], strOpenPrice, strStopLoss, strTakeProfit, strCloseTime, closeTimes[i], strClosePrice, strMagicNumber, strCommission, strSwap, strNetProfit, strGrossProfit, strBalance, comments[i]) < 0) {
          catch("onStart(18)->FileWrite()");
          FileClose(hFile);
          return(last_error);

@@ -6685,31 +6685,30 @@ int Explode(string input, string separator, string &results[], int limit=NULL) {
 
 
 /**
- * Liest die History eines Accounts aus dem Dateisystem in das angegebene Array ein (Daten werden als Strings gespeichert).
+ * Liest die History eines Accounts aus einer CSV-Datei in das angegebene Array ein (Werte werden im Array als Strings gespeichert).
  *
- * @param  int    account                    - Account-Nummer
- * @param  string results[][HISTORY_COLUMNS] - Zeiger auf Ergebnisarray
+ * @param  int    account     - Account-Nummer
+ * @param  string results[][] - Zielarray
  *
  * @return int - Fehlerstatus
  */
-int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
-   if (ArrayRange(results, 1) != HISTORY_COLUMNS)
+int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
+   if (ArrayRange(results, 1) != AH_COLUMNS)
       return(catch("GetAccountHistory(1)   invalid parameter results["+ ArrayRange(results, 0) +"]["+ ArrayRange(results, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
 
    static int    static.account[1];
-   static string static.results[][HISTORY_COLUMNS];
+   static string static.results[][AH_COLUMNS];
 
    ArrayResize(results, 0);
 
    // nach Möglichkeit die gecachten Daten liefern
    if (account == static.account[0]) {
       ArrayCopy(results, static.results);
-      //if (__LOG) log("GetAccountHistory(2)   delivering "+ ArrayRange(results, 0) +" history entries for account "+ account +" from cache");
       return(catch("GetAccountHistory(3)"));
    }
 
    // Cache-Miss, History-Datei auslesen
-   string header[HISTORY_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","ExpirationTime","ExpirationTimestamp","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
+   string header[AH_COLUMNS] = { "Ticket","OpenTime","OpenTimestamp","Description","Type","Size","Symbol","OpenPrice","StopLoss","TakeProfit","CloseTime","CloseTimestamp","ClosePrice","MagicNumber","Commission","Swap","NetProfit","GrossProfit","Balance","Comment" };
 
    string filename = ShortAccountCompany() +"/"+ account + "_account_history.csv";
    int hFile = FileOpen(filename, FILE_CSV|FILE_READ, '\t');
@@ -6723,7 +6722,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
    string value;
    bool   newLine=true, blankLine=false, lineEnd=true;
    int    lines=0, row=-2, col=-1;
-   string result[][HISTORY_COLUMNS]; ArrayResize(result, 0);   // tmp. Zwischenspeicher für ausgelesene Daten
+   string result[][AH_COLUMNS]; ArrayResize(result, 0);        // tmp. Zwischenspeicher für ausgelesene Daten
 
    // Daten feldweise einlesen und Zeilen erkennen
    while (!FileIsEnding(hFile)) {
@@ -6763,8 +6762,8 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
       // Zeilen- und Spaltenindex aktualisieren und Bereich überprüfen
       col++;
-      if (lineEnd) /*&&*/ if (col!=HISTORY_COLUMNS-1) {
-         error = catch("GetAccountHistory(5)   data format error in \""+ filename +"\", column count in line "+ lines +" is not "+ HISTORY_COLUMNS, ERR_RUNTIME_ERROR);
+      if (lineEnd) /*&&*/ if (col!=AH_COLUMNS-1) {
+         error = catch("GetAccountHistory(5)   data format error in \""+ filename +"\", column count in line "+ lines +" is not "+ AH_COLUMNS, ERR_RUNTIME_ERROR);
          break;
       }
       if (newLine)
@@ -6804,8 +6803,7 @@ int GetAccountHistory(int account, string results[][HISTORY_COLUMNS]) {
 
 
    // Daten in Zielarray kopieren und cachen
-   if (ArrayRange(result, 0) > 0) {       // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
-      //if (__LOG) log("GetAccountHistory(8)   caching "+ ArrayRange(result, 0) +" history entries for account "+ account);
+   if (ArrayRange(result, 0) > 0) {                                  // "leere" Historydaten nicht cachen (falls Datei noch erstellt wird)
       static.account[0] = account;
       ArrayResize(static.results, 0);
       ArrayCopy  (static.results, result);
@@ -6897,7 +6895,7 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
    }
 
    // Cache-Miss, Balance-Daten aus Account-History auslesen
-   string data[][HISTORY_COLUMNS]; ArrayResize(data, 0);
+   string data[][AH_COLUMNS]; ArrayResize(data, 0);
    int error = GetAccountHistory(account, data);
    if (IsError(error)) {
       if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(3)", error));
@@ -6913,8 +6911,8 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
       return(catch("GetBalanceHistory(5)"));
 
    for (int i=0; i<size; i++) {
-      balance = StrToDouble (data[i][AH_BALANCE       ]);
-      time    = StrToInteger(data[i][AH_CLOSETIMESTAMP]);
+      balance = StrToDouble (data[i][I_AH_BALANCE       ]);
+      time    = StrToInteger(data[i][I_AH_CLOSETIMESTAMP]);
 
       // der erste Datensatz wird immer geschrieben...
       if (i == 0) {
