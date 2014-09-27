@@ -22,7 +22,7 @@ int onStart() {
    }
 
 
-   // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Tickets sortieren
+   // (1) Sortierschlüssel aller verfügbaren Tickets auslesen und Tickets aufsteigend nach {CloseTime,OpenTime,Ticket} sortieren
    int orders = OrdersHistoryTotal();
    int sortKeys[][3];
    ArrayResize(sortKeys, orders);
