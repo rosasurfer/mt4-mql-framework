@@ -521,30 +521,28 @@ int      last_error;                                        // der letzte Fehler
 #define PIVOT_S3                       6
 
 
-// Konstanten zum Zugriff auf die Spalten der Account-History
-#define HISTORY_COLUMNS               22
-#define AH_TICKET                      0
-#define AH_OPENTIME                    1
-#define AH_OPENTIMESTAMP               2
-#define AH_TYPEDESCRIPTION             3
-#define AH_TYPE                        4
-#define AH_SIZE                        5
-#define AH_SYMBOL                      6
-#define AH_OPENPRICE                   7
-#define AH_STOPLOSS                    8
-#define AH_TAKEPROFIT                  9
-#define AH_CLOSETIME                  10
-#define AH_CLOSETIMESTAMP             11
-#define AH_CLOSEPRICE                 12
-#define AH_EXPIRATIONTIME             13
-#define AH_EXPIRATIONTIMESTAMP        14
-#define AH_MAGICNUMBER                15
-#define AH_COMMISSION                 16
-#define AH_SWAP                       17
-#define AH_NETPROFIT                  18
-#define AH_GROSSPROFIT                19
-#define AH_BALANCE                    20
-#define AH_COMMENT                    21
+// Konstanten zum Zugriff auf die in CSV-Dateien gespeicherte Accounthistory
+#define AH_COLUMNS                    20
+#define I_AH_TICKET                    0
+#define I_AH_OPENTIME                  1
+#define I_AH_OPENTIMESTAMP             2
+#define I_AH_TYPEDESCRIPTION           3
+#define I_AH_TYPE                      4
+#define I_AH_SIZE                      5
+#define I_AH_SYMBOL                    6
+#define I_AH_OPENPRICE                 7
+#define I_AH_STOPLOSS                  8
+#define I_AH_TAKEPROFIT                9
+#define I_AH_CLOSETIME                10
+#define I_AH_CLOSETIMESTAMP           11
+#define I_AH_CLOSEPRICE               12
+#define I_AH_MAGICNUMBER              13
+#define I_AH_COMMISSION               14
+#define I_AH_SWAP                     15
+#define I_AH_NETPROFIT                16
+#define I_AH_GROSSPROFIT              17
+#define I_AH_BALANCE                  18
+#define I_AH_COMMENT                  19
 
 
 // Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
