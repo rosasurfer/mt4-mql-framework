@@ -32,7 +32,7 @@ string label.stopoutLevel    = "StopoutLevel";
 int appliedPrice = PRICE_MEDIAN;                                     // Preis in Chartanzeige: Bid | Ask | Median (default)
 
 
-// Money-/Riskmanagement (mit hard-codierten Defaultwerten, falls keine Konfiguration vorhanden ist)
+// Money-/Riskmanagement mit diesen Defaultwerten, falls nicht anders konfiguriert
 #define DEFAULT_LEVERAGE   2.5                                       // Leverage je Unit: Erfahrungswert, keine Berücksichtigung der Volatilität
 #define DEFAULT_RISK       2.5                                       // Risiko je Unit in Prozent Equity je Woche: Erfahrungswert
 #define DEFAULT_STOPLOSS   5.0                                       // Stoploss in Prozent Equity
@@ -817,7 +817,7 @@ bool UpdateTime() {
 
 
 /**
- * Ermittelt die momentane Marktpositionierung und berechnet Breakeven-, Stoploss- und Profit-Werte
+ * Ermittelt die momentane Marktpositionierung und berechnet Breakeven-, Stoploss- und Profit-Werte.
  *
  * @return bool - Erfolgsstatus
  */
