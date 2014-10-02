@@ -1,11 +1,30 @@
 /**
- * Zeigt im Chart verschiedene aktuelle Informationen an.
+ * Zeigt im Chart verschiedene Informationen zum Instrument und den aktuell offenen Positionen eines der folgenden Typen an:
+ *
+ * (1) interne Positionen: - Positionen, die im aktuellen Account gehalten werden
+ *                         - Order- und P/L-Daten stammen vom Terminal
+ *
+ * (2) externe Positionen: - Positionen, die in einem anderen Account gehalten werden
+ *                         - Orderdaten stammen aus einer externen Quelle
+ *                         - P/L-Daten werden anhand der aktuellen Kurse selbst berechnet
+ *
+ * (3) Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (typischerweise LFX-Positionen)
+ *                         - Orderdaten stammen aus einer externen Quelle
+ *                         - P/L-Daten stammen ebenfalls aus einer externen Quelle
+ *                         - aktive Limit-Orders können überwacht und die externe Quelle vom Erreichen benachrichtigt werden
  */
 #property indicator_chart_window
 
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////////////////////// Externe Parameter //////////////////////////////////////////////////////////////////////////////
+
+extern string Track.Signal = "";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 
 #include <MT4iQuickChannel.mqh>
@@ -17,27 +36,16 @@ int __DEINIT_FLAGS__[];
 #include <structs/pewa/LFX_ORDER.mqh>
 
 
-// Label der einzelnen Anzeigen
-string label.instrument      = "Instrument";
-string label.ohlc            = "OHLC";
-string label.price           = "Price";
-string label.spread          = "Spread";
-string label.unitSize        = "UnitSize";
-string label.position        = "Position";
-string label.time            = "Time";
-string label.lfxTradeAccount = "LfxTradeAccount";
-string label.stopoutLevel    = "StopoutLevel";
+// Instrument-/Kursanzeige
+int appliedPrice = PRICE_MEDIAN;                                     // Preis: Bid | Ask | Median (default)
 
 
-int appliedPrice = PRICE_MEDIAN;                                     // Preis in Chartanzeige: Bid | Ask | Median (default)
-
-
-// Money-/Riskmanagement mit diesen Defaultwerten, falls nicht anders konfiguriert
+// Leverage-/Riskmanagementanzeige                                   // Defaultwerte:
 #define DEFAULT_LEVERAGE   2.5                                       // Leverage je Unit: Erfahrungswert, keine Berücksichtigung der Volatilität
 #define DEFAULT_RISK       2.5                                       // Risiko je Unit in Prozent Equity je Woche: Erfahrungswert
 #define DEFAULT_STOPLOSS   5.0                                       // Stoploss in Prozent Equity
 
-bool   mm.isDone;
+bool   mm.done;
 double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
 double mm.ATRwAbs;                                                   // wöchentliche ATR, absolut
 double mm.ATRwPct;                                                   // wöchentliche ATR, prozentual
@@ -55,28 +63,41 @@ double mm.stoploss = DEFAULT_STOPLOSS;                               // StopLoss
 string mm.notice = "";                                               // beliebiger anzuzeigender Text
 
 
-// lokale Positionsdaten                                             // Die lokalen Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen.
-bool   positionsAnalyzed;
-bool   isLocalPosition;
-double totalPosition;                                                // Gesamtposition total
-double longPosition;                                                 // Gesamtposition long
-double shortPosition;                                                // Gesamtposition short
+// Status
+bool   positionsAnalyzed;                                            // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
+bool   mode.intern;                                                  //   eingelesen, Orderänderungen werden automatisch erkannt.
+bool   mode.extern;                                                  // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
+bool   mode.remote;                                                  //   oder nach Eintreffen einer entsprechenden Nachricht zurückgesetzt und aus der Quelle neu eingelesen,
+                                                                     //   Orderänderungen werden nicht automatisch erkannt.
+string signalProvider;
+string signal;
 
-double local.position.conf      [][2];                               // individuelle Konfiguration: = {LotSize|Amount, Ticket|DirectionType|AmountType}
-string local.position.conf.comments[];                               //                             =  Comment
-int    local.position.types     [][3];                               // Positionsdetails:           = {PositionType, DirectionType, iComment}
-double local.position.data      [][6];                               //                             = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, StopLoss, Profit, Amount}
+// individuelle Positionskonfiguration
+double custom.position.conf      [][2];                              // Format siehe ReadCustomPositionConfig()
+string custom.position.conf.comments[];
 
-#define TYPE_DEFAULT       0                                         // PositionTypes: normale Terminalposition (local oder remote)
-#define TYPE_CUSTOM        1                                         //                individuell konfigurierte reale Position
-#define TYPE_VIRTUAL       2                                         //                individuell konfigurierte virtuelle Position
+// interne + externe Positionsdaten
+bool   isPosition;                                                   // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
+double totalPosition;
+double longPosition;
+double shortPosition;
+int    positions.idata[][3];                                         // Positionsdetails: [] = {PositionType, DirectionType, idxComment}
+double positions.ddata[][6];                                         //                   [] = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, StopLoss, Profit, Amount}
+
+#define TYPE_DEFAULT       0                                         // PositionTypes:    normale Position (intern oder extern)
+#define TYPE_CUSTOM        1                                         //                   individuell konfigurierte reale Position
+#define TYPE_VIRTUAL       2                                         //                   individuell konfigurierte virtuelle Position
 
 #define TYPE_LONG          1                                         // DirectionTypes
 #define TYPE_SHORT         2
 #define TYPE_HEDGE         3
-#define TYPE_AMOUNT        3                                         // AmountType (wie TYPE_HEDGE)
+#define TYPE_AMOUNT        3                                         // AmountType = TYPE_HEDGE
 
-#define I_DIRECT_LOTSIZE   0                                         // Arrayindizes von local.position.data[]
+#define I_POSITION_TYPE    0                                         // Arrayindizes von positions.idata[]
+#define I_DIRECTION_TYPE   1
+#define I_COMMENT          2
+
+#define I_DIRECT_LOTSIZE   0                                         // Arrayindizes von positions.ddata[]
 #define I_HEDGED_LOTSIZE   1
 #define I_BREAKEVEN        2
 #define I_STOPLOSS         3
@@ -84,18 +105,43 @@ double local.position.data      [][6];                               //         
 #define I_CUSTOM_AMOUNT    5
 
 
-// LFX-Positionsdaten
-int    lfxOrders.iVolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
-double lfxOrders.dVolatile[][1];                                     //                               = {Profit}
+// externe Positionen
+int      external.ticket    [];
+int      external.type      [];
+double   external.lots      [];
+datetime external.openTime  [];
+double   external.openPrice [];
+double   external.takeProfit[];
+double   external.stoploss  [];
+double   external.commission[];
+double   external.swap      [];
+double   external.profit    [];
+
+
+// LFX-Positionensdaten (remote)
+int    lfxOrders.ivolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
+double lfxOrders.dvolatile[][1];                                     //                               = {Profit}
 int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen in den offenen Orders (IsOpen = 1)
 
-#define I_TICKET           0                                         // Arrayindizes von lfxOrders.*Volatile[]
+#define I_TICKET           0                                         // Arrayindizes von lfxOrders.~volatile[]
 #define I_ISOPEN           1
 #define I_ISLOCKED         2
 #define I_VPROFIT          0
 
 
-// Font-Settings der detaillierten Positionsanzeige (lokal und LFX)
+// Textlabel für die einzelnen Anzeigen
+string label.instrument      = "Instrument";
+string label.ohlc            = "OHLC";
+string label.price           = "Price";
+string label.spread          = "Spread";
+string label.unitSize        = "UnitSize";
+string label.position        = "Position";
+string label.time            = "Time";
+string label.lfxTradeAccount = "LfxTradeAccount";
+string label.stopoutLevel    = "StopoutLevel";
+
+
+// Font-Settings der detaillierten Positionsanzeige
 string positions.fontName     = "MS Sans Serif";
 int    positions.fontSize     = 8;
 color  positions.fontColors[] = {Blue, Blue, Green};                 // unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
@@ -111,7 +157,7 @@ color  positions.fontColors[] = {Blue, Blue, Green};                 // untersch
  * @return int - Fehlerstatus
  */
 int onTick() {
-   mm.isDone         = false;
+   mm.done           = false;
    positionsAnalyzed = false;
 
    if (!UpdatePrice())                       return(last_error);
@@ -266,7 +312,7 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
          slValue = los.StopLossValue  (lfxOrders, i);
          tpPrice = los.TakeProfitLfx  (lfxOrders, i);
          tpValue = los.TakeProfitValue(lfxOrders, i);
-         profit  = lfxOrders.dVolatile[i][I_VPROFIT];
+         profit  = lfxOrders.dvolatile[i][I_VPROFIT];
    }
 
    switch (type) {
@@ -491,8 +537,8 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                     return(true );        // Anzeige wird im Tester nicht benötigt
-   if (!mm.isDone) /*&&*/ if (!UpdateMoneyManagement()) return(false);
+   if (IsTesting())                                   return(true );          // Anzeige wird im Tester nicht benötigt
+   if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(false);
 
    string strMM = "";
    if (mm.isDefaultLeverage) { double lotsize=mm.stdRiskLots, leverage=mm.stdRiskLeverage; }
@@ -543,13 +589,13 @@ bool UpdateUnitSize() {
  */
 bool UpdatePositions() {
    if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions()     ) return(false);
-   if (!mm.isDone        ) /*&&*/ if (!UpdateMoneyManagement()) return(false);
+   if (!mm.done          ) /*&&*/ if (!UpdateMoneyManagement()) return(false);
 
 
    // (1) Gesamtpositionsanzeige unten rechts
    string strCurrentRisk, strCurrentLeverage,strPosition;
-   if      (!isLocalPosition) strPosition = " ";
-   else if (!totalPosition  ) strPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   if      (!isPosition   ) strPosition = " ";
+   else if (!totalPosition) strPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       // aktueller Leverage = MathAbs(totalPosition)/mm.unleveragedLots
       if (mm.unleveragedLots != 0) {         //  L - Leverage
@@ -569,13 +615,13 @@ bool UpdatePositions() {
       return(!catch("UpdatePositions(1)", error));
 
 
-   // (2) Einzelpositionsanzeige unten links: mit Breakeven, StopLoss und Profit/Loss
+   // (2) Einzelpositionsanzeige unten links
    // Spalten:           Direction:, LotSize, BE:, BePrice, SL:, SlPrice, Profit:, ProfitAmount, Comment
    int col.xShifts[]  = {20,         59,      135, 160,     231, 252,     323,     355,          445}, cols=ArraySize(col.xShifts), yDist=3;
-   int localPositions = ArrayRange(local.position.types, 0);
-   int positions      = localPositions + lfxOrders.openPositions;
+   int localPositions = ArrayRange(positions.idata, 0);
+   int positions      = localPositions + lfxOrders.openPositions;    // nur einer der beiden Werte kann ungleich 0 sein
 
-   // (2.1) ggf. weitere Zeilen hinzufügen
+   // (2.1) zusätzlich benötigte Zeilen hinzufügen
    static int lines;
    while (lines < positions) {
       lines++;
@@ -591,7 +637,6 @@ bool UpdatePositions() {
          else GetLastError();
       }
    }
-
    // (2.2) nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
@@ -609,55 +654,55 @@ bool UpdatePositions() {
    // lokale Positionsdaten
    for (int i=localPositions-1; i >= 0; i--) {
       line++;
-      if (local.position.types[i][1] == TYPE_HEDGE) {
-         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[local.position.types[i][1]],                                                                  positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(local.position.data [i][I_HEDGED_LOTSIZE], ".+") +" lot",                                     positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                                  positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            if (!local.position.data[i][I_BREAKEVEN])
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+      if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HEDGE) {
+         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                    positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                      positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                              positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            if (!positions.ddata[i][I_BREAKEVEN])
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(local.position.data[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
 
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", "-",                                                                                                      positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", "-",                                                                                                  positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
 
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            if (!local.position.data[i][I_PROFIT])
-         ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            else { if (!local.position.data[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
-                   else                                          strCustomAmount = "   ("+ DoubleToStr(local.position.data[i][I_CUSTOM_AMOUNT], 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            if (!positions.ddata[i][I_PROFIT])
+         ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            else { if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
+                   else                                      strCustomAmount = "   ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
             }
       }
       else {
-         ObjectSetText(label.position +".line"+ line +"_col0",            strTypes[local.position.types[i][1]],                                                          positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            if (!local.position.data[i][I_HEDGED_LOTSIZE]) strLotSize = NumberToStr(local.position.data [i][I_DIRECT_LOTSIZE], ".+");
-            else                                           strLotSize = NumberToStr(local.position.data [i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(local.position.data[i][I_HEDGED_LOTSIZE], ".+");
-         ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            if (!local.position.data[i][I_BREAKEVEN])
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            else if (local.position.types[i][1] == TYPE_LONG)
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil (local.position.data[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col0",         strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            if (!positions.ddata[i][I_HEDGED_LOTSIZE]) strLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+");
+            else                                       strLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+");
+         ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                   positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            if (!positions.ddata[i][I_BREAKEVEN])
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            else if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_LONG)
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil (positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(local.position.data[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                    positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(RoundEx(local.position.data[i][I_STOPLOSS], Digits), PriceFormat),                            positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
-            if (!local.position.data[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
-            else                                          strCustomAmount = "   ("+ DoubleToStr(local.position.data[i][I_CUSTOM_AMOUNT], 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(local.position.data[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(RoundEx(positions.ddata[i][I_STOPLOSS], Digits), PriceFormat),                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+            if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
+            else                                      strCustomAmount = "   ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
       }
 
-         if (local.position.types[i][2] > -1) comment = local.position.conf.comments[local.position.types[i][2]];
-         else                                 comment = "";
-         ObjectSetText(label.position +".line"+ line +"_col8", comment +" ",                                                                                             positions.fontSize, positions.fontName, positions.fontColors[local.position.types[i][0]]);
+         if (positions.idata[i][I_COMMENT] > -1) comment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
+         else                                    comment = "";
+         ObjectSetText(label.position +".line"+ line +"_col8", comment +" ",                                                                                         positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
    }
 
 
    // LFX-Positionsdaten
    for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
-      if (lfxOrders.iVolatile[i][I_ISOPEN] != 0) {
+      if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
          line++;
          ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[los.Type        (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
          ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
@@ -666,7 +711,7 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                          positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
          ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
          ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                      positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(lfxOrders.dVolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
       }
    }
    return(!catch("UpdatePositions(2)"));
@@ -682,7 +727,7 @@ bool UpdateStopoutLevel() {
    if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
-   if (!totalPosition) {                                                               // keine Position im Markt: vorhandene Marker löschen
+   if (!totalPosition) {                                                               // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // bei offenem Properties-Dialog oder Object::onDrag()
@@ -778,7 +823,7 @@ bool UpdateOHLC() {
 
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
       return(!catch("UpdateOHLC(2)", error));
    return(true);
 }
@@ -810,197 +855,187 @@ bool UpdateTime() {
    lastTime = now;
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
       return(!catch("UpdateTime()", error));
    return(true);
 }
 
 
 /**
- * Ermittelt die momentane Marktpositionierung und berechnet Breakeven-, Stoploss- und Profit-Werte.
+ * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
  *
  * @return bool - Erfolgsstatus
  */
 bool AnalyzePositions() {
-   if (positionsAnalyzed)
-      return(true);
+   if (mode.remote      ) positionsAnalyzed = true;
+   if (positionsAnalyzed) return(true);
 
-   longPosition  = 0;
-   shortPosition = 0;
-   totalPosition = 0;
-
-   int orders = OrdersTotal();
-   int sortKeys[][2];                                                // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
-   ArrayResize(sortKeys, orders);
-
-   int pos, lfxMagics []={0}; ArrayResize(lfxMagics , 1);            // Die Arrays für die P/L-Daten detektierter LFX-Positionen werden mit Größe 1 initialisiert.
-   double   lfxProfits[]={0}; ArrayResize(lfxProfits, 1);            // So sparen wir den ständigen Test auf einen ungültigen Index bei Arraygröße 0.
+   int    tickets    [], openPositions;                                 // Positionsdetails
+   int    types      [];
+   double lots       [];
+   double openPrices [];
+   double commissions[];
+   double swaps      [];
+   double profits    [];
 
 
    // (1) Gesamtposition ermitteln
-   for (int n, i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
-      if (OrderType() > OP_SELL) continue;
-      if (LFX.IsMyOrder()) {                                         // dabei P/L gefundener LFX-Positionen aufaddieren
-         if (OrderMagicNumber() != lfxMagics[pos]) {
-            pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
-            if (pos == -1)
-               pos = ArrayResize(lfxProfits, ArrayPushInt(lfxMagics, OrderMagicNumber()))-1;
+   longPosition  = 0;
+   shortPosition = 0;
+
+   // (1.1) mode.intern
+   if (mode.intern) {
+      int orders = OrdersTotal();
+      int sortKeys[][2];                                                // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
+      ArrayResize(sortKeys, orders);
+
+      int pos, lfxMagics []={0}; ArrayResize(lfxMagics , 1);            // Die Arrays für die P/L-Daten detektierter LFX-Positionen werden mit Größe 1 initialisiert.
+      double   lfxProfits[]={0}; ArrayResize(lfxProfits, 1);            // So sparen wir in Zeile (1.1.1) den ständigen Test auf ein leeres Array.
+
+      // Sortierschlüssel auslesen und dabei P/L's sämtlicher LFX-Positionen verarbeiten (alle Symbole, Update bei jedem Tick)
+      for (int n, i=0; i < orders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
+         if (OrderType() > OP_SELL) continue;
+         if (LFX.IsMyOrder()) {                                         // nebenbei P/L gefundener LFX-Positionen aufaddieren
+            if (OrderMagicNumber() != lfxMagics[pos]) {                 // Zeile (1.1.1): Quickcheck mit dem letzten verwendeten Index, erst dann Suche (schnellste Variante)
+               pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
+               if (pos == -1)
+                  pos = ArrayResize(lfxProfits, ArrayPushInt(lfxMagics, OrderMagicNumber()))-1;
+            }
+            lfxProfits[pos] += OrderCommission() + OrderSwap() + OrderProfit();
          }
-         lfxProfits[pos] += OrderCommission() + OrderSwap() + OrderProfit();
+         if (OrderSymbol() != Symbol()) continue;
+         if (OrderType() == OP_BUY) longPosition  += OrderLots();       // Gesamtposition je Richtung aufaddieren
+         else                       shortPosition += OrderLots();
+
+         sortKeys[n][0] = OrderOpenTime();                              // Sortierschlüssel der Tickets auslesen
+         sortKeys[n][1] = OrderTicket();
+         n++;
       }
-      if (OrderSymbol() != Symbol()) continue;
+      if (pos != 0) LFX.ProcessProfits(lfxMagics, lfxProfits);          // P/L's gefundener LFX-Positionen verarbeiten
+      if (n < orders)
+         ArrayResize(sortKeys, n);
+      openPositions = n;
 
-      if (OrderType() == OP_BUY) longPosition  += OrderLots();       // Gesamtposition aufaddieren
-      else                       shortPosition += OrderLots();
-
-      sortKeys[n][0] = OrderOpenTime();                              // Sortierschlüssel der Tickets auslesen
-      sortKeys[n][1] = OrderTicket();
-      n++;
-   }
-   if (n < orders) {
-      ArrayResize(sortKeys, n);
-      orders = n;
-   }
-   totalPosition   = NormalizeDouble(longPosition - shortPosition, 2);
-   isLocalPosition = (longPosition || shortPosition);
-
-
-   // (2) P/L gefundener LFX-Positionen ans LFX-Terminal schicken, wenn sich dieser Wert seit der letzten Nachricht geändert hat.
-   double lastLfxProfit;
-   string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hQC.TradeToLfxSenders));    // 2 x ArrayResize() = ArrayInitialize(string array)
-   string globalVarLfxProfit;
-   int    error;
-
-   for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
-      // (2.1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
-      globalVarLfxProfit = StringConcatenate("LFX.#", lfxMagics[i], ".profit");
-      lastLfxProfit      = GlobalVariableGet(globalVarLfxProfit);
-      if (!lastLfxProfit) {                                          // 0 oder Fehler
-         error = GetLastError();
-         if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
-            return(!catch("AnalyzePositions(1)->GlobalVariableGet()", error));
-      }
-
-      // TODO: Prüfung auf Wertänderung nur innerhalb der Woche, nicht am Wochenende
-
-      if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
-         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um in (2.4) Marker für Speichern in globaler Variable zu haben
-         continue;
-      }
-
-      // (2.2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
-      int cid = LFX.CurrencyId(lfxMagics[i]);
-      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       "LFX:", lfxMagics[i], ":profit=", DoubleToStr(lfxProfits[i], 2));
-      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, "LFX:", lfxMagics[i], ":profit=", DoubleToStr(lfxProfits[i], 2));
-   }
-
-   // (2.3) angesammelte Messages verschicken: Messages je Channel werden gemeinsam, nicht einzeln verschickt, um beim Empfänger unnötige Ticks zu vermeiden
-   for (i=ArraySize(lfxMessages)-1; i > 0; i--) {                    // Index 0 ist unbenutzt
-      if (StringLen(lfxMessages[i]) > 0) {
-         if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartTradeToLfxSender(i))
-            return(false);
-         if (!QC_SendMessage(hQC.TradeToLfxSenders[i], lfxMessages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
-            return(!catch("AnalyzePositions(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
-      }
-   }
-
-   // (2.4) verschickte Werte jeweils in globaler Variable speichern
-   for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
-      // Marker aus (2.1) verwenden: MagicNumbers unveränderter Werte wurden zurückgesetzt
-      if (lfxMagics[i] != 0) {
-         globalVarLfxProfit = StringConcatenate("LFX.#", lfxMagics[i], ".profit");
-         if (!GlobalVariableSet(globalVarLfxProfit, lfxProfits[i])) {
-            error = GetLastError();
-            return(!catch("AnalyzePositions(3)->GlobalVariableSet(name=\""+ globalVarLfxProfit +"\", value="+ lfxProfits[i] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
-         }
-      }
-   }
-
-
-   // (3) Positionsdetails analysieren und in *.position.types[] und *.position.data[] speichern
-   if (ArrayRange(local.position.types, 0) > 0) {
-      ArrayResize(local.position.types, 0);                          // lokale Positionsdaten werden bei jedem Tick zurückgesetzt und neu eingelesen
-      ArrayResize(local.position.data,  0);
-   }
-
-   if (isLocalPosition) {
-      // (3.1) individuelle Konfiguration einlesen (bei vorhandenen lokalen Positionen werden Remote-Positionen ignoriert)
-      if (ArrayRange(local.position.conf, 0)==0) /*&&*/ if (!ReadCustomPositionConfig()) {
-         positionsAnalyzed = !last_error;                            // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
-         return(positionsAnalyzed);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
-      }
-
-      // (3.2) offene Tickets sortieren und einlesen
-      if (orders > 1) /*&&*/ if (!SortTickets(sortKeys))
+      // (1.1.2) offene Positionen sortieren und einlesen
+      if (openPositions > 1) /*&&*/ if (!SortTickets(sortKeys))
          return(false);
 
-      int    tickets    [], customTickets    []; ArrayResize(tickets    , orders);
-      int    types      [], customTypes      []; ArrayResize(types      , orders);
-      double lotSizes   [], customLotSizes   []; ArrayResize(lotSizes   , orders);
-      double openPrices [], customOpenPrices []; ArrayResize(openPrices , orders);
-      double commissions[], customCommissions[]; ArrayResize(commissions, orders);
-      double swaps      [], customSwaps      []; ArrayResize(swaps      , orders);
-      double profits    [], customProfits    []; ArrayResize(profits    , orders);
-      double                customAmounts    [];
+      ArrayResize(tickets    , openPositions);                          // interne Positionsdetails werden bei jedem Tick zurückgesetzt
+      ArrayResize(types      , openPositions);
+      ArrayResize(lots       , openPositions);
+      ArrayResize(openPrices , openPositions);
+      ArrayResize(commissions, openPositions);
+      ArrayResize(swaps      , openPositions);
+      ArrayResize(profits    , openPositions);
 
-      for (i=0; i < orders; i++) {
-         if (!SelectTicket(sortKeys[i][1], "AnalyzePositions(4)"))
+      for (i=0; i < openPositions; i++) {
+         if (!SelectTicket(sortKeys[i][1], "AnalyzePositions(1)"))
             return(false);
          tickets    [i] = OrderTicket();
          types      [i] = OrderType();
-         lotSizes   [i] = NormalizeDouble(OrderLots(), 2);
+         lots       [i] = NormalizeDouble(OrderLots(), 2);
          openPrices [i] = OrderOpenPrice();
          commissions[i] = OrderCommission();
          swaps      [i] = OrderSwap();
          profits    [i] = OrderProfit();
       }
-      double lotSize, customLongPosition, customShortPosition, customTotalPosition, local.longPosition=longPosition, local.shortPosition=shortPosition, local.totalPosition=totalPosition;
-      int    ticket, confLine;
-      bool   isVirtual;
+   }
 
+   // (1.2) mode.extern
+   if (mode.extern) {
+      openPositions = ArraySize(external.ticket);
 
-      // (3.3) individuell konfigurierte Positionen extrahieren
-      int confSize = ArrayRange(local.position.conf, 0);
-
-      for (i=0, confLine=0; i < confSize; i++) {
-         lotSize = local.position.conf[i][0];
-         ticket  = local.position.conf[i][1];
-
-         if (!ticket) {                                              // ticket==NULL => "Zeilenende"
-            // (3.4) individuell konfigurierte Position speichern (zusammengefaßt: Long+Short+Hedged)
-            if (ArraySize(customTickets) > 0) {
-               if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, confLine, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
-                  return(false);
-               isVirtual           = false;
-               customLongPosition  = 0;
-               customShortPosition = 0;
-               customTotalPosition = 0;
-               ArrayResize(customTickets    , 0);
-               ArrayResize(customTypes      , 0);
-               ArrayResize(customLotSizes   , 0);
-               ArrayResize(customOpenPrices , 0);
-               ArrayResize(customCommissions, 0);
-               ArrayResize(customSwaps      , 0);
-               ArrayResize(customProfits    , 0);
-               ArrayResize(customAmounts    , 0);
-            }
-            confLine++;
-            continue;
+      // offene Positionen werden nur in init() oder nach entsprechendem Event neu eingelesen
+      static bool external.lots.checked;                                // TODO: Status bei Event zurücksetzen
+      if (!external.lots.checked) {
+         for (i=0; i < openPositions; i++) {                            // Gesamtposition je Richtung aufaddieren
+            if (external.type[i] == OP_BUY) longPosition  += external.lots[i];
+            else                            shortPosition += external.lots[i];
          }
-         if (!ExtractPosition(lotSize, ticket, local.longPosition, local.shortPosition, local.totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
-                              isVirtual,       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
-            return(false);
+         external.lots.checked = true;
       }
+      if (openPositions > 0) {
+         ArrayCopy(tickets    , external.ticket    );                   // ExtractPosition() modifiziert die übergebenen Arrays, also jedesmal
+         ArrayCopy(types      , external.type      );                   // Kopie der Originaldaten erstellen
+         ArrayCopy(lots       , external.lots      );
+         ArrayCopy(openPrices , external.openPrice );
+         ArrayCopy(commissions, external.commission);
+         ArrayCopy(swaps      , external.swap      );
+         ArrayCopy(profits    , external.profit    );
+      }
+   }
+
+   // (1.3) Ergebnisse intern + extern
+   longPosition  = NormalizeDouble(longPosition,  2);
+   shortPosition = NormalizeDouble(shortPosition, 2);
+   totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
+   isPosition    = longPosition || shortPosition;
 
 
-      // (3.5) reguläre (Rest-)Positionen speichern (einzeln: Long, Short, Hedged)
-      if (!StoreRegularPositions(local.longPosition, local.shortPosition, local.totalPosition, tickets, types, lotSizes, openPrices, commissions, swaps, profits))
+   // (2) Positionen analysieren und in positions.~data[] speichern
+   if (ArrayRange(positions.idata, 0) > 0) {
+      ArrayResize(positions.idata, 0);
+      ArrayResize(positions.ddata, 0);
+   }
+
+   // (2.1) individuelle Konfiguration parsen
+   if (ArrayRange(custom.position.conf, 0)==0) /*&&*/ if (!ReadCustomPositionConfig()) {
+      positionsAnalyzed = !last_error;                                  // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
+      return(positionsAnalyzed);                                        // in diesem Fall nächster Versuch beim nächsten Tick.
+   }
+   double lotSize, customLongPosition, customShortPosition, customTotalPosition, local.longPosition=longPosition, local.shortPosition=shortPosition, local.totalPosition=totalPosition;
+   int    ticket, confLine;
+   bool   isVirtual;
+   int    customTickets    [];
+   int    customTypes      [];
+   double customLots       [];
+   double customOpenPrices [];
+   double customCommissions[];
+   double customSwaps      [];
+   double customProfits    [];
+   double customAmounts    [];
+
+   // (2.2) individuelle Positionen aus den offenen Positionen extrahieren
+   int confSize = ArrayRange(custom.position.conf, 0);
+
+   for (i=0, confLine=0; i < confSize; i++) {
+      lotSize = custom.position.conf[i][0];
+      ticket  = custom.position.conf[i][1];
+
+      if (!ticket) {                                                    // ticket==NULL => "Zeilenende"
+         // (2.3) individuelle Position speichern (zusammengefaßt: Long+Short+Hedged)
+         if (ArraySize(customTickets) > 0) {
+            if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, confLine, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
+               return(false);
+            isVirtual           = false;
+            customLongPosition  = 0;
+            customShortPosition = 0;
+            customTotalPosition = 0;
+            ArrayResize(customTickets    , 0);
+            ArrayResize(customTypes      , 0);
+            ArrayResize(customLots       , 0);
+            ArrayResize(customOpenPrices , 0);
+            ArrayResize(customCommissions, 0);
+            ArrayResize(customSwaps      , 0);
+            ArrayResize(customProfits    , 0);
+            ArrayResize(customAmounts    , 0);
+         }
+         confLine++;
+         continue;
+      }
+      if (!ExtractPosition(lotSize, ticket, local.longPosition, local.shortPosition, local.totalPosition, tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
+                           isVirtual,       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits,    customAmounts))
          return(false);
    }
 
+   // (2.4) reguläre (Rest-)Positionen speichern (einzeln: Long, Short, Hedged)
+   if (!StoreRegularPositions(local.longPosition, local.shortPosition, local.totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits))
+      return(false);
+
+
    positionsAnalyzed = true;
-   return(!catch("AnalyzePositions(5)"));
+   return(!catch("AnalyzePositions(2)"));
 }
 
 
@@ -1010,7 +1045,7 @@ bool AnalyzePositions() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
-   if (mm.isDone)
+   if (mm.done)
       return(true);
 
    mm.unleveragedLots = 0;                                                       // Lotsize bei Hebel 1:1
@@ -1058,7 +1093,7 @@ bool UpdateMoneyManagement() {
    }
 
 
-   mm.isDone = true;
+   mm.done = true;
    return(true);
 }
 
@@ -1070,7 +1105,7 @@ bool UpdateMoneyManagement() {
  * @param  int array[] - zu durchsuchendes Array
  * @param  int number  - zu suchende MagicNumber
  *
- * @return int - Index der MagicNumber oder -1 (EMPTY), wenn der Wert nicht im Array enthalten ist
+ * @return int - Index der MagicNumber oder -1, wenn der Wert nicht im Array enthalten ist
  */
 int SearchMagicNumber(int array[], int number) {
    int size = ArraySize(array);
@@ -1078,31 +1113,32 @@ int SearchMagicNumber(int array[], int number) {
       if (array[i] == number)
          return(i);
    }
-   return(EMPTY);
+   return(-1);
 }
 
 
 /**
- * Liest die individuell konfigurierten lokalen Positionsdaten neu ein.
+ * Liest die individuell konfigurierten Positionsdaten neu ein.
  *
  * @return bool - Erfolgsstatus
  *
  *
- * Füllt das Array local.position.conf[][2] mit den Konfigurationsdaten des aktuellen Instruments. Im Array sind die einzelnen Elemente im Format
- * {LotSize, Ticket|DirectionType} gespeichert. Ein Ticket|DirectionType-Wert von NULL markiert ein Zeilenende oder eine leere Konfiguration.
- * Nach einer eingelesenen und ausgewerteten Konfiguration ist sizeOf(local.position.conf) also immer größer 0.
+ * Füllt das Array custom.position.conf[][2] mit den Konfigurationsdaten des aktuellen Instruments. Das Array enthält Elemente im Format
+ * {LotSize|Amount, Ticket|Type}.  Ein leeres Element {NULL, NULL} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer
+ * eingelesenen Konfiguration ist die Größe des Arrays immer != 0.
+ * Zeilenkommentare werden in custom.position.conf.comments[] gespeichert.
  *
  *
- *  Notation:                                                                                      Arraydarstellung:                      Konstanten:
- *  ---------                                                                                      -----------------                      -----------
- *   0.1#123456               - O.1 Lot eines Tickets (1)                                          {  0.1, 123456       }                 EMPTY:        -1
- *      #123456               - komplettes Ticket oder verbleibender Rest eines Tickets            {EMPTY, 123456       }                 NULL:          0
- *   0.2{#}L                  - virtuelle Long-Position, immer mit Größenangabe (2)                {  0.2, TYPE_LONG    }                 TYPE_LONG:     1
- *   0.3{#}S                  - virtuelle Short-Position, immer mit Größenangabe (2)               {  0.3, TYPE_SHORT   }                 TYPE_SHORT:    2
- *         L                  - alle verbleibenden Long-Positionen, niemals mit Größenangabe       {EMPTY, TYPE_LONG    }                 TYPE_STOPLOSS: 3
- *         S                  - alle verbleibenden Short-Positionen, niemals mit Größenangabe      {EMPTY, TYPE_SHORT   }                 TYPE_EQUITY:   4
- *   SL5.0{%}                 - StopLoss-Prozentsatz (unabhängig von DEFAULT_STOPLOSS)             {  0.5, TYPE_STOPLOSS}                 TYPE_AMOUNT:   5
- *   EQ{123.00}{[+-/*]456.00} - für Equityberechnungen zu verwendender Wert (3)                    {  0.5, TYPE_EQUITY  }
+ *  Notation:                                                                                      Arraydarstellung:             Konstanten:
+ *  ---------                                                                                      -----------------             -----------
+ *   0.1#123456               - O.1 Lot eines Tickets (1)                                          {  0.1, 123456       }        EMPTY:        -1
+ *      #123456               - komplettes Ticket oder verbleibender Rest eines Tickets            {EMPTY, 123456       }        NULL:          0
+ *   0.2{#}L                  - virtuelle Long-Position, immer mit Größenangabe (2)                {  0.2, TYPE_LONG    }        TYPE_LONG:     1
+ *   0.3{#}S                  - virtuelle Short-Position, immer mit Größenangabe (2)               {  0.3, TYPE_SHORT   }        TYPE_SHORT:    2
+ *         L                  - alle verbleibenden Long-Positionen, ohne Größenangabe              {EMPTY, TYPE_LONG    }        TYPE_STOPLOSS: 3    nicht implementiert
+ *         S                  - alle verbleibenden Short-Positionen, ohne Größenangabe             {EMPTY, TYPE_SHORT   }        TYPE_EQUITY:   4    nicht implementiert
+ *   SL5.0{%}                 - StopLoss-Prozentsatz (unabhängig von DEFAULT_STOPLOSS)             {  0.5, TYPE_STOPLOSS}        TYPE_AMOUNT:   5
+ *   EQ{123.00}{[+-/*]456.00} - als Equity zu verwendender Wert (3)                                {  0.5, TYPE_EQUITY  }
  *   12.34                    - dem P/L einer Position zuzuschlagender Betrag                      {12.34, TYPE_AMOUNT  }
  *
  *   Kommentare (alles nach ";")                    - werden als Beschreibung angezeigt
@@ -1121,11 +1157,11 @@ int SearchMagicNumber(int array[], int number) {
  *
  *  Resultierendes Array:
  *  ---------------------
- *  local.position.conf = {{EMPTY, 111111    }, {  0.1, 222222    }, {...   , NULL       },
- *                         {  0.2, TYPE_LONG }, {EMPTY, 222222    }, {...   , NULL       },
- *                         {EMPTY, TYPE_LONG }, {EMPTY, TYPE_SHORT}, {-34.45, TYPE_AMOUNT}, {..., NULL},
- *                         {  0.3, TYPE_SHORT}, {...   , NULL     }
- *                        }
+ *  custom.position.conf = {{EMPTY, 111111    }, {  0.1, 222222    }, {...   , NULL       },
+ *                          {  0.2, TYPE_LONG }, {EMPTY, 222222    }, {...   , NULL       },
+ *                          {EMPTY, TYPE_LONG }, {EMPTY, TYPE_SHORT}, {-34.45, TYPE_AMOUNT}, {..., NULL},
+ *                          {  0.3, TYPE_SHORT}, {...   , NULL     }
+ *                         }
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
  *  (2) Reale Positionen, die mit virtuellen Positionen kombiniert werden, werden nicht von der verbleibenden Gesamtposition abgezogen.
@@ -1135,9 +1171,9 @@ int SearchMagicNumber(int array[], int number) {
  *  (4) Die einzelnen Einträge werden unsortiert ausgewertet.
  */
 bool ReadCustomPositionConfig() {
-   if (ArrayRange(local.position.conf, 0) > 0) {
-      ArrayResize(local.position.conf,          0);
-      ArrayResize(local.position.conf.comments, 0);
+   if (ArrayRange(custom.position.conf, 0) > 0) {
+      ArrayResize(custom.position.conf,          0);
+      ArrayResize(custom.position.conf.comments, 0);
    }
 
    string keys[], values[], value, comment, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", symbol=Symbol(), stdSymbol=StdSymbol();
@@ -1223,33 +1259,33 @@ bool ReadCustomPositionConfig() {
                if (lotSize!=EMPTY && ticket<=TYPE_SHORT) {
                   if (!isConfigEmpty && !isConfigVirtual) {
                      double tmp[2] = {NULL, TYPE_LONG};                    // am Anfang der Zeile virtuelle 0-Position einfügen
-                     ArrayInsertDoubleArray(local.position.conf, offsetStartOfPosition, tmp);
+                     ArrayInsertDoubleArray(custom.position.conf, offsetStartOfPosition, tmp);
                   }
                   isConfigVirtual = true;
                }
 
                // Konfiguration hinzufügen
-               confSize = ArrayRange(local.position.conf, 0);
-               ArrayResize(local.position.conf, confSize+1);
-               local.position.conf[confSize][0] = lotSize;
-               local.position.conf[confSize][1] = ticket;
+               confSize = ArrayRange(custom.position.conf, 0);
+               ArrayResize(custom.position.conf, confSize+1);
+               custom.position.conf[confSize][0] = lotSize;
+               custom.position.conf[confSize][1] = ticket;
                isConfigEmpty = false;
             }
 
             if (!isConfigEmpty) {                                          // Zeilenende mit Leerelement markieren
-               confSize = ArrayRange(local.position.conf, 0);
-               ArrayResize(local.position.conf, confSize+1);               // initialisiert Element mit {NULL, NULL}
-               ArrayPushString(local.position.conf.comments, comment);
+               confSize = ArrayRange(custom.position.conf, 0);
+               ArrayResize(custom.position.conf, confSize+1);              // initialisiert Element mit {NULL, NULL}
+               ArrayPushString(custom.position.conf.comments, comment);
                offsetStartOfPosition = confSize + 1;                       // Start-Offset der nächsten Position (falls zutreffend)
             }
          }
       }
    }
 
-   confSize = ArrayRange(local.position.conf, 0);
+   confSize = ArrayRange(custom.position.conf, 0);
    if (!confSize) {                                                        // leere Konfiguration mit Leerelement {NULL, NULL} markieren
-      ArrayResize(local.position.conf,     1);                             // initialisiert Element mit {NULL, NULL}
-      ArrayPushString(local.position.conf.comments, "");
+      ArrayResize(custom.position.conf, 1);                                // initialisiert Element mit {NULL, NULL}
+      ArrayPushString(custom.position.conf.comments, "");
    }
    return(true);
 }
@@ -1268,11 +1304,10 @@ bool ReadCustomPositionConfig() {
  * @return bool - Erfolgsstatus
  */
 bool ExtractPosition(double lotSize, int ticket,
-                     double       &longPosition, double       &shortPosition, double       &totalPosition, int       &tickets[], int       &types[], double       &lotSizes[], double       &openPrices[], double       &commissions[], double       &swaps[], double       &profits[],
+                     double       &longPosition, double       &shortPosition, double       &totalPosition, int       &tickets[], int       &types[], double       &lots[], double       &openPrices[], double       &commissions[], double       &swaps[], double       &profits[],
                      bool            &isVirtual,
-                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLotSizes[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &customAmounts[]) {
+                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLots[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &customAmounts[]) {
    int sizeTickets = ArraySize(tickets);
-
 
    if (ticket == TYPE_LONG) {
       if (lotSize == EMPTY) {
@@ -1285,18 +1320,18 @@ bool ExtractPosition(double lotSize, int ticket,
                   // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
                   ArrayPushInt   (customTickets,     tickets    [i]);
                   ArrayPushInt   (customTypes,       types      [i]);
-                  ArrayPushDouble(customLotSizes,    lotSizes   [i]);
+                  ArrayPushDouble(customLots,        lots       [i]);
                   ArrayPushDouble(customOpenPrices,  openPrices [i]);
                   ArrayPushDouble(customCommissions, commissions[i]);
                   ArrayPushDouble(customSwaps,       swaps      [i]);
                   ArrayPushDouble(customProfits,     profits    [i]);
                   ArrayPushDouble(customAmounts,     0             );
                   if (!isVirtual) {
-                     longPosition  = NormalizeDouble(longPosition - lotSizes[i],   2);
+                     longPosition  = NormalizeDouble(longPosition - lots[i],       2);
                      totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
                      tickets[i]    = NULL;
                   }
-                  customLongPosition  = NormalizeDouble(customLongPosition + lotSizes[i],         2);
+                  customLongPosition  = NormalizeDouble(customLongPosition + lots[i],             2);
                   customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 2);
                }
             }
@@ -1307,7 +1342,7 @@ bool ExtractPosition(double lotSize, int ticket,
          if (lotSize != 0) {                                         // 0-Lots-Positionen werden ignoriert
             ArrayPushInt   (customTickets,     TYPE_LONG                                     );
             ArrayPushInt   (customTypes,       OP_BUY                                        );
-            ArrayPushDouble(customLotSizes,    lotSize                                       );
+            ArrayPushDouble(customLots,        lotSize                                       );
             ArrayPushDouble(customOpenPrices,  Ask                                           );
             ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotSize, 2));
             ArrayPushDouble(customSwaps,       0                                             );
@@ -1331,18 +1366,18 @@ bool ExtractPosition(double lotSize, int ticket,
                   // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
                   ArrayPushInt   (customTickets,     tickets    [i]);
                   ArrayPushInt   (customTypes,       types      [i]);
-                  ArrayPushDouble(customLotSizes,    lotSizes   [i]);
+                  ArrayPushDouble(customLots,        lots       [i]);
                   ArrayPushDouble(customOpenPrices,  openPrices [i]);
                   ArrayPushDouble(customCommissions, commissions[i]);
                   ArrayPushDouble(customSwaps,       swaps      [i]);
                   ArrayPushDouble(customProfits,     profits    [i]);
                   ArrayPushDouble(customAmounts,     0             );
                   if (!isVirtual) {
-                     shortPosition = NormalizeDouble(shortPosition - lotSizes[i],   2);
+                     shortPosition = NormalizeDouble(shortPosition - lots[i],       2);
                      totalPosition = NormalizeDouble(longPosition  - shortPosition, 2);
                      tickets[i]    = NULL;
                   }
-                  customShortPosition = NormalizeDouble(customShortPosition + lotSizes[i],         2);
+                  customShortPosition = NormalizeDouble(customShortPosition + lots[i],             2);
                   customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 2);
                }
             }
@@ -1353,7 +1388,7 @@ bool ExtractPosition(double lotSize, int ticket,
          if (lotSize != 0) {                                         // 0-Lots-Positionen werden ignoriert
             ArrayPushInt   (customTickets,     TYPE_SHORT                                    );
             ArrayPushInt   (customTypes,       OP_SELL                                       );
-            ArrayPushDouble(customLotSizes,    lotSize                                       );
+            ArrayPushDouble(customLots,        lotSize                                       );
             ArrayPushDouble(customOpenPrices,  Bid                                           );
             ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission() * lotSize, 2));
             ArrayPushDouble(customSwaps,       0                                             );
@@ -1371,7 +1406,7 @@ bool ExtractPosition(double lotSize, int ticket,
       if (lotSize != 0) {                                            // 0.00-Beträge werden ignoriert
          ArrayPushInt   (customTickets,     TYPE_AMOUNT);
          ArrayPushInt   (customTypes,       TYPE_AMOUNT);
-         ArrayPushDouble(customLotSizes,    NULL       );
+         ArrayPushDouble(customLots,        NULL       );
          ArrayPushDouble(customOpenPrices,  NULL       );
          ArrayPushDouble(customCommissions, NULL       );
          ArrayPushDouble(customSwaps,       NULL       );
@@ -1388,21 +1423,21 @@ bool ExtractPosition(double lotSize, int ticket,
                // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
                ArrayPushInt   (customTickets,     tickets    [i]);
                ArrayPushInt   (customTypes,       types      [i]);
-               ArrayPushDouble(customLotSizes,    lotSizes   [i]);
+               ArrayPushDouble(customLots,        lots       [i]);
                ArrayPushDouble(customOpenPrices,  openPrices [i]);
                ArrayPushDouble(customCommissions, commissions[i]);
                ArrayPushDouble(customSwaps,       swaps      [i]);
                ArrayPushDouble(customProfits,     profits    [i]);
                ArrayPushDouble(customAmounts,     0             );
                if (!isVirtual) {
-                  if (types[i] == OP_BUY) longPosition        = NormalizeDouble(longPosition  - lotSizes[i],   2);
-                  else                    shortPosition       = NormalizeDouble(shortPosition - lotSizes[i],   2);
+                  if (types[i] == OP_BUY) longPosition        = NormalizeDouble(longPosition  - lots[i],       2);
+                  else                    shortPosition       = NormalizeDouble(shortPosition - lots[i],       2);
                                           totalPosition       = NormalizeDouble(longPosition  - shortPosition, 2);
                                           tickets[i]          = NULL;
                }
-               if (types[i] == OP_BUY)    customLongPosition  = NormalizeDouble(customLongPosition  + lotSizes[i], 2);
-               else                       customShortPosition = NormalizeDouble(customShortPosition + lotSizes[i], 2);
-                                          customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 2);
+               if (types[i] == OP_BUY)    customLongPosition  = NormalizeDouble(customLongPosition  + lots[i],             2);
+               else                       customShortPosition = NormalizeDouble(customShortPosition + lots[i],             2);
+                                          customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 2);
                break;
             }
          }
@@ -1411,25 +1446,25 @@ bool ExtractPosition(double lotSize, int ticket,
          // partielles Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == ticket) {
-               if (GT(lotSize, lotSizes[i])) return(!catch("ExtractPosition(1)   illegal partial lotsize "+ NumberToStr(lotSize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lotSizes[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
-               if (EQ(lotSize, lotSizes[i])) {
+               if (GT(lotSize, lots[i])) return(!catch("ExtractPosition(1)   illegal partial lotsize "+ NumberToStr(lotSize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
+               if (EQ(lotSize, lots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(EMPTY, ticket,
-                                       longPosition,       shortPosition,       totalPosition,       tickets,       types,       lotSizes,       openPrices,       commissions,       swaps,       profits,
+                                       longPosition,       shortPosition,       totalPosition,       tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
                                        isVirtual,
-                                       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLotSizes, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
+                                       customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, customAmounts))
                      return(false);
                }
                else {
                   // Daten anteilig nach custom.* übernehmen und Ticket ggf. reduzieren
-                  double factor = lotSize/lotSizes[i];
+                  double factor = lotSize/lots[i];
                   ArrayPushInt   (customTickets,     tickets    [i]         );
                   ArrayPushInt   (customTypes,       types      [i]         );
-                  ArrayPushDouble(customLotSizes,    lotSize                ); if (!isVirtual) lotSizes   [i]  = NormalizeDouble(lotSizes[i]-lotSize, 2); // reduzieren
+                  ArrayPushDouble(customLots,        lotSize                ); if (!isVirtual) lots       [i]  = NormalizeDouble(lots[i]-lotSize, 2); // reduzieren
                   ArrayPushDouble(customOpenPrices,  openPrices [i]         );
-                  ArrayPushDouble(customSwaps,       swaps      [i]         ); if (!isVirtual) swaps      [i]  = NULL;                                    // komplett
-                  ArrayPushDouble(customCommissions, commissions[i] * factor); if (!isVirtual) commissions[i] *= (1-factor);                              // anteilig
-                  ArrayPushDouble(customProfits,     profits    [i] * factor); if (!isVirtual) profits    [i] *= (1-factor);                              // anteilig
+                  ArrayPushDouble(customSwaps,       swaps      [i]         ); if (!isVirtual) swaps      [i]  = NULL;                                // komplett
+                  ArrayPushDouble(customCommissions, commissions[i] * factor); if (!isVirtual) commissions[i] *= (1-factor);                          // anteilig
+                  ArrayPushDouble(customProfits,     profits    [i] * factor); if (!isVirtual) profits    [i] *= (1-factor);                          // anteilig
                   ArrayPushDouble(customAmounts,     0                      );
                   if (!isVirtual) {
                      if (types[i] == OP_BUY) longPosition        = NormalizeDouble(longPosition  - lotSize, 2);
@@ -1451,11 +1486,11 @@ bool ExtractPosition(double lotSize, int ticket,
 
 /**
  * Speichert die übergebene Teilposition zusammengefaßt (direktionaler und gehedgeter Anteil gemeinsam) in den globalen Variablen
- * local.position.types[] und local.position.data[].
+ * positions.~data[].
  *
  * @return bool - Erfolgsstatus
  */
-bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int iCommentLine, int &tickets[], int &types[], double &lotSizes[], double &openPrices[], double &commissions[], double &swaps[], double &profits[], double &amounts[]) {
+bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int iCommentLine, int &tickets[], int &types[], double &lots[], double &openPrices[], double &commissions[], double &swaps[], double &profits[], double &amounts[]) {
    isVirtual = isVirtual!=0;
 
    // Existieren zu dieser Position keine offenen Tickets mehr, wird sie übersprungen
@@ -1491,43 +1526,43 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
          if (types[i] == OP_BUY) {
             if (!remainingLong) continue;
-            if (remainingLong >= lotSizes[i]) {
+            if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice    += lotSizes   [i] * openPrices[i];
+               openPrice    += lots       [i] * openPrices[i];
                swap         += swaps      [i];
                commission   += commissions[i];
-               remainingLong = NormalizeDouble(remainingLong - lotSizes[i], 2);
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
                tickets[i]    = NULL;
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor        = remainingLong/lotSizes[i];
+               factor        = remainingLong/lots[i];
                openPrice    += remainingLong * openPrices [i];
                swap         +=                 swaps      [i]; swaps      [i]  = 0;
                commission   += factor        * commissions[i]; commissions[i] -= factor * commissions[i];
                                                                profits    [i] -= factor * profits    [i];
-                                                               lotSizes   [i]  = NormalizeDouble(lotSizes[i]-remainingLong, 2);
+                                                               lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 2);
                remainingLong = 0;
             }
          }
          else { /*OP_SELL*/
             if (!remainingShort) continue;
-            if (remainingShort >= lotSizes[i]) {
+            if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               closePrice    += lotSizes   [i] * openPrices[i];
+               closePrice    += lots       [i] * openPrices[i];
                swap          += swaps      [i];
                //commission  += commissions[i];                                                          // Commission wird nur für Long-Leg übernommen
-               remainingShort = NormalizeDouble(remainingShort - lotSizes[i], 2);
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
                tickets[i]     = NULL;
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor      = remainingShort/lotSizes[i];
+               factor      = remainingShort/lots[i];
                closePrice += remainingShort * openPrices[i];
                swap       +=                  swaps     [i]; swaps      [i]  = 0;
                                                              commissions[i] -= factor * commissions[i];  // Commission wird nur für Long-Leg übernommen
                                                              profits    [i] -= factor * profits    [i];
-                                                             lotSizes   [i]  = NormalizeDouble(lotSizes[i]-remainingShort, 2);
+                                                             lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 2);
                remainingShort = 0;
             }
          }
@@ -1544,19 +1579,19 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
       // (1.1) Kein direktionaler Anteil: Position speichern und Rückkehr
       if (!totalPosition) {
-         size = ArrayRange(local.position.types, 0);
-         ArrayResize(local.position.types, size+1);
-         ArrayResize(local.position.data,  size+1);
+         size = ArrayRange(positions.idata, 0);
+         ArrayResize(positions.idata, size+1);
+         ArrayResize(positions.ddata, size+1);
 
-         local.position.types[size][0]                = TYPE_CUSTOM + isVirtual;
-         local.position.types[size][1]                = TYPE_HEDGE;
-         local.position.types[size][2]                = iCommentLine;
-         local.position.data [size][I_DIRECT_LOTSIZE] = 0;
-         local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
-         local.position.data [size][I_BREAKEVEN     ] = pipDistance;
-         local.position.data [size][I_STOPLOSS      ] = 0;
-         local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount;
-         local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
+         positions.idata[size][I_POSITION_TYPE ] = TYPE_CUSTOM + isVirtual;
+         positions.idata[size][I_DIRECTION_TYPE] = TYPE_HEDGE;
+         positions.idata[size][I_COMMENT       ] = iCommentLine;
+         positions.ddata[size][I_DIRECT_LOTSIZE] = 0;
+         positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+         positions.ddata[size][I_BREAKEVEN     ] = pipDistance;
+         positions.ddata[size][I_STOPLOSS      ] = 0;
+         positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount;
+         positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
          return(!catch("StoreCustomPosition(3)"));
       }
    }
@@ -1576,23 +1611,23 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (!remainingLong) continue;
 
          if (types[i] == OP_BUY) {
-            if (remainingLong >= lotSizes[i]) {
+            if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice    += lotSizes   [i] * openPrices[i];
+               openPrice    += lots       [i] * openPrices[i];
                swap         += swaps      [i];
                commission   += commissions[i];
                profit       += profits    [i];
                tickets[i]    = NULL;
-               remainingLong = NormalizeDouble(remainingLong - lotSizes[i], 2);
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor        = remainingLong/lotSizes[i];
+               factor        = remainingLong/lots[i];
                openPrice    += remainingLong * openPrices [i];
                swap         +=                 swaps      [i]; swaps      [i]  = 0;
                commission   += factor        * commissions[i]; commissions[i] -= factor * commissions[i];
                profit       += factor        * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                               lotSizes   [i]  = NormalizeDouble(lotSizes[i]-remainingLong, 2);
+                                                               lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 2);
                remainingLong = 0;
             }
          }
@@ -1600,22 +1635,22 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       if (remainingLong != 0) return(!catch("StoreCustomPosition(4)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of custom long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types, size+1);
-      ArrayResize(local.position.data,  size+1);
+      size = ArrayRange(positions.idata, 0);
+      ArrayResize(positions.idata, size+1);
+      ArrayResize(positions.ddata, size+1);
 
-      local.position.types[size][0]                = TYPE_CUSTOM + isVirtual;
-      local.position.types[size][1]                = TYPE_LONG;
-      local.position.types[size][2]                = iCommentLine;
-      local.position.data [size][I_DIRECT_LOTSIZE] = totalPosition;
-      local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+      positions.idata[size][I_POSITION_TYPE ] = TYPE_CUSTOM + isVirtual;
+      positions.idata[size][I_DIRECTION_TYPE] = TYPE_LONG;
+      positions.idata[size][I_COMMENT       ] = iCommentLine;
+      positions.ddata[size][I_DIRECT_LOTSIZE] = totalPosition;
+      positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
-      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
+      positions.ddata[size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
+      positions.ddata[size][I_STOPLOSS      ] = positions.ddata[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
-      local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
-      local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
+      positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
+      positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
       return(!catch("StoreCustomPosition(5)"));
    }
 
@@ -1633,23 +1668,23 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (!remainingShort) continue;
 
          if (types[i] == OP_SELL) {
-            if (remainingShort >= lotSizes[i]) {
+            if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice     += lotSizes   [i] * openPrices[i];
+               openPrice     += lots       [i] * openPrices[i];
                swap          += swaps      [i];
                commission    += commissions[i];
                profit        += profits    [i];
                tickets[i]     = NULL;
-               remainingShort = NormalizeDouble(remainingShort - lotSizes[i], 2);
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor         = remainingShort/lotSizes[i];
+               factor         = remainingShort/lots[i];
                openPrice     += remainingShort * openPrices [i];
                swap          +=                  swaps      [i]; swaps      [i]  = 0;
                commission    += factor         * commissions[i]; commissions[i] -= factor * commissions[i];
                profit        += factor         * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                                 lotSizes   [i]  = NormalizeDouble(lotSizes[i]-remainingShort, 2);
+                                                                 lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 2);
                remainingShort = 0;
             }
          }
@@ -1657,22 +1692,22 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       if (remainingShort != 0) return(!catch("StoreCustomPosition(6)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of custom short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types, size+1);
-      ArrayResize(local.position.data,  size+1);
+      size = ArrayRange(positions.idata, 0);
+      ArrayResize(positions.idata, size+1);
+      ArrayResize(positions.ddata, size+1);
 
-      local.position.types[size][0]                = TYPE_CUSTOM + isVirtual;
-      local.position.types[size][1]                = TYPE_SHORT;
-      local.position.types[size][2]                = iCommentLine;
-      local.position.data [size][I_DIRECT_LOTSIZE] = -totalPosition;
-      local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
-         pipValue = PipValue(-totalPosition, true);                                                                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
-         if (pipValue != 0) {                                                                                        // Default-Stoploss ist -5% Equity
-      local.position.data [size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
-      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
+      positions.idata[size][I_POSITION_TYPE ] = TYPE_CUSTOM + isVirtual;
+      positions.idata[size][I_DIRECTION_TYPE] = TYPE_SHORT;
+      positions.idata[size][I_COMMENT       ] = iCommentLine;
+      positions.ddata[size][I_DIRECT_LOTSIZE] = -totalPosition;
+      positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+         pipValue = PipValue(-totalPosition, true);                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         if (pipValue != 0) {
+      positions.ddata[size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
+      positions.ddata[size][I_STOPLOSS      ] = positions.ddata[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
-      local.position.data [size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
-      local.position.data [size][I_CUSTOM_AMOUNT ] = customAmount;
+      positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
+      positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
       return(!catch("StoreCustomPosition(7)"));
    }
 
@@ -1681,11 +1716,11 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
 
 
 /**
- * Speichert die übergebenen Teilpositionen getrennt nach Long/Short/Hedge in den globalen Variablen local.position.types[] und local.position.data[].
+ * Speichert die übergebenen Teilpositionen getrennt nach Long/Short/Hedge in den globalen Variablen positions.~data[].
  *
  * @return bool - Erfolgsstatus
  */
-bool StoreRegularPositions(double longPosition, double shortPosition, double totalPosition, int &tickets[], int &types[], double &lotSizes[], double &openPrices[], double &commissions[], double &swaps[], double &profits[]) {
+bool StoreRegularPositions(double longPosition, double shortPosition, double totalPosition, int &tickets[], int &types[], double &lots[], double &openPrices[], double &commissions[], double &swaps[], double &profits[]) {
    double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, pipValue;
    int ticketsSize = ArraySize(tickets);
 
@@ -1707,25 +1742,25 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
          if (!remainingLong) continue;
 
          if (types[i] == OP_BUY) {
-            lotSizes[i] = NormalizeDouble(lotSizes[i], 2);
+            lots[i] = NormalizeDouble(lots[i], 2);
 
-            if (remainingLong >= lotSizes[i]) {
+            if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice    += lotSizes   [i] * openPrices[i];
+               openPrice    += lots       [i] * openPrices[i];
                swap         += swaps      [i];
                commission   += commissions[i];
                profit       += profits    [i];
                tickets[i]    = NULL;
-               remainingLong = NormalizeDouble(remainingLong - lotSizes[i], 2);
+               remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor        = remainingLong/lotSizes[i];
+               factor        = remainingLong/lots[i];
                openPrice    += remainingLong * openPrices [i];
                swap         +=                 swaps      [i]; swaps      [i]  = 0;
                commission   += factor        * commissions[i]; commissions[i] -= factor * commissions[i];
                profit       += factor        * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                               lotSizes   [i]  = NormalizeDouble(lotSizes[i]-remainingLong, 2);
+                                                               lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 2);
                remainingLong = 0;
             }
          }
@@ -1733,22 +1768,22 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       if (remainingLong != 0) return(!catch("StoreRegularPositions(1)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of effective long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      int size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types, size+1);
-      ArrayResize(local.position.data,  size+1);
+      int size = ArrayRange(positions.idata, 0);
+      ArrayResize(positions.idata, size+1);
+      ArrayResize(positions.ddata, size+1);
 
-      local.position.types[size][0]                = TYPE_DEFAULT;
-      local.position.types[size][1]                = TYPE_LONG;
-      local.position.types[size][2]                = -1;                   // kein Kommentar
-      local.position.data [size][I_DIRECT_LOTSIZE] = totalPosition;
-      local.position.data [size][I_HEDGED_LOTSIZE] = 0;
-         pipValue = PipValue(totalPosition, true);                         // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      positions.idata[size][I_POSITION_TYPE ] = TYPE_DEFAULT;
+      positions.idata[size][I_DIRECTION_TYPE] = TYPE_LONG;
+      positions.idata[size][I_COMMENT       ] = -1;                  // kein Kommentar
+      positions.ddata[size][I_DIRECT_LOTSIZE] = totalPosition;
+      positions.ddata[size][I_HEDGED_LOTSIZE] = 0;
+         pipValue = PipValue(totalPosition, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      local.position.data [size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
-      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
+      positions.ddata[size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
+      positions.ddata[size][I_STOPLOSS      ] = positions.ddata[size][I_BREAKEVEN] - mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
-      local.position.data [size][I_PROFIT        ] = commission + swap + profit;
-      local.position.data [size][I_CUSTOM_AMOUNT ] = 0;
+      positions.ddata[size][I_PROFIT        ] = commission + swap + profit;
+      positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
    }
 
 
@@ -1765,25 +1800,25 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
          if (!remainingShort) continue;
 
          if (types[i] == OP_SELL) {
-            lotSizes[i] = NormalizeDouble(lotSizes[i], 2);
+            lots[i] = NormalizeDouble(lots[i], 2);
 
-            if (remainingShort >= lotSizes[i]) {
+            if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice     += lotSizes   [i] * openPrices[i];
+               openPrice     += lots       [i] * openPrices[i];
                swap          += swaps      [i];
                commission    += commissions[i];
                profit        += profits    [i];
                tickets[i]     = NULL;
-               remainingShort = NormalizeDouble(remainingShort - lotSizes[i], 2);
+               remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor         = remainingShort/lotSizes[i];
+               factor         = remainingShort/lots[i];
                openPrice     += remainingShort * openPrices [i];
                swap          +=                  swaps      [i]; swaps      [i]  = 0;
                commission    += factor         * commissions[i]; commissions[i] -= factor * commissions[i];
                profit        += factor         * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                                 lotSizes   [i]  = NormalizeDouble(lotSizes[i]-remainingShort, 2);
+                                                                 lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 2);
                remainingShort = 0;
             }
          }
@@ -1791,22 +1826,22 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       if (remainingShort != 0) return(!catch("StoreRegularPositions(2)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of effective short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types, size+1);
-      ArrayResize(local.position.data,  size+1);
+      size = ArrayRange(positions.idata, 0);
+      ArrayResize(positions.idata, size+1);
+      ArrayResize(positions.ddata, size+1);
 
-      local.position.types[size][0]                = TYPE_DEFAULT;
-      local.position.types[size][1]                = TYPE_SHORT;
-      local.position.types[size][2]                = -1;                   // kein Kommentar
-      local.position.data [size][I_DIRECT_LOTSIZE] = -totalPosition;
-      local.position.data [size][I_HEDGED_LOTSIZE] = 0;
-         pipValue = PipValue(-totalPosition, true);                        // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      positions.idata[size][I_POSITION_TYPE ] = TYPE_DEFAULT;
+      positions.idata[size][I_DIRECTION_TYPE] = TYPE_SHORT;
+      positions.idata[size][I_COMMENT       ] = -1;                  // kein Kommentar
+      positions.ddata[size][I_DIRECT_LOTSIZE] = -totalPosition;
+      positions.ddata[size][I_HEDGED_LOTSIZE] = 0;
+         pipValue = PipValue(-totalPosition, true);                  // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      local.position.data [size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
-      local.position.data [size][I_STOPLOSS      ] = local.position.data[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
+      positions.ddata[size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
+      positions.ddata[size][I_STOPLOSS      ] = positions.ddata[size][I_BREAKEVEN] + mm.stoploss/100*(AccountEquity()-AccountCredit())/pipValue*Pips;
          }
-      local.position.data [size][I_PROFIT        ] = commission + swap + profit;
-      local.position.data [size][I_CUSTOM_AMOUNT ] = 0;
+      positions.ddata[size][I_PROFIT        ] = commission + swap + profit;
+      positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
    }
 
 
@@ -1820,50 +1855,50 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       swap           = 0;
       commission     = 0;
 
-      for (i=ticketsSize-1; i >= 0; i--) {                                 // jüngstes Ticket zuerst
+      for (i=ticketsSize-1; i >= 0; i--) {                           // jüngstes Ticket zuerst
          if (!tickets[i]) continue;
-         lotSizes[i] = NormalizeDouble(lotSizes[i], 2);
+         lots[i] = NormalizeDouble(lots[i], 2);
 
          if (types[i] == OP_BUY) {
             if (!remainingLong) continue;
-            if (remainingLong < lotSizes[i]) return(!catch("StoreRegularPositions(3)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
+            if (remainingLong < lots[i]) return(!catch("StoreRegularPositions(3)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
 
             // Daten komplett übernehmen, Ticket auf NULL setzen
-            openPrice    += lotSizes   [i] * openPrices[i];
+            openPrice    += lots       [i] * openPrices[i];
             swap         += swaps      [i];
             commission   += commissions[i];
-            remainingLong = NormalizeDouble(remainingLong - lotSizes[i], 2);
+            remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
             tickets[i]    = NULL;
          }
          else { /*OP_SELL*/
             if (!remainingShort) continue;
-            if (remainingShort < lotSizes[i]) return(!catch("StoreRegularPositions(4)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
+            if (remainingShort < lots[i]) return(!catch("StoreRegularPositions(4)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
 
             // Daten komplett übernehmen, Ticket auf NULL setzen
-            closePrice    += lotSizes   [i] * openPrices[i];
+            closePrice    += lots       [i] * openPrices[i];
             swap          += swaps      [i];
-            //commission  += commissions[i];                               // Commissions nur für eine Seite übernehmen
-            remainingShort = NormalizeDouble(remainingShort - lotSizes[i], 2);
+            //commission  += commissions[i];                         // Commissions nur für eine Seite übernehmen
+            remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
             tickets[i]     = NULL;
          }
       }
 
       // Position speichern
-      size = ArrayRange(local.position.types, 0);
-      ArrayResize(local.position.types, size+1);
-      ArrayResize(local.position.data,  size+1);
+      size = ArrayRange(positions.idata, 0);
+      ArrayResize(positions.idata, size+1);
+      ArrayResize(positions.ddata, size+1);
 
-      local.position.types[size][0]                = TYPE_DEFAULT;
-      local.position.types[size][1]                = TYPE_HEDGE;
-      local.position.types[size][2]                = -1;                   // kein Kommentar
-      local.position.data [size][I_DIRECT_LOTSIZE] = 0;
-      local.position.data [size][I_HEDGED_LOTSIZE] = hedgedLotSize;
-         pipValue = PipValue(hedgedLotSize, true);                         // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      positions.idata[size][I_POSITION_TYPE ] = TYPE_DEFAULT;
+      positions.idata[size][I_DIRECTION_TYPE] = TYPE_HEDGE;
+      positions.idata[size][I_COMMENT       ] = -1;                  // kein Kommentar
+      positions.ddata[size][I_DIRECT_LOTSIZE] = 0;
+      positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
+         pipValue = PipValue(hedgedLotSize, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      local.position.data [size][I_BREAKEVEN     ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
-      local.position.data [size][I_STOPLOSS      ] = 0;
-      local.position.data [size][I_PROFIT        ] = local.position.data[size][I_BREAKEVEN] * pipValue;
-      local.position.data [size][I_CUSTOM_AMOUNT ] = 0;
+      positions.ddata[size][I_BREAKEVEN     ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
+      positions.ddata[size][I_STOPLOSS      ] = 0;
+      positions.ddata[size][I_PROFIT        ] = positions.ddata[size][I_BREAKEVEN] * pipValue;
+      positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
    }
 
    return(!catch("StoreRegularPositions(5)"));
@@ -1949,9 +1984,9 @@ bool ProcessLfxTerminalMessage(string message) {
    if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
       int size = ArrayRange(lfxOrders, 0);
       for (int i=0; i < size; i++) {
-         if (lfxOrders.iVolatile[i][I_TICKET] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
-            if (lfxOrders.iVolatile[i][I_ISOPEN] && !lfxOrders.iVolatile[i][I_ISLOCKED])
-               lfxOrders.dVolatile[i][I_VPROFIT] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
+         if (lfxOrders.ivolatile[i][I_TICKET] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
+            if (lfxOrders.ivolatile[i][I_ISOPEN] && !lfxOrders.ivolatile[i][I_ISLOCKED])
+               lfxOrders.dvolatile[i][I_VPROFIT] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
             break;
          }
       }
@@ -1992,12 +2027,12 @@ bool ProcessLfxTerminalMessage(string message) {
  */
 bool RestoreLfxStatusFromFiles() {
    // Sind wir nicht in einem init-Cycle, werden die vorhandenen volatilen Daten vorm Überschreiben gespeichert.
-   if (ArrayRange(lfxOrders.iVolatile, 0) > 0) {
+   if (ArrayRange(lfxOrders.ivolatile, 0) > 0) {
       if (!SaveVolatileLfxStatus())
          return(false);
    }
-   ArrayResize(lfxOrders.iVolatile, 0);
-   ArrayResize(lfxOrders.dVolatile, 0);
+   ArrayResize(lfxOrders.ivolatile, 0);
+   ArrayResize(lfxOrders.dvolatile, 0);
    lfxOrders.openPositions = 0;
 
 
@@ -2005,28 +2040,28 @@ bool RestoreLfxStatusFromFiles() {
    int size = LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders);
    if (size == -1)
       return(false);
-   ArrayResize(lfxOrders.iVolatile, size);
-   ArrayResize(lfxOrders.dVolatile, size);
+   ArrayResize(lfxOrders.ivolatile, size);
+   ArrayResize(lfxOrders.dvolatile, size);
 
 
    // Zähler der offenen Positionen und volatile P/L-Daten aktualisieren
    for (int i=0; i < size; i++) {
-      lfxOrders.iVolatile[i][I_TICKET] = los.Ticket(lfxOrders, i);
-      lfxOrders.iVolatile[i][I_ISOPEN] = los.IsOpen(lfxOrders, i);
-      if (lfxOrders.iVolatile[i][I_ISOPEN] == 0) {
-         lfxOrders.dVolatile[i][I_VPROFIT] = 0;
+      lfxOrders.ivolatile[i][I_TICKET] = los.Ticket(lfxOrders, i);
+      lfxOrders.ivolatile[i][I_ISOPEN] = los.IsOpen(lfxOrders, i);
+      if (lfxOrders.ivolatile[i][I_ISOPEN] == 0) {
+         lfxOrders.dvolatile[i][I_VPROFIT] = 0;
          continue;
       }
       lfxOrders.openPositions++;
 
-      string varName = StringConcatenate("LFX.#", lfxOrders.iVolatile[i][I_TICKET], ".profit");
+      string varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
       double value   = GlobalVariableGet(varName);
       if (!value) {                                                  // 0 oder Fehler
          int error = GetLastError();
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
             return(!catch("RestoreLfxStatusFromFiles(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
       }
-      lfxOrders.dVolatile[i][I_VPROFIT] = value;
+      lfxOrders.dvolatile[i][I_VPROFIT] = value;
    }
    return(true);
 }
@@ -2038,7 +2073,7 @@ bool RestoreLfxStatusFromFiles() {
  * @return bool - Erfolgsstatus
  */
 bool RestoreLfxStatusFromLib() {
-   int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile);
+   int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile);
    if (size == -1)
       return(!SetLastError(ERR_RUNTIME_ERROR));
 
@@ -2046,7 +2081,7 @@ bool RestoreLfxStatusFromLib() {
 
    // Zähler der offenen Positionen aktualisieren
    for (int i=0; i < size; i++) {
-      if (lfxOrders.iVolatile[i][I_ISOPEN] != 0)
+      if (lfxOrders.ivolatile[i][I_ISOPEN] != 0)
          lfxOrders.openPositions++;
    }
    return(true);
@@ -2060,15 +2095,15 @@ bool RestoreLfxStatusFromLib() {
  */
 bool SaveVolatileLfxStatus() {
    string varName;
-   int size = ArrayRange(lfxOrders.iVolatile, 0);
+   int size = ArrayRange(lfxOrders.ivolatile, 0);
 
    for (int i=0; i < size; i++) {
-      if (lfxOrders.iVolatile[i][I_ISOPEN] != 0) {
-         varName = StringConcatenate("LFX.#", lfxOrders.iVolatile[i][I_TICKET], ".profit");
+      if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
+         varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
 
-         if (!GlobalVariableSet(varName, lfxOrders.dVolatile[i][I_VPROFIT])) {
+         if (!GlobalVariableSet(varName, lfxOrders.dvolatile[i][I_VPROFIT])) {
             int error = GetLastError();
-            return(!catch("SaveVolatileLfxStatus(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dVolatile[i][I_VPROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("SaveVolatileLfxStatus(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
       }
    }
@@ -2195,6 +2230,228 @@ bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ti
       data[i][1] = ticket;                                           // Originaldaten mit den sortierten Werten überschreiben
    }
    return(!catch("SortSameOpens()"));
+}
+
+
+/**
+ * Aufruf nur in ChartInfos::AnalyzePositions()
+ *
+ * Schickt den aktuellen P/L der offenen LFX-Positionen ans LFX-Terminal, wenn er sich seit dem letzten Aufruf geändert hat.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
+   double lastLfxProfit;
+   string lfxMessages[]; ArrayResize(lfxMessages, 0); ArrayResize(lfxMessages, ArraySize(hQC.TradeToLfxSenders));    // 2 x ArrayResize() = ArrayInitialize()
+   string globalVarLfxProfit;
+
+   for (int i=ArraySize(lfxMagics)-1; i > 0; i--) {                  // Index 0 ist unbenutzt
+      // (1) prüfen, ob sich der aktuelle vom letzten verschickten Wert unterscheidet
+      globalVarLfxProfit = StringConcatenate("LFX.#", lfxMagics[i], ".profit");
+      lastLfxProfit      = GlobalVariableGet(globalVarLfxProfit);
+      if (!lastLfxProfit) {                                          // 0 oder Fehler
+         int error = GetLastError();
+         if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
+            return(!catch("LFX.ProcessProfits(1)->GlobalVariableGet()", error));
+      }
+
+      // TODO: Prüfung auf Wertänderung nur innerhalb der Woche, nicht am Wochenende
+
+      if (EQ(lfxProfits[i], lastLfxProfit)) {                        // Wert hat sich nicht geändert
+         lfxMagics[i] = NULL;                                        // MagicNumber zurücksetzen, um in (4) Marker für Speichern in globaler Variable zu haben
+         continue;
+      }
+
+      // (2) geänderten Wert zu Messages des entsprechenden Channels hinzufügen (Messages eines Channels werden gemeinsam, nicht einzeln verschickt)
+      int cid = LFX.CurrencyId(lfxMagics[i]);
+      if (!StringLen(lfxMessages[cid])) lfxMessages[cid] = StringConcatenate(                       "LFX:", lfxMagics[i], ":profit=", DoubleToStr(lfxProfits[i], 2));
+      else                              lfxMessages[cid] = StringConcatenate(lfxMessages[cid], TAB, "LFX:", lfxMagics[i], ":profit=", DoubleToStr(lfxProfits[i], 2));
+   }
+
+   // (3) angesammelte Messages verschicken: Messages je Channel werden gemeinsam, nicht einzeln verschickt, um beim Empfänger unnötige Ticks zu vermeiden
+   for (i=ArraySize(lfxMessages)-1; i > 0; i--) {                    // Index 0 ist unbenutzt
+      if (StringLen(lfxMessages[i]) > 0) {
+         if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartTradeToLfxSender(i))
+            return(false);
+         if (!QC_SendMessage(hQC.TradeToLfxSenders[i], lfxMessages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
+            return(!catch("LFX.ProcessProfits(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+      }
+   }
+
+   // (4) verschickte Werte jeweils in globaler Variable speichern
+   for (i=ArraySize(lfxMagics)-1; i > 0; i--) {                      // Index 0 ist unbenutzt
+      // Marker aus (1) verwenden: MagicNumbers unveränderter Werte wurden zurückgesetzt
+      if (lfxMagics[i] != 0) {
+         globalVarLfxProfit = StringConcatenate("LFX.#", lfxMagics[i], ".profit");
+         if (!GlobalVariableSet(globalVarLfxProfit, lfxProfits[i])) {
+            error = GetLastError();
+            return(!catch("LFX.ProcessProfits(3)->GlobalVariableSet(name=\""+ globalVarLfxProfit +"\", value="+ lfxProfits[i] +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+         }
+      }
+   }
+
+   return(!catch("LFX.ProcessProfits(4)"));
+}
+
+
+/**
+ * Liest die aktuell offenen externen Positionen des konfigurierten Signals ein. Die Positionen sind bereits aufsteigend nach {OpenTime,Ticket}
+ * gespeichert und müssen nicht nochmal sortiert werden.
+ *
+ * @param  string provider - Signalprovider
+ * @param  string signal   - Signal
+ *
+ * @return int - Anzahl der gelesenen Positionen oder -1 (EMPTY), falls ein Fehler auftrat
+ */
+int ReadExternalPositions(string provider, string signal) {
+   // (1) Parametervaliderung
+   if (provider != "simpletrader") return(_EMPTY(catch("ReadExternalPositions(1)   invalid parameter provider = \""+ provider +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if      (signal == "alexprofit"  ) {}
+   else if (signal == "caesar2"     ) {}
+   else if (signal == "caesar21"    ) {}
+   else if (signal == "dayfox"      ) {}
+   else if (signal == "fxviper"     ) {}
+   else if (signal == "goldstar"    ) {}
+   else if (signal == "smartscalper") {}
+   else if (signal == "smarttrader" ) {}
+   else                            return(_EMPTY(catch("ReadExternalPositions(2)   invalid parameter signal = \""+ signal +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   ArrayResize(external.ticket    , 0);
+   ArrayResize(external.type      , 0);
+   ArrayResize(external.lots      , 0);
+   ArrayResize(external.openTime  , 0);
+   ArrayResize(external.openPrice , 0);
+   ArrayResize(external.takeProfit, 0);
+   ArrayResize(external.stoploss  , 0);
+   ArrayResize(external.commission, 0);
+   ArrayResize(external.swap      , 0);
+   ArrayResize(external.profit    , 0);
+
+
+   // (2) alle Schlüssel einlesen
+   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_open.positions.ini";
+   string section = StringConcatenate(provider, ".", signal);
+   string keys[], symbol = StdSymbol();
+   int keysSize = GetIniKeys(file, section, keys);
+
+
+   // (3) Schlüssel gegen aktuelles Symbol prüfen und Positionen einlesen
+   for (int i=0; i < keysSize; i++) {
+      string key = keys[i];
+      if (StringStartsWith(key, symbol +".")) {
+
+         // (3.1) Zeile lesen
+         string value = GetIniString(file, section, key, "");
+         if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(3)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
+
+         // (3.2) Positionsdaten validieren
+         //Symbol.Ticket = Type, Lots, OpenTime, OpenPrice, TakeProfit, StopLoss, Commission, Swap, MagicNumber, Comment
+         string sValue, values[];
+         if (Explode(value, ",", values, NULL) != 10) return(_EMPTY(catch("ReadExternalPositions(4)   invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // Ticket
+         sValue = StringRight(key, -StringLen(symbol));
+         if (StringGetChar(sValue, 0) != '.')         return(_EMPTY(catch("ReadExternalPositions(5)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         sValue = StringSubstr(sValue, 1);
+         if (!StringIsDigit(sValue))                  return(_EMPTY(catch("ReadExternalPositions(6)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         int _ticket = StrToInteger(sValue);
+         if (_ticket <= 0)                            return(_EMPTY(catch("ReadExternalPositions(7)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // Type
+         sValue = StringTrim(values[0]);
+         int _type = StrToOperationType(sValue);
+         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(8)   invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // Lots
+         sValue = StringTrim(values[1]);
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(9)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         double _lots = StrToDouble(sValue);
+         if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(10)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _lots = NormalizeDouble(_lots, 2);
+
+         // OpenTime
+         sValue = StringTrim(values[2]);
+         datetime _openTime = StrToTime(sValue);
+         if (!_openTime)                              return(_EMPTY(catch("ReadExternalPositions(11)   invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // OpenPrice
+         sValue = StringTrim(values[3]);
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(12)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         double _openPrice = StrToDouble(sValue);
+         if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(13)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _openPrice = NormalizeDouble(_openPrice, Digits);
+
+         // TakeProfit
+         sValue = StringTrim(values[4]);
+         double _takeProfit = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(14)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _takeProfit = StrToDouble(sValue);
+            if (_takeProfit < 0)                      return(_EMPTY(catch("ReadExternalPositions(15)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _takeProfit = NormalizeDouble(_takeProfit, Digits);
+         }
+
+         // StopLoss
+         sValue = StringTrim(values[5]);
+         double _stopLoss = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(16)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _stopLoss = StrToDouble(sValue);
+            if (_stopLoss < 0)                        return(_EMPTY(catch("ReadExternalPositions(17)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _stopLoss = NormalizeDouble(_stopLoss, Digits);
+         }
+
+         // Commission
+         sValue = StringTrim(values[6]);
+         double _commission = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(18)   invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _commission = NormalizeDouble(StrToDouble(sValue), 2);
+         }
+
+         // Swap
+         sValue = StringTrim(values[7]);
+         double _swap = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(19)   invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _swap = NormalizeDouble(StrToDouble(sValue), 2);
+         }
+
+         // MagicNumber: vorerst nicht benötigt
+         // Comment:     vorerst nicht benötigt
+
+         // (3.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
+         int oldSize=ArraySize(external.ticket), newSize=oldSize+1;
+         ArrayResize(external.ticket    , newSize);
+         ArrayResize(external.type      , newSize);
+         ArrayResize(external.lots      , newSize);
+         ArrayResize(external.openTime  , newSize);
+         ArrayResize(external.openPrice , newSize);
+         ArrayResize(external.takeProfit, newSize);
+         ArrayResize(external.stoploss  , newSize);
+         ArrayResize(external.commission, newSize);
+         ArrayResize(external.swap      , newSize);
+         ArrayResize(external.profit    , newSize);
+
+         external.ticket    [oldSize] = _ticket;
+         external.type      [oldSize] = _type;
+         external.lots      [oldSize] = _lots;
+         external.openTime  [oldSize] = _openTime;
+         external.openPrice [oldSize] = _openPrice;
+         external.takeProfit[oldSize] = _takeProfit;
+         external.stoploss  [oldSize] = _stopLoss;
+         external.commission[oldSize] = _commission;
+         external.swap      [oldSize] = _swap;
+         external.profit    [oldSize] = NULL;
+      }
+   }
+   ArrayResize(keys,   0);
+   ArrayResize(values, 0);
+
+   if (!catch("ReadExternalPositions(20)"))
+      return(ArraySize(external.ticket));
+   return(-1);
 }
 
 
