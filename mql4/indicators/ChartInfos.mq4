@@ -947,14 +947,18 @@ bool AnalyzePositions() {
       openPositions = ArraySize(external.ticket);
 
       // offene Positionen werden nur in init() oder nach entsprechendem Event neu eingelesen
-      static bool external.lots.checked;                                // TODO: Status bei Event zurücksetzen
+      static double external.long,external.short;                       // TODO: Status bei Event zurücksetzen
+      static bool   external.lots.checked;
       if (!external.lots.checked) {
          for (i=0; i < openPositions; i++) {                            // Gesamtposition je Richtung aufaddieren
-            if (external.type[i] == OP_BUY) longPosition  += external.lots[i];
-            else                            shortPosition += external.lots[i];
+            if (external.type[i] == OP_BUY) external.long  += external.lots[i];
+            else                            external.short += external.lots[i];
          }
          external.lots.checked = true;
       }
+      longPosition  = external.long;
+      shortPosition = external.short;
+
       if (openPositions > 0) {
          ArrayCopy(tickets    , external.ticket    );                   // ExtractPosition() modifiziert die übergebenen Arrays, also jedesmal
          ArrayCopy(types      , external.type      );                   // Kopie der Originaldaten erstellen
@@ -963,6 +967,10 @@ bool AnalyzePositions() {
          ArrayCopy(commissions, external.commission);
          ArrayCopy(swaps      , external.swap      );
          ArrayCopy(profits    , external.profit    );
+
+         for (i=0; i < openPositions; i++) {
+            profits[i] = ifDouble(types[i]==OP_LONG, Bid-openPrices[i], openPrices[i]-Ask)/Pips * PipValue(lots[i], true); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         }
       }
    }
 
@@ -971,6 +979,8 @@ bool AnalyzePositions() {
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
+
+   //debug("AnalyzePositions()   extern="+ mode.extern +"  open="+ openPositions +"  long="+ NumberToStr(longPosition, ".+") +"  short="+ NumberToStr(shortPosition, ".+") +"  isPosition="+ isPosition);
 
 
    // (2) Positionen analysieren und in positions.~data[] speichern
@@ -2422,7 +2432,7 @@ int ReadExternalPositions(string provider, string signal) {
          // Comment:     vorerst nicht benötigt
 
          // (3.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
-         int oldSize=ArraySize(external.ticket), newSize=oldSize+1;
+         int size=ArraySize(external.ticket), newSize=size+1;
          ArrayResize(external.ticket    , newSize);
          ArrayResize(external.type      , newSize);
          ArrayResize(external.lots      , newSize);
@@ -2434,16 +2444,16 @@ int ReadExternalPositions(string provider, string signal) {
          ArrayResize(external.swap      , newSize);
          ArrayResize(external.profit    , newSize);
 
-         external.ticket    [oldSize] = _ticket;
-         external.type      [oldSize] = _type;
-         external.lots      [oldSize] = _lots;
-         external.openTime  [oldSize] = _openTime;
-         external.openPrice [oldSize] = _openPrice;
-         external.takeProfit[oldSize] = _takeProfit;
-         external.stoploss  [oldSize] = _stopLoss;
-         external.commission[oldSize] = _commission;
-         external.swap      [oldSize] = _swap;
-         external.profit    [oldSize] = NULL;
+         external.ticket    [size] = _ticket;
+         external.type      [size] = _type;
+         external.lots      [size] = _lots;
+         external.openTime  [size] = _openTime;
+         external.openPrice [size] = _openPrice;
+         external.takeProfit[size] = _takeProfit;
+         external.stoploss  [size] = _stopLoss;
+         external.commission[size] = _commission;
+         external.swap      [size] = _swap;
+         external.profit    [size] = ifDouble(_type==OP_LONG, Bid-_openPrice, _openPrice-Ask)/Pips * PipValue(_lots, true);   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       }
    }
    ArrayResize(keys,   0);
