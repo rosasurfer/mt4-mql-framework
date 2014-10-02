@@ -18,7 +18,7 @@ int onDeinit() {
  */
 int onDeinitParameterChange() {
    // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
-   if (ChartInfos.CopyLfxStatus(true, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile) == -1)
+   if (ChartInfos.CopyLfxStatus(true, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
@@ -32,7 +32,7 @@ int onDeinitParameterChange() {
  */
 int onDeinitChartChange() {
    // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
-   if (ChartInfos.CopyLfxStatus(true, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile) == -1)
+   if (ChartInfos.CopyLfxStatus(true, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
