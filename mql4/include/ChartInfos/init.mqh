@@ -20,7 +20,7 @@ int onInit() {
    }
    else {
       string value = StringToLower(StringTrim(Track.Signal));
-      if (AccountNumber()=={account-no} && Symbol()=="EURUSD") value = "simpletrader.alexprofit";
+      if (AccountNumber()=={account-no} && Symbol()=="EURUSD") value = "simpletrader.caesar2";
       if (AccountNumber()=={account-no} && Symbol()=="NZDUSD") value = "simpletrader.dayfox";
       if (AccountNumber()=={account-no} && Symbol()=="XAUUSD") value = "simpletrader.goldstar";
 
