@@ -2,12 +2,10 @@
  *  SnowRoller - Pyramiding Trade Manager
  *  -------------------------------------
  *
- *
  *  TODO:
  *  -----
- *  - Multi-Sequenz-Management implementieren                                                   *
- *  - Equity-Charts: Schreiben aus Online-Chart                                                 *
- *  - Laufzeitumgebung auf Server einrichten                                                    *
+ *  - Multi-Sequenz-Management implementieren                                          *
+ *  - Equity-Charts: Schreiben aus Online-Chart                                        *
  *
  *  - Sequenz-IDs auf Eindeutigkeit prüfen
  *  - im Tester fortlaufende Sequenz-IDs generieren
