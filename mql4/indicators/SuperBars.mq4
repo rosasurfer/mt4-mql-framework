@@ -189,8 +189,8 @@ int onDeinitRecompile() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   HandleEvent(EVENT_CHART_CMD);    // ChartCommands verarbeiten
-   UpdateSuperBars();               // SuperBars aktualisieren
+   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
+   UpdateSuperBars();                                                // SuperBars aktualisieren
    return(last_error);
 }
 
@@ -593,7 +593,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
 /**
  * Prüft, ob seit dem letzten Aufruf ein ChartCommand für diesen Indikator eingetroffen ist.
  *
- * @param  string commands[] - Array zur Aufnahme aller eingetroffenen Commands
+ * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
  * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
@@ -602,7 +602,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    if (!IsChart)
       return(false);
 
-   static string label="SuperBar.command", mutex="mutex.SuperBarCommand";
+   static string label="SuperBar.command", mutex="mutex.SuperBar.command";
 
 
    // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen

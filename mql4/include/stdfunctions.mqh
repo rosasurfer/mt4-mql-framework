@@ -1586,7 +1586,7 @@ int ResetLastError() {
  * @return bool - ob mindestens eines der angegebenen Events aufgetreten ist
  *
  *
- * NOTE: Statt dieser Funktion HandleEvent() benutzen, um für die Prüfung weitere event-spezifische Parameter anzugeben.
+ * NOTE: Statt dieser Funktion kann HandleEvent() benutzt werden, um für die Prüfung weitere event-spezifische Parameter anzugeben.
  */
 bool HandleEvents(int events) {
    int status = 0;
@@ -1608,13 +1608,14 @@ bool HandleEvents(int events) {
 
 
 /**
- * Prüft, ob ein Event aufgetreten ist und ruft bei Zutreffen dessen Eventhandler auf. Ermöglicht die Angabe weiterer
+ * Prüft, ob ein Event aufgetreten ist und ruft ggf. dessen Eventhandler auf. Ermöglicht die Angabe weiterer
  * eventspezifischer Prüfungskriterien.
  *
  * @param  int event    - Event-Flag
  * @param  int criteria - weitere eventspezifische Prüfungskriterien (default: keine)
  *
- * @return int - 1, wenn das Event aufgetreten ist; andererseits 0
+ * @return int - 1, wenn ein Event aufgetreten ist;
+ *               0  andererseits
  */
 int HandleEvent(int event, int criteria=NULL) {
    bool   status;
