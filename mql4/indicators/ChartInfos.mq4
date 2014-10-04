@@ -616,10 +616,10 @@ bool UpdatePositions() {
 
 
    // (2) Einzelpositionsanzeige unten links
-   // Spalten:           Direction:, LotSize, BE:, BePrice, SL:, SlPrice, Profit:, ProfitAmount, Comment
-   int col.xShifts[]  = {20,         59,      135, 160,     231, 252,     323,     355,          445}, cols=ArraySize(col.xShifts), yDist=3;
-   int localPositions = ArrayRange(positions.idata, 0);
-   int positions      = localPositions + lfxOrders.openPositions;    // nur einer der beiden Werte kann ungleich 0 sein
+   // Spalten:          Direction:, LotSize, BE:, BePrice, SL:, SlPrice, Profit:, ProfitAmount, Comment
+   int col.xShifts[] = {20,         59,      135, 160,     231, 252,     323,     355,          470}, cols=ArraySize(col.xShifts), yDist=3;
+   int iePositions   = ArrayRange(positions.idata, 0);
+   int positions     = iePositions + lfxOrders.openPositions;        // nur einer der beiden Werte kann ungleich 0 sein
 
    // (2.1) zusätzlich benötigte Zeilen hinzufügen
    static int lines;
@@ -651,8 +651,8 @@ bool UpdatePositions() {
    string strLotSize, strCustomAmount, comment, strTypes[]={"", "Long:", "Short:", "Hedge:"};  // DirectionTypes (1, 2, 3) werden als Indizes benutzt
    int line;
 
-   // lokale Positionsdaten
-   for (int i=localPositions-1; i >= 0; i--) {
+   // interne/externe Positionsdaten
+   for (int i=iePositions-1; i >= 0; i--) {
       line++;
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HEDGE) {
          ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                    positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
@@ -670,7 +670,7 @@ bool UpdatePositions() {
             if (!positions.ddata[i][I_PROFIT])
          ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
             else { if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
-                   else                                      strCustomAmount = "   ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
+                   else                                      strCustomAmount = " ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
          ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
             }
       }
@@ -690,7 +690,7 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(RoundEx(positions.ddata[i][I_STOPLOSS], Digits), PriceFormat),                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
          ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
             if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
-            else                                      strCustomAmount = "   ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
+            else                                      strCustomAmount = " ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
          ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
       }
 
