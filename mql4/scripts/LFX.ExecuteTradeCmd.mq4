@@ -25,7 +25,7 @@ string command = "";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int    lfxTicket;                         // geparste Details des übergebenen TradeCommands
+int    lfxTicket;                                                    // geparste Details des übergebenen TradeCommands
 string action;
 double leverage;
 
@@ -49,7 +49,7 @@ int onInit() {
    if (i >= size) return(catch("onInit(1)   missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
 
 
-   // (2) Scriptparameter validieren, Format: "LFX:{iTicket}:{Action}", z.B. "LFX:428371265:open"
+   // (2) Scriptparameter validieren, Format: "LFX:{iTicket}:{sAction}", z.B. "LFX:428371265:open"
    if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)   invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
    int pos = StringFind(command, ":", 4);
    if (pos == -1)                                   return(catch("onInit(3)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));

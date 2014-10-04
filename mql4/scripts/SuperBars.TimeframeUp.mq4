@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
    // (1) Schreibzugriff auf Command-Object synchronisieren (Lesen ist ohne Lock möglich)
-   string mutex = "mutex.SuperBarCommand";
+   string mutex = "mutex.SuperBar.command";
    if (!AquireLock(mutex, true))
       return(SetLastError(stdlib.GetLastError()));
 
