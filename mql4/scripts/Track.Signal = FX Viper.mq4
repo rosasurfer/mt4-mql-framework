@@ -28,7 +28,7 @@ int onStart() {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))                return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
       if (!ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_int(catch("onStart(2)"), ReleaseLock(mutex)));
    }
-   if (!ObjectSetText(label, "Track.Signal=fxviper"))              return(_int(catch("onStart(3)"), ReleaseLock(mutex)));
+   if (!ObjectSetText(label, "Track.Signal=simpletrader.fxviper")) return(_int(catch("onStart(3)"), ReleaseLock(mutex)));
 
 
    // (3) Schreibzugriff auf Command-Object freigeben

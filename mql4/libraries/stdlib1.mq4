@@ -1397,13 +1397,13 @@ bool IsIniKey(string fileName, string section, string key) {
  * @param  string section  - Abschnitt des Schlüssels
  * @param  string key      - zu löschender Schlüssel
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int DeleteIniKey(string fileName, string section, string key) {
+bool DeleteIniKey(string fileName, string section, string key) {
    string sNull;
    if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(catch("DeleteIniKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")", ERR_WIN32_ERROR));
-   return(NO_ERROR);
+      return(!catch("DeleteIniKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")", ERR_WIN32_ERROR));
+   return(true);
 }
 
 

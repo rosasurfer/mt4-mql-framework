@@ -312,7 +312,7 @@
    string   GetIniString(string fileName, string section, string key, string defaultValue);
    string   GetRawIniString(string fileName, string section, string key, string defaultValue);
    bool     IsIniKey(string fileName, string section, string key);
-   int      DeleteIniKey(string fileName, string section, string key);
+   bool     DeleteIniKey(string fileName, string section, string key);
 
    bool     EditFile (string filename   );
    bool     EditFiles(string filenames[]);

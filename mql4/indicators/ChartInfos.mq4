@@ -18,13 +18,6 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
-
-////////////////////////////////////////////////////////////////////////////// Externe Parameter //////////////////////////////////////////////////////////////////////////////
-
-extern string Track.Signal = "";
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 #include <core/indicator.mqh>
 
 #include <MT4iQuickChannel.mqh>
@@ -36,7 +29,7 @@ extern string Track.Signal = "";
 #include <structs/pewa/LFX_ORDER.mqh>
 
 
-// Instrument-/Kursanzeige
+// Kursanzeige
 int appliedPrice = PRICE_MEDIAN;                                     // Preis: Bid | Ask | Median (default)
 
 
@@ -69,12 +62,11 @@ bool   mode.intern;                                                  //   eingel
 bool   mode.extern;                                                  // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
 bool   mode.remote;                                                  //   oder nach Eintreffen einer entsprechenden Nachricht zurückgesetzt und aus der Quelle neu eingelesen,
                                                                      //   Orderänderungen werden nicht automatisch erkannt.
-string signalProvider;
-string signal;
 
 // individuelle Positionskonfiguration
 double custom.position.conf      [][2];                              // Format siehe ReadCustomPositionConfig()
 string custom.position.conf.comments[];
+
 
 // interne + externe Positionsdaten
 bool   isPosition;                                                   // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
@@ -106,6 +98,8 @@ double positions.ddata[][6];                                         //         
 
 
 // externe Positionen
+string   external.provider = "";
+string   external.signal   = "";
 int      external.ticket    [];
 int      external.type      [];
 double   external.lots      [];
@@ -116,6 +110,8 @@ double   external.stoploss  [];
 double   external.commission[];
 double   external.swap      [];
 double   external.profit    [];
+bool     external.lots.checked;
+double   external.longPosition, external.shortPosition;
 
 
 // LFX-Positionensdaten (remote)
@@ -157,28 +153,142 @@ color  positions.fontColors[] = {Blue, Blue, Green};                 // untersch
  * @return int - Fehlerstatus
  */
 int onTick() {
+   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
+
    mm.done           = false;
    positionsAnalyzed = false;
 
-   if (!UpdatePrice())                       return(last_error);
-   if (!UpdateOHLC())                        return(last_error);
+   if (!UpdatePrice())                     return(last_error);
+   if (!UpdateOHLC())                      return(last_error);
 
    if (isLfxInstrument) {
-      if (!QC.HandleLfxTerminalMessages())   return(last_error);     // Listener für beim LFX-Terminal eingehende Messages
-      if (!UpdatePositions())                return(last_error);
-      if (!CheckLfxLimits())                 return(last_error);
+      if (!QC.HandleLfxTerminalMessages()) return(last_error);       // Listener für beim LFX-Terminal eingehende Messages
+      if (!UpdatePositions())              return(last_error);
+      if (!CheckLfxLimits())               return(last_error);
    }
    else {
-      if (!QC.HandleTradeTerminalMessages()) return(last_error);     // Listener für beim Trade-Terminal eingehende Messages
-      if (!UpdateSpread())                   return(last_error);
-      if (!UpdateUnitSize())                 return(last_error);
-      if (!UpdatePositions())                return(last_error);
-      if (!UpdateStopoutLevel())             return(last_error);
+      if (!QC.HandleTradeCommands())       return(last_error);       // Listener für beim Terminal eingehende Trade-Commands
+      if (!UpdateSpread())                 return(last_error);
+      if (!UpdateUnitSize())               return(last_error);
+      if (!UpdatePositions())              return(last_error);
+      if (!UpdateStopoutLevel())           return(last_error);
    }
 
    if (IsVisualMode())                                               // nur im Tester
       UpdateTime();
    return(last_error);
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein ChartCommand für diesen Indikator eingetroffen ist.
+ *
+ * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
+ * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
+   if (!IsChart)
+      return(false);
+
+   static string label, mutex; if (!StringLen(label)) {
+      label = __NAME__ +".command";
+      mutex = "mutex."+ label;
+   }
+
+   // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
+   if (ObjectFind(label) == 0) {
+
+      // (2) erst wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
+      if (!AquireLock(mutex, true))
+         return(!SetLastError(stdlib.GetLastError()));
+
+      // (3) Command auslesen und Command-Object löschen
+      ArrayResize(commands, 1);
+      commands[0] = ObjectDescription(label);
+      ObjectDelete(label);
+
+      // (4) Lock wieder freigeben
+      if (!ReleaseLock(mutex))
+         return(!SetLastError(stdlib.GetLastError()));
+
+      return(!catch("EventListener.ChartCommand(1)"));
+   }
+   return(false);
+}
+
+
+/**
+ * Handler für ChartCommands.
+ *
+ * @param  string commands[] - die eingetroffenen Commands
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onChartCommand(string commands[]) {
+   int size = ArraySize(commands);
+   if (!size) return(!warn("onChartCommand(1)   empty parameter commands = {}"));
+
+   // unterstütze CharCommands
+   string cmd = "Track.Signal=";                                        // Schaltet den interne Indikatorparameter "Track.Signal" um.
+
+   for (int i=0; i < size; i++) {
+      if (StringFind(commands[i], cmd) == 0) {                          // non-Library-Version von StringStartsWith(), schneller
+         if (!TrackSignal(StringSubstr(commands[i], StringLen(cmd))))   // non-Library-Version von StringRight(), schneller
+            return(false);
+         continue;
+      }
+      warn("onChartCommand(2)   unknown chart command \""+ commands[i] +"\"");
+   }
+   return(!catch("onChartCommand(3)"));
+}
+
+
+/**
+ * Schaltet das Signaltracking um .
+ *
+ * @param  string signal - das anzuzeigende Signal
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool TrackSignal(string signal) {
+   bool change = false;
+
+   if (signal == "") {                                               // Leerstring bedeutet: Signaltracking/mode.extern = OFF
+      if (external.signal != "") {
+         change      = true;
+         mode.intern = true;
+         mode.extern = false; external.provider=""; external.signal="";
+         mode.remote = false;
+      }
+   }
+   else {
+      string provider="", name="";
+      if (!ParseSignal(signal, provider, name)) return(_true(warn("TrackSignal(1)   invalid or unknown parameter signal=\""+ signal +"\"")));
+
+      if (external.provider!=provider || external.signal!=name) {
+         change      = true;
+         mode.intern = false;
+         mode.extern = true;
+         mode.remote = false;
+
+         external.provider     = provider;
+         external.signal       = name;
+         external.lots.checked = false;
+
+         if (ReadExternalPositions(provider, name) == -1)
+            return(false);
+      }
+   }
+
+   if (change) {
+      ArrayResize(custom.position.conf,          0);
+      ArrayResize(custom.position.conf.comments, 0);
+
+      debug("TrackSignal()   signal=\""+ signal +"\"");
+   }
+   return(!catch("TrackSignal(2)"));
 }
 
 
@@ -946,18 +1056,18 @@ bool AnalyzePositions() {
    if (mode.extern) {
       openPositions = ArraySize(external.ticket);
 
-      // offene Positionen werden nur in init() oder nach entsprechendem Event neu eingelesen
-      static double external.long,external.short;                       // TODO: Status bei Event zurücksetzen
-      static bool   external.lots.checked;
+      // offene Positionen werden nicht bei jedem Tick, sondern nur in init() oder nach entsprechendem Event neu eingelesen
       if (!external.lots.checked) {
+         external.longPosition  = 0;
+         external.shortPosition = 0;
          for (i=0; i < openPositions; i++) {                            // Gesamtposition je Richtung aufaddieren
-            if (external.type[i] == OP_BUY) external.long  += external.lots[i];
-            else                            external.short += external.lots[i];
+            if (external.type[i] == OP_BUY) external.longPosition  += external.lots[i];
+            else                            external.shortPosition += external.lots[i];
          }
          external.lots.checked = true;
       }
-      longPosition  = external.long;
-      shortPosition = external.short;
+      longPosition  = external.longPosition;
+      shortPosition = external.shortPosition;
 
       if (openPositions > 0) {
          ArrayCopy(tickets    , external.ticket    );                   // ExtractPosition() modifiziert die übergebenen Arrays, also jedesmal
@@ -979,8 +1089,6 @@ bool AnalyzePositions() {
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
-
-   //debug("AnalyzePositions()   extern="+ mode.extern +"  open="+ openPositions +"  long="+ NumberToStr(longPosition, ".+") +"  short="+ NumberToStr(shortPosition, ".+") +"  isPosition="+ isPosition);
 
 
    // (2) Positionen analysieren und in positions.~data[] speichern
@@ -1833,7 +1941,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
             }
          }
       }
-      if (remainingShort != 0) return(!catch("StoreRegularPositions(2)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of effective short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingShort != 0) return(!catch("StoreRegularPositions(2)   illegal remaining short position ("+ NumberToStr(remainingShort, ".+") +" lots) of effective short position of "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
       size = ArrayRange(positions.idata, 0);
@@ -2122,11 +2230,11 @@ bool SaveVolatileLfxStatus() {
 
 
 /**
- * Listener + Handler für beim Trade-Terminal eingehende Messages.
+ * Listener + Handler für beim Terminal eingehende Trade-Commands.
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.HandleTradeTerminalMessages() {
+bool QC.HandleTradeCommands() {
    if (!IsChart)
       return(true);
 
@@ -2137,9 +2245,9 @@ bool QC.HandleTradeTerminalMessages() {
    // (2) Channel auf neue Messages prüfen
    int result = QC_CheckChannel(qc.TradeCmdChannel);
    if (result < QC_CHECK_CHANNEL_EMPTY) {
-      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleTradeTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
-      if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.HandleTradeTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")   channel doesn't exist",              ERR_WIN32_ERROR));
-                                            return(!catch("QC.HandleTradeTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")   unexpected return value = "+ result, ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")   channel doesn't exist",              ERR_WIN32_ERROR));
+                                               return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")   unexpected return value = "+ result, ERR_WIN32_ERROR));
    }
    if (result == QC_CHECK_CHANNEL_EMPTY)
       return(true);
@@ -2147,19 +2255,19 @@ bool QC.HandleTradeTerminalMessages() {
    // (3) neue Messages abholen
    result = QC_GetMessages3(hQC.TradeCmdReceiver, qc.TradeCmdBuffer, QC_MAX_BUFFER_SIZE);
    if (result != QC_GET_MSG3_SUCCESS) {
-      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
-      if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
-                                               return(!catch("QC.HandleTradeTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
+      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
+      if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
+                                               return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
    }
 
    // (4) Messages verarbeiten
    string msgs[];
-   int size = Explode(qc.TradeCmdBuffer[0], TAB, msgs, NULL);
+   int msgsSize = Explode(qc.TradeCmdBuffer[0], TAB, msgs, NULL);
 
-   for (int i=0; i < size; i++) {
+   for (int i=0; i < msgsSize; i++) {
       if (!StringLen(msgs[i]))
          continue;
-      log("QC.HandleTradeTerminalMessages(7)   received \""+ msgs[i] +"\"");
+      log("QC.HandleTradeCommands(7)   received \""+ msgs[i] +"\"");
       if (!RunScript("LFX.ExecuteTradeCmd", "command="+ msgs[i]))    // TODO: Scripte dürfen nicht in Schleife gestartet werden
          return(false);
    }
@@ -2305,7 +2413,107 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
 
 
 /**
- * Liest die aktuell offenen externen Positionen des konfigurierten Signals ein. Die Positionen sind bereits aufsteigend nach {OpenTime,Ticket}
+ * Speichert die Fenster-relevanten Konfigurationsdaten im Chart und in der lokalen Terminalkonfiguration.
+ * Dadurch gehen sie auch beim Laden eines neuen Chart-Templates nicht verloren.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StoreWindowStatus() {
+   // (1) Signaltracking
+   // Konfiguration im Chart speichern (oder löschen)
+   string label = __NAME__ +".sticky.TrackSignal";
+   string value = external.provider +"."+ external.signal;
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (mode.extern) {
+      ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      ObjectSetText(label, value);
+   }
+   // Konfiguration in Terminalkonfiguration speichern (oder löschen)
+   string file     = GetLocalConfigPath();
+   string section  = "WindowStatus";
+      int    hWnd  = WindowHandle(Symbol(), NULL); if (!hWnd)     return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      string shWnd = "0x"+ IntToHexStr(hWnd);
+   string key      = shWnd +".TrackSignal";
+   if (mode.extern) {
+      if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+   }
+   else if (!DeleteIniKey(file, section, key))                    return(!SetLastError(stdlib.GetLastError()));
+
+   return(!catch("StoreWindowStatus(3)"));
+}
+
+
+/**
+ * Restauriert die Fenster-relevanten Konfigurationsdaten aus dem Chart oder der Terminalkonfiguration.
+ *
+ *  - SignalTracking
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RestoreWindowStatus() {
+   bool signalTracking.success = false;
+
+   // (1) Signaltracking
+   // Konfiguration im Chart restaurieren
+   string label = __NAME__ +".sticky.TrackSignal", empty="";
+   if (ObjectFind(label) == 0) {
+      string value = ObjectDescription(label);
+      if (value=="" || ParseSignal(value, empty, empty)) {           // Validierung
+         signalTracking.success = true;
+      }
+   }
+   // bei Mißerfolg Konfiguration in der Terminalkonfiguration restaurieren
+   if (!signalTracking.success) {
+      int hWnd  = WindowHandle(Symbol(), NULL);
+      if (hWnd != 0) {
+         string file    = GetLocalConfigPath();
+         string section = "WindowStatus";
+         string key     = "0x"+ IntToHexStr(hWnd) +".TrackSignal";
+         value = GetLocalConfigString(section, key, "");
+         if (value=="" || ParseSignal(value, empty, empty)) {        // Validierung
+            signalTracking.success = true;
+         }
+      }
+   }
+   if (signalTracking.success) {
+      TrackSignal(value);
+   }
+   return(!catch("RestoreWindowStatus()"));
+}
+
+
+/**
+ * Parst einen Signalbezeichner.
+ *
+ * @param  string  value    - zu parsender String
+ * @param  string &provider - Zeiger auf Variable zur Aufnahme des Signalproviders
+ * @param  string &signal   - Zeiger auf Variable zur Aufnahme des Signalnamens
+ *
+ * @return bool - TRUE, wenn der Bezeichner ein bekanntes Signal darstellt;
+ *                FALSE andererseits
+ */
+bool ParseSignal(string value, string &provider, string &signal) {
+   value = StringToLower(value);
+
+   if      (value == "simpletrader.alexprofit"  ) { provider="simpletrader"; signal="alexprofit"  ; }
+   else if (value == "simpletrader.caesar2"     ) { provider="simpletrader"; signal="caesar2"     ; }
+   else if (value == "simpletrader.caesar21"    ) { provider="simpletrader"; signal="caesar21"    ; }
+   else if (value == "simpletrader.dayfox"      ) { provider="simpletrader"; signal="dayfox"      ; }
+   else if (value == "simpletrader.fxviper"     ) { provider="simpletrader"; signal="fxviper"     ; }
+   else if (value == "simpletrader.goldstar"    ) { provider="simpletrader"; signal="goldstar"    ; }
+   else if (value == "simpletrader.smartscalper") { provider="simpletrader"; signal="smartscalper"; }
+   else if (value == "simpletrader.smarttrader" ) { provider="simpletrader"; signal="smarttrader" ; }
+   else {
+      return(false);
+   }
+   return(true);
+}
+
+
+/**
+ * Liest die offenen externen Positionen des aktiven Signals ein. Die Positionen sind bereits aufsteigend nach {OpenTime,Ticket}
  * gespeichert und müssen nicht nochmal sortiert werden.
  *
  * @param  string provider - Signalprovider
@@ -2314,17 +2522,14 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
  * @return int - Anzahl der gelesenen Positionen oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int ReadExternalPositions(string provider, string signal) {
-   // (1) Parametervaliderung
-   if (provider != "simpletrader") return(_EMPTY(catch("ReadExternalPositions(1)   invalid parameter provider = \""+ provider +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if      (signal == "alexprofit"  ) {}
-   else if (signal == "caesar2"     ) {}
-   else if (signal == "caesar21"    ) {}
-   else if (signal == "dayfox"      ) {}
-   else if (signal == "fxviper"     ) {}
-   else if (signal == "goldstar"    ) {}
-   else if (signal == "smartscalper") {}
-   else if (signal == "smarttrader" ) {}
-   else                            return(_EMPTY(catch("ReadExternalPositions(2)   invalid parameter signal = \""+ signal +"\"", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   // (1) alle Schlüssel einlesen
+   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_open.ini";
+      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(1)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR)));
+   string section = provider +"."+ signal;
+   string keys[], symbol = StdSymbol();
+   int keysSize = GetIniKeys(file, section, keys);
+
 
    ArrayResize(external.ticket    , 0);
    ArrayResize(external.type      , 0);
@@ -2338,67 +2543,59 @@ int ReadExternalPositions(string provider, string signal) {
    ArrayResize(external.profit    , 0);
 
 
-   // (2) alle Schlüssel einlesen
-   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_open.positions.ini";
-   string section = StringConcatenate(provider, ".", signal);
-   string keys[], symbol = StdSymbol();
-   int keysSize = GetIniKeys(file, section, keys);
-
-
-   // (3) Schlüssel gegen aktuelles Symbol prüfen und Positionen einlesen
+   // (2) Schlüssel gegen aktuelles Symbol prüfen und Positionen einlesen
    for (int i=0; i < keysSize; i++) {
       string key = keys[i];
       if (StringStartsWith(key, symbol +".")) {
 
-         // (3.1) Zeile lesen
+         // (2.1) Zeile lesen
          string value = GetIniString(file, section, key, "");
-         if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(3)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
+         if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(2)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
-         // (3.2) Positionsdaten validieren
+         // (2.2) Positionsdaten validieren
          //Symbol.Ticket = Type, Lots, OpenTime, OpenPrice, TakeProfit, StopLoss, Commission, Swap, MagicNumber, Comment
          string sValue, values[];
-         if (Explode(value, ",", values, NULL) != 10) return(_EMPTY(catch("ReadExternalPositions(4)   invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (Explode(value, ",", values, NULL) != 10) return(_EMPTY(catch("ReadExternalPositions(3)   invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Ticket
          sValue = StringRight(key, -StringLen(symbol));
-         if (StringGetChar(sValue, 0) != '.')         return(_EMPTY(catch("ReadExternalPositions(5)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (StringGetChar(sValue, 0) != '.')         return(_EMPTY(catch("ReadExternalPositions(4)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          sValue = StringSubstr(sValue, 1);
-         if (!StringIsDigit(sValue))                  return(_EMPTY(catch("ReadExternalPositions(6)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StringIsDigit(sValue))                  return(_EMPTY(catch("ReadExternalPositions(5)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          int _ticket = StrToInteger(sValue);
-         if (_ticket <= 0)                            return(_EMPTY(catch("ReadExternalPositions(7)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (_ticket <= 0)                            return(_EMPTY(catch("ReadExternalPositions(6)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Type
          sValue = StringTrim(values[0]);
          int _type = StrToOperationType(sValue);
-         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(8)   invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(7)   invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // Lots
          sValue = StringTrim(values[1]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(9)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(8)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _lots = StrToDouble(sValue);
-         if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(10)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(9)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _lots = NormalizeDouble(_lots, 2);
 
          // OpenTime
          sValue = StringTrim(values[2]);
          datetime _openTime = StrToTime(sValue);
-         if (!_openTime)                              return(_EMPTY(catch("ReadExternalPositions(11)   invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!_openTime)                              return(_EMPTY(catch("ReadExternalPositions(10)   invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
          // OpenPrice
          sValue = StringTrim(values[3]);
-         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(12)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(11)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          double _openPrice = StrToDouble(sValue);
-         if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(13)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(12)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
          _openPrice = NormalizeDouble(_openPrice, Digits);
 
          // TakeProfit
          sValue = StringTrim(values[4]);
          double _takeProfit = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(14)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(13)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _takeProfit = StrToDouble(sValue);
-            if (_takeProfit < 0)                      return(_EMPTY(catch("ReadExternalPositions(15)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (_takeProfit < 0)                      return(_EMPTY(catch("ReadExternalPositions(14)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _takeProfit = NormalizeDouble(_takeProfit, Digits);
          }
 
@@ -2406,9 +2603,9 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[5]);
          double _stopLoss = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(16)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(15)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _stopLoss = StrToDouble(sValue);
-            if (_stopLoss < 0)                        return(_EMPTY(catch("ReadExternalPositions(17)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (_stopLoss < 0)                        return(_EMPTY(catch("ReadExternalPositions(16)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _stopLoss = NormalizeDouble(_stopLoss, Digits);
          }
 
@@ -2416,7 +2613,7 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[6]);
          double _commission = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(18)   invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(17)   invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _commission = NormalizeDouble(StrToDouble(sValue), 2);
          }
 
@@ -2424,14 +2621,14 @@ int ReadExternalPositions(string provider, string signal) {
          sValue = StringTrim(values[7]);
          double _swap = 0;
          if (sValue != "") {
-            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(19)   invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(18)   invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
             _swap = NormalizeDouble(StrToDouble(sValue), 2);
          }
 
          // MagicNumber: vorerst nicht benötigt
          // Comment:     vorerst nicht benötigt
 
-         // (3.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
+         // (2.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
          int size=ArraySize(external.ticket), newSize=size+1;
          ArrayResize(external.ticket    , newSize);
          ArrayResize(external.type      , newSize);
@@ -2456,10 +2653,10 @@ int ReadExternalPositions(string provider, string signal) {
          external.profit    [size] = ifDouble(_type==OP_LONG, Bid-_openPrice, _openPrice-Ask)/Pips * PipValue(_lots, true);   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       }
    }
+
    ArrayResize(keys,   0);
    ArrayResize(values, 0);
-
-   if (!catch("ReadExternalPositions(20)"))
+   if (!catch("ReadExternalPositions(19)"))
       return(ArraySize(external.ticket));
    return(-1);
 }
@@ -2487,6 +2684,7 @@ string InputsToStr() {
    int      ArrayPushDouble(double array[], double value);
    string   BoolToStr(bool value);
    string   DateToStr(datetime time, string mask);
+   bool     DeleteIniKey(string fileName, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
    double   GetCommission();
    string   GetConfigString(string section, string key, string defaultValue);
@@ -2501,6 +2699,7 @@ string InputsToStr() {
    int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);
    bool     IsCurrency(string value);
+   bool     IsFile(string filename);
    bool     IsGlobalConfigKey(string section, string key);
    double   MathModFix(double a, double b);
    int      ObjectRegister(string label);
