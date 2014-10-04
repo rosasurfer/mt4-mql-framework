@@ -20,6 +20,11 @@ int onDeinitParameterChange() {
    // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
    if (ChartInfos.CopyLfxStatus(true, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
+
+   // Fenster-Status  speichern
+   if (!StoreWindowStatus())
+      return(last_error);
+
    return(NO_ERROR);
 }
 
@@ -34,6 +39,11 @@ int onDeinitChartChange() {
    // LFX-Status in Library zwischenspeichern, um in init() Neuladen zu vermeiden
    if (ChartInfos.CopyLfxStatus(true, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
+
+   // Fenster-Status  speichern
+   if (!StoreWindowStatus())
+      return(last_error);
+
    return(NO_ERROR);
 }
 
@@ -45,9 +55,16 @@ int onDeinitChartChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitRemove() {
+   // Terminal-Exit und bei Profilwechsel
+
    // volatilen LFX-Status in globalen Variablen speichern
    if (!SaveVolatileLfxStatus())
       return(last_error);
+
+   // Fenster-Status  speichern
+   if (!StoreWindowStatus())
+      return(last_error);
+
    return(NO_ERROR);
 }
 
@@ -62,6 +79,11 @@ int onDeinitRecompile() {
    // volatilen LFX-Status in globalen Variablen speichern
    if (!SaveVolatileLfxStatus())
       return(last_error);
+
+   // Fenster-Status  speichern
+   if (!StoreWindowStatus())
+      return(last_error);
+
    return(NO_ERROR);
 }
 
@@ -70,8 +92,7 @@ int onDeinitRecompile() {
  * Deinitialisierung Postprocessing-Hook
  *
  * @return int - Fehlerstatus
- *
+ */
 int afterDeinit() {
    return(NO_ERROR);
 }
-*/

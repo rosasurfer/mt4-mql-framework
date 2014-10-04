@@ -16,29 +16,7 @@ int onInit() {
       lfxCurrencyId     = GetCurrencyId(lfxCurrency);
       lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
       isLfxInstrument   = true;
-      mode.remote       = true;                                      // TODO: muﬂ in Abh‰ngigkeit einer Konfiguration gesetzt werden
-   }
-   else {
-      string value = StringToLower(StringTrim(Track.Signal));
-      if (AccountNumber()=={account-no} && Symbol()=="EURUSD") value = "simpletrader.caesar2";
-      if (AccountNumber()=={account-no} && Symbol()=="NZDUSD") value = "simpletrader.dayfox";
-      if (AccountNumber()=={account-no} && Symbol()=="XAUUSD") value = "simpletrader.goldstar";
-
-      if (value == "") {
-         mode.intern = true;                                         // ohne Konfiguration Anzeige interner Positionen
-      }
-      else {
-         if      (value == "simpletrader.alexprofit"  ) { signalProvider="simpletrader"; signal="alexprofit"  ; }
-         else if (value == "simpletrader.caesar2"     ) { signalProvider="simpletrader"; signal="caesar2"     ; }
-         else if (value == "simpletrader.caesar21"    ) { signalProvider="simpletrader"; signal="caesar21"    ; }
-         else if (value == "simpletrader.dayfox"      ) { signalProvider="simpletrader"; signal="dayfox"      ; }
-         else if (value == "simpletrader.fxviper"     ) { signalProvider="simpletrader"; signal="fxviper"     ; }
-         else if (value == "simpletrader.goldstar"    ) { signalProvider="simpletrader"; signal="goldstar"    ; }
-         else if (value == "simpletrader.smartscalper") { signalProvider="simpletrader"; signal="smartscalper"; }
-         else if (value == "simpletrader.smarttrader" ) { signalProvider="simpletrader"; signal="smarttrader" ; }
-         else return(catch("onInit(1)   Invalid input parameter Track.Signal = \""+ Track.Signal +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         mode.extern = true;                                         // externe Positionen
-      }
+      mode.remote       = true;                                      // TODO: LFX/mode.remote muﬂ in Abh‰ngigkeit einer Konfiguration gesetzt werden
    }
 
    // (1.2) Preisanzeige
@@ -93,11 +71,9 @@ int onInit() {
    }
 
 
-   // (2) in allen init()-Szenarios ggf. externe Positionen einlesen
-   if (mode.extern) {
-      if (ReadExternalPositions(signalProvider, signal) == -1)
-         return(last_error);
-   }
+   // (2) in allen init()-Szenarios im Fenster gespeicherten Status restaurieren
+   if (!RestoreWindowStatus())
+      return(last_error);
 
 
    // (3) Textlabel erzeugen
@@ -198,4 +174,14 @@ int onInit.Recompile() {
          return(last_error);
    }
    return(NO_ERROR);
+}
+
+
+/**
+ * Initialisierung Postprocessing-Hook
+ *
+ * @return int - Fehlerstatus
+ */
+int afterInit() {
+   return(catch("afterInit(1)"));
 }
