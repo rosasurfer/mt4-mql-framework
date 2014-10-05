@@ -1,7 +1,7 @@
 /**
  * SuperBars Up
  *
- * Schickt dem SuperBars-Indikator im aktuellen Chart das Command, den nächsthöheren SuperTimeframe anzuzeigen.
+ * Schickt dem SuperBars-Indikator im aktuellen Chart die Nachricht, den nächsthöheren SuperTimeframe anzuzeigen.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
