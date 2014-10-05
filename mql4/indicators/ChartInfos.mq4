@@ -50,10 +50,7 @@ double mm.stdRiskLots;                                               // Lotsize 
 bool   mm.isDefaultLeverage;                                         // ob die Lotsize nach Standard-Risiko oder nach benutzerdefiniertem Hebel berechnet wird
 double mm.customLeverage;                                            // benutzerdefinierter Hebel für eine Unit
 double mm.customLots;                                                // Lotsize für benutzerdefinierten Hebel
-
 double mm.stoploss = DEFAULT_STOPLOSS;                               // StopLoss
-
-string mm.notice = "";                                               // beliebiger anzuzeigender Text
 
 
 // Status
@@ -100,6 +97,8 @@ double positions.ddata[][6];                                         //         
 // externe Positionen
 string   external.provider = "";
 string   external.signal   = "";
+string   external.name     = "";
+
 int      external.ticket    [];
 int      external.type      [];
 double   external.lots      [];
@@ -132,9 +131,10 @@ string label.price           = "Price";
 string label.spread          = "Spread";
 string label.unitSize        = "UnitSize";
 string label.position        = "Position";
-string label.time            = "Time";
+string label.externalAccount = "ExternalAccount";
 string label.lfxTradeAccount = "LfxTradeAccount";
 string label.stopoutLevel    = "StopoutLevel";
+string label.time            = "Time";
 
 
 // Font-Settings der detaillierten Positionsanzeige
@@ -248,47 +248,53 @@ bool onChartCommand(string commands[]) {
 /**
  * Schaltet das Signaltracking um .
  *
- * @param  string signal - das anzuzeigende Signal
+ * @param  string signalId - das anzuzeigende Signal
  *
  * @return bool - Erfolgsstatus
  */
-bool TrackSignal(string signal) {
-   bool change = false;
+bool TrackSignal(string signalId) {
+   bool sigChanged = false;
 
-   if (signal == "") {                                               // Leerstring bedeutet: Signaltracking/mode.extern = OFF
-      if (external.signal != "") {
-         change      = true;
+   if (signalId == "") {                                             // Leerstring bedeutet: Signaltracking/mode.extern = OFF
+      if (!mode.intern) {
          mode.intern = true;
-         mode.extern = false; external.provider=""; external.signal="";
+         mode.extern = false;
          mode.remote = false;
+         sigChanged  = true;
       }
    }
    else {
-      string provider="", name="";
-      if (!ParseSignal(signal, provider, name)) return(_true(warn("TrackSignal(1)   invalid or unknown parameter signal=\""+ signal +"\"")));
+      string provider="", signal="";
+      if (!ParseSignal(signalId, provider, signal)) return(_true(warn("TrackSignal(1)   invalid or unknown parameter signalId=\""+ signalId +"\"")));
 
-      if (external.provider!=provider || external.signal!=name) {
-         change      = true;
+      if (!mode.extern || provider!=external.provider || signal!=external.signal) {
          mode.intern = false;
          mode.extern = true;
          mode.remote = false;
 
-         external.provider     = provider;
-         external.signal       = name;
-         external.lots.checked = false;
+         external.provider = provider;
+         external.signal   = signal;
+            string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+            string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_config.ini"; if (!IsFile(file)) return(!catch("TrackSignal(2)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
+            string section = provider +"."+ signal;
+            string key     = "Name";
+            string value   = GetIniString(file, section, key, ""); if (!StringLen(value))                                    return(!catch("TrackSignal(3)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty value)", ERR_RUNTIME_ERROR));
+         external.name     = value;
 
-         if (ReadExternalPositions(provider, name) == -1)
+         external.lots.checked = false;
+         if (-1 == ReadExternalPositions(provider, signal))
             return(false);
+         sigChanged = true;
       }
    }
 
-   if (change) {
+   if (sigChanged) {
       ArrayResize(custom.position.conf,          0);
       ArrayResize(custom.position.conf.comments, 0);
-
-      debug("TrackSignal()   signal=\""+ signal +"\"");
+      if (!UpdateExternalAccount())
+         return(false);
    }
-   return(!catch("TrackSignal(2)"));
+   return(!catch("TrackSignal(4)"));
 }
 
 
@@ -459,6 +465,7 @@ int CreateLabels() {
    label.unitSize        = __NAME__ +"."+ label.unitSize;
    label.position        = __NAME__ +"."+ label.position;
    label.time            = __NAME__ +"."+ label.time;
+   label.externalAccount = __NAME__ +"."+ label.externalAccount;
    label.lfxTradeAccount = __NAME__ +"."+ label.lfxTradeAccount;
    label.stopoutLevel    = __NAME__ +"."+ label.stopoutLevel;
 
@@ -466,12 +473,12 @@ int CreateLabels() {
 
 
    // Instrument-Label: Anzeige wird sofort und nur hier gesetzt
-   if (build <= 509) {                                                                    // Builds ab 510 haben oben links eine {Symbol,Period}-Anzeige, die das
+   if (build <= 509) {                                                                    // Builds größer 509 haben oben links eine {Symbol,Period}-Anzeige, die das
       if (ObjectFind(label.instrument) == 0)                                              // Label überlagert und sich nicht ohne weiteres ausblenden läßt.
          ObjectDelete(label.instrument);
       if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // Builds ab 479 haben oben links einen Pfeil fürs One-Click-Trading,
+         ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // Builds größer 478 haben oben links einen Pfeil fürs One-Click-Trading,
          ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));   // das Instrument-Label wird dort entsprechend versetzt positioniert.
          ObjectRegister(label.instrument);
       }
@@ -539,7 +546,7 @@ int CreateLabels() {
    }
 
 
-   // Gesamt-Position-Label: nicht in LFX-Charts
+   // Gesamt-Positions-Label: nicht in LFX-Charts
    if (!isLfxInstrument) {
       if (ObjectFind(label.position) == 0)
          ObjectDelete(label.position);
@@ -566,6 +573,21 @@ int CreateLabels() {
          ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 4);
          ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
          ObjectRegister(label.lfxTradeAccount);
+      }
+      else GetLastError();
+   }
+
+
+   // External-Account-Label: nicht in LFX-Charts
+   if (!isLfxInstrument) {
+      if (ObjectFind(label.externalAccount) == 0)
+         ObjectDelete(label.externalAccount);
+      if (ObjectCreate(label.externalAccount, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label.externalAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+         ObjectSet    (label.externalAccount, OBJPROP_XDISTANCE, 190);
+         ObjectSet    (label.externalAccount, OBJPROP_YDISTANCE,   8);
+         ObjectSetText(label.externalAccount, " ", 1);
+         ObjectRegister(label.externalAccount);
       }
       else GetLastError();
    }
@@ -650,12 +672,11 @@ bool UpdateUnitSize() {
    if (IsTesting())                                   return(true );          // Anzeige wird im Tester nicht benötigt
    if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(false);
 
-   string strMM = "";
+   string strMM = " ";
    if (mm.isDefaultLeverage) { double lotsize=mm.stdRiskLots, leverage=mm.stdRiskLeverage; }
    else                      {        lotsize=mm.customLots;  leverage=mm.customLeverage;  }
 
-
-   // (1) Lotsize runden
+   // Lotsize runden
    if (lotsize > 0) {                                                                                    // Abstufung max. 6.7% je Schritt
       if      (lotsize <=    0.03) lotsize = NormalizeDouble(MathRound(lotsize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
       else if (lotsize <=   0.075) lotsize = NormalizeDouble(MathRound(lotsize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
@@ -674,15 +695,11 @@ bool UpdateUnitSize() {
       else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
       else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-      // !!! max. 63 Zeichen                              V - Volatility                            L - Leverage
-      strMM = StringConcatenate(mm.notice, "              V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
-   }
-   else {
-      strMM = StringConcatenate(mm.notice, " ");
+      // !!! max. 63 Zeichen     V - Volatility                            L - Leverage
+      strMM = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
 
-
-   // (2) Gesamtanzeige aktualisieren
+   // Anzeige aktualisieren
    ObjectSetText(label.unitSize, strMM, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -825,6 +842,33 @@ bool UpdatePositions() {
       }
    }
    return(!catch("UpdatePositions(2)"));
+}
+
+
+/**
+ * Aktualisiert die Anzeige eines externen Accounts.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateExternalAccount() {
+   if (mode.extern) {
+      string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+      string file    = TerminalPath() + mqlDir +"\\files\\"+ external.provider +"\\"+ external.signal +"_config.ini"; if (!IsFile(file)) return(!catch("UpdateExternalAccount(2)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
+      string section = external.provider +"."+ external.signal;
+      string key     = StdSymbol() +".Notice";
+      string notice  = GetIniString(file, section, key, "");
+
+      string text = StringConcatenate(external.name, " ", notice);
+      ObjectSetText(label.externalAccount, text, 8, "Arial Fett", Red);
+   }
+   else {
+      ObjectSetText(label.externalAccount, " ", 1);
+   }
+
+   int error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateExternalAccount()", error));
+   return(true);
 }
 
 
@@ -2116,21 +2160,21 @@ bool ProcessLfxTerminalMessage(string message) {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
       if (success) { if (__LOG) log("ProcessLfxTerminalMessage(4)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
       else         {           warn("ProcessLfxTerminalMessage(5)   #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
-      return(RestoreLfxStatusFromFiles());                                    // LFX-Status neu einlesen (auch bei Fehler)
+      return(RestoreLfxStatusFromFile());                                     // LFX-Status neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(6)   #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
-      return(RestoreLfxStatusFromFiles());                                    // LFX-Status neu einlesen (auch bei Fehler)
+      return(RestoreLfxStatusFromFile());                                     // LFX-Status neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(7)   #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
-      return(RestoreLfxStatusFromFiles());                                    // LFX-Status neu einlesen (auch bei Fehler)
+      return(RestoreLfxStatusFromFile());                                     // LFX-Status neu einlesen (auch bei Fehler)
    }
 
    // ???
@@ -2143,8 +2187,8 @@ bool ProcessLfxTerminalMessage(string message) {
  *
  * @return bool - Erfolgsstatus
  */
-bool RestoreLfxStatusFromFiles() {
-   // Sind wir nicht in einem init-Cycle, werden die vorhandenen volatilen Daten vorm Überschreiben gespeichert.
+bool RestoreLfxStatusFromFile() {
+   // Sind wir nicht in einem init()-Cycle, werden die vorhandenen volatilen Daten vorm Überschreiben gespeichert.
    if (ArrayRange(lfxOrders.ivolatile, 0) > 0) {
       if (!SaveVolatileLfxStatus())
          return(false);
@@ -2177,7 +2221,7 @@ bool RestoreLfxStatusFromFiles() {
       if (!value) {                                                  // 0 oder Fehler
          int error = GetLastError();
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
-            return(!catch("RestoreLfxStatusFromFiles(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
+            return(!catch("RestoreLfxStatusFromFile(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
       }
       lfxOrders.dvolatile[i][I_VPROFIT] = value;
    }
@@ -2431,11 +2475,10 @@ bool StoreWindowStatus() {
       ObjectSetText(label, value);
    }
    // Konfiguration in Terminalkonfiguration speichern (oder löschen)
-   string file     = GetLocalConfigPath();
-   string section  = "WindowStatus";
-      int    hWnd  = WindowHandle(Symbol(), NULL); if (!hWnd)     return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
-      string shWnd = "0x"+ IntToHexStr(hWnd);
-   string key      = shWnd +".TrackSignal";
+   string file    = GetLocalConfigPath();
+   string section = "WindowStatus";
+      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd)     return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+   string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
    if (mode.extern) {
       if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
    }
@@ -2453,34 +2496,32 @@ bool StoreWindowStatus() {
  * @return bool - Erfolgsstatus
  */
 bool RestoreWindowStatus() {
-   bool signalTracking.success = false;
-
    // (1) Signaltracking
-   // Konfiguration im Chart restaurieren
+   bool restoreSignal.success = false;
+   // Versuchen, die Konfiguration aus dem Chart zu restaurieren (kann nach Laden eines neuen Templates fehlschlagen).
    string label = __NAME__ +".sticky.TrackSignal", empty="";
    if (ObjectFind(label) == 0) {
-      string value = ObjectDescription(label);
-      if (value=="" || ParseSignal(value, empty, empty)) {           // Validierung
-         signalTracking.success = true;
+      string signal = ObjectDescription(label);
+      if (signal=="" || ParseSignal(signal, empty, empty)) {
+         restoreSignal.success = true;
       }
    }
-   // bei Mißerfolg Konfiguration in der Terminalkonfiguration restaurieren
-   if (!signalTracking.success) {
-      int hWnd  = WindowHandle(Symbol(), NULL);
+   // Bei Mißerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
+   if (!restoreSignal.success) {
+      int hWnd = WindowHandle(Symbol(), NULL);
       if (hWnd != 0) {
-         string file    = GetLocalConfigPath();
          string section = "WindowStatus";
-         string key     = "0x"+ IntToHexStr(hWnd) +".TrackSignal";
-         value = GetLocalConfigString(section, key, "");
-         if (value=="" || ParseSignal(value, empty, empty)) {        // Validierung
-            signalTracking.success = true;
+         string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
+         signal = GetLocalConfigString(section, key, "");
+         if (signal=="" || ParseSignal(signal, empty, empty)) {
+            restoreSignal.success = true;
          }
       }
    }
-   if (signalTracking.success) {
-      TrackSignal(value);
-   }
-   return(!catch("RestoreWindowStatus()"));
+   if (restoreSignal.success)
+      TrackSignal(signal);
+
+   return(!catch("RestoreWindowStatus(1)"));
 }
 
 
