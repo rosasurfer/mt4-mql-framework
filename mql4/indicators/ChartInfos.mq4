@@ -2502,9 +2502,7 @@ bool RestoreWindowStatus() {
    string label = __NAME__ +".sticky.TrackSignal", empty="";
    if (ObjectFind(label) == 0) {
       string signal = ObjectDescription(label);
-      if (signal=="" || ParseSignal(signal, empty, empty)) {
-         restoreSignal.success = true;
-      }
+      restoreSignal.success = (signal=="" || ParseSignal(signal, empty, empty));
    }
    // Bei Miﬂerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
    if (!restoreSignal.success) {
@@ -2513,9 +2511,7 @@ bool RestoreWindowStatus() {
          string section = "WindowStatus";
          string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
          signal = GetLocalConfigString(section, key, "");
-         if (signal=="" || ParseSignal(signal, empty, empty)) {
-            restoreSignal.success = true;
-         }
+         restoreSignal.success = (signal=="" || ParseSignal(signal, empty, empty));
       }
    }
    if (restoreSignal.success)
