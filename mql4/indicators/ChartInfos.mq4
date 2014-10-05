@@ -105,7 +105,7 @@ double   external.lots      [];
 datetime external.openTime  [];
 double   external.openPrice [];
 double   external.takeProfit[];
-double   external.stoploss  [];
+double   external.stopLoss  [];
 double   external.commission[];
 double   external.swap      [];
 double   external.profit    [];
@@ -225,17 +225,29 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  * @param  string commands[] - die eingetroffenen Commands
  *
  * @return bool - Erfolgsstatus
+ *
+ *
+ * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
+ *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
+ *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History (geschlossene Positionen) ein/aus.
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
    if (!size) return(!warn("onChartCommand(1)   empty parameter commands = {}"));
 
-   // unterstütze CharCommands
-   string cmd = "Track.Signal=";                                        // Schaltet den interne Indikatorparameter "Track.Signal" um.
-
    for (int i=0; i < size; i++) {
-      if (StringFind(commands[i], cmd) == 0) {                          // non-Library-Version von StringStartsWith(), schneller
-         if (!TrackSignal(StringSubstr(commands[i], StringLen(cmd))))   // non-Library-Version von StringRight(), schneller
+      if (StringFind(commands[i], "cmd=TrackSignal,") == 0) {
+         if (!TrackSignal(StringSubstr(commands[i], 16)))
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=ToggleOpenOrders") {
+         if (!ToggleOpenOrders())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=ToggleTradeHistory") {
+         if (!ToggleTradeHistory())
             return(false);
          continue;
       }
@@ -246,7 +258,151 @@ bool onChartCommand(string commands[]) {
 
 
 /**
- * Schaltet das Signaltracking um .
+ * Schaltet die Anzeige der offenen Orders ein/aus.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ToggleOpenOrders() {
+   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
+   bool status = !GetOpenOrderDisplayStatus();
+
+   // Status ON: offene Orders anzeigen
+   if (status) {
+      int orders = ShowOpenOrders();
+      if (orders == -1)
+         return(false);
+      if (!orders) {                                                 // ohne offene Orders bleibt die Anzeige unverändert
+         status = false;
+         ForceSound("Windows XP-Batterie niedrig.wav");              // Plonk!!!
+      }
+   }
+
+   // Status OFF: Chartobjekte offener Orders löschen
+   else {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+         if (StringStartsWith(name, "open #"))
+            ObjectDelete(name);
+      }
+   }
+
+   // Anzeigestatus im Chart speichern
+   SetOpenOrderDisplayStatus(status);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Zeigt alle aktuell offenen Orders an.
+ *
+ * @return int - Anzahl der angezeigten offenen Orders oder -1 (EMPTY), falls ein Fehler auftrat.
+ */
+int ShowOpenOrders() {
+   int      ticket, type, colors[]={Blue, Red};
+   datetime openTime;
+   double   lots, openPrice, takeProfit, stopLoss;
+   string   label, text, types[]={"Buy", "Sell"};
+
+
+   // mode.intern
+   if (mode.intern) {
+      return(0);
+   }
+
+
+   // mode.extern
+   if (mode.extern) {
+      int orders = ArraySize(external.ticket);
+      for (int i=0; i < orders; i++) {
+         // Daten auslesen
+         ticket     =                 external.ticket    [i];
+         type       =                 external.type      [i];
+         lots       =                 external.lots      [i];
+         openTime   = FxtToServerTime(external.openTime  [i]);
+         openPrice  =                 external.openPrice [i];
+         takeProfit =                 external.takeProfit[i];
+         stopLoss   =                 external.stopLoss  [i];
+
+         // Strings zusammenstellen
+         label = StringConcatenate("open #", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
+         text  = "";
+         if (takeProfit != NULL) text = StringConcatenate(                                       "tp: ", NumberToStr(takeProfit, SubPipPriceFormat));
+         if (stopLoss   != NULL) text = StringConcatenate(text, ifString(takeProfit, "   ", ""), "sl: ", NumberToStr(stopLoss  , SubPipPriceFormat));
+
+         // Order anzeigen
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, openTime, openPrice)) {
+            ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet(label, OBJPROP_COLOR    , colors[type]    );
+            ObjectSetText(label, text);
+         }
+      }
+      return(orders);
+   }
+
+
+   // mode.remote
+   if (mode.remote) {
+      return(_EMPTY(catch("ShowOpenOrders(1)   feature mode.remote=1 not implemented", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_EMPTY(catch("ShowOpenOrder(2)   unreachable code reached", ERR_WRONG_JUMP)));
+}
+
+
+/**
+ * Liest den im Chart gespeicherten aktuellen OpenOrder-Anzeigestatus aus.
+ *
+ * @return bool - Status: ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".OpenOrderDisplay.status";
+   if (ObjectFind(label) != -1)
+      return(StrToInteger(ObjectDescription(label)) != 0);
+   return(false);
+}
+
+
+/**
+ * Speichert den angegebenen OpenOrder-Anzeigestatus im Chart.
+ *
+ * @param  bool status - Status
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".OpenOrderDisplay.status";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+
+   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
+   ObjectSetText(label, ""+ status, 0);
+
+   return(!catch("SetOpenOrderDisplayStatus()"));
+}
+
+
+/**
+ * Schaltet die Anzeige der Trade-History (geschlossene Positionen) ein/aus.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ToggleTradeHistory() {
+   debug("ToggleTradeHistory()");
+   return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Schaltet das Signaltracking um.
  *
  * @param  string signalId - das anzuzeigende Signal
  *
@@ -873,7 +1029,7 @@ bool UpdateStopoutLevel() {
    if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
-   if (!totalPosition) {                                                               // keine effektive Position im Markt: vorhandene Marker löschen
+   if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // bei offenem Properties-Dialog oder Object::onDrag()
@@ -2566,7 +2722,7 @@ int ReadExternalPositions(string provider, string signal) {
    ArrayResize(external.openTime  , 0);
    ArrayResize(external.openPrice , 0);
    ArrayResize(external.takeProfit, 0);
-   ArrayResize(external.stoploss  , 0);
+   ArrayResize(external.stopLoss  , 0);
    ArrayResize(external.commission, 0);
    ArrayResize(external.swap      , 0);
    ArrayResize(external.profit    , 0);
@@ -2665,7 +2821,7 @@ int ReadExternalPositions(string provider, string signal) {
          ArrayResize(external.openTime  , newSize);
          ArrayResize(external.openPrice , newSize);
          ArrayResize(external.takeProfit, newSize);
-         ArrayResize(external.stoploss  , newSize);
+         ArrayResize(external.stopLoss  , newSize);
          ArrayResize(external.commission, newSize);
          ArrayResize(external.swap      , newSize);
          ArrayResize(external.profit    , newSize);
@@ -2676,7 +2832,7 @@ int ReadExternalPositions(string provider, string signal) {
          external.openTime  [size] = _openTime;
          external.openPrice [size] = _openPrice;
          external.takeProfit[size] = _takeProfit;
-         external.stoploss  [size] = _stopLoss;
+         external.stopLoss  [size] = _stopLoss;
          external.commission[size] = _commission;
          external.swap      [size] = _swap;
          external.profit    [size] = ifDouble(_type==OP_LONG, Bid-_openPrice, _openPrice-Ask)/Pips * PipValue(_lots, true);   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
@@ -2715,6 +2871,7 @@ string InputsToStr() {
    string   DateToStr(datetime time, string mask);
    bool     DeleteIniKey(string fileName, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
+   datetime FxtToServerTime(datetime fxtTime);
    double   GetCommission();
    string   GetConfigString(string section, string key, string defaultValue);
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);

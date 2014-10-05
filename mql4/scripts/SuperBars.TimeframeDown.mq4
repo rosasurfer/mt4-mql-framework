@@ -1,7 +1,7 @@
 /**
  * SuperBars Down
  *
- * Schickt dem SuperBars-Indikator im aktuellen Chart das Command, den nächstniedrigeren SuperTimeframe anzuzeigen.
+ * Schickt dem SuperBars-Indikator im aktuellen Chart die Nachricht, den nächstniedrigeren SuperTimeframe anzuzeigen.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
