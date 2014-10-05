@@ -1,5 +1,5 @@
 /**
- * Schaltet die Anzeige der offenen Orders des aktuellen oder eines Remote-Accounts ein/aus.
+ * Schaltet die Anzeige der offenen Orders des aktuellen Accounts ein/aus.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
