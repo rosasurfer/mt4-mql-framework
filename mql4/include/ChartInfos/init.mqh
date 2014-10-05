@@ -4,12 +4,16 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Parametervalidierung
-   // (1.1) Tracking- bzw. Anzeigemodus: interne | externe | Remote-Positionen
-   isLfxInstrument = false;
-   mode.intern     = false;
+   // (1) Textlabel erzeugen (zuerst, da RestoreWindowStatus() sie bereits benötigt)
+   CreateLabels();
+
+
+   // (2) Status restaurieren
+   mode.intern     = true;                                           // Default-Status
    mode.extern     = false;
    mode.remote     = false;
+   isLfxInstrument = false;
+
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    if (StringLen(lfxCurrency) > 0) {
@@ -18,8 +22,13 @@ int onInit() {
       isLfxInstrument   = true;
       mode.remote       = true;                                      // TODO: LFX/mode.remote muß in Abhängigkeit einer Konfiguration gesetzt werden
    }
+   else if (!RestoreWindowStatus()) {                                // restauriert mode.intern/extern
+      return(last_error);
+   }
 
-   // (1.2) Preisanzeige
+
+   // (3) Konfiguration validieren
+   // AppliedPrice
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";
    if (!IsVisualMode()) {                                            // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
@@ -31,7 +40,7 @@ int onInit() {
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
    else return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
-   // (1.3) Moneymanagement
+   // Moneymanagement
    if (!isLfxInstrument) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
       section="Moneymanagement"; key=stdSymbol +".Leverage";
@@ -64,20 +73,8 @@ int onInit() {
       if (dValue <=   0)               return(catch("onInit(8)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
       if (dValue >= 100)               return(catch("onInit(9)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too high)", ERR_INVALID_CONFIG_PARAMVALUE));
       mm.stoploss = dValue;
-
-      // Notice: nur lokale Konfiguration
-      key = stdSymbol +".Notice";
-      mm.notice = GetLocalConfigString(section, key, "");
    }
 
-
-   // (2) in allen init()-Szenarios im Fenster gespeicherten Status restaurieren
-   if (!RestoreWindowStatus())
-      return(last_error);
-
-
-   // (3) Textlabel erzeugen
-   CreateLabels();
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(10)"));
@@ -85,14 +82,14 @@ int onInit() {
 
 
 /**
- * Nach manuellem Laden des Indikators durch den User, mit Input-Dialog.
+ * Nach manuellem Laden des Indikators durch den User (Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit.User() {
    if (isLfxInstrument) {
       // LFX-Status einlesen
-      if (!RestoreLfxStatusFromFiles())
+      if (!RestoreLfxStatusFromFile())
          return(last_error);
    }
    return(NO_ERROR);
@@ -100,14 +97,14 @@ int onInit.User() {
 
 
 /**
- * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start, kein Input-Dialog.
+ * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit.Template() {
    if (isLfxInstrument) {
       // LFX-Status neu einlesen
-      if (!RestoreLfxStatusFromFiles())
+      if (!RestoreLfxStatusFromFile())
          return(last_error);
    }
    return(NO_ERROR);
@@ -115,7 +112,7 @@ int onInit.Template() {
 
 
 /**
- * Nach manueller Änderung der Indikatorparameter, mit Input-Dialog.
+ * Nach manueller Änderung der Indikatorparameter (Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
@@ -130,7 +127,7 @@ int onInit.Parameters() {
 
 
 /**
- * Nach Wechsel der aktuellen Chartperiode, kein Input-Dialog.
+ * Nach Wechsel der aktuellen Chartperiode (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
@@ -145,32 +142,32 @@ int onInit.TimeframeChange() {
 
 
 /**
- * Nach Änderung des aktuellen Chartsymbols, kein Input-Dialog.
+ * Nach Änderung des aktuellen Chartsymbols (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit.SymbolChange() {
    if (isLfxInstrument) {
-      // in Library gespeicherten LFX-Status des alten Symbols restaurieren und speichern
-      if (!RestoreLfxStatusFromLib())   return(last_error);
-      if (!SaveVolatileLfxStatus())     return(last_error);
+      // LFX-Status des alten Symbols speichern (liegt noch in Library)
+      if (!RestoreLfxStatusFromLib())  return(last_error);
+      if (!SaveVolatileLfxStatus())    return(last_error);
 
-      // LFX-Status des aktuellen Symbols einlesen
-      if (!RestoreLfxStatusFromFiles()) return(last_error);
+      // LFX-Status des neuen Symbols einlesen
+      if (!RestoreLfxStatusFromFile()) return(last_error);
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Bei Reload des Indikators nach Neukompilierung, kein Input-Dialog
+ * Bei Reload des Indikators nach Neukompilierung (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit.Recompile() {
    if (isLfxInstrument) {
       // LFX-Status neu einlesen
-      if (!RestoreLfxStatusFromFiles())
+      if (!RestoreLfxStatusFromFile())
          return(last_error);
    }
    return(NO_ERROR);
