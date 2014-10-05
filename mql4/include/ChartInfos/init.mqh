@@ -21,6 +21,10 @@ int onInit() {
       lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
       isLfxInstrument   = true;
       mode.remote       = true;                                      // TODO: LFX/mode.remote muﬂ in Abh‰ngigkeit einer Konfiguration gesetzt werden
+      if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+         return(last_error);
+      string name = lfxAccountName +": "+ lfxAccountCompany +", "+ lfxAccount +", "+ lfxAccountCurrency;
+      ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
    else if (!RestoreWindowStatus()) {                                // restauriert mode.intern/extern
       return(last_error);

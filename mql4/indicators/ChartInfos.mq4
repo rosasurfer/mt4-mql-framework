@@ -462,11 +462,11 @@ int CreateLabels() {
    label.ohlc            = __NAME__ +"."+ label.ohlc;
    label.price           = __NAME__ +"."+ label.price;
    label.spread          = __NAME__ +"."+ label.spread;
-   label.unitSize        = __NAME__ +"."+ label.unitSize;
    label.position        = __NAME__ +"."+ label.position;
-   label.time            = __NAME__ +"."+ label.time;
+   label.unitSize        = __NAME__ +"."+ label.unitSize;
    label.externalAccount = __NAME__ +"."+ label.externalAccount;
    label.lfxTradeAccount = __NAME__ +"."+ label.lfxTradeAccount;
+   label.time            = __NAME__ +"."+ label.time;
    label.stopoutLevel    = __NAME__ +"."+ label.stopoutLevel;
 
    int build = GetTerminalBuild();
@@ -516,81 +516,69 @@ int CreateLabels() {
    else GetLastError();
 
 
-   // Spread-Label: nicht in LFX-Charts
-   if (!isLfxInstrument) {
-      if (ObjectFind(label.spread) == 0)
-         ObjectDelete(label.spread);
-      if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
-         ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
-         ObjectSetText(label.spread, " ", 1);
-         ObjectRegister(label.spread);
-      }
-      else GetLastError();
+   // Spread-Label
+   if (ObjectFind(label.spread) == 0)
+      ObjectDelete(label.spread);
+   if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
+      ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
+      ObjectSetText(label.spread, " ", 1);
+      ObjectRegister(label.spread);
    }
+   else GetLastError();
 
 
-   // UnitSize-Label: nicht in LFX-Charts
-   if (!isLfxInstrument) {
-      if (ObjectFind(label.unitSize) == 0)
-         ObjectDelete(label.unitSize);
-      if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
-         ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
-         ObjectSetText(label.unitSize, " ", 1);
-         ObjectRegister(label.unitSize);
-      }
-      else GetLastError();
+   // Gesamt-Positions-Label
+   if (ObjectFind(label.position) == 0)
+      ObjectDelete(label.position);
+   if (ObjectCreate(label.position, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.position, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
+      ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
+      ObjectSetText(label.position, " ", 1);
+      ObjectRegister(label.position);
    }
+   else GetLastError();
 
 
-   // Gesamt-Positions-Label: nicht in LFX-Charts
-   if (!isLfxInstrument) {
-      if (ObjectFind(label.position) == 0)
-         ObjectDelete(label.position);
-      if (ObjectCreate(label.position, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.position, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
-         ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
-         ObjectSetText(label.position, " ", 1);
-         ObjectRegister(label.position);
-      }
-      else GetLastError();
+   // UnitSize-Label
+   if (ObjectFind(label.unitSize) == 0)
+      ObjectDelete(label.unitSize);
+   if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
+      ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
+      ObjectSetText(label.unitSize, " ", 1);
+      ObjectRegister(label.unitSize);
    }
-   else {
-      // LFX-Trade-Account-Label: nur in LFX-Charts, Anzeige wird sofort und nur hier gesetzt
-      if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
-         return(last_error);
-      name = lfxAccountName +": "+ lfxAccountCompany +", "+ lfxAccount +", "+ lfxAccountCurrency;
+   else GetLastError();
 
-      if (ObjectFind(label.lfxTradeAccount) == 0)
-         ObjectDelete(label.lfxTradeAccount);
-      if (ObjectCreate(label.lfxTradeAccount, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.lfxTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
-         ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 4);
-         ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
-         ObjectRegister(label.lfxTradeAccount);
-      }
-      else GetLastError();
+
+   // External-Account-Label
+   if (ObjectFind(label.externalAccount) == 0)
+      ObjectDelete(label.externalAccount);
+   if (ObjectCreate(label.externalAccount, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.externalAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.externalAccount, OBJPROP_XDISTANCE, 6);
+      ObjectSet    (label.externalAccount, OBJPROP_YDISTANCE, 8);
+      ObjectSetText(label.externalAccount, " ", 1);
+      ObjectRegister(label.externalAccount);
    }
+   else GetLastError();
 
 
-   // External-Account-Label: nicht in LFX-Charts
-   if (!isLfxInstrument) {
-      if (ObjectFind(label.externalAccount) == 0)
-         ObjectDelete(label.externalAccount);
-      if (ObjectCreate(label.externalAccount, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.externalAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label.externalAccount, OBJPROP_XDISTANCE, 190);
-         ObjectSet    (label.externalAccount, OBJPROP_YDISTANCE,   8);
-         ObjectSetText(label.externalAccount, " ", 1);
-         ObjectRegister(label.externalAccount);
-      }
-      else GetLastError();
+   // LFX-Trade-Account-Label
+   if (ObjectFind(label.lfxTradeAccount) == 0)
+      ObjectDelete(label.lfxTradeAccount);
+   if (ObjectCreate(label.lfxTradeAccount, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.lfxTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
+      ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 4);
+      ObjectSetText(label.lfxTradeAccount, " ", 1);
+      ObjectRegister(label.lfxTradeAccount);
    }
+   else GetLastError();
 
 
    // Time-Label: nur im Tester bei VisualMode = ON
@@ -672,35 +660,39 @@ bool UpdateUnitSize() {
    if (IsTesting())                                   return(true );          // Anzeige wird im Tester nicht benötigt
    if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(false);
 
-   string strMM = " ";
-   if (mm.isDefaultLeverage) { double lotsize=mm.stdRiskLots, leverage=mm.stdRiskLeverage; }
-   else                      {        lotsize=mm.customLots;  leverage=mm.customLeverage;  }
+   string strUnitSize = " ";
 
-   // Lotsize runden
-   if (lotsize > 0) {                                                                                    // Abstufung max. 6.7% je Schritt
-      if      (lotsize <=    0.03) lotsize = NormalizeDouble(MathRound(lotsize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
-      else if (lotsize <=   0.075) lotsize = NormalizeDouble(MathRound(lotsize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
-      else if (lotsize <=    0.1 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.005) *   0.005, 3);   //  0.075-0.1: Vielfaches von   0.005
-      else if (lotsize <=    0.3 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: Vielfaches von   0.01
-      else if (lotsize <=    0.75) lotsize = NormalizeDouble(MathRound(lotsize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
-      else if (lotsize <=    1.2 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
-      else if (lotsize <=    3.  ) lotsize = NormalizeDouble(MathRound(lotsize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
-      else if (lotsize <=    7.5 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
-      else if (lotsize <=   12.  ) lotsize = NormalizeDouble(MathRound(lotsize/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
-      else if (lotsize <=   30.  ) lotsize =       MathRound(MathRound(lotsize/  1    ) *   1       );   //      12-30: Vielfaches von   1
-      else if (lotsize <=   75.  ) lotsize =       MathRound(MathRound(lotsize/  2    ) *   2       );   //      30-75: Vielfaches von   2
-      else if (lotsize <=  120.  ) lotsize =       MathRound(MathRound(lotsize/  5    ) *   5       );   //     75-120: Vielfaches von   5
-      else if (lotsize <=  300.  ) lotsize =       MathRound(MathRound(lotsize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
-      else if (lotsize <=  750.  ) lotsize =       MathRound(MathRound(lotsize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
-      else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
-      else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
+   // Anzeige wird nur mit internem Account benötigt
+   if (mode.intern) {
+      if (mm.isDefaultLeverage) { double lotsize=mm.stdRiskLots, leverage=mm.stdRiskLeverage; }
+      else                      {        lotsize=mm.customLots;  leverage=mm.customLeverage;  }
 
-      // !!! max. 63 Zeichen     V - Volatility                            L - Leverage
-      strMM = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
+      // Lotsize runden
+      if (lotsize > 0) {                                                                                    // Abstufung max. 6.7% je Schritt
+         if      (lotsize <=    0.03) lotsize = NormalizeDouble(MathRound(lotsize/  0.001) *   0.001, 3);   //     0-0.03: Vielfaches von   0.001
+         else if (lotsize <=   0.075) lotsize = NormalizeDouble(MathRound(lotsize/  0.002) *   0.002, 3);   // 0.03-0.075: Vielfaches von   0.002
+         else if (lotsize <=    0.1 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.005) *   0.005, 3);   //  0.075-0.1: Vielfaches von   0.005
+         else if (lotsize <=    0.3 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: Vielfaches von   0.01
+         else if (lotsize <=    0.75) lotsize = NormalizeDouble(MathRound(lotsize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: Vielfaches von   0.02
+         else if (lotsize <=    1.2 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: Vielfaches von   0.05
+         else if (lotsize <=    3.  ) lotsize = NormalizeDouble(MathRound(lotsize/  0.1  ) *   0.1  , 1);   //      1.2-3: Vielfaches von   0.1
+         else if (lotsize <=    7.5 ) lotsize = NormalizeDouble(MathRound(lotsize/  0.2  ) *   0.2  , 1);   //      3-7.5: Vielfaches von   0.2
+         else if (lotsize <=   12.  ) lotsize = NormalizeDouble(MathRound(lotsize/  0.5  ) *   0.5  , 1);   //     7.5-12: Vielfaches von   0.5
+         else if (lotsize <=   30.  ) lotsize =       MathRound(MathRound(lotsize/  1    ) *   1       );   //      12-30: Vielfaches von   1
+         else if (lotsize <=   75.  ) lotsize =       MathRound(MathRound(lotsize/  2    ) *   2       );   //      30-75: Vielfaches von   2
+         else if (lotsize <=  120.  ) lotsize =       MathRound(MathRound(lotsize/  5    ) *   5       );   //     75-120: Vielfaches von   5
+         else if (lotsize <=  300.  ) lotsize =       MathRound(MathRound(lotsize/ 10    ) *  10       );   //    120-300: Vielfaches von  10
+         else if (lotsize <=  750.  ) lotsize =       MathRound(MathRound(lotsize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
+         else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
+         else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
+
+         // !!! max. 63 Zeichen           V - Volatility                            L - Leverage
+         strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
+      }
    }
 
    // Anzeige aktualisieren
-   ObjectSetText(label.unitSize, strMM, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
