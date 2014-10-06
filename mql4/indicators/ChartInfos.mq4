@@ -924,54 +924,57 @@ bool UpdatePositions() {
 
    // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}   {Comment}"
    string strLotSize, strCustomAmount, comment, strTypes[]={"", "Long:", "Short:", "Hedge:"};  // DirectionTypes (1, 2, 3) werden als Indizes benutzt
-   int line;
+   color fontColor = Red;                                            // Default für externe Positionen
+   int   line;
 
    // interne/externe Positionsdaten
    for (int i=iePositions-1; i >= 0; i--) {
+      if (mode.intern) fontColor = positions.fontColors[positions.idata[i][I_POSITION_TYPE]];
       line++;
+
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HEDGE) {
-         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                    positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                      positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                              positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                    positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                      positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                              positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_BREAKEVEN])
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, fontColor);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", DoubleToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip", positions.fontSize, positions.fontName, fontColor);
 
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", "-",                                                                                                  positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col5", "-",                                                                                                  positions.fontSize, positions.fontName, fontColor);
 
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_PROFIT])
-         ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col7", "...",                                                                                                positions.fontSize, positions.fontName, fontColor);
             else { if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
                    else                                      strCustomAmount = " ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, fontColor);
             }
       }
       else {
-         ObjectSetText(label.position +".line"+ line +"_col0",         strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col0",         strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_HEDGED_LOTSIZE]) strLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+");
             else                                       strLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+");
-         ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                   positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col1", strLotSize +" lot",                                                                                   positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_BREAKEVEN])
-         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, fontColor);
             else if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_LONG)
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil (positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil (positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, fontColor);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(RoundEx(positions.ddata[i][I_STOPLOSS], Digits), PriceFormat),                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                                                                positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(RoundEx(positions.ddata[i][I_STOPLOSS], Digits), PriceFormat),                            positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                                                            positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
             else                                      strCustomAmount = " ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, fontColor);
       }
 
          if (positions.idata[i][I_COMMENT] > -1) comment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
          else                                    comment = "";
-         ObjectSetText(label.position +".line"+ line +"_col8", comment +" ",                                                                                         positions.fontSize, positions.fontName, positions.fontColors[positions.idata[i][I_POSITION_TYPE]]);
+         ObjectSetText(label.position +".line"+ line +"_col8", comment +" ",                                                                                         positions.fontSize, positions.fontName, fontColor);
    }
 
 
@@ -2625,7 +2628,7 @@ bool StoreWindowStatus() {
    // Konfiguration in Terminalkonfiguration speichern (oder löschen)
    string file    = GetLocalConfigPath();
    string section = "WindowStatus";
-      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd)     return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd)      return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
    string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
    if (mode.extern) {
       if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
