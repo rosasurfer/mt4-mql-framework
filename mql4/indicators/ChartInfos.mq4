@@ -929,7 +929,7 @@ bool UpdatePositions() {
 
    // interne/externe Positionsdaten
    for (int i=iePositions-1; i >= 0; i--) {
-      if (mode.intern) fontColor = positions.fontColors[positions.idata[i][I_POSITION_TYPE]];
+      if (mode.intern || positions.idata[i][I_POSITION_TYPE]==TYPE_VIRTUAL) fontColor = positions.fontColors[positions.idata[i][I_POSITION_TYPE]];
       line++;
 
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HEDGE) {
