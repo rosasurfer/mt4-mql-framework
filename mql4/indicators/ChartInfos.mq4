@@ -282,7 +282,7 @@ bool ToggleOpenOrders() {
          return(false);
       if (!orders) {                                                 // ohne offene Orders bleibt die Anzeige unverändert
          status = false;
-         ForceSound("Windows XP-Batterie niedrig.wav");              // Plonk!!!
+         ForceSound("Plonk.wav");                                    // Plonk!!!
       }
    }
 
