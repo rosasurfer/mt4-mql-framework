@@ -138,9 +138,12 @@ string label.time            = "Time";
 
 
 // Font-Settings der detaillierten Positionsanzeige
-string positions.fontName     = "MS Sans Serif";
-int    positions.fontSize     = 8;
-color  positions.fontColors[] = {Blue, Blue, Green};                 // unterschiedliche PositionTypes: {TYPE_DEFAULT, TYPE_CUSTOM, TYPE_VIRTUAL}
+string positions.fontName          = "MS Sans Serif";
+int    positions.fontSize          = 8;
+color  positions.fontColor.intern  = Blue;
+color  positions.fontColor.extern  = Red;
+color  positions.fontColor.remote  = Blue;
+color  positions.fontColor.virtual = Green;
 
 
 #include <ChartInfos/init.mqh>
@@ -230,6 +233,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
  *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History (geschlossene Positionen) ein/aus.
+ *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
@@ -248,6 +252,11 @@ bool onChartCommand(string commands[]) {
       }
       if (commands[i] == "cmd=ToggleTradeHistory") {
          if (!ToggleTradeHistory())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=EditAccountConfig") {
+         if (!EditAccountConfig())
             return(false);
          continue;
       }
@@ -409,14 +418,14 @@ bool ToggleTradeHistory() {
  * @return bool - Erfolgsstatus
  */
 bool TrackSignal(string signalId) {
-   bool sigChanged = false;
+   bool signalChanged = false;
 
    if (signalId == "") {                                             // Leerstring bedeutet: Signaltracking/mode.extern = OFF
       if (!mode.intern) {
-         mode.intern = true;
-         mode.extern = false;
-         mode.remote = false;
-         sigChanged  = true;
+         mode.intern   = true;
+         mode.extern   = false;
+         mode.remote   = false;
+         signalChanged = true;
       }
    }
    else {
@@ -440,11 +449,11 @@ bool TrackSignal(string signalId) {
          external.lots.checked = false;
          if (-1 == ReadExternalPositions(provider, signal))
             return(false);
-         sigChanged = true;
+         signalChanged = true;
       }
    }
 
-   if (sigChanged) {
+   if (signalChanged) {
       ArrayResize(custom.position.conf,          0);
       ArrayResize(custom.position.conf.comments, 0);
       if (!UpdateExternalAccount())
@@ -924,14 +933,15 @@ bool UpdatePositions() {
 
    // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}   {Comment}"
    string strLotSize, strCustomAmount, comment, strTypes[]={"", "Long:", "Short:", "Hedge:"};  // DirectionTypes (1, 2, 3) werden als Indizes benutzt
-   color fontColor = Red;                                            // Default für externe Positionen
-   int   line;
+   color  fontColor;
+   int    line;
 
    // interne/externe Positionsdaten
    for (int i=iePositions-1; i >= 0; i--) {
-      if (mode.intern || positions.idata[i][I_POSITION_TYPE]==TYPE_VIRTUAL) fontColor = positions.fontColors[positions.idata[i][I_POSITION_TYPE]];
       line++;
-
+      if (positions.idata[i][I_POSITION_TYPE] == TYPE_VIRTUAL) fontColor = positions.fontColor.virtual;
+      else if (mode.intern)                                    fontColor = positions.fontColor.intern;
+      else                                                     fontColor = positions.fontColor.extern;
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HEDGE) {
          ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                    positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                      positions.fontSize, positions.fontName, fontColor);
@@ -982,14 +992,16 @@ bool UpdatePositions() {
    for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
       if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
          line++;
-         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[los.Type        (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                          positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                          positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                      positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, positions.fontColors[TYPE_DEFAULT]);
+         if (positions.idata[i][I_POSITION_TYPE] == TYPE_VIRTUAL) fontColor = positions.fontColor.virtual;
+         else                                                     fontColor = positions.fontColor.remote;
+         ObjectSetText(label.position +".line"+ line +"_col0",    strTypes[los.Type        (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                          positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                          positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                      positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, fontColor);
       }
    }
    return(!catch("UpdatePositions(2)"));
@@ -1489,22 +1501,24 @@ bool ReadCustomPositionConfig() {
       ArrayResize(custom.position.conf.comments, 0);
    }
 
-   string keys[], values[], value, comment, details[], strLotSize, strTicket, sNull, section="BreakevenCalculation", symbol=Symbol(), stdSymbol=StdSymbol();
+   string keys[], values[], value, comment, details[], strLotSize, strTicket, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int    valuesSize, detailsSize, confSize, pos, ticket, offsetStartOfPosition=0;
    bool   isConfigEmpty, isConfigVirtual;
    if (!minLotSize) return(false);                                         // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
-   string localConfigPath = GetLocalConfigPath();
-   if (localConfigPath=="") return(!SetLastError(stdlib.GetLastError()));
+   if (mode.remote) return(!catch("ReadCustomPositionConfig(1)   feature for mode.remote=1 not implemented", ERR_NOT_IMPLEMENTED));
 
-   int keysSize = GetIniKeys(localConfigPath, section, keys);
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.provider +"\\"+ external.signal) +"_config.ini";
+   string section  = "BreakevenCalculation";
+   int    keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
       if (StringIStartsWith(keys[i], symbol) || StringIStartsWith(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {                     // bei gleichnamigen Schlüsseln wird nur der erste ausgewertet
-            value = GetRawLocalConfigString(section, keys[i], "");
+            value = GetRawIniString(file, section, keys[i], "");
 
             // Kommentar auswerten
             pos = StringFind(value, ";");
@@ -1546,18 +1560,18 @@ bool ReadCustomPositionConfig() {
                      }
                   }
                }
-               else if (detailsSize != 2)                   return(!catch("ReadCustomPositionConfig(2)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else if (detailsSize != 2)                   return(!catch("ReadCustomPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                strLotSize = StringTrim(details[0]);
                strTicket  = StringTrim(details[1]);
 
                // Lotsize validieren
                lotSize = EMPTY;
                if (StringLen(strLotSize) > 0) {
-                  if (!StringIsNumeric(strLotSize))         return(!catch("ReadCustomPositionConfig(3)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strLotSize))         return(!catch("ReadCustomPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-numeric lot size) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   lotSize = StrToDouble(strLotSize);
                   if (strTicket!="") /*&&*/ if (lotSize!=0) {              // wenn lotSize nicht Betrag ist (TYPE_AMOUNT)
-                     if (LT(lotSize, minLotSize))           return(!catch("ReadCustomPositionConfig(4)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                     if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadCustomPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (LT(lotSize, minLotSize))           return(!catch("ReadCustomPositionConfig(5)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (MathModFix(lotSize, lotStep) != 0) return(!catch("ReadCustomPositionConfig(6)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (lot size not a multiple of LOTSTEP) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   }
                }
 
@@ -1566,7 +1580,7 @@ bool ReadCustomPositionConfig() {
                else if (StringIsDigit(strTicket)) ticket = StrToInteger(strTicket);
                else if (strTicket == "L")         ticket = TYPE_LONG;
                else if (strTicket == "S")         ticket = TYPE_SHORT;
-               else                                         return(!catch("ReadCustomPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ localConfigPath +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else                                         return(!catch("ReadCustomPositionConfig(7)   illegal configuration \""+ section +"\": "+ keys[i] +"=\""+ value +"\" (non-digits in ticket) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Virtuelle Konfigurationen müssen mit einer virtuellen Position beginnen, damit die virtuellen Lots später nicht von den realen Lots abgezogen werden, siehe (2).
                if (lotSize!=EMPTY && ticket<=TYPE_SHORT) {
@@ -2851,6 +2865,24 @@ int ReadExternalPositions(string provider, string signal) {
 
 
 /**
+ * Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EditAccountConfig() {
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file     = TerminalPath() + mqlDir +"\\files\\";
+      if      (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
+      else if (mode.extern) file = file + external.provider +"\\"+ external.signal +"_config.ini";
+      else if (mode.remote) file = file +"LiteForex\\remote_positions.ini";
+      else return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
+
+   if (!EditFile(file))
+      return(!SetLastError(stdlib.GetLastError()));
+}
+
+
+/**
  * String-Repräsentation der Input-Parameter fürs Logging bei Aufruf durch iCustom().
  *
  * @return string
@@ -2872,8 +2904,9 @@ string InputsToStr() {
    int      ArrayPushDouble(double array[], double value);
    string   BoolToStr(bool value);
    string   DateToStr(datetime time, string mask);
-   bool     DeleteIniKey(string fileName, string section, string key);
+   bool     DeleteIniKey(string file, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
+   bool     EditFile(string filename);
    datetime FxtToServerTime(datetime fxtTime);
    double   GetCommission();
    string   GetConfigString(string section, string key, string defaultValue);
@@ -2881,7 +2914,7 @@ string InputsToStr() {
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
-   string   GetRawLocalConfigString(string section, string key, string defaultValue);
+   string   GetRawIniString(string file, string section, string key, string defaultValue);
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();
@@ -2895,6 +2928,7 @@ string InputsToStr() {
    string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
+   string   ShortAccountCompany();
    bool     StringEndsWith(string object, string postfix);
    bool     StringIEndsWith(string object, string postfix);
    string   StringSubstrFix(string object, int start, int length);
