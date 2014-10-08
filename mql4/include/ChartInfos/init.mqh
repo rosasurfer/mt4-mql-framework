@@ -4,7 +4,7 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Textlabel erzeugen (zuerst, da RestoreWindowStatus() sie bereits benötigt)
+   // (1) Textlabel erzeugen (zuerst, da RestoreWindowStatus() sie benötigt)
    CreateLabels();
 
 

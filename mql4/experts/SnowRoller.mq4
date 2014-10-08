@@ -4983,7 +4983,7 @@ int ToggleOrderDisplayMode() {
    }
    else {
       // nothing to change, Anzeige bleibt unverändert
-      ForceSound("Windows XP-Batterie niedrig.wav");
+      ForceSound("Plonk.wav");
    }
    return(catch("ToggleOrderDisplayMode()"));
 }
