@@ -1,5 +1,5 @@
 /**
- * Hinterlegt den Chart mit Bars übergeordneter Timeframes und markiert die jeweilige ATR-Projection.
+ * Hinterlegt den Chart mit Bars übergeordneter Timeframes.
  */
 #property indicator_chart_window
 
@@ -7,26 +7,20 @@
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-
+#include <win32api.mqh>
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern string Timeframe            = "W";                // anzuzeigender SuperTimeframe: [D | W* | M | Q]
-extern int    ATR.Periods          = 14;                 // MovingAverage-Perioden des ATR
-extern color  Color.BarUp          = C'193,255,193';     // Up-Bars              blass: C'215,255,215'
-extern color  Color.BarDown        = C'255,213,213';     // Down-Bars            blass: C'255,230,230'
-extern color  Color.BarUnchanged   = C'232,232,232';     // unveränderte Bars                               // oder Gray
-extern color  Color.Close          = C'164,164,164';     // Close-Marker                                    // oder Black
-extern color  Color.ATR.Projection = C'164,164,164';     // default zunächst wie Close-Marker
+extern color Color.BarUp        = C'193,255,193';        // Up-Bars              blass: C'215,255,215'
+extern color Color.BarDown      = C'255,213,213';        // Down-Bars            blass: C'255,230,230'
+extern color Color.BarUnchanged = C'232,232,232';        // unveränderte Bars                               // oder Gray
+extern color Color.Close        = C'164,164,164';        // Close-Marker                                    // oder Black
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 
-
-bool   superBars.off = false;                            // Die Anzeige wird ausgeschaltet, wenn der SuperTimeframe in der aktuellen Chartauflösung unsinnig ist.
-int    superTimeframe;
-
-string label.superbar = "SuperBar";                      // Label für Chartanzeige
+int    superBars.timeframe;
+string label.description = "Description";                // Label für Chartanzeige
 
 
 #define STF_UP        1
@@ -39,101 +33,59 @@ string label.superbar = "SuperBar";                      // Label für Chartanzei
  * @return int - Fehlerstatus
  */
 int onInit() {
-   superBars.off = false;
-
    // (1) Parametervalidierung
-   // Timeframe
-   string value = StringToUpper(StringTrim(Timeframe));
-   if      (value=="D" || value=="D1"  ) { superTimeframe = PERIOD_D1;  Timeframe = "D"; }
-   else if (value=="W" || value=="W1"  ) { superTimeframe = PERIOD_W1;  Timeframe = "W"; }
-   else if (value=="M" || value=="MN1" ) { superTimeframe = PERIOD_MN1; Timeframe = "M"; }
-   else if (value=="Q" || value=="Q1"  ) { superTimeframe = PERIOD_Q1;  Timeframe = "Q"; }
-   else return(catch("onInit(1)   Invalid input parameter Timeframe = \""+ Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   // Colors
+   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;   // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
+   if (Color.BarDown      == 0xFF000000) Color.BarDown = CLR_NONE;
+   if (Color.BarUnchanged == 0xFF000000) Color.BarDown = CLR_NONE;
+   if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
 
-   switch (Period()) {
-      case PERIOD_M1 :
-      case PERIOD_M5 :
-      case PERIOD_M15:
-      case PERIOD_M30:
-      case PERIOD_H1 :
-      case PERIOD_H4 :
-         break;
 
-      case PERIOD_D1 :
-         if (superTimeframe <= PERIOD_D1) superBars.off = true;      // min. W1 oder keine Anzeige
-         break;
+   // (2) Textlabel erzeugen
+   CreateLabels();
 
-      case PERIOD_W1 :
-         if (superTimeframe <= PERIOD_W1) superBars.off = true;      // min. MN1 oder keine Anzeige
-         break;
 
-      case PERIOD_MN1:
-         superBars.off = true;                                       // keine Anzeige
-         break;
+   // (3) Status restaurieren
+   if (!RestoreWindowStatus())
+      return(last_error);
+
+
+   // (4) Anzeigestatus prüfen und ggf. Default festlegen
+   switch (superBars.timeframe) {
+      // off: kann nur manuell aktiviert werden
+      case  INT_MIN   :
+      case  INT_MAX   : break;
+
+      // aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
+      case  PERIOD_D1 : if (Period() >  PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_W1 : if (Period() >  PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_MN1: if (Period() >  PERIOD_W1) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_Q1 :                                                                        break;
+
+      // deaktiviert: wird automatisch reaktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
+      case -PERIOD_D1 : if (Period() <= PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_W1 : if (Period() <= PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_MN1: if (Period() <= PERIOD_W1) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_Q1 :                            superBars.timeframe = -superBars.timeframe; break;
+
+      // ungültiger Status: Default benutzen
+      default:
+         switch (Period()) {
+            case PERIOD_M1 :
+            case PERIOD_M5 :
+            case PERIOD_M15:
+            case PERIOD_M30:
+            case PERIOD_H1 : superBars.timeframe = PERIOD_D1;  break;
+            case PERIOD_H4 : superBars.timeframe = PERIOD_W1;  break;
+            case PERIOD_D1 : superBars.timeframe = PERIOD_MN1; break;
+            case PERIOD_W1 :
+            case PERIOD_MN1: superBars.timeframe = PERIOD_Q1;  break;
+         }
    }
 
-   // ATR.Periods
-   if (ATR.Periods < 1) return(catch("onInit(2)   Invalid input parameter ATR.Periods = "+ ATR.Periods, ERR_INVALID_INPUT_PARAMVALUE));
 
-   // Colors
-   if (Color.BarUp          == 0xFF000000) Color.BarUp          = CLR_NONE;   // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
-   if (Color.BarDown        == 0xFF000000) Color.BarDown        = CLR_NONE;
-   if (Color.BarUnchanged   == 0xFF000000) Color.BarDown        = CLR_NONE;
-   if (Color.Close          == 0xFF000000) Color.Close          = CLR_NONE;
-   if (Color.ATR.Projection == 0xFF000000) Color.ATR.Projection = CLR_NONE;
-
-
-   // (2) Label für Textanzeige erzeugen
-   CreateDisplayLabel();
-
-
-   // (3) Datenanzeige ausschalten
-   SetIndexLabel(0, NULL);
+   SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(3)"));
-}
-
-
-/**
- * Nach Änderung der aktuellen Chartperiode. Kein Input-Dialog.
- *
- * @return int - Fehlerstatus
- */
-int onInit.TimeframeChange() {
-   RestoreStickyStatus();
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Änderung des aktuellen Chartsymbols. Kein Input-Dialog.
- *
- * @return int - Fehlerstatus
- */
-int onInit.SymbolChange() {
-   RestoreStickyStatus();
-   return(NO_ERROR);
-}
-
-
-/**
- * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start. Kein Input-Dialog.
- *
- * @return int - Fehlerstatus
- */
-int onInit.Template() {
-   RestoreStickyStatus();        // Beim Umschalten zwischen Profilen wird so die letzte jeweilige Konfiguration reaktiviert.
-   return(NO_ERROR);
-}
-
-
-/**
- * Bei Reload des Indikators nach Neukompilierung. Kein Input-Dialog
- *
- * @return int - Fehlerstatus
- */
-int onInit.Recompile() {
-   RestoreStickyStatus();
-   return(NO_ERROR);
 }
 
 
@@ -144,42 +96,11 @@ int onInit.Recompile() {
  */
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
+
+   // in allen deinit()-Szenarien Fensterstatus  speichern
+   if (!StoreWindowStatus())
+      return(last_error);
    return(catch("onDeinit()"));
-}
-
-
-/**
- * außerhalb iCustom(): vor Symbol- oder Timeframewechsel
- * innerhalb iCustom(): nie
- *
- * @return int - Fehlerstatus
- */
-int onDeinitChartChange() {
-   // bei Timeframe- und auch bei Symbolwechsel wird die aktuelle Konfiguration übernommen
-   return(StoreStickyStatus());
-}
-
-
-/**
- * außerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
- * innerhalb iCustom(): in allen deinit()-Fällen
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRemove() {
-   // Terminal-Exit und bei Profilwechsel: beim Zurückwechseln zum selben Profil wird die letzte Konfiguration verwendet
-   return(StoreStickyStatus());
-}
-
-
-/**
- * außerhalb iCustom(): bei Reload nach Recompilation
- * innerhalb iCustom(): nie
- *
- * @return int - Fehlerstatus
- */
-int onDeinitRecompile() {
-   return(StoreStickyStatus());
 }
 
 
@@ -207,8 +128,8 @@ bool onChartCommand(string commands[]) {
    if (!size) return(!warn("onChartCommand(1)   empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
-      if      (commands[i] == "Timeframe=1" ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
-      else if (commands[i] == "Timeframe=-1") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
+      if      (commands[i] == "Timeframe=Up"  ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
+      else if (commands[i] == "Timeframe=Down") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
       else
          warn("onChartCommand(2)   unknown chart command \""+ commands[i] +"\"");
    }
@@ -219,40 +140,54 @@ bool onChartCommand(string commands[]) {
 /**
  * Schaltet den Parameter superTimeframe des Indikators um.
  *
- * @param  int id - Timeframe-ID
+ * @param  int direction - Richtungs-ID:  STF_UP|STF_DOWN
  *
  * @return bool - Erfolgsstatus
  */
-bool SwitchSuperTimeframe(int id) {
-   if (id == STF_UP) {
-      switch (superTimeframe) {
-         case PERIOD_D1 : superTimeframe = PERIOD_W1;  break;
-         case PERIOD_W1 : superTimeframe = PERIOD_MN1; break;
-         case PERIOD_MN1: superTimeframe = PERIOD_Q1;  break;
+bool SwitchSuperTimeframe(int direction) {
+   bool reset = false;
+
+   if (direction == STF_DOWN) {
+      switch (superBars.timeframe) {
+         case INT_MIN   : ForceSound("Plonk.wav");          break;   // Plonk!!! (we hit a wall)
+         case PERIOD_D1 : superBars.timeframe = INT_MIN;    break;
+         case PERIOD_W1 : superBars.timeframe = PERIOD_D1;  break;
+         case PERIOD_MN1: superBars.timeframe = PERIOD_W1;  break;
+         case PERIOD_Q1 : superBars.timeframe = PERIOD_MN1; break;
+         case INT_MAX   : superBars.timeframe = PERIOD_Q1;  break;
+         default:
+            reset = true;
       }
    }
-   else if (id == STF_DOWN) {
-      switch (superTimeframe) {
-         case PERIOD_W1 : superTimeframe = PERIOD_D1;  break;
-         case PERIOD_MN1: superTimeframe = PERIOD_W1;  break;
-         case PERIOD_Q1 : superTimeframe = PERIOD_MN1; break;
+   else if (direction == STF_UP) {
+      switch (superBars.timeframe) {
+         case INT_MIN   : superBars.timeframe = PERIOD_D1;  break;
+         case PERIOD_D1 : superBars.timeframe = PERIOD_W1;  break;
+         case PERIOD_W1 : superBars.timeframe = PERIOD_MN1; break;
+         case PERIOD_MN1: superBars.timeframe = PERIOD_Q1;  break;
+         case PERIOD_Q1 : superBars.timeframe = INT_MAX;    break;
+         case INT_MAX   : ForceSound("Plonk.wav");          break;   // Plonk!!! (we hit a wall)
+         default:
+            reset = true;
       }
    }
-   else return(_true(warn("SwitchSuperTimeframe(1)   unknown parameter id = "+ id)));
+   else warn("SwitchSuperTimeframe(1)   unknown parameter direction = "+ direction);
 
-   switch (Period()) {
-      case PERIOD_D1 :
-         if (superTimeframe <= PERIOD_D1) superBars.off = true;      // min. W1 oder keine Anzeige
-         break;
-
-      case PERIOD_W1 :
-         if (superTimeframe <= PERIOD_W1) superBars.off = true;      // min. MN1 oder keine Anzeige
-         break;
-
-      case PERIOD_MN1:
-         superBars.off = true;                                       // keine Anzeige
-         break;
+   if (reset) {
+      // Parameter superBars.timeframe war ungültig und wird auf den Default-Wert zurückgesetzt.
+      switch (Period()) {
+         case PERIOD_M1 :
+         case PERIOD_M5 :
+         case PERIOD_M15:
+         case PERIOD_M30:
+         case PERIOD_H1 : superBars.timeframe = PERIOD_D1;  break;
+         case PERIOD_H4 : superBars.timeframe = PERIOD_W1;  break;
+         case PERIOD_D1 : superBars.timeframe = PERIOD_MN1; break;
+         case PERIOD_W1 :
+         case PERIOD_MN1: superBars.timeframe = PERIOD_Q1;  break;
+      }
    }
+
    return(true);
 }
 
@@ -263,35 +198,28 @@ bool SwitchSuperTimeframe(int id) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateSuperBars() {
-   static bool lastSuperBars.off;
-   static int  lastSuperTimeframe;
-
-   // Wechseln SuperTimeframe oder der Status von superBars.off, müssen evt. vorhandene Bars gelöscht werden, solange
-   // dies nicht der erste Aufruf nach einem init()-Cycle ist (statische Variablen sind noch nicht initialisiert).
-
-   // (1) Konfigurationswechsel detektieren und vorhandene Bars löschen
-   bool configChange = false;
-   if (lastSuperTimeframe != 0) {                                    // 0: erster Aufruf seit init()
-      if (superTimeframe != lastSuperTimeframe) {
-         //debug("UpdateSuperBars(0.1)   config change: lastStf="+ lastSuperTimeframe +"  now="+ superTimeframe);
-         configChange = true;
+   // (1) Konfigurationswechsel detektieren und ggf. vorhandene Bars löschen
+   bool timeframeChanged = false;
+   static int last.timeframe;
+   if (last.timeframe != 0) {
+      if (superBars.timeframe != last.timeframe) {
+         timeframeChanged = true;
       }
-      else if (superBars.off != lastSuperBars.off) {
-         //debug("UpdateSuperBars(0.2)   config change: lastOff="+ lastSuperBars.off +"  now="+ superBars.off);
-         configChange = true;
-      }
-      if (configChange) {
-         DeleteRegisteredObjects(NULL);
-         CreateDisplayLabel();
+      if (timeframeChanged) /*&&*/ if (last.timeframe!=INT_MIN) /*&&*/ if (last.timeframe!=INT_MAX) {
+         DeleteRegisteredObjects(NULL);                              // War last.timeframe INT_MIN oder INT_MAX, wurden vorhandene Bars bereits gelöscht.
+         CreateLabels();
       }
    }
 
 
-   // (2) Rückkehr bei ausgeschalteter Anzeige
-   if (superBars.off) {
-      lastSuperBars.off  = superBars.off;
-      lastSuperTimeframe = superTimeframe;
-      return(true);
+   // (2) Rückkehr bei manuell abgeschalteter oder automatisch deaktivierter Anzeige
+   switch (superBars.timeframe) {
+      case  INT_MIN   :                   // manuell abgeschaltet
+      case  INT_MAX   :
+      case -PERIOD_D1 :                   // automatisch deaktiviert
+      case -PERIOD_W1 :
+      case -PERIOD_MN1:
+      case -PERIOD_Q1 : return(true);
    }
 
 
@@ -299,28 +227,27 @@ bool UpdateSuperBars() {
    // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
    // - Die erste, aktuelle Superbar reicht nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
    // - Die letzte Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
-
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int      openBar, closeBar, lastChartBar=Bars-1, i=-1, changedBars=ChangedBars;
-   if (configChange)
-      changedBars = Bars;                                            // bei Konfigurationswechsel müssen alle Bars neugezeichnet werden
+   if (timeframeChanged)
+      changedBars = Bars;                                            // bei Timeframewechsel müssen immer alle Bars neugezeichnet werden
 
    // Schleife über alle Superbars von "jung" nach "alt"
    //
    // Mit "Session" ist in der Folge keine 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
    // z.B. ein Tag, eine Woche oder ein Monat.
    while (true) {
-      if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
+      if (!GetPreviousSession(superBars.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(false);
 
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
       // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
-      if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe>=PERIOD_MN1) {
+      if (Period()==PERIOD_D1) /*&&*/ if (superBars.timeframe>=PERIOD_MN1) {
          if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar: Server-Timezone westlich von FXT
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
       }
       openBar = iBarShiftNext(NULL, NULL, openTime.srv);             // Da immer der aktuelle Timeframe benutzt wird, kann ERS_HISTORY_UPDATE eigentlich nie auftreten.
-      if (openBar == EMPTY_VALUE) return(!SetLastError(warn("onTick(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
+      if (openBar == EMPTY_VALUE) return(!SetLastError(warn("UpdateSuperBars(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
       if (closeBar == -1)                                            // closeTime ist zu alt für den Chart => Abbruch
@@ -334,8 +261,7 @@ bool UpdateSuperBars() {
          break;                                                      // Superbars bis max. changedBars aktualisieren
    }
 
-   lastSuperBars.off  = superBars.off;
-   lastSuperTimeframe = superTimeframe;
+   last.timeframe = superBars.timeframe;
    return(true);
 }
 
@@ -462,7 +388,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
       if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
       else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
    }
-   else return(!catch("GetPreviousSession(1) unsupported timeframe = "+ PeriodToStr(timeframe), ERR_RUNTIME_ERROR));
+   else return(!catch("GetPreviousSession(1) unsupported timeframe = "+ ifString(!timeframe, NULL, PeriodToStr(timeframe)), ERR_RUNTIME_ERROR));
 
 
    // (5) entsprechende Serverzeiten ermitteln
@@ -506,7 +432,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
 
    // Label definieren
    string label;
-   switch (superTimeframe) {
+   switch (superBars.timeframe) {
       case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w D.M.Y ");                            break; // "w D.M.Y" wird bereits vom Grid verwendet
       case PERIOD_W1 : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y" );                            break;
       case PERIOD_MN1: label =          DateToStr(openTime.fxt,     "N Y" );                            break;
@@ -558,7 +484,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    // bei Superbar[0] OHL-Anzeige aktualisieren
    if (closeBar == 0) {
       string sRange = "";
-      switch (superTimeframe) {
+      switch (superBars.timeframe) {
          case PERIOD_M1 : sRange = "Superbars: 1 Minute";   break;
          case PERIOD_M5 : sRange = "Superbars: 5 Minutes";  break;
          case PERIOD_M15: sRange = "Superbars: 15 Minutes"; break;
@@ -571,7 +497,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
          case PERIOD_Q1 : sRange = "Superbars: Quarters";   break;
       }
       //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
-      label = __NAME__ +"."+ label.superbar;
+      label = __NAME__ +"."+ label.description;
       string fontName = "";
       int    fontSize = 8;                                                    // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
       ObjectSetText(label, sRange, fontSize, fontName, Black);
@@ -602,7 +528,10 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    if (!IsChart)
       return(false);
 
-   static string label="SuperBar.command", mutex="mutex.SuperBar.command";
+   static string label, mutex; if (!StringLen(label)) {
+      label = __NAME__ +".command";
+      mutex = "mutex."+ label;
+   }
 
 
    // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
@@ -632,8 +561,8 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  *
  * @return int - Fehlerstatus
  */
-int CreateDisplayLabel() {
-   string label = __NAME__ +"."+ label.superbar;
+int CreateLabels() {
+   string label = __NAME__ +"."+ label.description;
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -646,85 +575,73 @@ int CreateDisplayLabel() {
       ObjectRegister(label);
    }
 
-   return(catch("CreateDisplayLabel(1)"));
+   return(catch("CreateLabels(1)"));
 }
 
 
 /**
- * Speichert die volatile Konfiguration im Chart, sodaß sie im nächsten init()-Cycle daraus wiederhergestellt werden kann.
- * Die volatile Konfiguration umfaßt alle jenen internen Parameter, die sich zur Laufzeit ohne Aufruf des Config-Dialogs ändern können:
+ * Speichert die Fenster-relevanten Konfigurationsdaten im Chart und in der lokalen Terminalkonfiguration.
+ * Dadurch gehen sie auch beim Laden eines neuen Chart-Templates nicht verloren.
  *
- *  - bool superBars.off;
- *  - int  superTimeframe;
- *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int StoreStickyStatus() {
-   // Die Konfiguration wird nur dann im Chart gespeichert, wenn sie gültig ist (z.B. nicht, wenn init() mit Fehler zurückkehrte).
-   // TODO: Solange die Validierung nicht ausgelagert ist, muß superTimeframe hier nochmal manuell validiert werden.
-   //
-   // superBars.off                                                  // immer gültig
-   // superTimeframe
-   switch (superTimeframe) {
-      case PERIOD_D1 :
-      case PERIOD_W1 :
-      case PERIOD_MN1:
-      case PERIOD_Q1 : break;
-      default:         return(NO_ERROR);
-   }
+bool StoreWindowStatus() {
+   // Die Konfiguration wird nur gespeichert, wenn sie gültig ist.
+   if (!superBars.timeframe)
+      return(true);
 
-   // Daten speichern
-   string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
+   // Konfiguration im Chart speichern
+   string label = __NAME__ +".sticky.timeframe";
+   string value = superBars.timeframe;                               // (string) int
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", superBars.off));       // (string) bool
+   ObjectSetText(label, value);
 
-   label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, StringConcatenate("", superTimeframe));      // (string) int
+   // Konfiguration in Terminalkonfiguration speichern
+   string file    = GetLocalConfigPath();
+   string section = "WindowStatus";
+      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd)   return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+   string key     = "SuperBars.Timeframe.0x"+ IntToHexStr(hWnd);
+   if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
 
-   return(catch("StoreStickyStatus(1)"));
+   return(catch("StoreWindowStatus(3)"));
 }
 
 
 /**
- * Restauriert die im Chart vorhandenen volatilen Konfigurationsdaten (@see StoreStickyStatus).
+ * Restauriert die Fenster-relevanten Konfigurationsdaten aus dem Chart oder der Terminalkonfiguration.
  *
- *  - bool superBars.off;
- *  - int  superTimeframe;
+ *  - SuperbarTimeframe
  *
- * @return bool - Erfolgsstatus (die gefundenen Daten werden nur übernommen, wenn sie vollständig gültig sind)
+ * @return bool - Erfolgsstatus
  */
-bool RestoreStickyStatus() {
-   // superBars.off
-   string label = StringConcatenate(__NAME__, ".sticky.superBars.off");
-   if (ObjectFind(label) != 0)   return(false);
-   string strValue = StringTrim(ObjectDescription(label));
-   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(1)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
-   bool _superBars.off = StrToInteger(strValue) != 0;
+bool RestoreWindowStatus() {
+   bool success = false;
+   int  timeframe;
 
-   // superTimeframe
-   label = StringConcatenate(__NAME__, ".sticky.superTimeframe");
-   if (ObjectFind(label) != 0)   return(false);
-   strValue = StringTrim(ObjectDescription(label));
-   if (!StringIsDigit(strValue)) return(_false(warn("RestoreStickyStatus(2)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
-   int iValue = StrToInteger(strValue);
-   switch (iValue) {
-      case PERIOD_D1 :
-      case PERIOD_W1 :
-      case PERIOD_MN1:
-      case PERIOD_Q1 : break;
-      default:                   return(_false(warn("RestoreStickyStatus(3)   unsupported chart value found \""+ label +"\" = \""+ ObjectDescription(label) +"\"")));
+   // Versuchen, die Konfiguration aus dem Chart zu restaurieren (kann nach Laden eines neuen Templates fehlschlagen).
+   string label = __NAME__ +".sticky.timeframe", empty="";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      success       = StringIsDigit(sValue);
+      timeframe     = StrToInteger(sValue);
    }
-   int _superTimeframe = iValue;
 
-   // globale Variablen erst nach vollständiger Validierung überschreiben
-   superBars.off  = _superBars.off;
-   superTimeframe = _superTimeframe;
-   return(!catch("RestoreStickyStatus(4)"));
+   // Bei Mißerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
+   if (!success) {
+      int hWnd = WindowHandle(Symbol(), NULL);
+      if (hWnd != 0) {
+         string section = "WindowStatus";
+         string key     = "SuperBars.Timeframe.0x"+ IntToHexStr(hWnd);
+         sValue         = GetLocalConfigString(section, key, "");
+         success        = StringIsDigit(sValue);
+         timeframe      = StrToInteger(sValue);
+      }
+   }
+
+   if (success)
+      superBars.timeframe = timeframe;
+   return(!catch("RestoreWindowStatus(1)"));
 }
