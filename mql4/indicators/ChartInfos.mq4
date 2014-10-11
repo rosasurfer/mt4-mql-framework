@@ -905,7 +905,7 @@ bool UpdatePositions() {
 
    // (2) Einzelpositionsanzeige unten links
    // Spalten:          Direction:, LotSize, BE:, BePrice, SL:, SlPrice, Profit:, ProfitAmount, Drawdwon, Comment
-   int col.xShifts[] = {20,         59,      135, 160,     231, 252,     323,     355,          450,      500}, cols=ArraySize(col.xShifts), yDist=3;
+   int col.xShifts[] = {20,         59,      135, 160,     231, 252,     323,     355,          458,      503}, cols=ArraySize(col.xShifts), yDist=3;
    int iePositions   = ArrayRange(positions.idata, 0);
    int positions     = iePositions + lfxOrders.openPositions;        // nur einer der beiden Werte kann ungleich 0 sein
 
