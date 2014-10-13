@@ -1602,7 +1602,7 @@ bool ReadCustomPositionConfig() {
 
                else if (StringContains(values[n], "#")) {                  // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
-                  strSize = StringTrimRight(StringLeft(values[n], 0));
+                  strSize = StringTrimRight(StringLeft(values[n], pos));
                   if (!StringIsNumeric(strSize))              return(!catch("ReadCustomPositionConfig(11)   invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ value +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   sizeValue  = StrToDouble(strSize);
                   if (sizeValue && LT(sizeValue, minLotSize)) return(!catch("ReadCustomPositionConfig(12)   invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ value +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
