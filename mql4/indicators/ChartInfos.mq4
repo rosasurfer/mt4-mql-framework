@@ -160,6 +160,10 @@ color  positions.fontColor.virtual = Green;
  * @return int - Fehlerstatus
  */
 int onTick() {
+   if (Symbol() == "GBPLFX") {
+      //debug("onTick()   ValidBars="+ IndicatorCounted() +"  ChangedBars="+ (Bars-IndicatorCounted()));
+   }
+
    HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
 
    mm.done           = false;
