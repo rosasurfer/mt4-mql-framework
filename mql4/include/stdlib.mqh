@@ -110,10 +110,10 @@
    int      ArrayInsertDoubles    (double array[],   int offset, double values[]);
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
-#import "stdlib1.ex4"
    int      ArrayInsertString     (string array[],   int offset, string value   );
    int      ArrayInsertStrings    (string array[],   int offset, string values[]);
 
+#import "stdlib1.ex4"
    bool     BoolInArray   (bool   haystack[], bool   needle);
    bool     IntInArray    (int    haystack[], int    needle);
    bool     DoubleInArray (double haystack[], double needle);
@@ -200,6 +200,18 @@
    double   GetGlobalConfigDouble   (string section, string key, double defaultValue);
    string   GetGlobalConfigString   (string section, string key, string defaultValue);
    string   GetRawGlobalConfigString(string section, string key, string defaultValue);
+
+   int      GetIniSections(string fileName, string names[]);
+   bool     IsIniSection  (string fileName, string section);
+
+   int      GetIniKeys  (string fileName, string section, string names[]);
+   bool     IsIniKey    (string fileName, string section, string key    );
+   bool     DeleteIniKey(string fileName, string section, string key    );
+   bool     GetIniBool     (string fileName, string section, string key, bool   defaultValue);
+   int      GetIniInt      (string fileName, string section, string key, int    defaultValue);
+   double   GetIniDouble   (string fileName, string section, string key, double defaultValue);
+   string   GetIniString   (string fileName, string section, string key, string defaultValue);
+   string   GetRawIniString(string fileName, string section, string key, string defaultValue);
 
 
    // Date/Time
@@ -305,14 +317,6 @@
    bool     IsMqlDirectory(string dirname);
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
-
-   int      GetIniSections(string fileName, string names[]);
-   bool     IsIniSection(string fileName, string section);
-   int      GetIniKeys(string fileName, string section, string names[]);
-   string   GetIniString(string fileName, string section, string key, string defaultValue);
-   string   GetRawIniString(string fileName, string section, string key, string defaultValue);
-   bool     IsIniKey(string fileName, string section, string key);
-   bool     DeleteIniKey(string fileName, string section, string key);
 
    bool     EditFile (string filename   );
    bool     EditFiles(string filenames[]);
