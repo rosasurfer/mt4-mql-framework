@@ -2808,39 +2808,6 @@ int ArrayInsertDouble(double &array[], int offset, double value) {
 
 
 /**
- * Fügt ein Element an der angegebenen Position eines String-Arrays ein.
- *
- * @param  string array[] - String-Array
- * @param  int    offset  - Position, an dem das Element eingefügt werden soll
- * @param  string value   - einzufügendes Element
- *
- * @return int - neue Größe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
- */
-int ArrayInsertString(string &array[], int offset, string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   int size = ArraySize(array);
-   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
-
-   // Einfügen am Anfang des Arrays
-   if (offset == 0)
-      return(ArrayUnshiftString(array, value));
-
-   // Einfügen am Ende des Arrays
-   if (offset == size)
-      return(ArrayPushString(array, value));
-
-   // Einfügen innerhalb des Arrays: ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, daher zusätzliche Kopie nötig
-   string tmp[]; ArrayResize(tmp, 0);
-   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfügepunkt machen
-   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfügepunkt nach hinten schieben (Quelle: die Kopie)
-   ArrayResize(tmp, 0);
-   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
-   return(size + 1);
-}
-
-
-/**
  * Fügt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
  *
  * @param  bool array[]  - Ausgangs-Array
@@ -2947,46 +2914,6 @@ int ArrayInsertDoubles(double array[], int offset, double values[]) {
    ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
    ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
 
-   return(newSize);
-}
-
-
-/**
- * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
- *
- * @param  string array[]  - Ausgangs-Array
- * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
- * @param  string values[] - einzufügende Elemente
- *
- * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
- */
-int ArrayInsertStrings(string array[], int offset, string values[]) {
-   if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   int sizeOfArray = ArraySize(array);
-   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-   int sizeOfValues = ArraySize(values);
-
-   // Einfügen am Anfang des Arrays
-   if (offset == 0)
-      return(MergeStringArrays(values, array, array));
-
-   // Einfügen am Ende des Arrays
-   if (offset == sizeOfArray)
-      return(MergeStringArrays(array, values, array));
-
-   // Einfügen innerhalb des Arrays
-   int newSize = sizeOfArray + sizeOfValues;
-   ArrayResize(array, newSize);
-
-   // ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, wir müssen mit einer zusätzlichen Kopie arbeiten
-   string tmp[]; ArrayResize(tmp, 0);
-   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfügepunkt erstellen
-   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfügepunkt nach hinten schieben
-   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
-
-   ArrayResize(tmp, 0);
    return(newSize);
 }
 
@@ -6829,7 +6756,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // ggf. wäh
 
    int account = AccountNumber();
 
-   if (account == 0x4000) {                                          // beim Test ohne Server-Verbindung
+   if (account == 0x4000) {                                          // im Tester ohne Server-Verbindung
       if (!IsTesting())
          return(_NULL(catch("GetAccountNumber(1)->AccountNumber()   illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
@@ -6837,7 +6764,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // ggf. wäh
 
    if (!account) {
       string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
-      if (!StringLen(title))                                         // benutzt SendMessage(), nicht nach Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
+      if (!StringLen(title))                                         // benutzt SendMessage(), nicht nach Tester.Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
          return(_NULL(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
@@ -6846,7 +6773,7 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // ggf. wäh
 
       string strValue = StringLeft(title, pos);
       if (!StringIsDigit(strValue))
-         return(_NULL(catch("GetAccountNumber(3)   account number in top window title contains non-digit characters \""+ title +"\"", ERR_RUNTIME_ERROR)));
+         return(_NULL(catch("GetAccountNumber(3)   account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);
    }
@@ -7433,12 +7360,91 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
+ * Gibt einen Konfigurationswert einer .ini-Datei als Boolean zurück.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  bool   defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ *
+ * @return bool - Konfigurationswert
+ */
+bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
+   string strDefault = defaultValue;
+
+   int    bufferSize = 255;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+
+   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, fileName);
+
+   buffer[0] = StringToLower(buffer[0]);
+
+   bool result = false;
+   if      (buffer[0] == ""    ) result = defaultValue;
+   else if (buffer[0] == "1"   ) result = true;
+   else if (buffer[0] == "true") result = true;
+   else if (buffer[0] == "yes" ) result = true;
+   else if (buffer[0] == "on"  ) result = true;
+
+   if (!catch("GetIniBool(1)"))
+      return(result);
+   return(false);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert einer .ini-Datei als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  int    defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ *
+ * @return int - Konfigurationswert
+ */
+int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, fileName);  // gibt auch negative Werte richtig zurück
+
+   if (!catch("GetIniInt(1)"))
+      return(result);
+   return(NULL);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert einer .ini-Datei als Double zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  double defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ *
+ * @return double - Konfigurationswert
+ */
+double GetIniDouble(string fileName, string section, string key, double defaultValue=0) {
+   int    bufferSize = 255;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+
+   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, fileName);
+
+   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
+
+   if (!catch("GetIniDouble(1)"))
+      return(result);
+   return(NULL);
+}
+
+
+/**
  * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei ohne eventuell vorhandenen Kommentar zurück.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
  * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls kein Wert gefunden wurde
+ * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
  *
  * @return string - Wert des Schlüssels oder Leerstring, falls ein Fehler auftrat
  */
@@ -7460,7 +7466,7 @@ string GetIniString(string fileName, string section, string key, string defaultV
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
  * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls kein Wert gefunden wurde
+ * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
  *
  * @return string - Wert des Schlüssels oder Leerstring, falls ein Fehler auftrat
  */
@@ -7486,9 +7492,9 @@ string GetRawIniString(string fileName, string section, string key, string defau
 /**
  * Gibt einen lokalen Konfigurationswert als Boolean zurück.
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  bool   defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
  *
  * @return bool - Konfigurationswert
  */
@@ -7512,18 +7518,38 @@ bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
    else if (buffer[0] == "yes" ) result = true;
    else if (buffer[0] == "on"  ) result = true;
 
-   if (!catch("GetLocalConfigBool()"))
+   if (!catch("GetLocalConfigBool(1)"))
       return(result);
    return(false);
 }
 
 
 /**
+ * Gibt einen lokalen Konfigurationswert als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
+ *
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  int    defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ *
+ * @return int - Konfigurationswert
+ */
+int GetLocalConfigInt(string section, string key, int defaultValue=0) {
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(NULL);
+
+   int result = GetPrivateProfileIntA(section, key, defaultValue, localConfigPath);     // gibt auch negative Werte richtig zurück
+
+   if (!catch("GetLocalConfigInt(1)"))
+      return(result);
+   return(NULL);
+}
+
+
+/**
  * Gibt einen lokalen Konfigurationswert als Double zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  double defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
  *
  * @return double - Konfigurationswert
  */
@@ -7536,27 +7562,7 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 
    double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
 
-   if (!catch("GetLocalConfigDouble()"))
-      return(result);
-   return(NULL);
-}
-
-
-/**
- * Gibt einen lokalen Konfigurationswert als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return int - Konfigurationswert
- */
-int GetLocalConfigInt(string section, string key, int defaultValue=0) {
-   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(NULL);
-
-   int result = GetPrivateProfileIntA(section, key, defaultValue, localConfigPath);     // gibt auch negative Werte richtig zurück
-
-   if (!catch("GetLocalConfigInt()"))
+   if (!catch("GetLocalConfigDouble(1)"))
       return(result);
    return(NULL);
 }
@@ -7565,9 +7571,9 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 /**
  * Gibt einen lokalen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
  *
  * @return string - Konfigurationswert
  */
@@ -7581,9 +7587,9 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 /**
  * Gibt einen lokalen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.
  *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
  *
  * @return string - Konfigurationswert
  */
@@ -12799,11 +12805,11 @@ void Tester.ResetGlobalArrays() {
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
 #import "StdLib.dll"
-   int    GetBoolsAddress(bool array[]);
-   int    GetBufferAddress(int buffer[]);
+   int    GetBoolsAddress  (bool   array[]);
+   int    GetBufferAddress (int    array[]);
    int    GetDoublesAddress(double array[]);
+   int    GetStringAddress (string value  );
    int    GetStringsAddress(string array[]);
-   int    GetStringAddress (string value);
    string GetString(int address);
 
 #import "struct.EXECUTION_CONTEXT.ex4"

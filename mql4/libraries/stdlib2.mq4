@@ -793,6 +793,79 @@ int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
 
 
 /**
+ * Fügt ein Element an der angegebenen Position eines String-Arrays ein.
+ *
+ * @param  string array[] - String-Array
+ * @param  int    offset  - Position, an dem das Element eingefügt werden soll
+ * @param  string value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
+ */
+int ArrayInsertString(string &array[], int offset, string value) {
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftString(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushString(array, value));
+
+   // Einfügen innerhalb des Arrays: ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, daher zusätzliche Kopie nötig
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfügepunkt machen
+   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfügepunkt nach hinten schieben (Quelle: die Kopie)
+   ArrayResize(tmp, 0);
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   return(size + 1);
+}
+
+
+/**
+ * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
+ *
+ * @param  string array[]  - Ausgangs-Array
+ * @param  int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
+ * @param  string values[] - einzufügende Elemente
+ *
+ * @return int - neue Größe des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
+ */
+int ArrayInsertStrings(string array[], int offset, string values[]) {
+   if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)   invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)   invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeStringArrays(values, array, array));
+
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeStringArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, wir müssen mit einer zusätzlichen Kopie arbeiten
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfügepunkt erstellen
+   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfügepunkt nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+
+   ArrayResize(tmp, 0);
+   return(newSize);
+}
+
+
+/**
  * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
