@@ -1378,12 +1378,12 @@ bool UpdateMoneyManagement() {
    if (mm.done)
       return(true);
 
-   mm.unleveragedLots = 0;                                                       // Lotsize bei Hebel 1:1
-   mm.ATRwAbs         = 0;                                                       // wöchentliche ATR, absolut
-   mm.ATRwPct         = 0;                                                       // wöchentliche ATR, prozentual
+   mm.unleveragedLots = 0;                                                                   // Lotsize bei Hebel 1:1
+   mm.ATRwAbs         = 0;                                                                   // wöchentliche ATR, absolut
+   mm.ATRwPct         = 0;                                                                   // wöchentliche ATR, prozentual
    mm.stdRiskLeverage = 0;
-   mm.stdRiskLots     = 0;                                                       // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
-   mm.customLots      = 0;                                                       // Lotsize für benutzerdefinierten Hebel
+   mm.stdRiskLots     = 0;                                                                   // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
+   mm.customLots      = 0;                                                                   // Lotsize für benutzerdefinierten Hebel
 
 
    // (1) unleveraged Lots
@@ -1396,11 +1396,11 @@ bool UpdateMoneyManagement() {
          if (error == ERR_UNKNOWN_SYMBOL) return(false);
          return(!catch("UpdateMoneyManagement(1)", error));
       }
-   if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)   // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
-   double lotValue    = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
-   mm.unleveragedLots = equity/lotValue;                                         // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
+   double lotValue    = Close[0]/tickSize * tickValue;                                       // Value eines Lots in Account-Currency
+   mm.unleveragedLots = equity/lotValue;                                                     // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
 
 
    // (2) ATR als Maximalwert dreier wöchentlicher Einzelwerte: ATR, TR[1] und TR[0]
@@ -1409,18 +1409,21 @@ bool UpdateMoneyManagement() {
    double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange Vorwoche
    double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
-   mm.ATRwPct = mm.ATRwAbs/Close[0];
+      double C = iClose(NULL, PERIOD_W1, 1);
+      double H = iHigh (NULL, PERIOD_W1, 0);
+      double L = iLow  (NULL, PERIOD_W1, 0);
+   mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);                              // median price
 
    if (mm.isDefaultLeverage) {
       // (3) stdRiskLots
       if (!mm.ATRwPct)
          return(false);
       mm.stdRiskLeverage = mm.stdRisk/(mm.ATRwPct*100);
-      mm.stdRiskLots     = mm.unleveragedLots * mm.stdRiskLeverage;                 // auf wöchentliche Volatilität von {mm.stdRisk} gehebelte Lotsize
+      mm.stdRiskLots     = mm.unleveragedLots * mm.stdRiskLeverage;                          // auf wöchentliche Volatilität von {mm.stdRisk} gehebelte Lotsize
    }
    else {
       // (4) customLots
-      mm.customLots      = mm.unleveragedLots * mm.customLeverage;                  // mit benutzerdefiniertem Hebel gehebelte Lotsize
+      mm.customLots      = mm.unleveragedLots * mm.customLeverage;                           // mit benutzerdefiniertem Hebel gehebelte Lotsize
    }
 
 
