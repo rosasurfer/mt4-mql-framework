@@ -40,8 +40,8 @@ int appliedPrice = PRICE_MEDIAN;                                     // Preis: B
 
 bool   mm.done;
 double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
-double mm.ATRwAbs;                                                   // wöchentliche ATR, absolut
-double mm.ATRwPct;                                                   // wöchentliche ATR, prozentual
+double mm.ATRwAbs;                                                   // Max(weekly_ATR, TrueRange_W[0], TrueRange_W[1]): absoluter Wert
+double mm.ATRwPct;                                                   // Max(weekly_ATR, TrueRange_W[0], TrueRange_W[1]): prozentualer Wert
 
 double mm.stdRisk = DEFAULT_RISK;
 double mm.stdRiskLeverage;                                           // effektiver Hebel für eine Unit von {mm.stdRiskLots} lots
@@ -163,7 +163,6 @@ int onTick() {
    if (Symbol() == "GBPLFX") {
       //debug("onTick()   ValidBars="+ IndicatorCounted() +"  ChangedBars="+ (Bars-IndicatorCounted()));
    }
-
    HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
 
    mm.done           = false;
@@ -1380,8 +1379,8 @@ bool UpdateMoneyManagement() {
       return(true);
 
    mm.unleveragedLots = 0;                                                       // Lotsize bei Hebel 1:1
-   mm.ATRwAbs         = 0;                                                       // ATR wöchentlich, absolut
-   mm.ATRwPct         = 0;                                                       // ATR wöchentlich, prozentual
+   mm.ATRwAbs         = 0;                                                       // wöchentliche ATR, absolut
+   mm.ATRwPct         = 0;                                                       // wöchentliche ATR, prozentual
    mm.stdRiskLeverage = 0;
    mm.stdRiskLots     = 0;                                                       // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
    mm.customLots      = 0;                                                       // Lotsize für benutzerdefinierten Hebel
@@ -1404,12 +1403,13 @@ bool UpdateMoneyManagement() {
    mm.unleveragedLots = equity/lotValue;                                         // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
 
 
-   // (2) ATR
-   mm.ATRwAbs = ixATR(NULL, PERIOD_W1, 14, 1);// throws ERS_HISTORY_UPDATE
-      if (mm.ATRwAbs==EMPTY)                                              return(false);
-      if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
+   // (2) ATR als Maximalwert dreier wöchentlicher Einzelwerte: ATR, TR[1] und TR[0]
+   double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);   // ATR(14xW)
+      if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);   //throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+   double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange Vorwoche
+   double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
+   mm.ATRwAbs = MathMax(a, MathMax(b, c));
    mm.ATRwPct = mm.ATRwAbs/Close[0];
-
 
    if (mm.isDefaultLeverage) {
       // (3) stdRiskLots
@@ -2919,7 +2919,7 @@ bool EditAccountConfig() {
 string InputsToStr() {
    return(StringConcatenate("init()   config: ",                     // 'config' statt 'inputs', da die Laufzeitparameter extern konfiguriert werden
 
-                            "appliedPrice=", PriceTypeToStr(appliedPrice), "; ")
+                            "appliedPrice=",                PriceTypeToStr(appliedPrice), "; ")
    );
 }
 
