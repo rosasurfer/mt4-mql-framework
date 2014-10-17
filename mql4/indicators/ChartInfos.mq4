@@ -858,8 +858,8 @@ bool UpdateUnitSize() {
          else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
          else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-         // !!! max. 63 Zeichen           V - Volatility                            L - Leverage
-         strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
+         // !!! max. 63 Zeichen           V - Volatility                             L - Leverage
+         strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "%     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
       }
    }
 
