@@ -308,14 +308,6 @@ int      last_error;                                        // der letzte Fehler
 #define OP_VENDOR                      9        // custom: OP_BALANCE initiiert durch Criminal (Swap, sonstiges)
 
 
-// Order-Flags, können logisch kombiniert werden, siehe EventListener.PositionOpen() u. EventListener.PositionClose()
-#define OFLAG_CURRENTSYMBOL            1        // order of current symbol (active chart)
-#define OFLAG_BUY                      2        // long order
-#define OFLAG_SELL                     4        // short order
-#define OFLAG_MARKETORDER              8        // market order
-#define OFLAG_PENDINGORDER            16        // pending order (Limit- oder Stop-Order)
-
-
 // OrderSelect-ID's zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop() etc.
 #define O_PUSH                         1
 #define O_POP                          2
@@ -497,13 +489,11 @@ int      last_error;                                        // der letzte Fehler
 #define I_BAR_VOLUME       I_RATE_VOLUME
 
 
-// Event-Identifier siehe event()
+// Event-Identifier
 #define EVENT_BAR_OPEN            0x0001
 #define EVENT_ORDER_PLACE         0x0002
 #define EVENT_ORDER_CHANGE        0x0004
 #define EVENT_ORDER_CANCEL        0x0008
-#define EVENT_POSITION_OPEN       0x0010
-#define EVENT_POSITION_CLOSE      0x0020
 #define EVENT_ACCOUNT_CHANGE      0x0040
 #define EVENT_ACCOUNT_PAYMENT     0x0080        // Ein- oder Auszahlung
 #define EVENT_CHART_CMD           0x0100        // Chart-Command             (aktueller Chart)
@@ -886,7 +876,7 @@ int debug(string message, int error=NO_ERROR) {
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
-   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", message));
+   OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", StringReplace(message, NL, " ")));
 
    return(error); __DummyCalls();
 }
@@ -1117,7 +1107,7 @@ int log(string message, int error=NO_ERROR) {
 
    string name;
    if (StringLen(__NAME__) > 0) name = __NAME__;
-   else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
+   else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
 
    if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
@@ -1125,7 +1115,7 @@ int log(string message, int error=NO_ERROR) {
 
    // (2) Custom-Log benutzen oder ...
    if (__LOG_CUSTOM)
-      if (__log.custom(StringConcatenate(name, "::", message)))      // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
+      if (__log.custom(StringConcatenate(name, "::", message)))            // custom Log: ohne Instanz-ID, bei Fehler Fallback zum Standardlogging
          return(error);
 
 
@@ -1136,7 +1126,7 @@ int log(string message, int error=NO_ERROR) {
       if (pos == -1) name = StringConcatenate(           name,       "(", logId, ")");
       else           name = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
    }
-   Print(StringConcatenate(name, "::", message));                    // global Log: ggf. mit Instanz-ID
+   Print(StringConcatenate(name, "::", StringReplace(message, NL, " ")));  // global Log: ggf. mit Instanz-ID
 
    return(error); __DummyCalls();
 }
@@ -1155,7 +1145,7 @@ private*/bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", message);
+   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", StringReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -1595,8 +1585,6 @@ bool HandleEvents(int events) {
    if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE    );
    if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE   );
    if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL   );
-   if (events & EVENT_POSITION_OPEN   != 0) status |= HandleEvent(EVENT_POSITION_OPEN  );
-   if (events & EVENT_POSITION_CLOSE  != 0) status |= HandleEvent(EVENT_POSITION_CLOSE );
    if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE );
    if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
    if (events & EVENT_CHART_CMD       != 0) status |= HandleEvent(EVENT_CHART_CMD      );
@@ -1627,8 +1615,6 @@ int HandleEvent(int event, int criteria=NULL) {
       case EVENT_ORDER_PLACE    : if (EventListener.OrderPlace     (iResults, criteria)) { status = true; onOrderPlace     (iResults); } break;
       case EVENT_ORDER_CHANGE   : if (EventListener.OrderChange    (iResults, criteria)) { status = true; onOrderChange    (iResults); } break;
       case EVENT_ORDER_CANCEL   : if (EventListener.OrderCancel    (iResults, criteria)) { status = true; onOrderCancel    (iResults); } break;
-      case EVENT_POSITION_OPEN  : if (EventListener.PositionOpen   (iResults, criteria)) { status = true; onPositionOpen   (iResults); } break;
-      case EVENT_POSITION_CLOSE : if (EventListener.PositionClose  (iResults, criteria)) { status = true; onPositionClose  (iResults); } break;
       case EVENT_ACCOUNT_CHANGE : if (EventListener.AccountChange  (iResults, criteria)) { status = true; onAccountChange  (iResults); } break;
       case EVENT_ACCOUNT_PAYMENT: if (EventListener.AccountPayment (iResults, criteria)) { status = true; onAccountPayment (iResults); } break;
       case EVENT_CHART_CMD      : if (EventListener.ChartCommand   (sResults, criteria)) { status = true; onChartCommand   (sResults); } break;
@@ -2524,7 +2510,7 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
- * Ermittelt einen ATR-Value. Die Funktion setzt immer den internen Fehlercode, bei Erfolg also zurück.
+ * Ermittelt einen ATR-Value. Die Funktion setzt immer den internen Fehlercode, bei Erfolg setzt sie ihn also zurück.
  *
  * @param  string symbol    - Symbol    (default: NULL = das aktuelle Symbol   )
  * @param  int    timeframe - Timeframe (default: NULL = der aktuelle Timeframe)
@@ -2671,8 +2657,6 @@ void __DummyCalls() {
    bool   EventListener.OrderCancel    (int    data[], int criteria);
    bool   EventListener.OrderChange    (int    data[], int criteria);
    bool   EventListener.OrderPlace     (int    data[], int criteria);
-   bool   EventListener.PositionClose  (int    data[], int criteria);
-   bool   EventListener.PositionOpen   (int    data[], int criteria);
 
    bool   onAccountChange  (int    data[]);
    bool   onAccountPayment (int    data[]);
@@ -2683,8 +2667,6 @@ void __DummyCalls() {
    bool   onOrderCancel    (int    data[]);
    bool   onOrderChange    (int    data[]);
    bool   onOrderPlace     (int    data[]);
-   bool   onPositionClose  (int    data[]);
-   bool   onPositionOpen   (int    data[]);
 
    int    ArrayPopInt(int array[]);
    int    ArrayPushInt(int array[], int value);
@@ -2699,6 +2681,7 @@ void __DummyCalls() {
    string StdSymbol();
    bool   StringContains(string object, string substring);
    string StringLeft(string value, int n);
+   string StringReplace(string object, string search, string replace);
    string StringRight(string value, int n);
    string StringPadRight(string input, int length, string pad_string);
 
