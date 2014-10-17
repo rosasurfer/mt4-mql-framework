@@ -273,8 +273,6 @@
    bool     EventListener.OrderPlace     (int    data[], int criteria);
    bool     EventListener.OrderChange    (int    data[], int criteria);
    bool     EventListener.OrderCancel    (int    data[], int criteria);
-   bool     EventListener.PositionOpen   (int    data[], int criteria);
-   bool     EventListener.PositionClose  (int    data[], int criteria);
    bool     EventListener.ChartCommand   (string data[], int criteria);
    bool     EventListener.InternalCommand(string data[], int criteria);
    bool     EventListener.ExternalCommand(string data[], int criteria);
@@ -287,8 +285,6 @@
    bool     onOrderPlace     (int    data[]);
    bool     onOrderChange    (int    data[]);
    bool     onOrderCancel    (int    data[]);
-   bool     onPositionOpen   (int    data[]);
-   bool     onPositionClose  (int    data[]);
    bool     onChartCommand   (string data[]);
    bool     onInternalCommand(string data[]);
    bool     onExternalCommand(string data[]);
