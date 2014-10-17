@@ -4,7 +4,7 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Textlabel erzeugen (zuerst, da RestoreWindowStatus() sie benötigt)
+   // (1) Textlabel sofort erzeugen, RestoreWindowStatus() benötigt sie bereits
    CreateLabels();
 
 
@@ -31,7 +31,7 @@ int onInit() {
    }
 
 
-   // (3) Konfiguration validieren
+   // (3) Konfiguration einlesen und validieren
    // AppliedPrice
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";
