@@ -181,10 +181,15 @@ bool Indicator.IsTesting() {
    else if (__WHEREAMI__ != FUNC_START) {                            // Indikator läuft im UI-Thread in Indicator::init|deinit(): entweder im Hauptchart oder im Testchart
       int hChart = WindowHandle(Symbol(), NULL);
       if (!hChart) {
+         return(!catch("Indicator.IsTesting(2)->WindowHandle()=0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+         /*
+         // TODO: GetTesterWindow() löst rekursiven Aufruf von This.IsTesting() aus
+         //
          int hWndTester = GetTesterWindow();
          if (hWndTester != 0)
             return(!catch("Indicator.IsTesting(2)->WindowHandle()=0 und hWndTester!=0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          static.result = false;                                      // Tester ist nicht geladen: Indikator läuft im UI-Thread in Indicator::init|deinit(), also im Hauptchart
+         */
       }
       else {
          string title = GetWindowText(GetParent(hChart));
