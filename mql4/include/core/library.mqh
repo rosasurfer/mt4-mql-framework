@@ -175,20 +175,26 @@ bool Indicator.IsTesting() {
    if (IsTesting()) {                                                // Indikator läuft in EA::iCustom() im Tester
       static.result = true;
    }
-   else if (GetCurrentThreadId() != GetUIThreadId()) {               // Indikator läuft im Testchart in Indicator::start()
+   else if (GetCurrentThreadId() != GetUIThreadId()) {               // Indikator läuft im Thread des Testers in Indicator::start()
       static.result = true;
    }
-   else if (__WHEREAMI__ != FUNC_START) {                            // Indikator läuft in Indicator::init|deinit() und im UI-Thread: entweder Hauptchart oder Testchart
+   else if (__WHEREAMI__ != FUNC_START) {                            // Indikator läuft im UI-Thread in Indicator::init|deinit(): entweder im Hauptchart oder im Testchart
       int hChart = WindowHandle(Symbol(), NULL);
-      if (!hChart)
-         return(!catch("Indicator.IsTesting(2)->WindowHandle() = 0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
-      string title = GetWindowText(GetParent(hChart));
-      if (title == "")                                               // Indikator wurde mit Template geladen, Ergebnis kann nicht erkannt werden
-         return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
-      static.result = StringEndsWith(title, "(visual)");             // Indikator läuft im Haupt- oder Testchart ("(visual)" ist nicht internationalisiert)
+      if (!hChart) {
+         int hWndTester = GetTesterWindow();
+         if (hWndTester != 0)
+            return(!catch("Indicator.IsTesting(2)->WindowHandle()=0 und hWndTester!=0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+         static.result = false;                                      // Tester ist nicht geladen: Indikator läuft im UI-Thread in Indicator::init|deinit(), also im Hauptchart
+      }
+      else {
+         string title = GetWindowText(GetParent(hChart));
+         if (title == "")                                            // Indikator läuft im UI-Thread und wurde mit Template geladen, Ergebnis kann nicht erkannt werden
+            return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+         static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im UI-Thread und im Haupt- oder Testchart, Unterscheidung durch "...(visual)" im Fenstertitel
+      }
    }
    else {
-      static.result = false;                                         // Indikator läuft in Indicator::start() im Hauptchart
+      static.result = false;                                         // Indikator läuft im UI-Thread in Indicator::start(), also im Hauptchart
    }
 
    static.resolved = true;
@@ -259,6 +265,7 @@ int CheckProgramStatus(int value=NULL) {
 
 
 #import "stdlib1.ex4"
+   int    GetTesterWindow();
    int    GetUIThreadId();
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);

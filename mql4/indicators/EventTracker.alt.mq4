@@ -49,6 +49,42 @@ int onInit() {
 
 
 /**
+ * Initialisiert und konfiguriert den EventTracker mit Account-spezifischen Einstellungen.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EventTracker.init() { //throws ERS_TERMINAL_NOT_YET_READY
+   int account = GetAccountNumber();
+   if (!account)
+      return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
+
+   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+
+   // Sound.Alerts
+   sound.alerts = GetIniBool(file, "EventTracker", "Sound.Alerts", false);
+
+   // SMS.Alerts
+   __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
+   if (__SMS.alerts) {
+      __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
+      // TODO: Rufnummer validieren
+      //if (!StringIsDigit(__SMS.receiver)) return(!catch("EventTracker.init(1)   invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringLen(__SMS.receiver))
+         __SMS.alerts = false;
+   }
+
+   // Track.Positions
+   track.positions = GetIniBool(file, "EventTracker", "Track.Positions", false);
+
+   // TODO: Orders in Library zwischenspeichern und bei init() daraus restaurieren
+
+   debug(InputsToStr());
+   return(true);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
@@ -60,7 +96,6 @@ int onTick() {
       if (!eventTracker.initialized) /*&&*/ if (IsLastError()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
          return(last_error);
    }
-
 
    // (2) Pending- und Limit-Orders überwachen
    if (track.positions) {
@@ -282,42 +317,6 @@ bool onPositionClose(int tickets[]) {
    if (sound.alerts)
       PlaySound(positions.sound.onClose);
    return(!catch("onPositionClose(3)"));
-}
-
-
-/**
- * Initialisiert und konfiguriert den EventTracker mit Account-spezifischen Einstellungen.
- *
- * @return bool - Erfolgsstatus
- */
-bool EventTracker.init() { //throws ERS_TERMINAL_NOT_YET_READY
-   int account = GetAccountNumber();
-   if (!account)
-      return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-
-   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
-
-   // Sound.Alerts
-   sound.alerts = GetIniBool(file, "EventTracker", "Sound.Alerts", false);
-
-   // SMS.Alerts
-   __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
-   if (__SMS.alerts) {
-      __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
-      // TODO: Rufnummer validieren
-      //if (!StringIsDigit(__SMS.receiver)) return(!catch("EventTracker.init(1)   invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringLen(__SMS.receiver))
-         __SMS.alerts = false;
-   }
-
-   // Track.Positions
-   track.positions = GetIniBool(file, "EventTracker", "Track.Positions", false);
-
-   // TODO: Orders in Library zwischenspeichern und bei init() daraus restaurieren
-
-   debug(InputsToStr());
-   return(true);
 }
 
 
