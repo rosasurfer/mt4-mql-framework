@@ -57,16 +57,16 @@ int onInit() {
       case  INT_MAX   : break;
 
       // aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
-      case  PERIOD_D1 : if (Period() >  PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
-      case  PERIOD_W1 :
-      case  PERIOD_MN1:
-      case  PERIOD_Q1 : if (Period() >  PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_D1 : if (Period() >  PERIOD_H1) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_W1 : if (Period() >  PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_MN1: if (Period() >  PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
+      case  PERIOD_Q1 : if (Period() >  PERIOD_W1) superBars.timeframe = -superBars.timeframe; break;
 
       // deaktiviert: wird automatisch reaktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
-      case -PERIOD_D1 : if (Period() <= PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
-      case -PERIOD_W1 :
-      case -PERIOD_MN1:
-      case -PERIOD_Q1 : if (Period() <= PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_D1 : if (Period() <= PERIOD_H1) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_W1 : if (Period() <= PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_MN1: if (Period() <= PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_Q1 : if (Period() <= PERIOD_W1) superBars.timeframe = -superBars.timeframe; break;
 
       // ungültiger Status: Default benutzen
       default:
