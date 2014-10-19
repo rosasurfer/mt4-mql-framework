@@ -4652,7 +4652,8 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "CHFZAR")) return("CHFZAR");
                 break;
 
-      case 'D': break;
+      case 'D': if (symbol=="DE30") return("DAX");
+                break;
 
       case 'E': if (                 symbol=="ECX"   )  return("EURX"  );
                 if (StringStartsWith(symbol, "EURAUD")) return("EURAUD");
@@ -5075,20 +5076,20 @@ string GetLongSymbolNameStrict(string symbol) {
       return("");
 
    if (symbol == "ASX200"  ) return("ASX 200"                 );
-   if (symbol == "DJIA"    ) return("Dow Jones Industrial"    );
-   if (symbol == "DJTA"    ) return("Dow Jones Transportation");
-   if (symbol == "NAS100"  ) return("Nasdaq 100"              );
-   if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
-   if (symbol == "NIK225"  ) return("Nikkei 225"              );
-   if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "AUDLFX"  ) return("AUD (LFX)"               );
    if (symbol == "CADLFX"  ) return("CAD (LFX)"               );
    if (symbol == "CHFLFX"  ) return("CHF (LFX)"               );
+   if (symbol == "DJIA"    ) return("Dow Jones Industrial"    );
+   if (symbol == "DJTA"    ) return("Dow Jones Transportation");
    if (symbol == "EURLFX"  ) return("EUR (LFX)"               );
    if (symbol == "EURX"    ) return("EUR-Index"               );
    if (symbol == "GBPLFX"  ) return("GBP (LFX)"               );
    if (symbol == "LFXJPY"  ) return("1/JPY (LFX)"             );
+   if (symbol == "NAS100"  ) return("Nasdaq 100"              );
+   if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
+   if (symbol == "NIK225"  ) return("Nikkei 225"              );
    if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
+   if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "USDLFX"  ) return("USD (LFX)"               );
    if (symbol == "USDX"    ) return("USD-Index"               );
    if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
