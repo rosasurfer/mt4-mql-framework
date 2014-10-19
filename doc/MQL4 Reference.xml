@@ -6796,15 +6796,15 @@ a loss of significance in the result occurs, in which case the function returns 
       caption=ObjectCreate()
       type=bool
       <content>
-Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates to specify ranges
-from 1 to 3 depending on the object type. Specified coordinates for objects of type OBJ_LABEL are ignored. Use <a href="help://objects_ObjectSet">ObjectSet()</a>
-to set <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
+Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending 
+on the object type. Specified coordinates for objects of type OBJ_LABEL are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set 
+<a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
 If the function succeeds it returns TRUE, otherwise it returns FALSE. To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 <br/>
 
 Notes:<br>
-- The main chart window always exists and has the index 0. Chart sub-windows (if there are any) are indexed starting from 1.<br/>
-- Coordinates must always be specified in pairs, a time and a price value. If an object needs only a time (for example OBJ_VLINE), a price value (any value) must be passed, as well.<br>
+- The main chart window always exists and has the index 0. Chart subwindows (if any) are indexed starting from 1.<br/>
+- Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example OBJ_VLINE), a price value (any) needs to be passed, too.<br>
       </content>
 
 <example>
@@ -6824,7 +6824,7 @@ ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
       <parameter>
         type=string
         name=name
-        description=Unique object name with a <span style="color:red">maximum length of 63 chars</span>.
+        description=Unique object name <span style="color:red">with a maximum length of 63 chars</span>.
       </parameter>
       <parameter>
         type=int
@@ -6839,36 +6839,36 @@ ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
       <parameter>
         type=datetime
         name=time1
-        description=Time part of the first coordinate pair.
+        description=Time value of the first coordinate pair.
       </parameter>
       <parameter>
         type=double
         name=price1
-        description=Price part of the first coordinate pair.
+        description=Price value of the first coordinate pair.
       </parameter>
       <parameter>
         type=datetime
         name=time2
         def_value=NULL
-        description=Time part of the second coordinate pair.
+        description=Time value of the second coordinate pair.
       </parameter>
       <parameter>
         type=double
         name=price2
         def_value=NULL
-        description=Price part of the second coordinate pair.
+        description=Price value of the second coordinate pair.
       </parameter>
       <parameter>
         type=datetime
         name=time3
         def_value=NULL
-        description=Time part of the third coordinate pair.
+        description=Time value of the third coordinate pair.
       </parameter>
       <parameter>
         type=double
         name=price3
         def_value=NULL
-        description=Price part of the third coordinate pair.
+        description=Price value of the third coordinate pair.
       </parameter>
     </function>
 
@@ -7354,7 +7354,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringGetChar()
       type=int
       <content>
-      Returns character (code) from the specified position in the string.
+      Returns the character code at the specified position of the string.
       </content>
       <example>
   int char_code=StringGetChar(&quot;abcdefgh&quot;, 3);
@@ -7368,7 +7368,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       <parameter>
         type=int
         name=pos
-        description=Char position in the string. Can be from 0 to <a href="help://strings_StringLen">StringLen(text)</a>-1.
+        description=Character position in the string. Can be from 0 to <a href="help://strings_StringLen">StringLen(text)</a>-1.
       </parameter>
     </function>
 

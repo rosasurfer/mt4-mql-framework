@@ -36,7 +36,7 @@ int appliedPrice = PRICE_MEDIAN;                                     // Preis: B
 // Leverage-/Riskmanagementanzeige                                   // Defaultwerte:
 #define DEFAULT_LEVERAGE   2.5                                       // Leverage je Unit: Erfahrungswert, keine Berücksichtigung der Volatilität
 #define DEFAULT_RISK       2.5                                       // Risiko je Unit in Prozent Equity je Woche: Erfahrungswert
-#define DEFAULT_STOPLOSS   5.0                                       // Stoploss in Prozent Equity
+#define DEFAULT_STOPLOSS   5.0                                       // StopLoss in Prozent Equity
 
 bool   mm.done;
 double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
@@ -148,6 +148,11 @@ color  positions.fontColor.intern  = Blue;
 color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
+
+
+// Unterscheidung von offenen und geschlossenen Order-Arrows
+#define OpenOrderBlue      C'0,0,254'                                // offen Long
+#define OpenOrderRed       C'254,0,0'                                // offen Short
 
 
 #include <ChartInfos/init.mqh>
@@ -297,8 +302,14 @@ bool ToggleOpenOrders() {
    else {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
-         if (StringStartsWith(name, "open #"))
-            ObjectDelete(name);
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name)==OBJ_ARROW) {
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+               if (clr!=OpenOrderBlue) /*&&*/ if (clr!=OpenOrderRed) /*&&*/ if (clr!=DeepSkyBlue)
+                  continue;
+               ObjectDelete(name);
+            }
+         }
       }
    }
 
@@ -317,7 +328,7 @@ bool ToggleOpenOrders() {
  * @return int - Anzahl der angezeigten offenen Orders oder -1 (EMPTY), falls ein Fehler auftrat.
  */
 int ShowOpenOrders() {
-   int      ticket, type, colors[]={Blue, Red};
+   int      orders, ticket, type, colors[]={OpenOrderBlue, OpenOrderRed};  // Unterscheidung von offenen und geschlossenen Order-Arrows anhand der Farben
    datetime openTime;
    double   lots, openPrice, takeProfit, stopLoss;
    string   label, text, types[]={"Buy", "Sell"};
@@ -325,14 +336,52 @@ int ShowOpenOrders() {
 
    // mode.intern
    if (mode.intern) {
-      return(0);
+      orders = OrdersTotal();
+
+      for (int i=0; i < orders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))            // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
+            break;
+         if (OrderSymbol() != Symbol()) continue;
+
+         if (OrderType() <= OP_SELL) {
+            // offene Position: Daten auslesen
+            ticket     =                 OrderTicket();
+            type       =                 OrderType();
+            lots       =                 OrderLots();
+            openTime   = FxtToServerTime(OrderOpenTime());
+            openPrice  =                 OrderOpenPrice();
+            takeProfit =                 OrderTakeProfit();
+            stopLoss   =                 OrderStopLoss();
+
+            // Strings zusammenstellen
+            label = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, PriceFormat));
+            text  = "";
+            if (takeProfit != NULL) text = StringConcatenate(                                       "tp: ", NumberToStr(takeProfit, PriceFormat));
+            if (stopLoss   != NULL) text = StringConcatenate(text, ifString(takeProfit, "   ", ""), "sl: ", NumberToStr(stopLoss  , PriceFormat));
+
+            // Order anzeigen
+            if (ObjectFind(label) == 0)
+               ObjectDelete(label);
+            if (ObjectCreate(label, OBJ_ARROW, 0, openTime, openPrice)) {
+               ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label, OBJPROP_COLOR    , colors[type]    );
+               ObjectSetText(label, text);
+            }
+         }
+         else {
+            // Pending-Order:
+            if (!ChartMarker.OrderSent_A(OrderTicket(), Digits, DeepSkyBlue))
+               return(_EMPTY(SetLastError(stdlib.GetLastError())));
+         }
+      }
+      return(orders);
    }
 
 
    // mode.extern
    if (mode.extern) {
-      int orders = ArraySize(external.ticket);
-      for (int i=0; i < orders; i++) {
+      orders = ArraySize(external.ticket);
+      for (i=0; i < orders; i++) {
          // Daten auslesen
          ticket     =                 external.ticket    [i];
          type       =                 external.type      [i];
@@ -343,7 +392,7 @@ int ShowOpenOrders() {
          stopLoss   =                 external.stopLoss  [i];
 
          // Strings zusammenstellen
-         label = StringConcatenate("open #", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
+         label = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
          text  = "";
          if (takeProfit != NULL) text = StringConcatenate(                                       "tp: ", NumberToStr(takeProfit, SubPipPriceFormat));
          if (stopLoss   != NULL) text = StringConcatenate(text, ifString(takeProfit, "   ", ""), "sl: ", NumberToStr(stopLoss  , SubPipPriceFormat));
@@ -363,10 +412,10 @@ int ShowOpenOrders() {
 
    // mode.remote
    if (mode.remote) {
-      return(_EMPTY(catch("ShowOpenOrders(1)   feature mode.remote=1 not implemented", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY(catch("ShowOpenOrders(1)   feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
 
-   return(_EMPTY(catch("ShowOpenOrder(2)   unreachable code reached", ERR_WRONG_JUMP)));
+   return(_EMPTY(catch("ShowOpenOrder(2)   unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -858,7 +907,7 @@ bool UpdateUnitSize() {
          else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
          else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
 
-         // !!! max. 63 Zeichen           V - Volatility                             L - Leverage
+         // !!! max. 63 Zeichen           V - Volatilität/Woche                      L - Leverage                           Unitsize
          strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "%     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
       }
    }
@@ -884,20 +933,20 @@ bool UpdatePositions() {
 
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string strCurrentRisk, strCurrentLeverage,strPosition;
+   string strCurrentVola, strCurrentLeverage, strPosition;
    if      (!isPosition   ) strPosition = " ";
    else if (!totalPosition) strPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
-      // aktueller Leverage = MathAbs(totalPosition)/mm.unleveragedLots
-      if (mm.unleveragedLots != 0) {         //  L - Leverage
+      // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
+      if (mm.unleveragedLots != 0) {
          double currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
          strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
-         // aktuelles Risiko = aktueller Leverage * ATRwPct
-         //if (mm.ATRwPct != 0)                // R - Risk
-         //   strCurrentRisk = StringConcatenate("R", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "      ");
+         // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
+         if (mm.ATRwPct != 0)
+            strCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%      ");
       }
-      strPosition = StringConcatenate("Position:   " , strCurrentRisk, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      strPosition = StringConcatenate("Position:   " , strCurrentVola, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
 
@@ -2957,6 +3006,7 @@ string InputsToStr() {
    bool     IsGlobalConfigKey(string section, string key);
    double   MathModFix(double a, double b);
    int      ObjectRegister(string label);
+   bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
