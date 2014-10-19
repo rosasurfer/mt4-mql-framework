@@ -58,15 +58,15 @@ int onInit() {
 
       // aktiviert: wird automatisch deaktiviert, wenn Anzeige in aktueller Chartperiode unsinnig ist
       case  PERIOD_D1 : if (Period() >  PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
-      case  PERIOD_W1 : if (Period() >  PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
-      case  PERIOD_MN1: if (Period() >  PERIOD_W1) superBars.timeframe = -superBars.timeframe; break;
-      case  PERIOD_Q1 :                                                                        break;
+      case  PERIOD_W1 :
+      case  PERIOD_MN1:
+      case  PERIOD_Q1 : if (Period() >  PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
 
       // deaktiviert: wird automatisch reaktiviert, wenn Anzeige in aktueller Chartperiode Sinn macht
       case -PERIOD_D1 : if (Period() <= PERIOD_H4) superBars.timeframe = -superBars.timeframe; break;
-      case -PERIOD_W1 : if (Period() <= PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
-      case -PERIOD_MN1: if (Period() <= PERIOD_W1) superBars.timeframe = -superBars.timeframe; break;
-      case -PERIOD_Q1 :                            superBars.timeframe = -superBars.timeframe; break;
+      case -PERIOD_W1 :
+      case -PERIOD_MN1:
+      case -PERIOD_Q1 : if (Period() <= PERIOD_D1) superBars.timeframe = -superBars.timeframe; break;
 
       // ungültiger Status: Default benutzen
       default:
@@ -75,11 +75,11 @@ int onInit() {
             case PERIOD_M5 :
             case PERIOD_M15:
             case PERIOD_M30:
-            case PERIOD_H1 : superBars.timeframe = PERIOD_D1;  break;
-            case PERIOD_H4 : superBars.timeframe = PERIOD_W1;  break;
-            case PERIOD_D1 : superBars.timeframe = PERIOD_MN1; break;
+            case PERIOD_H1 : superBars.timeframe =  PERIOD_D1;  break;
+            case PERIOD_H4 : superBars.timeframe =  PERIOD_W1;  break;
+            case PERIOD_D1 : superBars.timeframe =  PERIOD_MN1; break;
             case PERIOD_W1 :
-            case PERIOD_MN1: superBars.timeframe = PERIOD_Q1;  break;
+            case PERIOD_MN1: superBars.timeframe = -PERIOD_MN1; break;
          }
    }
 
@@ -180,11 +180,11 @@ bool SwitchSuperTimeframe(int direction) {
          case PERIOD_M5 :
          case PERIOD_M15:
          case PERIOD_M30:
-         case PERIOD_H1 : superBars.timeframe = PERIOD_D1;  break;
-         case PERIOD_H4 : superBars.timeframe = PERIOD_W1;  break;
-         case PERIOD_D1 : superBars.timeframe = PERIOD_MN1; break;
+         case PERIOD_H1 : superBars.timeframe =  PERIOD_D1;  break;
+         case PERIOD_H4 : superBars.timeframe =  PERIOD_W1;  break;
+         case PERIOD_D1 : superBars.timeframe =  PERIOD_MN1; break;
          case PERIOD_W1 :
-         case PERIOD_MN1: superBars.timeframe = PERIOD_Q1;  break;
+         case PERIOD_MN1: superBars.timeframe = -PERIOD_MN1; break;
       }
    }
 
@@ -606,6 +606,7 @@ bool StoreWindowStatus() {
    string key     = "SuperBars.Timeframe.0x"+ IntToHexStr(hWnd);
    if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
 
+   //debug("StoreWindowStatus()   stored \""+ value +"\"");
    return(catch("StoreWindowStatus(3)"));
 }
 
@@ -625,7 +626,7 @@ bool RestoreWindowStatus() {
    string label = __NAME__ +".sticky.timeframe", empty="";
    if (ObjectFind(label) == 0) {
       string sValue = ObjectDescription(label);
-      success       = StringIsDigit(sValue);
+      success       = StringIsInteger(sValue);
       timeframe     = StrToInteger(sValue);
    }
 
@@ -636,7 +637,7 @@ bool RestoreWindowStatus() {
          string section = "WindowStatus";
          string key     = "SuperBars.Timeframe.0x"+ IntToHexStr(hWnd);
          sValue         = GetLocalConfigString(section, key, "");
-         success        = StringIsDigit(sValue);
+         success        = StringIsInteger(sValue);
          timeframe      = StrToInteger(sValue);
       }
    }
