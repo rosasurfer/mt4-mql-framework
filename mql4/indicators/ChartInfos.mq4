@@ -133,8 +133,9 @@ string label.instrument      = "Instrument";
 string label.ohlc            = "OHLC";
 string label.price           = "Price";
 string label.spread          = "Spread";
-string label.unitSize        = "UnitSize";
+string label.balance         = "Balance";
 string label.position        = "Position";
+string label.unitSize        = "UnitSize";
 string label.externalAccount = "ExternalAccount";
 string label.lfxTradeAccount = "LfxTradeAccount";
 string label.stopoutLevel    = "StopoutLevel";
@@ -683,6 +684,7 @@ int CreateLabels() {
    label.ohlc            = __NAME__ +"."+ label.ohlc;
    label.price           = __NAME__ +"."+ label.price;
    label.spread          = __NAME__ +"."+ label.spread;
+   label.balance         = __NAME__ +"."+ label.balance;
    label.position        = __NAME__ +"."+ label.position;
    label.unitSize        = __NAME__ +"."+ label.unitSize;
    label.externalAccount = __NAME__ +"."+ label.externalAccount;
@@ -746,6 +748,20 @@ int CreateLabels() {
       ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
       ObjectSetText(label.spread, " ", 1);
       ObjectRegister(label.spread);
+   }
+   else GetLastError();
+
+
+   // Balance-Label
+   if (ObjectFind(label.balance) == 0)
+      ObjectDelete(label.balance);
+   if (ObjectCreate(label.balance, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.balance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.balance, OBJPROP_XDISTANCE, 200);
+      ObjectSet    (label.balance, OBJPROP_YDISTANCE,   9);
+      ObjectSetText(label.balance, " ", 1);
+      ObjectSetText(label.balance, "Balance: 2 000.00 USD", 9, "Tahoma", SlateGray);
+      ObjectRegister(label.balance);
    }
    else GetLastError();
 
@@ -1063,23 +1079,26 @@ bool UpdatePositions() {
 
 
 /**
+ * Aktualisiert die Balance-Anzeige.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateBalance() {
+   return(true);
+}
+
+
+/**
  * Aktualisiert die Anzeige eines externen Accounts.
  *
  * @return bool - Erfolgsstatus
  */
 bool UpdateExternalAccount() {
-   if (mode.extern) {
-      string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-      string file    = TerminalPath() + mqlDir +"\\files\\"+ external.provider +"\\"+ external.signal +"_config.ini"; if (!IsFile(file)) return(!catch("UpdateExternalAccount(2)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
-      string section = external.provider +"."+ external.signal;
-      string key     = StdSymbol() +".Notice";
-      string notice  = GetIniString(file, section, key, "");
-
-      string text = StringConcatenate(external.name, " ", notice);
-      ObjectSetText(label.externalAccount, text, 8, "Arial Fett", Red);
+   if (!mode.extern) {
+      ObjectSetText(label.externalAccount, " ", 1);
    }
    else {
-      ObjectSetText(label.externalAccount, " ", 1);
+      ObjectSetText(label.externalAccount, external.name, 8, "Arial Fett", Red);
    }
 
    int error = GetLastError();
@@ -1452,12 +1471,13 @@ bool UpdateMoneyManagement() {
    mm.unleveragedLots = equity/lotValue;                                                     // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
 
 
-   // (2) ATR als Maximalwert dreier wöchentlicher Einzelwerte: ATR, TR[1] und TR[0]
+   // (2) aktuelle TrueRange als Maximalwert von ATR und den letzten drei Einzelwerten: ATR, TR[2], TR[1] und TR[0]
    double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);   // ATR(14xW)
       if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);   //throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
-   double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange Vorwoche
-   double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
-   mm.ATRwAbs = MathMax(a, MathMax(b, c));
+   double b = ixATR(NULL, PERIOD_W1,  1, 2); if (b == EMPTY)                return(false);   // TrueRange vorvorige Woche
+   double c = ixATR(NULL, PERIOD_W1,  1, 1); if (c == EMPTY)                return(false);   // TrueRange vorige Woche
+   double d = ixATR(NULL, PERIOD_W1,  1, 0); if (d == EMPTY)                return(false);   // TrueRange aktuelle Woche
+   mm.ATRwAbs = MathMax(a, MathMax(b, MathMax(c, d)));
       double C = iClose(NULL, PERIOD_W1, 1);
       double H = iHigh (NULL, PERIOD_W1, 0);
       double L = iLow  (NULL, PERIOD_W1, 0);
