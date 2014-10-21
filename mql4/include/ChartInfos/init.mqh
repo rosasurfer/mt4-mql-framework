@@ -5,7 +5,8 @@
  */
 int onInit() {
    // (1) Textlabel sofort erzeugen, RestoreWindowStatus() benötigt sie bereits
-   CreateLabels();
+   if (!CreateLabels())
+      return(last_error);
 
 
    // (2) Status restaurieren

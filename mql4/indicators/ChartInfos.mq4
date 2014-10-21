@@ -133,7 +133,7 @@ string label.instrument      = "Instrument";
 string label.ohlc            = "OHLC";
 string label.price           = "Price";
 string label.spread          = "Spread";
-string label.balance         = "Balance";
+string label.aum             = "AuM";
 string label.position        = "Position";
 string label.unitSize        = "UnitSize";
 string label.externalAccount = "ExternalAccount";
@@ -245,7 +245,8 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  *
  * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
  *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
- *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History (geschlossene Positionen) ein/aus.
+ *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History ein/aus.
+ *                "cmd=ToggleAuM"              - Schaltet die zusätzliche Assets-under-Management-Anzeige ein/aus.
  *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
  */
 bool onChartCommand(string commands[]) {
@@ -265,6 +266,11 @@ bool onChartCommand(string commands[]) {
       }
       if (commands[i] == "cmd=ToggleTradeHistory") {
          if (!ToggleTradeHistory())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=ToggleAuM") {
+         if (!ToggleAuM())
             return(false);
          continue;
       }
@@ -464,6 +470,103 @@ bool SetOpenOrderDisplayStatus(bool status) {
 bool ToggleTradeHistory() {
    debug("ToggleTradeHistory()");
    return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Schaltet die Assets-under-Management-Anzeige ein/aus.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ToggleAuM() {
+   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
+   bool status = !GetAuMDisplayStatus();
+
+   // Status ON
+   if (status) {
+      double value;
+      string currency = "";
+      if (!GetAssetsUnderManagement(value, currency, true))
+         return(false);
+      ObjectSetText(label.aum, "AuM: "+ DoubleToStr(value, 2) +" "+ currency, 9, "Tahoma", SlateGray);
+   }
+
+   // Status OFF
+   else {
+      ObjectSetText(label.aum, " ", 1);
+   }
+
+   int error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("ToggleAuM(1)", error));
+
+   // Anzeigestatus im Chart speichern
+   SetAuMDisplayStatus(status);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleAuM(2)"));
+}
+
+
+/**
+ * Gibt den Wert der Assets-under-Management zurück. Ist kein expliziter Wert konfiguriert, wird die AccountBalance() zurückgegeben.
+ *
+ * @param  double value    - Variable zur Aufnahme des AuM-Values
+ * @param  string currency - Variable zur Aufnahme der AuM-Währung
+ * @param  bool   refresh  - ob ein ggf.gecachter Wert neu eingelesen werden soll (default: nein)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool GetAssetsUnderManagement(double &value, string &currency, bool refresh=false) {
+   static double static.aum.value    = INT_MIN;
+   static string static.aum.currency = "";
+
+   if (static.aum.value==INT_MIN || refresh) {
+      static.aum.value    = AccountBalance();
+      static.aum.currency = AccountCurrency();
+   }
+
+   value    = static.aum.value;
+   currency = static.aum.currency;
+
+   return(!catch("GetAssetsUnderManagement(1)"));
+}
+
+
+/**
+ * Liest den im Chart gespeicherten aktuellen AuM-Anzeigestatus aus.
+ *
+ * @return bool - Status: ON/OFF
+ */
+bool GetAuMDisplayStatus() {
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".AuMDisplay.status";
+   if (ObjectFind(label) != -1)
+      return(StrToInteger(ObjectDescription(label)) != 0);
+   return(false);
+}
+
+
+/**
+ * Speichert den angegebenen AuM-Anzeigestatus im Chart.
+ *
+ * @param  bool status - Status
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SetAuMDisplayStatus(bool status) {
+   status = status!=0;
+
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".AuMDisplay.status";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+
+   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
+   ObjectSetText(label, ""+ status, 0);
+
+   return(!catch("SetAuMDisplayStatus()"));
 }
 
 
@@ -676,15 +779,15 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
 /**
  * Erzeugt die einzelnen ChartInfo-Label.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int CreateLabels() {
+bool CreateLabels() {
    // Label definieren
    label.instrument      = __NAME__ +"."+ label.instrument;
    label.ohlc            = __NAME__ +"."+ label.ohlc;
    label.price           = __NAME__ +"."+ label.price;
    label.spread          = __NAME__ +"."+ label.spread;
-   label.balance         = __NAME__ +"."+ label.balance;
+   label.aum             = __NAME__ +"."+ label.aum;
    label.position        = __NAME__ +"."+ label.position;
    label.unitSize        = __NAME__ +"."+ label.unitSize;
    label.externalAccount = __NAME__ +"."+ label.externalAccount;
@@ -752,16 +855,15 @@ int CreateLabels() {
    else GetLastError();
 
 
-   // Balance-Label
-   if (ObjectFind(label.balance) == 0)
-      ObjectDelete(label.balance);
-   if (ObjectCreate(label.balance, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.balance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.balance, OBJPROP_XDISTANCE, 200);
-      ObjectSet    (label.balance, OBJPROP_YDISTANCE,   9);
-      ObjectSetText(label.balance, " ", 1);
-      ObjectSetText(label.balance, "Balance: 2 000.00 USD", 9, "Tahoma", SlateGray);
-      ObjectRegister(label.balance);
+   // Assets-under-Management-Label
+   if (ObjectFind(label.aum) == 0)
+      ObjectDelete(label.aum);
+   if (ObjectCreate(label.aum, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.aum, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.aum, OBJPROP_XDISTANCE, 240);
+      ObjectSet    (label.aum, OBJPROP_YDISTANCE,   9);
+      ObjectSetText(label.aum, " ", 1);
+      ObjectRegister(label.aum);
    }
    else GetLastError();
 
@@ -832,7 +934,7 @@ int CreateLabels() {
       else GetLastError();
    }
 
-   return(catch("CreateLabels()"));
+   return(!catch("CreateLabels(1)"));
 }
 
 
@@ -1079,16 +1181,6 @@ bool UpdatePositions() {
 
 
 /**
- * Aktualisiert die Balance-Anzeige.
- *
- * @return bool - Erfolgsstatus
- */
-bool UpdateBalance() {
-   return(true);
-}
-
-
-/**
  * Aktualisiert die Anzeige eines externen Accounts.
  *
  * @return bool - Erfolgsstatus
@@ -1103,7 +1195,7 @@ bool UpdateExternalAccount() {
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateExternalAccount()", error));
+      return(!catch("UpdateExternalAccount(1)", error));
    return(true);
 }
 
@@ -1145,8 +1237,8 @@ bool UpdateStopoutLevel() {
    if (ObjectFind(label.stopoutLevel) == -1) {
       ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
       ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed);
-      ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true);
+      ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed  );
+      ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true       );
          if (soMode == ASM_PERCENT) string description = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
          else                              description = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
       ObjectSetText(label.stopoutLevel, description);
