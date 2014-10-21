@@ -98,7 +98,7 @@ double positions.ddata[][8];                                         //         
 #define I_PROFIT           4
 #define I_CUSTOM_AMOUNT    5
 #define I_OPEN_EQUITY      6
-#define I_DRAWDOWN         7
+#define I_PROFIT_PERCENT   7
 
 
 // externe Positionen
@@ -169,9 +169,6 @@ color  positions.fontColor.virtual = Green;
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (Symbol() == "GBPLFX") {
-      //debug("onTick()   ValidBars="+ IndicatorCounted() +"  ChangedBars="+ (Bars-IndicatorCounted()));
-   }
    mm.done           = false;
    positionsAnalyzed = false;
 
@@ -1137,8 +1134,8 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}   Drawdown   {Comment}"
-   string strLotSize, strCustomAmount, strDrawdown, strComment, strTypes[]={"", "Long:", "Short:", "Hedge:"};   // DirectionTypes (1, 2, 3) werden als Indizes benutzt
+   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   SL: {SlPrice}   Profit: {ProfitAmount}   {ProfitPct}   {Comment}"
+   string strLotSize, strCustomAmount, strProfitPct, strComment, strTypes[]={"", "Long:", "Short:", "Hedge:"};   // DirectionTypes (1, 2, 3) werden als Indizes benutzt
    color  fontColor;
    int    line;
 
@@ -1183,9 +1180,9 @@ bool UpdatePositions() {
             if (!positions.ddata[i][I_CUSTOM_AMOUNT]) strCustomAmount = "";
             else                                      strCustomAmount = " ("+ DoubleToStr(positions.ddata[i][I_CUSTOM_AMOUNT], 2) +")";
          ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(positions.ddata[i][I_PROFIT], 2) + strCustomAmount,                                       positions.fontSize, positions.fontName, fontColor);
-            if (!positions.ddata[i][I_OPEN_EQUITY])   strDrawdown = "";
-            else                                      strDrawdown = DoubleToStr(positions.ddata[i][I_DRAWDOWN], 1) +"%";
-         ObjectSetText(label.position +".line"+ line +"_col8", strDrawdown,                                                                                          positions.fontSize, positions.fontName, fontColor);
+            if (!positions.ddata[i][I_OPEN_EQUITY])   strProfitPct = "";
+            else                                      strProfitPct = DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT], 1) +"%";
+         ObjectSetText(label.position +".line"+ line +"_col8", strProfitPct,                                                                                         positions.fontSize, positions.fontName, fontColor);
             if (positions.idata[i][I_COMMENT] == -1)  strComment = "";
             else                                      strComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
          ObjectSetText(label.position +".line"+ line +"_col9", strComment +" ",                                                                                      positions.fontSize, positions.fontName, fontColor);
@@ -1222,6 +1219,7 @@ bool UpdateExternalAccount() {
       ObjectSetText(label.externalAccount, " ", 1);
    }
    else {
+      ObjectSetText(label.unitSize, " ", 1);
       ObjectSetText(label.externalAccount, external.name, 8, "Arial Fett", Red);
    }
 
@@ -1587,9 +1585,7 @@ bool UpdateMoneyManagement() {
          if (error == ERR_UNKNOWN_SYMBOL) return(false);
          return(!catch("UpdateMoneyManagement(1)", error));
       }
-   double equity, aum=GetAssetsUnderManagement();
-   if (mode.intern && !aum) equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-   else                     equity = aum;
+   double equity = ifDouble(GetAssetsUnderManagement(), aum.value, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
 
    if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
@@ -1623,7 +1619,7 @@ bool UpdateMoneyManagement() {
 
 
    mm.done = true;
-   return(true);
+   return(!catch("UpdateMoneyManagement(2)"));
 }
 
 
@@ -2049,8 +2045,13 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       return(true);
 
 
-   double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, hedgedProfit, pipDistance, pipValue;
+   double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, hedgedProfit, openEquity, pipDistance, pipValue;
    int size, ticketsSize=ArraySize(tickets);
+
+   if      (customEquity               && 1) openEquity = customEquity;
+   else if (GetAssetsUnderManagement() && 1) openEquity = aum.value;
+   else if (mode.intern                    ) openEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   else   /*mode.extern*/                    openEquity = 0;
 
    // Die Gesamtposition besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
    // - kein direktionaler Anteil:  BE-Distance berechnen
@@ -2134,8 +2135,8 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          positions.ddata[size][I_STOPLOSS      ] = 0;
          positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount;
          positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
-         positions.ddata[size][I_OPEN_EQUITY   ] = ifDouble(customEquity || mode.extern, customEquity, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
-         positions.ddata[size][I_DRAWDOWN      ] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
+         positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
+         positions.ddata[size][I_PROFIT_PERCENT] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
          return(!catch("StoreCustomPosition(3)"));
       }
    }
@@ -2195,8 +2196,8 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          }
       positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
-      positions.ddata[size][I_OPEN_EQUITY   ] = ifDouble(customEquity || mode.extern, customEquity, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
-      positions.ddata[size][I_DRAWDOWN      ] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
+      positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
+      positions.ddata[size][I_PROFIT_PERCENT] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
       return(!catch("StoreCustomPosition(5)"));
    }
 
@@ -2254,8 +2255,8 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          }
       positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
-      positions.ddata[size][I_OPEN_EQUITY   ] = ifDouble(customEquity || mode.extern, customEquity, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
-      positions.ddata[size][I_DRAWDOWN      ] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
+      positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
+      positions.ddata[size][I_PROFIT_PERCENT] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
       return(!catch("StoreCustomPosition(7)"));
    }
 
@@ -2269,12 +2270,16 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
  * @return bool - Erfolgsstatus
  */
 bool StoreRegularPositions(double longPosition, double shortPosition, double totalPosition, int &tickets[], int &types[], double &lots[], double &openPrices[], double &commissions[], double &swaps[], double &profits[]) {
-   double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, pipValue;
+   double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, openEquity, pipValue;
    int ticketsSize = ArraySize(tickets);
 
    longPosition  = NormalizeDouble(longPosition,  2);
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(totalPosition, 2);
+
+   if      (GetAssetsUnderManagement() && 1) openEquity = aum.value;
+   else if (mode.intern                    ) openEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   else                                      openEquity = 0;
 
 
    // (1) eventuelle Longposition selektieren
@@ -2332,8 +2337,8 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
          }
       positions.ddata[size][I_PROFIT        ] = commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
-      positions.ddata[size][I_OPEN_EQUITY   ] = ifDouble(mode.extern, 0, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
-      positions.ddata[size][I_DRAWDOWN      ] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
+      positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
+      positions.ddata[size][I_PROFIT_PERCENT] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
    }
 
 
@@ -2392,8 +2397,8 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
          }
       positions.ddata[size][I_PROFIT        ] = commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
-      positions.ddata[size][I_OPEN_EQUITY   ] = ifDouble(mode.extern, 0, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
-      positions.ddata[size][I_DRAWDOWN      ] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
+      positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
+      positions.ddata[size][I_PROFIT_PERCENT] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
    }
 
 
@@ -2451,8 +2456,8 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       positions.ddata[size][I_STOPLOSS      ] = 0;
       positions.ddata[size][I_PROFIT        ] = positions.ddata[size][I_BREAKEVEN] * pipValue;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
-      positions.ddata[size][I_OPEN_EQUITY   ] = ifDouble(mode.extern, 0, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
-      positions.ddata[size][I_DRAWDOWN      ] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
+      positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
+      positions.ddata[size][I_PROFIT_PERCENT] = MathDiv(positions.ddata[size][I_PROFIT], positions.ddata[size][I_OPEN_EQUITY]) * 100;
    }
 
    return(!catch("StoreRegularPositions(5)"));
