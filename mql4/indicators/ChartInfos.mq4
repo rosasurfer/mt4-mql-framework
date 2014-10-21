@@ -1598,13 +1598,12 @@ bool UpdateMoneyManagement() {
    mm.unleveragedLots = equity/lotValue;                                                     // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
 
 
-   // (2) aktuelle TrueRange als Maximalwert von ATR und den letzten drei Einzelwerten: ATR, TR[2], TR[1] und TR[0]
+   // (2) aktuelle TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
    double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);   // ATR(14xW)
       if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);   //throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
-   double b = ixATR(NULL, PERIOD_W1,  1, 2); if (b == EMPTY)                return(false);   // TrueRange vorvorige Woche
-   double c = ixATR(NULL, PERIOD_W1,  1, 1); if (c == EMPTY)                return(false);   // TrueRange vorige Woche
-   double d = ixATR(NULL, PERIOD_W1,  1, 0); if (d == EMPTY)                return(false);   // TrueRange aktuelle Woche
-   mm.ATRwAbs = MathMax(a, MathMax(b, MathMax(c, d)));
+   double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange letzte Woche
+   double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
+   mm.ATRwAbs = MathMax(a, MathMax(b, c));
       double C = iClose(NULL, PERIOD_W1, 1);
       double H = iHigh (NULL, PERIOD_W1, 0);
       double L = iLow  (NULL, PERIOD_W1, 0);
