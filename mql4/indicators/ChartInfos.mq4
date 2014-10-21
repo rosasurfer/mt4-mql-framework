@@ -340,7 +340,7 @@ bool ToggleOpenOrders() {
  * @return int - Anzahl der angezeigten offenen Orders oder -1 (EMPTY), falls ein Fehler auftrat.
  */
 int ShowOpenOrders() {
-   int      orders, ticket, type, colors[]={OpenOrderBlue, OpenOrderRed};  // Unterscheidung von offenen und geschlossenen Order-Arrows anhand der Farben
+   int      orders, ticket, type, colors[]={OpenOrderBlue, OpenOrderRed};  // minimal abweichend von {ClosedOrderBlue, ClosedOrderRed}
    datetime openTime;
    double   lots, openPrice, takeProfit, stopLoss;
    string   label, text, types[]={"Buy", "Sell"};
@@ -351,7 +351,7 @@ int ShowOpenOrders() {
       orders = OrdersTotal();
 
       for (int i=0, n; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))            // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
             break;
          if (OrderSymbol() != Symbol()) continue;
 
@@ -381,7 +381,7 @@ int ShowOpenOrders() {
                ObjectDelete(label);
             if (ObjectCreate(label, OBJ_ARROW, 0, openTime, openPrice)) {
                ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-               ObjectSet(label, OBJPROP_COLOR    , colors[type]    );
+               ObjectSet(label, OBJPROP_COLOR,     colors[type]    );
                ObjectSetText(label, text);
             }
          }
@@ -416,7 +416,7 @@ int ShowOpenOrders() {
             ObjectDelete(label);
          if (ObjectCreate(label, OBJ_ARROW, 0, openTime, openPrice)) {
             ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label, OBJPROP_COLOR    , colors[type]    );
+            ObjectSet(label, OBJPROP_COLOR,     colors[type]    );
             ObjectSetText(label, text);
          }
       }
