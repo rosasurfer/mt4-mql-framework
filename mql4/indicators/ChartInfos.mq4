@@ -174,8 +174,6 @@ int onTick() {
    }
    mm.done           = false;
    positionsAnalyzed = false;
-   if (!aum.value) /*&&*/ if (!RefreshAssetsUnderManagement())
-      return(last_error);
 
 
    HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
@@ -352,12 +350,17 @@ int ShowOpenOrders() {
    if (mode.intern) {
       orders = OrdersTotal();
 
-      for (int i=0; i < orders; i++) {
+      for (int i=0, n; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))            // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
             break;
          if (OrderSymbol() != Symbol()) continue;
 
-         if (OrderType() <= OP_SELL) {
+         if (OrderType() > OP_SELL) {
+            // Pending-Order:
+            if (!ChartMarker.OrderSent_A(OrderTicket(), Digits, DeepSkyBlue))
+               return(_EMPTY(SetLastError(stdlib.GetLastError())));
+         }
+         else {
             // offene Position: Daten auslesen
             ticket     =                 OrderTicket();
             type       =                 OrderType();
@@ -382,19 +385,16 @@ int ShowOpenOrders() {
                ObjectSetText(label, text);
             }
          }
-         else {
-            // Pending-Order:
-            if (!ChartMarker.OrderSent_A(OrderTicket(), Digits, DeepSkyBlue))
-               return(_EMPTY(SetLastError(stdlib.GetLastError())));
-         }
+         n++;
       }
-      return(orders);
+      return(n);
    }
 
 
    // mode.extern
    if (mode.extern) {
       orders = ArraySize(external.ticket);
+
       for (i=0; i < orders; i++) {
          // Daten auslesen
          ticket     =                 external.ticket    [i];
@@ -493,7 +493,10 @@ bool ToggleAuM() {
    if (status) {
       if (!RefreshAssetsUnderManagement())
          return(false);
-      ObjectSetText(label.aum, "AuM:  "+ DoubleToStr(aum.value, 2) +" "+ aum.currency, 9, "Tahoma", SlateGray);
+
+      if (!aum.value) string strAum = "Balance:  "+ DoubleToStr(AccountBalance(), 2) +" "+ AccountCurrency();
+      else                   strAum = "Assets:  " + DoubleToStr(aum.value, 2)        +" "+ aum.currency;
+      ObjectSetText(label.aum, strAum, 9, "Tahoma", SlateGray);
    }
 
    // Status OFF
@@ -515,7 +518,23 @@ bool ToggleAuM() {
 
 
 /**
- * Liest die Konfiguration der Assets-under-Management ernuet ein. Ohne Konfiguration werden AccountBalance() und AccountCurrency() verwendet.
+ * Gibt den Wert der Assets-under-Management zurück.
+ *
+ * @return double - Wert oder NULL, falls keine AuM konfiguriert sind
+ */
+double GetAssetsUnderManagement() {
+   static bool refreshed;
+   if (!refreshed) {
+      if (!RefreshAssetsUnderManagement())
+         return(NULL);
+      refreshed = true;
+   }
+   return(aum.value);
+}
+
+
+/**
+ * Liest die Konfiguration der Assets-under-Management ernuet ein. Ohne Konfiguration werden als Datenbasis AccountBalance() und AccountCurrency() verwendet.
  *
  * @return bool - Erfolgsstatus
  */
@@ -527,8 +546,8 @@ bool RefreshAssetsUnderManagement() {
 
    double value = GetIniDouble(file, section, key, 0);
    if (!value) {
-      aum.value    = AccountBalance();
-      aum.currency = AccountCurrency();
+      aum.value    = 0;
+      aum.currency = "";
       return(!catch("RefreshAssetsUnderManagement(1)"));
    }
    if (value < 0) return(!catch("RefreshAssetsUnderManagement(2)   invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -1016,8 +1035,8 @@ bool UpdateUnitSize() {
 
    // Anzeige wird nur mit internem Account benötigt
    if (mode.intern) {
-      if (mm.isDefaultLeverage) { double lotsize=mm.stdRiskLots, leverage=mm.stdRiskLeverage; }
-      else                      {        lotsize=mm.customLots;  leverage=mm.customLeverage;  }
+      if (mm.isDefaultLeverage) { double leverage=mm.stdRiskLeverage, lotsize=mm.stdRiskLots; }
+      else                      {        leverage=mm.customLeverage;  lotsize=mm.customLots;  }
 
       // Lotsize runden
       if (lotsize > 0) {                                                                                    // Abstufung max. 6.7% je Schritt
@@ -1563,12 +1582,15 @@ bool UpdateMoneyManagement() {
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
    double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
-   double equity         = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
       int error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL) return(false);
          return(!catch("UpdateMoneyManagement(1)", error));
       }
+   double equity, aum=GetAssetsUnderManagement();
+   if (mode.intern && !aum) equity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   else                     equity = aum;
+
    if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
