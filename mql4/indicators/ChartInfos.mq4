@@ -52,6 +52,9 @@ double mm.customLeverage;                                            // benutzer
 double mm.customLots;                                                // Lotsize für benutzerdefinierten Hebel
 double mm.stoploss = DEFAULT_STOPLOSS;                               // StopLoss
 
+double aum.value    = NULL;                                          // Assets-under-Management: Kann als lokaler (AccountBalance) oder als externer Wert (Accountkonfiguration)
+string aum.currency = "";                                            // definiert sein.
+
 
 // Status
 bool   positionsAnalyzed;                                            // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
@@ -169,10 +172,14 @@ int onTick() {
    if (Symbol() == "GBPLFX") {
       //debug("onTick()   ValidBars="+ IndicatorCounted() +"  ChangedBars="+ (Bars-IndicatorCounted()));
    }
-   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
-
    mm.done           = false;
    positionsAnalyzed = false;
+   if (!aum.value) /*&&*/ if (!RefreshAssetsUnderManagement())
+      return(last_error);
+
+
+   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
+
 
    if (!UpdatePrice())                     return(last_error);
    if (!UpdateOHLC())                      return(last_error);
@@ -484,11 +491,9 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      double value;
-      string currency = "";
-      if (!GetAssetsUnderManagement(value, currency, true))
+      if (!RefreshAssetsUnderManagement())
          return(false);
-      ObjectSetText(label.aum, "AuM: "+ DoubleToStr(value, 2) +" "+ currency, 9, "Tahoma", SlateGray);
+      ObjectSetText(label.aum, "AuM:  "+ DoubleToStr(aum.value, 2) +" "+ aum.currency, 9, "Tahoma", SlateGray);
    }
 
    // Status OFF
@@ -510,27 +515,35 @@ bool ToggleAuM() {
 
 
 /**
- * Gibt den Wert der Assets-under-Management zurück. Ist kein expliziter Wert konfiguriert, wird die AccountBalance() zurückgegeben.
- *
- * @param  double value    - Variable zur Aufnahme des AuM-Values
- * @param  string currency - Variable zur Aufnahme der AuM-Währung
- * @param  bool   refresh  - ob ein ggf.gecachter Wert neu eingelesen werden soll (default: nein)
+ * Liest die Konfiguration der Assets-under-Management ernuet ein. Ohne Konfiguration werden AccountBalance() und AccountCurrency() verwendet.
  *
  * @return bool - Erfolgsstatus
  */
-bool GetAssetsUnderManagement(double &value, string &currency, bool refresh=false) {
-   static double static.aum.value    = INT_MIN;
-   static string static.aum.currency = "";
+bool RefreshAssetsUnderManagement() {
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.provider +"\\"+ external.signal) +"_config.ini";
+   string section  = "General";
+   string key      = "AuM.Value";
 
-   if (static.aum.value==INT_MIN || refresh) {
-      static.aum.value    = AccountBalance();
-      static.aum.currency = AccountCurrency();
+   double value = GetIniDouble(file, section, key, 0);
+   if (!value) {
+      aum.value    = AccountBalance();
+      aum.currency = AccountCurrency();
+      return(!catch("RefreshAssetsUnderManagement(1)"));
    }
+   if (value < 0) return(!catch("RefreshAssetsUnderManagement(2)   invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
-   value    = static.aum.value;
-   currency = static.aum.currency;
 
-   return(!catch("GetAssetsUnderManagement(1)"));
+   key = "AuM.Currency";
+   string currency = GetIniString(file, section, key, "");
+   if (!StringLen(currency)) {
+      if (!IsIniKey(file, section, key)) return(!catch("RefreshAssetsUnderManagement(3)   missing ini entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+                                         return(!catch("RefreshAssetsUnderManagement(4)   invalid ini entry ["+ section +"]->"+ key +"=\"\" (empty value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   }
+   aum.value    = value;
+   aum.currency = StringToUpper(currency);
+
+   return(!catch("RefreshAssetsUnderManagement(5)"));
 }
 
 
@@ -601,7 +614,7 @@ bool TrackSignal(string signalId) {
          external.signal   = signal;
             string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
             string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_config.ini"; if (!IsFile(file)) return(!catch("TrackSignal(2)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
-            string section = provider +"."+ signal;
+            string section = "General";
             string key     = "Name";
             string value   = GetIniString(file, section, key, ""); if (!StringLen(value))                                    return(!catch("TrackSignal(3)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty value)", ERR_RUNTIME_ERROR));
          external.name     = value;
@@ -3104,6 +3117,7 @@ string InputsToStr() {
    double   GetCommission();
    string   GetConfigString(string section, string key, string defaultValue);
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
+   double   GetIniDouble(string fileName, string section, string key, double defaultValue);
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);

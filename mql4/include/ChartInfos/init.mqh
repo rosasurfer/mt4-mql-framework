@@ -80,7 +80,6 @@ int onInit() {
       mm.stoploss = dValue;
    }
 
-
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(10)"));
 }
