@@ -159,6 +159,9 @@ int start() {
       return(last_error);
    }
 
+   if (!__WND_HANDLE)                                                      // Workaround um WindowHandle()-Bug ab Build 418
+      __WND_HANDLE = WindowHandle(Symbol(), NULL);
+
    int error;
 
    Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
@@ -177,11 +180,11 @@ int start() {
    if (StringStartsWith(Symbol(), "_")) {
       error = GetLastError(); if (error != ERR_UNKNOWN_SYMBOL) catch("start(0.1)", error);
 
-      int hWndChart = WindowHandle(Symbol(), NULL);                        // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
+      int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;   // schlägt in etlichen Situationen fehl (init(), deinit(), in start() bei Programmstart, im Tester)
 
-      debug("start()   Tick="+ Tick +"   hWndChart="+ hWndChart);
+      debug("start()   Tick="+ Tick +"   hWnd="+ hWnd);
 
-      if (!hWndChart) {
+      if (!hWnd) {
          int hWndMain, hWndMDI, hWndNext;
 
          hWndMain = GetApplicationWindow();

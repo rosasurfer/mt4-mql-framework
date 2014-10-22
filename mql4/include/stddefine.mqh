@@ -13,6 +13,7 @@ string   __NAME__;                                          // Name des aktuelle
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     IsOfflineChart;                                    // ob der Chart ein Offline-Chart ist
+int      __WND_HANDLE;                                      // Window-Handle des aktuellen Charts: Workaround um WindowHandle()-Bug ab Build 418
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind

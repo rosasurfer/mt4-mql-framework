@@ -2876,7 +2876,8 @@ bool StoreWindowStatus() {
    // Konfiguration in Terminalkonfiguration speichern (oder lˆschen)
    string file    = GetLocalConfigPath();
    string section = "WindowStatus";
-      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd)      return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
+      if (!hWnd) return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
    string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
    if (mode.extern) {
       if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
@@ -2905,7 +2906,7 @@ bool RestoreWindowStatus() {
    }
    // Bei Miﬂerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
    if (!restoreSignal.success) {
-      int hWnd = WindowHandle(Symbol(), NULL);
+      int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
       if (hWnd != 0) {
          string section = "WindowStatus";
          string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);

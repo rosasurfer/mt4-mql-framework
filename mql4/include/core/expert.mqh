@@ -156,6 +156,9 @@ int start() {
       return(ShowStatus(last_error));
    }
 
+   if (!__WND_HANDLE)                                                      // Workaround um WindowHandle()-Bug ab Build 418
+      __WND_HANDLE = WindowHandle(Symbol(), NULL);
+
 
    // "Time machine"-Bug im Tester abfangen
    if (IsTesting()) {
