@@ -145,11 +145,11 @@ bool Script.IsTesting() {
    if (static.resolved)
       return(static.result);
 
-   int hChart = WindowHandle(Symbol(), NULL);
-   if (!hChart)
+   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
+   if (!hWnd)
       return(!catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
-   static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");    // "(visual)" ist nicht internationalisiert
+   static.result = StringEndsWith(GetWindowText(GetParent(hWnd)), "(visual)");      // "(visual)" ist nicht internationalisiert
 
    static.resolved = true;
    return(static.result);
@@ -179,8 +179,8 @@ bool Indicator.IsTesting() {
       static.result = true;
    }
    else if (__WHEREAMI__ != FUNC_START) {                            // Indikator läuft im UI-Thread in Indicator::init|deinit(): entweder im Hauptchart oder im Testchart
-      int hChart = WindowHandle(Symbol(), NULL);
-      if (!hChart) {
+      int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
+      if (!hWnd) {
          return(!catch("Indicator.IsTesting(2)->WindowHandle()=0 in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          /*
          // TODO: GetTesterWindow() löst rekursiven Aufruf von This.IsTesting() aus
@@ -192,7 +192,7 @@ bool Indicator.IsTesting() {
          */
       }
       else {
-         string title = GetWindowText(GetParent(hChart));
+         string title = GetWindowText(GetParent(hWnd));
          if (title == "")                                            // Indikator läuft im UI-Thread und wurde mit Template geladen, Ergebnis kann nicht erkannt werden
             return(!catch("Indicator.IsTesting(3)->GetWindowText() = \"\"   undefined result in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          static.result = StringEndsWith(title, "(visual)");          // Indikator läuft im UI-Thread und im Haupt- oder Testchart, Unterscheidung durch "...(visual)" im Fenstertitel

@@ -32,7 +32,7 @@ bool RunScript(string scriptName, string parameters="") {
    if (parameters == "0")                                            // (string) NULL
       parameters = "";
 
-   int hWnd = WindowHandle(Symbol(), NULL);
+   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
    if (!hWnd)
       return(!catch("RunScript(3)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
@@ -159,7 +159,7 @@ bool QC.StartScriptParameterSender() {
    if (hQC.ScriptParameterSender != 0)
       return(true);
 
-   int hWnd = WindowHandle(Symbol(), NULL);
+   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
    if (!hWnd)
       return(!catch("QC.StartScriptParameterSender(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 

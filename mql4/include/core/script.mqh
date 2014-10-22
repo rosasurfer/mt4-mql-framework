@@ -85,6 +85,9 @@ int start() {
       return(last_error);
    }
 
+   if (!__WND_HANDLE)                                                         // Workaround um WindowHandle()-Bug ab Build 418
+      __WND_HANDLE = WindowHandle(Symbol(), NULL);
+
    int error;
 
    Tick++;                                                                    // einfacher Zähler, der konkrete Wert hat keine Bedeutung
@@ -257,11 +260,11 @@ bool Script.IsTesting() {
    if (static.resolved)
       return(static.result);
 
-   int hChart = WindowHandle(Symbol(), NULL);
-   if (!hChart)
+   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
+   if (!hWnd)
       return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
-   static.result = StringEndsWith(GetWindowText(GetParent(hChart)), "(visual)");  // "(visual)" ist nicht internationalisiert
+   static.result = StringEndsWith(GetWindowText(GetParent(hWnd)), "(visual)");   // "(visual)" ist nicht internationalisiert
 
    static.resolved = true;
    return(static.result);
