@@ -10331,12 +10331,11 @@ it means that the chart window has not been fully filled out and there is a spac
       </content>
       <example>
    // work with visible bars.
-   int bars_count=WindowBarsPerChart();
-   int bar=WindowFirstVisibleBar();
-   for(int i=0; i&lt;bars_count; i++,bar--)
-     {
+   int bars = WindowBarsPerChart();
+   int bar  = WindowFirstVisibleBar();
+   for (int i=0; i &lt; bars; i++, bar--) {
       // ...
-     }
+   }
       </example>
     </function>
 
@@ -10345,23 +10344,28 @@ it means that the chart window has not been fully filled out and there is a spac
       caption=WindowHandle()
       type=int
       <content>
-        Returns the system window handler containing the given chart.
-        If the chart of <i>symbol</i> and <i>timeframe</i> has not been opened by the moment of function calling, 0 will be returned.<br/>
+        Returns the handle of the system window containing the given chart.
+        If no chart of <i>symbol</i> and <i>timeframe</i> is open, 0 will be returned.<br/>
+      <br>
+      <span style="color:red">Fehler:</span>
+      <br>
+      Ab Build 418 gibt die Funktion bei Terminal-Shutdown in deinit() 0 zurück.<br>
+      Workaround: Frameworkvariable WND_HANDLE benutzen.
       </content>
       <example>
-  int win_handle=WindowHandle("USDX",PERIOD_H1);
-  if(win_handle!=0)
-    Print(&quot;Window with USDX,H1 detected. Rates array will be copied immediately.&quot;);
+int hWnd = WindowHandle("USDX", PERIOD_H1);
+if (hWnd != 0)
+   Print(&quot;Window with USDX,H1 detected.&quot;);
       </example>
       <parameter>
         type=string
         name=symbol
-        description=symbol name.
+        description=symbol name
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=Timeframe, can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
       </parameter>
     </function>
 
