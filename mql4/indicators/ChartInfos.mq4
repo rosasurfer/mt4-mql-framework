@@ -645,8 +645,8 @@ bool TrackSignal(string signalId) {
    if (signalChanged) {
       ArrayResize(custom.position.conf,          0);
       ArrayResize(custom.position.conf.comments, 0);
-      if (!UpdateExternalAccount())
-         return(false);
+      if (!UpdateExternalAccount())        return(false);
+      if (!RefreshAssetsUnderManagement()) return(false);
    }
    return(!catch("TrackSignal(4)"));
 }
