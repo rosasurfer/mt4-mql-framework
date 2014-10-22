@@ -537,7 +537,9 @@ double GetAssetsUnderManagement() {
  */
 bool RefreshAssetsUnderManagement() {
    string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.provider +"\\"+ external.signal) +"_config.ini";
+   string file     = TerminalPath() + mqlDir +"\\files\\";
+      if (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
+      else             file = file + external.provider     +"\\"+ external.signal    +"_config.ini";
    string section  = "General";
    string key      = "AuM.Value";
 
