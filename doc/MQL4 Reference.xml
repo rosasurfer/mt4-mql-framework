@@ -1609,11 +1609,12 @@ It can be one of the following values:</p>
     <text>
       tag=constants_arrows
       caption=Arrow codes
-      keywords=;SYMBOL_LEFTPRICE;SYMBOL_RIGHTPRICE;SYMBOL_THUMBSUP;SYMBOL_THUMBSDOWN;SYMBOL_ARROWUP;SYMBOL_ARROWDOWN;SYMBOL_STOPSIGN;SYMBOL_CHECKSIGN;
+      keywords=;SYMBOL_LEFTPRICE;SYMBOL_RIGHTPRICE;SYMBOL_THUMBSUP;SYMBOL_THUMBSDOWN;SYMBOL_ORDEROPEN;SYMBOL_ORDERCLOSE;SYMBOL_STOPSIGN;SYMBOL_CHECKSIGN;
       <content>
-<p>Predefined Arrow codes enumeration. Arrows code constants. It can be one of the following values:</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
+
+<p>General arrow codes:</p>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+<tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
 <tr><td>SYMBOL_THUMBSUP</td><td>67</td><td>Thumb up symbol (<span style="font: 12pt Wingdings;">&#67;</span>).</td></tr>
 <tr><td>SYMBOL_THUMBSDOWN</td><td>68</td><td>Thumb down symbol (<span style="font: 12pt Wingdings;">&#68;</span>).</td></tr>
 <tr><td>SYMBOL_ARROWUP</td><td>241</td><td>Arrow up symbol (<span style="font: 12pt Wingdings;">&#241;</span>).</td></tr>
@@ -1621,18 +1622,18 @@ It can be one of the following values:</p>
 <tr><td>SYMBOL_STOPSIGN</td><td>251</td><td>Stop sign symbol (<span style="font: 12pt Wingdings;">&#251;</span>).</td></tr>
 <tr><td>SYMBOL_CHECKSIGN</td><td>252</td><td>Check sign symbol (<span style="font: 12pt Wingdings;">&#252;</span>).</td></tr>
 </table>
-<p>Special Arrow codes that exactly points to price and time.
-It can be one of the following values:</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td>&nbsp;</td><td>1</td><td>Upwards arrow with tip rightwards (<span style="font-family: Lucida Sans Unicode; font-size: 12pt;">&#8625;</span>).</td></tr>
+<br>
+<p>Special arrow codes pointing exactly to the specified price and time values:</p>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+<tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
+<tr><td>SYMBOL_ORDEROPEN</td><td>1</td><td>Right pointing arrow, default open order marker (<span style="font-family: Lucida Sans Unicode; font-size: 12pt;">&#8625;</span>).</td></tr>
 <tr><td>&nbsp;</td><td>2</td><td>Downwards arrow with tip rightwards (<span style="font-family: Lucida Sans Unicode; font-size: 12pt;">&#8627;</span>).</td></tr>
-<tr><td>&nbsp;</td><td>3</td><td>Left pointing triangle (<span style="font: 12pt Arial;">&#9668;</span>).</td></tr>
-<tr><td>&nbsp;</td><td>4</td><td>En Dash symbol (&#8211;).</td></tr>
-<tr><td>SYMBOL_LEFTPRICE</td><td>5</td><td>Left sided price label.</td></tr>
-<tr><td>SYMBOL_RIGHTPRICE</td><td>6</td><td>Right sided price label.</td></tr>
-
+<tr><td>SYMBOL_ORDERCLOSE</td><td>3</td><td>Left pointing arrow, default closed order marker (<span style="font: 12pt Arial;">&#9668;</span>).</td></tr>
+<tr><td>SYMBOL_DASH</td><td>4</td><td>Dash symbol, default takeprofit and stoploss marker (&#8211;).</td></tr>
+<tr><td>SYMBOL_LEFTPRICE</td><td>5</td><td>Left side price label.</td></tr>
+<tr><td>SYMBOL_RIGHTPRICE</td><td>6</td><td>Right side price label.</td></tr>
 </table>
+
       </content>
     </text>
 
@@ -5245,7 +5246,7 @@ SetLevelValue(1,3.14);
       caption=TimeCurrent()
       type=datetime
       <content>
-      Returns the last known server time (time of the latest tick) as seconds since 00:00 January 1, 1970.<br/><br/>
+      Returns the last known server time (time of the last tick) as seconds since 00:00 January 1, 1970.<br/><br/>
       Note: At testing server time is modelled.
       </content>
       <example>
