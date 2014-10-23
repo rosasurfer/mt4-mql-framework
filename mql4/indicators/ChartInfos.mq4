@@ -347,7 +347,7 @@ int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, openPrice, takeProfit, stopLoss;
-   string   label1, label2, label3, sTP, sSL, types[]={"Buy", "Sell"};
+   string   label1, label2, label3, sTP, sSL, types[]={"Buy", "Sell", "Buy Limit", "Sell Limit", "Buy Stop", "Sell Stop"};
 
 
    // (1) mode.intern
@@ -359,23 +359,30 @@ int ShowOpenOrders() {
             break;
          if (OrderSymbol() != Symbol()) continue;
 
+         // Daten auslesen
+         ticket     = OrderTicket();
+         type       = OrderType();
+         lots       = OrderLots();
+         openTime   = OrderOpenTime();
+         openPrice  = OrderOpenPrice();
+         takeProfit = OrderTakeProfit();
+         stopLoss   = OrderStopLoss();
+
          if (OrderType() > OP_SELL) {
-            // Pending-Order:
-            if (!ChartMarker.OrderSent_A(OrderTicket(), Digits, CLR_PENDING_OPEN))
-               return(_EMPTY(SetLastError(stdlib.GetLastError())));
+            // Pending-Order
+            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, PriceFormat));
+
+            // Order anzeigen
+            if (ObjectFind(label1) == 0)
+               ObjectDelete(label1);
+            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrent(), openPrice)) {
+               ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+            }
          }
          else {
-            // offene Position: Daten auslesen
-            ticket     =                 OrderTicket();
-            type       =                 OrderType();
-            lots       =                 OrderLots();
-            openTime   = FxtToServerTime(OrderOpenTime());
-            openPrice  =                 OrderOpenPrice();
-            takeProfit =                 OrderTakeProfit();
-            stopLoss   =                 OrderStopLoss();
-
-            // Hauptlabel erstellen
-            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lot at ", NumberToStr(openPrice, PriceFormat));
+            // offene Position
+            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, PriceFormat));
 
             // TakeProfit anzeigen
             if (takeProfit != NULL) {
@@ -406,7 +413,7 @@ int ShowOpenOrders() {
             // Order anzeigen
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
+            if (ObjectCreate(label1, OBJ_ARROW, 0, FxtToServerTime(openTime), openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
                ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
@@ -433,7 +440,7 @@ int ShowOpenOrders() {
          stopLoss   =                 external.stopLoss  [i];
 
          // Hauptlabel erstellen
-         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lot at ", NumberToStr(openPrice, SubPipPriceFormat));
+         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
 
          // TakeProfit anzeigen
          if (takeProfit != NULL) {
