@@ -69,15 +69,6 @@ int onInit() {
       dValue = StrToDouble(sValue);
       if (dValue <= 0)                 return(catch("onInit(6)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
       mm.stdRisk = dValue;
-
-      // StopLoss
-      key    = "DefaultStopLoss";
-      sValue = GetConfigString(section, key, DoubleToStr(DEFAULT_STOPLOSS, 2));
-      if (!StringIsNumeric(sValue))    return(catch("onInit(7)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (dValue <=   0)               return(catch("onInit(8)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (dValue >= 100)               return(catch("onInit(9)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too high)", ERR_INVALID_CONFIG_PARAMVALUE));
-      mm.stoploss = dValue;
    }
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
