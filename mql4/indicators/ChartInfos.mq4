@@ -154,9 +154,15 @@ color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
 
 
-// Unterscheidung von offenen und geschlossenen Order-Arrows
-#define OpenOrderBlue      C'0,0,254'                                // offen Long
-#define OpenOrderRed       C'254,0,0'                                // offen Short
+// Farben für Orderanzeige
+#define CLR_PENDING_OPEN         DeepSkyBlue
+#define CLR_OPEN_LONG            C'0,0,254'                          // Blue - rgb(1,1,1)
+#define CLR_OPEN_SHORT           C'254,0,0'                          // Red  - rgb(1,1,1)
+#define CLR_OPEN_TAKEPROFIT      LimeGreen
+#define CLR_OPEN_STOPLOSS        Red
+#define CLR_CLOSED_LONG          Blue
+#define CLR_CLOSED_SHORT         Red
+#define CLR_CLOSE                Orange
 
 
 #include <ChartInfos/init.mqh>
@@ -313,9 +319,14 @@ bool ToggleOpenOrders() {
          string name = ObjectName(i);
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name)==OBJ_ARROW) {
-               color clr = ObjectGet(name, OBJPROP_COLOR);
-               if (clr!=OpenOrderBlue) /*&&*/ if (clr!=OpenOrderRed) /*&&*/ if (clr!=DeepSkyBlue)
-                  continue;
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR    );
+               if (arrow == SYMBOL_ORDEROPEN)
+                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT)
+                     continue;
+               if (arrow == SYMBOL_ORDERCLOSE)
+                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS)
+                     continue;
                ObjectDelete(name);
             }
          }
@@ -337,13 +348,13 @@ bool ToggleOpenOrders() {
  * @return int - Anzahl der angezeigten offenen Orders oder -1 (EMPTY), falls ein Fehler auftrat.
  */
 int ShowOpenOrders() {
-   int      orders, ticket, type, colors[]={OpenOrderBlue, OpenOrderRed};  // minimal abweichend von {ClosedOrderBlue, ClosedOrderRed}
+   int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, openPrice, takeProfit, stopLoss;
-   string   label, text, types[]={"Buy", "Sell"};
+   string   label1, label2, label3, sTP, sSL, types[]={"Buy", "Sell"};
 
 
-   // mode.intern
+   // (1) mode.intern
    if (mode.intern) {
       orders = OrdersTotal();
 
@@ -354,7 +365,7 @@ int ShowOpenOrders() {
 
          if (OrderType() > OP_SELL) {
             // Pending-Order:
-            if (!ChartMarker.OrderSent_A(OrderTicket(), Digits, DeepSkyBlue))
+            if (!ChartMarker.OrderSent_A(OrderTicket(), Digits, CLR_PENDING_OPEN))
                return(_EMPTY(SetLastError(stdlib.GetLastError())));
          }
          else {
@@ -367,19 +378,42 @@ int ShowOpenOrders() {
             takeProfit =                 OrderTakeProfit();
             stopLoss   =                 OrderStopLoss();
 
-            // Strings zusammenstellen
-            label = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, PriceFormat));
-            text  = "";
-            if (takeProfit != NULL) text = StringConcatenate(                                       "tp: ", NumberToStr(takeProfit, PriceFormat));
-            if (stopLoss   != NULL) text = StringConcatenate(text, ifString(takeProfit, "   ", ""), "sl: ", NumberToStr(stopLoss  , PriceFormat));
+            // Hauptlabel erstellen
+            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lot at ", NumberToStr(openPrice, PriceFormat));
+
+            // TakeProfit anzeigen
+            if (takeProfit != NULL) {
+               sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
+               label2 = StringConcatenate(label1, ",  ", sTP);
+               if (ObjectFind(label2) == 0)
+                  ObjectDelete(label2);
+               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrent(), takeProfit)) {
+                  ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
+                  ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+               }
+            }
+            else sTP = "";
+
+            // StopLoss anzeigen
+            if (stopLoss != NULL) {
+               sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
+               label3 = StringConcatenate(label1, ",  ", sSL);
+               if (ObjectFind(label3) == 0)
+                  ObjectDelete(label3);
+               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrent(), stopLoss)) {
+                  ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+                  ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+               }
+            }
+            else sSL = "";
 
             // Order anzeigen
-            if (ObjectFind(label) == 0)
-               ObjectDelete(label);
-            if (ObjectCreate(label, OBJ_ARROW, 0, openTime, openPrice)) {
-               ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-               ObjectSet(label, OBJPROP_COLOR,     colors[type]    );
-               ObjectSetText(label, text);
+            if (ObjectFind(label1) == 0)
+               ObjectDelete(label1);
+            if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
+               ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
+               ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
             }
          }
          n++;
@@ -388,7 +422,7 @@ int ShowOpenOrders() {
    }
 
 
-   // mode.extern
+   // (2) mode.extern
    if (mode.extern) {
       orders = ArraySize(external.ticket);
 
@@ -402,26 +436,35 @@ int ShowOpenOrders() {
          takeProfit =                 external.takeProfit[i];
          stopLoss   =                 external.stopLoss  [i];
 
-         // Strings zusammenstellen
-         label = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
-         text  = "";
-         if (takeProfit != NULL) text = StringConcatenate(                                       "tp: ", NumberToStr(takeProfit, SubPipPriceFormat));
-         if (stopLoss   != NULL) text = StringConcatenate(text, ifString(takeProfit, "   ", ""), "sl: ", NumberToStr(stopLoss  , SubPipPriceFormat));
+         // Hauptlabel erstellen
+         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lot at ", NumberToStr(openPrice, SubPipPriceFormat));
+
+         // TakeProfit anzeigen
+         if (takeProfit != NULL) {
+            sTP = StringConcatenate("TP: ", NumberToStr(takeProfit, SubPipPriceFormat));
+         }
+         else sTP = "";
+
+         // StopLoss anzeigen
+         if (stopLoss != NULL) {
+            sSL = StringConcatenate("SL: ", NumberToStr(stopLoss, SubPipPriceFormat));
+         }
+         else sSL = "";
 
          // Order anzeigen
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_ARROW, 0, openTime, openPrice)) {
-            ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label, OBJPROP_COLOR,     colors[type]    );
-            ObjectSetText(label, text);
+         if (ObjectFind(label1) == 0)
+            ObjectDelete(label1);
+         if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
+            ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
+            ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
          }
       }
       return(orders);
    }
 
 
-   // mode.remote
+   // (3) mode.remote
    if (mode.remote) {
       return(_EMPTY(catch("ShowOpenOrders(1)   feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }

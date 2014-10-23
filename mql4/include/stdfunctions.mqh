@@ -735,12 +735,10 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_ORDEROPEN                        1     // right pointing arrow (default open ticket marker)
-#define SYMBOL_ORDEROPEN_UP      SYMBOL_ORDEROPEN     // right pointing up arrow                               // ??? wird so nicht angezeigt
-#define SYMBOL_ORDEROPEN_DOWN                   2     // right pointing down arrow                             // ??? wird so nicht angezeigt
-#define SYMBOL_ORDERCLOSE                       3     // left pointing arrow (default closed ticket marker)
-
-#define SYMBOL_DASH                             4     // dash symbol (default stoploss and takeprofit marker)
+#define SYMBOL_ORDEROPEN                        1     // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
+//                                              2     // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
+#define SYMBOL_ORDERCLOSE                       3     // left pointing arrow  (default closed order marker)
+#define SYMBOL_DASH                             4     // dash symbol          (default takeprofit and stoploss marker)
 #define SYMBOL_LEFTPRICE                        5     // left sided price label
 #define SYMBOL_RIGHTPRICE                       6     // right sided price label
 #define SYMBOL_THUMBSUP                        67     // thumb up symbol
