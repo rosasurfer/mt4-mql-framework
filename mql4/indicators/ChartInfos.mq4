@@ -413,7 +413,7 @@ int ShowOpenOrders() {
             // Order anzeigen
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, FxtToServerTime(openTime), openPrice)) {
+            if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
                ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
@@ -518,8 +518,235 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * @return bool - Erfolgsstatus
  */
 bool ToggleTradeHistory() {
-   debug("ToggleTradeHistory()");
+   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
+   bool status = !GetTradeHistoryDisplayStatus();
+
+   // Status ON: Trade-History anzeigen
+   if (status) {
+      int trades = ShowTradeHistory();
+      if (trades == -1)
+         return(false);
+      if (!trades) {                                                 // ohne Trade-History bleibt die Anzeige unverändert
+         status = false;
+         ForceSound("Plonk.wav");                                    // Plonk!!!
+      }
+   }
+
+   // Status OFF: Chartobjekte der Trade-History löschen
+   else {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name)==OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR    );
+               if (arrow == SYMBOL_ORDEROPEN)
+                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT)
+                     continue;
+               if (arrow == SYMBOL_ORDERCLOSE)
+                  if (clr!=CLR_CLOSE)
+                     continue;
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // Anzeigestatus im Chart speichern
+   SetTradeHistoryDisplayStatus(status);
+
+   if (This.IsTesting())
+      WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
+
+   ShowTradeHistory.onStart();
+}
+
+
+/**
+ * Liest den im Chart gespeicherten aktuellen TradeHistory-Anzeigestatus aus.
+ *
+ * @return bool - Status: ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".TradeHistoryDisplay.status";
+   if (ObjectFind(label) != -1)
+      return(StrToInteger(ObjectDescription(label)) != 0);
+   return(false);
+}
+
+
+/**
+ * Speichert den angegebenen TradeHistory-Anzeigestatus im Chart.
+ *
+ * @param  bool status - Status
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".TradeHistoryDisplay.status";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+
+   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
+   ObjectSetText(label, ""+ status, 0);
+
+   return(!catch("SetTradeHistoryDisplayStatus()"));
+}
+
+
+/**
+ * Zeigt die Trade-History an.
+ *
+ * @return int - Anzahl der angezeigten geschlossenen Positionen oder -1 (EMPTY), falls ein Fehler auftrat.
+ */
+int ShowTradeHistory() {
+   debug("ShowTradeHistory()   feature not implemented");
+   return(0);
+
+   int      orders, ticket, type, colors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT};
+   datetime openTime;
+   double   lots, openPrice;
+   string   label, types[]={"Buy", "Sell"};
+
+
+   // (1) mode.intern
+   if (mode.intern) {
+      orders = OrdersTotal();
+
+      for (int i=0, n; i < orders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))            // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
+            break;
+         if (OrderSymbol() != Symbol()) continue;
+
+         // Daten auslesen
+         ticket    = OrderTicket();
+         type      = OrderType();
+         lots      = OrderLots();
+         openTime  = OrderOpenTime();
+         openPrice = OrderOpenPrice();
+
+         if (OrderType() > OP_SELL) {
+            // Pending-Order
+            label = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, PriceFormat));
+
+            if (ObjectFind(label) == 0)
+               ObjectDelete(label);
+            if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrent(), openPrice)) {
+               ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+            }
+         }
+         else {
+            // offene Position
+            label = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, PriceFormat));
+
+            if (ObjectFind(label) == 0)
+               ObjectDelete(label);
+            if (ObjectCreate(label, OBJ_ARROW, 0, FxtToServerTime(openTime), openPrice)) {
+               ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label, OBJPROP_COLOR,     colors[type]    );
+            }
+         }
+         n++;
+      }
+      return(n);
+   }
+
+
+   // (2) mode.extern
+   if (mode.extern) {
+      return(_EMPTY(catch("ShowTradeHistory(1)   feature not implemented for mode.extern=1", ERR_NOT_IMPLEMENTED)));
+      /*
+      orders = ArraySize(external.ticket);
+
+      for (i=0; i < orders; i++) {
+         // Daten auslesen
+         ticket     =                 external.ticket    [i];
+         type       =                 external.type      [i];
+         lots       =                 external.lots      [i];
+         openTime   = FxtToServerTime(external.openTime  [i]);
+         openPrice  =                 external.openPrice [i];
+         takeProfit =                 external.takeProfit[i];
+         stopLoss   =                 external.stopLoss  [i];
+
+         // Hauptlabel erstellen
+         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
+
+         // TakeProfit anzeigen
+         if (takeProfit != NULL) {
+            sTP = StringConcatenate("TP: ", NumberToStr(takeProfit, SubPipPriceFormat));
+         }
+         else sTP = "";
+
+         // StopLoss anzeigen
+         if (stopLoss != NULL) {
+            sSL = StringConcatenate("SL: ", NumberToStr(stopLoss, SubPipPriceFormat));
+         }
+         else sSL = "";
+
+         // Order anzeigen
+         if (ObjectFind(label1) == 0)
+            ObjectDelete(label1);
+         if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
+            ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
+            ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
+         }
+      }
+      return(orders);
+      */
+   }
+
+
+   // (3) mode.remote
+   if (mode.remote) {
+      return(_EMPTY(catch("ShowTradeHistory(2)   feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_EMPTY(catch("ShowTradeHistory(3)   unreachable code reached", ERR_RUNTIME_ERROR)));
+}
+
+
+
+/**
+ * Main-Funktion
+ *
+ * @return int - Fehlerstatus
+ */
+int ShowTradeHistory.onStart() {
+   /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
+   int orders = LFX.GetOrders(Symbol(), OF_CLOSED, los);
+
+   for (int i=0; i < orders; i++) {
+      /*
+      int      ticket      =                     los.Ticket       (los, i);
+      int      type        =                     los.Type         (los, i);
+      double   units       =                     los.Units        (los, i);
+      datetime openTime    =     GmtToServerTime(los.OpenTime     (los, i));
+      double   openPrice   =                     los.OpenPriceLfx (los, i);
+      datetime closeTime   = GmtToServerTime(Abs(los.CloseTime    (los, i)));
+      double   closePrice  =                     los.ClosePriceLfx(los, i);
+      double   profit      =                     los.Profit       (los, i);
+      color    markerColor = ifInt(type==OP_BUY, Blue, Red);
+      string   comment     = "Profit: "+ DoubleToStr(profit, 2);
+
+      if (!ChartMarker.OrderSent_B(ticket, SubPipDigits, markerColor, type, units, Symbol(), openTime, openPrice, NULL, NULL, comment)) {
+         SetLastError(stdlib.GetLastError());
+         break;
+      }
+      if (!ChartMarker.PositionClosed_B(ticket, SubPipDigits, Orange, type, units, Symbol(), openTime, openPrice, closeTime, closePrice)) {
+         SetLastError(stdlib.GetLastError());
+         break;
+      }
+      */
+   }
+   ArrayResize(los, 0);
+   return(last_error);
 }
 
 
