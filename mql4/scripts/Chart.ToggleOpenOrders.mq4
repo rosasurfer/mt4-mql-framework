@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator im aktuellen Chart die Nachricht, die Anzeige der offenen Orders ein/auszuschaltem.
+ * Schickt dem ChartInfos-Indikator im aktuellen Chart die Nachricht, die Anzeige der offenen Orders umzuschaltem.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];

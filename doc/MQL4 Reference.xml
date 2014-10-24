@@ -10060,21 +10060,24 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       caption=OrdersTotal()
       type=int
       <content>
-Returns market and pending orders count.<br/>
+      Returns the number of currently open orders (pending and market orders).<br/>
       </content>
       <example>
-  int handle=FileOpen("OrdersReport.csv",FILE_WRITE|FILE_CSV,"\t");
-  if(handle&lt;0) return(0);
-  // write header
-  FileWrite(handle,&quot;#&quot;,&quot;open price&quot;,&quot;open time&quot;,&quot;symbol&quot;,&quot;lots&quot;);
-  int total=OrdersTotal();
-  // write open orders
-  for(int pos=0;pos&lt;total;pos++)
-    {
-     if(OrderSelect(pos,SELECT_BY_POS)==false) continue;
-     FileWrite(handle,OrderTicket(),OrderOpenPrice(),OrderOpenTime(),OrderSymbol(),OrderLots());
-    }
-  FileClose(handle);
+   int hFile = FileOpen("OrdersReport.csv", FILE_WRITE|FILE_CSV, "\t");
+   if (hFile &lt; 0) 
+      return(0);
+
+   // write header
+   FileWrite(hFile, "#", "open price", "open time", "symbol", "lots");
+
+   // write open orders
+   int total = OrdersTotal();
+   for (int pos=0; pos &lt; total; pos++) {
+      if (!OrderSelect(pos, SELECT_BY_POS)) 
+         continue;
+      FileWrite(hFile, OrderTicket(), OrderOpenPrice(), OrderOpenTime(), OrderSymbol(), OrderLots());
+   }
+   FileClose(handle);
       </example>
     </function>
 
