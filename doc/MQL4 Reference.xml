@@ -5332,8 +5332,8 @@ SetLevelValue(1,3.14);
       Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
       Note: At testing local time is modelled and is the same as the modelled server time.<br>
       <br>
-      <span style="color:red">Vorsicht:</span> Dies bedeutet, daﬂ der Tester die lokale Zeitzone auf die Server-Zeitzone setzt, Tests laufen also
-      u.U. in einer anderen als der tats‰chlichen lokalen Zeitzone.
+      <span style="color:red">Vorsicht:</span>Der Tester setzt die lokale Zeitzone also auf die Server-Zeitzone, Tests laufen damit ggf. in einer anderen als der 
+      tats‰chlichen lokalen Zeitzone.
       </content>
       <example>
 if (TimeLocal()-OrderOpenTime() &lt; 360)
