@@ -866,6 +866,229 @@ int ArrayInsertStrings(string array[], int offset, string values[]) {
 
 
 /**
+ * Sortiert die übergebenen Ticketdaten nach {OpenTime, Ticket}.
+ *
+ * @param  int tickets[] - Array mit Ticketdaten
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SortOpenTickets(int tickets[][/*{OpenTime, Ticket}*/]) {
+   if (ArrayRange(tickets, 1) != 2) return(!catch("SortOpenTickets(1)   invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+
+   int rows = ArrayRange(tickets, 0);
+   if (rows < 2)
+      return(true);                                                  // weniger als 2 Zeilen
+
+   // Zeilen nach OpenTime sortieren
+   ArraySort(tickets);
+
+   // Zeilen mit gleicher OpenTime zusätzlich nach Ticket sortieren
+   int openTime, lastOpenTime, ticket, sameOpenTimes[][2];
+   ArrayResize(sameOpenTimes, 1);
+
+   for (int i=0, n; i < rows; i++) {
+      openTime = tickets[i][0];
+      ticket   = tickets[i][1];
+
+      if (openTime == lastOpenTime) {
+         n++;
+         ArrayResize(sameOpenTimes, n+1);
+      }
+      else if (n > 0) {
+         // in sameOpenTimes[] angesammelte Zeilen von keys[] nach Ticket sortieren
+         if (!_SOT.SameOpenTimes(tickets, sameOpenTimes))
+            return(false);
+         ArrayResize(sameOpenTimes, 1);
+         n = 0;
+      }
+      sameOpenTimes[n][0] = ticket;
+      sameOpenTimes[n][1] = i;                                       // Originalposition der Zeile in keys[]
+
+      lastOpenTime = openTime;
+   }
+   if (n > 0) {
+      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen müssen auch sortiert werden
+      if (!_SOT.SameOpenTimes(tickets, sameOpenTimes))
+         return(false);
+      n = 0;
+   }
+   ArrayResize(sameOpenTimes, 0);
+
+   return(!catch("SortOpenTickets(2)"));
+}
+
+
+/**
+ * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen
+ * sind gleich und müssen nicht umsortiert werden.
+ *
+ * @param  int ticketData[] - zu sortierendes Datenarray
+ * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ *
+ * @return bool - Erfolgsstatus
+ *
+privat*/bool _SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
+   int rows.copy[][2]; ArrayResize(rows.copy, 0);
+   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+
+   // Zeilen nach Ticket sortieren
+   ArraySort(rows.copy);
+
+   int ticket, rows=ArrayRange(rowsToSort, 0);
+
+   // Originaldaten mit den sortierten Werten überschreiben
+   for (int i, n=0; n < rows; n++) {
+      i                = rowsToSort[n][1];
+      ticketData[i][1] = rows.copy [n][0];
+   }
+   return(!catch("_SOT.SameOpenTimes(1)"));
+}
+
+
+/**
+ * Sortiert die übergebenen Ticketdaten nach {CloseTime, OpenTime, Ticket}.
+ *
+ * @param  int tickets[] - Array mit Ticketdaten
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SortClosedTickets(int tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
+   if (ArrayRange(tickets, 1) != 3) return(!catch("SortClosedTickets(1)   invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+
+   int rows = ArrayRange(tickets, 0);
+   if (rows < 2)
+      return(true);                                                  // single row, nothing to do
+
+
+   // (1) alle Zeilen nach CloseTime sortieren
+   ArraySort(tickets);
+
+
+   // (2) Zeilen mit gleicher CloseTime zusätzlich nach OpenTime sortieren
+   int closeTime, openTime, ticket, lastCloseTime, sameCloseTimes[][3];
+   ArrayResize(sameCloseTimes, 1);
+
+   for (int n, i=0; i < rows; i++) {
+      closeTime = tickets[i][0];
+      openTime  = tickets[i][1];
+      ticket    = tickets[i][2];
+
+      if (closeTime == lastCloseTime) {
+         n++;
+         ArrayResize(sameCloseTimes, n+1);
+      }
+      else if (n > 0) {
+         // in sameCloseTimes[] angesammelte Zeilen von tickets[] nach OpenTime sortieren
+         _SCT.SameCloseTimes(tickets, sameCloseTimes);
+         ArrayResize(sameCloseTimes, 1);
+         n = 0;
+      }
+      sameCloseTimes[n][0] = openTime;
+      sameCloseTimes[n][1] = ticket;
+      sameCloseTimes[n][2] = i;                                      // Originalposition der Zeile in keys[]
+
+      lastCloseTime = closeTime;
+   }
+   if (n > 0) {
+      // im letzten Schleifendurchlauf in sameCloseTimes[] angesammelte Zeilen müssen auch sortiert werden
+      _SCT.SameCloseTimes(tickets, sameCloseTimes);
+      n = 0;
+   }
+   ArrayResize(sameCloseTimes, 0);
+
+
+   // (3) Zeilen mit gleicher Close- und OpenTime zusätzlich nach Ticket sortieren
+   int lastOpenTime, sameOpenTimes[][2];
+   ArrayResize(sameOpenTimes, 1);
+   lastCloseTime = 0;
+
+   for (i=0; i < rows; i++) {
+      closeTime = tickets[i][0];
+      openTime  = tickets[i][1];
+      ticket    = tickets[i][2];
+
+      if (closeTime==lastCloseTime && openTime==lastOpenTime) {
+         n++;
+         ArrayResize(sameOpenTimes, n+1);
+      }
+      else if (n > 0) {
+         // in sameOpenTimes[] angesammelte Zeilen von tickets[] nach Ticket sortieren
+         _SCT.SameOpenTimes(tickets, sameOpenTimes);
+         ArrayResize(sameOpenTimes, 1);
+         n = 0;
+      }
+      sameOpenTimes[n][0] = ticket;
+      sameOpenTimes[n][1] = i;                                       // Originalposition der Zeile in tickets[]
+
+      lastCloseTime = closeTime;
+      lastOpenTime  = openTime;
+   }
+   if (n > 0) {
+      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen müssen auch sortiert werden
+      _SCT.SameOpenTimes(tickets, sameOpenTimes);
+   }
+   ArrayResize(sameOpenTimes, 0);
+
+   return(!catch("SortClosedTickets(2)"));
+}
+
+
+/**
+ * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach {OpenTime, Ticket}. Die CloseTime-Felder dieser Zeilen
+ * sind gleich und müssen nicht umsortiert werden.
+ *
+ * @param  int ticketData[] - zu sortierendes Datenarray
+ * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ *
+ * @return bool - Erfolgsstatus
+ *
+private*/bool _SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], int rowsToSort[][/*{OpenTime, Ticket, i}*/]) {
+   int rows.copy[][3]; ArrayResize(rows.copy, 0);
+   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+
+   // Zeilen nach OpenTime sortieren
+   ArraySort(rows.copy);
+
+   // Original-Daten mit den sortierten Werten überschreiben
+   int openTime, ticket, rows=ArrayRange(rowsToSort, 0);
+
+   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten überschreiben
+      i                = rowsToSort[n][2];
+      ticketData[i][1] = rows.copy [n][0];
+      ticketData[i][2] = rows.copy [n][1];
+   }
+
+   return(!catch("_SCT.SameCloseTimes()"));
+}
+
+
+/**
+ * Sortiert die in rowsToSort[] angegebene Zeilen des Datenarrays ticketData[] nach {Ticket}. Die Open- und CloseTime-Felder dieser Zeilen
+ * sind gleich und müssen nicht umsortiert werden.
+ *
+ * @param  int ticketData[] - zu sortierendes Datenarray
+ * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ *
+ * @return bool - Erfolgsstatus
+ *
+private*/bool _SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
+   int rows.copy[][2]; ArrayResize(rows.copy, 0);
+   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+
+   // Zeilen nach Ticket sortieren
+   ArraySort(rows.copy);
+
+   int ticket, rows=ArrayRange(rowsToSort, 0);
+
+   for (int i, n=0; n < rows; n++) {                                 // Originaldaten mit den sortierten Werten überschreiben
+      i                = rowsToSort[n][1];
+      ticketData[i][2] = rows.copy [n][0];
+   }
+   return(!catch("_SCT.SameOpenTimes()"));
+}
+
+
+/**
  * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {

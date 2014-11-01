@@ -435,7 +435,11 @@
    int      GetBalanceHistory(int account, datetime times[], double values[]);
    double   PipValue(double lots, bool hideErrors);
    int      SortTicketsChronological(int tickets[]);
+#import "stdlib2.ex4"
+   bool     SortClosedTickets(int keys[][]);
+   bool     SortOpenTickets(int keys[][]);
 
+#import "stdlib1.ex4"
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    bool     IsCurrency(string value);

@@ -599,6 +599,11 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 }
 
 
+#import "stdlib2.ex4"
+   string IntsToStr (int array[], string separator);
+#import
+
+
 /**
  * Zeigt die Trade-History an.
  *
@@ -608,67 +613,156 @@ int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
    double   lots, openPrice, closePrice;
-   string   sOpenPrice, sClosePrice, openLabel, lineLabel, closeLabel, types[]={"buy", "sell"};
+   string   sOpenPrice, sClosePrice, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
 
    // (1) mode.intern
    if (mode.intern) {
+      // (1.1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
       orders = OrdersHistoryTotal();
+      int sortKeys[][3];                                                // {CloseTime, OpenTime, Ticket}
+      ArrayResize(sortKeys, orders);
 
-      for (int i=0, n; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))           // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+      for (int n, i=0; i < orders; i++) {
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+            orders = i;
             break;
-         if (OrderSymbol() != Symbol()) continue;                    // Orders anderer Symbole überspringen
-         if (OrderType()   >  OP_SELL ) continue;                    // gecancelte Orders überspringen
+         }
+         if (OrderSymbol() != Symbol()) continue;
+         if (OrderType()   >  OP_SELL ) continue;
 
-         // Daten einlesen
-         ticket     = OrderTicket();
-         type       = OrderType();
-         lots       = OrderLots();
-         openTime   = OrderOpenTime();
-         openPrice  = OrderOpenPrice();  sOpenPrice  = NumberToStr(openPrice, PriceFormat);
-         closeTime  = OrderCloseTime();
-         closePrice = OrderClosePrice(); sClosePrice = NumberToStr(closePrice, PriceFormat);
+         sortKeys[n][0] = OrderCloseTime();
+         sortKeys[n][1] = OrderOpenTime();
+         sortKeys[n][2] = OrderTicket();
+         n++;
+      }
+      orders = n;
+      ArrayResize(sortKeys, orders);
+      SortClosedTickets(sortKeys);
+
+      // (1.2) Tickets sortiert einlesen
+      int      tickets    []; ArrayResize(tickets    , 0);
+      int      types      []; ArrayResize(types      , 0);
+      double   lotSizes   []; ArrayResize(lotSizes   , 0);
+      datetime openTimes  []; ArrayResize(openTimes  , 0);
+      datetime closeTimes []; ArrayResize(closeTimes , 0);
+      double   openPrices []; ArrayResize(openPrices , 0);
+      double   closePrices[]; ArrayResize(closePrices, 0);
+      double   commissions[]; ArrayResize(commissions, 0);
+      double   swaps      []; ArrayResize(swaps      , 0);
+      double   profits    []; ArrayResize(profits    , 0);
+      string   comments   []; ArrayResize(comments   , 0);
+
+      for (i=0; i < orders; i++) {
+         if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(1)"))
+            return(-1);
+         ArrayPushInt   (tickets    , OrderTicket()    );
+         ArrayPushInt   (types      , OrderType()      );
+         ArrayPushDouble(lotSizes   , OrderLots()      );
+         ArrayPushInt   (openTimes  , OrderOpenTime()  );
+         ArrayPushInt   (closeTimes , OrderCloseTime() );
+         ArrayPushDouble(openPrices , OrderOpenPrice() );
+         ArrayPushDouble(closePrices, OrderClosePrice());
+         ArrayPushDouble(commissions, OrderCommission());
+         ArrayPushDouble(swaps      , OrderSwap()      );
+         ArrayPushDouble(profits    , OrderProfit()    );
+         ArrayPushString(comments   , OrderComment()   );
+      }
+      /*
+      for (i=0; i < orders; i++) {
+         if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(2)"))
+            return(-1);
+         debug("ShowTradeHistory(0.1)   #"+ OrderTicket() +"  from="+ TimeToStr(OrderOpenTime(), TIME_FULL) +"  to="+ TimeToStr(OrderCloseTime(), TIME_FULL) +", "+ OperationTypeDescription(OrderType()) +" "+ DoubleToStr(OrderLots(), 2) +" "+ OrderSymbol() +"  O="+ NumberToStr(OrderOpenPrice(), PriceFormat) +"  C="+ NumberToStr(OrderClosePrice(), PriceFormat) +" for "+ DoubleToStr(OrderProfit(), 2));
+      }
+      */
+
+      // (1.3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
+      for (i=0; i < orders; i++) {
+         if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
+            // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
+
+            if (!StringIStartsWith(comments[i], "close hedge by #"))
+               return(_EMPTY(catch("ShowTradeHistory(3)   #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
+
+            // Gegenstück suchen
+            ticket = StrToInteger(StringSubstr(comments[i], 16));
+            for (n=0; n < orders; n++) {
+               if (tickets[n] == ticket)
+                  break;
+            }
+            if (n == orders) return(_EMPTY(catch("ShowTradeHistory(4)   cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
+            if (i == n     ) return(_EMPTY(catch("ShowTradeHistory(5)   both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
+
+            int first  = Min(i, n);
+            int second = Max(i, n);
+
+            // Orderdaten korrigieren
+            if (i == first) {
+               lotSizes   [first] = lotSizes   [second];             // alle Transaktionsdaten in der ersten Order speichern
+               commissions[first] = commissions[second];
+               swaps      [first] = swaps      [second];
+               profits    [first] = profits    [second];
+            }
+            closeTimes [first] = openTimes [second];
+            closePrices[first] = openPrices[second];
+            tickets   [second] = NULL;                               // hedgendes Ticket als verworfen markieren
+         }
+      }
+      /*
+      debug("ShowTradeHistory(0.2)   ------");
+      for (i=0; i < orders; i++) {
+         if (!tickets[i])
+            continue;
+         if (!SelectTicket(tickets[i], "ShowTradeHistory(6)"))
+            return(-1);
+         debug("ShowTradeHistory(0.3)   #"+ tickets[i] +"  from="+ TimeToStr(openTimes[i], TIME_FULL) +"  to="+ TimeToStr(closeTimes[i], TIME_FULL) +", "+ OperationTypeDescription(types[i]) +" "+ DoubleToStr(lotSizes[i], 2) +" "+ Symbol() +"  O="+ NumberToStr(openPrices[i], PriceFormat) +"  C="+ NumberToStr(closePrices[i], PriceFormat) +" for "+ DoubleToStr(profits[i], 2));
+      }
+      */
+
+      // (1.4) Orders anzeigen
+      for (i=0; i < orders; i++) {
+         if (!tickets[i])                                            // verworfene Hedges überspringen
+            continue;
+         sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
+         sClosePrice = NumberToStr(closePrices[i], PriceFormat);
 
          // Open-Marker anzeigen
-         openLabel = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", sOpenPrice);
+         openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
          if (ObjectFind(openLabel) == 0)
             ObjectDelete(openLabel);
-         if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i])) {
             ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[type]);
+            ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[types[i]]);
          }
 
          // Trendlinie anzeigen
-         lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+         lineLabel = StringConcatenate("#", tickets[i], " ", sOpenPrice, " -> ", sClosePrice);
          if (ObjectFind(lineLabel) == 0)
             ObjectDelete(lineLabel);
-         if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+         if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i])) {
             ObjectSet(lineLabel, OBJPROP_RAY  , false    );
             ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
+            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
             ObjectSet(lineLabel, OBJPROP_BACK , true);
          }
 
-         // Close-Marker anzeigen                                                            // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
+         // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
          closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
          if (ObjectFind(closeLabel) == 0)
             ObjectDelete(closeLabel);
-         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i])) {
             ObjectSet(closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
          }
          n++;
       }
-
-      debug("ShowTradeHistory()   orders="+ n);
       return(n);
    }
 
 
    // (2) mode.extern
    if (mode.extern) {
-      return(_EMPTY(catch("ShowTradeHistory(1)   feature not implemented for mode.extern=1", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY(catch("ShowTradeHistory(7)   feature not implemented for mode.extern=1", ERR_NOT_IMPLEMENTED)));
       /*
       orders = ArraySize(external.ticket);
 
@@ -713,10 +807,10 @@ int ShowTradeHistory() {
 
    // (3) mode.remote
    if (mode.remote) {
-      return(_EMPTY(catch("ShowTradeHistory(2)   feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY(catch("ShowTradeHistory(8)   feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
 
-   return(_EMPTY(catch("ShowTradeHistory(3)   unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY(catch("ShowTradeHistory(9)   unreachable code reached", ERR_RUNTIME_ERROR)));
 
    /*
    script ShowTradeHistory.onStart() [
@@ -1699,7 +1793,7 @@ bool AnalyzePositions() {
       openPositions = n;
 
       // (1.1.2) offene Positionen sortieren und einlesen
-      if (openPositions > 1) /*&&*/ if (!SortTickets(sortKeys))
+      if (openPositions > 1) /*&&*/ if (!SortOpenTickets(sortKeys))
          return(false);
 
       ArrayResize(tickets    , openPositions);                          // interne Positionsdetails werden bei jedem Tick zurückgesetzt
@@ -3015,82 +3109,6 @@ bool QC.HandleTradeCommands() {
 
 
 /**
- * Sortiert die übergebenen Ticketdaten nach OpenTime_asc, Ticket_asc.
- *
- * @param  int keys[] - Array mit Sortierschlüsseln
- *
- * @return bool - Erfolgsstatus
- */
-bool SortTickets(int keys[][/*{OpenTime, Ticket}*/]) {
-   int rows = ArrayRange(keys, 0);
-   if (rows < 2)
-      return(true);                                                  // weniger als 2 Zeilen
-
-   // Zeilen nach OpenTime sortieren
-   ArraySort(keys);
-
-   // Zeilen mit derselben OpenTime zusätzlich nach Ticket sortieren
-   int open, lastOpen, ticket, n, sameOpens[][2];
-   ArrayResize(sameOpens, 1);
-
-   for (int i=0; i < rows; i++) {
-      open   = keys[i][0];
-      ticket = keys[i][1];
-
-      if (open == lastOpen) {
-         n++;
-         ArrayResize(sameOpens, n+1);
-      }
-      else if (n > 0) {
-         // in sameOpens[] angesammelte Zeilen nach Ticket sortieren und zurück nach keys[] schreiben
-         if (!SortSameOpens(sameOpens, keys))
-            return(false);
-         ArrayResize(sameOpens, 1);
-         n = 0;
-      }
-      sameOpens[n][0] = ticket;
-      sameOpens[n][1] = i;                                           // Originalposition der Zeile in keys[]
-
-      lastOpen = open;
-   }
-   if (n > 0) {
-      // im letzten Schleifendurchlauf in sameOpens[] angesammelte Zeilen müssen auch verarbeitet werden
-      if (!SortSameOpens(sameOpens, keys))
-         return(false);
-      n = 0;
-   }
-   return(!catch("SortTickets()"));
-}
-
-
-/**
- * Sortiert die in sameOpens[] übergebenen Daten und aktualisiert die entsprechenden Einträge in data[].
- *
- * @param  int  sameOpens[] - Array mit Ausgangsdaten
- * @param  int &data[]      - das zu aktualisierende Originalarray
- *
- * @return bool - Erfolgsstatus
- */
-bool SortSameOpens(int sameOpens[][/*{Ticket, i}*/], int &data[][/*{OpenTime, Ticket}*/]) {
-   int sameOpens.copy[][2]; ArrayResize(sameOpens.copy, 0);
-   ArrayCopy(sameOpens.copy, sameOpens);                             // Originalreihenfolge der Indizes in Kopie speichern
-
-   // Zeilen nach Ticket sortieren
-   ArraySort(sameOpens);
-
-   // Original-Daten mit den sortierten Werten überschreiben
-   int ticket, i, rows=ArrayRange(sameOpens, 0);
-
-   for (int n=0; n < rows; n++) {
-      ticket = sameOpens     [n][0];
-      i      = sameOpens.copy[n][1];
-      data[i][1] = ticket;                                           // Originaldaten mit den sortierten Werten überschreiben
-   }
-   return(!catch("SortSameOpens()"));
-}
-
-
-/**
  * Aufruf nur in ChartInfos::AnalyzePositions()
  *
  * Schickt den aktuellen P/L der offenen LFX-Positionen ans LFX-Terminal, wenn er sich seit dem letzten Aufruf geändert hat.
@@ -3471,6 +3489,8 @@ string InputsToStr() {
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
    int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
+   bool     SortClosedTickets(int keys[][]);
+   bool     SortOpenTickets(int keys[][]);
 
    string   DoublesToStr(double array[], string separator);
    string   StringsToStr(string array[], string separator);
