@@ -411,8 +411,10 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Sorting modes, siehe ArraySort()
-#define MODE_ASCEND                    1        // aufsteigend
-#define MODE_DESCEND                   2        // absteigend
+#define MODE_ASC                       1        // aufsteigend
+#define MODE_DESC                      2        // absteigend
+#define MODE_ASCEND             MODE_ASC        // MetaQuotes-Aliasse
+#define MODE_DESCEND           MODE_DESC
 
 
 // Trend direction flags
