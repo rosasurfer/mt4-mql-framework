@@ -1,5 +1,5 @@
 /**
- * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung bzw. Rückzug von Margin Credits werden nicht gespeichert.
+ * Aktualisiert die lokale, dateibasierte Accounthistory. Gewährung oder Rückzug von Margin Credits werden nicht gespeichert.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -28,7 +28,7 @@ int onStart() {
    ArrayResize(sortKeys, orders);
 
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verändert
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
          ArrayResize(sortKeys, i);
          orders = i;
          break;

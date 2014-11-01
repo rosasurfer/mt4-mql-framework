@@ -4414,7 +4414,7 @@ bool SynchronizeStatus() {
       }
 
       for (i=OrdersHistoryTotal()-1; i >= 0; i--) {                        // geschlossene Tickets
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))                 // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verändert
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))                 // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
             continue;
          if (IsPendingTradeOperation(OrderType()))                         // gestrichene PendingOrders ignorieren
             continue;

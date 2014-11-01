@@ -49,26 +49,28 @@ int onInit() {
    if (!isLfxInstrument) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
       section="Moneymanagement"; key=stdSymbol +".Leverage";
-      string sValue = GetConfigString(section, key, "");
+      string sValue = GetLocalConfigString(section, key, "");
       if (StringLen(sValue) > 0) {
          if (!StringIsNumeric(sValue)) return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
          if (dValue < 0.1)             return(catch("onInit(4)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
-         mm.customLeverage    = dValue;
-         mm.isDefaultLeverage = false;
+         mm.customLeverage   = dValue;
+         mm.isCustomLeverage = true;
       }
       else {
-         // allgemeine Konfiguration: der Hebel ergibt sich aus dem konfigurierten oder dem Default-Risiko
-         mm.isDefaultLeverage = true;
+         // allgemeine Konfiguration: der Hebel wird aus der Soll-Volatilität berechnet
+         mm.isCustomLeverage = false;
       }
 
-      // Risk
-      key    = "DefaultRisk";
-      sValue = GetConfigString(section, key, DoubleToStr(DEFAULT_RISK, 2));
-      if (!StringIsNumeric(sValue))    return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
-      dValue = StrToDouble(sValue);
-      if (dValue <= 0)                 return(catch("onInit(6)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
-      mm.stdRisk = dValue;
+      // Volatilität
+      if (!mm.isCustomLeverage) {
+         key    = "Volatility";
+         sValue = GetLocalConfigString(section, key, DoubleToStr(DEFAULT_VOLATILITY, 2));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         dValue = StrToDouble(sValue);
+         if (dValue <= 0)              return(catch("onInit(6)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+         mm.vola = dValue;
+      }
    }
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
