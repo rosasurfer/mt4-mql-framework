@@ -249,7 +249,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
  *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleAuM"              - Schaltet die zusätzliche Assets-under-Management-Anzeige ein/aus.
+ *                "cmd=ToggleAuM"              - Schaltet die Assets-under-Management-Anzeige ein/aus.
  *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
  */
 bool onChartCommand(string commands[]) {
@@ -855,11 +855,20 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      if (!RefreshAssetsUnderManagement())
+      if (!RefreshExternalAssets())
          return(false);
+      string strAum = " ";
 
-      if (!aum.value) string strAum = "Balance:  "+ DoubleToStr(AccountBalance(), 2) +" "+ AccountCurrency();
-      else                   strAum = "Assets:  " + DoubleToStr(aum.value, 2)        +" "+ aum.currency;
+      if (mode.intern) {
+         strAum = ifString(!aum.value, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + aum.value, 2) +" "+ AccountCurrency();
+      }
+      else if (mode.extern) {
+         strAum = "Assets:  n/a" + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ aum.currency);
+      }
+      else /*mode.remote*/{
+         status = false;                                             // not implemented
+         ForceSound("Plonk.wav");                                    // Plonk!!!
+      }
       ObjectSetText(label.aum, strAum, 9, "Tahoma", SlateGray);
    }
 
@@ -882,14 +891,14 @@ bool ToggleAuM() {
 
 
 /**
- * Gibt den Wert der Assets-under-Management zurück.
+ * Gibt den Wert der extern verwalteten Assets zurück.
  *
  * @return double - Wert oder NULL, falls keine AuM konfiguriert sind
  */
-double GetAssetsUnderManagement() {
+double GetExternalAssets() {
    static bool refreshed;
    if (!refreshed) {
-      if (!RefreshAssetsUnderManagement())
+      if (!RefreshExternalAssets())
          return(NULL);
       refreshed = true;
    }
@@ -898,11 +907,11 @@ double GetAssetsUnderManagement() {
 
 
 /**
- * Liest die Konfiguration der Assets-under-Management ernuet ein. Ohne Konfiguration werden als Datenbasis AccountBalance() und AccountCurrency() verwendet.
+ * Liest die Konfiguration der extern verwalteten Assets ernuet ein.
  *
  * @return bool - Erfolgsstatus
  */
-bool RefreshAssetsUnderManagement() {
+bool RefreshExternalAssets() {
    string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file     = TerminalPath() + mqlDir +"\\files\\";
       if (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
@@ -914,21 +923,21 @@ bool RefreshAssetsUnderManagement() {
    if (!value) {
       aum.value    = 0;
       aum.currency = "";
-      return(!catch("RefreshAssetsUnderManagement(1)"));
+      return(!catch("RefreshExternalAssets(1)"));
    }
-   if (value < 0) return(!catch("RefreshAssetsUnderManagement(2)   invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (value < 0) return(!catch("RefreshExternalAssets(2)   invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
    key = "AuM.Currency";
    string currency = GetIniString(file, section, key, "");
    if (!StringLen(currency)) {
-      if (!IsIniKey(file, section, key)) return(!catch("RefreshAssetsUnderManagement(3)   missing ini entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-                                         return(!catch("RefreshAssetsUnderManagement(4)   invalid ini entry ["+ section +"]->"+ key +"=\"\" (empty value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (!IsIniKey(file, section, key)) return(!catch("RefreshExternalAssets(3)   missing ini entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+                                         return(!catch("RefreshExternalAssets(4)   invalid ini entry ["+ section +"]->"+ key +"=\"\" (empty value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
    aum.value    = value;
    aum.currency = StringToUpper(currency);
 
-   return(!catch("RefreshAssetsUnderManagement(5)"));
+   return(!catch("RefreshExternalAssets(5)"));
 }
 
 
@@ -1014,8 +1023,8 @@ bool TrackSignal(string signalId) {
    if (signalChanged) {
       ArrayResize(custom.position.conf,          0);
       ArrayResize(custom.position.conf.comments, 0);
-      if (!UpdateExternalAccount())        return(false);
-      if (!RefreshAssetsUnderManagement()) return(false);
+      if (!UpdateExternalAccount()) return(false);
+      if (!RefreshExternalAssets()) return(false);
    }
    return(!catch("TrackSignal(4)"));
 }
@@ -1929,8 +1938,8 @@ bool AnalyzePositions() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
-   if (mm.done)
-      return(true);
+   if (mm.done    ) return(true);
+   if (mode.remote) return(!catch("UpdateMoneyManagement(1)   feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED));
 
    mm.unleveragedLots = 0;                                                                   // Lotsize bei Hebel 1:1
    mm.ATRwAbs         = 0;                                                                   // wöchentliche ATR, absolut
@@ -1947,9 +1956,12 @@ bool UpdateMoneyManagement() {
       int error = GetLastError();
       if (IsError(error)) {
          if (error == ERR_UNKNOWN_SYMBOL) return(false);
-         return(!catch("UpdateMoneyManagement(1)", error));
+         return(!catch("UpdateMoneyManagement(2)", error));
       }
-   double equity = ifDouble(GetAssetsUnderManagement(), aum.value, MathMin(AccountBalance(), AccountEquity()-AccountCredit()));
+   double equity = GetExternalAssets();
+   if (mode.intern)
+      equity += MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   //debug("UpdateMoneyManagement()   equity="+ DoubleToStr(equity, 2));
 
    if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
@@ -1983,7 +1995,7 @@ bool UpdateMoneyManagement() {
 
 
    mm.done = true;
-   return(!catch("UpdateMoneyManagement(2)"));
+   return(!catch("UpdateMoneyManagement(3)"));
 }
 
 
@@ -2446,10 +2458,12 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
    double hedgedLotSize, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, profit, hedgedProfit, openEquity, pipDistance, pipValue;
    int size, ticketsSize=ArraySize(tickets);
 
-   if      (customEquity               && 1) openEquity = customEquity;
-   else if (GetAssetsUnderManagement() && 1) openEquity = aum.value;
-   else if (mode.intern                    ) openEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-   else   /*mode.extern*/                    openEquity = 0;
+   if (customEquity != NULL) openEquity = customEquity;
+   else {
+      openEquity = GetExternalAssets();
+      if (mode.intern)
+         openEquity += MathMin(AccountBalance(), AccountEquity()-AccountCredit());
+   }
 
    // Die Gesamtposition besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
    // - kein direktionaler Anteil:  BE-Distance berechnen
@@ -2672,9 +2686,9 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(totalPosition, 2);
 
-   if      (GetAssetsUnderManagement() && 1) openEquity = aum.value;
-   else if (mode.intern                    ) openEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-   else                                      openEquity = 0;
+   openEquity = GetExternalAssets();
+   if (mode.intern)
+      openEquity += MathMin(AccountBalance(), AccountEquity()-AccountCredit());
 
 
    // (1) eventuelle Longposition selektieren
