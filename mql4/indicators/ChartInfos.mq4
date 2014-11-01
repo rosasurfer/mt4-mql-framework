@@ -679,7 +679,7 @@ int ShowTradeHistory() {
       // (1.3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
       for (i=0; i < orders; i++) {
          if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
-            // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
+            // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
 
             if (!StringIStartsWith(comments[i], "close hedge by #"))
                return(_EMPTY(catch("ShowTradeHistory(3)   #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));

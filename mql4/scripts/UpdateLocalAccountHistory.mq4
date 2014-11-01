@@ -90,7 +90,7 @@ int onStart() {
    // (3) Hedges korrigieren: relevante Daten der ersten Position zuordnen und hedgende Position korrigieren
    for (i=0; i < orders; i++) {
       if ((types[i]==OP_BUY || types[i]==OP_SELL) && EQ(lotSizes[i], 0)) {    // lotSize = 0.00: Hedge-Position
-         // TODO: Prüfen, wie sich OrderComment() bei partiellem Close und/oder custom comments verhält.
+         // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
             return(catch("onStart(2)   #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
