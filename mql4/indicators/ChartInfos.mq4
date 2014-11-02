@@ -49,8 +49,8 @@ bool   mm.isCustomLeverage;                                          // ob die L
 double mm.customLeverage;                                            // benutzerdefinierter Hebel einer Unit
 double mm.customLots;                                                // resultierende Lotsize
 
-double aum.value    = NULL;                                          // Assets-under-Management: Kann als lokaler (AccountBalance) oder als externer Wert (Accountkonfiguration)
-string aum.currency = "";                                            // definiert sein.
+double aum.value;                                                    // zusätzliche extern verwaltete und bei Equity-Berechnungen zu berücksichtigende Assets
+string aum.currency = "";
 
 
 // Status
@@ -1967,12 +1967,12 @@ bool UpdateMoneyManagement() {
       return(false);
 
    double lotValue    = Close[0]/tickSize * tickValue;                                       // Value eines Lots in Account-Currency
-   mm.unleveragedLots = equity/lotValue;                                                     // maximal mögliche Lotsize ohne Hebel (Leverage 1:1)
+   mm.unleveragedLots = equity/lotValue;                                                     // ungehebelte Lotsize (Leverage 1:1)
 
 
-   // (2) aktuelle TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
+   // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
    double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);   // ATR(14xW)
-      if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);   //throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+      if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);//throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
    double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange letzte Woche
    double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
