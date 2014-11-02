@@ -2,14 +2,17 @@
  *                                                          Grid-Trading
  *                                                         ==============
  *
- *  - Ursprünglich waren BollingerBänder für Swing-Trades von einem Band zum anderen gedacht. Diese ProfitTarget erwies
+ *  - Ursprünglich waren BollingerBand-Setups für Swing-Trades von einem Band zum anderen gedacht. Dieses ProfitTarget erwies
  *    sich als unrealistisch (wird zu selten erreicht) und wurde zunächst auf 1.0% und dann auf 0.5% Equity reduziert.
+ *
  *  - Nach den ersten Verlusten wurde ein StopLoss von 3.0% Equity definiert.
- *  - Angesichts der Grid-Projection für TP=0.5% und SL=3.0% (Range 1:4) sind BollingerBänder kein vernünftiges Einstiegs-
- *    kriterium mehr. Statt dessen scheint die Weekly-Range aussichtsreicher, denn die Distance zwischen TakeProfit und
+ *
+ *  - Angesichts der Grid-Projection für TP=0.5% und SL=3.0% (Rangeverhältnis 1:4) sind BollingerBänder kein vernünftiges
+ *    Einstiegskriterium. Statt dessen scheint die Weekly-Range aussichtsreicher, denn die Distance zwischen TakeProfit und
  *    StopLoss entspricht exakt der erwarteten wöchentlichen Trading-Range (ETR).
- *  - Kritischer Punkt ist ein Ausbruch aus der ETR, dies kann ein Extrem oder ein neuer Trend sein. Ein Bruch der ETR
- *    kann dann als zuverlässiges Setup benutzt werden, wenn ein neuer Trend sicher ausgeschlossen werden kann.
+ *
+ *  - Potentielle Setups sind der Bruch der Vorwochenrange, der ETR oder von wöchentlichen Insidebars. Dies können Extreme oder
+ *    die Entstehung neuer Trends sein. Als Extreme sind sie zuverlässig, wenn ein neuer Trend ausgeschlossen werden kann.
  *
  *
  *  TODO:
@@ -19,6 +22,7 @@
  *  - ETR-Channel im Chart
  *  - Gridmanager: TP-Anpassung bei Erreichen von Level 2, Trailing Stop bei Erreichen von TP
  *  - Alerts bei Bruch der ETR (evt. bereits bei 80% der Range)
+ *  - Alerts bei Bruch von wöchentlichen Insidebars
  *  - Alerts bei Bruch BollingerBand
  *
  *
