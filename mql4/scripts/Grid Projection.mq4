@@ -1,5 +1,40 @@
 /**
- * Grid Projection
+ *                                                          Grid-Trading
+ *                                                         ==============
+ *
+ *  - Ursprünglich waren BollingerBänder für Swing-Trades von einem Band zum anderen gedacht. Diese ProfitTarget erwies
+ *    sich als unrealistisch (wird zu selten erreicht) und wurde zunächst auf 1.0% und dann auf 0.5% Equity reduziert.
+ *  - Nach den ersten Verlusten wurde ein StopLoss von 3.0% Equity definiert.
+ *  - Angesichts der Grid-Projection für TP=0.5% und SL=3.0% (Range 1:4) sind BollingerBänder kein vernünftiges Einstiegs-
+ *    kriterium mehr. Statt dessen scheint die Weekly-Range aussichtsreicher, denn die Distance zwischen TakeProfit und
+ *    StopLoss entspricht exakt der erwarteten wöchentlichen Trading-Range (ETR).
+ *  - Kritischer Punkt ist ein Ausbruch aus der ETR, dies kann ein Extrem oder ein neuer Trend sein. Ein Bruch der ETR
+ *    kann dann als zuverlässiges Setup benutzt werden, wenn ein neuer Trend sicher ausgeschlossen werden kann.
+ *
+ *
+ *  TODO:
+ *  -----
+ *  - jeden Entry dokumentieren: Screenshot, Notizen
+ *  - historische Grid-Projection
+ *  - ETR-Channel im Chart
+ *  - Gridmanager: TP-Anpassung bei Erreichen von Level 2, Trailing Stop bei Erreichen von TP
+ *  - Alerts bei Bruch der ETR (evt. bereits bei 80% der Range)
+ *  - Alerts bei Bruch BollingerBand
+ *
+ *
+ *  Parameter:
+ *  ----------
+ *  - GridSize:   1.0% Equity/Woche
+ *  - TakeProfit: 0.5% Equity
+ *  - StopLoss:  -3.0% Equity = Gridlevel 3
+ *
+ *
+ *  Einstieg:
+ *  ---------
+ *  - bei/nach Extremen: BollingerBänder, wenn sie weit auseinanderliegen (nicht mehr gültig)
+ *  - Negativkriterien: StdDev, enge BollingerBänder (kündigen Extreme an, siehe Gold)
+ *  - bei Start OpenEquity, Grid- und Stopout-Level speichern und alle Orders in den Markt legen (Ersatz für Grid-Trademanager)
+ *  - bei Erreichen von Level 2 TakeProfit-Level anpassen
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
