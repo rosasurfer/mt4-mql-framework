@@ -1,5 +1,5 @@
 /**
- * GridTrading Preview
+ * Grid Projection
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
