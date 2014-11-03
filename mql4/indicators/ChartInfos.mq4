@@ -3263,6 +3263,7 @@ bool ParseSignal(string value, string &provider, string &signal) {
    value = StringToLower(value);
 
    if      (value == "simpletrader.alexprofit"  ) { provider="simpletrader"; signal="alexprofit"  ; }
+   if      (value == "simpletrader.asta"        ) { provider="simpletrader"; signal="asta"        ; }
    else if (value == "simpletrader.caesar2"     ) { provider="simpletrader"; signal="caesar2"     ; }
    else if (value == "simpletrader.caesar21"    ) { provider="simpletrader"; signal="caesar21"    ; }
    else if (value == "simpletrader.dayfox"      ) { provider="simpletrader"; signal="dayfox"      ; }
