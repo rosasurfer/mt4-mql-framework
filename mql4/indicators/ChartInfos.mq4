@@ -863,7 +863,7 @@ bool ToggleAuM() {
          strAum = ifString(!aum.value, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + aum.value, 2) +" "+ AccountCurrency();
       }
       else if (mode.extern) {
-         strAum = "Assets:  n/a" + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ aum.currency);
+         strAum = "Assets:  " + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ aum.currency);
       }
       else /*mode.remote*/{
          status = false;                                             // not implemented

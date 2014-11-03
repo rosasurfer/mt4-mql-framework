@@ -7,12 +7,12 @@
  *
  *  - Nach den ersten Verlusten wurde ein StopLoss von 3.0% Equity definiert.
  *
- *  - Angesichts der Grid-Projection für TP=0.5% und SL=3.0% (Rangeverhältnis 1:4) sind BollingerBänder kein vernünftiges
- *    Einstiegskriterium. Statt dessen scheint die Weekly-Range aussichtsreicher, denn die Distance zwischen TakeProfit und
- *    StopLoss entspricht exakt der erwarteten wöchentlichen Trading-Range (ETR).
+ *  - Angesichts der Grid-Projection für TP=0.5% und SL=3.0% (Rangeverhältnis 1:4) erscheinen BollingerBänder nicht mehr als
+ *    vernünftiges Einstiegskriterium. Statt dessen scheint die Weekly-Range aussichtsreicher, denn die Distance zwischen TakeProfit
+ *    und StopLoss entspricht exakt der erwarteten wöchentlichen Trading-Range (ETR).
  *
  *  - Potentielle Setups sind der Bruch der Vorwochenrange, der ETR oder von wöchentlichen Insidebars. Dies können Extreme oder
- *    die Entstehung neuer Trends sein. Als Extreme sind sie zuverlässig, wenn ein neuer Trend ausgeschlossen werden kann.
+ *    die Entstehung neuer Trends sein. Als Extreme sollten sie zuverlässig sein, wenn ein neuer Trend ausgeschlossen werden kann.
  *
  *
  *  TODO:
