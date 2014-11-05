@@ -1897,23 +1897,22 @@ bool AnalyzePositions() {
 
       if (!type) {                                                      // type==NULL => "Zeilenende"
          // (2.3) individuelle Position speichern (zusammengefaßt: Long+Short+Hedged)
-         if (ArraySize(customTickets) > 0) {
+         if (ArraySize(customTickets) > 0)
             if (!StoreCustomPosition(isVirtual, customLongPosition, customShortPosition, customTotalPosition, customAmount, customEquity, confLine, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
                return(false);
-            isVirtual           = false;
-            customLongPosition  = 0;
-            customShortPosition = 0;
-            customTotalPosition = 0;
-            customAmount        = 0;
-            customEquity        = 0;
-            ArrayResize(customTickets    , 0);
-            ArrayResize(customTypes      , 0);
-            ArrayResize(customLots       , 0);
-            ArrayResize(customOpenPrices , 0);
-            ArrayResize(customCommissions, 0);
-            ArrayResize(customSwaps      , 0);
-            ArrayResize(customProfits    , 0);
-         }
+         isVirtual           = false;
+         customLongPosition  = 0;
+         customShortPosition = 0;
+         customTotalPosition = 0;
+         customAmount        = 0;
+         customEquity        = 0;
+         ArrayResize(customTickets    , 0);
+         ArrayResize(customTypes      , 0);
+         ArrayResize(customLots       , 0);
+         ArrayResize(customOpenPrices , 0);
+         ArrayResize(customCommissions, 0);
+         ArrayResize(customSwaps      , 0);
+         ArrayResize(customProfits    , 0);
          confLine++;
          continue;
       }
