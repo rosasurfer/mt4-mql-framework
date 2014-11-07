@@ -4,7 +4,6 @@
  *
  *  TODO:
  *  -----
- *  - Multi-Sequenz-Management implementieren                                          *
  *  - Equity-Charts: Schreiben aus Online-Chart                                        *
  *
  *  - Sequenz-IDs auf Eindeutigkeit prüfen
@@ -25,7 +24,7 @@
  *
  *  - Alpari: wiederholte Trade-Timeouts von exakt 200 sec. (Socket-Timeout ?)
  *  - Alpari: StopOrder-Slippage EUR/USD bis 4.1 pip, GBP/AUD bis 6 pip, GBP/JPY bis 21.4 pip
- *  - FxPro: beim Stop-Trailen zu viele Traderequests in zu kurzer Zeit => ERR_TRADE_TIMEOUT
+ *  - FxPro: beim Trailen der Stops zu viele Traderequests in zu kurzer Zeit => ERR_TRADE_TIMEOUT
  *
  *
  *  Übersicht der Aktionen und Statuswechsel:
