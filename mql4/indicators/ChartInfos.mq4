@@ -101,18 +101,33 @@ string   external.provider = "";
 string   external.signal   = "";
 string   external.name     = "";
 
-int      external.ticket    [];
-int      external.type      [];
-double   external.lots      [];
-datetime external.openTime  [];
-double   external.openPrice [];
-double   external.takeProfit[];
-double   external.stopLoss  [];
-double   external.commission[];
-double   external.swap      [];
-double   external.profit    [];
-bool     external.lots.checked;
-double   external.longPosition, external.shortPosition;
+// externe Positionen: open
+int      external.open.ticket    [];
+int      external.open.type      [];
+double   external.open.lots      [];
+datetime external.open.openTime  [];
+double   external.open.openPrice [];
+double   external.open.takeProfit[];
+double   external.open.stopLoss  [];
+double   external.open.commission[];
+double   external.open.swap      [];
+double   external.open.profit    [];
+bool     external.open.lots.checked;
+double   external.open.longPosition, external.open.shortPosition;
+
+// externe Positionen: closed
+int      external.closed.ticket    [];
+int      external.closed.type      [];
+double   external.closed.lots      [];
+datetime external.closed.openTime  [];
+double   external.closed.openPrice [];
+datetime external.closed.closeTime [];
+double   external.closed.closePrice[];
+double   external.closed.takeProfit[];
+double   external.closed.stopLoss  [];
+double   external.closed.commission[];
+double   external.closed.swap      [];
+double   external.closed.profit    [];
 
 
 // LFX-Positionensdaten (remote)
@@ -426,17 +441,17 @@ int ShowOpenOrders() {
 
    // (2) mode.extern
    if (mode.extern) {
-      orders = ArraySize(external.ticket);
+      orders = ArraySize(external.open.ticket);
 
       for (i=0; i < orders; i++) {
          // Daten auslesen
-         ticket     =                 external.ticket    [i];
-         type       =                 external.type      [i];
-         lots       =                 external.lots      [i];
-         openTime   = FxtToServerTime(external.openTime  [i]);
-         openPrice  =                 external.openPrice [i];
-         takeProfit =                 external.takeProfit[i];
-         stopLoss   =                 external.stopLoss  [i];
+         ticket     =                 external.open.ticket    [i];
+         type       =                 external.open.type      [i];
+         lots       =                 external.open.lots      [i];
+         openTime   = FxtToServerTime(external.open.openTime  [i]);
+         openPrice  =                 external.open.openPrice [i];
+         takeProfit =                 external.open.takeProfit[i];
+         stopLoss   =                 external.open.stopLoss  [i];
 
          // Hauptlabel erstellen
          label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, SubPipPriceFormat));
@@ -708,16 +723,6 @@ int ShowTradeHistory() {
             tickets   [second] = NULL;                               // hedgendes Ticket als verworfen markieren
          }
       }
-      /*
-      debug("ShowTradeHistory(0.2)   ------");
-      for (i=0; i < orders; i++) {
-         if (!tickets[i])
-            continue;
-         if (!SelectTicket(tickets[i], "ShowTradeHistory(6)"))
-            return(-1);
-         debug("ShowTradeHistory(0.3)   #"+ tickets[i] +"  from="+ TimeToStr(openTimes[i], TIME_FULL) +"  to="+ TimeToStr(closeTimes[i], TIME_FULL) +", "+ OperationTypeDescription(types[i]) +" "+ DoubleToStr(lotSizes[i], 2) +" "+ Symbol() +"  O="+ NumberToStr(openPrices[i], PriceFormat) +"  C="+ NumberToStr(closePrices[i], PriceFormat) +" for "+ DoubleToStr(profits[i], 2));
-      }
-      */
 
       // (1.4) Orders anzeigen
       for (i=0; i < orders; i++) {
@@ -731,8 +736,8 @@ int ShowTradeHistory() {
          if (ObjectFind(openLabel) == 0)
             ObjectDelete(openLabel);
          if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i])) {
-            ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[types[i]]);
+            ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
+            ObjectSet(openLabel, OBJPROP_COLOR    , markerColors[types[i]]);
          }
 
          // Trendlinie anzeigen
@@ -740,10 +745,10 @@ int ShowTradeHistory() {
          if (ObjectFind(lineLabel) == 0)
             ObjectDelete(lineLabel);
          if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i])) {
-            ObjectSet(lineLabel, OBJPROP_RAY  , false    );
-            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_RAY  , false               );
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT           );
             ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
-            ObjectSet(lineLabel, OBJPROP_BACK , true);
+            ObjectSet(lineLabel, OBJPROP_BACK , true                );
          }
 
          // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
@@ -762,46 +767,48 @@ int ShowTradeHistory() {
 
    // (2) mode.extern
    if (mode.extern) {
-      return(_EMPTY(catch("ShowTradeHistory(7)   feature not implemented for mode.extern=1", ERR_NOT_IMPLEMENTED)));
-      /*
-      orders = ArraySize(external.ticket);
+      orders = ArraySize(external.closed.ticket);
 
       for (i=0; i < orders; i++) {
          // Daten auslesen
-         ticket     =                 external.ticket    [i];
-         type       =                 external.type      [i];
-         lots       =                 external.lots      [i];
-         openTime   = FxtToServerTime(external.openTime  [i]);
-         openPrice  =                 external.openPrice [i];
-         takeProfit =                 external.takeProfit[i];
-         stopLoss   =                 external.stopLoss  [i];
+         ticket     =                 external.closed.ticket    [i];
+         type       =                 external.closed.type      [i];
+         lots       =                 external.closed.lots      [i];
+         openTime   = FxtToServerTime(external.closed.openTime  [i]);
+         openPrice  =                 external.closed.openPrice [i];  sOpenPrice  = NumberToStr(openPrice, PriceFormat);
+         closeTime  = FxtToServerTime(external.closed.closeTime [i]);
+         closePrice =                 external.closed.closePrice[i];  sClosePrice = NumberToStr(closePrice, PriceFormat);
 
-         // Hauptlabel erstellen
-         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " lots at ", NumberToStr(openPrice, SubPipPriceFormat));
-
-         // TakeProfit anzeigen
-         if (takeProfit != NULL) {
-            sTP = StringConcatenate("TP: ", NumberToStr(takeProfit, SubPipPriceFormat));
+         // Open-Marker anzeigen
+         openLabel = StringConcatenate("#", ticket, " ", sTypes[type], " ", DoubleToStr(lots, 2), " at ", sOpenPrice);
+         if (ObjectFind(openLabel) == 0)
+            ObjectDelete(openLabel);
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
+            ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN  );
+            ObjectSet(openLabel, OBJPROP_COLOR    , markerColors[type]);
          }
-         else sTP = "";
 
-         // StopLoss anzeigen
-         if (stopLoss != NULL) {
-            sSL = StringConcatenate("SL: ", NumberToStr(stopLoss, SubPipPriceFormat));
+         // Trendlinie anzeigen
+         lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+         if (ObjectFind(lineLabel) == 0)
+            ObjectDelete(lineLabel);
+         if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+            ObjectSet(lineLabel, OBJPROP_RAY  , false           );
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT       );
+            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
+            ObjectSet(lineLabel, OBJPROP_BACK , true            );
          }
-         else sSL = "";
 
-         // Order anzeigen
-         if (ObjectFind(label1) == 0)
-            ObjectDelete(label1);
-         if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
-            ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
-            ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
+         // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
+         closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+         if (ObjectFind(closeLabel) == 0)
+            ObjectDelete(closeLabel);
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
+            ObjectSet(closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet(closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
          }
       }
       return(orders);
-      */
    }
 
 
@@ -1013,7 +1020,7 @@ bool TrackSignal(string signalId) {
             string value   = GetIniString(file, section, key, ""); if (!StringLen(value))                                    return(!catch("TrackSignal(3)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty value)", ERR_RUNTIME_ERROR));
          external.name     = value;
 
-         external.lots.checked = false;
+         external.open.lots.checked = false;
          if (-1 == ReadExternalPositions(provider, signal))
             return(false);
          signalChanged = true;
@@ -1828,29 +1835,29 @@ bool AnalyzePositions() {
 
    // (1.2) mode.extern
    if (mode.extern) {
-      openPositions = ArraySize(external.ticket);
+      openPositions = ArraySize(external.open.ticket);
 
       // offene Positionen werden nicht bei jedem Tick, sondern nur in init() oder nach entsprechendem Event neu eingelesen
-      if (!external.lots.checked) {
-         external.longPosition  = 0;
-         external.shortPosition = 0;
+      if (!external.open.lots.checked) {
+         external.open.longPosition  = 0;
+         external.open.shortPosition = 0;
          for (i=0; i < openPositions; i++) {                            // Gesamtposition je Richtung aufaddieren
-            if (external.type[i] == OP_BUY) external.longPosition  += external.lots[i];
-            else                            external.shortPosition += external.lots[i];
+            if (external.open.type[i] == OP_BUY) external.open.longPosition  += external.open.lots[i];
+            else                                 external.open.shortPosition += external.open.lots[i];
          }
-         external.lots.checked = true;
+         external.open.lots.checked = true;
       }
-      longPosition  = external.longPosition;
-      shortPosition = external.shortPosition;
+      longPosition  = external.open.longPosition;
+      shortPosition = external.open.shortPosition;
 
       if (openPositions > 0) {
-         ArrayCopy(tickets    , external.ticket    );                   // ExtractPosition() modifiziert die übergebenen Arrays, also Kopie der Originaldaten erstellen
-         ArrayCopy(types      , external.type      );
-         ArrayCopy(lots       , external.lots      );
-         ArrayCopy(openPrices , external.openPrice );
-         ArrayCopy(commissions, external.commission);
-         ArrayCopy(swaps      , external.swap      );
-         ArrayCopy(profits    , external.profit    );
+         ArrayCopy(tickets    , external.open.ticket    );              // ExtractPosition() modifiziert die übergebenen Arrays, also Kopie der Originaldaten erstellen
+         ArrayCopy(types      , external.open.type      );
+         ArrayCopy(lots       , external.open.lots      );
+         ArrayCopy(openPrices , external.open.openPrice );
+         ArrayCopy(commissions, external.open.commission);
+         ArrayCopy(swaps      , external.open.swap      );
+         ArrayCopy(profits    , external.open.profit    );
 
          for (i=0; i < openPositions; i++) {
             profits[i] = ifDouble(types[i]==OP_LONG, Bid-openPrices[i], openPrices[i]-Ask)/Pips * PipValue(lots[i], true); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
@@ -3279,8 +3286,8 @@ bool ParseSignal(string value, string &provider, string &signal) {
 
 
 /**
- * Liest die offenen externen Positionen des aktiven Signals ein. Die Positionen sind bereits aufsteigend nach {OpenTime,Ticket}
- * gespeichert und müssen nicht nochmal sortiert werden.
+ * Liest die externen offenen und geschlossenen Positionen des aktiven Signals ein. Die Positionen sind bereits sortiert gespeichert und müssen nicht
+ * nochmal sortiert werden.
  *
  * @param  string provider - Signalprovider
  * @param  string signal   - Signal
@@ -3288,7 +3295,7 @@ bool ParseSignal(string value, string &provider, string &signal) {
  * @return int - Anzahl der gelesenen Positionen oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int ReadExternalPositions(string provider, string signal) {
-   // (1) alle Schlüssel einlesen
+   // (1.1) offene Positionen: alle Schlüssel einlesen
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_open.ini";
       if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(1)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -3296,29 +3303,27 @@ int ReadExternalPositions(string provider, string signal) {
    string keys[], symbol = StdSymbol();
    int keysSize = GetIniKeys(file, section, keys);
 
+   ArrayResize(external.open.ticket    , 0);
+   ArrayResize(external.open.type      , 0);
+   ArrayResize(external.open.lots      , 0);
+   ArrayResize(external.open.openTime  , 0);
+   ArrayResize(external.open.openPrice , 0);
+   ArrayResize(external.open.takeProfit, 0);
+   ArrayResize(external.open.stopLoss  , 0);
+   ArrayResize(external.open.commission, 0);
+   ArrayResize(external.open.swap      , 0);
+   ArrayResize(external.open.profit    , 0);
 
-   ArrayResize(external.ticket    , 0);
-   ArrayResize(external.type      , 0);
-   ArrayResize(external.lots      , 0);
-   ArrayResize(external.openTime  , 0);
-   ArrayResize(external.openPrice , 0);
-   ArrayResize(external.takeProfit, 0);
-   ArrayResize(external.stopLoss  , 0);
-   ArrayResize(external.commission, 0);
-   ArrayResize(external.swap      , 0);
-   ArrayResize(external.profit    , 0);
-
-
-   // (2) Schlüssel gegen aktuelles Symbol prüfen und Positionen einlesen
+   // (1.2) Schlüssel gegen aktuelles Symbol prüfen und Positionen einlesen
    for (int i=0; i < keysSize; i++) {
       string key = keys[i];
       if (StringStartsWith(key, symbol +".")) {
 
-         // (2.1) Zeile lesen
+         // (1.2.1) Zeile lesen
          string value = GetIniString(file, section, key, "");
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(2)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
-         // (2.2) Positionsdaten validieren
+         // (1.2.2) Positionsdaten validieren
          //Symbol.Ticket = Type, Lots, OpenTime, OpenPrice, TakeProfit, StopLoss, Commission, Swap, MagicNumber, Comment
          string sValue, values[];
          if (Explode(value, ",", values, NULL) != 10) return(_EMPTY(catch("ReadExternalPositions(3)   invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
@@ -3394,36 +3399,188 @@ int ReadExternalPositions(string provider, string signal) {
          // MagicNumber: vorerst nicht benötigt
          // Comment:     vorerst nicht benötigt
 
-         // (2.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
-         int size=ArraySize(external.ticket), newSize=size+1;
-         ArrayResize(external.ticket    , newSize);
-         ArrayResize(external.type      , newSize);
-         ArrayResize(external.lots      , newSize);
-         ArrayResize(external.openTime  , newSize);
-         ArrayResize(external.openPrice , newSize);
-         ArrayResize(external.takeProfit, newSize);
-         ArrayResize(external.stopLoss  , newSize);
-         ArrayResize(external.commission, newSize);
-         ArrayResize(external.swap      , newSize);
-         ArrayResize(external.profit    , newSize);
+         // (1.2.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
+         int size=ArraySize(external.open.ticket), newSize=size+1;
+         ArrayResize(external.open.ticket    , newSize);
+         ArrayResize(external.open.type      , newSize);
+         ArrayResize(external.open.lots      , newSize);
+         ArrayResize(external.open.openTime  , newSize);
+         ArrayResize(external.open.openPrice , newSize);
+         ArrayResize(external.open.takeProfit, newSize);
+         ArrayResize(external.open.stopLoss  , newSize);
+         ArrayResize(external.open.commission, newSize);
+         ArrayResize(external.open.swap      , newSize);
+         ArrayResize(external.open.profit    , newSize);
 
-         external.ticket    [size] = _ticket;
-         external.type      [size] = _type;
-         external.lots      [size] = _lots;
-         external.openTime  [size] = _openTime;
-         external.openPrice [size] = _openPrice;
-         external.takeProfit[size] = _takeProfit;
-         external.stopLoss  [size] = _stopLoss;
-         external.commission[size] = _commission;
-         external.swap      [size] = _swap;
-         external.profit    [size] = ifDouble(_type==OP_LONG, Bid-_openPrice, _openPrice-Ask)/Pips * PipValue(_lots, true);   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+         external.open.ticket    [size] = _ticket;
+         external.open.type      [size] = _type;
+         external.open.lots      [size] = _lots;
+         external.open.openTime  [size] = _openTime;
+         external.open.openPrice [size] = _openPrice;
+         external.open.takeProfit[size] = _takeProfit;
+         external.open.stopLoss  [size] = _stopLoss;
+         external.open.commission[size] = _commission;
+         external.open.swap      [size] = _swap;
+         external.open.profit    [size] = ifDouble(_type==OP_LONG, Bid-_openPrice, _openPrice-Ask)/Pips * PipValue(_lots, true);   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       }
    }
 
+
+   // (2.1) geschlossene Positionen: alle Schlüssel einlesen
+   file = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_closed.ini";
+      if (!IsFile(file)) return(_EMPTY(catch("ReadExternalPositions(19)   file not found \""+ file +"\"", ERR_RUNTIME_ERROR)));
+   section  = provider +"."+ signal;
+   keysSize = GetIniKeys(file, section, keys);
+
+   ArrayResize(external.closed.ticket    , 0);
+   ArrayResize(external.closed.type      , 0);
+   ArrayResize(external.closed.lots      , 0);
+   ArrayResize(external.closed.openTime  , 0);
+   ArrayResize(external.closed.openPrice , 0);
+   ArrayResize(external.closed.closeTime , 0);
+   ArrayResize(external.closed.closePrice, 0);
+   ArrayResize(external.closed.takeProfit, 0);
+   ArrayResize(external.closed.stopLoss  , 0);
+   ArrayResize(external.closed.commission, 0);
+   ArrayResize(external.closed.swap      , 0);
+   ArrayResize(external.closed.profit    , 0);
+
+   // (2.2) Schlüssel gegen aktuelles Symbol prüfen und Positionen einlesen
+   for (i=0; i < keysSize; i++) {
+      key = keys[i];
+      if (StringStartsWith(key, symbol +".")) {
+         // (2.2.1) Zeile lesen
+         value = GetIniString(file, section, key, "");
+         if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(20)   invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
+
+         // (2.2.2) Positionsdaten validieren
+         //Symbol.Ticket = Type, Lots, OpenTime, OpenPrice, CloseTime, ClosePrice, TakeProfit, StopLoss, Commission, Swap, Profit, MagicNumber, Comment
+         if (Explode(value, ",", values, NULL) != 13) return(_EMPTY(catch("ReadExternalPositions(21)   invalid position entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // Ticket
+         sValue = StringRight(key, -StringLen(symbol));
+         if (StringGetChar(sValue, 0) != '.')         return(_EMPTY(catch("ReadExternalPositions(22)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         sValue = StringSubstr(sValue, 1);
+         if (!StringIsDigit(sValue))                  return(_EMPTY(catch("ReadExternalPositions(23)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _ticket = StrToInteger(sValue);
+         if (_ticket <= 0)                            return(_EMPTY(catch("ReadExternalPositions(24)   invalid ticket \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // Type
+         sValue = StringTrim(values[0]);
+         _type  = StrToOperationType(sValue);
+         if (!IsTradeOperation(_type))                return(_EMPTY(catch("ReadExternalPositions(25)   invalid order type \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // Lots
+         sValue = StringTrim(values[1]);
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(26)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _lots = StrToDouble(sValue);
+         if (_lots <= 0)                              return(_EMPTY(catch("ReadExternalPositions(27)   invalid lot size \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _lots = NormalizeDouble(_lots, 2);
+
+         // OpenTime
+         sValue    = StringTrim(values[2]);
+         _openTime = StrToTime(sValue);
+         if (!_openTime)                              return(_EMPTY(catch("ReadExternalPositions(28)   invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // OpenPrice
+         sValue = StringTrim(values[3]);
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(29)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _openPrice = StrToDouble(sValue);
+         if (_openPrice <= 0)                         return(_EMPTY(catch("ReadExternalPositions(30)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _openPrice = NormalizeDouble(_openPrice, Digits);
+
+         // CloseTime
+         sValue = StringTrim(values[4]);
+         datetime _closeTime = StrToTime(sValue);
+         if (!_closeTime)                             return(_EMPTY(catch("ReadExternalPositions(31)   invalid open time \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+         // ClosePrice
+         sValue = StringTrim(values[5]);
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(32)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         double _closePrice = StrToDouble(sValue);
+         if (_closePrice <= 0)                        return(_EMPTY(catch("ReadExternalPositions(33)   invalid open price \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         _closePrice = NormalizeDouble(_closePrice, Digits);
+
+         // TakeProfit
+         sValue      = StringTrim(values[6]);
+         _takeProfit = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(34)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _takeProfit = StrToDouble(sValue);
+            if (_takeProfit < 0)                      return(_EMPTY(catch("ReadExternalPositions(35)   invalid takeprofit \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _takeProfit = NormalizeDouble(_takeProfit, Digits);
+         }
+
+         // StopLoss
+         sValue    = StringTrim(values[7]);
+         _stopLoss = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(36)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _stopLoss = StrToDouble(sValue);
+            if (_stopLoss < 0)                        return(_EMPTY(catch("ReadExternalPositions(37)   invalid stoploss \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _stopLoss = NormalizeDouble(_stopLoss, Digits);
+         }
+
+         // Commission
+         sValue      = StringTrim(values[8]);
+         _commission = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(38)   invalid commission value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _commission = NormalizeDouble(StrToDouble(sValue), 2);
+         }
+
+         // Swap
+         sValue = StringTrim(values[9]);
+         _swap  = 0;
+         if (sValue != "") {
+            if (!StringIsNumeric(sValue))             return(_EMPTY(catch("ReadExternalPositions(39)   invalid swap value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+            _swap = NormalizeDouble(StrToDouble(sValue), 2);
+         }
+
+         // Profit
+         sValue = StringTrim(values[10]);
+         if (sValue == "")                            return(_EMPTY(catch("ReadExternalPositions(40)   invalid profit value \"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         if (!StringIsNumeric(sValue))                return(_EMPTY(catch("ReadExternalPositions(41)   invalid profit value \""+ sValue +"\" in position entry ["+ section +"]->"+ key +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+         double _profit = NormalizeDouble(StrToDouble(sValue), 2);
+
+         // MagicNumber: vorerst nicht benötigt
+         // Comment:     vorerst nicht benötigt
+
+         // (2.2.3) Position in die globalen Arrays schreiben (erst nach vollständiger erfolgreicher Validierung)
+         size=ArraySize(external.closed.ticket); newSize=size+1;
+         ArrayResize(external.closed.ticket    , newSize);
+         ArrayResize(external.closed.type      , newSize);
+         ArrayResize(external.closed.lots      , newSize);
+         ArrayResize(external.closed.openTime  , newSize);
+         ArrayResize(external.closed.openPrice , newSize);
+         ArrayResize(external.closed.closeTime , newSize);
+         ArrayResize(external.closed.closePrice, newSize);
+         ArrayResize(external.closed.takeProfit, newSize);
+         ArrayResize(external.closed.stopLoss  , newSize);
+         ArrayResize(external.closed.commission, newSize);
+         ArrayResize(external.closed.swap      , newSize);
+         ArrayResize(external.closed.profit    , newSize);
+
+         external.closed.ticket    [size] = _ticket;
+         external.closed.type      [size] = _type;
+         external.closed.lots      [size] = _lots;
+         external.closed.openTime  [size] = _openTime;
+         external.closed.openPrice [size] = _openPrice;
+         external.closed.closeTime [size] = _closeTime;
+         external.closed.closePrice[size] = _closePrice;
+         external.closed.takeProfit[size] = _takeProfit;
+         external.closed.stopLoss  [size] = _stopLoss;
+         external.closed.commission[size] = _commission;
+         external.closed.swap      [size] = _swap;
+         external.closed.profit    [size] = _profit;
+      }
+   }
+
+
    ArrayResize(keys,   0);
    ArrayResize(values, 0);
-   if (!catch("ReadExternalPositions(19)"))
-      return(ArraySize(external.ticket));
+   if (!catch("ReadExternalPositions(42)"))
+      return(ArraySize(external.open.ticket) + ArraySize(external.closed.ticket));
    return(-1);
 }
 
