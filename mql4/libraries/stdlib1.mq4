@@ -4741,7 +4741,10 @@ string GetStandardSymbolStrict(string symbol) {
       case 'T': if (StringStartsWith(symbol, "TRYJPY")) return("TRYJPY");
                 break;
 
-      case 'U': if (                 symbol=="US500"  ) return("SP500" );
+      case 'U':
+                if (                 symbol=="US30"   ) return("DJIA"  );
+                if (                 symbol=="US500"  ) return("SP500" );
+                if (                 symbol=="US2000" ) return("RUS2000");
                 if (StringStartsWith(symbol, "USDCAD")) return("USDCAD");
                 if (StringStartsWith(symbol, "USDCHF")) return("USDCHF");
                 if (StringStartsWith(symbol, "USDCCK")) return("USDCZK");
@@ -4962,6 +4965,9 @@ string GetSymbolNameStrict(string symbol) {
 
       case 'Q': break;
 
+      case 'R': if (symbol == "RUS2000") return("Russel 2000");
+                break;
+
       case 'S': if (symbol == "SEKJPY" ) return("SEK/JPY"  );
                 if (symbol == "SGDJPY" ) return("SGD/JPY"  );
                 if (symbol == "SP500"  ) return("S&P 500"  );
@@ -5089,6 +5095,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
    if (symbol == "NIK225"  ) return("Nikkei 225"              );
    if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
+   if (symbol == "RUS2000" ) return("Russel 2000"             );
    if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "USDLFX"  ) return("USD (LFX)"               );
    if (symbol == "USDX"    ) return("USD-Index"               );
