@@ -41,8 +41,8 @@ int onInit() {
    if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
 
 
-   // (2) Textlabel erzeugen
-   CreateLabels();
+   // (2) Textlabel für SuperBars-Beschreibung erzeugen
+   CreateDescriptionLabel();
 
 
    // (3) Status restaurieren
@@ -149,7 +149,7 @@ bool SwitchSuperTimeframe(int direction) {
 
    if (direction == STF_DOWN) {
       switch (superBars.timeframe) {
-         case INT_MIN   : ForceSound("Plonk.wav");          break;   // Plonk!!! (we hit a wall)
+         case INT_MIN   : ForceSound("Plonk.wav");          break;   // Plonk, we hit a wall!
          case PERIOD_D1 : superBars.timeframe = INT_MIN;    break;
          case PERIOD_W1 : superBars.timeframe = PERIOD_D1;  break;
          case PERIOD_MN1: superBars.timeframe = PERIOD_W1;  break;
@@ -166,7 +166,7 @@ bool SwitchSuperTimeframe(int direction) {
          case PERIOD_W1 : superBars.timeframe = PERIOD_MN1; break;
          case PERIOD_MN1: superBars.timeframe = PERIOD_Q1;  break;
          case PERIOD_Q1 : superBars.timeframe = INT_MAX;    break;
-         case INT_MAX   : ForceSound("Plonk.wav");          break;   // Plonk!!! (we hit a wall)
+         case INT_MAX   : ForceSound("Plonk.wav");          break;   // Plonk, we hit a wall!
          default:
             reset = true;
       }
@@ -174,7 +174,7 @@ bool SwitchSuperTimeframe(int direction) {
    else warn("SwitchSuperTimeframe(1)   unknown parameter direction = "+ direction);
 
    if (reset) {
-      // Parameter superBars.timeframe war ungültig und wird auf den Default-Wert zurückgesetzt.
+      // Parameter superBars.timeframe war nicht gesetzt oder ungültig und wird auf den Default-Wert zurückgesetzt.
       switch (Period()) {
          case PERIOD_M1 :
          case PERIOD_M5 :
@@ -198,28 +198,30 @@ bool SwitchSuperTimeframe(int direction) {
  * @return bool - Erfolgsstatus
  */
 bool UpdateSuperBars() {
-   // (1) Konfigurationswechsel detektieren und ggf. vorhandene Bars löschen
+   // (1) bei Timeframe-Wechsel vorm Neuzeichnen die vorhandenen Bars löschen
    bool timeframeChanged = false;
    static int last.timeframe;
+
    if (last.timeframe != 0) {
-      if (superBars.timeframe != last.timeframe) {
+      if (superBars.timeframe != last.timeframe)
          timeframeChanged = true;
-      }
+
       if (timeframeChanged) /*&&*/ if (last.timeframe!=INT_MIN) /*&&*/ if (last.timeframe!=INT_MAX) {
-         DeleteRegisteredObjects(NULL);                              // War last.timeframe INT_MIN oder INT_MAX, wurden vorhandene Bars bereits gelöscht.
-         CreateLabels();
+         DeleteRegisteredObjects(NULL);                              // War last.timeframe INT_MIN oder INT_MAX, wurden vorhandene SuperBars bereits gelöscht.
+         CreateDescriptionLabel();
       }
    }
 
 
-   // (2) Rückkehr bei manuell abgeschalteter oder automatisch deaktivierter Anzeige
+   // (2) bei inaktiven SuperBars Textanzeige aktualisieren und sofortige Rückkehr
    switch (superBars.timeframe) {
-      case  INT_MIN   :                   // manuell abgeschaltet
+      case  INT_MIN   :                   // manuell abgeschaltet    "SuperBars: off"
       case  INT_MAX   :
-      case -PERIOD_D1 :                   // automatisch deaktiviert
+      case -PERIOD_D1 :                   // automatisch deaktiviert "SuperBars: n/a"
       case -PERIOD_W1 :
       case -PERIOD_MN1:
-      case -PERIOD_Q1 : return(true);
+      case -PERIOD_Q1 : UpdateDescription();
+                        return(true);
    }
 
 
@@ -452,8 +454,8 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    else GetLastError();
 
    // Close-Marker zeichnen
-   if (closeBar > 0) {                                                        // jedoch nicht bei der jüngsten Bar[0] (unnötig)
-      int centerBar = (openBar+closeBar_j)/2;
+   if (closeBar > 0) {                                                        // jedoch nicht bei der jüngsten Bar[0], die Session ist noch nicht beendet
+      int centerBar = (openBar+closeBar_j)/2;                                 // TODO: nach Market-Close Marker auch bei der jüngsten Session zeichnen
       if (centerBar > closeBar) {
          string labelWithPrice, labelWithoutPrice=label +" Close";
 
@@ -483,28 +485,7 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
 
    // bei Superbar[0] OHL-Anzeige aktualisieren
    if (closeBar == 0) {
-      string sRange = "";
-      switch (superBars.timeframe) {
-         case PERIOD_M1 : sRange = "Superbars: 1 Minute";   break;
-         case PERIOD_M5 : sRange = "Superbars: 5 Minutes";  break;
-         case PERIOD_M15: sRange = "Superbars: 15 Minutes"; break;
-         case PERIOD_M30: sRange = "Superbars: 30 Minutes"; break;
-         case PERIOD_H1 : sRange = "Superbars: 1 Hour";     break;
-         case PERIOD_H4 : sRange = "Superbars: 4 Hours";    break;
-         case PERIOD_D1 : sRange = "Superbars: Days";       break;
-         case PERIOD_W1 : sRange = "Superbars: Weeks";      break;
-         case PERIOD_MN1: sRange = "Superbars: Months";     break;
-         case PERIOD_Q1 : sRange = "Superbars: Quarters";   break;
-      }
-      //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
-      label = __NAME__ +"."+ label.description;
-      string fontName = "";
-      int    fontSize = 8;                                                    // "MS Sans Serif"-8 entspricht in allen Builds der Menüschrift
-      ObjectSetText(label, sRange, fontSize, fontName, Black);
-
-      int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)        // bei offenem Properties-Dialog oder Object::onDrag()
-         return(!catch("DrawSuperBar(1)", error));
+      UpdateDescription();
    }
 
    //static int i;
@@ -512,7 +493,45 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
    //   debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
    //   i++;
    //}
-   return(!catch("DrawSuperBar(2)"));
+   return(!catch("DrawSuperBar(1)"));
+}
+
+
+/**
+ * Aktualisiert die SuperBar-Textanzeige.
+ *
+ * @return bool - Ergebnis
+ */
+bool UpdateDescription() {
+   string description = "";
+
+   switch (superBars.timeframe) {
+      case PERIOD_M1 : description = "Superbars: 1 Minute";   break;
+      case PERIOD_M5 : description = "Superbars: 5 Minutes";  break;
+      case PERIOD_M15: description = "Superbars: 15 Minutes"; break;
+      case PERIOD_M30: description = "Superbars: 30 Minutes"; break;
+      case PERIOD_H1 : description = "Superbars: 1 Hour";     break;
+      case PERIOD_H4 : description = "Superbars: 4 Hours";    break;
+      case PERIOD_D1 : description = "Superbars: Days";       break;
+      case PERIOD_W1 : description = "Superbars: Weeks";      break;
+      case PERIOD_MN1: description = "Superbars: Months";     break;
+      case PERIOD_Q1 : description = "Superbars: Quarters";   break;
+
+      case INT_MIN   :
+      case INT_MAX   : description = "Superbars: off";        break;       // manuell abgeschaltet
+      default        : description = "Superbars: n/a";        break;       // automatisch deaktiviert
+   }
+   //sRange = StringConcatenate(sRange, "   O: ", NumberToStr(Open[openBar], PriceFormat), "   H: ", NumberToStr(High[highBar], PriceFormat), "   L: ", NumberToStr(Low[lowBar], PriceFormat));
+   string label    = __NAME__ +"."+ label.description;
+   string fontName = "";
+   int    fontSize = 8;                                                    // "MS Sans Serif"/8 entspricht in allen Builds der Menüschrift
+   ObjectSetText(label, description, fontSize, fontName, Black);
+
+   int error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)        // bei offenem Properties-Dialog oder Object::onDrag()
+      return(!catch("UpdateDescription(1)", error));
+
+   return(true);
 }
 
 
@@ -557,11 +576,11 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
 
 
 /**
- * Erzeugt das Label für die Textanzeige im Chart.
+ * Erzeugt das Textlabel für die SuperBars-Beschreibung.
  *
  * @return int - Fehlerstatus
  */
-int CreateLabels() {
+int CreateDescriptionLabel() {
    string label = __NAME__ +"."+ label.description;
 
    if (ObjectFind(label) == 0)
@@ -575,7 +594,7 @@ int CreateLabels() {
       ObjectRegister(label);
    }
 
-   return(catch("CreateLabels(1)"));
+   return(catch("CreateDescriptionLabel(1)"));
 }
 
 
