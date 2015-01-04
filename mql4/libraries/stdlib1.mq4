@@ -8664,16 +8664,18 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
 
 
 /**
- * Ermittelt den Chart-Offset (Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die letzte vorherige existierende Bar zurück.
+ * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Zeitreihe und gibt bei nicht existierender Bar die letzte vorherige existierende Bar zurück.
  *
- * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default: NULL = aktuelles Symbol)
- * @param  int      period - Periode der zu verwendenden Datenreihe (default: 0 = aktuelle Periode)
+ * @param  string   symbol - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
+ * @param  int      period - Periode der zu untersuchenden Zeitreihe (default: 0 = aktuelle Periode)
  * @param  datetime time   - Zeitpunkt
  *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für den Chart);
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für Zeitreihe);
  *               EMPTY_VALUE, falls ein Fehler auftrat
+ *
+ * @throws ERS_HISTORY_UPDATE
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) { // throws ERS_HISTORY_UPDATE
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
 
@@ -8687,7 +8689,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
                      der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
    */
 
-   // Datenreihe holen
+   // Zeitreihe holen
    datetime times[];
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
    int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
@@ -8695,7 +8697,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
    if (!error) {
       // Bars überprüfen
       if (time < times[bars-1]) {
-         int bar = -1;                                      // Zeitpunkt ist zu alt für den Chart
+         int bar = -1;                                      // Zeitpunkt ist zu alt für die Reihe
       }
       else {
          bar   = iBarShift(symbol, period, time);
@@ -8714,16 +8716,18 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
 
 
 /**
- * Ermittelt den Chart-Offset (die Bar) eines Zeitpunktes und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
+ * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Zeitreihe und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
  *
- * @param  string   symbol - Symbol der zu verwendenden Datenreihe (default:  NULL = aktuelles Symbol)
- * @param  int      period - Periode der zu verwendenden Datenreihe (default: NULL = aktuelle Periode)
+ * @param  string   symbol - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
+ * @param  int      period - Periode der zu untersuchenden Zeitreihe (default: NULL = aktuelle Periode)
  * @param  datetime time   - Zeitpunkt (Serverzeit)
  *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für den Chart);
+ * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für die Zeitreihe);
  *               EMPTY_VALUE, falls ein Fehler auftrat
+ *
+ * @throws ERS_HISTORY_UPDATE
  */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) { // throws ERS_HISTORY_UPDATE
+int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
    if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
 
@@ -8748,14 +8752,14 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) { 
 
       if (!error) {
          // Bars überprüfen
-         if (time < times[bars-1]) {                        // Zeitpunkt ist zu alt für den Chart, die älteste Bar zurückgeben
+         if (time < times[bars-1]) {                        // Zeitpunkt ist zu alt für die Reihe, die älteste Bar zurückgeben
             bar = bars-1;
          }
          else if (time < times[0]) {                        // Kurslücke, die nächste existierende Bar zurückgeben
             bar   = iBarShift(symbol, period, time) - 1;
             error = GetLastError();                         // ERS_HISTORY_UPDATE ???
          }
-         //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für den Chart, bar bleibt -1
+         //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für die Reihe, bar bleibt -1
       }
    }
 
@@ -9441,8 +9445,8 @@ string ColorToRGBStr(color rgb) {
  *
  * @return int - Fehlerstatus
  */
-int RGBValuesToHSVColor(int red, int green, int blue, double hsv[]) {
-   return(RGBToHSVColor(RGB(red, green, blue), hsv));
+int RGBValuesToHSV(int red, int green, int blue, double hsv[]) {
+   return(RGBToHSV(RGB(red, green, blue), hsv));
 }
 
 
@@ -9454,7 +9458,7 @@ int RGBValuesToHSVColor(int red, int green, int blue, double hsv[]) {
  *
  * @return int - Fehlerstatus
  */
-int RGBToHSVColor(color rgb, double &hsv[]) {
+int RGBToHSV(color rgb, double &hsv[]) {
    int red   = rgb       & 0xFF;
    int green = rgb >>  8 & 0xFF;
    int blue  = rgb >> 16 & 0xFF;
@@ -9492,7 +9496,7 @@ int RGBToHSVColor(color rgb, double &hsv[]) {
    hsv[1] = sat;
    hsv[2] = val;
 
-   return(catch("RGBToHSVColor()"));
+   return(catch("RGBToHSV()"));
 }
 
 
@@ -9503,13 +9507,13 @@ int RGBToHSVColor(color rgb, double &hsv[]) {
  *
  * @return color - Farbe oder -1, falls ein Fehler auftrat
  */
-color HSVToRGBColor(double hsv[3]) {
+color HSVToRGB(double hsv[3]) {
    if (ArrayDimension(hsv) != 1)
-      return(catch("HSVToRGBColor(1)   illegal parameter hsv = "+ DoublesToStr(hsv, NULL), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGB(1)   illegal parameter hsv = "+ DoublesToStr(hsv, NULL), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(hsv) != 3)
-      return(catch("HSVToRGBColor(2)   illegal parameter hsv = "+ DoublesToStr(hsv, NULL), ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("HSVToRGB(2)   illegal parameter hsv = "+ DoublesToStr(hsv, NULL), ERR_INCOMPATIBLE_ARRAYS));
 
-   return(HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]));
+   return(HSVValuesToRGB(hsv[0], hsv[1], hsv[2]));
 }
 
 
@@ -9522,10 +9526,10 @@ color HSVToRGBColor(double hsv[3]) {
  *
  * @return color - Farbe oder -1 (EMPTY), falls ein Fehler auftrat
  */
-color HSVValuesToRGBColor(double hue, double saturation, double value) {
-   if (hue < 0 || hue > 360)             return(_EMPTY(catch("HSVValuesToRGBColor(1)   invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (saturation < 0 || saturation > 1) return(_EMPTY(catch("HSVValuesToRGBColor(2)   invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (value < 0 || value > 1)           return(_EMPTY(catch("HSVValuesToRGBColor(3)   invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+color HSVValuesToRGB(double hue, double saturation, double value) {
+   if (hue < 0 || hue > 360)             return(_EMPTY(catch("HSVValuesToRGB(1)   invalid parameter hue = "+ NumberToStr(hue, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (saturation < 0 || saturation > 1) return(_EMPTY(catch("HSVValuesToRGB(2)   invalid parameter saturation = "+ NumberToStr(saturation, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (value < 0 || value > 1)           return(_EMPTY(catch("HSVValuesToRGB(3)   invalid parameter value = "+ NumberToStr(value, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    double red, green, blue;
 
@@ -9559,7 +9563,7 @@ color HSVValuesToRGBColor(double hue, double saturation, double value) {
    int error = GetLastError();
    if (!error)
       return(rgb);
-   return(_EMPTY(catch("HSVValuesToRGBColor(4)", error)));
+   return(_EMPTY(catch("HSVValuesToRGB(4)", error)));
 }
 
 
@@ -9584,7 +9588,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
          if (-100 <= mod_saturation) {
             if (-100 <= mod_value) {
                // nach HSV konvertieren
-               double hsv[]; RGBToHSVColor(rgb, hsv);
+               double hsv[]; RGBToHSV(rgb, hsv);
 
                // Farbton anpassen
                if (NE(mod_hue, 0)) {
@@ -9611,7 +9615,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
                }
 
                // zurück nach RGB konvertieren
-               color result = HSVValuesToRGBColor(hsv[0], hsv[1], hsv[2]);
+               color result = HSVValuesToRGB(hsv[0], hsv[1], hsv[2]);
 
                ArrayResize(hsv, 0);
 

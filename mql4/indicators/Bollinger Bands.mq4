@@ -311,13 +311,13 @@ void SetIndicatorStyles() {
    else {
       static color histogramColor;
       if (!histogramColor) {
-         double hsv[3]; RGBToHSVColor(Color.Bands, hsv);
+         double hsv[3]; RGBToHSV(Color.Bands, hsv);
          hsv[2] *= 4;                                                // Helligkeit des Histogramms erhöhen
          if (hsv[2] > 1) {
             hsv[1] /= hsv[2];
             hsv[2] = 1;
          }
-         histogramColor = HSVToRGBColor(hsv);
+         histogramColor = HSVToRGB(hsv);
       }
       SetIndexStyle(0, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);
       SetIndexStyle(1, DRAW_HISTOGRAM, EMPTY, EMPTY, histogramColor);

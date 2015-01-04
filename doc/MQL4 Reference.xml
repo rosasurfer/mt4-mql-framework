@@ -5332,7 +5332,7 @@ SetLevelValue(1,3.14);
       Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
       Note: At testing local time is modelled and is the same as the modelled server time.<br>
       <br>
-      <span style="color:red">Vorsicht:</span>Der Tester setzt die lokale Zeitzone also auf die Server-Zeitzone, Tests laufen damit ggf. in einer anderen als der 
+      <span style="color:red">Vorsicht:</span> Der Tester setzt die lokale Zeitzone also auf die Server-Zeitzone, Tests laufen damit ggf. in einer anderen als der 
       tatsächlichen lokalen Zeitzone.
       </content>
       <example>
