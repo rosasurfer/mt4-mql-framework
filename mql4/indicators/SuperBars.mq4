@@ -11,15 +11,20 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern color Color.BarUp        = C'193,255,193';        // Up-Bars              blass: C'215,255,215'
-extern color Color.BarDown      = C'255,213,213';        // Down-Bars            blass: C'255,230,230'
-extern color Color.BarUnchanged = C'232,232,232';        // unveränderte Bars                               // oder Gray
-extern color Color.Close        = C'164,164,164';        // Close-Marker                                    // oder Black
+extern color Color.BarUp        = C'193,255,193';        // Up-Bars
+extern color Color.BarDown      = C'255,213,213';        // Down-Bars
+extern color Color.BarUnchanged = C'232,232,232';        // (fast) unveränderte Bars
+extern color Color.ETH          = C'199,243,243';        // Extended-Hours                // ist ein etwas helleres PaleTurquoise
+extern color Color.CloseMarker  = C'164,164,164';        // Close-Marker
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 
 int    superBars.timeframe;
+
+bool   isFuture;                                         // ob das Instrument wie ein Globex-Derivat analysiert werden kann (Futures, Indizes, Commodities, Bonds, CFDs darauf)
+bool   eth.enabled;                                      // ob die Extended-Hours von Globex-Derivaten angezeigt werden sollen (RTH wie Globex Chicago)
+
 bool   showOHLData;                                      // ob die aktuellen OHL-Daten angezeigt werden sollen
 string label.description = "Description";                // Label für Chartanzeige
 
@@ -36,10 +41,11 @@ string label.description = "Description";                // Label für Chartanzei
 int onInit() {
    // (1) Parametervalidierung
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp   = CLR_NONE;   // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
-   if (Color.BarDown      == 0xFF000000) Color.BarDown = CLR_NONE;
-   if (Color.BarUnchanged == 0xFF000000) Color.BarDown = CLR_NONE;
-   if (Color.Close        == 0xFF000000) Color.Close   = CLR_NONE;
+   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
+   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // z.B. nach Recompile oder Deserialisierung
+   if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
+   if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
+   if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
 
    // (2) Label für Superbar-Beschreibung erzeugen
@@ -83,6 +89,12 @@ int onInit() {
             case PERIOD_MN1: superBars.timeframe = -PERIOD_MN1; break;
          }
    }
+
+
+   // (5) Future-Status ermitteln und Farben für Extended-Hours definieren
+   string futures[] = {"DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
+   isFuture = StringInArray(futures, StdSymbol());
+
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(1)"));
@@ -138,7 +150,7 @@ bool onChartCommand(string commands[]) {
 
 
 /**
- * Schaltet den Parameter superTimeframe des Indikators um.
+ * Schaltet den Parameter superBars.timeframe des Indikators um.
  *
  * @param  int direction - Richtungs-ID:  STF_UP|STF_DOWN
  *
@@ -224,12 +236,12 @@ bool UpdateSuperBars() {
    }
 
 
-   // (3) Anzeige
+   // (3) Superbars aktualisieren
    // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
    // - Die jüngste Superbar reicht nach rechts nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
-   // - Die älteste Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (ist zur Laufzeit Normalfall).
+   // - Die älteste Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (zur Laufzeit Normalfall).
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
-   int      openBar, closeBar, lastChartBar=Bars-1, i=-1, changedBars=ChangedBars;
+   int      openBar, closeBar, lastChartBar=Bars-1, changedBars=ChangedBars;
    if (timeframeChanged)
       changedBars = Bars;                                                  // bei Superbar-Timeframe-Wechsel müssen alle Bars neugezeichnet werden
 
@@ -247,7 +259,7 @@ bool UpdateSuperBars() {
          if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar: Server-Timezone westlich von FXT
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
       }
-      openBar = iBarShiftNext(NULL, NULL, openTime.srv);                   // Da immer der aktuelle Timeframe benutzt wird, kann ERS_HISTORY_UPDATE eigentlich nie auftreten.
+      openBar = iBarShiftNext(NULL, NULL, openTime.srv);                   // ERS_HISTORY_UPDATE kann nicht auftreten, da der aktuelle Timeframe benutzt wird
       if (openBar == EMPTY_VALUE) return(!SetLastError(warn("UpdateSuperBars(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
@@ -255,12 +267,17 @@ bool UpdateSuperBars() {
          break;
 
       if (openBar >= closeBar) {
-         if      (openBar != lastChartBar)                              { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(false); }
-         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { i++; if (!DrawSuperBar(i, openTime.fxt, openBar, closeBar)) return(false); }
-      }                                                                    // Die Supersession auf der letzten Chartbar ist äußerst selten vollständig, trotzdem mit (exact=TRUE) prüfen.
+         if      (openBar != lastChartBar)                              { if (!DrawSuperBar(openBar, closeBar, openTime.fxt, openTime.srv)) return(false); }
+         else if (openBar == iBarShift(NULL, NULL, openTime.srv, true)) { if (!DrawSuperBar(openBar, closeBar, openTime.fxt, openTime.srv)) return(false); }
+      }                                                                    // Die Supersession auf der letzten Chartbar ist selten genau vollständig, trotzdem mit (exact=TRUE) prüfen.
       if (openBar >= changedBars-1)
          break;                                                            // Superbars bis max. changedBars aktualisieren
    }
+
+
+   // (5) OHL-Anzeige aktualisieren (falls zutreffend)
+   if (showOHLData)
+      UpdateDescription();
 
    static.lastTimeframe = superBars.timeframe;
    return(true);
@@ -410,28 +427,28 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 /**
  * Zeichnet eine einzelne Superbar.
  *
- * @param  int      i        - Barindex (beginnend mit 0)
- * @param  datetime openTime - Startzeit der Supersession in FXT
- * @param  int      openBar  - Chartoffset der Open-Bar der Superbar
- * @param  int      closeBar - Chartoffset der Close-Bar der Superbar
+ * @param  int      openBar      - Chartoffset der Open-Bar der Superbar
+ * @param  int      closeBar     - Chartoffset der Close-Bar der Superbar
+ * @param  datetime openTime.fxt - FXT-Startzeit der Supersession
+ * @param  datetime openTime.srv - Server-Startzeit der Supersession
  *
  * @return bool - Erfolgsstatus
  */
-bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
-   // High- und Low-Bar ermitteln
+bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime openTime.srv) {
+   // (1.1) High- und Low-Bar ermitteln
    int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
    int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
 
-   // Farbe bestimmen
+   // (1.2) Farbe bestimmen
    color barColor = Color.BarUnchanged;
-   if (openBar < Bars-1) double openPrice = Close[openBar + 1];
-   else                         openPrice = Open [openBar];                                  // Als OpenPrice wird nach Möglichkeit das Close der vorherigen Bar verwendet.
-   if (MathMax(openPrice,  Close[closeBar])/MathMin(openPrice, Close[closeBar]) > 1.0005) {  // Ab ca. 5-10 pip Preisunterschied wird Up- oder Down-Color angewendet.
-      if      (openPrice < Close[closeBar]) barColor = Color.BarUp;
+   if (openBar < Bars-1) double openPrice = Close[openBar+1];                             // Als OpenPrice wird nach Möglichkeit das Close der vorherigen Bar verwendet.
+   else                         openPrice = Open [openBar];
+   if (MathMax(openPrice,  Close[closeBar])/MathMin(openPrice, Close[closeBar]) > 1.0005) {
+      if      (openPrice < Close[closeBar]) barColor = Color.BarUp;                       // Ab ca. 5-10 pip Preisunterschied werden Color.BarUp bzw. Color.BarDown verwendet.
       else if (openPrice > Close[closeBar]) barColor = Color.BarDown;
    }
 
-   // Label definieren
+   // (1.3) Label definieren
    string label;
    switch (superBars.timeframe) {
       case PERIOD_D1 : label =          DateToStr(openTime.fxt, "w D.M.Y ");                            break; // "w D.M.Y" wird bereits vom Grid verwendet
@@ -440,29 +457,30 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
       case PERIOD_Q1 : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYear(openTime.fxt); break;
    }
 
-   // Superbar zeichnen
+   // (1.4) Superbar zeichnen
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
-      int closeBar_j = closeBar; /*j: justified*/                             // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
-      if (closeBar > 0) closeBar_j--;                                         // jedoch nicht bei der jüngsten Bar[0]
+      int closeBar_j = closeBar; /*j: justified*/                                         // Rechtecke um eine Chartbar nach rechts verbreitern, damit sie sich gegenseitig berühren.
+      if (closeBar > 0) closeBar_j--;                                                     // jedoch nicht bei der jüngsten Bar[0]
    if (ObjectCreate(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
       ObjectSet     (label, OBJPROP_COLOR, barColor);
       ObjectSet     (label, OBJPROP_BACK , true    );
       ObjectRegister(label);
    }
    else GetLastError();
+                                                                                          // TODO: nach Market-Close Marker auch bei der jüngsten Session zeichnen
+   // (1.5) Close-Marker zeichnen
+   if (closeBar > 0) {                                                                    // jedoch nicht bei der jüngsten Bar[0], die Session ist noch nicht beendet
+      int centerBar = (openBar+closeBar) >> 1;                                            // entspricht (int) Division durch 2
 
-   // Close-Marker zeichnen
-   if (closeBar > 0) {                                                        // jedoch nicht bei der jüngsten Bar[0], die Session ist noch nicht beendet
-      int centerBar = (openBar+closeBar_j)/2;                                 // TODO: nach Market-Close Marker auch bei der jüngsten Session zeichnen
       if (centerBar > closeBar) {
          string labelWithPrice, labelWithoutPrice=label +" Close";
 
-         if (ObjectFind(labelWithoutPrice) == 0) {                            // Jeder Marker besteht aus zwei Objekten: Ein unsichtbares Label (erstes Objekt) mit
-            labelWithPrice = ObjectDescription(labelWithoutPrice);            // festem Namen, das in der Beschreibung den veränderlichen Namen des sichtbaren Markers
-            if (ObjectFind(labelWithPrice) == 0)                              // (zweites Objekt) enthält. So kann ein bereits vorhandener Marker einer Superbar im
-               ObjectDelete(labelWithPrice);                                  // Chart gefunden und durch einen neuen ersetzt werden, obwohl sich sein dynamischer Name
-            ObjectDelete(labelWithoutPrice);                                  // geändert hat.
+         if (ObjectFind(labelWithoutPrice) == 0) {                                        // Jeder Marker besteht aus zwei Objekten: Ein unsichtbares Label (erstes Objekt) mit
+            labelWithPrice = ObjectDescription(labelWithoutPrice);                        // festem Namen, das in der Beschreibung den veränderlichen Namen des sichtbaren Markers
+            if (ObjectFind(labelWithPrice) == 0)                                          // (zweites Objekt) enthält. So kann ein bereits vorhandener Marker einer Superbar im
+               ObjectDelete(labelWithPrice);                                              // Chart gefunden und durch einen neuen ersetzt werden, obwohl sich sein dynamischer Name
+            ObjectDelete(labelWithoutPrice);                                              // geändert hat.
          }
          labelWithPrice = labelWithoutPrice +" "+ DoubleToStr(Close[closeBar], PipDigits);
 
@@ -473,26 +491,116 @@ bool DrawSuperBar(int i, datetime openTime.fxt, int openBar, int closeBar) {
          } else GetLastError();
 
          if (ObjectCreate(labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
-            ObjectSet    (labelWithPrice, OBJPROP_RAY  , false      );
+            ObjectSet    (labelWithPrice, OBJPROP_RAY  , false);
             ObjectSet    (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet    (labelWithPrice, OBJPROP_COLOR, Color.Close);
-            ObjectSet    (labelWithPrice, OBJPROP_BACK , true       );
+            ObjectSet    (labelWithPrice, OBJPROP_COLOR, Color.CloseMarker);
+            ObjectSet    (labelWithPrice, OBJPROP_BACK , true);
             ObjectRegister(labelWithPrice);
          } else GetLastError();
       }
    }
 
-   // bei Superbar[0] ggf. OHL-Anzeige aktualisieren
-   if (showOHLData) /*&&*/ if (closeBar==0) {
-      UpdateDescription();
+
+   // (2) Extended-Hours markieren (falls zutreffend)
+   if (superBars.timeframe==PERIOD_D1 && isFuture && Color.ETH!=CLR_NONE /*&& future.showETH*/) {
+      if (1 || Symbol()=="XAUUSD") {
+
+      // Schleife nur für einfacheres Verlassen des gesamten ETH-Blocks
+      while (true) {
+         // (2.1) High und Low ermitteln
+         datetime eth.openTime.srv  = openTime.srv;                                       // wie reguläre Starttime der 24h-Session (00:00 FXT)
+         datetime eth.closeTime.srv = openTime.srv + 16*HOURS + 30*MINUTES;               // Handelsbeginn Globex Chicago           (16:30 FXT)
+
+         int eth.openBar  = openBar;                                                      // reguläre OpenBar der 24h-Session
+         int eth.closeBar = iBarShiftPrevious(NULL, NULL, eth.closeTime.srv-1*SECOND);    // openBar ist hier immer >= closeBar (Prüfung oben)
+            if (eth.openBar <= eth.closeBar) break;                                       // Abbruch, wenn openBar nicht größer als closeBar (kein Platz zum Zeichnen)
+
+         int eth.M15.openBar = iBarShiftNext(NULL, PERIOD_M15, eth.openTime.srv);         // ERS_HISTORY_UPDATE kann nicht mehr aufreten, da schon iChangedBars(M15) aufgerufen wurde
+            if (eth.M15.openBar == EMPTY_VALUE) return(!warn("DrawSuperBar(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError()));
+            if (eth.M15.openBar == -1)          break;                                    // Daten sind noch nicht da (HISTORY_UPDATE sollte laufen)
+
+         int eth.M15.closeBar = iBarShiftPrevious(NULL, PERIOD_M15, eth.closeTime.srv-1*SECOND);
+            if (eth.M15.closeBar == EMPTY_VALUE)    return(!warn("DrawSuperBar(2)->iBarShiftPrevious() => EMPTY_VALUE", stdlib.GetLastError()));
+            if (eth.M15.closeBar == -1)             break;                                // die vorhandenen Daten reichen nicht soweit zurück TODO: globales Flag für Abbruch setzen
+            if (eth.M15.openBar < eth.M15.closeBar) break;                                // die vorhandenen Daten weisen eine Lücke auf
+
+         int eth.M15.highBar = iHighest(NULL, PERIOD_M15, MODE_HIGH, eth.M15.openBar-eth.M15.closeBar+1, eth.M15.closeBar);
+         int eth.M15.lowBar  = iLowest (NULL, PERIOD_M15, MODE_LOW , eth.M15.openBar-eth.M15.closeBar+1, eth.M15.closeBar);
+
+         double eth.open     = iOpen (NULL, PERIOD_M15, eth.M15.openBar );
+         double eth.high     = iHigh (NULL, PERIOD_M15, eth.M15.highBar );
+         double eth.low      = iLow  (NULL, PERIOD_M15, eth.M15.lowBar  );
+         double eth.close    = iClose(NULL, PERIOD_M15, eth.M15.closeBar);
+
+         // (2.2) Label definieren
+         string eth.label    = "ETH "+ label;
+         string eth.bg.label = "ETH "+ label +" background";
+
+         // (2.3) ETH-Background zeichnen ("macht ein Loch" in die vorhandene Superbar)
+         if (ObjectFind(eth.bg.label) == 0)
+            ObjectDelete(eth.bg.label);
+         if (ObjectCreate(eth.bg.label, OBJ_RECTANGLE, 0, Time[eth.openBar], eth.high, Time[eth.closeBar], eth.low)) {
+            ObjectSet     (eth.bg.label, OBJPROP_COLOR, barColor);                        // barColor + barColor gemischt => Farbe des Chartbackgrounds
+            ObjectSet     (eth.bg.label, OBJPROP_BACK , true);
+            ObjectRegister(eth.bg.label);
+         }
+
+         // (2.4) ETH-Bar zeichnen (füllt das "Loch" mit ETH-Bar)
+         if (ObjectFind(eth.label) == 0)
+            ObjectDelete(eth.label);
+         if (ObjectCreate(eth.label, OBJ_RECTANGLE, 0, Time[eth.openBar], eth.high, Time[eth.closeBar], eth.low)) {
+            ObjectSet     (eth.label, OBJPROP_COLOR, Color.ETH);
+            ObjectSet     (eth.label, OBJPROP_BACK , true);
+            ObjectRegister(eth.label);
+         }
+
+         // (2.5) oberen bzw. unteren ETH-Rahmen zeichnen
+
+         // (2.6) ETH-Close-Marker zeichnen, wenn die Extended-Hours beendet sind
+         if (TimeCurrent() > eth.closeTime.srv) {
+            int eth.centerBar = (eth.openBar+eth.closeBar) >> 1;                          // entspricht (int) Division durch 2
+
+            if (eth.centerBar > eth.closeBar) {
+               string eth.labelWithPrice, eth.labelWithoutPrice=eth.label +" Close";
+
+               if (ObjectFind(eth.labelWithoutPrice) == 0) {                              // Jeder Marker besteht aus zwei Objekten: Ein unsichtbares Label (erstes Objekt) mit
+                  eth.labelWithPrice = ObjectDescription(eth.labelWithoutPrice);          // festem Namen, das in der Beschreibung den veränderlichen Namen des sichtbaren Markers
+                  if (ObjectFind(eth.labelWithPrice) == 0)                                // (zweites Objekt) enthält. So kann ein bereits vorhandener Marker einer ETH-Bar im
+                     ObjectDelete(eth.labelWithPrice);                                    // Chart gefunden und durch einen neuen ersetzt werden, obwohl sich sein dynamischer Name
+                  ObjectDelete(eth.labelWithoutPrice);                                    // geändert hat.
+               }
+               eth.labelWithPrice = eth.labelWithoutPrice +" "+ DoubleToStr(eth.close, PipDigits);
+
+               if (ObjectCreate(eth.labelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
+                  ObjectSet    (eth.labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+                  ObjectSetText(eth.labelWithoutPrice, eth.labelWithPrice);
+                  ObjectRegister(eth.labelWithoutPrice);
+               } else GetLastError();
+
+               if (ObjectCreate(eth.labelWithPrice, OBJ_TREND, 0, Time[eth.centerBar], eth.close, Time[eth.closeBar], eth.close)) {
+                  ObjectSet    (eth.labelWithPrice, OBJPROP_RAY  , false);
+                  ObjectSet    (eth.labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
+                  ObjectSet    (eth.labelWithPrice, OBJPROP_COLOR, Color.CloseMarker);
+                  ObjectSet    (eth.labelWithPrice, OBJPROP_BACK , true);
+                  ObjectRegister(eth.labelWithPrice);
+               } else GetLastError();
+            }
+         }
+
+         if (closeBar==0) {
+            //debug("DrawSuperBar()   eth.openBar="+ eth.openBar +" ("+ TimeToStr(Time[eth.openBar], TIME_FULL) +")  eth.closeBar="+ eth.closeBar +" ("+ TimeToStr(Time[eth.closeBar], TIME_FULL) +")");
+         }
+         break;
+      }
+      }
    }
 
-   //static int i;
+   //static int i; if (closeBar == 0) i = 0;
    //if (i <= 5) {
-   //   debug("DrawSuperBar("+ PeriodDescription(superTimeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
+   //   debug("DrawSuperBar("+ PeriodDescription(superBars.timeframe) +")   from="+ openBar +"  to="+ closeBar +"  label=\""+ label +"\"");
    //   i++;
    //}
-   return(!catch("DrawSuperBar(1)"));
+   return(!catch("DrawSuperBar(3)"));
 }
 
 

@@ -293,11 +293,11 @@
    // Farben
    color    RGB(int red, int green, int blue);
 
-   int      RGBToHSVColor(color rgb, double hsv[]);
-   int      RGBValuesToHSVColor(int red, int green, int blue, double hsv[]);
+   int      RGBToHSV(color rgb, double hsv[]);
+   int      RGBValuesToHSV(int red, int green, int blue, double hsv[]);
 
-   color    HSVToRGBColor(double hsv[]);
-   color    HSVValuesToRGBColor(double hue, double saturation, double value);
+   color    HSVToRGB(double hsv[]);
+   color    HSVValuesToRGB(double hue, double saturation, double value);
 
    color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
 
