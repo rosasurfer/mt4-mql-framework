@@ -127,7 +127,7 @@
 #define ERR_OBJECT_ERROR                                           4207
 #define ERR_SOME_OBJECT_ERROR                          ERR_OBJECT_ERROR    //                                        MetaQuotes-Alias
 #define ERR_NOTIFICATION_SEND_ERROR                                4250    // error setting notification into sending queue
-#define ERR_NOTIFICATION_WRONG_PARAMETER                           4251    // empty string passed to SendNotification()
+#define ERR_NOTIFICATION_WRONG_PARAM                               4251    // empty string passed to SendNotification()
 #define ERR_NOTIFICATION_WRONG_SETTINGS                            4252    // invalid notifications settings (ID not specified or notifications not enabled)
 #define ERR_NOTIFICATION_TOO_FREQUENT                              4253
 
