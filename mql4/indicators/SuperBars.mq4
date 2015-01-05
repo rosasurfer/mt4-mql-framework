@@ -92,7 +92,7 @@ int onInit() {
 
 
    // (5) Future-Status ermitteln und Farben für Extended-Hours definieren
-   string futures[] = {"DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
+   string futures[] = {"BRENT","DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
    isFuture = StringInArray(futures, StdSymbol());
 
 

@@ -4772,6 +4772,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "USDTWD")) return("USDTWD");
                 if (                 symbol=="USDX"   ) return("USDX"  );
                 if (StringStartsWith(symbol, "USDZAR")) return("USDZAR");
+                if (                 symbol=="USTEC"  ) return("NAS100");
                 break;
 
       case 'V':
