@@ -3434,7 +3434,7 @@ When accessed the first dimension of the destination array holds the rates bar o
 4 - close<br/>
 5 - volume<br/>
 <br/>
-If data from another timeseries than the current chart is requested the error <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
+If data from another time series than the current chart is requested the error <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
 set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
 <br/>
 
@@ -9040,7 +9040,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
 
   <group>
     tag=series
-    caption=Timeseries access
+    caption=Time series access
     <content>
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
@@ -9056,21 +9056,21 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
       caption=iBars()
       type=int
       <content>
-      Returns the number of bars on the specified chart.<br/>
-      For the current chart, the information about the amount of bars is in the predefined variable named <a href="help://predefined_variables_Bars">Bars</a>.
+      Returns the number of bars of the specified time series.<br/>
+      For the current chart, the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.
       </content>
       <example>
-  Print(&quot;Bar count on the 'EURUSD' symbol with PERIOD_H1 is&quot;,iBars(&quot;EURUSD&quot;,PERIOD_H1));
+  Print(&quot;The number of bars of 'EURUSD,PERIOD_H1' is&quot;, iBars(&quot;EURUSD&quot;, PERIOD_H1));
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. NULL means the current symbol.
+        description=Symbol of the time series (NULL means the current symbol).
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=Timeframe of the time series. Can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values (NULL means the current chart timeframe).
       </parameter>
     </function>
 
@@ -9098,13 +9098,13 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
         type=string
         name=symbol
         def_value=NULL
-        description=Symbol of the time series. NULL means the current symbol.
+        description=Symbol of the time series (NULL means the current symbol).
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=NULL
-        description=Timeframe of the time series, can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. NULL means the current chart timeframe.
+        description=Timeframe of the time series. Can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values (NULL means the current chart timeframe).
       </parameter>
       <parameter>
         type=datetime
