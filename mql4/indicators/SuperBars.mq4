@@ -1,5 +1,5 @@
 /**
- * Hinterlegt den Chart mit Bars übergeordneter Timeframes.
+ * Hinterlegt den Chart mit Bars übergeordneter Timeframes. Die Änderung des aktuellen Timeframe-Parameters erfolgt per Hotkeys.
  */
 #property indicator_chart_window
 
@@ -21,11 +21,9 @@ extern color Color.CloseMarker  = C'164,164,164';        // Close-Marker
 #include <core/indicator.mqh>
 
 int    superBars.timeframe;
-
-bool   isFuture;                                         // ob das Instrument wie ein Globex-Derivat analysiert werden kann (Futures, Indizes, Commodities, Bonds, CFDs darauf)
-bool   eth.enabled;                                      // ob die Extended-Hours von Globex-Derivaten angezeigt werden sollen (RTH wie Globex Chicago)
-
+bool   eth.likeFuture;                                   // ob das Instrument wie ein Globex-Derivat analysiert werden kann (Futures, Indizes, Commodities, Bonds, CFDs darauf)
 bool   showOHLData;                                      // ob die aktuellen OHL-Daten angezeigt werden sollen
+
 string label.description = "Description";                // Label für Chartanzeige
 
 
@@ -93,7 +91,7 @@ int onInit() {
 
    // (5) Future-Status ermitteln und Farben für Extended-Hours definieren
    string futures[] = {"BRENT","DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
-   isFuture = StringInArray(futures, StdSymbol());
+   eth.likeFuture = StringInArray(futures, StdSymbol());
 
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
@@ -236,19 +234,51 @@ bool UpdateSuperBars() {
    }
 
 
-   // (3) Superbars aktualisieren
-   // - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
-   // - Die jüngste Superbar reicht nach rechts nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
-   // - Die älteste Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (zur Laufzeit Normalfall).
    datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
    int      openBar, closeBar, lastChartBar=Bars-1, changedBars=ChangedBars;
    if (timeframeChanged)
       changedBars = Bars;                                                  // bei Superbar-Timeframe-Wechsel müssen alle Bars neugezeichnet werden
 
-   // Schleife über alle Superbars von "jung" nach "alt"
+
+   // (3) Sollen Extended-Hours angezeigt werden, muß der Bereich von ChangedBars immer auch iChangedBars(PERIOD_M15) berücksichtigen
+   if (eth.likeFuture) /*&&*/ if (superBars.timeframe==PERIOD_D1) /*&&*/ if (Color.ETH!=CLR_NONE) {
+
+      int M15.bars = iBars(NULL, PERIOD_M15);
+         int error = GetLastError(); if (error && error!=ERS_HISTORY_UPDATE) return(!catch("UpdateSuperBars(1)->iBars()", error));
+
+      /*
+      if (ERS_HISTORY_UPDATE) {                                            // erster Zugriff
+         iChangedBars = Bars;
+      }
+      else if (Bars==last(Bars) && Time[Bars-1]==last(Time[Bars-1])) {     // Baranzahl gleich und älteste Bar noch dieselbe
+         iChangedBars = 1;                                                 // normaler Tick
+      }
+      else {                                                               // neue Bars hinzugekommen
+      }
+      */
+
+
+
+
+
+      if (AccountNumber() == {account-no}) {
+         static int _i;
+         if (_i <= 2) {
+            //debug("UpdateSuperBars()   M15.bars="+ M15.bars, error);
+            _i++;
+         }
+      }
+   }
+
+
+   // (4) Superbars aktualisieren
+   //   - Zeichenbereich bei jedem Tick ist der Bereich von ChangedBars (jedoch keine for-Schleife über alle ChangedBars).
+   //   - Die jüngste Superbar reicht nach rechts nur bis Bar[0], was Fortschritt und Relevanz der wachsenden Superbar veranschaulicht.
+   //   - Die älteste Superbar reicht nach links über ChangedBars hinaus, wenn Bars > ChangedBars (zur Laufzeit Normalfall).
+   //   - Mit "Session" ist in der Folge keine 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
+   //     z.B. ein Tag, eine Woche oder ein Monat.
    //
-   // Mit "Session" ist in der Folge keine 24-h-Session, sondern eine Periode des jeweiligen Super-Timeframes gemeint,
-   // z.B. ein Tag, eine Woche oder ein Monat.
+   // Schleife über alle Superbars von "jung" nach "alt"
    while (true) {
       if (!GetPreviousSession(superBars.timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(false);
@@ -260,7 +290,7 @@ bool UpdateSuperBars() {
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
       }
       openBar = iBarShiftNext(NULL, NULL, openTime.srv);                   // ERS_HISTORY_UPDATE kann nicht auftreten, da der aktuelle Timeframe benutzt wird
-      if (openBar == EMPTY_VALUE) return(!SetLastError(warn("UpdateSuperBars(1)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
+      if (openBar == EMPTY_VALUE) return(!SetLastError(warn("UpdateSuperBars(2)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
 
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
       if (closeBar == -1)                                                  // closeTime ist zu alt für den Chart => Abbruch
@@ -471,7 +501,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
                                                                                           // TODO: nach Market-Close Marker auch bei der jüngsten Session zeichnen
    // (1.5) Close-Marker zeichnen
    if (closeBar > 0) {                                                                    // jedoch nicht bei der jüngsten Bar[0], die Session ist noch nicht beendet
-      int centerBar = (openBar+closeBar) >> 1;                                            // entspricht (int) Division durch 2
+      int centerBar = (openBar+closeBar)/2;
 
       if (centerBar > closeBar) {
          string labelWithPrice, labelWithoutPrice=label +" Close";
@@ -502,11 +532,8 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
 
 
    // (2) Extended-Hours markieren (falls zutreffend)
-   if (superBars.timeframe==PERIOD_D1 && isFuture && Color.ETH!=CLR_NONE /*&& future.showETH*/) {
-      if (1 || Symbol()=="XAUUSD") {
-
-      // Schleife nur für einfacheres Verlassen des gesamten ETH-Blocks
-      while (true) {
+   if (eth.likeFuture && superBars.timeframe==PERIOD_D1 && Color.ETH!=CLR_NONE) {
+      while (true) {                                                                      // die Schleife dient nur dem einfacheres Verlassen des gesamten ETH-Blocks
          // (2.1) High und Low ermitteln
          datetime eth.openTime.srv  = openTime.srv;                                       // wie reguläre Starttime der 24h-Session (00:00 FXT)
          datetime eth.closeTime.srv = openTime.srv + 16*HOURS + 30*MINUTES;               // Handelsbeginn Globex Chicago           (16:30 FXT)
@@ -521,8 +548,8 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
 
          int eth.M15.closeBar = iBarShiftPrevious(NULL, PERIOD_M15, eth.closeTime.srv-1*SECOND);
             if (eth.M15.closeBar == EMPTY_VALUE)    return(!warn("DrawSuperBar(2)->iBarShiftPrevious() => EMPTY_VALUE", stdlib.GetLastError()));
-            if (eth.M15.closeBar == -1)             break;                                // die vorhandenen Daten reichen nicht soweit zurück TODO: globales Flag für Abbruch setzen
-            if (eth.M15.openBar < eth.M15.closeBar) break;                                // die vorhandenen Daten weisen eine Lücke auf
+            if (eth.M15.closeBar == -1)             break;                                // die vorhandenen Daten reichen nicht soweit zurück        // TODO: globales Flag setzen
+            if (eth.M15.openBar < eth.M15.closeBar) break;                                // die vorhandenen Daten weisen eine Lücke auf              //       und abbrechen
 
          int eth.M15.highBar = iHighest(NULL, PERIOD_M15, MODE_HIGH, eth.M15.openBar-eth.M15.closeBar+1, eth.M15.closeBar);
          int eth.M15.lowBar  = iLowest (NULL, PERIOD_M15, MODE_LOW , eth.M15.openBar-eth.M15.closeBar+1, eth.M15.closeBar);
@@ -533,8 +560,8 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
          double eth.close    = iClose(NULL, PERIOD_M15, eth.M15.closeBar);
 
          // (2.2) Label definieren
-         string eth.label    = "ETH "+ label;
-         string eth.bg.label = "ETH "+ label +" background";
+         string eth.label    = label +" ETH";
+         string eth.bg.label = label +" ETH background";
 
          // (2.3) ETH-Background zeichnen ("macht ein Loch" in die vorhandene Superbar)
          if (ObjectFind(eth.bg.label) == 0)
@@ -558,7 +585,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
 
          // (2.6) ETH-Close-Marker zeichnen, wenn die Extended-Hours beendet sind
          if (TimeCurrent() > eth.closeTime.srv) {
-            int eth.centerBar = (eth.openBar+eth.closeBar) >> 1;                          // entspricht (int) Division durch 2
+            int eth.centerBar = (eth.openBar+eth.closeBar)/2;
 
             if (eth.centerBar > eth.closeBar) {
                string eth.labelWithPrice, eth.labelWithoutPrice=eth.label +" Close";
@@ -591,7 +618,6 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
             //debug("DrawSuperBar()   eth.openBar="+ eth.openBar +" ("+ TimeToStr(Time[eth.openBar], TIME_FULL) +")  eth.closeBar="+ eth.closeBar +" ("+ TimeToStr(Time[eth.closeBar], TIME_FULL) +")");
          }
          break;
-      }
       }
    }
 
