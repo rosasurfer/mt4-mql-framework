@@ -1932,7 +1932,6 @@ bool AnalyzePositions() {
    if (!StoreRegularPositions(_longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits))
       return(false);
 
-
    positionsAnalyzed = true;
    return(!catch("AnalyzePositions(2)"));
 }
@@ -2490,7 +2489,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             if (!remainingLong) continue;
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice    += lots       [i] * openPrices[i];
+               openPrice     = NormalizeDouble(openPrice     + lots[i] * openPrices[i], 8);
                swap         += swaps      [i];
                commission   += commissions[i];
                remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
@@ -2499,11 +2498,11 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor        = remainingLong/lots[i];
-               openPrice    += remainingLong * openPrices [i];
-               swap         +=                 swaps      [i]; swaps      [i]  = 0;
-               commission   += factor        * commissions[i]; commissions[i] -= factor * commissions[i];
-                                                               profits    [i] -= factor * profits    [i];
-                                                               lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+               openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices [i], 8);
+               swap         += swaps[i];                swaps      [i]  = 0;
+               commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+                                                        profits    [i] -= factor * profits    [i];
+                                                        lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
                remainingLong = 0;
             }
          }
@@ -2511,20 +2510,20 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             if (!remainingShort) continue;
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               closePrice    += lots       [i] * openPrices[i];
+               closePrice     = NormalizeDouble(closePrice     + lots[i] * openPrices[i], 8);
                swap          += swaps      [i];
-               //commission  += commissions[i];                                                          // Commission wird nur für Long-Leg übernommen
+               //commission  += commissions[i];                                        // Commission wird nur für Long-Leg übernommen
                remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
                tickets[i]     = NULL;
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor      = remainingShort/lots[i];
-               closePrice += remainingShort * openPrices[i];
-               swap       +=                  swaps     [i]; swaps      [i]  = 0;
-                                                             commissions[i] -= factor * commissions[i];  // Commission wird nur für Long-Leg übernommen
-                                                             profits    [i] -= factor * profits    [i];
-                                                             lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               factor         = remainingShort/lots[i];
+               closePrice     = NormalizeDouble(closePrice + remainingShort * openPrices[i], 8);
+               swap          += swaps[i]; swaps      [i]  = 0;
+                                          commissions[i] -= factor * commissions[i];   // Commission wird nur für Long-Leg übernommen
+                                          profits    [i] -= factor * profits    [i];
+                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
                remainingShort = 0;
             }
          }
@@ -2533,9 +2532,9 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       if (remainingShort != 0) return(!catch("StoreCustomPosition(2)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of custom hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
 
       // BE-Distance und Profit berechnen
-      pipValue = PipValue(hedgedLotSize, true);                      // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      pipValue = PipValue(hedgedLotSize, true);                                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0) {
-         pipDistance  = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
+         pipDistance  = NormalizeDouble((closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue, 8);
          hedgedProfit = pipDistance * pipValue;
       }
 
@@ -2576,7 +2575,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (types[i] == OP_BUY) {
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice    += lots       [i] * openPrices[i];
+               openPrice     = NormalizeDouble(openPrice     + lots[i] * openPrices[i], 8);
                swap         += swaps      [i];
                commission   += commissions[i];
                profit       += profits    [i];
@@ -2586,11 +2585,11 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor        = remainingLong/lots[i];
-               openPrice    += remainingLong * openPrices [i];
-               swap         +=                 swaps      [i]; swaps      [i]  = 0;
-               commission   += factor        * commissions[i]; commissions[i] -= factor * commissions[i];
-               profit       += factor        * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                               lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
+               openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices [i], 8);
+               swap         +=          swaps      [i]; swaps      [i]  = 0;
+               commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               profit       += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                        lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 3);
                remainingLong = 0;
             }
          }
@@ -2609,7 +2608,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(totalPosition, true);                   // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      positions.ddata[size][I_BREAKEVEN     ] = openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips;
+      positions.ddata[size][I_BREAKEVEN     ] = NormalizeDouble(openPrice/totalPosition - (hedgedProfit + customAmount + commission + swap)/pipValue*Pips, 8);
          }
       positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
@@ -2634,7 +2633,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          if (types[i] == OP_SELL) {
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice     += lots       [i] * openPrices[i];
+               openPrice      = NormalizeDouble(openPrice      + lots[i] * openPrices[i], 8);
                swap          += swaps      [i];
                commission    += commissions[i];
                profit        += profits    [i];
@@ -2644,11 +2643,11 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor         = remainingShort/lots[i];
-               openPrice     += remainingShort * openPrices [i];
-               swap          +=                  swaps      [i]; swaps      [i]  = 0;
-               commission    += factor         * commissions[i]; commissions[i] -= factor * commissions[i];
-               profit        += factor         * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                                 lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               openPrice      = NormalizeDouble(openPrice + remainingShort * openPrices [i], 8);
+               swap          +=          swaps      [i]; swaps      [i]  = 0;
+               commission    += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               profit        += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                         lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
                remainingShort = 0;
             }
          }
@@ -2667,7 +2666,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(-totalPosition, true);                  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      positions.ddata[size][I_BREAKEVEN     ] = (hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition;
+      positions.ddata[size][I_BREAKEVEN     ] = NormalizeDouble((hedgedProfit + customAmount + commission + swap)/pipValue*Pips - openPrice/totalPosition, 8);
          }
       positions.ddata[size][I_PROFIT        ] = hedgedProfit + customAmount + commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = customAmount;
@@ -2715,7 +2714,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice    += lots       [i] * openPrices[i];
+               openPrice     = NormalizeDouble(openPrice     + lots[i] * openPrices[i], 8);
                swap         += swaps      [i];
                commission   += commissions[i];
                profit       += profits    [i];
@@ -2725,11 +2724,11 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor        = remainingLong/lots[i];
-               openPrice    += remainingLong * openPrices [i];
-               swap         +=                 swaps      [i]; swaps      [i]  = 0;
-               commission   += factor        * commissions[i]; commissions[i] -= factor * commissions[i];
-               profit       += factor        * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                               lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 2);
+               openPrice     = NormalizeDouble(openPrice + remainingLong * openPrices [i], 8);
+               swap         +=          swaps      [i]; swaps      [i]  = 0;
+               commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               profit       += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                        lots       [i]  = NormalizeDouble(lots[i]-remainingLong, 2);
                remainingLong = 0;
             }
          }
@@ -2748,7 +2747,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       positions.ddata[size][I_HEDGED_LOTSIZE] = 0;
          pipValue = PipValue(totalPosition, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      positions.ddata[size][I_BREAKEVEN     ] = openPrice/totalPosition - (commission+swap)/pipValue*Pips;
+      positions.ddata[size][I_BREAKEVEN     ] = NormalizeDouble(openPrice/totalPosition - (commission+swap)/pipValue*Pips, 8);
          }
       positions.ddata[size][I_PROFIT        ] = commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
@@ -2774,7 +2773,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
-               openPrice     += lots       [i] * openPrices[i];
+               openPrice      = NormalizeDouble(openPrice      + lots[i] * openPrices[i], 8);
                swap          += swaps      [i];
                commission    += commissions[i];
                profit        += profits    [i];
@@ -2784,11 +2783,11 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor         = remainingShort/lots[i];
-               openPrice     += remainingShort * openPrices [i];
-               swap          +=                  swaps      [i]; swaps      [i]  = 0;
-               commission    += factor         * commissions[i]; commissions[i] -= factor * commissions[i];
-               profit        += factor         * profits    [i]; profits    [i] -= factor * profits    [i];
-                                                                 lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 2);
+               openPrice      = NormalizeDouble(openPrice + remainingShort * openPrices [i], 8);
+               swap          +=          swaps      [i]; swaps      [i]  = 0;
+               commission    += factor * commissions[i]; commissions[i] -= factor * commissions[i];
+               profit        += factor * profits    [i]; profits    [i] -= factor * profits    [i];
+                                                         lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 2);
                remainingShort = 0;
             }
          }
@@ -2807,7 +2806,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       positions.ddata[size][I_HEDGED_LOTSIZE] = 0;
          pipValue = PipValue(-totalPosition, true);                  // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0) {
-      positions.ddata[size][I_BREAKEVEN     ] = (commission+swap)/pipValue*Pips - openPrice/totalPosition;
+      positions.ddata[size][I_BREAKEVEN     ] = NormalizeDouble((commission+swap)/pipValue*Pips - openPrice/totalPosition, 8);
          }
       positions.ddata[size][I_PROFIT        ] = commission + swap + profit;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
@@ -2835,7 +2834,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
             if (remainingLong < lots[i]) return(!catch("StoreRegularPositions(3)   illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
 
             // Daten komplett übernehmen, Ticket auf NULL setzen
-            openPrice    += lots       [i] * openPrices[i];
+            openPrice     = NormalizeDouble(openPrice     + lots[i] * openPrices[i], 8);
             swap         += swaps      [i];
             commission   += commissions[i];
             remainingLong = NormalizeDouble(remainingLong - lots[i], 2);
@@ -2846,7 +2845,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
             if (remainingShort < lots[i]) return(!catch("StoreRegularPositions(4)   illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLotSize, ".+"), ERR_RUNTIME_ERROR));
 
             // Daten komplett übernehmen, Ticket auf NULL setzen
-            closePrice    += lots       [i] * openPrices[i];
+            closePrice     = NormalizeDouble(closePrice     + lots[i] * openPrices[i], 8);
             swap          += swaps      [i];
             //commission  += commissions[i];                         // Commissions nur für eine Seite übernehmen
             remainingShort = NormalizeDouble(remainingShort - lots[i], 2);
@@ -2866,7 +2865,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       positions.ddata[size][I_HEDGED_LOTSIZE] = hedgedLotSize;
          pipValue = PipValue(hedgedLotSize, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
          if (pipValue != 0)
-      positions.ddata[size][I_BREAKEVEN     ] = (closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue;
+      positions.ddata[size][I_BREAKEVEN     ] = NormalizeDouble((closePrice-openPrice)/hedgedLotSize/Pips + (commission+swap)/pipValue, 8);
       positions.ddata[size][I_PROFIT        ] = positions.ddata[size][I_BREAKEVEN] * pipValue;
       positions.ddata[size][I_CUSTOM_AMOUNT ] = 0;
       positions.ddata[size][I_OPEN_EQUITY   ] = openEquity;
@@ -3621,6 +3620,8 @@ string InputsToStr() {
 
 
 #import "stdlib1.ex4"
+   string   DoubleToStrEx(double value, int digits/*=0..16*/);
+
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble(double array[], double value);
