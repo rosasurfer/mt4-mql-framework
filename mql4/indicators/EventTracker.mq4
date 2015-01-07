@@ -163,13 +163,10 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
          if (type == knownOrders.type[i]) {
             // immer noch Pending-Order
             if (OrderCloseTime() != 0) {
-               if (OrderComment() == "cancelled") {
-                  // regulär gestrichene Pending-Order
-               }
-               else {
-                  // alles andere: "deleted [no money]", ???
-               }
-               // inaktive Pending-Order aus der Überwachung entfernen
+               if (OrderComment() != "cancelled")
+                  ArrayPushInt(failedOrders, knownOrders.ticket[i]);             // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
+
+               // geschlossene Pending-Order aus der Überwachung entfernen
                ArraySpliceInts(knownOrders.ticket, i, 1);
                ArraySpliceInts(knownOrders.type,   i, 1);
                knownSize--;
@@ -268,13 +265,13 @@ bool onOrderFail(int tickets[]) {
       if (!SelectTicket(tickets[i], "onOrderFail(1)"))
          return(false);
 
-      string type        = OperationTypeDescription(OrderType() & 0x1);    // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
+      string type        = OperationTypeDescription(OrderType() & 1);      // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"error: "+ OrderComment() + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
+      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
 
       // ggf. SMS verschicken
       if (__SMS.alerts) {
