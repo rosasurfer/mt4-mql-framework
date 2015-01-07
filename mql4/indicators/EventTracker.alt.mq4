@@ -4,7 +4,7 @@
  *
  * TODO:
  * -----
- *  - PositionOpen-/Close-Events während eines Timeframe- oder Symbolwechsels werden nicht erkannt
+ *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
  *  - Konfiguration per Indikator-Parameter und NICHT per Accountkonfiguration
  *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
@@ -25,8 +25,9 @@ bool     eventTracker.initialized;                                   // Settings
 bool     sound.alerts;
 
 bool     track.positions;
-string   positions.sound.onOpen  = "OrderFilled.wav";
-string   positions.sound.onClose = "PositionClosed.wav";
+string   sound.order.failed   = "Order-Execution-Failed.wav";
+string   sound.position.open  = "OrderFilled.wav";
+string   sound.position.close = "PositionClosed.wav";
 
 int      knownOrders.ticket[];                                       // vom letzten Aufruf bekannte offene Orders
 int      knownOrders.type  [];
@@ -38,7 +39,7 @@ int      knownOrders.type  [];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // EventTracker initialisieren (kann fehlschlagen, wenn die AccountNumber() beim Terminalstart kurzzeitig nicht verfügbar ist)
+   // EventTracker initialisieren (kann fehlschlagen, wenn die AccountNumber() beim Terminalstart noch nicht verfügbar ist)
    eventTracker.initialized = EventTracker.init();
    if (!eventTracker.initialized) /*&&*/ if (IsLastError()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
       return(last_error);
@@ -90,7 +91,7 @@ bool EventTracker.init() { //throws ERS_TERMINAL_NOT_YET_READY
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) endgültig prüfen, ob der EventTracker initialisiert ist
+   // (1) endgültige Prüfung, ob der EventTracker initialisiert ist
    if (!eventTracker.initialized) {
       eventTracker.initialized = EventTracker.init();
       if (!eventTracker.initialized) /*&&*/ if (IsLastError()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
@@ -99,13 +100,16 @@ int onTick() {
 
    // (2) Pending- und Limit-Orders überwachen
    if (track.positions) {
-      int opens[], closes[]; ArrayResize(opens, 0); ArrayResize(closes, 0);
+      int failedOrders   []; ArrayResize(failedOrders,    0);
+      int openedPositions[]; ArrayResize(openedPositions, 0);
+      int closedPositions[]; ArrayResize(closedPositions, 0);
 
-      if (!CheckPositions(opens, closes))
+      if (!CheckPositions(failedOrders, openedPositions, closedPositions))
          return(last_error);
 
-      if (ArraySize(opens)  > 0) onPositionOpen (opens);
-      if (ArraySize(closes) > 0) onPositionClose(closes);
+      if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders   );
+      if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
+      if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
    }
    return(last_error);
 }
@@ -114,12 +118,13 @@ int onTick() {
 /**
  * Prüft, ob seit dem letzten Aufruf eine Pending-Order oder ein Close-Limit ausgeführt wurden.
  *
- * @param  int opens [] - Array zur Aufnahme der Tickets neuer offener Positionen
- * @param  int closes[] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
+ * @param  int failedOrders   [] - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
+ * @param  int openedPositions[] - Array zur Aufnahme der Tickets neuer offener Positionen
+ * @param  int closedPositions[] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
  *
  * @return bool - Erfolgsstatus
  */
-bool CheckPositions(int opens[], int closes[]) {
+bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositions[]) {
    /*
    PositionOpen
    ------------
@@ -130,17 +135,18 @@ bool CheckPositions(int opens[], int closes[]) {
 
    PositionClose
    -------------
-   - ist Schließung einer offenen Position
+   - ist Schließung einer Position
    - Position muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders und offenen Positionen auf OrderClose prüfen:    über bekannte Orders iterieren
-     (2) alle unbekannten offenen Positionen mit Close-Limits in Überwachung aufnehmen: über OpenOrders iterieren
+     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:    über bekannte Orders iterieren
+     (2) alle unbekannten Positionen mit Close-Limits in Überwachung aufnehmen: über OpenOrders iterieren
 
    beides zusammen
    ---------------
-     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:                                          über bekannte Orders iterieren
-     (1.2) alle bekannten Pending-Orders und offenen Positionen auf OrderClose prüfen:                       über bekannte Orders iterieren
-     (2)   alle unbekannten Pending-Orders und offenen Positionen mit Close-Limits in Überwachung aufnehmen: über OpenOrders iterieren
-           nach (1) und (2), um sofortige Prüfung neuer zu überwachender Orders zu vermeiden
+     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:                                  über bekannte Orders iterieren
+     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:                       über bekannte Orders iterieren
+
+     (2)   alle unbekannten Pending-Orders und Positionen mit Close-Limits in Überwachung aufnehmen: über OpenOrders iterieren
+           - nach (1.1) und (1.2), um sofortige Prüfung neuer zu überwachender Orders zu vermeiden
    */
 
    int type, knownSize=ArraySize(knownOrders.ticket);
@@ -157,7 +163,13 @@ bool CheckPositions(int opens[], int closes[]) {
          if (type == knownOrders.type[i]) {
             // immer noch Pending-Order
             if (OrderCloseTime() != 0) {
-               // gelöschte Pending-Order: aus der Überwachung entfernen
+               if (OrderComment() == "cancelled") {
+                  // regulär gestrichene Pending-Order
+               }
+               else {
+                  // alles andere: "deleted [no money]", ???
+               }
+               // inaktive Pending-Order aus der Überwachung entfernen
                ArraySpliceInts(knownOrders.ticket, i, 1);
                ArraySpliceInts(knownOrders.type,   i, 1);
                knownSize--;
@@ -165,7 +177,7 @@ bool CheckPositions(int opens[], int closes[]) {
          }
          else {
             // jetzt offene oder bereits geschlossene Position
-            ArrayPushInt(opens, knownOrders.ticket[i]);                          // Pending-Order wurde ausgeführt
+            ArrayPushInt(openedPositions, knownOrders.ticket[i]);                // Pending-Order wurde ausgeführt
             knownOrders.type[i] = type;
             i++; continue;                                                       // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
          }
@@ -201,7 +213,7 @@ bool CheckPositions(int opens[], int closes[]) {
                }
             }
             if (closedByLimit)
-               ArrayPushInt(closes, knownOrders.ticket[i]);                      // Close-Limit wurde ausgeführt
+               ArrayPushInt(closedPositions, knownOrders.ticket[i]);             // Close-Limit wurde ausgeführt
             ArraySpliceInts(knownOrders.ticket, i, 1);                           // geschlossene Position aus der Überwachung entfernen
             ArraySpliceInts(knownOrders.type,   i, 1);
             knownSize--;
@@ -240,6 +252,46 @@ bool CheckPositions(int opens[], int closes[]) {
 
 
 /**
+ * Handler für OrderFail-Events.
+ *
+ * @param  int tickets[] - Tickets der fehlgeschlagenen Pending-Orders
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool onOrderFail(int tickets[]) {
+   if (!track.positions)
+      return(true);
+
+   int positions = ArraySize(tickets);
+
+   for (int i=0; i < positions; i++) {
+      if (!SelectTicket(tickets[i], "onOrderFail(1)"))
+         return(false);
+
+      string type        = OperationTypeDescription(OrderType() & 0x1);    // Buy-Limit -> Buy, Sell-Stop -> Sell, etc.
+      string lots        = DoubleToStr(OrderLots(), 2);
+      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+      int    pipDigits   = digits & (~1);
+      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
+      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"error: "+ OrderComment() + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
+
+      // ggf. SMS verschicken
+      if (__SMS.alerts) {
+         if (!SendSMS(__SMS.receiver, message))
+            return(!SetLastError(stdlib.GetLastError()));
+      }
+      else if (__LOG) log("onOrderFail(2)   "+ message);
+   }
+
+   // ggf. Sound abspielen
+   if (sound.alerts)
+      PlaySound(sound.order.failed);
+   return(!catch("onOrderFail(3)"));
+}
+
+
+/**
  * Handler für PositionOpen-Events.
  *
  * @param  int tickets[] - Tickets der neu geöffneten Positionen
@@ -274,7 +326,7 @@ bool onPositionOpen(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySound(positions.sound.onOpen);
+      PlaySound(sound.position.open);
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -315,7 +367,7 @@ bool onPositionClose(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySound(positions.sound.onClose);
+      PlaySound(sound.position.close);
    return(!catch("onPositionClose(3)"));
 }
 
