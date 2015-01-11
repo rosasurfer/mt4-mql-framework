@@ -8788,6 +8788,7 @@ MA.Timeframe=H1
 MA.Method=ALMA
 Color.UpTrend=16748574
 Color.DownTrend=42495
+Max.Values=5000
 </inputs>
 </expert>
 weight_0=0
