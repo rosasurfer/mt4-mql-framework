@@ -8779,15 +8779,12 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=ALMA
 flags=339
 window_num=0
 <inputs>
 MA.Periods=50
 MA.Timeframe=H1
-MA.Method=ALMA
-Color.UpTrend=16748574
-Color.DownTrend=42495
 Max.Values=5000
 </inputs>
 </expert>
