@@ -8796,20 +8796,19 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=ALMA
 flags=339
 window_num=0
 <inputs>
 MA.Periods=7
 MA.Timeframe=D1
-MA.Method=ALMA
 </inputs>
 </expert>
 weight_0=0
 weight_1=0
-weight_2=2
-weight_3=2
-weight_4=2
+weight_2=3
+weight_3=3
+weight_4=3
 period_flags=30
 show_data=1
 </indicator>

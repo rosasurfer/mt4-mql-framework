@@ -8779,13 +8779,12 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=ALMA
 flags=339
 window_num=0
 <inputs>
 MA.Periods=7
 MA.Timeframe=D1
-MA.Method=ALMA
 </inputs>
 </expert>
 weight_0=0

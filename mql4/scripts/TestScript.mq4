@@ -6,6 +6,8 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdlib.mqh>
+#include <history.mqh>
+#include <structs/mt4/HISTORY_HEADER.mqh>
 
 
 #import "StdLib.Release.dll"
@@ -19,8 +21,19 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   debug("onStart()");
+   string symbol = "AUDLFX";
+   int    period = PERIOD_M30;
+
+   int  hHst    = HistoryFile.Open(symbol, "", 4, period, FILE_READ|FILE_WRITE);
+   bool written = HistoryFile.AddTick(hHst, D'2014.08.26 02:55:01', 1.6244, NULL);
+   bool closed  = HistoryFile.Close  (hHst);
+
+
+   debug("onStart()  hHst="+ hHst +"  written="+ written +"  closed="+ closed);
    return(last_error);
+
+   int header[]; hf.Header(hHst, header);
+   HISTORY_HEADER.toStr(header, true);
 }
 
 /*
