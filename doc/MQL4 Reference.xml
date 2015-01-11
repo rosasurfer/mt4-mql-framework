@@ -576,26 +576,25 @@ of parameters to be passed (see above) can be considered as an example.</p>
       tag=basics_operations_rules
       caption=Precedence rules
       <content>
-<p>Each group of operations in the
-table has the same priority. The higher is the priority, the higher is the position of the group in the table.
-The precedence rules determine the grouping of operations and operands.</p>
+<p>Each group of operators in the table has the same priority. The higher the priority the higher the position of the group in the table.
+Precedence determines grouping of operations and operands.</p>
 <pre class="docmql4">
 ()     Function call                     From left to right
-[]     Referencing to an array element
+[]     Referencing an array element
 </pre>
 <pre class="docmql4">
 !      Logical negation                  From right to left
--      Sign changing operation
-++     Increment
---     Decrement
+-      Sign change operator
+++     Increment operator
+--     Decrement operator
 ~      Bitwise negation (complement)
 </pre>
 <pre class="docmql4">
-&amp;      Bitwise operation AND             From left to right
-|      Bitwise operation OR
-^      Bitwise operation exclusive OR
-&lt;&lt;     Left shift
-&gt;&gt;     Right shift
+&amp;      Bitwise AND operator              From left to right
+|      Bitwise OR operator 
+^      Bitwise exclusive OR operator
+&lt;&lt;     Bitwise left shift
+&gt;&gt;     Bitwise right shift
 </pre>
 <pre class="docmql4">
 *      Multiplication                    From left to right
@@ -631,8 +630,8 @@ The precedence rules determine the grouping of operations and operands.</p>
 ^=     Assignment exclusive OR
 </pre>
 <pre class="docmql4">,      Comma                             From left to right</pre><br/>
-<p>Parentheses that have higher priority are applied to change the execution order of the operations.<br/>
-        <b>Attention:</b> Priority of performing operations in MQL4 differs to some extent from that conventional in the C language.</p>
+<p>Parentheses (highest priority) can be applied to change the precedence order.<br/>
+        <b>Attention:</b> The operator priorities in MQL4 differ to some extent from conventional C language.</p>
       </content>
     </text>
   </group>
@@ -2245,7 +2244,7 @@ It can be one of the following values:</p>
 ;ERR_CANNOT_LOAD_LIBRARY;ERR_CANNOT_CALL_FUNCTION;ERR_EXTERNAL_CALLS_NOT_ALLOWED;
 ;ERR_NO_MEMORY_FOR_RETURNED_STR;ERR_SYSTEM_BUSY;ERR_INVALID_FUNCTION_PARAMSCNT;
 ;ERR_INVALID_FUNCTION_PARAMVALUE;ERR_STRING_FUNCTION_INTERNAL;ERR_ARRAY_ERROR;
-;ERR_INCORRECT_SERIESARRAY_USING;ERR_CUSTOM_INDICATOR_ERROR;ERR_INCOMPATIBLE_ARRAYS;
+;ERR_SERIES_NOT_AVAILABLE;ERR_CUSTOM_INDICATOR_ERROR;ERR_INCOMPATIBLE_ARRAYS;
 ;ERR_GLOBAL_VARIABLES_PROCESSING;ERR_GLOBAL_VARIABLE_NOT_FOUND;ERR_FUNC_NOT_ALLOWED_IN_TESTING;
 ;ERR_FUNCTION_NOT_CONFIRMED;ERR_SEND_MAIL_ERROR;ERR_STRING_PARAMETER_EXPECTED;ERR_INTEGER_PARAMETER_EXPECTED;
 ;ERR_DOUBLE_PARAMETER_EXPECTED;ERR_ARRAY_AS_PARAMETER_EXPECTED;ERR_END_OF_FILE;ERR_FILE_ERROR;
@@ -2338,7 +2337,7 @@ void SendMyMessage(string text)
 <tr><td>ERR_INVALID_FUNCTION_PARAMVALUE</td><td>4051</td><td>Invalid function parameter value.</td></tr>
 <tr><td>ERR_STRING_FUNCTION_INTERNAL</td><td>4052</td><td>String function internal error.</td></tr>
 <tr><td>ERR_ARRAY_ERROR</td><td>4053</td><td>Some array error.</td></tr>
-<tr><td>ERR_INCORRECT_SERIESARRAY_USING</td><td>4054</td><td>Incorrect series array using.</td></tr>
+<tr><td>ERR_SERIES_NOT_AVAILABLE</td><td>4054</td><td>Time series not available.</td></tr>
 <tr><td>ERR_CUSTOM_INDICATOR_ERROR</td><td>4055</td><td>Custom indicator error.</td></tr>
 <tr><td>ERR_INCOMPATIBLE_ARRAYS</td><td>4056</td><td>Arrays are incompatible.</td></tr>
 <tr><td>ERR_GLOBAL_VARIABLES_PROCESSING</td><td>4057</td><td>Global variables processing error.</td></tr>
@@ -2801,7 +2800,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       ;ERR_CANNOT_LOAD_LIBRARY;ERR_CANNOT_CALL_FUNCTION;ERR_EXTERNAL_CALLS_NOT_ALLOWED;
       ;ERR_NO_MEMORY_FOR_RETURNED_STR;ERR_SYSTEM_BUSY;ERR_INVALID_FUNCTION_PARAMSCNT;
       ;ERR_INVALID_FUNCTION_PARAMVALUE;ERR_STRING_FUNCTION_INTERNAL;ERR_ARRAY_ERROR;
-      ;ERR_INCORRECT_SERIESARRAY_USING;ERR_CUSTOM_INDICATOR_ERROR;ERR_INCOMPATIBLE_ARRAYS;
+      ;ERR_SERIES_NOT_AVAILABLE;ERR_CUSTOM_INDICATOR_ERROR;ERR_INCOMPATIBLE_ARRAYS;
       ;ERR_GLOBAL_VARIABLES_PROCESSING;ERR_GLOBAL_VARIABLE_NOT_FOUND;ERR_FUNC_NOT_ALLOWED_IN_TESTING;
       ;ERR_FUNCTION_NOT_CONFIRMED;ERR_SEND_MAIL_ERROR;ERR_STRING_PARAMETER_EXPECTED;ERR_INTEGER_PARAMETER_EXPECTED;
       ;ERR_DOUBLE_PARAMETER_EXPECTED;ERR_ARRAY_AS_PARAMETER_EXPECTED;ERR_END_OF_FILE;ERR_FILE_ERROR;
@@ -2814,15 +2813,12 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       </keywords>
       <content>
         <p>
-         In the executing sub-system of the client terminal, the error code can be stored, in the case of its occurring
-       at an mql4 program execution. There is a specific <i>last_error</i> variable provided for every executable mql4 program.
-       Before the init function is run, the <i>last_error</i> variable has been zeroized. If an error occurs during the process of
-       calculation or that of calling the built-in function, the <i>last_error</i> variable takes the corresponding
-       <a href="help://constants_errors">error code</a>. Value stored in this variable can be got using the <a href="help://check_GetLastError">GetLastError</a> function.
-         At that, the <i>last_error</i> variable will be zeroized.
+         The client terminal stores the last error occurred during MQL program execution in the <i>last_error</i> variable (separately for each MQL program).
+       	The variable is reset to NULL before the execution of the init function. To read the <i>last_error</i> variable use the <a href="help://check_GetLastError">GetLastError</a> 
+       	function. With each call of that function the <i>last_error</i> variable is reset to NULL.
         </p>
         <p>
-         There is a number of critical errors that cause immediate stopping of program execution:</p>
+         There are a number of critical errors that cause an immediate stop of program execution:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
         <tr><td>ERR_WRONG_FUNCTION_POINTER</td><td>4001</td><td>At calling of an internal function, a wrong function pointer has been detected</td></tr>
@@ -2837,12 +2833,12 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td>ERR_UNKNOWN_COMMAND</td><td>4014</td><td>Unknown instruction</td></tr>
         </table>
         <p>
-         If the program stopped working due to a critical error, the code of this error can be read at the next launching of the start or deinit function
-         using the <a href="help://check_GetLastError">GetLastError()</a> function. The <i>last_error</i> variable is not zeroized before the start or deinit function starts.
+         If the program stopped working due to a critical error, the code of this error can be read at the next execution of the start or the deinit function using
+         <a href="help://check_GetLastError">GetLastError()</a>.
         </p>
         <p><br/>
-         There is a number of critical errors referred to <a href="help://runtime_imports">imported functions call</a> that cause immediate stopping of
-         expert advisor or custom indicator execution the start function will not be launched until expert or indicator is re-initialized.
+         There are a number of critical errors referred to <a href="help://runtime_imports">imported functions call</a> that cause an immediate stop of
+         expert advisor or custom indicator execution. The start function will not be executed again until the expert or the indicator is re-initialized.
         </p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
@@ -2852,7 +2848,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td>ERR_EXTERNAL_CALLS_NOT_ALLOWED</td><td>4020</td><td>At calling of an ex4 function, it was found out that external ex4 imports were not allowed</td></tr>
         </table>
         <p><br/>
-         Other errors do not interrupt program execution.</p>
+         Other errors that do not interrupt program execution:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
         <tr><td>ERR_ARRAY_INDEX_OUT_OF_RANGE</td><td>4002</td><td>Attempt to access an array item number of which is out of the array range</td></tr>
@@ -2864,7 +2860,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         The ERR_NO_MQLERROR (4000) code is never generated.
         </p>
         <p>
-         There is a number of errors which are possible only as a result of software or hardware failure.If any errors described below occur repeatedly, one should contact the developers.</p>
+         There are a number of errors which are possible only as a result of software or hardware failure. If any errors described below occur repeatedly, one should contact the developers.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
         <tr><td>ERR_WRONG_FUNCTION_POINTER</td><td>4001</td><td>At calling of an internal function, a wrong function pointer has been detected</td></tr>
@@ -2876,7 +2872,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td>ERR_OBJECT_ERROR</td><td>4207</td><td>Object function internal error</td></tr>
         </table>
         <p><br/>
-         There are some functions that always change the <i>last_error</i> variable value.</p>
+         There are some functions that always set the <i>last_error</i> variable.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Function</th><th width="85%">Error codes</th></tr>
         <tr><td><a href="help://account_AccountFreeMarginCheck">AccountFreeMarginCheck</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_UNKNOWN_SYMBOL (4106), ERR_NOT_ENOUGH_MONEY (134)</td></tr>
@@ -2888,13 +2884,13 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://check_GetLastError">GetLastError</a></td><td>ERR_NO_ERROR (0)</td></tr>
         </table>
         <p><br/>
-         Some functions change value of the <i>last_error</i> variable only if an error occurs.</p>
+         Most other functions change the <i>last_error</i> variable only if an error occurs:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Function</th><th width="85%">Error codes</th></tr>
         <tr><td><a href="help://array_ArrayBsearch">ArrayBsearch</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArrayCopy">ArrayCopy</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArrayCopyRates">ArrayCopyRates</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062),</td></tr>
-        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_UPDATE (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_SERIES_NOT_AVAILABLE (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_UPDATE (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArrayDimension">ArrayDimension</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://array_ArrayGetAsSeries">ArrayGetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://array_ArrayInitialize">ArrayInitialize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
@@ -2905,7 +2901,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://array_ArrayResize">ArrayResize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
         <tr><td><a href="help://array_ArraySize">ArraySize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArraySort">ArraySort</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArraySort">ArraySort</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_SERIES_NOT_AVAILABLE (4054), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileClose">FileClose</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://files_FileDelete">FileDelete</a></td><td>ERR_WRONG_FILE_NAME (4101), ERR_FILE_ERROR (4100)</td></tr>
         <tr><td><a href="help://files_FileFlush">FileFlush</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
@@ -2980,7 +2976,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://common_SendMail">SendMail</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_FUNCTION_NOT_CONFIRMED (4060), ERR_SEND_MAIL_ERROR (4061)</td></tr>
         <tr><td><a href="help://common_SendNotification">SendNotification</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOTIFICATION_SEND_ERROR (4250), ERR_NOTIFICATION_WRONG_PARAMETER (4251), ERR_NOTIFICATION_WRONG_SETTINGS (4252), ERR_NOTIFICATION_TOO_FREQUENT (4253)</td></tr>
         <tr><td><a href="help://customind_SetIndexArrow">SetIndexArrow</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexBuffer">SetIndexBuffer</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCORRECT_SERIESARRAY_USING (4054), ERR_INCOMPATIBLE_ARRAYS (4056)</td></tr>
+        <tr><td><a href="help://customind_SetIndexBuffer">SetIndexBuffer</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_SERIES_NOT_AVAILABLE (4054), ERR_INCOMPATIBLE_ARRAYS (4056)</td></tr>
         <tr><td><a href="help://customind_SetIndexDrawBegin">SetIndexDrawBegin</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://customind_SetIndexEmptyValue">SetIndexEmptyValue</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         <tr><td><a href="help://customind_SetIndexLabel">SetIndexLabel</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
@@ -3001,7 +2997,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://windows_WindowScreenShot">WindowScreenShot</a></td><td>ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
         </table>
         <p><br/>
-         Other functions never change the <i>last_error</i> variable value.<br/>
+         Some other functions never change the <i>last_error</i> variable:<br/>
          <a href="help://account_AccountBalance">AccountBalance</a>,
          <a href="help://account_AccountCompany">AccountCompany</a>,
          <a href="help://account_AccountCredit">AccountCredit</a>,
