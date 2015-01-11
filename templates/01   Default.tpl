@@ -8770,7 +8770,6 @@ name=SuperBars
 flags=339
 window_num=0
 <inputs>
-Color.ETH=-1
 </inputs>
 </expert>
 period_flags=255

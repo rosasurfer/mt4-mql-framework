@@ -815,10 +815,12 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Flags zur Fehlerbehandlung                         // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
-#define CATCH_ERR_INVALID_STOP                  1     // ERR_INVALID_STOP
-#define CATCH_ERR_ORDER_CHANGED                 2     // ERR_ORDER_CHANGED
-#define CATCH_ERS_EXECUTION_STOPPING            4     // ERS_EXECUTION_STOPPING (Status)
-#define CATCH_ERR_CONCUR_MODIFICATION           8     // ERR_CONCURRENT_MODIFICATION
+#define MUTE_ERR_INVALID_STOP                   1     // ERR_INVALID_STOP
+#define MUTE_ERR_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED
+#define MUTE_ERR_CONCUR_MODIFICATION            4     // ERR_CONCURRENT_MODIFICATION
+#define MUTE_ERR_SERIES_NOT_AVAILABLE           8     // ERR_SERIES_NOT_AVAILABLE
+#define MUTE_ERS_HISTORY_UPDATE                16     // ERS_HISTORY_UPDATE            (Status)
+#define MUTE_ERS_EXECUTION_STOPPING            32     // ERS_EXECUTION_STOPPING        (Status)
 
 
 // String padding types, siehe StringPad()
@@ -1255,7 +1257,7 @@ string ErrorDescription(int error) {
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                          ); //   4051 invalid parameter value
       case ERR_STRING_FUNCTION_INTERNAL   : return("string function internal error"                            ); //   4052
       case ERR_ARRAY_ERROR                : return("array error"                                               ); //   4053 some array error
-      case ERR_TIMEFRAME_NOT_AVAILABLE    : return("requested timeframe not available"                         ); //   4054 timeframe not available
+      case ERR_SERIES_NOT_AVAILABLE       : return("requested time series not available"                       ); //   4054 time series not available
       case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                    ); //   4055 custom indicator error
       case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                       ); //   4056 incompatible arrays
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                         ); //   4057
@@ -1395,7 +1397,7 @@ string ErrorToStr(int error) {
       case ERR_INVALID_FUNCTION_PARAMVALUE: return("ERR_INVALID_FUNCTION_PARAMVALUE"); //   4051
       case ERR_STRING_FUNCTION_INTERNAL   : return("ERR_STRING_FUNCTION_INTERNAL"   ); //   4052
       case ERR_ARRAY_ERROR                : return("ERR_ARRAY_ERROR"                ); //   4053
-      case ERR_TIMEFRAME_NOT_AVAILABLE    : return("ERR_TIMEFRAME_NOT_AVAILABLE"    ); //   4054
+      case ERR_SERIES_NOT_AVAILABLE       : return("ERR_SERIES_NOT_AVAILABLE"       ); //   4054
       case ERR_CUSTOM_INDICATOR_ERROR     : return("ERR_CUSTOM_INDICATOR_ERROR"     ); //   4055
       case ERR_INCOMPATIBLE_ARRAYS        : return("ERR_INCOMPATIBLE_ARRAYS"        ); //   4056
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("ERR_GLOBAL_VARIABLES_PROCESSING"); //   4057
@@ -2532,13 +2534,13 @@ double ixATR(string symbol, int timeframe, int periods, int offset) {// throws E
    if (symbol == "0")         // (string) NULL
       symbol = Symbol();
 
-   double atr = iATR(symbol, timeframe, periods, offset);// throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+   double atr = iATR(symbol, timeframe, periods, offset);// throws ERS_HISTORY_UPDATE, ERR_SERIES_NOT_AVAILABLE
 
    int error = GetLastError();
    if (error != NO_ERROR) {
-      if      (timeframe == Period()               ) {                                     return(_EMPTY(catch("ixATR(1)", error))); }    // sollte niemals auftreten
-      if      (error == ERR_TIMEFRAME_NOT_AVAILABLE) { if (!IsBuiltinTimeframe(timeframe)) return(_EMPTY(catch("ixATR(2)", error))); }
-      else if (error != ERS_HISTORY_UPDATE         ) {                                     return(_EMPTY(catch("ixATR(3)", error))); }
+      if      (timeframe == Period()            ) {                                     return(_EMPTY(catch("ixATR(1)", error))); }    // sollte niemals auftreten
+      if      (error == ERR_SERIES_NOT_AVAILABLE) { if (!IsBuiltinTimeframe(timeframe)) return(_EMPTY(catch("ixATR(2)", error))); }
+      else if (error != ERS_HISTORY_UPDATE      ) {                                     return(_EMPTY(catch("ixATR(3)", error))); }
       atr   = 0;
       error = ERS_HISTORY_UPDATE;
    }

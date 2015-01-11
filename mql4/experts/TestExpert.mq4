@@ -18,11 +18,25 @@ extern int    iParameter = 12345;
 
 
 /**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   debug("onInit()   IsExpertEnabled="+ IsExpertEnabled() +"  IsTradeAllowed="+ IsTradeAllowed());
+   return(0);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onTick() {
+   debug("onTick()   IsExpertEnabled="+ IsExpertEnabled() +"  IsTradeAllowed="+ IsTradeAllowed());
+   return(0);
+
    string symbol         = Symbol();
    int    timeframe      = Period();
    string name           = "TestIndicator2";
