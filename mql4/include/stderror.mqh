@@ -86,8 +86,8 @@
 #define ERR_STRING_FUNCTION_INTERNAL                               4052
 #define ERR_ARRAY_ERROR                                            4053    // array error
 #define ERR_SOME_ARRAY_ERROR                            ERR_ARRAY_ERROR    //                                        MetaQuotes-Alias
-#define ERR_TIMEFRAME_NOT_AVAILABLE                                4054    // requested timeframe not available
-#define ERR_INCORRECT_SERIESARRAY_USING     ERR_TIMEFRAME_NOT_AVAILABLE    //                                        MetaQuotes-Alias
+#define ERR_SERIES_NOT_AVAILABLE                                   4054    // requested time series not available
+#define ERR_INCORRECT_SERIESARRAY_USING        ERR_SERIES_NOT_AVAILABLE    //                                        MetaQuotes-Alias
 #define ERR_CUSTOM_INDICATOR_ERROR                                 4055    // custom indicator error
 #define ERR_INCOMPATIBLE_ARRAYS                                    4056    // incompatible arrays
 #define ERR_GLOBAL_VARIABLES_PROCESSING                            4057

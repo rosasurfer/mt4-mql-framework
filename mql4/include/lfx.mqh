@@ -575,7 +575,7 @@ private*/int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) 
    SetLastError(error);
 
    // (1) die angegebenen Laufzeitfehler abfangen
-   if (fCatch & CATCH_ERR_CONCUR_MODIFICATION && 1) {
+   if (fCatch & MUTE_ERR_CONCUR_MODIFICATION && 1) {
       if (error == ERR_CONCURRENT_MODIFICATION) {
          if (__LOG) log(message, error);
          return(error);

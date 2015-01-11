@@ -9,7 +9,7 @@ bool icChartInfos(int timeframe) {
    // TODO: Aufruf statisch machen
    int lpLocalContext = GetBufferAddress(__ExecutionContext);
 
-   iCustom(NULL, timeframe, "ChartInfos",                                  // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+   iCustom(NULL, timeframe, "ChartInfos",                                  // throws ERS_HISTORY_UPDATE, ERR_SERIES_NOT_AVAILABLE
            "",                                                             // ________________
            lpLocalContext,                                                 // __SuperContext__
            0,                                                              // iBuffer

@@ -11,7 +11,7 @@ bool icEventTracker(int timeframe) {
 
    int lpLocalContext = GetBufferAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "EventTracker",                 // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+   double value = iCustom(NULL, timeframe, "EventTracker",                 // throws ERS_HISTORY_UPDATE, ERR_SERIES_NOT_AVAILABLE
                           "",                                              // ________________
                           lpLocalContext,                                  // __SuperContext__
                           0,                                               // iBuffer

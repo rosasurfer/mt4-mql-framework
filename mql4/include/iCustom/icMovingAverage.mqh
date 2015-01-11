@@ -37,7 +37,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 
                           "",                                              // ________________
                           lpLocalContext,                                  // __SuperContext__
-                          iBuffer, iBar);                                  // throws ERS_HISTORY_UPDATE, ERR_TIMEFRAME_NOT_AVAILABLE
+                          iBuffer, iBar);                                  // throws ERS_HISTORY_UPDATE, ERR_SERIES_NOT_AVAILABLE
 
    int error = GetLastError();
 

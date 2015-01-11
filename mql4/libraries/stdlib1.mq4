@@ -10400,7 +10400,7 @@ private*/int __Order.HandleError(string message, int error, bool serverError, in
    }
 
    // (2) die angegebenen Laufzeitfehler abfangen
-   if (oeFlags & CATCH_ERR_INVALID_STOP && 1) {
+   if (oeFlags & MUTE_ERR_INVALID_STOP && 1) {
       if (error == ERR_INVALID_STOP) {
          if (__LOG) log(message, error);
          return(error);
