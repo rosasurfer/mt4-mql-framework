@@ -3620,8 +3620,6 @@ string InputsToStr() {
 
 
 #import "stdlib1.ex4"
-   string   DoubleToStrEx(double value, int digits/*=0..16*/);
-
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble(double array[], double value);
