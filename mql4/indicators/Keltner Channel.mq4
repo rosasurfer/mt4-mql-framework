@@ -10,7 +10,7 @@ int __DEINIT_FLAGS__[];
 
 extern string MA.Periods            = "200";                         // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern string MA.Timeframe          = "current";                     // Timeframe: [M1|M5|M15|...], "" = aktueller Timeframe
-extern string MA.Method             = "SMA* | EMA | SMMA | LWMA | TMA | ALMA";
+extern string MA.Method             = "SMA* | EMA | LWMA | ALMA";
 extern string MA.AppliedPrice       = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern int    ATR.Periods           = 100;
@@ -33,7 +33,6 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 #define Bands.MODE_UPPER      0                                      // oberes Band
 #define Bands.MODE_MA         1                                      // MA
 #define Bands.MODE_LOWER      2                                      // unteres Band
-#define Bands.MODE_TMASMA     3                                      // SMA1 eines TMA
 
 #property indicator_chart_window
 
@@ -47,7 +46,6 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 double bufferUpperBand[];                                            // sichtbar
 double bufferMA       [];                                            // sichtbar
 double bufferLowerBand[];                                            // sichtbar
-double bufferTmaSma   [];                                            // unsichtbarer TMA-Hilfsbuffer
 
 int    ma.periods;
 int    ma.method;
@@ -142,8 +140,8 @@ int onInit() {
    if (ATR.Multiplicator < 0)        return(catch("onInit(11)   Invalid input parameter ATR.Multiplicator = "+ NumberToStr(ATR.Multiplicator, ".+"), ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.8) Colors
-   if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // kann vom Terminal falsch gesetzt worden sein
-   if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;
+   if (Color.Bands == 0xFF000000) Color.Bands = CLR_NONE;            // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+   if (Color.MA    == 0xFF000000) Color.MA    = CLR_NONE;            // u.U. 0xFF000000 (entspricht Schwarz)
 
    // (1.9) Max.Values
    if (Max.Values < -1)              return(catch("onInit(12)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
@@ -164,11 +162,9 @@ int onInit() {
 
 
    // (4.1) Bufferverwaltung
-   IndicatorBuffers(4);
-   SetIndexBuffer(Bands.MODE_UPPER,  bufferUpperBand);               // sichtbar
-   SetIndexBuffer(Bands.MODE_MA,     bufferMA       );               // sichtbar
-   SetIndexBuffer(Bands.MODE_LOWER,  bufferLowerBand);               // sichtbar
-   SetIndexBuffer(Bands.MODE_TMASMA, bufferTmaSma   );               // unsichtbarer Hilfsbuffer
+   SetIndexBuffer(Bands.MODE_UPPER, bufferUpperBand);                // sichtbar
+   SetIndexBuffer(Bands.MODE_MA,    bufferMA       );                // sichtbar
+   SetIndexBuffer(Bands.MODE_LOWER, bufferLowerBand);                // sichtbar
 
    // (4.2) Anzeigeoptionen
    string atrDescription = NumberToStr(ATR.Multiplicator, ".+") +"*ATR("+ ATR.Periods + strAtrTimeframe +")";
@@ -221,7 +217,6 @@ int onTick() {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      ArrayInitialize(bufferTmaSma,    EMPTY_VALUE);
       iBands.SetIndicatorStyles(Color.MA, Color.Bands);              // Workaround um diverse Terminalbugs (siehe dort)
    }
 
@@ -250,9 +245,6 @@ int onTick() {
          bufferLowerBand[bar] = bufferMA[bar] - atr;
       }
    }
-   else if (ma.method == MODE_TMA) {
-      RecalcTMAChannel(startBar);
-   }
    else if (ma.method == MODE_ALMA) {
       RecalcALMAChannel(startBar);
    }
@@ -261,36 +253,6 @@ int onTick() {
    // (3) Legende aktualisieren
    iBands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
    return(last_error);
-}
-
-
-/**
- * Berechnet die ungültigen Bars eines TMA-basierten Keltner Channels neu.
- *
- * @param  int startBar
- *
- * @return bool - Erfolgsstatus
- */
-bool RecalcTMAChannel(int startBar) {
-   double atr;
-
-   int sma1.periods  = ma.periods/2;                                 // Periode des ersten SMA eines TMA
-   int sma2.periods  = ma.periods - sma1.periods;                    // Periode des zweiten SMA eines TMA
-   int sma1.startBar = Min(Bars-sma1.periods, startBar+sma1.periods);
-
-   // erster SMA
-   for (int i, j, bar=sma1.startBar; bar >= 0; bar--) {
-      bufferTmaSma[bar] = iMA(NULL, NULL, sma1.periods, 0, MODE_SMA, ma.appliedPrice, bar);
-   }
-
-   // zweiter SMA
-   for (bar=startBar; bar >= 0; bar--) {
-      bufferMA       [bar] = iMAOnArray(bufferTmaSma, WHOLE_ARRAY, sma2.periods, 0, MODE_SMA, bar) + shift.vertical;
-      atr                  = iATR(NULL, atr.timeframe, ATR.Periods, bar) * ATR.Multiplicator;
-      bufferUpperBand[bar] = bufferMA[bar] + atr;
-      bufferLowerBand[bar] = bufferMA[bar] - atr;
-   }
-   return(!catch("RecalcTMAChannel()"));
 }
 
 

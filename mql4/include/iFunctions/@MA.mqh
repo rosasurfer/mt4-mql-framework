@@ -1,37 +1,44 @@
 /**
- * Aktualisiert Trend und Trend-Coloring eines Moving Average.
+ * Aktualisiert die Indikatorbuffer für den Trend und das Trend-Coloring eines Moving Average.
+ *
+ * @param  _IN_  double  ma[]        - Array mit den Werten des Moving Average
+ * @param  _IN_  int     bar         - Offset der zu aktualisierenden Bar
+ * @param  _OUT_ double &trend    [] - Trendrichtung und -länge der aktualisierten Bar (-n...-1 ... +1...+n)
+ * @param  _OUT_ double &upTrend1 [] - steigende Indikatorwerte
+ * @param  _OUT_ double &downTrend[] - fallende Indikatorwerte (liegt im Chart über der UpTrend-1-Linie)
+ * @param  _OUT_ double &upTrend2 [] - steigende Indikatorwerte für Trendlängen von einer einzigen Bar (liegt im Chart über der DownTrend-Line)
  */
-void iMA.UpdateTrend(double bufferMA[], double &bufferTrend[], double &bufferUpTrend[], double &bufferDownTrend[], double &bufferUpTrend2[], int bar) {
+void iMA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]) {
    // (1) Trend: Reversal-Glättung um 0.1 pip durch Normalisierung
-   double currentValue  = NormalizeDouble(bufferMA[bar  ], SubPipDigits);
-   double previousValue = NormalizeDouble(bufferMA[bar+1], SubPipDigits);
+   double currentValue  = NormalizeDouble(ma[bar  ], SubPipDigits);
+   double previousValue = NormalizeDouble(ma[bar+1], SubPipDigits);
 
-   if      (currentValue > previousValue) bufferTrend[bar] =       Max(bufferTrend[bar+1], 0) + 1;
-   else if (currentValue < previousValue) bufferTrend[bar] =       Min(bufferTrend[bar+1], 0) - 1;
-   else                                   bufferTrend[bar] = MathRound(bufferTrend[bar+1] + Sign(bufferTrend[bar+1]));
+   if      (currentValue > previousValue) trend[bar] =       Max(trend[bar+1], 0) + 1;
+   else if (currentValue < previousValue) trend[bar] =       Min(trend[bar+1], 0) - 1;
+   else                                   trend[bar] = MathRound(trend[bar+1] + Sign(trend[bar+1]));
 
 
    // (2) Trend-Coloring
-   if (bufferTrend[bar] > 0) {                                       // Up-Trend
-      bufferUpTrend  [bar] = bufferMA[bar];
-      bufferDownTrend[bar] = EMPTY_VALUE;
+   if (trend[bar] > 0) {                                             // (2.1) jetzt Up-Trend
+      upTrend1 [bar] = ma[bar];
+      downTrend[bar] = EMPTY_VALUE;
 
-      if (bufferTrend[bar+1] < 0) bufferUpTrend  [bar+1] = bufferMA[bar+1];
-      else                        bufferDownTrend[bar+1] = EMPTY_VALUE;
+      if (trend[bar+1] < 0) upTrend1 [bar+1] = ma[bar+1];            // wenn vorher Down-Trend...
+      else                  downTrend[bar+1] = EMPTY_VALUE;
    }
-   else {                                                            // Down-Trend
-      bufferUpTrend  [bar] = EMPTY_VALUE;
-      bufferDownTrend[bar] = bufferMA[bar];
+   else {                                                            // (2.2) jetzt Down-Trend
+      upTrend1 [bar] = EMPTY_VALUE;
+      downTrend[bar] = ma[bar];
 
-      if (bufferTrend[bar+1] > 0) {                                  // wenn vorher Up-Trend...
-         bufferDownTrend[bar+1] = bufferMA[bar+1];
-         if (Bars > bar+2) /*&&*/ if (bufferTrend[bar+2] < 0) {      // ...und Up-Trend war nur eine Bar lang, ...
-            bufferUpTrend2[bar+2] = bufferMA[bar+2];
-            bufferUpTrend2[bar+1] = bufferMA[bar+1];                 // ... dann Down-Trend mit Up-Trend 2 überlagern.
+      if (trend[bar+1] > 0) {                                        // wenn vorher Up-Trend...
+         downTrend[bar+1] = ma[bar+1];
+         if (Bars > bar+2) /*&&*/ if (trend[bar+2] < 0) {            // ...und dieser Up-Trend war nur eine Bar lang...
+            upTrend2[bar+2] = ma[bar+2];
+            upTrend2[bar+1] = ma[bar+1];                             // ...dann Down-Trend mit Up-Trend 2 überlagern.
          }
       }
       else {
-         bufferUpTrend[bar+1] = EMPTY_VALUE;
+         upTrend1[bar+1] = EMPTY_VALUE;
       }
    }
 }

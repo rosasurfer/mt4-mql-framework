@@ -56,7 +56,7 @@ int onTick() {
 
       // Sadukey-Median = (O+H+L+C)/4
 
-      // (Sadukey-Median + Close)/2
+      // buffer1     = (Sadukey-Median + Close)/2
       Buffer1[shift] = 0.11859648 * ((Open[shift+ 0] + High[shift+ 0] + Low[shift+ 0] + Close[shift+ 0])/4 + Close[shift+ 0])/2
                      + 0.11781324 * ((Open[shift+ 1] + High[shift+ 1] + Low[shift+ 1] + Close[shift+ 1])/4 + Close[shift+ 1])/2
                      + 0.11548308 * ((Open[shift+ 2] + High[shift+ 2] + Low[shift+ 2] + Close[shift+ 2])/4 + Close[shift+ 2])/2
@@ -124,7 +124,7 @@ int onTick() {
                      - 0.00274361 * ((Open[shift+64] + High[shift+64] + Low[shift+64] + Close[shift+64])/4 + Close[shift+64])/2
                      + 0.01018757 * ((Open[shift+65] + High[shift+65] + Low[shift+65] + Close[shift+65])/4 + Close[shift+65])/2;
 
-      // (Sadukey-Median + Open)/2
+      // buffer2     = (Sadukey-Median + Open)/2
       Buffer2[shift] = 0.11859648 * ((Open[shift+ 0] + High[shift+ 0] + Low[shift+ 0] + Close[shift+ 0])/4 + Open[shift+ 0])/2
                      + 0.11781324 * ((Open[shift+ 1] + High[shift+ 1] + Low[shift+ 1] + Close[shift+ 1])/4 + Open[shift+ 1])/2
                      + 0.11548308 * ((Open[shift+ 2] + High[shift+ 2] + Low[shift+ 2] + Close[shift+ 2])/4 + Open[shift+ 2])/2

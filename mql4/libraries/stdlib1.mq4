@@ -7524,10 +7524,8 @@ string MovAvgMethodToStr(int method) {
    switch (method) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_EMA : return("MODE_EMA" );
-      case MODE_SMMA: return("MODE_SMMA");
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
-      case MODE_TMA : return("MODE_TMA" );
    }
    return(_emptyStr(catch("MovAvgMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -7558,10 +7556,8 @@ string MovAvgMethodDescription(int method) {
    switch (method) {
       case MODE_SMA : return("SMA" );
       case MODE_EMA : return("EMA" );
-      case MODE_SMMA: return("SMMA");
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
-      case MODE_TMA : return("TMA" );
    }
    return(_emptyStr(catch("MovAvgMethodDescription()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -7584,7 +7580,7 @@ string MovingAverageMethodDescription(int method) {
 /**
  * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
  *
- * @param  string value - MA-Methode: [MODE_][SMA|EMA|SMMA|LWMA|ALMA|TMA]
+ * @param  string value - MA-Methode: [MODE_][SMA|EMA|LWMA|ALMA]
  *
  * @return int - MA-Konstante oder -1 (EMPTY), wenn der Methodenbezeichner unbekannt ist
  */
@@ -7598,14 +7594,10 @@ int StrToMovAvgMethod(string value) {
    if (str == ""+ MODE_SMA  ) return(MODE_SMA );
    if (str ==         "EMA" ) return(MODE_EMA );
    if (str == ""+ MODE_EMA  ) return(MODE_EMA );
-   if (str ==         "SMMA") return(MODE_SMMA);
-   if (str == ""+ MODE_SMMA ) return(MODE_SMMA);
    if (str ==         "LWMA") return(MODE_LWMA);
    if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
-   if (str ==         "TMA" ) return(MODE_TMA );
-   if (str == ""+ MODE_TMA  ) return(MODE_TMA );
 
    if (__LOG) log("StrToMovAvgMethod(1)   invalid parameter value = \""+ value +"\"", ERR_INVALID_FUNCTION_PARAMVALUE);
    return(EMPTY);
@@ -10013,8 +10005,8 @@ string DateToStr(datetime time, string mask) {
  * @return string - String-Token oder Leerstring, falls der übergebene Wert kein gültiger Farbcode ist.
  */
 string ColorToStr(color value)   {
-   if (value == 0xFF000000)                                          // kann als Farb-Property vom Terminal falsch gesetzt worden sein
-      value = CLR_NONE;
+   if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+      value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
    if (value < CLR_NONE || value > C'255,255,255')
       return(_emptyStr(catch("ColorToStr()   invalid parameter value = "+ value +" (not a color)", ERR_INVALID_FUNCTION_PARAMVALUE)));
 

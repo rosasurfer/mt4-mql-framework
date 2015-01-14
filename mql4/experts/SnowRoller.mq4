@@ -2841,7 +2841,6 @@ bool ValidateConfiguration(bool interactive) {
             // key="ALMA"
             if      (key == "SMA" ) start.trend.method = key;
             else if (key == "EMA" ) start.trend.method = key;
-            else if (key == "SMMA") start.trend.method = key;
             else if (key == "LWMA") start.trend.method = key;
             else if (key == "ALMA") start.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(25)", "Invalid StartConditions = \""+ StartConditions +"\"", interactive)));
@@ -2963,7 +2962,6 @@ bool ValidateConfiguration(bool interactive) {
             // key="ALMA"
             if      (key == "SMA" ) stop.trend.method = key;
             else if (key == "EMA" ) stop.trend.method = key;
-            else if (key == "SMMA") stop.trend.method = key;
             else if (key == "LWMA") stop.trend.method = key;
             else if (key == "ALMA") stop.trend.method = key;
             else                                       return(_false(ValidateConfig.HandleError("ValidateConfiguration(53)", "Invalid StopConditions = \""+ StopConditions +"\"", interactive)));
@@ -3068,8 +3066,8 @@ bool ValidateConfiguration(bool interactive) {
 
 
    // (7) StartStop.Color
-   if (StartStop.Color == 0xFF000000)                                   // kann vom Terminal falsch gesetzt worden sein
-      StartStop.Color = CLR_NONE;
+   if (StartStop.Color == 0xFF000000)                                   // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+      StartStop.Color = CLR_NONE;                                       // u.U. 0xFF000000 (entspricht Schwarz)
    if (StartStop.Color < CLR_NONE || StartStop.Color > C'255,255,255')  // kann nur nicht-interaktiv falsch reinkommen
                                                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(76)", "Invalid StartStop.Color = 0x"+ IntToHexStr(StartStop.Color), interactive)));
 

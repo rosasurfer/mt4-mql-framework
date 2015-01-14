@@ -14,7 +14,7 @@ int __DEINIT_FLAGS__[];
 extern int    MA.Periods        = 200;                               // Anzahl der zu verwendenden Perioden
 extern string MA.Timeframe      = "current";                         // zu verwendender Timeframe (M1, M5, M15 etc. oder "" = aktueller Timeframe)
 extern string MA.Methods        = "SMA";                             // ein/zwei MA-Methoden (komma-getrennt)
-extern string MA.Methods.Help   = "SMA | EMA | SMMA | LWMA | ALMA";
+extern string MA.Methods.Help   = "SMA | EMA | LWMA | ALMA";
 extern string AppliedPrice      = "Close";                           // Preis zur MA- und StdDev-Berechnung
 extern string AppliedPrice.Help = "Open | High | Low | Close | Median | Typical | Weighted";
 extern string Deviations        = "2.0";                             // ein/zwei Multiplikatoren für die Std.-Abweichung (komma-getrennt)
@@ -66,7 +66,6 @@ int onInit() {
    string value = StringTrim(values[0]);
    if      (value == "SMA" ) maMethod1 = MODE_SMA;
    else if (value == "EMA" ) maMethod1 = MODE_EMA;
-   else if (value == "SMMA") maMethod1 = MODE_SMMA;
    else if (value == "LWMA") maMethod1 = MODE_LWMA;
    else if (value == "ALMA") maMethod1 = MODE_ALMA;
    else                               return(catch("onInit(3)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -76,7 +75,6 @@ int onInit() {
       value = StringTrim(values[1]);
       if      (value == "SMA" ) maMethod2 = MODE_SMA;
       else if (value == "EMA" ) maMethod2 = MODE_EMA;
-      else if (value == "SMMA") maMethod2 = MODE_SMMA;
       else if (value == "LWMA") maMethod2 = MODE_LWMA;
       else if (value == "ALMA") maMethod2 = MODE_ALMA;
       else                            return(catch("onInit(4)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));

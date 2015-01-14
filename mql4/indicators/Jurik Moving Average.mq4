@@ -126,8 +126,8 @@ int onInit() {
    if (Max.Values < -1)              return(catch("onInit(10)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.6) Colors
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // können vom Terminal falsch gesetzt worden sein
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;    // u.U. 0xFF000000 (entspricht Schwarz)
 
 
    // (2) Chart-Legende erzeugen
@@ -474,7 +474,7 @@ int onTick() {
       bufferMA[bar] = jma;
 
       // Trend aktualisieren
-      iMA.UpdateTrend(bufferMA, bufferTrend, bufferUpTrend, bufferDownTrend, bufferUpTrend2, bar);
+      iMA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend, bufferDownTrend, bufferUpTrend2);
    }
 
 

@@ -19,11 +19,13 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
    if (IsLastError())
       return(0);
 
-   int maMaxValues    = 10;                                                // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
-   int lpLocalContext = GetBufferAddress(__ExecutionContext);
+   bool hotkeysEnabled = false;
+   int  maMaxValues    = 10;                                               // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
+   int  lpLocalContext = GetBufferAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                                       // MA.Periods
+                          hotkeysEnabled,                                  // MA.Periods.Hotkeys.Enabled
                           maTimeframe,                                     // MA.Timeframe
                           maMethod,                                        // MA.Method
                           maAppliedPrice,                                  // AppliedPrice

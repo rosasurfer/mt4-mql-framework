@@ -326,10 +326,8 @@ int      last_error;                                        // der letzte Fehler
 // MA method identifiers, siehe iMA()
 #define MODE_SMA                       0        // simple moving average
 #define MODE_EMA                       1        // exponential moving average
-#define MODE_SMMA                      2        // smoothed moving average
 #define MODE_LWMA                      3        // linear weighted moving average
 #define MODE_ALMA                      4        // Arnaud Legoux moving average
-#define MODE_TMA                       5        // triangular moving average
 
 
 // Indicator line identifiers, siehe iMACD(), iRVI(), iStochastic()
@@ -1618,8 +1616,8 @@ bool HandleEvents(int events) {
  */
 int HandleEvent(int event, int criteria=NULL) {
    bool   status;
-   int    iResults[];                                                // die Listener müssen die Arrays selbst zurücksetzen
-   string sResults[];                                                // ...
+   int    iResults[];                                                // die Arrays müssen von den Listenern selbst zurückgesetzt werden
+   string sResults[];
 
    switch (event) {
       case EVENT_BAR_OPEN       : if (EventListener.BarOpen        (iResults, criteria)) { status = true; onBarOpen        (iResults); } break;
