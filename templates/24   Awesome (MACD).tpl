@@ -3,7 +3,7 @@ symbol=USDCHF
 period=60
 leftpos=13564
 digits=5
-scale=3
+scale=4
 graph=1
 fore=0
 grid=0
@@ -19,7 +19,7 @@ fixed_pos=620
 window_left=0
 window_top=0
 window_right=1304
-window_bottom=1032
+window_bottom=780
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -34,7 +34,7 @@ askline_color=15130800
 stops_color=17919
 
 <window>
-height=100
+height=110
 
 <indicator>
 name=main
@@ -8779,23 +8779,60 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ALMA
+name=Moving Average
 flags=339
 window_num=0
 <inputs>
-MA.Periods=4
-MA.Timeframe=H1
-Max.Values=5000
+MA.Periods=5
+MA.Timeframe=current
+MA.Method=SMA
 </inputs>
 </expert>
 weight_0=0
 weight_1=0
-weight_2=3
-weight_3=3
-weight_4=3
-period_flags=31
+weight_2=2
+weight_3=2
+weight_4=2
+period_flags=0
 show_data=1
 </indicator>
 
+<indicator>
+name=Custom Indicator
+<expert>
+name=Moving Average
+flags=339
+window_num=0
+<inputs>
+MA.Periods=34
+MA.Timeframe=current
+MA.Method=SMA
+Color.UpTrend=16711680
+Color.DownTrend=16711680
+</inputs>
+</expert>
+weight_0=0
+weight_1=0
+weight_2=1
+weight_3=1
+weight_4=1
+period_flags=0
+show_data=1
+</indicator>
+</window>
+
+<window>
+height=27
+<indicator>
+name=Awesome Oscillator
+color=32768
+style=0
+weight=2
+color2=255
+style2=0
+weight2=2
+period_flags=0
+show_data=1
+</indicator>
 </window>
 </chart>
