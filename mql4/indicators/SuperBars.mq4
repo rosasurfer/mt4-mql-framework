@@ -14,7 +14,7 @@ int __DEINIT_FLAGS__[];
 extern color Color.BarUp        = C'193,255,193';        // Up-Bars
 extern color Color.BarDown      = C'255,213,213';        // Down-Bars
 extern color Color.BarUnchanged = C'232,232,232';        // (fast) unveränderte Bars
-extern color Color.ETH          = C'255,255,140';        // Extended-Hours                // oder (199,243,243)=helles PaleTurquoise
+extern color Color.ETH          = C'255,255,176';        // Extended-Hours
 extern color Color.CloseMarker  = C'164,164,164';        // Close-Marker
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,15 +40,15 @@ string label.description = "Description";                // Label für Chartanzei
 int onInit() {
    // (1) Parametervalidierung
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // CLR_NONE kann vom Terminal u.U. falsch gesetzt worden sein
-   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // z.B. nach Recompile oder Deserialisierung
+   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // u.U. 0xFF000000 (entspricht Schwarz)
    if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
    if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
 
    // (2) ETH/Future-Status ermitteln
-   string futures[] = {"BRENT","DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
+   string futures[] = {"BRENT","DJIA","DJTA","EURUSD","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
    eth.likeFuture = StringInArray(futures, StdSymbol());
 
 
@@ -796,7 +796,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
    if (ObjectFind(label) == 0) {
 
-      // (2) erst wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
+      // (2) erst, wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
       if (!AquireLock(mutex, true))
          return(!SetLastError(stdlib.GetLastError()));
 

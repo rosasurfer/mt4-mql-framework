@@ -234,7 +234,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
    if (ObjectFind(label) == 0) {
 
-      // (2) erst wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
+      // (2) erst, wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
       if (!AquireLock(mutex, true))
          return(!SetLastError(stdlib.GetLastError()));
 
