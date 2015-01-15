@@ -137,15 +137,16 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
    -------------
    - ist Schließung einer Position
    - Position muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:    über bekannte Orders iterieren
-     (2) alle unbekannten Positionen mit Close-Limits in Überwachung aufnehmen: über OpenOrders iterieren
+     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:            über bekannte Orders iterieren
+     (2) alle unbekannten Positionen mit und ohne Close-Limit in Überwachung aufnehmen: über OpenOrders iterieren
+         (limitlose Positionen können durch Stopout geschlossen worden sein)
 
    beides zusammen
    ---------------
-     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:                                  über bekannte Orders iterieren
-     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:                       über bekannte Orders iterieren
+     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:                 über bekannte Orders iterieren
+     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:      über bekannte Orders iterieren
 
-     (2)   alle unbekannten Pending-Orders und Positionen mit Close-Limits in Überwachung aufnehmen: über OpenOrders iterieren
+     (2)   alle unbekannten Pending-Orders und Positionen in Überwachung aufnehmen: über OpenOrders iterieren
            - nach (1.1) und (1.2), um sofortige Prüfung neuer zu überwachender Orders zu vermeiden
    */
 
@@ -183,34 +184,28 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
          // (1.2) beim letzten Aufruf offene Position
          if (!OrderCloseTime()) {
             // immer noch offene Position
-            if (EQ(OrderTakeProfit(), 0)) /*&&*/ if (EQ(OrderStopLoss(), 0)) {
-               // keine Close-Limits mehr gesetzt: aus der Überwachung entfernen
-               ArraySpliceInts(knownOrders.ticket, i, 1);
-               ArraySpliceInts(knownOrders.type,   i, 1);
-               knownSize--;
-            }
          }
          else {
             // jetzt geschlossene Position
-            // prüfen, ob die Position durch ein Close-Limit oder manuell geschlossen wurde
-            bool closedByLimit = false;
+            // prüfen, ob die Position durch ein Close-Limit, durch Stopout oder manuell geschlossen wurde
+            bool closedByBroker = false;
             string comment = StringToLower(StringTrim(OrderComment()));
 
-            if      (StringStartsWith(comment, "so:" )) closedByLimit = true;    // Margin Stopout wie StopLoss-Limit behandeln
-            else if (StringEndsWith  (comment, "[tp]")) closedByLimit = true;
-            else if (StringEndsWith  (comment, "[sl]")) closedByLimit = true;
+            if      (StringStartsWith(comment, "so:" )) closedByBroker = true;   // Margin Stopout erkennen
+            else if (StringEndsWith  (comment, "[tp]")) closedByBroker = true;
+            else if (StringEndsWith  (comment, "[sl]")) closedByBroker = true;
             else {                                                               // manche Broker setzen den OrderComment bei Schließung durch Limit nicht korrekt
                if (!EQ(OrderTakeProfit(), 0)) {
-                  if (type == OP_BUY ) closedByLimit = closedByLimit || (OrderClosePrice() >= OrderTakeProfit());
-                  else                 closedByLimit = closedByLimit || (OrderClosePrice() <= OrderTakeProfit());
+                  if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() >= OrderTakeProfit());
+                  else                 closedByBroker = closedByBroker || (OrderClosePrice() <= OrderTakeProfit());
                }
                if (!EQ(OrderStopLoss(), 0)) {
-                  if (type == OP_BUY ) closedByLimit = closedByLimit || (OrderClosePrice() <= OrderStopLoss());
-                  else                 closedByLimit = closedByLimit || (OrderClosePrice() >= OrderStopLoss());
+                  if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() <= OrderStopLoss());
+                  else                 closedByBroker = closedByBroker || (OrderClosePrice() >= OrderStopLoss());
                }
             }
-            if (closedByLimit)
-               ArrayPushInt(closedPositions, knownOrders.ticket[i]);             // Close-Limit wurde ausgeführt
+            if (closedByBroker)
+               ArrayPushInt(closedPositions, knownOrders.ticket[i]);             // Position wurde geschlossen
             ArraySpliceInts(knownOrders.ticket, i, 1);                           // geschlossene Position aus der Überwachung entfernen
             ArraySpliceInts(knownOrders.type,   i, 1);
             knownSize--;
@@ -219,27 +214,26 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
    }
 
 
-   // (2) über alle OpenOrders iterieren und neue Pending-Orders und offene Positionen mit Close-Limits in Überwachung aufnehmen
+   // (2) über alle OpenOrders iterieren und neue Pending-Orders und Positionen in Überwachung aufnehmen
    while (true) {
       int ordersTotal = OrdersTotal();
 
       for (i=0; i < ordersTotal; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {          // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
-            ordersTotal = -1;
+            ordersTotal = -1;                                        // Abbruch, via while-Schleife alle Orders nochmal verarbeiten, bis for fehlerfrei durchläuft
             break;
          }
          for (int n=0; n < knownSize; n++) {
             if (knownOrders.ticket[n] == OrderTicket())              // Order bereits bekannt
                break;
          }
-         if (n >= knownSize) {                                       // Order unbekannt: in Überwachung aufnehmen, wenn sie ein Limit hat
-            if (OrderType()<=OP_SELL) /*&&*/ if (EQ(OrderTakeProfit(), 0)) /*&&*/ if (EQ(OrderStopLoss(), 0))
-               continue;
+         if (n >= knownSize) {                                       // Order unbekannt: in Überwachung aufnehmen
             ArrayPushInt(knownOrders.ticket, OrderTicket());
             ArrayPushInt(knownOrders.type,   OrderType()  );
             knownSize++;
          }
       }
+
       if (ordersTotal == OrdersTotal())
          break;
    }
