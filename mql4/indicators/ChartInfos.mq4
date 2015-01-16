@@ -1550,10 +1550,8 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_BREAKEVEN])
          ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, fontColor);
-            else if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_LONG)
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundCeil (positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, fontColor);
             else
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                        positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(RoundEx(positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat),                           positions.fontSize, positions.fontName, fontColor);
       }
          // Hedged und Not-Hedged
          ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                            positions.fontSize, positions.fontName, fontColor);

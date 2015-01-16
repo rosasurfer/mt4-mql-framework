@@ -296,7 +296,7 @@ string DoublesToStr(double values[][], string separator=", ") {
  * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
  *
 private*/string __DoublesToStr(double values2[][], double values3[][][], string separator) {
-   if (separator == "0")      // (string) NULL
+   if (separator == "0")                                             // (string) NULL
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
@@ -345,6 +345,79 @@ private*/string __DoublesToStr(double values2[][], double values3[][][], string 
    }
 
    return(_emptyStr(catch("__DoublesToStr()   too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Konvertiert ein maximal 3-dimensionales Array von Doubles mit bis zu 16 Nachkommstaellen in einen lesbaren String.
+ *
+ * @param  double values[]  - zu konvertierende Werte
+ * @param  string separator - Separator (default: NULL = ", ")
+ * @param  int    digits    - Anzahl der Nachkommastellen (0-16)
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string DoublesToStrEx(double values[][], string separator, int digits) {
+   return(__DoublesToStrEx(values, values, separator, digits));
+}
+
+
+/**
+ * Interne Hilfsfunktion (Workaround um Dimension-Check des Compilers)
+ *
+private*/string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
+   if (digits < 0 || digits > 16)
+      return(_emptyStr(catch("__DoublesToStrEx(1)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   if (separator == "0")                                             // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+
+   // 1-dimensionales Array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinDoublesEx(values2, separator, digits), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+
+   // 2-dimensionales Array
+   if (dimensions == 2) {
+      string strValuesX[]; ArrayResize(strValuesX, dim1);
+      double    valuesY[]; ArrayResize(   valuesY, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            valuesY[y] = values2[x][y];
+         }
+         strValuesX[x] = DoublesToStrEx(valuesY, separator, digits);
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+
+   // 3-dimensionales Array
+   if (dimensions == 3) {
+                           ArrayResize(strValuesX, dim1);
+      string strValuesY[]; ArrayResize(strValuesY, dim2);
+      double    valuesZ[]; ArrayResize(   valuesZ, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               valuesZ[z] = values3[x][y][z];
+            }
+            strValuesY[y] = DoublesToStrEx(valuesZ, separator, digits);
+         }
+         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+      }
+      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+   }
+
+   return(_emptyStr(catch("__DoublesToStrEx(2)   too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 

@@ -3446,6 +3446,39 @@ string JoinDoubles(double values[], string separator) {
 
 
 /**
+ * Verbindet die Werte eines Double-Arrays mit bis zu 16 Nachkommastellen unter Verwendung des angegebenen Separators.
+ *
+ * @param  double values[]  - Array mit Ausgangswerten
+ * @param  string separator - zu verwendender Separator
+ * @param  int    digits    - Anzahl der Nachkommastellen (0-16)
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string JoinDoublesEx(double values[], string separator, int digits) {
+   if (ArrayDimension(values) > 1) return(_emptyStr(catch("JoinDoubles(1)   too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (digits < 0 || digits > 16)  return(_emptyStr(catch("JoinDoubles(2)   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+
+   string strings[];
+
+   int size = ArraySize(values);
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = DoubleToStrEx(values[i], digits);
+      if (!StringLen(strings[i]))
+         return("");
+   }
+
+   string result = JoinStrings(strings, separator);
+
+   if (ArraySize(strings) > 0)
+      ArrayResize(strings, 0);
+
+   return(result);
+}
+
+
+/**
  * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
  *
  * @param  string values[]  - Array mit Ausgangswerten
@@ -9630,7 +9663,7 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
 
 
 /**
- * Konvertiert einen Double in einen String mit bis zu 16 Nachkommastellen.
+ * Konvertiert einen Double mit bis zu 16 Nachkommastellen in einen String.
  *
  * @param  double value  - zu konvertierender Wert
  * @param  int    digits - Anzahl von Nachkommastellen
