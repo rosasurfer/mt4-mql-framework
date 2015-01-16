@@ -141,10 +141,11 @@
    int      MergeDoubleArrays(double array1[], double array2[], double merged[]);
    int      MergeStringArrays(string array1[], string array2[], string merged[]);
 
-   string   JoinBools  (bool   array[], string separator);
-   string   JoinInts   (int    array[], string separator);
-   string   JoinDoubles(double array[], string separator);
-   string   JoinStrings(string array[], string separator);
+   string   JoinBools    (bool   array[], string separator);
+   string   JoinInts     (int    array[], string separator);
+   string   JoinDoubles  (double array[], string separator);
+   string   JoinDoublesEx(double array[], string separator, int digits);
+   string   JoinStrings  (string array[], string separator);
 
    int      SumInts   (int    array[]);
    double   SumDoubles(double array[]);
@@ -502,6 +503,7 @@
    string   OperationTypesToStr(int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
    string   DoublesToStr    (double array[], string separator);
+   string   DoublesToStrEx  (double array[], string separator, int digits/*=0...16*/);
    string   iBufferToStr    (double array[], string separator);
    string   MoneysToStr     (double array[], string separator);
    string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
