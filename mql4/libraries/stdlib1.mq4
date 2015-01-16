@@ -7496,20 +7496,20 @@ int GetLocalToGmtTimeOffset() {
 
 
 /**
- * Gibt die lesbare Konstante einer SwapCalculation-Methode zurück.
+ * Gibt die lesbare Konstante eines SwapCalculation-Modes zurück.
  *
- * @param  int method - SwapCalculation-Methode
+ * @param  int mode - SwapCalculation-Mode
  *
  * @return string
  */
-string SwapCalculationMethodToStr(int method) {
-   switch (method) {
+string SwapCalculationModeToStr(int mode) {
+   switch (mode) {
       case SCM_POINTS         : return("SCM_POINTS"         );
       case SCM_BASE_CURRENCY  : return("SCM_BASE_CURRENCY"  );
       case SCM_INTEREST       : return("SCM_INTEREST"       );
       case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
-   return(_emptyStr(catch("SwapCalculationMethodToStr()   invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("SwapCalculationModeToStr()   invalid paramter mode = "+ mode, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 

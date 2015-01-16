@@ -188,29 +188,30 @@ int UpdateInfos() {
                                                                              ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);
    double totalFees        = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:       "                                                                                                            , fg.fontSize, fg.fontName, fg.fontColor);
 
-   int    swapMethod       = MarketInfo(symbol, MODE_SWAPTYPE );
+   int    swapMode         = MarketInfo(symbol, MODE_SWAPTYPE );
    double swapLong         = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort        = MarketInfo(symbol, MODE_SWAPSHORT);
       double swapLongDaily, swapShortDaily, swapLongYearly, swapShortYearly;
       string strSwapLong, strSwapShort;
 
-      if (swapMethod == SCM_POINTS) {                                // in points of quote currency
+      if (swapMode == SCM_POINTS) {                                  // in points of quote currency
          swapLongDaily  = swapLong *Point/Pip; swapLongYearly  = MathDiv(swapLongDaily *Pip*365, Close[0]) * 100;
          swapShortDaily = swapShort*Point/Pip; swapShortYearly = MathDiv(swapShortDaily*Pip*365, Close[0]) * 100;
       }
       else {
-         if (swapMethod == SCM_INTEREST) {                           // überprüfen: "in percentage terms" z.B. LiteForex Aktien-CFDs
+         /*
+         if (swapMode == SCM_INTEREST) {                             // TODO: prüfen "in percentage terms" z.B. LiteForex Aktien-CFDs
             //swapLongDaily  = swapLong *Close[0]/100/365/Pip; swapLongY  = swapLong;
             //swapShortDaily = swapShort*Close[0]/100/365/Pip; swapShortY = swapShort;
          }
-         else if (swapMethod == SCM_BASE_CURRENCY  ) {}              // as amount of base currency   (see "symbols.raw")
-         else if (swapMethod == SCM_MARGIN_CURRENCY) {}              // as amount of margin currency (see "symbols.raw")
-
-         strSwapLong  = SwapCalculationMethodToStr(swapMethod) +"  "+ NumberToStr(swapLong,  ".+");
-         strSwapShort = SwapCalculationMethodToStr(swapMethod) +"  "+ NumberToStr(swapShort, ".+");
-         swapMethod = -1;
+         else if (swapMode == SCM_BASE_CURRENCY  ) {}                // as amount of base currency   (see "symbols.raw")
+         else if (swapMode == SCM_MARGIN_CURRENCY) {}                // as amount of margin currency (see "symbols.raw")
+         */
+         strSwapLong  = ifString(!swapLong,  "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapLong,  ".+"));
+         strSwapShort = ifString(!swapShort, "none", SwapCalculationModeToStr(swapMode) +"  "+ NumberToStr(swapShort, ".+"));
+         swapMode     = -1;
       }
-      if (swapMethod != -1) {
+      if (swapMode != -1) {
          if (!swapLong)  strSwapLong  = "none";
          else {
             if (MathAbs(swapLongDaily ) <= 0.05) swapLongDaily  = Sign(swapLongDaily ) * 0.1;
