@@ -1,5 +1,5 @@
 /**
- * Multi-Color/Multi-Timeframe Moving Average
+ * Multi-Color/Multi-Timeframe Moving Average mit Hotkey-Steuerung
  *
  *
  * Unterstützte MA-Typen:
@@ -9,27 +9,28 @@
  *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach konfigurierbarer Gaußscher Verteilungsfunktion
  *
  * Nicht mehr unterstützte MA-Typen:
- *  • SMMA - Smoothed Moving Average:        ist ein EMA anderer Periode (Relikt aus den 70'ern, neue Bars lassen sich schneller als mit EMA berechnen)
+ *  • SMMA - Smoothed Moving Average:        EMA anderer Periode (Relikt aus den 70'ern, läßt sich teilweise schneller als EMA berechnen)
  *  • TMA  - Triangular Moving Average:      doppelter SMA(SMA(n)), also verdoppelte Response-Zeit und verdoppeltes Lag
  *
- * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Synonym konfiguriert werden, z.B.:
- *  • die Konfiguration "3 x D1=>H1"  ist gleichbedeutend mit "72 x H1"
- *  • die Konfiguration "2 x D1=>M15" ist gleichbedeutend mit "192 x M15"
+ * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
+ *  • die Konfiguration "3 x D1=>H1"  entspricht "72 x H1"
+ *  • die Konfiguration "2 x D1=>M15" entspricht "192 x M15"
  *
- * Ist der Timeframe des Indikators mit einem Synonym konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben werden, wenn die
- * Periodenlänge nach Auflösung des Timeframe-Synonyms einen gültigen ganzzahligen Wert darstellt, z.B.:
- *  • die Konfiguration "1.5 x D1=>H1"  ist gleichbedeutend mit "36 x H1"
- *  • die Konfiguration "0.5 x D1=>M15" ist gleichbedeutend mit "48 x M15"
+ * Ist der Timeframe des Indikators mit einem Alias konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben werden, wenn die
+ * Periodenlänge nach Auflösung des Alias ein ganzzahliger Wert ist, z.B.:
+ *  • die Konfiguration "1.5 x D1=>H1" entspricht "36 x H1"
+ *  • die Konfiguration "2.5 x H1=>M5" entspricht "30 x M5"
  *
- * Ist ein Timeframe konfiguriert, wird beim Umschalten des Chart-Timeframes die Indikatorkonfiguration NICHT auf die aktuelle Chartperiode umgerechnet.
- * Zur Berechnung wird immer die ursprünglich konfigurierte Datenreihe verwendet, der Indikator zeigt in allen Chartauflösungen exakt dieselben Werte an.
+ * Ein konfigurierter Timeframe wird beim Umschalten des Chart-Timeframes NICHT auf die jeweilige Chartperiode umgerechnet. Zur Berechnung wird immer der
+ * konfigurierte Timeframe verwendet, wodurch der Indikator in allen Chartauflösungen exakt dieselben Werte anzeigt.
  *
- * Sind die Hotkeys zur Änderung der Indikatorperiode für mehr als einen Indikator des aktuellen Charts aktiviert, empfängt nur der erste für diese Hotkeys
+ * Sind Hotkeys zur schnellen Änderung der Indikatorperiode für mehr als einen Indikator des aktuellen Charts aktiviert, empfängt nur der erste für Hotkeys
  * konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge des "Indicators List" Window).
  *
  * Im Buffer MovingAverage.MODE_MA stehen die Werte des Moving Average und im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge der jeweiligen Bar
- * zur Verfügung (Werte: +1...+n für Aufwärtstrends bzw. -1...-n für Abwärtstrends). Der Absolutwert des Trends einer Bar weniger 1 ist die Distanz dieser Bar
- * vom letzten davor aufgetretenen Trendreversal.
+ * zur Verfügung:
+ *  • Trendrichtung: positive Werte (+1...+n) für Aufwärtstrends bzw. negative Werte (-1...-n) für Abwärtstrends
+ *  • Die Trendlänge entspricht dem Absolutwert des Trends einer Bar weniger 1, also der Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
