@@ -32,7 +32,7 @@ bearcandle_color=128
 chartline_color=8421504
 volumes_color=25600
 grid_color=5921370
-askline_color=15130800
+askline_color=13688896
 stops_color=17919
 
 <window>
