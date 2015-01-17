@@ -42,7 +42,7 @@ int __DEINIT_FLAGS__[];
 extern string MA.Periods                 = "200";                    // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
 extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotkeys zur schnellen Änderung der Periode aktiviert sind
 extern string MA.Timeframe               = "current";                // Timeframe: [M1|M5|M15,...[=> M1|M5|M15,...]]    ("current"|"" = aktueller Timeframe)
-extern string MA.Method                  = "SMA* | EMA | LWMA | ALMA";
+extern string MA.Method                  = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
 
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
@@ -64,6 +64,9 @@ extern int    Shift.Vertical.Pips        = 0;                        // vertikal
 #define MovingAverage.MODE_DOWNTREND   3                             // optisch verdeckt. Um auch diese kurzfristigen Trendwechsel sichtbar zu machen, werden sie im Buffer MODE_UPTREND.2
 #define MovingAverage.MODE_UPTREND2    4                             // gespeichert, der den Buffer MODE_DOWNTREND überlagert.
 
+#define MA_PERIODS_UP                  1                             // Hotkey-Commands
+#define MA_PERIODS_DOWN               -1
+
 #property indicator_chart_window
 
 #property indicator_buffers 5
@@ -73,9 +76,6 @@ extern int    Shift.Vertical.Pips        = 0;                        // vertikal
 #property indicator_width3  2
 #property indicator_width4  2
 #property indicator_width5  2
-
-#define MA_PERIODS_UP       1
-#define MA_PERIODS_DOWN    -1
 
 double bufferMA       [];                                            // vollst. Indikator (unsichtbar, Anzeige im "Data Window")
 double bufferTrend    [];                                            // Trend: +/-        (unsichtbar)
@@ -102,93 +102,101 @@ string legendLabel, legendName;
 int onInit() {
    // (1) Validierung
    // (1.1) MA.Timeframe zuerst, da Gültigkeit von MA.Periods davon abhängt
+   int    timeframe, timeframeAlias;
    string sValue = StringToUpper(StringTrim(MA.Timeframe));
    if (sValue=="" || sValue=="CURRENT") {
-      ma.timeframe = Period();
+      timeframe    = Period();
       MA.Timeframe = "";
    }
    else {
       string values[];
       if (Explode(sValue, "=>", values, 2) == 1) {
-         ma.timeframe = StrToPeriod(sValue);
-         if (ma.timeframe == -1)               return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         MA.Timeframe = PeriodDescription(ma.timeframe);
+         timeframe = StrToPeriod(sValue);
+         if (timeframe == -1)                     return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         MA.Timeframe = PeriodDescription(timeframe);
       }
       else {
-         int timeframe1=StrToPeriod(StringTrim(values[0])), timeframe2=StrToPeriod(StringTrim(values[1]));
-         if (timeframe1==-1 || timeframe2==-1) return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         if (timeframe1 < timeframe2)          return(catch("onInit(3)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         timeframe      = StrToPeriod(StringTrim(values[1]));
+         timeframeAlias = StrToPeriod(StringTrim(values[0]));
 
-         if (timeframe1 > timeframe2) {                         // Timeframes > W1 können nicht immer auf einen kleineren Timeframe heruntergerechnet werden
-            if (timeframe1==PERIOD_MN1 || (timeframe1==PERIOD_Q1 && timeframe2!=PERIOD_MN1))
-                                               return(catch("onInit(4)   Illegal input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-            ma.timeframe = timeframe2;
-            MA.Timeframe = PeriodDescription(timeframe1) +"=>"+ PeriodDescription(timeframe2);
+         if (timeframe==-1 || timeframeAlias==-1) return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         if (timeframeAlias < timeframe)          return(catch("onInit(3)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+
+         if (timeframeAlias > timeframe) {                           // Timeframes > W1 können nicht immer auf einen kleineren Timeframe heruntergerechnet werden
+            if (timeframeAlias==PERIOD_MN1 || (timeframeAlias==PERIOD_Q1 && timeframe!=PERIOD_MN1))
+                                                  return(catch("onInit(4)   Illegal input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            MA.Timeframe = PeriodDescription(timeframeAlias) +"=>"+ PeriodDescription(timeframe);
          }
-         else {
-            ma.timeframe = timeframe1;
-            MA.Timeframe = PeriodDescription(timeframe1);
+         else /*timeframeAlias == timeframe*/ {
+            timeframeAlias = 0;
+            MA.Timeframe   = PeriodDescription(timeframe);
          }
       }
    }
-
-
-
+   ma.timeframe = timeframe;
 
    // (1.2) MA.Periods
    sValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(sValue))     return(catch("onInit(2)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                  return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    double dValue = StrToDouble(sValue);
-   if (dValue <= 0)                  return(catch("onInit(3)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
-   if (MathModFix(dValue, 0.5) != 0) return(catch("onInit(4)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
-   sValue = NumberToStr(dValue, ".+");
-   if (StringEndsWith(sValue, ".5")) {                               // gebrochene Perioden in ganze Bars umrechnen
-      switch (ma.timeframe) {
-         case PERIOD_M30: dValue *=  2; ma.timeframe = PERIOD_M15; break;
-         case PERIOD_H1 : dValue *=  2; ma.timeframe = PERIOD_M30; break;
-         case PERIOD_H4 : dValue *=  4; ma.timeframe = PERIOD_H1;  break;
-         case PERIOD_D1 : dValue *=  6; ma.timeframe = PERIOD_H4;  break;
-         case PERIOD_W1 : dValue *= 30; ma.timeframe = PERIOD_H4;  break;
-         default:                    return(catch("onInit(5)   Illegal input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (dValue <= 0)                               return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+
+   if (!timeframeAlias) {
+      if (MathModFix(dValue, 1) != 0)             return(catch("onInit(7)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+      ma.periods = MathRound(dValue);
+   }
+   else {
+      // Alias angegeben
+     double dMinutes;
+     switch (timeframeAlias) {
+         case PERIOD_M1 :                                            // kann nicht auftreten
+         case PERIOD_MN1: break;                                     // wird vorher abgefangen
+         case PERIOD_Q1:                                             // kommt nur in Kombination mit timeframe=PERIOD_MN1 vor
+            if (MathModFix(dValue, 1) != 0)       return(catch("onInit(8)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+            ma.periods = Round(dValue) * 3;                          // 3 Monate je Quartal
+            break;
+
+         case PERIOD_M5 :
+         case PERIOD_M15:
+         case PERIOD_M30:
+         case PERIOD_H1 :
+         case PERIOD_H4 :
+         case PERIOD_D1 : dMinutes = dValue * timeframeAlias; break;
+         case PERIOD_W1 : dMinutes = dValue * 5 * PERIOD_D1;  break; // 5 Handelstage je Woche
+      }
+      if (dMinutes != 0) {
+         if (MathModFix(dMinutes, 1) != 0)        return(catch("onInit(9)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+         int iMinutes = MathRound(dMinutes);
+         if (iMinutes%timeframe != 0)             return(catch("onInit(10)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+         ma.periods = iMinutes/timeframe;
       }
    }
-   switch (ma.timeframe) {                                           // Timeframes > H1 auf H1 umrechnen
-      case PERIOD_H4: dValue *=   4; ma.timeframe = PERIOD_H1; break;
-      case PERIOD_D1: dValue *=  24; ma.timeframe = PERIOD_H1; break;
-      case PERIOD_W1: dValue *= 120; ma.timeframe = PERIOD_H1; break;
-   }
-   ma.periods = MathRound(dValue);
-   if (ma.periods < 2)               return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
-   if (ma.timeframe != Period()) {                                   // angegebenen auf aktuellen Timeframe umrechnen
-      double minutes = ma.timeframe * ma.periods;                    // Timeframe * Anzahl_Bars = Range_in_Minuten
-      ma.periods = MathRound(minutes/Period());
-   }
-   MA.Periods = sValue;
+   if (ma.periods < 1)                            return(catch("onInit(11)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   MA.Periods = NumberToStr(dValue, ".+");
 
    // (1.3) MA.Method
-   string elems[];
-   if (Explode(MA.Method, "*", elems, 2) > 1) {
-      int size = Explode(elems[0], "|", elems, NULL);
-      sValue   = elems[size-1];
+   if (Explode(MA.Method, "*", values, 2) > 1) {
+      int size = Explode(values[0], "|", values, NULL);
+      sValue   = values[size-1];
    }
    else sValue = MA.Method;
    ma.method = StrToMovAvgMethod(sValue);
-   if (ma.method == -1)              return(catch("onInit(7)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   if (ma.method == -1)                           return(catch("onInit(12)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.Method = MovAvgMethodDescription(ma.method);
 
    // (1.4) MA.AppliedPrice
-   if (Explode(MA.AppliedPrice, "*", elems, 2) > 1) {
-      size   = Explode(elems[0], "|", elems, NULL);
-      sValue = elems[size-1];
+   if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {
+      size   = Explode(values[0], "|", values, NULL);
+      sValue = values[size-1];
    }
    else sValue = MA.AppliedPrice;
    ma.appliedPrice = StrToPriceType(sValue);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                     return(catch("onInit(8)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+                                                  return(catch("onInit(13)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // (1.5) Max.Values
-   if (Max.Values < -1)              return(catch("onInit(9)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
+   if (Max.Values < -1)                           return(catch("onInit(14)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.6) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
@@ -196,10 +204,10 @@ int onInit() {
 
 
    // (2) Chart-Legende erzeugen
-   string strTimeframe="", strAppliedPrice="";
-   if (MA.Timeframe != "")             strTimeframe    = "x"+ MA.Timeframe;
-   if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
-   legendName  = MA.Method +"("+ MA.Periods + strTimeframe + strAppliedPrice +")";
+   string sTimeframe="", sAppliedPrice="";
+   if (MA.Timeframe != "")             sTimeframe    = "x"+ MA.Timeframe;
+   if (ma.appliedPrice != PRICE_CLOSE) sAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
+   legendName  = MA.Method +"("+ MA.Periods + sTimeframe + sAppliedPrice +")";
    legendLabel = CreateLegendLabel(legendName);
    ObjectRegister(legendLabel);
 
@@ -217,13 +225,13 @@ int onInit() {
    SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend2 );    // UpTrend-Linie 2:   sichtbar
 
    // (4.2) Anzeigeoptionen
-   IndicatorShortName(legendName);                                   // Context Menu
-   string dataName = MA.Method +"("+ MA.Periods + strTimeframe +")";
-   SetIndexLabel(MovingAverage.MODE_MA,        dataName);            // Tooltip und "Data Window"
-   SetIndexLabel(MovingAverage.MODE_TREND,     NULL);
-   SetIndexLabel(MovingAverage.MODE_UPTREND1,  NULL);
-   SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL);
-   SetIndexLabel(MovingAverage.MODE_UPTREND2,  NULL);
+   IndicatorShortName(legendName);                                   // für Context Menu
+   string dataName = MA.Method +"("+ MA.Periods + sTimeframe +")";
+   SetIndexLabel(MovingAverage.MODE_MA,        dataName);            // für Tooltip und "Data Window"
+   SetIndexLabel(MovingAverage.MODE_TREND,     NULL    );
+   SetIndexLabel(MovingAverage.MODE_UPTREND1,  NULL    );
+   SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL    );
+   SetIndexLabel(MovingAverage.MODE_UPTREND2,  NULL    );
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
@@ -239,7 +247,7 @@ int onInit() {
    // (4.4) Styles
    SetIndicatorStyles();                                             // Workaround um diverse Terminalbugs (siehe dort)
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(15)"));
 }
 
 
@@ -421,16 +429,17 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                 , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe               , "\"; ",
-                            "MA.Method=\"",           MA.Method                  , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice            , "\"; ",
+                            "MA.Periods=\"",               MA.Periods                           , "\"; ",
+                            "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",
+                            "MA.Timeframe=\"",             MA.Timeframe                         , "\"; ",
+                            "MA.Method=\"",                MA.Method                            , "\"; ",
+                            "MA.AppliedPrice=\"",          MA.AppliedPrice                      , "\"; ",
 
-                            "Color.UpTrend=",         ColorToStr(Color.UpTrend)  , "; ",
-                            "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",
+                            "Color.UpTrend=",              ColorToStr(Color.UpTrend)            , "; ",
+                            "Color.DownTrend=",            ColorToStr(Color.DownTrend)          , "; ",
 
-                            "Max.Values=",            Max.Values                 , "; ",
-                            "Shift.Horizontal.Bars=", Shift.Horizontal.Bars      , "; ",
-                            "Shift.Vertical.Pips=",   Shift.Vertical.Pips        , "; ")
+                            "Max.Values=",                 Max.Values                           , "; ",
+                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars                , "; ",
+                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips                  , "; ")
    );
 }
