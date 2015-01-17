@@ -1,5 +1,5 @@
 /**
- * Hinterlegt den Chart mit Bars übergeordneter Timeframes. Die Änderung des aktuellen Timeframe-Parameters erfolgt per Hotkeys.
+ * Hinterlegt den Chart mit Bars übergeordneter Timeframes. Die Änderung des Timeframes erfolgt per Hotkey.
  */
 #property indicator_chart_window
 
@@ -86,8 +86,8 @@ int onDeinit() {
 
 
 /**
- * Ermittelt die Anzahl der seit dem letzten Tick modifiziert Bars einer Zeitreihe.  Entspricht der manuellen Ermittlung
- * der Variable ChangedBars für eine andere als die aktuelle Zeitreihe.
+ * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe.  Entspricht der manuellen Ermittlung
+ * der Variable ChangedBars für eine andere als die aktuelle Datenreihe.
  *
  * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (default: NULL = aktuelle Periode)
