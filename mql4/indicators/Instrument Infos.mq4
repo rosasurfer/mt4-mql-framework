@@ -11,10 +11,6 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-color  bg.color              = C'212,208,200';
-string bg.fontName           = "Webdings";
-int    bg.fontSize           = 197;
-
 color  fg.fontColor.Enabled  = Blue;
 color  fg.fontColor.Disabled = Gray;
 string fg.fontName           = "Tahoma";
@@ -88,6 +84,10 @@ int onTick() {
  *
  */
 int CreateLabels() {
+   color  bg.color    = C'212,208,200';
+   string bg.fontName = "Webdings";
+   int    bg.fontSize = 212;
+
    int x =  3;                   // X-Ausgangskoordinate
    int y = 73;                   // Y-Ausgangskoordinate
    int n = 10;                   // Counter für eindeutige Labels (mind. zweistellig)
@@ -112,7 +112,7 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x    );
-      ObjectSet    (label, OBJPROP_YDISTANCE, y+215);
+      ObjectSet    (label, OBJPROP_YDISTANCE, y+196);
       ObjectSetText(label, "g", bg.fontSize, bg.fontName, bg.color);
       ObjectRegister(label);
    }
