@@ -188,9 +188,7 @@ int onTick() {
    mm.done           = false;
    positionsAnalyzed = false;
 
-
    HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
-
 
    if (!UpdatePrice())                     return(last_error);
    if (!UpdateOHLC())                      return(last_error);
@@ -1996,13 +1994,17 @@ bool UpdateMoneyManagement() {
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
    double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);   // ATR(14xW)
       if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);//throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+      if (!a) return(false);
    double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange letzte Woche
+      if (!b) return(false);
    double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
+      if (!c) return(false);
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
-      double C = iClose(NULL, PERIOD_W1, 1);
-      double H = iHigh (NULL, PERIOD_W1, 0);
-      double L = iLow  (NULL, PERIOD_W1, 0);
+      double C = iClose(NULL, PERIOD_W1, 1); if (!C) return(false);
+      double H = iHigh (NULL, PERIOD_W1, 0); if (!H) return(false);
+      double L = iLow  (NULL, PERIOD_W1, 0); if (!L) return(false);
    mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);                              // median price
+
 
    if (mm.isCustomLeverage) {
       // (3) customLots
@@ -2015,7 +2017,6 @@ bool UpdateMoneyManagement() {
       mm.volaLeverage = mm.vola/(mm.ATRwPct*100);
       mm.volaLots     = mm.unleveragedLots * mm.volaLeverage;                                // auf wöchentliche Volatilität gehebelte Lotsize
    }
-
 
    mm.done = true;
    return(!catch("UpdateMoneyManagement(3)"));
