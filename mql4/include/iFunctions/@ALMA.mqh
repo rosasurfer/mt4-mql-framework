@@ -9,7 +9,7 @@
  *
  *
  */
-void iALMA.CalculateWeights(double &weights[], int periods, double distOffset=0.85, double distSigma=6.0) {
+void @ALMA.CalculateWeights(double &weights[], int periods, double distOffset=0.85, double distSigma=6.0) {
    if (ArraySize(weights) != periods)
       ArrayResize(weights, periods);
 

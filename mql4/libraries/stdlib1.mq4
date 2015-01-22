@@ -32,7 +32,7 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
-#include <iCustom/icMovingAverage.mqh>
+#include <iCustom/MovingAverage.mqh>
 #include <structs/pewa/ORDER_EXECUTION.mqh>
 
 

@@ -30,7 +30,7 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/iMA.mqh>
+#include <iFunctions/@MA.mqh>
 
 #define MovingAverage.MODE_MA          0        // Buffer-Identifier
 #define MovingAverage.MODE_TREND       1
@@ -474,12 +474,12 @@ int onTick() {
       bufferMA[bar] = jma;
 
       // Trend aktualisieren
-      iMA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend, bufferDownTrend, bufferUpTrend2);
+      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend, bufferDownTrend, bufferUpTrend2);
    }
 
 
    // (4) Legende aktualisieren
-   iMA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
 

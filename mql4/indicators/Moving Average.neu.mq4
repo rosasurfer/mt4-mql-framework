@@ -55,8 +55,8 @@ extern int    Shift.Vertical.Pips        = 0;                        // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/iMA.mqh>
-#include <indicators/iALMA.mqh>
+#include <iFunctions/@MA.mqh>
+#include <iFunctions/@ALMA.mqh>
 
 #define MovingAverage.MODE_MA          0                             // Buffer-ID's
 #define MovingAverage.MODE_TREND       1
@@ -214,7 +214,7 @@ int onInit() {
 
    // (3) ggf. ALMA-Gewichtungen berechnen
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)              // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      iALMA.CalculateWeights(alma.weights, ma.periods);
+      @ALMA.CalculateWeights(alma.weights, ma.periods);
 
 
    // (4.1) Bufferverwaltung
@@ -319,12 +319,12 @@ int onTick() {
       bufferMA[bar] += shift.vertical;
 
       // Trend aktualisieren
-      iMA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2);
+      @MA.UpdateTrend(bufferMA, bar, bufferTrend, bufferUpTrend1, bufferDownTrend, bufferUpTrend2);
    }
 
 
    // (4) Legende aktualisieren
-   iMA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
+   @MA.UpdateLegend(legendLabel, legendName, Color.UpTrend, Color.DownTrend, bufferMA[0], bufferTrend[0], Time[0]);
    return(last_error);
 }
 
