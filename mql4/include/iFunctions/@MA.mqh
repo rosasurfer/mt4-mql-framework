@@ -8,7 +8,7 @@
  * @param  _OUT_ double &downTrend[] - fallende Indikatorwerte (liegt im Chart über der UpTrend-1-Linie)
  * @param  _OUT_ double &upTrend2 [] - steigende Indikatorwerte für Trendlängen von einer einzigen Bar (liegt im Chart über der DownTrend-Line)
  */
-void iMA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]) {
+void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]) {
    // (1) Trend: Reversal-Glättung um 0.1 pip durch Normalisierung
    double currentValue  = NormalizeDouble(ma[bar  ], SubPipDigits);
    double previousValue = NormalizeDouble(ma[bar+1], SubPipDigits);
@@ -47,7 +47,7 @@ void iMA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], 
 /**
  * Aktualisiert die Legende eines Moving Average.
  */
-void iMA.UpdateLegend(string legendLabel, string legendDescription, color upTrendColor, color downTrendColor, double currentValue, int currentTrend, datetime currentBarOpenTime) {
+void @MA.UpdateLegend(string legendLabel, string legendDescription, color upTrendColor, color downTrendColor, double currentValue, int currentTrend, datetime currentBarOpenTime) {
    static double   lastValue;                                           // Value des vorherigen Ticks
    static int      lastTrend;                                           // Trend des vorherigen Ticks
    static datetime lastBarOpenTime;
@@ -58,7 +58,7 @@ void iMA.UpdateLegend(string legendLabel, string legendDescription, color upTren
       ObjectSetText(legendLabel, ObjectDescription(legendLabel), 9, "Arial Fett", ifInt(currentTrend>0, upTrendColor, downTrendColor));
       int error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
-         return(catch("iMA.UpdateLegend()", error));
+         return(catch("@MA.UpdateLegend()", error));
       if (lastTrend != 0)
          intrabarTrendChange = !intrabarTrendChange;
    }

@@ -27,8 +27,8 @@ extern int    Shift.Vertical.Pips   = 0;                             // vertikal
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/iBands.mqh>
-#include <indicators/iALMA.mqh>
+#include <iFunctions/@Bands.mqh>
+#include <iFunctions/@ALMA.mqh>
 
 #define Bands.MODE_UPPER      0                                      // oberes Band
 #define Bands.MODE_MA         1                                      // MA
@@ -158,7 +158,7 @@ int onInit() {
 
    // (3) ggf. ALMA-Gewichtungen berechnen
    if (ma.method==MODE_ALMA) /*&&*/ if (ma.periods > 1)              // ma.periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      iALMA.CalculateWeights(alma.weights, ma.periods);
+      @ALMA.CalculateWeights(alma.weights, ma.periods);
 
 
    // (4.1) Bufferverwaltung
@@ -184,7 +184,7 @@ int onInit() {
    shift.vertical = Shift.Vertical.Pips * Pip;                       // TODO: Digits/Point-Fehler abfangen
 
    // (4.4) Styles
-   iBands.SetIndicatorStyles(Color.MA, Color.Bands);                 // Workaround um diverse Terminalbugs (siehe dort)
+   @Bands.SetIndicatorStyles(Color.MA, Color.Bands);                 // Workaround um diverse Terminalbugs (siehe dort)
 
    return(catch("onInit(13)"));
 }
@@ -217,7 +217,7 @@ int onTick() {
       ArrayInitialize(bufferUpperBand, EMPTY_VALUE);
       ArrayInitialize(bufferMA,        EMPTY_VALUE);
       ArrayInitialize(bufferLowerBand, EMPTY_VALUE);
-      iBands.SetIndicatorStyles(Color.MA, Color.Bands);              // Workaround um diverse Terminalbugs (siehe dort)
+      @Bands.SetIndicatorStyles(Color.MA, Color.Bands);              // Workaround um diverse Terminalbugs (siehe dort)
    }
 
    if (ma.periods < 2)                                               // Abbruch bei ma.periods < 2 (möglich bei Umschalten auf zu großen Timeframe)
@@ -251,7 +251,7 @@ int onTick() {
 
 
    // (3) Legende aktualisieren
-   iBands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
+   @Bands.UpdateLegend(legendLabel, iDescription, Color.Bands, bufferUpperBand[0], bufferLowerBand[0]);
    return(last_error);
 }
 

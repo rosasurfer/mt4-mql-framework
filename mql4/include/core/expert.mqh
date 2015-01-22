@@ -3,7 +3,7 @@
 #define __lpSuperContext NULL
 
 #include <history.mqh>
-#include <iCustom/icChartInfos.mqh>
+#include <iCustom/ChartInfos.mqh>
 
 
 // Variablen für Teststatistiken

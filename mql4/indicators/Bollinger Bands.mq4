@@ -24,7 +24,7 @@ extern color  Color.Bands       = RoyalBlue;                         // Farbe hi
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <indicators/iALMA.mqh>
+#include <iFunctions/@ALMA.mqh>
 
 #property indicator_chart_window
 
@@ -192,7 +192,7 @@ int onInit() {
 
    // ALMA-Gewichtungen berechnen
    if (ALMA) /*&&*/ if (MA.Periods > 1)                              // MA.Periods < 2 ist möglich bei Umschalten auf zu großen Timeframe
-      iALMA.CalculateWeights(wALMA, MA.Periods);
+      @ALMA.CalculateWeights(wALMA, MA.Periods);
 
    return(catch("onInit(13)"));
 }

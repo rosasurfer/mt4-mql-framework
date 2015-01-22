@@ -73,7 +73,7 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
-#include <iCustom/icMovingAverage.mqh>
+#include <iCustom/MovingAverage.mqh>
 #include <structs/pewa/ORDER_EXECUTION.mqh>
 
 

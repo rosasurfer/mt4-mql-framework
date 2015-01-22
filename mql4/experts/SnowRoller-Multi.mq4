@@ -17,7 +17,7 @@ int __DEINIT_FLAGS__[];
 
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
-#include <iCustom/icMovingAverage.mqh>
+#include <iCustom/MovingAverage.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
