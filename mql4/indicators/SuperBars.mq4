@@ -122,8 +122,8 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    // Fehlerbehandlung je nach execFlags
    if (!bars || error) {
       if (!bars && error!=ERR_SERIES_NOT_AVAILABLE) {
-         // Beim ersten Zugriff kann ERS_HISTORY_UPDATE auftreten.
-         // Ohne Server-Connection kann nach Recompilieren kein Fehler gesetzt sein.
+         // - Beim ersten Zugriff auf die Datenreihe wird statt ERR_SERIES_NOT_AVAILABLE gewöhnlich ERS_HISTORY_UPDATE gesetzt.
+         // - Ohne Server-Connection ist nach Recompilation u.U. gar kein Fehler gesetzt (trotz fehlender Bars).
          if (!error || error==ERS_HISTORY_UPDATE) error = ERR_SERIES_NOT_AVAILABLE;                // NO_ERROR und ERS_HISTORY_UPDATE überschreiben
          else warn("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") = "+ bars, error);
       }
