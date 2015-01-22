@@ -45,6 +45,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdlib.mqh>
+#include <iFunctions/@ATR.mqh>
 
 
 // Moneymanagement
@@ -82,9 +83,9 @@ int onStart() {
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(last_error);    // ATR(14xW)
-   double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(last_error);    // TrueRange letzte Woche
-   double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY) return(last_error);    // TrueRange aktuelle Woche
+   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(last_error);     // ATR(14xW)
+   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(last_error);     // TrueRange letzte Woche
+   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY) return(last_error);     // TrueRange aktuelle Woche
    double ETRwAbs = MathMax(a, MathMax(b, c));
       double C = iClose(NULL, PERIOD_W1, 1);
       double H = iHigh (NULL, PERIOD_W1, 0);

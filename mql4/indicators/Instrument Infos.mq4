@@ -4,9 +4,9 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
-
 #include <core/indicator.mqh>
+#include <stdlib.mqh>
+#include <iFunctions/@ATR.mqh>
 
 #property indicator_chart_window
 
@@ -161,11 +161,11 @@ int UpdateInfos() {
    double pointValue       = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue         = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue,       "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fg.fontSize, fg.fontName, fg.fontColor);
 
-   double atr_d            = ixATR(NULL, PERIOD_D1,  14, 1); if (atr_d == EMPTY) return(last_error);
+   double atr_d            = @ATR(NULL, PERIOD_D1,  14, 1); if (atr_d == EMPTY) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_D         ], "ATR(d):     "     + ifString(!atr_d,          "", Round(atr_d/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_d, Close[0])*100, 2) +"%"), fg.fontSize, fg.fontName, fg.fontColor);
-   double atr_w            = ixATR(NULL, PERIOD_W1,  14, 1); if (atr_w == EMPTY) return(last_error);
+   double atr_w            = @ATR(NULL, PERIOD_W1,  14, 1); if (atr_w == EMPTY) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_W         ], "ATR(w):   "       + ifString(!atr_w,          "", Round(atr_w/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_w, Close[0])*100, 2) +"%"), fg.fontSize, fg.fontName, fg.fontColor);
-   double atr_m            = ixATR(NULL, PERIOD_MN1, 14, 1); if (atr_m == EMPTY) return(last_error);
+   double atr_m            = @ATR(NULL, PERIOD_MN1, 14, 1); if (atr_m == EMPTY) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_M         ], "ATR(m):   "       + ifString(!atr_m,          "", Round(atr_m/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_m, Close[0])*100, 2) +"%"+ ifString(!atr_w, "", " = "+ DoubleToStr(MathDiv(atr_m, atr_w), 1) +" ATR(w)")), fg.fontSize, fg.fontName, fg.fontColor);
 
    double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   +                               DoubleToStr(stopLevel,   Digits<<31>>31) +" pip",     fg.fontSize, fg.fontName, fg.fontColor);
