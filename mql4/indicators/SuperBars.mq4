@@ -667,7 +667,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
          ObjectDelete(eth.label);                                                      //       gemischt (warum auch immer), vermutlich setzt das Terminal einen anderen Drawing-Mode.
       if (ObjectCreate(eth.label, OBJ_RECTANGLE, 0, Time[eth.openBar], eth.high, Time[eth.closeBar], eth.low)) {
          ObjectSet     (eth.label, OBJPROP_COLOR, Color.ETH);
-         ObjectSet     (eth.label, OBJPROP_BACK , true);
+         ObjectSet     (eth.label, OBJPROP_BACK , true     );
          ObjectRegister(eth.label);
       }
 

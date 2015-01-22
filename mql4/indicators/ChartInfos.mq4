@@ -27,6 +27,7 @@ int __DEINIT_FLAGS__[];
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
+#include <iFunctions/@ATR.mqh>
 
 
 // Kursanzeige
@@ -1992,12 +1993,12 @@ bool UpdateMoneyManagement() {
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = ixATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);   // ATR(14xW)
+   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);    // ATR(14xW)
       if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);//throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
       if (!a) return(false);
-   double b = ixATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);   // TrueRange letzte Woche
+   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);    // TrueRange letzte Woche
       if (!b) return(false);
-   double c = ixATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);   // TrueRange aktuelle Woche
+   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);    // TrueRange aktuelle Woche
       if (!c) return(false);
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
       double C = iClose(NULL, PERIOD_W1, 1); if (!C) return(false);
