@@ -1,5 +1,24 @@
 /**
- * EventTracker für getriggerte Pending-Orders. Benachrichtigt akustisch und/oder per SMS.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt akustisch, per E-Mail und/oder per SMS.
+ *
+ *
+ * Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
+ * EventTracker je Instrument zu laden. Preis-Events:
+ *  - neues Tages-High/Low
+ *  - Bruch Vortages-Range
+ *  - neues Wochen-High/Low
+ *  - Bruch Vorwochen-Range
+ *
+ * Zu überwachende Order-Events werden mit Indikator-Inputparametern konfiguriert. Ein so konfigurierter EventTracker überwacht alle Symbole des Accounts,
+ * nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen von allen laufenden EventTrackern für die Orderüberwachung
+ * zu konfigurieren. Order-Events:
+ *  - Orderausführung fehlgeschlagen
+ *  - Position geöffnet
+ *  - Position geschlossen
+ *
+ * Die Art der Benachrichtigung (Sound, E-Mail und/oder SMS) kann je Event konfiguriert werden.
+ *
+ *
  *
  *
  * TODO:
@@ -16,6 +35,16 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
+
+//////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
+
+extern bool   Track.Orders               = false;
+
+extern bool   Order.Alerts.Sound         = true;                           // Sound-Alerts sind per Default aktiv.
+extern string Order.Alerts.Mail.Receiver = "system* | email@address.tld";   // Mail-Alerts sind per Default inaktiv.
+extern string Order.Alerts.SMS.Receiver  = "system* | phone-number";        // SMS-Alerts sind per Default inaktiv.
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 
 
@@ -25,9 +54,9 @@ bool     eventTracker.initialized;                                   // Settings
 bool     sound.alerts;
 
 bool     track.positions;
-string   sound.order.failed   = "speech/OrderExecutionFailed.wav";
-string   sound.position.open  = "speech/OrderFilled.wav";
-string   sound.position.close = "speech/PositionClosed.wav";
+string   sound.order.failed    = "speech/OrderExecutionFailed.wav";
+string   sound.position.opened = "speech/OrderFilled.wav";
+string   sound.position.closed = "speech/PositionClosed.wav";
 
 int      knownOrders.ticket[];                                       // vom letzten Aufruf bekannte offene Orders
 int      knownOrders.type  [];
@@ -317,7 +346,7 @@ bool onPositionOpen(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySoundEx(sound.position.open);
+      PlaySoundEx(sound.position.opened);
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -358,7 +387,7 @@ bool onPositionClose(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySoundEx(sound.position.close);
+      PlaySoundEx(sound.position.closed);
    return(!catch("onPositionClose(3)"));
 }
 
