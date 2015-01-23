@@ -13,24 +13,23 @@
  *  • TMA  - Triangular Moving Average:      doppelter SMA(SMA(n)), also verdoppelte Response-Zeit und verdoppeltes Lag
  *
  * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
- *  • die Konfiguration "3 x D1=>H1"  entspricht "72 x H1"
- *  • die Konfiguration "2 x D1=>M15" entspricht "192 x M15"
+ *  • die Konfiguration "3 x D1=>H1"  wird interpretiert als "72 x H1"
+ *  • die Konfiguration "2 x D1=>M15" wird interpretiert als "192 x M15"
  *
  * Ist der Timeframe des Indikators mit einem Alias konfiguriert, kann für die Periodenlänge ein gebrochener Wert angegeben werden, wenn die
  * Periodenlänge nach Auflösung des Alias ein ganzzahliger Wert ist, z.B.:
- *  • die Konfiguration "1.5 x D1=>H1" entspricht "36 x H1"
- *  • die Konfiguration "2.5 x H1=>M5" entspricht "30 x M5"
+ *  • die Konfiguration "1.5 x D1=>H1" wird interpretiert als "36 x H1"
+ *  • die Konfiguration "2.5 x H1=>M5" wird interpretiert als "30 x M5"
  *
- * Ein konfigurierter Timeframe wird beim Umschalten des Chart-Timeframes NICHT auf die jeweilige Chartperiode umgerechnet. Zur Berechnung wird immer der
- * konfigurierte Timeframe verwendet, wodurch der Indikator in allen Chartauflösungen exakt dieselben Werte anzeigt.
+ * Zur Berechnung wird immer der konfigurierte Timeframe verwendet, auch bei abweichender Chartperiode.
  *
- * Sind Hotkeys zur schnellen Änderung der Indikatorperiode für mehr als einen Indikator des aktuellen Charts aktiviert, empfängt nur der erste für Hotkeys
- * konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge des "Indicators List" Window).
+ * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert, empfängt nur der erste
+ * für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren im "Indicators List" Window).
  *
- * Im Buffer MovingAverage.MODE_MA stehen die Werte des Moving Average und im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge der jeweiligen Bar
- * zur Verfügung:
+ * Im Buffer MovingAverage.MODE_MA stehen die Werte des Moving Average und im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge
+ * der jeweiligen Bar zur Verfügung:
  *  • Trendrichtung: positive Werte (+1...+n) für Aufwärtstrends bzw. negative Werte (-1...-n) für Abwärtstrends
- *  • Die Trendlänge entspricht dem Absolutwert des Trends einer Bar weniger 1, also der Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal.
+ *  • Trendlänge:    der Absolutwert des Trends einer Bar weniger 1 (Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -40,10 +39,10 @@ int __DEINIT_FLAGS__[];
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
 extern string MA.Periods                 = "200";                    // für einige Timeframes sind gebrochene Werte zulässig (z.B. 1.5 x D1)
-extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotkeys zur schnellen Änderung der Periode aktiviert sind
 extern string MA.Timeframe               = "current";                // Timeframe: [M1|M5|M15,...[=> M1|M5|M15,...]]    ("current"|"" = aktueller Timeframe)
 extern string MA.Method                  = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotkeys zur schnellen Änderung der Periode aktiviert sind
 
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend            = Orange;
@@ -58,14 +57,14 @@ extern int    Shift.Vertical.Pips        = 0;                        // vertikal
 #include <iFunctions/@MA.mqh>
 #include <iFunctions/@ALMA.mqh>
 
-#define MovingAverage.MODE_MA          0                             // Buffer-ID's
-#define MovingAverage.MODE_TREND       1
-#define MovingAverage.MODE_UPTREND1    2                             // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden Down-Trend
-#define MovingAverage.MODE_DOWNTREND   3                             // optisch verdeckt. Um auch diese kurzfristigen Trendwechsel sichtbar zu machen, werden sie im Buffer MODE_UPTREND.2
-#define MovingAverage.MODE_UPTREND2    4                             // gespeichert, der den Buffer MODE_DOWNTREND überlagert.
+#define MODE_MA             MovingAverage.MODE_MA                    // Buffer-ID's
+#define MODE_TREND          MovingAverage.MODE_TREND                 //
+#define MODE_UPTREND1       2                                        // Bei Unterbrechung eines Down-Trends um nur eine Bar wird dieser Up-Trend durch den sich fortsetzenden
+#define MODE_DOWNTREND      3                                        // Down-Trendoptisch verdeckt. Um auch solche kurzen Trendwechsel sichtbar zu machen, werden sie zusätzlich
+#define MODE_UPTREND2       4                                        // im Buffer MODE_UPTREND2 gespeichert, der im Chart den Buffer MODE_DOWNTREND optisch überlagert.
 
-#define MA_PERIODS_UP                  1                             // Hotkey-Commands
-#define MA_PERIODS_DOWN               -1
+#define MA_PERIODS_UP       1                                        // Hotkey-Command-IDs
+#define MA_PERIODS_DOWN    -1
 
 #property indicator_chart_window
 
@@ -218,29 +217,29 @@ int onInit() {
 
 
    // (4.1) Bufferverwaltung
-   SetIndexBuffer(MovingAverage.MODE_MA,        bufferMA       );    // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
-   SetIndexBuffer(MovingAverage.MODE_TREND,     bufferTrend    );    // Trend: +/-         unsichtbar
-   SetIndexBuffer(MovingAverage.MODE_UPTREND1,  bufferUpTrend1 );    // UpTrend-Linie 1:   sichtbar
-   SetIndexBuffer(MovingAverage.MODE_DOWNTREND, bufferDownTrend);    // DownTrend-Linie:   sichtbar
-   SetIndexBuffer(MovingAverage.MODE_UPTREND2,  bufferUpTrend2 );    // UpTrend-Linie 2:   sichtbar
+   SetIndexBuffer(MODE_MA,        bufferMA       );                  // vollst. Indikator: unsichtbar (Anzeige im "Data Window"
+   SetIndexBuffer(MODE_TREND,     bufferTrend    );                  // Trend: +/-         unsichtbar
+   SetIndexBuffer(MODE_UPTREND1,  bufferUpTrend1 );                  // UpTrend-Linie 1:   sichtbar
+   SetIndexBuffer(MODE_DOWNTREND, bufferDownTrend);                  // DownTrend-Linie:   sichtbar
+   SetIndexBuffer(MODE_UPTREND2,  bufferUpTrend2 );                  // UpTrend-Linie 2:   sichtbar
 
    // (4.2) Anzeigeoptionen
    IndicatorShortName(legendName);                                   // für Context Menu
    string dataName = MA.Method +"("+ MA.Periods + sTimeframe +")";
-   SetIndexLabel(MovingAverage.MODE_MA,        dataName);            // für Tooltip und "Data Window"
-   SetIndexLabel(MovingAverage.MODE_TREND,     NULL    );
-   SetIndexLabel(MovingAverage.MODE_UPTREND1,  NULL    );
-   SetIndexLabel(MovingAverage.MODE_DOWNTREND, NULL    );
-   SetIndexLabel(MovingAverage.MODE_UPTREND2,  NULL    );
+   SetIndexLabel(MODE_MA,        dataName);                          // für Tooltip und "Data Window"
+   SetIndexLabel(MODE_TREND,     NULL    );
+   SetIndexLabel(MODE_UPTREND1,  NULL    );
+   SetIndexLabel(MODE_DOWNTREND, NULL    );
+   SetIndexLabel(MODE_UPTREND2,  NULL    );
    IndicatorDigits(SubPipDigits);
 
    // (4.3) Zeichenoptionen
    int startDraw = Max(ma.periods-1, Bars-ifInt(Max.Values < 0, Bars, Max.Values)) + Shift.Horizontal.Bars;
-   SetIndexDrawBegin(MovingAverage.MODE_MA,        0        ); SetIndexShift(MovingAverage.MODE_MA,        Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MovingAverage.MODE_TREND,     0        ); SetIndexShift(MovingAverage.MODE_TREND,     Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MovingAverage.MODE_UPTREND1,  startDraw); SetIndexShift(MovingAverage.MODE_UPTREND1,  Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MovingAverage.MODE_DOWNTREND, startDraw); SetIndexShift(MovingAverage.MODE_DOWNTREND, Shift.Horizontal.Bars);
-   SetIndexDrawBegin(MovingAverage.MODE_UPTREND2,  startDraw); SetIndexShift(MovingAverage.MODE_UPTREND2,  Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MODE_MA,        0        ); SetIndexShift(MODE_MA,        Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MODE_TREND,     0        ); SetIndexShift(MODE_TREND,     Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MODE_UPTREND1,  startDraw); SetIndexShift(MODE_UPTREND1,  Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MODE_DOWNTREND, startDraw); SetIndexShift(MODE_DOWNTREND, Shift.Horizontal.Bars);
+   SetIndexDrawBegin(MODE_UPTREND2,  startDraw); SetIndexShift(MODE_UPTREND2,  Shift.Horizontal.Bars);
 
    shift.vertical = Shift.Vertical.Pips * Pip;                       // TODO: Digits/Point-Fehler abfangen
 
@@ -413,11 +412,11 @@ bool ModifyMaPeriods(int direction) {
  * normalerweise in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {
-   SetIndexStyle(MovingAverage.MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MovingAverage.MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
-   SetIndexStyle(MovingAverage.MODE_UPTREND1,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
-   SetIndexStyle(MovingAverage.MODE_DOWNTREND, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
-   SetIndexStyle(MovingAverage.MODE_UPTREND2,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY, CLR_NONE       );
+   SetIndexStyle(MODE_UPTREND1,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
+   SetIndexStyle(MODE_DOWNTREND, DRAW_LINE, EMPTY, EMPTY, Color.DownTrend);
+   SetIndexStyle(MODE_UPTREND2,  DRAW_LINE, EMPTY, EMPTY, Color.UpTrend  );
 }
 
 
