@@ -318,7 +318,7 @@ bool ToggleOpenOrders() {
          return(false);
       if (!orders) {                                                 // ohne offene Orders bleibt die Anzeige unverändert
          status = false;
-         ForceSound("Plonk.wav");                                    // Plonk!!!
+         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
    }
 
@@ -541,7 +541,7 @@ bool ToggleTradeHistory() {
          return(false);
       if (!trades) {                                                 // ohne Trade-History bleibt die Anzeige unverändert
          status = false;
-         ForceSound("Plonk.wav");                                    // Plonk!!!
+         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
    }
 
@@ -873,7 +873,7 @@ bool ToggleAuM() {
       }
       else /*mode.remote*/{
          status = false;                                             // not implemented
-         ForceSound("Plonk.wav");                                    // Plonk!!!
+         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
       ObjectSetText(label.aum, strAum, 9, "Tahoma", SlateGray);
    }

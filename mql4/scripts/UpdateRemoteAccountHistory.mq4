@@ -56,7 +56,7 @@ int onStart() {
             int error = GetLastError();
             if (error == ERR_UNKNOWN_SYMBOL) {
                if (__LOG) log("onStart(1)   MarketInfo("+ OrderSymbol() +") - unknown symbol");
-               PlaySound("notify.wav");
+               PlaySoundEx("Windows Notify.wav");
                MessageBox("Add \""+ OrderSymbol() +"\" to the \"Market Watch\" window !", __NAME__, MB_ICONEXCLAMATION|MB_OK);
                return(SetLastError(error));
             }
@@ -174,11 +174,11 @@ int onStart() {
 
    // (4) Antwort auswerten und Rückmeldung an den User geben
    if (result==200 || result==201) {
-      PlaySound("ding.wav");
+      PlaySoundEx("Windows Confirm.wav");
       MessageBox(ifString(result==200, "History is up-to-date.", "History successfully updated."), __NAME__, MB_ICONINFORMATION|MB_OK);
    }
    else {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       MessageBox(ifString(errorMsg=="", "error "+ result, errorMsg), __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 

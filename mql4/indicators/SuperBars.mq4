@@ -205,7 +205,7 @@ bool SwitchSuperTimeframe(int direction) {
 
    if (direction == STF_DOWN) {
       switch (superBars.timeframe) {
-         case  INT_MIN      : ForceSound("Plonk.wav");           break;    // Plonk, we hit a wall!
+         case  INT_MIN      : PlaySoundEx("Plonk.wav");          break;    // Plonk, we hit a wall!
 
          case  PERIOD_D1_ETH:
          case -PERIOD_D1_ETH: superBars.timeframe =  INT_MIN;    break;
@@ -243,7 +243,7 @@ bool SwitchSuperTimeframe(int direction) {
 
          case  PERIOD_Q1    : superBars.timeframe =  INT_MAX;    break;
 
-         case  INT_MAX      : ForceSound("Plonk.wav" );          break;   // Plonk, we hit a wall!
+         case  INT_MAX      : PlaySoundEx("Plonk.wav" );         break;   // Plonk, we hit a wall!
       }
    }
    else warn("SwitchSuperTimeframe(1)   unknown parameter direction = "+ direction);

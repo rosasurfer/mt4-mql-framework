@@ -479,7 +479,7 @@
    int      iBarShiftPrevious(string symbol, int period, datetime time);               // throws ERS_HISTORY_UPDATE
 
    int      ForceMessageBox(string caption, string message, int flags);
-   int      ForceSound(string soundfile);
+   int      PlaySoundEx(string soundfile);
    bool     SendSMS(string receiver, string message);
 
 

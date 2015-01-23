@@ -271,24 +271,6 @@ bool Init.IsNewSymbol(string symbol) {
 }
 
 
-/**
- * Gibt optisch und akustisch eine Warnung aus.
- *
- * @param  string message - anzuzeigende Nachricht
- * @param  int    error   - anzuzeigender Fehlercode
- *
- * @return int - derselbe Fehlercode
- *
- *
- * NOTE: Nur bei Implementierung in der Headerdatei wird das aktuell laufende Modul als Auslöser angezeigt.
- */
-int _warn(string message, int error=NO_ERROR) {
-   ForceSound("alert.wav");
-   log(message, error);
-   return(error);
-}
-
-
 // virtuelle Init/Deinit-Handler und Main-Funktionen, können je nach Bedarf überschrieben werden
 int    onInit()                  { return(NO_ERROR); }
 int    onInit.User()             { return(NO_ERROR); }
@@ -334,6 +316,21 @@ int    afterDeinit()             {                                              
 
 string InputsToStr()             {                                       return("InputsToStr()   function not implemented"); }
 int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");        return(error); }
+
+
+/**
+ * Nur zu Testzwecken bei Unterscheidung von 509/600-Builds.
+ *
+ * @param  string message - anzuzeigende Nachricht
+ * @param  int    error   - anzuzeigender Fehlercode
+ *
+ * @return int - derselbe Fehlercode
+ */
+int _warn(string message, int error=NO_ERROR) {
+   PlaySoundEx("alert.wav");
+   log(message, error);
+   return(error);
+}
 
 
 /**
@@ -4233,7 +4230,7 @@ int Chart.SendTick(bool sound=false) {
    }
 
    if (sound)
-      PlaySound("tick1.wav");
+      PlaySoundEx("Tick.wav");
 
    return(NO_ERROR);
 }
@@ -9263,9 +9260,9 @@ string UrlEncode(string value) {
 
 
 /**
- * Prüft, ob der angegebene Name eine existierende und normale Datei ist (kein Verzeichnis).
+ * Prüft, ob die angegebene Datei existiert und eine normale Datei ist (kein Verzeichnis).
  *
- * @return string filename - vollständiger Dateiname (für Windows-Dateifunktionen)
+ * @return string filename - vollständiger Dateiname
  *
  * @return bool
  */
@@ -9288,9 +9285,9 @@ bool IsFile(string filename) {
 
 
 /**
- * Prüft, ob der angegebene Name ein existierendes Verzeichnis ist (keine normale Datei).
+ * Prüft, ob das angegebene Verzeichnis existiert.
  *
- * @return string filename - vollständiger Dateiname (für Windows-Dateifunktionen)
+ * @return string filename - vollständiger Verzeichnisname
  *
  * @return bool
  */
@@ -9317,9 +9314,9 @@ bool IsDirectory(string filename) {
 
 
 /**
- * Prüft, ob der angegebene Name eine existierende MQL-Datei ist (kein Verzeichnis).
+ * Prüft, ob die angegebene Datei im MQL-Files-Verzeichnis existiert und eine normale Datei ist (kein Verzeichnis).
  *
- * @return string filename - zu ".\{mql-dir}\files\" relativer Dateiname (für MQL-Dateifunktionen)
+ * @return string filename - zu ".\{mql-dir}\files\" relativer Dateiname
  *
  * @return bool
  */
@@ -9331,9 +9328,9 @@ bool IsMqlFile(string filename) {
 
 
 /**
- * Prüft, ob der angegebene Name ein existierendes MQL-Verzeichnis ist (keine Datei).
+ * Prüft, ob das angegebene Verzeichnis im MQL-Files-Verzeichnis existiert.
  *
- * @return string dirname - zu ".\{mql-dir}\files\" relativer Verzeichnisname (für MQL-Dateifunktionen)
+ * @return string dirname - zu ".\{mql-dir}\files\" relativer Verzeichnisname
  *
  * @return bool
  */
@@ -10349,7 +10346,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
 
          if (__LOG) log(StringConcatenate("OrderSendEx(30)   ", __OrderSendEx.SuccessMsg(oe)));
          if (!IsTesting())
-            PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
+            PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          if (IsError(catch("OrderSendEx(31)", NULL, O_POP)))
             ticket = -1;
@@ -10782,7 +10779,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
 
          if (__LOG) log(StringConcatenate("OrderModifyEx(18)   ", __OrderModifyEx.SuccessMsg(oe, origOpenPrice, origStopLoss, origTakeProfit)));
          if (!IsTesting())
-            PlaySound("RFQ.wav");
+            PlaySoundEx("OrderModified.wav");
 
          return(!oe.setError(oe, catch("OrderModifyEx(19)", NULL, O_POP)));            // regular exit
       }
@@ -11442,7 +11439,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
 
          if (__LOG) log(StringConcatenate("OrderCloseEx(24)   ", __OrderCloseEx.SuccessMsg(oe)));
          if (!IsTesting())
-            PlaySound(ifString(requotes, "Blip.wav", "OrderOk.wav"));
+            PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
          return(!oe.setError(oe, catch("OrderCloseEx(25)", NULL, O_POP)));             // regular exit
       }
@@ -11767,7 +11764,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
 
          if (__LOG) log(StringConcatenate("OrderCloseByEx(16)   ", __OrderCloseByEx.SuccessMsg(first, second, largerType, oe)));
          if (!IsTesting())
-            PlaySound("OrderOk.wav");
+            PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderCloseByEx(17)", NULL, O_POP)));           // regular exit
       }
@@ -12483,7 +12480,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
 
          if (__LOG) log(StringConcatenate("OrderDeleteEx(9)   ", __OrderDeleteEx.SuccessMsg(oe)));
          if (!IsTesting())
-            PlaySound("OrderOk.wav");
+            PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(10)", NULL, O_POP)));             // regular exit
       }

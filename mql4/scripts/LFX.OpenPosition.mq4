@@ -145,7 +145,7 @@ int onStart() {
             retry++;
             continue;
          }
-         PlaySound("notify.wav");                                                      // bei weiterem Mißerfolg Bestätigung für Fortsetzung einholen
+         PlaySoundEx("Windows Notify.wav");                                            // bei weiterem Mißerfolg Bestätigung für Fortsetzung einholen
          button = MessageBox("Invalid MarketInfo() data.\n\n"+ errorMsg, __NAME__, MB_ICONINFORMATION|MB_RETRYCANCEL);
          if (button == IDRETRY) {
             i = -1;
@@ -191,7 +191,7 @@ int onStart() {
 
    // (2.8) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
    if (StringLen(overLeverageMsg) > 0) {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       button = MessageBox("Not enough money! The following positions will over-leverage:\n"+ overLeverageMsg +"\n\nResulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not realizable)", "")) +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(4)"));
@@ -207,7 +207,7 @@ int onStart() {
 
 
    // (4) finale Sicherheitsabfrage
-   PlaySound("notify.wav");
+   PlaySoundEx("Windows Notify.wav");
    button = MessageBox(ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not realizable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
