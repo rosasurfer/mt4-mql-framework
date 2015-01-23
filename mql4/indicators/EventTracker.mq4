@@ -8,7 +8,7 @@
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
  *  - Konfiguration per Indikator-Parameter und NICHT per Accountkonfiguration
  *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
- *  - großflächige Anzeige der überwachten Kriterien
+ *  - Anzeige der überwachten Kriterien
  */
 #property indicator_chart_window
 
@@ -25,9 +25,9 @@ bool     eventTracker.initialized;                                   // Settings
 bool     sound.alerts;
 
 bool     track.positions;
-string   sound.order.failed   = "Order-Execution-Failed.wav";
-string   sound.position.open  = "OrderFilled.wav";
-string   sound.position.close = "PositionClosed.wav";
+string   sound.order.failed   = "speech/OrderExecutionFailed.wav";
+string   sound.position.open  = "speech/OrderFilled.wav";
+string   sound.position.close = "speech/PositionClosed.wav";
 
 int      knownOrders.ticket[];                                       // vom letzten Aufruf bekannte offene Orders
 int      knownOrders.type  [];
@@ -54,7 +54,7 @@ int onInit() {
  *
  * @return bool - Erfolgsstatus
  */
-bool EventTracker.init() { //throws ERS_TERMINAL_NOT_YET_READY
+bool EventTracker.init() {// throws ERS_TERMINAL_NOT_YET_READY
    int account = GetAccountNumber();
    if (!account)
       return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
@@ -277,7 +277,7 @@ bool onOrderFail(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySound(sound.order.failed);
+      PlaySoundEx(sound.order.failed);
    return(!catch("onOrderFail(3)"));
 }
 
@@ -317,7 +317,7 @@ bool onPositionOpen(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySound(sound.position.open);
+      PlaySoundEx(sound.position.open);
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -358,7 +358,7 @@ bool onPositionClose(int tickets[]) {
 
    // ggf. Sound abspielen
    if (sound.alerts)
-      PlaySound(sound.position.close);
+      PlaySoundEx(sound.position.close);
    return(!catch("onPositionClose(3)"));
 }
 

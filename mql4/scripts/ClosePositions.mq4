@@ -136,7 +136,7 @@ int onStart() {
    // Positionen schließen
    int selected = ArraySize(tickets);
    if (selected > 0) {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       int button = MessageBox(ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ ifString(selected==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
@@ -147,7 +147,7 @@ int onStart() {
       }
    }
    else {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       MessageBox("No "+ ifString(isInput, "matching", "open") +" positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
    }
 

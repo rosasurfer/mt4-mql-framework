@@ -47,7 +47,7 @@ int onStart() {
 
       // (3) Bestätigung einholen
       for (i=0; i < sizeOfIds; i++) {
-         ForceSound("notify.wav");
+         PlaySoundEx("Windows Notify.wav");
          int button = ForceMessageBox(__NAME__, ifString(!IsDemo() && !Script.IsTesting(), "- Real Money Account -\n\n", "") +"Do you really want to "+ ifString(status[i]==STATUS_WAITING, "start", "resume") +" sequence "+ ids[i] +"?", MB_ICONQUESTION|ifInt(sizeOfIds==1, MB_OKCANCEL, MB_YESNOCANCEL));
          if (button == IDCANCEL)
             break;
@@ -80,7 +80,7 @@ int onStart() {
 
    if (!last_error) {
       if (sizeOfIds == 0) {
-         ForceSound("chord.wav");
+         PlaySoundEx("chord.wav");
          ForceMessageBox(__NAME__, "No stopped sequence found.", MB_ICONEXCLAMATION|MB_OK);
       }
       catch("onStart(3)");

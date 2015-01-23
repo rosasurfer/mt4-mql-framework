@@ -99,14 +99,14 @@ int onStart() {
    }
    int magicsSize = ArraySize(magics);
    if (!magicsSize) {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       MessageBox("No matching LFX positions found.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(1)"));
    }
 
 
    // (2) Sicherheitsabfrage
-   PlaySound("notify.wav");
+   PlaySoundEx("Windows Notify.wav");
    int button = MessageBox(ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Do you really want to close the specified "+ ifString(magicsSize==1, "", magicsSize +" ") +"LFX position"+ ifString(magicsSize==1, "", "s") +"?", __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(2)"));

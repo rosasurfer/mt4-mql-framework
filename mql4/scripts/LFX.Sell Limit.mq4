@@ -98,7 +98,7 @@ int onStart() {
 
    // (1) Sicherheitsabfrage
    if (LimitPrice <= Bid) {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" is already triggered (current price "+ NumberToStr(Bid, SubPipPriceFormat) +").\n\n"
                         +"Do you really want the order to immediately get executed?",
@@ -110,7 +110,7 @@ int onStart() {
       // TODO: Statt PendingOrder Order sofort hier ausführen, da sie sonst erst bei der nächsten Preisänderung ausgeführt wird (und evt. auch eben nicht).
    }
    else {
-      PlaySound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
                         +"Do you really want to place a Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                         +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
@@ -147,7 +147,7 @@ int onStart() {
 
 
    // (4) Bestätigungsmeldung
-   PlaySound("Entry order.wav");
+   PlaySoundEx("OrderOk.wav");
    MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
             +"Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)

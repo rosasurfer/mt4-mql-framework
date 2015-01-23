@@ -119,7 +119,7 @@ bool ConfirmTick1Trade(string location, string message) {
          confirmed = true;
       }
       else {
-         ForceSound("notify.wav");
+         PlaySoundEx("Windows Notify.wav");
          confirmed = (IDOK == ForceMessageBox(__NAME__ + ifString(!StringLen(location), "", " - "+ location), ifString(!IsDemo(), "- Real Money Account -\n\n", "") + message, MB_ICONQUESTION|MB_OKCANCEL));
          if (Tick > 0)
             RefreshRates();                                          // bei Tick==0, also Aufruf in init(), ist RefreshRates() unnötig

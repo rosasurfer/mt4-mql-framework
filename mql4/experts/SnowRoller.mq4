@@ -3097,7 +3097,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
       return(catch(location +"   "+ message, ERR_INVALID_CONFIG_PARAMVALUE));
 
    if (__LOG) log(StringConcatenate(location, "   ", message), ERR_INVALID_INPUT_PARAMVALUE);
-   ForceSound("chord.wav");
+   PlaySoundEx("chord.wav");
    int button = ForceMessageBox(__NAME__ +" - "+ location, message, MB_ICONERROR|MB_RETRYCANCEL);
 
    __STATUS_INVALID_INPUT = true;
@@ -4354,7 +4354,7 @@ bool SynchronizeStatus() {
       if (!IsTest() || !IsTesting()) {                                     // keine Synchronization für abgeschlossene Tests
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
-               ForceSound("notify.wav");
+               PlaySoundEx("Windows Notify.wav");
                int button = ForceMessageBox(__NAME__ +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
                if (button != IDRETRY)
                   return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -4427,7 +4427,7 @@ bool SynchronizeStatus() {
    if (size > 0) {                                                      //       müssen sie richtig einsortiert werden.
       return(_false(catch("SynchronizeStatus(3)   unknown pending orders found: #"+ JoinInts(orphanedPendingOrders, ", #"), ERR_RUNTIME_ERROR)));
       //ArraySort(orphanedPendingOrders);
-      //ForceSound("notify.wav");
+      //PlaySoundEx("Windows Notify.wav");
       //int button = ForceMessageBox(__NAME__ +" - SynchronizeStatus()", ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Orphaned pending order"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedPendingOrders, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       //if (button != IDOK) {
       //   SetLastError(ERR_CANCELLED_BY_USER);
@@ -4439,7 +4439,7 @@ bool SynchronizeStatus() {
    if (size > 0) {                                                      //       müssen sie richtig einsortiert werden.
       return(_false(catch("SynchronizeStatus(5)   unknown open positions found: #"+ JoinInts(orphanedOpenPositions, ", #"), ERR_RUNTIME_ERROR)));
       //ArraySort(orphanedOpenPositions);
-      //ForceSound("notify.wav");
+      //PlaySoundEx("Windows Notify.wav");
       //button = ForceMessageBox(__NAME__ +" - SynchronizeStatus()", ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Orphaned open position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedOpenPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       //if (button != IDOK) {
       //   SetLastError(ERR_CANCELLED_BY_USER);
@@ -4450,7 +4450,7 @@ bool SynchronizeStatus() {
    size = ArraySize(orphanedClosedPositions);
    if (size > 0) {
       ArraySort(orphanedClosedPositions);
-      ForceSound("notify.wav");
+      PlaySoundEx("Windows Notify.wav");
       button = ForceMessageBox(__NAME__ +" - SynchronizeStatus()", ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Orphaned closed position"+ ifString(size==1, "", "s") +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK) {
          SetLastError(ERR_CANCELLED_BY_USER);
@@ -4980,7 +4980,7 @@ int ToggleOrderDisplayMode() {
    }
    else {
       // nothing to change, Anzeige bleibt unverändert
-      ForceSound("Plonk.wav");
+      PlaySoundEx("Plonk.wav");
    }
    return(catch("ToggleOrderDisplayMode()"));
 }

@@ -21,6 +21,16 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   string sound.order.failed   = "speech/OrderExecutionFailed.wav";
+   string sound.position.open  = "speech/OrderFilled.wav";
+   string sound.position.close = "speech/PositionClosed.wav";
+
+   PlaySoundEx(sound.position.close);
+
+   return(catch("onStart()"));
+
+
+
    string symbol = "AUDLFX";
    int    period = PERIOD_M30;
 
@@ -30,7 +40,7 @@ int onStart() {
 
 
    debug("onStart()  hHst="+ hHst +"  written="+ written +"  closed="+ closed);
-   return(last_error);
+   return(catch("onStart()"));
 
    int header[]; hf.Header(hHst, header);
    HISTORY_HEADER.toStr(header, true);

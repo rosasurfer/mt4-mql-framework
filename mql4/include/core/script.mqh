@@ -371,7 +371,7 @@ int HandleScriptError(string location, string message, int error) {
    if (StringLen(location) > 0)
       location = " :: "+ location;
 
-   PlaySound("chord.wav");
+   PlaySoundEx("Windows Chord.wav");
    MessageBox(message, "Script "+ __NAME__ + location, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));

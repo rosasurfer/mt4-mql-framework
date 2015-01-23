@@ -950,7 +950,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
                         message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
 
-         ForceSound("alert.wav");
+         PlaySoundEx("alert.wav");
          ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
          alerted = true;
       }
@@ -1027,7 +1027,7 @@ int warn(string message, int error=NO_ERROR) {
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
                      message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
 
-      ForceSound("alert.wav");
+      PlaySoundEx("alert.wav");
       ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
    }
    else if (!alerted) {
@@ -1489,6 +1489,7 @@ string PeriodDescription(int period=NULL) {
  * Dropin-Ersatz für PlaySound()
  *
  * Spielt ein Soundfile ab, auch wenn dies im aktuellen Kontext des Terminals (z.B. im Tester) nicht unterstützt wird.
+ * Prüft zusätzlich, ob das angegebene Soundfile existiert.
  *
  * @param  string soundfile
  *
@@ -1497,15 +1498,15 @@ string PeriodDescription(int period=NULL) {
  *
  * NOTE: Global definiert, da vom Errorhandling referenziert.
  */
-int ForceSound(string soundfile) {
-   if (!IsTesting()) {
-      PlaySound(soundfile);
-   }
-   else {
-      soundfile = StringConcatenate(TerminalPath(), "\\sounds\\", soundfile);
-      PlaySoundA(soundfile, NULL, SND_FILENAME|SND_ASYNC);
-   }
-   return(NO_ERROR);
+int PlaySoundEx(string soundfile) {
+   string filename = StringReplace(soundfile, "/", "\\");
+   string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
+   if (!IsFile(fullName)) return(catch("PlaySoundEx(1)   file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
+
+   if (IsTesting()) PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
+   else             PlaySound(filename);
+
+   return(catch("PlaySoundEx(2)"));
 }
 
 
@@ -2649,6 +2650,7 @@ void __DummyCalls() {
    bool   GetConfigBool(string section, string key, bool defaultValue);
    int    GetCustomLogID();
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
+   bool   IsFile(string filename);
    bool   ReverseStringArray(string array[]);
    bool   SendSMS(string receiver, string message);
    string StdSymbol();
