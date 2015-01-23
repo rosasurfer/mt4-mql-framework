@@ -1,5 +1,5 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt akustisch, per E-Mail und/oder per SMS.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt akustisch, per HTML-Request, E-Mail und/oder SMS.
  *
  *
  * Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
@@ -16,7 +16,7 @@
  *  - Position geöffnet
  *  - Position geschlossen
  *
- * Die Art der Benachrichtigung (Sound, E-Mail und/oder SMS) kann je Event konfiguriert werden.
+ * Die Art der Benachrichtigung (Sound, HTML-Request, E-Mail und/oder SMS) kann je Event konfiguriert werden.
  *
  *
  *
@@ -40,9 +40,10 @@ int __DEINIT_FLAGS__[];
 
 extern bool   Track.Orders               = false;
 
-extern bool   Order.Alerts.Sound         = true;                           // Sound-Alerts sind per Default aktiv.
-extern string Order.Alerts.Mail.Receiver = "system* | email@address.tld";   // Mail-Alerts sind per Default inaktiv.
-extern string Order.Alerts.SMS.Receiver  = "system* | phone-number";        // SMS-Alerts sind per Default inaktiv.
+extern bool   Order.Alerts.Sound         = true;                     // alle Alerts bis auf Sounds sind per Default inaktiv
+extern string Order.Alerts.HTTP.Url      = "";                       // vollständige URL (POST)
+extern string Order.Alerts.Mail.Receiver = "email@address.tld";      //
+extern string Order.Alerts.SMS.Receiver  = "phone-number";           // "system": global konfigurierte E-Mailadresse oder Telefonnummer
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
