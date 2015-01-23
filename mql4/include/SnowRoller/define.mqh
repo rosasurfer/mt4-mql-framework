@@ -4,6 +4,11 @@
 #define SID_MAX                 16383                                // Höchstwert für Sequenz-IDs:  maximal 14 bit (32767 >> 1)
 
 
+// Trend direction flags
+#define MODE_UPTREND                1
+#define MODE_DOWNTREND              2
+
+
 // Griddirection-Types und Flags
 #define D_LONG                OP_LONG                                // Types: {0, 1}
 #define D_SHORT              OP_SHORT                                //

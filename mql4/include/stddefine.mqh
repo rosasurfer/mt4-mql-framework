@@ -415,11 +415,6 @@ int      last_error;                                        // der letzte Fehler
 #define MODE_DESCEND           MODE_DESC
 
 
-// Trend direction flags
-#define MODE_UPTREND                   1
-#define MODE_DOWNTREND                 2
-
-
 // Market info identifiers, siehe MarketInfo()
 #define MODE_LOW                       1        // session low price (since midnight server time)
 #define MODE_HIGH                      2        // session high price (since midnight server time)

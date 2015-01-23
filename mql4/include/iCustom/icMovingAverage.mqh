@@ -1,7 +1,7 @@
 /**
  * In Headerdatei implementiert, um direkt inkludiert werden zu können.  Notwendig, wenn die Indikatorausgabe nach Testende
  * bei VisualMode=On gezeichnet werden soll. Der Tester zeichnet den Inhalt der Buffer nur dann, wenn der iCustom()-Aufruf
- * direkt im EA erfolgt, jedoch nicht bei Aufruf in einer Library.
+ * im Hauptmodul des Programms (also im EA selbst) erfolgt, nicht bei Aufruf in einer Library (anderes Modul).
  *
  * Berechnet den angegebenen Wert des "Moving Average"-Indikators und gibt ihn zurück.
  *
