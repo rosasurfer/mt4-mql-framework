@@ -39,14 +39,10 @@
     caption=MQL4 Reference
 
     <content>
-      <p>MetaQuotes Language 4 (MQL4) is a new built-in language for programming of trading
-      strategies. This language allows to create your own Expert Advisors that make
-      trading management automated and are perfectly suitable for implementing of one's
-      own trade strategies. Besides, one can use MQL4 for creation of one's own Custom
-      Indicators, Scripts, and Libraries. You can start learning the language using Sergey Kovalyov's book named
-      <i>Programming in Algorithmic Language MQL4</i> published and supported by
-      <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a>
-      You can download the Book in .chm format at: <a href="http://www.mql4.com/files/mql4bookenglish.chm?source=metaeditor_help">http://www.mql4.com/files/mql4bookenglish.chm</a> (size 2.0 Mb).</p>
+      <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts. 
+      You can start learning the language using Sergey Kovalyov's book <i>Programming in Algorithmic Language MQL4</i> published by 
+      <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a> You can download the Book in .chm format at
+      <a href="http://www.mql4.com/files/mql4bookenglish.chm?source=metaeditor_help">http://www.mql4.com/files/mql4bookenglish.chm</a> (size 2.0 Mb).</p>
 
       <p>A large amount of functions necessary for analysis of the current and
       previously income quotes, as well as basic arithmetic and logic operations are included in MQL4
@@ -61,27 +57,25 @@
 
       <p>Programs written in MetaQuotes Language 4 have different features and purposes:</p>
       <ul><li><p>
-          <strong>Expert Advisor</strong> is a mechanical trading system (MTS) linked up to a certain chart.
-          An Advisor starts to run with every incoming tick for a given symbol. The Advisor will not be launched for a new,
-          tick if it is processing the previous one at this moment (i.e., the Advisor has not completed its operation yet).
-          The Advisor can both inform you about a possibility to trade and trade at an account automatically sending orders
-          directly to the trade server. Like most trading systems, the terminal supports testing strategies on history data
-          with displaying trading in-and-out points in the chart.<br/>
-          Experts are stored in <em>terminal_directory\experts</em>.</p></li>
+          <strong>Expert Advisor</strong> is a mechanical trading system linked to a specific chart.
+          An Advisor is executed for every incoming tick of a given symbol. The Advisor will not be executed for a new
+          tick if it is still processing the previous one (i.e. the Advisor has not yet completed its processing).
+          The Advisor can both inform you about a possibility to trade and trade at an account automatically, sending orders
+          directly to the trade server. Like most trading platforms the terminal supports the testing of strategies on historic data
+          and can display trade entries and exits in the chart.<br/>
+          Experts are stored in the directory <em>terminal_directory\experts</em>.</p></li>
         <li><p><strong>Custom Indicator</strong> is a technical indicator written independently in addition to those
-          already integrated into the client terminal. Like built-in indicators, they cannot trade automatically
-          and are intended for implementing of analytical functions only.<br/>
-          Custom Indicators are stored in <em>terminal_directory\experts\indicators</em>.</p></li>
-        <li><p><strong>Script</strong> is a program intended for a single execution of some actions. Unlike
-          Expert Advisors, Scripts are not run tickwise, but on request.<br/>
-          Scripts are stored in <em>terminal_dictionary\experts\scripts</em>.</p></li>
-        <li><p><strong>Library</strong> is a set of custom functions containing programs most frequently used. Libraries cannot start execution by itself.<br/>
-          Libraries are recommended to be stored in <em>terminal_directory\experts\libraries</em>.</p></li>
-        <li><p><strong>Included file</strong> is a source text of the most frequently used blocks of custom programs.
-          Such files can be included into the source texts of experts, scripts, custom indicators, and libraries at the compiling stage.
-          The use of included files is more preferable than the use of libraries because of additional burden occurring
-          at calling library functions.<br/>
-          Included files are recommended to be stored in <em>terminal_directory\experts\include</em></p></li>
+          already built-in into the client terminal. Like built-in indicators, they cannot trade and are intended for analytical functionality.<br/>
+          Custom Indicators are stored in the directory <em>terminal_directory\experts\indicators</em>.</p></li>
+        <li><p><strong>Script</strong> is a program for the single non-repetitive execution of one or more actions. Unlike Expert Advisors, Scripts are not run 
+          tickwise but on explicite request.<br/>
+          Scripts are stored in the directory <em>terminal_dictionary\experts\scripts</em>.</p></li>
+        <li><p><strong>Library</strong> is a set of custom functions most frequently used. Libraries cannot be executed by themself.<br/>
+          Libraries are recommended to be stored in the directory <em>terminal_directory\experts\libraries</em>.</p></li>
+        <li><p><strong>Include file</strong> is the source code of frequently used blocks of custom programs.
+          Such files can be included into the source codes of any other file at compile time.
+          The use of include files is to be preferred over the use of libraries because of the additional processing burden of calls of library functions.<br/>
+          Include files are recommended to be stored in the directory <em>terminal_directory\experts\include</em></p></li>
       </ul>
     </content>
 
@@ -90,10 +84,7 @@
     caption=Basics
 
     <content>
-      <p>MetaQuotes Language 4 (MQL4) is a new integrated language for programming of trading strategies.
-      This language allows users writing of their own programs (Expert Advisors) that automate trading management
-      and ideally suit for implementing of their own trading strategies. Besides, one can create one's own technical
-      indicators (Custom Indicators), scripts, and libraries in MQL 4.</p>
+      <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts.</p>
     </content>
 
   <group>
@@ -135,9 +126,9 @@
       tag=basics_syntax_identifiers
       caption=Identifiers
       <content>
-        <p>Identifiers are used as names of variables, functions, and data types.
-        The length of an identifier cannot exceed 31 characters.</p>
-        <p>Characters you can use: digits (0 - 9), latin case sensitive letters (a - z, A - Z), underscore (_) and dot (.).
+        <p>Identifiers are used as names of constants, variables and functions.
+        The length of an identifier <font color="red">cannot exceed 31 characters</font>.</p>
+        <p>Characters you can use: digits (0 - 9), latin case sensitive letters (a - z, A - Z), underscore (_), commercial at (@) and dot (.).
         The first character cannot be a digit or a dot. The identifier must not coincide with a reserved word.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">NAME1 namel Total_5 Paper name.var</pre>
@@ -148,8 +139,7 @@
       tag=basics_syntax_reserved
       caption=Reserved words
       <content>
-        <p>The identifiers listed below are fixed reserved words. A certain action is assigned to each
-        of them, and they cannot be used for other purposes:</p>
+        <p>Reserved words cannot be used as identifiers:</p>
 
         <table cellspacing="0" cellpadding="4" border="0" class="docenums">
         <tr><th width="25%">Data types</th><th width="25%">Memory classes</th><th width="25%">Operators</th><th width="25%">Other</th></tr>
@@ -7319,7 +7309,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringFind()
       type=int
       <content>
-      Search for a substring. Returns the position in the string from which the searched substring begins, or -1 if the substring has not been found.
+      Searches for a substring. Returns the starting position of the found substring, or -1 if the substring has not been found.
       </content>
       <example>
   string text = &quot;The quick brown dog jumps over the lazy fox&quot;;
@@ -7354,18 +7344,18 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       Returns the character code at the specified position of the string.
       </content>
       <example>
-  int char_code=StringGetChar(&quot;abcdefgh&quot;, 3);
-  // char code 'c' is 99
+  int charCode = StringGetChar(&quot;abcdefgh&quot;, 3);
+  // character code 'c' is 99
       </example>
       <parameter>
         type=string
-        name=text
+        name=value
         description=String
       </parameter>
       <parameter>
         type=int
         name=pos
-        description=Character position in the string. Can be from 0 to <a href="help://strings_StringLen">StringLen(text)</a>-1.
+        description=Character position in the string. Can be from 0 to <a href="help://strings_StringLen">StringLen(value)</a>-1.
       </parameter>
     </function>
 
@@ -7374,16 +7364,17 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringLen()
       type=int
       <content>
-      Returns character count in a string.
+      Returns the number of characters in a string.
       </content>
       <example>
-  string str=&quot;some text&quot;;
-  if(StringLen(str)&lt;5) return(0);
+  string str = &quot;some text&quot;;
+  if (StringLen(str) &lt; 5)
+     return(0);
       </example>
       <parameter>
         type=string
-        name=text
-        description=String where the length must be calculated.
+        name=value
+        description=String
       </parameter>
     </function>
 
@@ -7392,27 +7383,27 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringSetChar()
       type=string
       <content>
-      Returns the string copy with changed character in the specified position.
+      Returns a copy of the string with the character at the specified position modified.
       </content>
       <example>
-  string str=&quot;abcdefgh&quot;;
-  string str1=StringSetChar(str, 3, 'D');
-  // str1 is &quot;abcDefgh&quot;
+  string str1 = &quot;abcdefgh&quot;;
+  string str2 = StringSetChar(str1, 3, 'D');
+  // str2 is &quot;abcDefgh&quot;
       </example>
       <parameter>
         type=string
-        name=text
-        description=String where character will be changed.
+        name=value
+        description=String to modify.
       </parameter>
       <parameter>
         type=int
         name=pos
-        description=The character position in the string. Can be from 0 to <a href="help://strings_StringLen">StringLen(text)</a>.
+        description=Character position to modify. Can be from 0 to <a href="help://strings_StringLen">StringLen(value)</a>.
       </parameter>
       <parameter>
         type=int
-        name=value
-        description=New char ASCII code.
+        name=char
+        description=ASCII code of the new character.
       </parameter>
     </function>
 
@@ -7421,29 +7412,38 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringSubstr()
       type=string
       <content>
-Extracts a substring from text string starting from the given position.<br/>
-The function returns a copy of the extracted substring if possible, otherwise, it returns an empty string.
+			Extracts a substring of the given length starting at the given position.<br/>
+			Returns a copy of the extracted substring if possible, otherwise an empty string.
+         <br>
+         <br>
+         <span style="color:red">Fehler:</span>
+         <br>
+			(1) Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.<br>
+         <br>
+			(2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (Null). StringSubstr(value, start, length=0) 
+			gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.<br>
+			Workaround: <span style="color:blue">StringSubstrFix()</span> benutzen
       </content>
       <example>
-  string text=&quot;The quick brown dog jumps over the lazy fox&quot;;
-  string substr=StringSubstr(text, 4, 5);
+  string text = &quot;The quick brown dog jumps over the lazy fox&quot;;
+  string substr = StringSubstr(text, 4, 5);
   // subtracted string is the &quot;quick&quot; word
       </example>
       <parameter>
         type=string
-        name=text
-        description=String from which the substring will be extracted.
+        name=value
+        description=String to extract a substring from.
       </parameter>
       <parameter>
         type=int
         name=start
-        description=Substring starting index. Can be from 0 to <a href="help://strings_StringLen">StringLen(text)</a>-1.
+        description=Substring starting index. Can be from 0 to <a href="help://strings_StringLen">StringLen(value)</a>-1.
       </parameter>
       <parameter>
         type=int
         name=length
         def_value=0
-        description=Length of the substring extracted. If the parameter value exceeds or equals to 0 or the parameter is not specified, the substring will be extracted starting from the given position and up to the end of the string.
+        description=Length of the substring to extract. If the parameter is not specified, equals to 0 or exceeds the length of the string, the substring will be extracted from the given position and up to the end of the string.
       </parameter>
     </function>
 
@@ -7452,19 +7452,16 @@ The function returns a copy of the extracted substring if possible, otherwise, i
       caption=StringTrimLeft()
       type=string
       <content>
-The function cuts line feed characters, spaces
-and tabs in the left part of the string.
-The function returns a copy of the trimmed string, if possible.
-Otherwise, it returns an empty string.
+			The function trims line feed characters, spaces and tabs in the left part of the string. Returns a copy of the trimmed string if possible, otherwise an empty string.
       </content>
       <example>
-  string str1=&quot;  Hello world   &quot;;
-  string str2=StringTrimLeft(str);
+  string str1 = &quot;  Hello world   &quot;;
+  string str2 = StringTrimLeft(str);
   // after trimming the str2 variable will be &quot;Hello World   &quot;
       </example>
       <parameter>
         type=string
-        name=text
+        name=value
         description=String to be trimmed at the left.
       </parameter>
     </function>
@@ -7474,19 +7471,16 @@ Otherwise, it returns an empty string.
       caption=StringTrimRight()
       type=string
       <content>
-The function cuts line feed characters, spaces
-and tabs in the right part of the string.
-The function returns a copy of the trimmed string, if possible.
-Otherwise, it returns an empty string.
+			The function trims line feed characters, spaces and tabs in the right part of the string. Returns a copy of the trimmed string if possible, otherwise an empty string.
       </content>
       <example>
-  string str1=&quot;  Hello world   &quot;;
-  string str2=StringTrimRight(str);
+  string str1 = &quot;  Hello world   &quot;;
+  string str2 = StringTrimRight(str);
   // after trimming the str2 variable will be &quot;  Hello World&quot;
       </example>
       <parameter>
         type=string
-        name=text
+        name=value
         description=String to be trimmed at the right.
       </parameter>
     </function>
