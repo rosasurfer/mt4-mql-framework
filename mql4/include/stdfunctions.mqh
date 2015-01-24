@@ -814,7 +814,7 @@ int      last_error;                                        // der letzte Fehler
 #define MUTE_ERR_SERIES_NOT_AVAILABLE           8     // ERR_SERIES_NOT_AVAILABLE
 #define MUTE_ERS_HISTORY_UPDATE                16     // ERS_HISTORY_UPDATE            (Status)
 #define MUTE_ERS_EXECUTION_STOPPING            32     // ERS_EXECUTION_STOPPING        (Status)
-
+#define MUTE_ERS_TERMINAL_NOT_YET_READY        64     // ERS_TERMINAL_NOT_YET_READY    (Status)
 
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                            1
@@ -1051,27 +1051,29 @@ int warn(string message, int error=NO_ERROR) {
 int warnSMS(string message, int error=NO_ERROR) {
    int _error = warn(message, error);
 
-   if (__SMS.alerts) /*&&*/ if (!This.IsTesting()) {
-      // Programmnamen um Instanz-ID erweitern
-      string name, name_wId;
-      if (StringLen(__NAME__) > 0) name = __NAME__;
-      else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
+   if (__SMS.alerts) {
+      if (!This.IsTesting()) {                                             // (bool) int
+         // Programmnamen um Instanz-ID erweitern
+         string name, name_wId;
+         if (StringLen(__NAME__) > 0) name = __NAME__;
+         else                         name = WindowExpertName();           // falls __NAME__ noch nicht definiert ist
 
-      int logId = GetCustomLogID();
-      if (logId != 0) {
-         int pos = StringFind(name, "::");
-         if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
-         else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+         int logId = GetCustomLogID();
+         if (logId != 0) {
+            int pos = StringFind(name, "::");
+            if (pos == -1) name_wId = StringConcatenate(           name,       "(", logId, ")");
+            else           name_wId = StringConcatenate(StringLeft(name, pos), "(", logId, ")", StringRight(name, -pos));
+         }
+         else              name_wId = name;
+
+         if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
+         else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
+
+         message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);
+
+         // SMS verschicken
+         SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message);
       }
-      else              name_wId = name;
-
-      if      (error >= ERR_WIN32_ERROR) message = StringConcatenate(message, "  [win32:", error-ERR_WIN32_ERROR, " - ", ErrorDescription(error), "]");
-      else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
-
-      message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);
-
-      // SMS verschicken
-      SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message);
    }
    return(_error); __DummyCalls();
 }
@@ -1834,12 +1836,12 @@ bool IsLogging() {
    string name = __NAME__;
    if (IsLibrary()) {
       if (!StringLen(__NAME__))
-         return(!catch("IsLogging()   library not initialized", ERR_RUNTIME_ERROR));
+         return(!catch("IsLogging(1)   library not initialized", ERR_RUNTIME_ERROR));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 
-   if (This.IsTesting()) return(GetConfigBool("Logging", "Tester", false));      // im Tester: default=OFF
-   else                  return(GetConfigBool("Logging", name,     true ));      // Online:    default=ON
+   if (!This.IsTesting()) return(GetConfigBool("Logging", name,     true ));      // Online:    default=ON
+   else                   return(GetConfigBool("Logging", "Tester", false));      // im Tester: default=OFF
 }
 
 
@@ -2528,8 +2530,8 @@ void __DummyCalls() {
 
    Expert.IsTesting();
    Script.IsTesting();
-   Indicator.IsTesting();
-   This.IsTesting();
+   Indicator.IsTesting(NULL);
+   This.IsTesting(NULL);
 
    InitReason();
    DeinitReason();
@@ -2614,8 +2616,8 @@ void __DummyCalls() {
    bool   IsLibrary();
    bool   Expert.IsTesting();
    bool   Script.IsTesting();
-   bool   Indicator.IsTesting();
-   bool   This.IsTesting();
+   int    Indicator.IsTesting(int execFlags);
+   int    This.IsTesting(int execFlags);
    int    InitReason();
    int    DeinitReason();
    bool   IsSuperContext();

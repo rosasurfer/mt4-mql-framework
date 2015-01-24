@@ -61,13 +61,13 @@ string   sound.positionOpened = "speech/OrderFilled.wav";
 string   sound.positionClosed = "speech/PositionClosed.wav";
 
 bool     orderAlerts.mail;
-string   orderAlerts.mail.receiver;
+string   orderAlerts.mail.receiver = "";
 
 bool     orderAlerts.sms;
-string   orderAlerts.sms.receiver;
+string   orderAlerts.sms.receiver = "";
 
 bool     orderAlerts.http;
-string   orderAlerts.http.url;
+string   orderAlerts.http.url = "";
 
 int      orders.knownOrders.ticket[];                                // vom letzten Aufruf bekannte offene Orders
 int      orders.knownOrders.type  [];
@@ -104,12 +104,14 @@ int onInit() {
  */
 bool Configure() {
    // (1) Konfiguration des OrderTrackers auswerten
-   track.orders      = Track.Orders;
-   orderAlerts.sound = Order.Alerts.Sound;
+   track.orders = Track.Orders;
    if (track.orders) {
-      // (1.1) Order.Alerts.Mail.Receiver = "email@address.tld";
+      // (1.1) Order.Alerts.Sound
+      orderAlerts.sound = Order.Alerts.Sound;
 
-      // (1.2) Order.Alerts.SMS.Receiver  = "phone-number";
+      // (1.2) Order.Alerts.Mail.Receiver = "email@address.tld";
+
+      // (1.3) Order.Alerts.SMS.Receiver  = "phone-number";
       string sValue = StringToLower(StringTrim(Order.Alerts.SMS.Receiver));
       if (StringLen(sValue) && sValue!="phone-number") {
          orderAlerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
@@ -122,30 +124,26 @@ bool Configure() {
       }
       else orderAlerts.sms = false;
 
-      // (1.3) Order.Alerts.HTTP.Url      = "";
-      // (1.4) Order.Alerts.ICQ.Contact   = "user-id";
+      // (1.4) Order.Alerts.HTTP.Url      = "";
+      // (1.5) Order.Alerts.ICQ.Contact   = "user-id";
    }
 
 
-
-
    // (2) Konfiguration des PriceTrackers auswerten
+   int account = GetAccountNumber();//throws ERS_TERMINAL_NOT_YET_READY
+   if (!account) return(!SetLastError(stdlib.GetLastError()));
+
+   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+
+
    /*
-   - neues Tages-High/Low (mit konfigurierbarem Mindestabstand zwischen zwei aufeinanderfolgenden gleichen Events)
-   - neues Wochen-High/Low (einmal je Richtung)
+   - neues Tages-High/Low
+   - neues Wochen-High/Low
    - Bruch Vortages-Range
    - Bruch Vorwochen-Range
    */
 
-
-
-
-
-
-   int account = GetAccountNumber(); if (!account) return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-
-   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
 
    // SMS.Alerts
    __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
@@ -158,7 +156,17 @@ bool Configure() {
    }
 
 
-   debug(InputsToStr());                                             // temporär: als externe Anzeige der erfolgreichen Konfiguration
+
+   if (true) {
+      debug("Configure()   "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                                    "; ",
+                                                "orders.sound=", BoolToStr(orderAlerts.sound),                                               "; ",
+                                                "orders.mail=" , ifString(orderAlerts.mail, "\""+ orderAlerts.mail.receiver +"\"", "false"), "; ",
+                                                "orders.sms="  , ifString(orderAlerts.sms,  "\""+ orderAlerts.sms.receiver  +"\"", "false"), "; ",
+                                                "orders.http=" , ifString(orderAlerts.http, "\""+ orderAlerts.http.url      +"\"", "false"), "; "
+                                              //"orders.icq="  , ifString(orderAlerts.icq,  "\""+ orderAlerts.icq.contact   +"\"", "false"), "; "
+                              )
+      );
+   }
 
    isConfigured = !catch("Configure(2)");
    return(isConfigured);

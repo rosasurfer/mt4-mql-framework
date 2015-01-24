@@ -47,8 +47,10 @@ bool LFX.InitAccountData() {
       // Daten des TradeAccounts
       string section = "LFX";
       string key     = "MRUTradeAccount";
-      //if (This.IsTesting())                            // TODO: Workaround schaffen für Fehler in Indikator::init() bei Terminalstart, wenn Chartfenster noch nicht bereit ist
-      //   key = key + ".Tester";                        //       WindowHandle() = 0
+
+      int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+      if (isTesting == 1)
+         key = key + ".Tester";
       _account = GetLocalConfigInt(section, key, 0);
       if (_account <= 0) {
          string value = GetLocalConfigString(section, key, "");

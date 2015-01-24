@@ -9,12 +9,24 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdlib.mqh>
+#include <structs/win32/structs.mqh>
 
 
 #import "kernel32.dll"
+   bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
+   int  GetCurrentProcess();
+
    // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist geringer, da der Buffer
    // selbst geparst werden muß. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
+
+   bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
+   void GetSystemTime(int lpSystemTime[]);
+   bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
+
+#import "ntdll.dll"
+   bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
+
 #import
 
 
@@ -1158,6 +1170,37 @@ private*/bool _SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticke
       ticketData[i][2] = rows.copy [n][0];
    }
    return(!catch("_SCT.SameOpenTimes()"));
+}
+
+
+/**
+ * Gibt die Laufzeit des Terminals seit Programmstart in Millisekunden zurück.
+ *
+ * @return int - Millisekunden seit Programmstart
+ */
+int GetTerminalRuntime() {
+   /*FILETIME*/  int ft[], iNull[]; InitializeByteBuffer(ft, FILETIME.size  ); InitializeByteBuffer(iNull, FILETIME.size);
+   /*SYSTEMTIME*/int st[];          InitializeByteBuffer(st, SYSTEMTIME.size);
+
+   int creationTime[2], currentTime[2], hProcess=GetCurrentProcess();
+
+   if (!GetProcessTimes(hProcess, ft, iNull, iNull, iNull)) return(catch("GetTerminalRuntime(1)->kernel32::GetProcessTimes()", ERR_WIN32_ERROR));
+   if (!RtlTimeToSecondsSince1970(ft, creationTime))        return(catch("GetTerminalRuntime(2)->kernel32::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
+   if (!FileTimeToSystemTime(ft, st))                       return(catch("GetTerminalRuntime(3)->kernel32::FileTimeToSystemTime()", ERR_WIN32_ERROR));
+   creationTime[1] = st.MilliSec(st);
+
+   GetSystemTime(st);
+   if (!SystemTimeToFileTime(st, ft))                       return(catch("GetTerminalRuntime(4)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
+   if (!RtlTimeToSecondsSince1970(ft, currentTime))         return(catch("GetTerminalRuntime(5)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
+   currentTime[1] = st.MilliSec(st);
+
+   int secDiff  = currentTime[0] - creationTime[0];                  // Sekunden
+   int mSecDiff = currentTime[1] - creationTime[1];                  // Millisekunden
+   if (mSecDiff < 0)
+      mSecDiff += 1000;
+   int runtime  = secDiff * 1000 + mSecDiff;                         // Gesamtlaufzeit in Millisekunden
+
+   return(runtime);
 }
 
 

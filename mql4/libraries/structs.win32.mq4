@@ -1,5 +1,5 @@
 /**
- * Win32 structures PROCESS_INFORMATION, SECURITY_ATTRIBUTES, STARTUPINFO, SYSTEMTIME, TIME_ZONE_INFORMATION, WIN32_FIND_DATA
+ * Win32 structures FILETIME, PROCESS_INFORMATION, SECURITY_ATTRIBUTES, STARTUPINFO, SYSTEMTIME, TIME_ZONE_INFORMATION, WIN32_FIND_DATA
  *
  * NOTE: MetaTrader 4 unterstützt maximal 512 deklarierte Arrays je Modul.
  */
@@ -18,10 +18,12 @@ int __DEINIT_FLAGS__[];
  * Win32 structure FILETIME
  *
  * struct FILETIME {
- *    int lowDateTime;        //  4
- *    int highDateTime;       //  4
- * }ft;                       //  8 byte = int[2]
+ *    int lowDateTime;           //  4
+ *    int highDateTime;          //  4
+ * } ft;                         //  8 byte = int[2]
  */
+int ft.LowDateTime (/*FILETIME*/int ft[]) { return(ft[0]); }
+int ft.HighDateTime(/*FILETIME*/int ft[]) { return(ft[1]); }
 
 
 /**

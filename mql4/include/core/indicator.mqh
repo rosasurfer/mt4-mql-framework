@@ -405,20 +405,33 @@ bool Script.IsTesting() {
 /**
  * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
- * @return bool
+ * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
+ *
+ * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY - Falls der Teststatus während des Terminal-Starts noch nicht bestimmt werden kann.
+ *                                      Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERS_TERMINAL_NOT_YET_READY gesetzt ist. Der Rückgabewert
+ *                                      der Funktion ist bei Auftreten dieses Fehlers -1 (EMPTY).
  */
-bool Indicator.IsTesting() {
-   return(__Indicator.IsTesting());                                  // In stdlib1 implementiert, damit das Ergebnis gecacht werden kann.
+int Indicator.IsTesting(int execFlags=NULL) {
+   int isTesting = __Indicator.IsTesting(execFlags); if (isTesting == -1) SetLastError(stdlib.GetLastError());
+   return(isTesting);                                                // In stdlib1 implementiert, damit das Ergebnis gecacht werden kann.
 }
 
 
 /**
  * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @return bool
+ * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
+ *
+ * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY - Falls der Teststatus während des Terminal-Starts noch nicht bestimmt werden kann.
+ *                                      Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERS_TERMINAL_NOT_YET_READY gesetzt ist. Der Rückgabewert
+ *                                      der Funktion ist bei Auftreten dieses Fehlers -1 (EMPTY).
  */
-bool This.IsTesting() {
-   return(Indicator.IsTesting());
+int This.IsTesting(int execFlags=NULL) {
+   return(Indicator.IsTesting(execFlags));
 }
 
 
@@ -731,7 +744,7 @@ int CheckProgramStatus(int value=NULL) {
    bool   Init.IsNewSymbol(string symbol);
    void   Init.StoreSymbol(string symbol);
    int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
-   bool __Indicator.IsTesting();
+   int  __Indicator.IsTesting(int execFlags);
    string InputsToStr();
 
    int    Chart.SendTick(bool sound);

@@ -11,6 +11,7 @@
    bool CloseHandle(int hObject);
    bool CreateProcessA(string lpApplicationName, string lpCmdLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int creationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    bool DeleteFileA(string lpFileName);
+   bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
    bool FindClose(int hFindFile);
    int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
    bool FindNextFileA(int hFindFile, int lpFindFileData[]);
@@ -30,6 +31,7 @@
    int  GetPrivateProfileSectionNamesA(int lpBuffer[], int bufferSize, string lpFileName);                           // @see  stdlib::GetIniSections()
    int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, string lpBuffer, int bufferSize, string lpFileName);
    int  GetProcAddress(int hModule, string lpProcedureName);
+   bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
    void GetStartupInfoA(int lpStartupInfo[]);
    void GetSystemTime(int lpSystemTime[]);
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
@@ -45,6 +47,7 @@
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int  SleepEx(int milliseconds, bool alertable);
+   bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);                                                                      //         +-- stdlib::DeleteIniSection()
@@ -53,6 +56,7 @@
 
 #import "ntdll.dll"
    int  RtlGetLastWin32Error();
+   bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
 
 #import "shell32.dll"
    int  ShellExecuteA(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);

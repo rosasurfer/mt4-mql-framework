@@ -10341,9 +10341,12 @@ it means that the chart window has not been fully filled out and there is a spac
         Returns the handle of the system window containing the given chart.
         If no chart of <i>symbol</i> and <i>timeframe</i> is open, 0 will be returned.<br/>
       <br>
-      <span style="color:red">Fehler:</span>
+      <span style="color:red">Achtung:</span>
       <br>
-      Ab Build 418 gibt die Funktion bei Terminal-Shutdown in deinit() 0 zurück.<br>
+		(1) WindowHandle() löst in EA's beim Testen mit VisualMode=false ERR_FUNC_NOT_ALLOWED_IN_TESTING aus. In Indikatoren löst WindowHandle() in diesem Fall keinen Fehler aus, 
+		gibt jedoch 0 zurück.<br>
+      <br>
+      (2) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in deinit() 0 zurück.<br>
       Workaround: Frameworkvariable __WND_HANDLE benutzen.
       </content>
       <example>

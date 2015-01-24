@@ -8,8 +8,8 @@
  *
  *  bool Expert.IsTesting();
  *  bool Script.IsTesting();
- *  bool Indicator.IsTesting();
- *  bool This.IsTesting();
+ *  int  Indicator.IsTesting(int execFlags);
+ *  int  This.IsTesting(int execFlags);
  *
  *  int  InitReason();
  *  int  DeinitReason();
@@ -37,10 +37,14 @@
 
    string   GetTerminalVersion();
    int      GetTerminalBuild();
+#import "stdlib2.ex4"
+   int      GetTerminalRuntime();
+#import "stdlib1.ex4"
    int      GetApplicationWindow();
    int      GetTesterWindow();
    int      GetUIThreadId();
    string   GetServerDirectory();
+   string   GetComputerName();
 
    bool     Tester.IsPaused();
    bool     Tester.IsStopped();
@@ -546,7 +550,6 @@
    // Win32-Funktionen (an MQL angepaﬂt)
    void     CopyMemory(int source, int destination, int bytes);      // intern als MoveMemory() implementiert
    string   GetClassName(int hWnd);
-   string   GetComputerName();
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
    int      WinExecAndWait(string cmdLine, int cmdShow);

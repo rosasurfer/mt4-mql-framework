@@ -21,13 +21,12 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string sound.order.failed   = "speech/OrderExecutionFailed.wav";
-   string sound.position.open  = "speech/OrderFilled.wav";
-   string sound.position.close = "speech/PositionClosed.wav";
 
-   PlaySoundEx(sound.position.close);
+   int runtime = GetTerminalRuntime();
+   debug("onStart()   runtime ="+ runtime +" msec");
 
-   return(catch("onStart()"));
+
+   return(catch("onStart(2)"));
 
 
 

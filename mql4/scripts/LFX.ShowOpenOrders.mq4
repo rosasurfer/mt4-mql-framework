@@ -63,7 +63,8 @@ int onStart() {
    // aktuellen Status im Chart speichern
    LFX.SaveDisplayStatus(status);
 
-   if (This.IsTesting())
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(SetLastError(stdlib.GetLastError()));
+   if (isTesting == 1)
       WindowRedraw();
    return(last_error);
 }
