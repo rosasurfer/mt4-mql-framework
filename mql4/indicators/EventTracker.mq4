@@ -1,5 +1,5 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt akustisch, per HTML-Request, E-Mail und/oder SMS.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per HTML-Request, E-Mail und/oder SMS.
  *
  *
  * Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
@@ -41,20 +41,16 @@ int __DEINIT_FLAGS__[];
 extern bool   Track.Orders               = false;
 
 extern bool   Order.Alerts.Sound         = true;                     // alle Alerts bis auf Sounds sind per Default inaktiv
-extern string Order.Alerts.HTTP.Url      = "";                       // vollständige URL (POST)
-extern string Order.Alerts.Mail.Receiver = "email@address.tld";      //
-extern string Order.Alerts.SMS.Receiver  = "phone-number";           // "system": global konfigurierte E-Mailadresse oder Telefonnummer
+extern string Order.Alerts.HTTP.Url      = "";                       // vollständige URL ("system" => global konfigurierte URL    )
+extern string Order.Alerts.Mail.Receiver = "email@address.tld";      // E-Mailadresse    ("system" => global konfigurierte Adresse)
+extern string Order.Alerts.SMS.Receiver  = "phone-number";           // Telefonnummer    ("system" => global konfigurierte Nummer )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 
 
-// Konfiguration
-datetime init.time;                                                  // Zeitpunkt des letzten init()-Cycles
-bool     eventTracker.initialized;                                   // Settings sind per Account, der kann bei Terminalstart kurzzeitig unbekannt sein
-bool     sound.alerts;
+bool     isConfigured;
 
-bool     track.positions;
 string   sound.order.failed    = "speech/OrderExecutionFailed.wav";
 string   sound.position.opened = "speech/OrderFilled.wav";
 string   sound.position.closed = "speech/PositionClosed.wav";
@@ -69,10 +65,8 @@ int      knownOrders.type  [];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // EventTracker initialisieren (kann fehlschlagen, wenn die AccountNumber() beim Terminalstart noch nicht verfügbar ist)
-   eventTracker.initialized = EventTracker.init();
-   if (!eventTracker.initialized) /*&&*/ if (IsLastError()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
-      return(last_error);
+   // Konfiguration einlesen. Ist die AccountNumber() beim Terminalstart noch nicht verfügbar, wird der Aufruf in onTick() wiederholt.
+   Configure();
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(1)"));
@@ -80,38 +74,39 @@ int onInit() {
 
 
 /**
- * Initialisiert und konfiguriert den EventTracker mit Account-spezifischen Einstellungen.
+ * Konfiguriert den EventTracker mit Account-spezifischen Einstellungen.
  *
  * @return bool - Erfolgsstatus
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY, wenn die AccountNumber bei Terminalstart vorübergehend nicht verfügbar ist
  */
-bool EventTracker.init() {// throws ERS_TERMINAL_NOT_YET_READY
-   int account = GetAccountNumber();
-   if (!account)
-      return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
+bool Configure() {
+   // TODO: Inputparameter auswerten und validieren
+   //extern string Order.Alerts.HTTP.Url      = "";
+   //extern string Order.Alerts.Mail.Receiver = "email@address.tld";
+   //extern string Order.Alerts.SMS.Receiver  = "phone-number";
+
+
+   int account = GetAccountNumber(); if (!account) return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
 
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
-
-   // Sound.Alerts
-   sound.alerts = GetIniBool(file, "EventTracker", "Sound.Alerts", false);
 
    // SMS.Alerts
    __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
    if (__SMS.alerts) {
       __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
       // TODO: Rufnummer validieren
-      //if (!StringIsDigit(__SMS.receiver)) return(!catch("EventTracker.init(1)   invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      //if (!StringIsDigit(__SMS.receiver)) return(!catch("Configure(1)   invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       if (!StringLen(__SMS.receiver))
          __SMS.alerts = false;
    }
 
-   // Track.Positions
-   track.positions = GetIniBool(file, "EventTracker", "Track.Positions", false);
 
-   // TODO: Orders in Library zwischenspeichern und bei init() daraus restaurieren
+   debug(InputsToStr());                                             // temporär: als externe Anzeige der erfolgreichen Konfiguration
 
-   debug(InputsToStr());
-   return(true);
+   isConfigured = !catch("Configure(2)");
+   return(isConfigured);
 }
 
 
@@ -121,15 +116,14 @@ bool EventTracker.init() {// throws ERS_TERMINAL_NOT_YET_READY
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) endgültige Prüfung, ob der EventTracker initialisiert ist
-   if (!eventTracker.initialized) {
-      eventTracker.initialized = EventTracker.init();
-      if (!eventTracker.initialized) /*&&*/ if (IsLastError()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
+   // (1) endgültige Prüfung, ob der EventTracker konfiguriert ist
+   if (!isConfigured) {
+      if (!Configure()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
          return(last_error);
    }
 
    // (2) Pending- und Limit-Orders überwachen
-   if (track.positions) {
+   if (Track.Orders) {
       int failedOrders   []; ArrayResize(failedOrders,    0);
       int openedPositions[]; ArrayResize(openedPositions, 0);
       int closedPositions[]; ArrayResize(closedPositions, 0);
@@ -280,7 +274,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
  * @return bool - Erfolgsstatus
  */
 bool onOrderFail(int tickets[]) {
-   if (!track.positions)
+   if (!Track.Orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -306,7 +300,7 @@ bool onOrderFail(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (sound.alerts)
+   if (Order.Alerts.Sound)
       PlaySoundEx(sound.order.failed);
    return(!catch("onOrderFail(3)"));
 }
@@ -320,7 +314,7 @@ bool onOrderFail(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionOpen(int tickets[]) {
-   if (!track.positions)
+   if (!Track.Orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -346,7 +340,7 @@ bool onPositionOpen(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (sound.alerts)
+   if (Order.Alerts.Sound)
       PlaySoundEx(sound.position.opened);
    return(!catch("onPositionOpen(3)"));
 }
@@ -360,7 +354,7 @@ bool onPositionOpen(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionClose(int tickets[]) {
-   if (!track.positions)
+   if (!Track.Orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -387,7 +381,7 @@ bool onPositionClose(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (sound.alerts)
+   if (Order.Alerts.Sound)
       PlaySoundEx(sound.position.closed);
    return(!catch("onPositionClose(3)"));
 }
@@ -401,12 +395,12 @@ bool onPositionClose(int tickets[]) {
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "Sound.Alerts=",    BoolToStr(sound.alerts),    "; ",
+                            "Order.Alerts.Sound=", BoolToStr(Order.Alerts.Sound), "; ",
 
-                            "SMS.Alerts=",      BoolToStr(__SMS.alerts),    "; ",
+                            "SMS.Alerts=",         BoolToStr(__SMS.alerts),       "; ",
                   ifString(__SMS.alerts,
-          StringConcatenate("SMS.Receiver=\"",  __SMS.receiver,           "\"; "), ""),
+          StringConcatenate("SMS.Receiver=\"",   __SMS.receiver,                "\"; "), ""),
 
-                            "Track.Positions=", BoolToStr(track.positions), "; ")
+                            "Track.Orders=",       BoolToStr(Track.Orders),       "; ")
    );
 }
