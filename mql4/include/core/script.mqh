@@ -274,19 +274,23 @@ bool Script.IsTesting() {
 /**
  * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
- * @return bool
+ * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
+ *
+ * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-bool Indicator.IsTesting() {
-   return(false);
+int Indicator.IsTesting(int execFlags=NULL) {
+   return(false);                                                    // (int) bool
 }
 
 
 /**
  * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @return bool
+ * @param  int execFlags - Parameter wird in Scripten ignoriert
+ *
+ * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-bool This.IsTesting() {
+int This.IsTesting(int execFlags=NULL) {
    return(Script.IsTesting());
 }
 

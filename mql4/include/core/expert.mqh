@@ -153,11 +153,18 @@ int start() {
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       debug("start(1)   "+ msg);
-      return(ShowStatus(last_error));
+      ShowStatus(last_error);
+
+      if (IsTesting())
+         Tester.Stop();                                                    // nach Fehler anhalten
+      return(last_error);
    }
 
-   if (!__WND_HANDLE)                                                      // Workaround um WindowHandle()-Bug ab Build 418
-      __WND_HANDLE = WindowHandle(Symbol(), NULL);
+
+   if (!__WND_HANDLE) {
+      if (!IsTesting() || IsVisualMode())
+         __WND_HANDLE = WindowHandle(Symbol(), NULL);                      // Workaround um WindowHandle()-Bug ab Build 418
+   }                                                                       // im Tester bei VisualMode=Off löst WindowHandle() ERR_FUNC_NOT_ALLOWED_IN_TESTER aus
 
 
    // "Time machine"-Bug im Tester abfangen
@@ -391,19 +398,23 @@ bool Script.IsTesting() {
 /**
  * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
- * @return bool
+ * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
+ *
+ * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-bool Indicator.IsTesting() {
-   return(false);
+int Indicator.IsTesting(int execFlags=NULL) {
+   return(false);                                                    // (int) bool
 }
 
 
 /**
  * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @return bool
+ * @param  int execFlags - Parameter wird in Experts ignoriert
+ *
+ * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-bool This.IsTesting() {
+int This.IsTesting(int execFlags=NULL) {
    return(Expert.IsTesting());
 }
 

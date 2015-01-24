@@ -345,7 +345,8 @@ bool ToggleOpenOrders() {
    // Anzeigestatus im Chart speichern
    SetOpenOrderDisplayStatus(status);
 
-   if (This.IsTesting())
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+   if (isTesting == 1)
       WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
 }
@@ -571,7 +572,8 @@ bool ToggleTradeHistory() {
    // Anzeigestatus im Chart speichern
    SetTradeHistoryDisplayStatus(status);
 
-   if (This.IsTesting())
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+   if (isTesting == 1)
       WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
@@ -890,7 +892,8 @@ bool ToggleAuM() {
    // Anzeigestatus im Chart speichern
    SetAuMDisplayStatus(status);
 
-   if (This.IsTesting())
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+   if (isTesting == 1)
       WindowRedraw();
    return(!catch("ToggleAuM(2)"));
 }

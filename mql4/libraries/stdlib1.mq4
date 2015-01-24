@@ -112,6 +112,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
       if (IntInArray(reasons, ec.UninitializeReason(ec)))
          OrderSelect(0, SELECT_BY_TICKET);
 
+
       if (IsTesting()) {                                             // nur im Tester
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
             return(catch("stdlib.init(3)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
@@ -131,7 +132,10 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
    tickData[1] = Tick.Time;
    tickData[2] = Tick.prevTime;
 
-   return(catch("stdlib.init(4)"));
+
+   catch("stdlib.init(0.8)");
+
+   return(last_error|catch("stdlib.init(4)"));
 }
 
 
@@ -346,10 +350,12 @@ int stdlib.GetLastError() {
 /**
  * Hilfsfunktion für Indicator.IsTesting(). Cacht das Ergebnis in der Library.
  *
- * @return bool
+ * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
+ *
+ * @return int
  */
-bool __Indicator.IsTesting() {
-   return(Indicator.IsTesting());                                    // verwendet die globale Implementierung in "include/core/library.mgh"
+int __Indicator.IsTesting(int execFlags=NULL) {
+   return(Indicator.IsTesting(execFlags));                           // verwendet die globale Implementierung in "include/core/library.mgh"
 }
 
 
@@ -909,7 +915,9 @@ bool AquireLock(string mutexName, bool wait) {
    datetime now, startTime=GetTickCount();
    int      error, duration, seconds=1;
    string   globalVarName = mutexName;
-   if (This.IsTesting())
+
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+   if (isTesting == 1)
       globalVarName = StringConcatenate("tester.", mutexName);
 
    // (2) no, run until lock is aquired
@@ -977,7 +985,9 @@ bool ReleaseLock(string mutexName) {
       ArraySpliceInts   (lock.counters, i, 1);
 
       string globalVarName = mutexName;
-      if (This.IsTesting())
+
+      int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+      if (isTesting == 1)
          globalVarName = StringConcatenate("tester.", mutexName);
 
       if (!GlobalVariableSet(globalVarName, 0)) {
@@ -1023,7 +1033,8 @@ bool ReleaseLocks(bool warn=false) {
  * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
  */
 int Chart.Expert.Properties() {
-   if (This.IsTesting())
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
+   if (isTesting == 1)
       return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = WindowHandle(Symbol(), NULL);
@@ -1043,7 +1054,9 @@ int Chart.Expert.Properties() {
  * @return int - Fehlerstatus
  */
 int Tester.Pause() {
-   if (!This.IsTesting()) return(catch("Tester.Pause()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
+   if (!isTesting)
+      return(catch("Tester.Pause()   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsPaused())              return(NO_ERROR);             // skipping
    if (!IsScript())
@@ -1064,7 +1077,8 @@ int Tester.Pause() {
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(!catch("Tester.IsPaused()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+   if (!isTesting)                                        return(!catch("Tester.IsPaused(1)   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    bool testerStopped;
    int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
@@ -1092,7 +1106,8 @@ bool Tester.IsPaused() {
  * @return int - Fehlerstatus
  */
 int Tester.Stop() {
-   if (!This.IsTesting()) return(catch("Tester.Stop()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
+   if (!isTesting)                                        return(catch("Tester.Stop(1)   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped())             return(NO_ERROR);             // skipping
    if (!IsScript())
@@ -1113,7 +1128,8 @@ int Tester.Stop() {
  * @return bool
  */
 bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(!catch("Tester.IsStopped()   Tester only function", ERR_FUNC_NOT_ALLOWED));
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+   if (!isTesting)                                        return(!catch("Tester.IsStopped(1)   Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
@@ -1897,8 +1913,8 @@ int SortTicketsChronological(int &tickets[]) {
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
 
-   if (This.IsTesting())
-      return(debug("Toolbar.Experts()   skipping in Tester", NO_ERROR));
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
+   if (isTesting == 1)                                    return(debug("Toolbar.Experts(1)   skipping in Tester", NO_ERROR));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
@@ -4222,7 +4238,9 @@ int Chart.SendTick(bool sound=false) {
    if (!hWnd)
       return(catch("Chart.SendTick()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
 
-   if (!This.IsTesting()) {
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
+
+   if (!isTesting) {
       PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 0);
    }
    else if (Tester.IsPaused()) {
@@ -4238,14 +4256,14 @@ int Chart.SendTick(bool sound=false) {
 
 /**
  * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
- * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel zuverlässig ermitteln.
+ * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *
  * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
  */
 string GetServerDirectory() {
    // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
-   // die Rückgabewerte der MQL-Accountfunktionen evt. schon auf den neuen Account, der aktuelle Tick gehört aber noch zum alten Chart des alten Verzeichnisses.
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Verzeichnis befinden.
+   // die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im alten Serververzeichnis.
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Serververzeichnis befinden.
 
    static string static.result[1];
    static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
@@ -5170,12 +5188,13 @@ string BoolToStr(bool value) {
 /**
  * Gibt die Terminal-Zeit in GMT zurück. Im Tester wird die GMT-Zeit der momentan im Tester modellierten Zeit zurückgegeben.
  *
- * @return datetime - GMT-Zeit
+ * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
  */
 datetime TimeGMT() {
    datetime gmt;
 
-   if (This.IsTesting()) {
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(NULL);
+   if (isTesting == 1) {
       // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
       //       nicht die modellierte, sondern die aktuelle reale Zeit.
       gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
@@ -5223,24 +5242,14 @@ datetime mql.GetLocalTime() {
  */
 datetime mql.GetSystemTime() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
+   /*FILETIME*/  int ft[]; InitializeByteBuffer(ft, FILETIME.size  );
+   datetime gmt[1];
+
    GetSystemTime(st);
+   if (!SystemTimeToFileTime(st, ft))       return(catch("mql.GetSystemTime(1)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
+   if (!RtlTimeToSecondsSince1970(ft, gmt)) return(catch("mql.GetSystemTime(2)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
 
-   int year  = st.Year  (st);
-   int month = st.Month (st);
-   int day   = st.Day   (st);
-   int hour  = st.Hour  (st);
-   int min   = st.Minute(st);
-   int sec   = st.Second(st);
-
-   string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
-   datetime gmt     = StrToTime(strTime);
-
-   // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
-   // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
-   if (TimeSeconds(gmt) != sec)
-      warn("mql.GetSystemTime()   StrToTime("+ strTime +") => \""+ TimeToStr(gmt, TIME_FULL) +"\"");
-
-   return(gmt);
+   return(gmt[0]);
 }
 
 
@@ -6166,7 +6175,8 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
-   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())          // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
+   int indicator.IsTesting = Indicator.IsTesting();
+   if (indicator.IsTesting==1) /*&&*/ if (!IsSuperContext())            // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(!catch("EventListener.BarOpen()   function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)
@@ -6571,11 +6581,13 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
 
 
 /**
- * Gibt den aktuellen Account unabhängig von einer Server-Verbindung zurück.
+ * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Server-Verbindung).
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY - falls die Account-Nummer während des Terminal-Starts noch nicht verfügbar ist
  */
-int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // ggf. während des Terminal-Starts
+int GetAccountNumber() {
    static int static.result;
    if (static.result != 0)
       return(static.result);
@@ -6588,29 +6600,23 @@ int GetAccountNumber() { // throws ERS_TERMINAL_NOT_YET_READY        // ggf. wäh
       account = 0;
    }
 
-   if (!account) {
-      string title = GetWindowText(GetApplicationWindow());          // Titelzeile des Hauptfensters auswerten:
-      if (!StringLen(title))                                         // benutzt SendMessage(), nicht nach Tester.Stop bei VisualMode=On benutzen => UI-Thread-Deadlock
-         return(_NULL(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
+      string title = GetWindowText(GetApplicationWindow());          // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
+      if (!StringLen(title))        return(_NULL(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)
-         return(_NULL(catch("GetAccountNumber(2)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (pos < 1)                  return(_NULL(catch("GetAccountNumber(2)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       string strValue = StringLeft(title, pos);
-      if (!StringIsDigit(strValue))
-         return(_NULL(catch("GetAccountNumber(3)   account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (!StringIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(3)   account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);
    }
 
-   if (IsError(catch("GetAccountNumber(4)")))
-      return(0);
-
    // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage() in deinit().
-   if (This.IsTesting())
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(NULL);
+   if (isTesting == 1)
       static.result = account;
-
    return(account);                                                  // nicht die statische Variable zurückgeben (kann 0 sein)
 }
 
@@ -7509,8 +7515,8 @@ string EventToStr(int event) {
  *               EMPTY_VALUE, falls  ein Fehler auftrat
  */
 int GetLocalToGmtTimeOffset() {
-   if (This.IsTesting())
-      return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
+   int isTesting = This.IsTesting(); if (isTesting == -1) return( EMPTY_VALUE);
+   if (isTesting == 1)                                    return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
 
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);
 
@@ -8356,7 +8362,7 @@ int GetApplicationWindow() {
  * @return int - Handle oder 0, falls ein Fehler auftrat
  */
 int GetTesterWindow() {
-   static int hWndTester;                                                  // ohne Initializer, @see MQL.doc
+   static int hWndTester;                                                        // ohne Initializer, @see MQL.doc
    if (hWndTester != 0)
       return(hWndTester);
 
@@ -8369,7 +8375,7 @@ int GetTesterWindow() {
    int hWndMain = GetApplicationWindow();
    if (!hWndMain)
       return(0);
-   int hWnd = GetDlgItem(hWndMain, IDD_DOCKABLES_CONTAINER);               // Container für im Hauptfenster angedockte Fenster
+   int hWnd = GetDlgItem(hWndMain, IDD_DOCKABLES_CONTAINER);                     // Container für im Hauptfenster angedockte Fenster
    if (!hWnd)
       return(_NULL(catch("GetTesterWindow(1)   cannot find main parent window of docked child windows")));
    hWndTester = GetDlgItem(hWnd, IDD_TESTER);
@@ -8384,7 +8390,7 @@ int GetTesterWindow() {
 
       if (processId[0] == me) {
          if (StringStartsWith(GetWindowText(hNext), "Tester")) {
-            hWnd = GetDlgItem(hNext, IDD_UNDOCKED_CONTAINER);              // Container für nicht angedockten Tester
+            hWnd = GetDlgItem(hNext, IDD_UNDOCKED_CONTAINER);                    // Container für nicht angedockten Tester
             if (!hWnd)
                return(_NULL(catch("GetTesterWindow(2)   cannot find children of top-level Tester window")));
             hWndTester = GetDlgItem(hWnd, IDD_TESTER);
@@ -8397,13 +8403,8 @@ int GetTesterWindow() {
    }
 
 
-   // (3) Fenster nicht gefunden (existiert vermutlich noch nicht)
-   if (!hWndTester) {
-      if (This.IsTesting())                                          // darf hier niemals zutreffen
-         return(_NULL(catch("GetTesterWindow(4)   cannot find Strategy Tester window", ERR_RUNTIME_ERROR)));
-
-      if (__LOG) log("GetTesterWindow(5)   cannot find Strategy Tester window");
-   }
+   if (!hWndTester)
+      if (__LOG) log("GetTesterWindow(4)   Strategy Tester window not found");   // Fenster existiert noch nicht
 
    return(hWndTester);
 }
@@ -9362,8 +9363,10 @@ bool IsDirectory(string filename) {
  * @return bool
  */
 bool IsMqlFile(string filename) {
-   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                        mqlDir = "\\tester";
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+
+   if (IsScript() || !isTesting) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   else                                 mqlDir = "\\tester";
    return(IsFile(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  filename)));
 }
 
@@ -9376,8 +9379,10 @@ bool IsMqlFile(string filename) {
  * @return bool
  */
 bool IsMqlDirectory(string dirname) {
-   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                        mqlDir = "\\tester";
+   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
+
+   if (IsScript() || !isTesting) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   else                                 mqlDir = "\\tester";
    return(IsDirectory(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  dirname)));
 }
 
