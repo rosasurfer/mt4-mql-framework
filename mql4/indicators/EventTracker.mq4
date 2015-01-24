@@ -1,13 +1,6 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per HTML-Request, E-Mail und/oder SMS.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail, SMS, HTML-Request und/oder ICQ.
  *
- *
- * Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
- * EventTracker je Instrument zu laden. Preis-Events:
- *  - neues Tages-High/Low
- *  - Bruch Vortages-Range
- *  - neues Wochen-High/Low
- *  - Bruch Vorwochen-Range
  *
  * Zu überwachende Order-Events werden mit Indikator-Inputparametern konfiguriert. Ein so konfigurierter EventTracker überwacht alle Symbole des Accounts,
  * nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen von allen laufenden EventTrackern für die Orderüberwachung
@@ -16,7 +9,14 @@
  *  - Position geöffnet
  *  - Position geschlossen
  *
- * Die Art der Benachrichtigung (Sound, HTML-Request, E-Mail und/oder SMS) kann je Event konfiguriert werden.
+ * Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
+ * EventTracker je Instrument zu laden. Preis-Events:
+ *  - neues Tages-High/Low (mit konfigurierbarem Mindestabstand zwischen zwei aufeinanderfolgenden gleichen Events)
+ *  - neues Wochen-High/Low (einmal je Richtung)
+ *  - Bruch Vortages-Range
+ *  - Bruch Vorwochen-Range
+ *
+ * Die Art der Benachrichtigung (akustisch, E-Mail, SMS, HTML-Request und/oder ICQ) kann je Event einzeln konfiguriert werden.
  *
  *
  *
@@ -25,7 +25,6 @@
  * -----
  *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
- *  - Konfiguration per Indikator-Parameter und NICHT per Accountkonfiguration
  *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
  *  - Anzeige der überwachten Kriterien
  */
@@ -41,9 +40,10 @@ int __DEINIT_FLAGS__[];
 extern bool   Track.Orders               = false;
 
 extern bool   Order.Alerts.Sound         = true;                     // alle Alerts bis auf Sounds sind per Default inaktiv
-extern string Order.Alerts.HTTP.Url      = "";                       // vollständige URL ("system" => global konfigurierte URL    )
 extern string Order.Alerts.Mail.Receiver = "email@address.tld";      // E-Mailadresse    ("system" => global konfigurierte Adresse)
 extern string Order.Alerts.SMS.Receiver  = "phone-number";           // Telefonnummer    ("system" => global konfigurierte Nummer )
+extern string Order.Alerts.HTTP.Url      = "";                       // vollständige URL ("system" => global konfigurierte URL    )
+//     string Order.Alerts.ICQ.Contact   = "user-id";                // ICQ-Kontakt      ("system" => global konfigurierte User-ID)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
@@ -51,12 +51,34 @@ extern string Order.Alerts.SMS.Receiver  = "phone-number";           // Telefonn
 
 bool     isConfigured;
 
-string   sound.order.failed    = "speech/OrderExecutionFailed.wav";
-string   sound.position.opened = "speech/OrderFilled.wav";
-string   sound.position.closed = "speech/PositionClosed.wav";
 
-int      knownOrders.ticket[];                                       // vom letzten Aufruf bekannte offene Orders
-int      knownOrders.type  [];
+// OrderTracker
+bool     track.orders;
+
+bool     orderAlerts.sound;
+string   sound.orderFailed    = "speech/OrderExecutionFailed.wav";
+string   sound.positionOpened = "speech/OrderFilled.wav";
+string   sound.positionClosed = "speech/PositionClosed.wav";
+
+bool     orderAlerts.mail;
+string   orderAlerts.mail.receiver;
+
+bool     orderAlerts.sms;
+string   orderAlerts.sms.receiver;
+
+bool     orderAlerts.http;
+string   orderAlerts.http.url;
+
+int      orders.knownOrders.ticket[];                                // vom letzten Aufruf bekannte offene Orders
+int      orders.knownOrders.type  [];
+
+
+// PriceTracker
+bool     track.price;
+bool     priceAlerts.sound;
+bool     priceAlerts.mail;
+bool     priceAlerts.sms;
+bool     priceAlerts.http;
 
 
 /**
@@ -74,17 +96,50 @@ int onInit() {
 
 
 /**
- * Konfiguriert den EventTracker mit Account-spezifischen Einstellungen.
+ * Konfiguriert diesen EventTracker.
  *
  * @return bool - Erfolgsstatus
  *
- * @throws ERS_TERMINAL_NOT_YET_READY, wenn die AccountNumber bei Terminalstart vorübergehend nicht verfügbar ist
+ * @throws ERS_TERMINAL_NOT_YET_READY - falls die AccountNumber bei Terminalstart noch nicht verfügbar ist
  */
 bool Configure() {
-   // TODO: Inputparameter auswerten und validieren
-   //extern string Order.Alerts.HTTP.Url      = "";
-   //extern string Order.Alerts.Mail.Receiver = "email@address.tld";
-   //extern string Order.Alerts.SMS.Receiver  = "phone-number";
+   // (1) Konfiguration des OrderTrackers auswerten
+   track.orders      = Track.Orders;
+   orderAlerts.sound = Order.Alerts.Sound;
+   if (track.orders) {
+      // (1.1) Order.Alerts.Mail.Receiver = "email@address.tld";
+
+      // (1.2) Order.Alerts.SMS.Receiver  = "phone-number";
+      string sValue = StringToLower(StringTrim(Order.Alerts.SMS.Receiver));
+      if (StringLen(sValue) && sValue!="phone-number") {
+         orderAlerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
+         orderAlerts.sms          = StringIsPhoneNumber(orderAlerts.sms.receiver);
+
+         if (!orderAlerts.sms) {
+            if (sValue == "system") return(!catch("Configure(1)   "+ ifString(orderAlerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ orderAlerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else                    return(!catch("Configure(2)   Invalid input parameter Order.Alerts.SMS.Receiver = \""+ Order.Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         }
+      }
+      else orderAlerts.sms = false;
+
+      // (1.3) Order.Alerts.HTTP.Url      = "";
+      // (1.4) Order.Alerts.ICQ.Contact   = "user-id";
+   }
+
+
+
+
+   // (2) Konfiguration des PriceTrackers auswerten
+   /*
+   - neues Tages-High/Low (mit konfigurierbarem Mindestabstand zwischen zwei aufeinanderfolgenden gleichen Events)
+   - neues Wochen-High/Low (einmal je Richtung)
+   - Bruch Vortages-Range
+   - Bruch Vorwochen-Range
+   */
+
+
+
+
 
 
    int account = GetAccountNumber(); if (!account) return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
@@ -174,33 +229,33 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
            - nach (1.1) und (1.2), um sofortige Prüfung neuer zu überwachender Orders zu vermeiden
    */
 
-   int type, knownSize=ArraySize(knownOrders.ticket);
+   int type, knownSize=ArraySize(orders.knownOrders.ticket);
 
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
    for (int i=knownSize-1; i >= 0; i--) {
-      if (!SelectTicket(knownOrders.ticket[i], "CheckPositions(1)"))
+      if (!SelectTicket(orders.knownOrders.ticket[i], "CheckPositions(1)"))
          return(false);
       type = OrderType();
 
-      if (knownOrders.type[i] > OP_SELL) {
+      if (orders.knownOrders.type[i] > OP_SELL) {
          // (1.1) beim letzten Aufruf Pending-Order
-         if (type == knownOrders.type[i]) {
+         if (type == orders.knownOrders.type[i]) {
             // immer noch Pending-Order
             if (OrderCloseTime() != 0) {
                if (OrderComment() != "cancelled")
-                  ArrayPushInt(failedOrders, knownOrders.ticket[i]);             // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
+                  ArrayPushInt(failedOrders, orders.knownOrders.ticket[i]);      // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
 
                // geschlossene Pending-Order aus der Überwachung entfernen
-               ArraySpliceInts(knownOrders.ticket, i, 1);
-               ArraySpliceInts(knownOrders.type,   i, 1);
+               ArraySpliceInts(orders.knownOrders.ticket, i, 1);
+               ArraySpliceInts(orders.knownOrders.type,   i, 1);
                knownSize--;
             }
          }
          else {
             // jetzt offene oder bereits geschlossene Position
-            ArrayPushInt(openedPositions, knownOrders.ticket[i]);                // Pending-Order wurde ausgeführt
-            knownOrders.type[i] = type;
+            ArrayPushInt(openedPositions, orders.knownOrders.ticket[i]);         // Pending-Order wurde ausgeführt
+            orders.knownOrders.type[i] = type;
             i++; continue;                                                       // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
          }
       }
@@ -218,7 +273,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             if      (StringStartsWith(comment, "so:" )) closedByBroker = true;   // Margin Stopout erkennen
             else if (StringEndsWith  (comment, "[tp]")) closedByBroker = true;
             else if (StringEndsWith  (comment, "[sl]")) closedByBroker = true;
-            else {                                                               // manche Broker setzen den OrderComment bei Schließung durch Limit nicht korrekt
+            else {                                                               // manche Broker setzen den OrderComment bei Schließung durch Limit nicht gemäß MT4-Standard
                if (!EQ(OrderTakeProfit(), 0)) {
                   if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() >= OrderTakeProfit());
                   else                 closedByBroker = closedByBroker || (OrderClosePrice() <= OrderTakeProfit());
@@ -229,9 +284,9 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
                }
             }
             if (closedByBroker)
-               ArrayPushInt(closedPositions, knownOrders.ticket[i]);             // Position wurde geschlossen
-            ArraySpliceInts(knownOrders.ticket, i, 1);                           // geschlossene Position aus der Überwachung entfernen
-            ArraySpliceInts(knownOrders.type,   i, 1);
+               ArrayPushInt(closedPositions, orders.knownOrders.ticket[i]);      // Position wurde geschlossen
+            ArraySpliceInts(orders.knownOrders.ticket, i, 1);                    // geschlossene Position aus der Überwachung entfernen
+            ArraySpliceInts(orders.knownOrders.type,   i, 1);
             knownSize--;
          }
       }
@@ -243,17 +298,17 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
       int ordersTotal = OrdersTotal();
 
       for (i=0; i < ordersTotal; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {          // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
-            ordersTotal = -1;                                        // Abbruch, via while-Schleife alle Orders nochmal verarbeiten, bis for fehlerfrei durchläuft
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                      // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
+            ordersTotal = -1;                                                    // Abbruch, via while-Schleife alle Orders nochmal verarbeiten, bis for fehlerfrei durchläuft
             break;
          }
          for (int n=0; n < knownSize; n++) {
-            if (knownOrders.ticket[n] == OrderTicket())              // Order bereits bekannt
+            if (orders.knownOrders.ticket[n] == OrderTicket())                   // Order bereits bekannt
                break;
          }
-         if (n >= knownSize) {                                       // Order unbekannt: in Überwachung aufnehmen
-            ArrayPushInt(knownOrders.ticket, OrderTicket());
-            ArrayPushInt(knownOrders.type,   OrderType()  );
+         if (n >= knownSize) {                                                   // Order unbekannt: in Überwachung aufnehmen
+            ArrayPushInt(orders.knownOrders.ticket, OrderTicket());
+            ArrayPushInt(orders.knownOrders.type,   OrderType()  );
             knownSize++;
          }
       }
@@ -300,8 +355,8 @@ bool onOrderFail(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (Order.Alerts.Sound)
-      PlaySoundEx(sound.order.failed);
+   if (orderAlerts.sound)
+      PlaySoundEx(sound.orderFailed);
    return(!catch("onOrderFail(3)"));
 }
 
@@ -340,8 +395,8 @@ bool onPositionOpen(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (Order.Alerts.Sound)
-      PlaySoundEx(sound.position.opened);
+   if (orderAlerts.sound)
+      PlaySoundEx(sound.positionOpened);
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -381,8 +436,8 @@ bool onPositionClose(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (Order.Alerts.Sound)
-      PlaySoundEx(sound.position.closed);
+   if (orderAlerts.sound)
+      PlaySoundEx(sound.positionClosed);
    return(!catch("onPositionClose(3)"));
 }
 
@@ -395,12 +450,12 @@ bool onPositionClose(int tickets[]) {
 string InputsToStr() {
    return(StringConcatenate("init()   inputs: ",
 
-                            "Order.Alerts.Sound=", BoolToStr(Order.Alerts.Sound), "; ",
-
-                            "SMS.Alerts=",         BoolToStr(__SMS.alerts),       "; ",
-                  ifString(__SMS.alerts,
-          StringConcatenate("SMS.Receiver=\"",   __SMS.receiver,                "\"; "), ""),
-
-                            "Track.Orders=",       BoolToStr(Track.Orders),       "; ")
+                            "Track.Orders="                , BoolToStr(Track.Orders),       "; ",
+                            "Order.Alerts.Sound="          , BoolToStr(Order.Alerts.Sound), "; ",
+                            "Order.Alerts.Mail.Receiver=\"", Order.Alerts.Mail.Receiver,  "\"; ",
+                            "Order.Alerts.SMS.Receiver=\"" , Order.Alerts.SMS.Receiver,   "\"; ",
+                            "Order.Alerts.HTTP.Url=\""     , Order.Alerts.HTTP.Url,       "\"; "
+                          //"Order.Alerts.ICQ.Contact=\""  , Order.Alerts.ICQ.Contact,    "\"; "
+                            )
    );
 }

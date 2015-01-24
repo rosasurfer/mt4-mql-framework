@@ -361,6 +361,7 @@
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
    bool     StringIsNull(string value);
+   bool     StringIsPhoneNumber(string value);
 
    bool     StringContains(string object, string substring);
    bool     StringIContains(string object, string substring);

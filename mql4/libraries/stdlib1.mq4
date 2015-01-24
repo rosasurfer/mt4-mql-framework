@@ -8907,15 +8907,17 @@ bool ObjectDeleteSilent(string label, string location) {
 /**
  * Schickt eine SMS an die angegebene Telefonnummer.
  *
- * @param  string receiver - Telefonnummer des Empfängers (internationales Format: 49123456789)
+ * @param  string receiver - Telefonnummer des Empfängers (internationales Format: +49-123-456789)
  * @param  string message  - Text der SMS
  *
  * @return bool - Erfolgsstatus
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StringTrim(receiver);
-   if (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
-   if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+   string _receiver = StringReplace.Recursive(StringReplace(StringTrim(receiver), "-", ""), " ", "");
+
+   if      (StringStartsWith(_receiver, "+" )) _receiver = StringRight(_receiver, -1);
+   else if (StringStartsWith(_receiver, "00")) _receiver = StringRight(_receiver, -2);
+
    if (!StringIsDigit(_receiver)) return(!catch("SendSMS(1)   invalid parameter receiver = \""+ receiver +"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
 
@@ -9116,6 +9118,45 @@ bool StringIsNumeric(string value) {
  */
 bool StringIsInteger(string value) {
    return(value == StringConcatenate("", StrToInteger(value)));
+}
+
+
+/**
+ * Ob ein String eine gültige Telefonnummer darstellt.
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsPhoneNumber(string value) {
+   string s = StringReplace(StringTrim(value), " ", "");
+   int char, length=StringLen(s);
+
+   // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
+   int pos = StringFind(s, "-");
+   while (pos != -1) {
+      if (pos   == 0     ) return(false);
+      if (pos+1 == length) return(false);
+
+      char = StringGetChar(s, pos-1);           // left char
+      if (char < '0') return(false);
+      if (char > '9') return(false);
+
+      char = StringGetChar(s, pos+1);           // right char
+      if (char < '0') return(false);
+      if (char > '9') return(false);
+
+      pos = StringFind(s, "-", pos+1);
+   }
+   if (char != 0) s = StringReplace(s, "-", "");
+
+   // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
+   if (StringStartsWith(s, "+" )) {
+      s = StringRight(s, -1);
+      if (StringStartsWith(s, "0")) return(false);
+   }
+
+   return(StringIsDigit(s));
 }
 
 
