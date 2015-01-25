@@ -4243,7 +4243,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
 The MessageBox function creates, displays and operates a message box. The message box contains an application-defined message and header,
 as well as a combination of predefined icons and push buttons. If the function succeeds, the returned value is one of
 the MessageBox <a href="help://constants_messagebox">return code</a> values.<br/> The function cannot be called from custom indicators since
-they are <a href="help://runtime_start">executed</a> within the user interface thread and may not deccelerate it.
+they are <a href="help://runtime_start">executed</a> within the user interface thread and may not decelerate it.
       </content>
       <example>
   #include &lt;WinUser32.mqh&gt;
@@ -4334,8 +4334,8 @@ To print values of datetime type as string, convert them with the <a href="help:
       caption=SendFTP()
       type=bool
       <content>
-Sends the file to the FTP server set in the Tools->Options->Publisher tab. If the attempt fails, it retuns <span class="constants">false</span>.<br/>
-The function does not operate in the testing mode. This function cannot be called from custom indicators, either.<br/>
+Uploads a file to the FTP server configured in the Tools->Options->Publisher tab. If the attempt fails, it returns <span class="constants">false</span>.<br/>
+The function can neither be called in the Strategy Tester nor from custom indicators.<br/>
 The file to be sent must be stored in the <em>terminal_directory\experts\files</em> folder or in its sub-folders.<br/>
 It will not be sent if there is no FTP address and/or access password specified in settings.
       </content>
