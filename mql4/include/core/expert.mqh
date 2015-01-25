@@ -122,9 +122,9 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
-   ShowStatus(NO_ERROR);
 
    UpdateProgramStatus();
+   ShowStatus(NO_ERROR);
    if (__STATUS_OFF) return(last_error);
 
 
@@ -135,12 +135,13 @@ int init() {
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluﬂ, da Ticks verloren gehen, wenn die entsprechende Windows-Message
       error = Chart.SendTick(false);                                          // vor Verlassen von init() verarbeitet wird.
-      if (IsError(error))
-         SetLastError(error);
+      if (IsError(error)) {
+         UpdateProgramStatus(SetLastError(error));
+         if (__STATUS_OFF) return(last_error);
+      }
    }
 
-   catch("init(7)");
-   return(UpdateProgramStatus(last_error));
+   return(UpdateProgramStatus(catch("init(7)")));
 }
 
 
@@ -182,7 +183,8 @@ int start() {
       __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, trying again...");
+         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         last_error = NO_ERROR;
 
          int error = init();                                               // init() erneut aufrufen
          if (__STATUS_OFF) return(ShowStatus(last_error));
@@ -225,7 +227,7 @@ int start() {
 
    error = GetLastError();
    if (error != NO_ERROR)
-      UpdateProgramStatus(catch("start(4)", error));
+      catch("start(4)", error);
 
 
    // (6) im Tester
