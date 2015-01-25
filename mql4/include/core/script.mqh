@@ -75,8 +75,7 @@ int init() {
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
                                                                               //
-   catch("init(6)");
-   return(UpdateProgramStatus(last_error));
+   return(UpdateProgramStatus(catch("init(6)")));
 }
 
 
@@ -133,10 +132,8 @@ int start() {
    // (4) Main-Funktion aufrufen
    onStart();
 
-   error = GetLastError();
-   if (error != NO_ERROR)
-      catch("start(4)", error);
 
+   catch("start(4)");
    return(UpdateProgramStatus(last_error));
 }
 

@@ -135,8 +135,7 @@ int init() {
       }
    }
 
-   catch("init(8)");
-   return(UpdateProgramStatus(last_error));
+   return(UpdateProgramStatus(catch("init(8)")));
 }
 
 
@@ -183,7 +182,8 @@ int start() {
       __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, trying again...");
+         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         last_error = NO_ERROR;
 
          error = init();                                                   // init() erneut aufrufen
          if (__STATUS_OFF) return(last_error);

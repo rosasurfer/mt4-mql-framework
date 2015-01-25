@@ -87,6 +87,9 @@ bool     priceAlerts.http;
  * @return int - Fehlerstatus
  */
 int onInit() {
+   if (This.IsTesting() == -1)
+      return(last_error);
+
    // Konfiguration einlesen. Ist die AccountNumber() beim Terminalstart noch nicht verfügbar, wird der Aufruf in onTick() wiederholt.
    if (!Configure())
       return(last_error);
