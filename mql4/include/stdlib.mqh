@@ -1,5 +1,5 @@
 /**
- * je Modultyp implementierte Statusfunktionen (core):
+ * Je Modultyp implementierte Statusfunktionen (core):
  * ---------------------------------------------------
  *  bool IsExpert();
  *  bool IsScript();
@@ -8,8 +8,8 @@
  *
  *  bool Expert.IsTesting();
  *  bool Script.IsTesting();
- *  int  Indicator.IsTesting(int execFlags);
- *  int  This.IsTesting(int execFlags);
+ *  int  Indicator.IsTesting();
+ *  int  This.IsTesting();
  *
  *  int  InitReason();
  *  int  DeinitReason();
@@ -17,7 +17,7 @@
  *  bool IsSuperContext();
  *
  *  int  SetLastError(int error, int param);
- *  int  CheckProgramStatus(int value);
+ *  int  UpdateProgramStatus(int value);
  */
 
 #import "stdlib1.ex4"
@@ -338,6 +338,9 @@
 
    bool     GT(double a, double b, int digits);
    bool     GE(double a, double b, int digits);
+
+   bool     IsNaN(double value);
+   bool     IsInfinite(double value);
 
    int      Div       (int    a, int    b, int    onZero);
    double   MathDiv   (double a, double b, double onZero);

@@ -189,11 +189,13 @@ int onDeinit() {
  * Main-Funktion
  *
  * @return int - Fehlerstatus
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
-      return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
+      return(debug("onTick(1)   size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor kompletter Neuberechnung Buffer zurücksetzen
    if (!ValidBars) {
@@ -220,7 +222,7 @@ int onTick() {
    int startBar = Min(ChangedBars-1, Bars-ma.periods);
    if (startBar < 0) {
       if (IsSuperContext())
-         return(catch("onTick()", ERR_HISTORY_INSUFFICIENT));
+         return(catch("onTick(2)", ERR_HISTORY_INSUFFICIENT));
       SetLastError(ERR_HISTORY_INSUFFICIENT);                           // Signalisieren, falls Bars für Berechnung nicht ausreichen (keine Rückkehr)
    }
 

@@ -18,8 +18,10 @@ int      Test.startMillis, Test.stopMillis;                          // in Milli
  * zurückgesetzt.
  *
  * @return int - Fehlerstatus
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int init() { // throws ERS_TERMINAL_NOT_YET_READY
+int init() {
    if (__STATUS_OFF)
       return(last_error);
 
@@ -31,52 +33,50 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext))
-      if (IsError(InitExecutionContext()))
-         return(CheckProgramStatus(last_error));
-
-   /*
-   if (StringStartsWith(WindowExpertName(), "Test")) {
-      int currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
-      debug("init(1)       "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  ec="+ GetBufferAddress(__ExecutionContext) +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
+   if (!ec.Signature(__ExecutionContext)) /**/ if (IsError(InitExecutionContext())) {
+      UpdateProgramStatus();
+      if (__STATUS_OFF) return(last_error);
    }
-   */
 
 
-   // (2) stdlib (re-)initialisieren
+   // (2) stdlib initialisieren
    int iNull[];
-   int error = stdlib.init(__ExecutionContext, iNull);
-   if (IsError(error))
-      return(CheckProgramStatus(SetLastError(error)));
+   int error = stdlib.init(__ExecutionContext, iNull);//throws ERS_TERMINAL_NOT_YET_READY
+   if (IsError(error)) {
+      UpdateProgramStatus(SetLastError(error));
+      if (__STATUS_OFF) return(last_error);
+   }
 
 
-   // (3) in Experts immer auch die history-lib (re-)initialisieren
+   // (3) in Experts immer auch die HistoryLib initialisieren
    error = history.init(__ExecutionContext);
-   if (IsError(error))
-      return(CheckProgramStatus(SetLastError(error)));                        // #define INIT_TIMEZONE               in stdlib.init()
-                                                                              // #define INIT_PIPVALUE
-                                                                              // #define INIT_BARS_ON_HIST_UPDATE
-   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
-   int initFlags = ec.InitFlags(__ExecutionContext);
+   if (IsError(error)) {
+      UpdateProgramStatus(SetLastError(error));
+      if (__STATUS_OFF) return(last_error);
+   }
 
+                                                                              // #define INIT_TIMEZONE               in stdlib.init()
+   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
+                                                                              // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(CheckProgramStatus(debug("init(1)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
-         return(CheckProgramStatus(catch("init(2)", error)));
+            return(UpdateProgramStatus(debug("init(1)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+         UpdateProgramStatus(catch("init(2)", error));
+         if (__STATUS_OFF) return(last_error);
       }
-      if (!TickSize) return(CheckProgramStatus(debug("init(3)   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                                     // siehe oben bei MODE_TICKSIZE
-            return(CheckProgramStatus(debug("init(4)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
-         return(CheckProgramStatus(catch("init(5)", error)));
+         UpdateProgramStatus(catch("init(4)", error));
+         if (__STATUS_OFF) return(last_error);
       }
-      if (!tickValue) return(CheckProgramStatus(debug("init(6)   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!tickValue)      return(UpdateProgramStatus(debug("init(5)   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
@@ -84,9 +84,11 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
    // (5) ggf. EA's aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                          // !!! TODO: Bug, wenn mehrere EA's den Modus gleichzeitig umschalten
-      if (IsError(error))
-         return(CheckProgramStatus(SetLastError(error)));
+      error = Toolbar.Experts(true);
+      if (IsError(error)) {                                                   // TODO: Fehler, wenn bei Terminalstart mehrere EA's den Modus gleichzeitig umschalten wollen
+         UpdateProgramStatus(SetLastError(error));
+         if (__STATUS_OFF) return(last_error);
+      }
    }
 
 
@@ -98,7 +100,7 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
                                                                               // User-Routinen *können*, müssen aber nicht implementiert werden.
    // (7) user-spezifische init()-Routinen aufrufen                           //
    onInit();                                                                  // Preprocessing-Hook
-   CheckProgramStatus();                                                      //
+   UpdateProgramStatus();                                                     //
    if (__STATUS_OFF) return(last_error);                                      //
                                                                               //
    switch (UninitializeReason()) {                                            //
@@ -114,21 +116,21 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
       case REASON_INITFAILED : error = onInitFailed();          break;        //
       case REASON_CLOSE      : error = onInitClose();           break;        //
 
-      default: return(CheckProgramStatus(catch("init(7)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+      default: return(UpdateProgramStatus(catch("init(6)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
    }                                                                          //
-   CheckProgramStatus();                                                      //
+   UpdateProgramStatus();                                                     //
    if (__STATUS_OFF) return(last_error);                                      //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
    ShowStatus(NO_ERROR);
 
-   CheckProgramStatus();
+   UpdateProgramStatus();
    if (__STATUS_OFF) return(last_error);
 
 
-   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern selbst einen Tick schicken.
+   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (IsTesting()) {
-      Test.fromDate    = TimeCurrent();
+      Test.fromDate    = TimeCurrent();                                       // für Teststatistiken
       Test.startMillis = GetTickCount();
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
@@ -136,16 +138,17 @@ int init() { // throws ERS_TERMINAL_NOT_YET_READY
       if (IsError(error))
          SetLastError(error);
    }
-   catch("init(8)");
-   return(CheckProgramStatus(last_error));
+
+   catch("init(7)");
+   return(UpdateProgramStatus(last_error));
 }
 
 
 /**
  * Globale start()-Funktion für Expert Adviser.
  *
- * Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_YET_READY zurück,
- * wird init() erneut ausgeführt. Bei erneutem Fehler bricht start() ab.
+ * Erfolgt der Aufruf nach einem init()-Cycle und init() kehrte mit dem Fehler ERS_TERMINAL_NOT_YET_READY zurück,
+ * wird init() solange erneut ausgeführt, bis das Terminal bereit ist
  *
  * @return int - Fehlerstatus
  */
@@ -155,25 +158,15 @@ int start() {
       debug("start(1)   "+ msg);
       ShowStatus(last_error);
 
-      if (IsTesting())
-         Tester.Stop();                                                    // nach Fehler anhalten
+      if (IsTesting())                                                     // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
+         Tester.Stop();                                                    // oder das Ende von start() evt. nicht mehr ausgeführt wird.
       return(last_error);
    }
 
 
    if (!__WND_HANDLE) {
-      if (!IsTesting() || IsVisualMode())
-         __WND_HANDLE = WindowHandle(Symbol(), NULL);                      // Workaround um WindowHandle()-Bug ab Build 418
-   }                                                                       // im Tester bei VisualMode=Off löst WindowHandle() ERR_FUNC_NOT_ALLOWED_IN_TESTER aus
-
-
-   // "Time machine"-Bug im Tester abfangen
-   if (IsTesting()) {
-      static datetime time, lastTime;
-      time = TimeCurrent();
-      if (time < lastTime)
-         return(CheckProgramStatus(ShowStatus(catch("start(2)   Bug in TimeCurrent()/MarketInfo(MODE_TIME) testen !!!\nTime is running backward here:   previous='"+ TimeToStr(lastTime, TIME_FULL) +"'   current='"+ TimeToStr(time, TIME_FULL) +"'", ERR_RUNTIME_ERROR))));
-      lastTime = time;
+      if (!IsTesting() || IsVisualMode())                                  // Workaround um WindowHandle()-Bug ab Build 418
+         __WND_HANDLE = WindowHandle(Symbol(), NULL);                      // im Tester bei VisualMode=Off löst WindowHandle() ERR_FUNC_NOT_ALLOWED_IN_TESTER aus
    }
 
 
@@ -184,20 +177,22 @@ int start() {
    ChangedBars   = -1;
 
 
-   // (1) Falls wir aus init() kommen, prüfen, ob es erfolgreich war
+   // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == FUNC_INIT) {
-      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
+      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
-      if (IsLastError()) {
-         if (last_error != ERS_TERMINAL_NOT_YET_READY)                     // init() ist mit hartem Fehler zurückgekehrt
-            return(CheckProgramStatus(ShowStatus(last_error)));
+      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
+         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, trying again...");
 
-         if (IsError(init())) {                                            // init() ist mit weichem Fehler zurückgekehrt => erneut aufrufen
-            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_INIT);  // erneuter Fehler (hart oder weich), __WHEREAMI__ zurücksetzen
-            return(CheckProgramStatus(ShowStatus(last_error)));
+         int error = init();                                               // init() erneut aufrufen
+         if (__STATUS_OFF) return(ShowStatus(last_error));
+
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                        // wenn überhaupt, kann wieder nur ein Status gesetzt sein
+            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            return(ShowStatus(error));
          }
       }
-      last_error = NO_ERROR;                                               // init() war erfolgreich
+      last_error = NO_ERROR;                                               // init() war erfolgreich, ein vorhandener Status wird überschrieben
    }
    else {
       prev_error = last_error;                                             // weiterer Tick: last_error sichern und zurücksetzen
@@ -209,45 +204,37 @@ int start() {
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       start.RelaunchInputDialog();
-      return(CheckProgramStatus(ShowStatus(last_error)));
+      return(UpdateProgramStatus(ShowStatus(last_error)));
    }
 
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)
-      return(CheckProgramStatus(ShowStatus(SetLastError(debug("start(3)   Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
+      return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)   Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
    // (4) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(CheckProgramStatus(ShowStatus(SetLastError(stdlib.GetLastError()))));
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+      UpdateProgramStatus(ShowStatus(SetLastError(stdlib.GetLastError())));
+      if (__STATUS_OFF) return(last_error);
+   }
 
 
    // (5) Main-Funktion aufrufen und auswerten
    onTick();
 
-   int error = GetLastError();
+   error = GetLastError();
    if (error != NO_ERROR)
-      catch("start(4)", error);
+      UpdateProgramStatus(catch("start(4)", error));
 
 
    // (6) im Tester
-   if (IsTesting()) {
-      CheckProgramStatus();
-      if (IsVisualMode()) {                                                // bei VisualMode=On ChartInfos anzeigen
-         if (__STATUS_OFF || !icChartInfos(PERIOD_H1))                     // nach Fehler anhalten
-            Tester.Stop();
-      }
-      else {
-         if (__STATUS_OFF)                                                 // nach Fehler anhalten
-            Tester.Stop();
-         return(last_error);                                               // kein ShowStatus()
-      }
-   }
+   if (IsVisualMode())
+      icChartInfos(PERIOD_H1);                                             // nur bei Tester::VisualMode=On ChartInfos per iCustom() anzeigen (ist Online nicht notwendig)
 
 
    // (7) Statusanzeige
-   return(CheckProgramStatus(ShowStatus(last_error)));
+   return(UpdateProgramStatus(ShowStatus(last_error)));
 }
 
 
@@ -292,7 +279,7 @@ int deinit() {
          case REASON_INITFAILED : error = onDeinitFailed();          break;      //
          case REASON_CLOSE      : error = onDeinitClose();           break;      //
 
-         default: return(CheckProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(UpdateProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                          //
    }                                                                             //
                                                                                  //
@@ -311,7 +298,7 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   return(CheckProgramStatus(last_error));
+   return(UpdateProgramStatus(last_error));
 }
 
 
@@ -398,11 +385,9 @@ bool Script.IsTesting() {
 /**
  * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
- * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
- *
  * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-int Indicator.IsTesting(int execFlags=NULL) {
+int Indicator.IsTesting() {
    return(false);                                                    // (int) bool
 }
 
@@ -410,11 +395,9 @@ int Indicator.IsTesting(int execFlags=NULL) {
 /**
  * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @param  int execFlags - Parameter wird in Experts ignoriert
- *
  * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-int This.IsTesting(int execFlags=NULL) {
+int This.IsTesting() {
    return(Expert.IsTesting());
 }
 
@@ -449,7 +432,7 @@ int InitExecutionContext() {
    __LOG_CUSTOM    = initFlags & INIT_CUSTOMLOG;
 
    PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints       = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
+   PipPoints       = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
    PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
@@ -507,11 +490,11 @@ int SetLastError(int error, int param=NULL) {
 /**
  * Überprüft und aktualisiert den aktuellen Programmstatus des EA's. Setzt je nach Kontext das Flag __STATUS_OFF.
  *
- * @param  int value - zurückzugebender Wert, wird intern ignoriert (default: NULL)
+ * @param  int value - der zurückzugebende Wert (default: NULL)
  *
  * @return int - der übergebene Wert
  */
-int CheckProgramStatus(int value=NULL) {
+int UpdateProgramStatus(int value=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :

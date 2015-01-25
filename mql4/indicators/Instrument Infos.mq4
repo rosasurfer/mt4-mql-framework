@@ -168,8 +168,8 @@ int UpdateInfos() {
    double atr_m            = @ATR(NULL, PERIOD_MN1, 14, 1); if (atr_m == EMPTY) return(last_error);
                                                                              ObjectSetText(labels[I_ATR_M         ], "ATR(m):   "       + ifString(!atr_m,          "", Round(atr_m/Pips) +" pip = "+ DoubleToStr(MathDiv(atr_m, Close[0])*100, 2) +"%"+ ifString(!atr_w, "", " = "+ DoubleToStr(MathDiv(atr_m, atr_w), 1) +" ATR(w)")), fg.fontSize, fg.fontName, fg.fontColor);
 
-   double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   +                               DoubleToStr(stopLevel,   Digits<<31>>31) +" pip",     fg.fontSize, fg.fontName, fg.fontColor);
-   double freezeLevel      = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                               DoubleToStr(freezeLevel, Digits<<31>>31) +" pip",     fg.fontSize, fg.fontName, fg.fontColor);
+   double stopLevel        = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:   "   +                               DoubleToStr(stopLevel,   Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
+   double freezeLevel      = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                               DoubleToStr(freezeLevel, Digits & 1) +" pip",         fg.fontSize, fg.fontName, fg.fontColor);
 
    double lotSize          = MarketInfo(symbol, MODE_LOTSIZE);               ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + ifString(!lotSize,        "", NumberToStr(lotSize, ", .+") +" units"),              fg.fontSize, fg.fontName, fg.fontColor);
    double minLot           = MarketInfo(symbol, MODE_MINLOT );               ObjectSetText(labels[I_MINLOT        ], "Min lot:    "     + ifString(!minLot,         "", NumberToStr(minLot,  ", .+")),                        fg.fontSize, fg.fontName, fg.fontColor);
@@ -182,7 +182,7 @@ int UpdateInfos() {
    double marginHedged     = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged     = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),               fg.fontSize, fg.fontName, ifInt(!marginRequired, fg.fontColor.Disabled, fg.fontColor));
 
-   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits<<31>>31) +" pip"+ ifString(!atr_w, "", " = "+ DoubleToStr(MathDiv(spread*Point, atr_w) * 100, 2) +"% ATR(w)"), fg.fontSize, fg.fontName, fg.fontColor);
+   double spread           = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread,      Digits & 1) +" pip"+ ifString(!atr_w, "", " = "+ DoubleToStr(MathDiv(spread*Point, atr_w) * 100, 2) +"% ATR(w)"), fg.fontSize, fg.fontName, fg.fontColor);
    double commission       = GetCommission();
    double commissionPip    = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
                                                                              ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + NumberToStr(commission, ".2R") +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip", fg.fontSize, fg.fontName, fg.fontColor);

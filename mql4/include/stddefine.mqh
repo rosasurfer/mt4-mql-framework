@@ -2031,6 +2031,32 @@ bool GT(double double1, double double2, int digits=8) {
 
 
 /**
+ * Ob der Wert eines Doubles NaN (Not-a-Number) ist.
+ *
+ * @param  double value
+ *
+ * @return bool
+ */
+bool IsNaN(double value) {
+   string s = value;
+   return(s == "-1.#IND0000");
+}
+
+
+/**
+ * Ob der Wert eines Doubles Infinite ist.
+ *
+ * @param  double value
+ *
+ * @return bool
+ */
+bool IsInfinite(double value) {
+   string s = value;
+   return(s == "-1.#INF0000");
+}
+
+
+/**
  * Pseudo-Funktion, die nichts weiter tut, als boolean TRUE zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -2530,15 +2556,15 @@ void __DummyCalls() {
 
    Expert.IsTesting();
    Script.IsTesting();
-   Indicator.IsTesting(NULL);
-   This.IsTesting(NULL);
+   Indicator.IsTesting();
+   This.IsTesting();
 
    InitReason();
    DeinitReason();
 
    IsSuperContext();
    SetLastError(NULL, NULL);
-   CheckProgramStatus();
+   UpdateProgramStatus();
 
    __log.custom(NULL);
    _bool(NULL);
@@ -2576,8 +2602,10 @@ void __DummyCalls() {
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
    IsError(NULL);
+   IsInfinite(NULL);
    IsLastError();
    IsLogging();
+   IsNaN(NULL);
    IsNaT(NULL);
    IsTicket(NULL);
    LE(NULL, NULL);
@@ -2616,8 +2644,8 @@ void __DummyCalls() {
    bool   IsLibrary();
    bool   Expert.IsTesting();
    bool   Script.IsTesting();
-   int    Indicator.IsTesting(int execFlags);
-   int    This.IsTesting(int execFlags);
+   int    Indicator.IsTesting();
+   int    This.IsTesting();
    int    InitReason();
    int    DeinitReason();
    bool   IsSuperContext();
