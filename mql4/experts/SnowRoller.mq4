@@ -906,8 +906,8 @@ string UpdateStatus.OrderFillMsg(int i) {
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
       string strSlippage;
-      if (slippage > 0) strSlippage = StringConcatenate(DoubleToStr( slippage, Digits<<31>>31), " pip slippage");
-      else              strSlippage = StringConcatenate(DoubleToStr(-slippage, Digits<<31>>31), " pip positive slippage");
+      if (slippage > 0) strSlippage = StringConcatenate(DoubleToStr( slippage, Digits & 1), " pip slippage");
+      else              strSlippage = StringConcatenate(DoubleToStr(-slippage, Digits & 1), " pip positive slippage");
       message = StringConcatenate(message, " at ", NumberToStr(orders.openPrice[i], PriceFormat), " (", strSlippage, ")");
    }
    return(message);
@@ -959,8 +959,8 @@ string UpdateStatus.SLExecuteMsg(int i) {
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
       string strSlippage;
-      if (slippage > 0) strSlippage = StringConcatenate(DoubleToStr( slippage, Digits<<31>>31), " pip slippage");
-      else              strSlippage = StringConcatenate(DoubleToStr(-slippage, Digits<<31>>31), " pip positive slippage");
+      if (slippage > 0) strSlippage = StringConcatenate(DoubleToStr( slippage, Digits & 1), " pip slippage");
+      else              strSlippage = StringConcatenate(DoubleToStr(-slippage, Digits & 1), " pip positive slippage");
       message = StringConcatenate(message, " at ", NumberToStr(orders.closePrice[i], PriceFormat), " (", strSlippage, ")");
    }
    return(message);

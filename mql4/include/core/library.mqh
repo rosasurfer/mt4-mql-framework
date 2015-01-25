@@ -159,15 +159,12 @@ bool Script.IsTesting() {
 /**
  * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
- * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
- *
  * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  *
- * @throws ERS_TERMINAL_NOT_YET_READY - Falls der Teststatus während des Terminal-Starts noch nicht bestimmt werden kann. Wird still gesetzt, wenn im Parameter
- *                                      execFlags das Flag MUTE_ERS_TERMINAL_NOT_YET_READY gesetzt ist. Der Rückgabewert der Funktion ist bei Auftreten dieses
- *                                      Fehlers -1 (EMPTY).
+ * @throws ERS_TERMINAL_NOT_YET_READY - Falls der Teststatus während des Terminal-Starts noch unbekannt ist. Wird still gesetzt.
+ *                                      Der Rückgabewert der Funktion ist in diesem Fall -1 (EMPTY).
  */
-int Indicator.IsTesting(int execFlags=NULL) {
+int Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_EMPTY(catch("Indicator.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR)));
 
@@ -188,39 +185,21 @@ int Indicator.IsTesting(int execFlags=NULL) {
    else if (__WHEREAMI__ == FUNC_START) {                            // Indikator läuft im UI-Thread in Indicator::start(), also im Hauptchart
       static.result = false;
    }
-   else {                                                            // Indikator läuft im UI-Thread in Indicator::init|deinit(): entweder im Hauptchart oder im Testchart
-      bool resolved;
+   else {
+      string title;
 
+      // Indikator läuft im UI-Thread in Indicator::init|deinit(), entweder im Hauptchart oder im Testchart
       int hWndChart = WindowHandle(Symbol(), NULL); if (!hWndChart) hWndChart = __WND_HANDLE;
-      if (hWndChart != 0) {
-         string title = GetWindowText(GetParent(hWndChart));
-         if (StringLen(title) > 0) {
-            static.result = StringEndsWith(title, "(visual)");       // Indikator läuft im UI-Thread und im Haupt- oder Testchart, Unterscheidung durch "...(visual)" im Fenstertitel
-            resolved      = true;
-         }
-         //else                                                      // Indikator wurde im UI-Thread per Template geladen, das Fenster ist bekannt, der Titel jedoch noch nicht gesetzt.
-      }
+      if (hWndChart != 0)
+         title = GetWindowText(GetParent(hWndChart));
 
-      if (!resolved) {                                               // Entweder war das Fensterhandle unbekannt oder das Fenster noch nicht vollständig initialisiert (kein Titel)
-         // Lief der Tester, dann existiert immer sein Hauptfenster. Existiert es nicht, läuft der Indikator im Hauptchart.
-         int hWndTester = GetTesterWindow();
-         if (!hWndTester) {
-            static.result = false;                                   // Tester lief noch nicht: Indikator läuft im UI-Thread in Indicator::init|deinit() im Hauptchart
-            resolved      = true;
-         }
-      }
+      if (!StringLen(title))
+         return(_EMPTY(debug("Indicator.IsTesting(2)   cannot determine testing status,  hWndChart="+ hWndChart +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
-      if (!resolved) {
-         // Der Test anhand einer ins file-Verzeichnis geschriebenen Datei funktioniert nicht, da die Datei auch im Tester ins Online-Verzeichnis geschrieben wird (bei VisualMode=Off).
-         static.result = false;
-         resolved      = true;
-      }
+      static.result = StringEndsWith(title, "(visual)");             // Unterscheidung durch "...(visual)" im Fenstertitel
 
-      if (!resolved) {
-         // TODO: Gesamte Erkennung in DLL auslagern, die das Terminal-Hauptfenster per Subclassing überwacht.
-         if (!execFlags & MUTE_ERS_TERMINAL_NOT_YET_READY) return(_EMPTY(catch("Indicator.IsTesting(5)   cannot determine testing status,  hWndChart="+ hWndChart +",  hWndTester="+ hWndTester +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), ERS_TERMINAL_NOT_YET_READY)));
-         else                                              return(_EMPTY(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-      }
+      // TODO: Gesamte Erkennung in DLL auslagern, die das Terminal-Hauptfenster per Subclassing überwacht. Der Test anhand einer ins file-Verzeichnis geschriebenen Datei
+      //       funktioniert nicht, da die Datei im Tester bei VisualMode=Off auch ins Online-Verzeichnis geschrieben wird. Indicator::init() läuft schließlich im UI-Thread.
    }
 
    static.resolved = true;
@@ -231,21 +210,18 @@ int Indicator.IsTesting(int execFlags=NULL) {
 /**
  * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
- *
  * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  *
  * @throws ERS_TERMINAL_NOT_YET_READY - Falls das Programm ein Indikator ist und der Teststatus während des Terminal-Starts noch nicht bestimmt werden kann.
- *                                      Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERS_TERMINAL_NOT_YET_READY gesetzt ist. Der Rückgabewert
- *                                      der Funktion ist bei Auftreten dieses Fehlers -1 (EMPTY).
+ *                                      Wird still gesetzt.
  */
-int This.IsTesting(int execFlags=NULL) {
+int This.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
       return(_EMPTY(catch("This.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR)));
 
    if (   IsExpert()) return(   Expert.IsTesting());                 // (int) bool
    if (   IsScript()) return(   Script.IsTesting());                 // (int) bool
-   if (IsIndicator()) return(Indicator.IsTesting(execFlags));
+   if (IsIndicator()) return(Indicator.IsTesting());                 //       int
 
    return(_EMPTY(catch("This.IsTesting(2)   unreachable code reached", ERR_RUNTIME_ERROR)));
 }
@@ -283,12 +259,12 @@ int SetLastError(int error, int param=NULL) {
  * Überprüft und aktualisiert den aktuellen Programmstatus. Darf in Libraries nicht verwendet werden, dort kann der Programmstatus aus dem
  * EXECUTION_CONTEXT ausgelesen, jedoch nicht modifiziert werden.
  *
- * @param  int value - zurückzugebender Wert, wird intern ignoriert (default: NULL)
+ * @param  int value - der zurückzugebende Wert (default: NULL)
  *
  * @return int - der übergebene Wert
  */
-int CheckProgramStatus(int value=NULL) {
-   catch("CheckProgramStatus()", ERR_FUNC_NOT_ALLOWED);
+int UpdateProgramStatus(int value=NULL) {
+   catch("UpdateProgramStatus()", ERR_FUNC_NOT_ALLOWED);
    return(value);
 }
 
@@ -301,6 +277,7 @@ int CheckProgramStatus(int value=NULL) {
    int    GetUIThreadId();
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
+   string StringToStr(string value);
    string __whereamiDescription(int id);
 
 #import "stdlib2.ex4"

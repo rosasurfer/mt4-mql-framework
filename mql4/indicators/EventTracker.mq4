@@ -88,7 +88,8 @@ bool     priceAlerts.http;
  */
 int onInit() {
    // Konfiguration einlesen. Ist die AccountNumber() beim Terminalstart noch nicht verfügbar, wird der Aufruf in onTick() wiederholt.
-   Configure();
+   if (!Configure())
+      return(last_error);
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(1)"));
@@ -99,8 +100,6 @@ int onInit() {
  * Konfiguriert diesen EventTracker.
  *
  * @return bool - Erfolgsstatus
- *
- * @throws ERS_TERMINAL_NOT_YET_READY - falls die AccountNumber bei Terminalstart noch nicht verfügbar ist
  */
 bool Configure() {
    // (1) Konfiguration des OrderTrackers auswerten
@@ -130,7 +129,7 @@ bool Configure() {
 
 
    // (2) Konfiguration des PriceTrackers auswerten
-   int account = GetAccountNumber();//throws ERS_TERMINAL_NOT_YET_READY
+   int account = GetAccountNumber();
    if (!account) return(!SetLastError(stdlib.GetLastError()));
 
    string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
@@ -180,10 +179,9 @@ bool Configure() {
  */
 int onTick() {
    // (1) endgültige Prüfung, ob der EventTracker konfiguriert ist
-   if (!isConfigured) {
-      if (!Configure()) /*&&*/ if (last_error!=ERS_TERMINAL_NOT_YET_READY)
-         return(last_error);
-   }
+   if (!isConfigured) /*&&*/ if (!Configure())
+      return(last_error);
+
 
    // (2) Pending- und Limit-Orders überwachen
    if (Track.Orders) {

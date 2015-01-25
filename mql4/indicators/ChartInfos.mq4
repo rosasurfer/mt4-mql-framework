@@ -1395,7 +1395,7 @@ bool UpdateSpread() {
    if (!Bid)                                                                  // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
       return(true);
 
-   string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits<<31>>31);
+   string strSpread = DoubleToStr(MarketInfo(Symbol(), MODE_SPREAD)/PipPoints, Digits & 1);
 
    ObjectSetText(label.spread, strSpread, 9, "Tahoma", SlateGray);
 

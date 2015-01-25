@@ -9,48 +9,56 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   if (__STATUS_OFF)
-      return(last_error);
+   if (__STATUS_OFF) return(last_error);
 
    __WHEREAMI__ = FUNC_INIT;
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext))
-      if (IsError(InitExecutionContext()))
-         return(CheckProgramStatus(last_error));
+   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (IsError(InitExecutionContext())) {
+      UpdateProgramStatus();
+      if (__STATUS_OFF) return(last_error);
+   }
 
 
    // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);
-   if (IsError(error))
-      return(CheckProgramStatus(SetLastError(error)));                        // #define INIT_TIMEZONE               in stdlib.init()
-                                                                              // #define INIT_PIPVALUE
-                                                                              // #define INIT_BARS_ON_HIST_UPDATE
-   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_CUSTOMLOG
-   int initFlags = ec.InitFlags(__ExecutionContext);
+   if (IsError(error)) {
+      UpdateProgramStatus(SetLastError(error));
+      if (__STATUS_OFF) return(last_error);
+   }
 
+                                                                              // #define INIT_TIMEZONE               in stdlib.init()
+   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
+                                                                              // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(1)"))) return(CheckProgramStatus(last_error));
-      if (!TickSize)                 return(CheckProgramStatus(catch("init(2)   MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(1)"))) {
+         UpdateProgramStatus();
+         if (__STATUS_OFF) return(last_error);
+      }
+      if (!TickSize)       return(UpdateProgramStatus(catch("init(2)   MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(3)"))) return(CheckProgramStatus(last_error));
-      if (!tickValue)                return(CheckProgramStatus(catch("init(4)   MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(3)"))) {
+         UpdateProgramStatus();
+         if (__STATUS_OFF) return(last_error);
+      }
+      if (!tickValue)      return(UpdateProgramStatus(catch("init(4)   MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
    // (4) user-spezifische init()-Routinen aufrufen                           // User-Routinen *können*, müssen aber nicht implementiert werden.
    if (onInit() == -1)                                                        //
-      return(CheckProgramStatus(last_error));                                 // Preprocessing-Hook
+      return(UpdateProgramStatus(last_error));                                // Preprocessing-Hook
                                                                               //
-   switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // Gibt eine der Funktionen einen Fehler zurück, bricht init() *nicht* ab.
+   switch (UninitializeReason()) {                                            // - gibt eine der Funktionen einen normalen Fehler zurück, bricht init() *nicht* ab
+      case REASON_PARAMETERS : error = onInitParameterChange(); break;        // - gibt eine der Funktionen -1 zurück, bricht init() ab
       case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        // Gibt eine der Funktionen -1 zurück, bricht init() ab.
+      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
       case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
       case REASON_UNDEFINED  : error = onInitUndefined();       break;        //
       case REASON_REMOVE     : error = onInitRemove();          break;        //
@@ -60,15 +68,15 @@ int init() {
       case REASON_INITFAILED : error = onInitFailed();          break;        //
       case REASON_CLOSE      : error = onInitClose();           break;        //
 
-      default: return(CheckProgramStatus(catch("init(5)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+      default: return(UpdateProgramStatus(catch("init(5)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
    }                                                                          //
    if (error == -1)                                                           //
-      return(CheckProgramStatus(last_error));                                 //
+      return(UpdateProgramStatus(last_error));                                 //
                                                                               //
    afterInit();                                                               // Postprocessing-Hook
                                                                               //
    catch("init(6)");
-   return(CheckProgramStatus(last_error));
+   return(UpdateProgramStatus(last_error));
 }
 
 
@@ -88,7 +96,6 @@ int start() {
    if (!__WND_HANDLE)                                                         // Workaround um WindowHandle()-Bug ab Build 418
       __WND_HANDLE = WindowHandle(Symbol(), NULL);
 
-   int error;
 
    Tick++;                                                                    // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
@@ -98,9 +105,11 @@ int start() {
 
 
    if (!Tick.Time) {
-      error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL)              // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
-         return(CheckProgramStatus(catch("start(2)", error)));                // nicht sicher detektiert werden kann
+      int error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {            // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
+         UpdateProgramStatus(catch("start(2)", error));                       // nicht sicher detektiert werden kann
+         if (__STATUS_OFF) return(last_error);
+      }
    }
 
 
@@ -110,13 +119,15 @@ int start() {
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars)                                                                 // TODO: kann Bars bei Scripten 0 sein???
-      return(CheckProgramStatus(catch("start(3)   Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
-
+   if (!Bars)                                                                 // Bars kann 0 sein, wenn das Script auf einem leeren Chart gestartet wird (Waiting for update...)
+      return(UpdateProgramStatus(catch("start(3)   Bars = 0", ERS_TERMINAL_NOT_YET_READY))); // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
+                                                                                             //       andere brauchen die aktuelle Zeitreihe nicht.
 
    // (3) stdLib benachrichtigen
-   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR)
-      return(CheckProgramStatus(SetLastError(stdlib.GetLastError())));
+   if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
+      UpdateProgramStatus(SetLastError(stdlib.GetLastError()));
+      if (__STATUS_OFF) return(last_error);
+   }
 
 
    // (4) Main-Funktion aufrufen
@@ -126,7 +137,7 @@ int start() {
    if (error != NO_ERROR)
       catch("start(4)", error);
 
-   return(CheckProgramStatus(last_error));
+   return(UpdateProgramStatus(last_error));
 }
 
 
@@ -158,7 +169,7 @@ int deinit() {
          case REASON_INITFAILED : error = onDeinitFailed();          break;   //
          case REASON_CLOSE      : error = onDeinitClose();           break;   //
 
-         default: return(CheckProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(UpdateProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error != -1)                                                           //
@@ -176,7 +187,7 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   return(CheckProgramStatus(last_error));
+   return(UpdateProgramStatus(last_error));
 }
 
 
@@ -274,11 +285,9 @@ bool Script.IsTesting() {
 /**
  * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
  *
- * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
- *
  * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-int Indicator.IsTesting(int execFlags=NULL) {
+int Indicator.IsTesting() {
    return(false);                                                    // (int) bool
 }
 
@@ -286,11 +295,9 @@ int Indicator.IsTesting(int execFlags=NULL) {
 /**
  * Ob das aktuelle Programm im Tester ausgeführt wird.
  *
- * @param  int execFlags - Parameter wird in Scripten ignoriert
- *
  * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
  */
-int This.IsTesting(int execFlags=NULL) {
+int This.IsTesting() {
    return(Script.IsTesting());
 }
 
@@ -325,7 +332,7 @@ int InitExecutionContext() {
    __LOG_CUSTOM    = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
 
    PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints       = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
+   PipPoints       = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
    PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
@@ -401,15 +408,15 @@ int SetLastError(int error, int param=NULL) {
 /**
  * Überprüft und aktualisiert den aktuellen Programmstatus des Scripts. Setzt je nach Kontext das Flag __STATUS_OFF.
  *
- * @param  int value - zurückzugebender Wert, wird intern ignoriert (default: NULL)
+ * @param  int value - der zurückzugebende Wert (default: NULL)
  *
  * @return int - der übergebene Wert
  */
-int CheckProgramStatus(int value=NULL) {
+int UpdateProgramStatus(int value=NULL) {
    switch (last_error) {
       case NO_ERROR                  :
       case ERS_HISTORY_UPDATE        :
-    //case ERS_TERMINAL_NOT_YET_READY:                               // in Scripten ist ERS_TERMINAL_NOT_YET_READY normaler Fehler
+    //case ERS_TERMINAL_NOT_YET_READY:                               // in Scripten ist ERS_TERMINAL_NOT_YET_READY kein Status, sondern normaler Fehler
       case ERS_EXECUTION_STOPPING    : break;
 
       default:

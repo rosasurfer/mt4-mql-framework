@@ -32,7 +32,6 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
-#include <iCustom/MovingAverage.mqh>
 #include <structs/pewa/ORDER_EXECUTION.mqh>
 
 
@@ -43,8 +42,10 @@ int __DEINIT_FLAGS__[];
  * @param  int tickData[] - Array, das die Daten der letzten Ticks aufnimmt (Variablen im aufrufenden Indikator sind nicht statisch)
  *
  * @return int - Fehlerstatus
+ *
+ * @throws ERS_TERMINAL_NOT_YET_READY
  */
-int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_TERMINAL_NOT_YET_READY
+int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    prev_error = last_error;
    last_error = NO_ERROR;
 
@@ -65,7 +66,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits<<31>>31));               PipPoint          = PipPoints;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
@@ -73,8 +74,8 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
 
    // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
    if (!GetApplicationWindow()) return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
-   if (!GetUIThreadId())        return(last_error);                  // bei Shutdown). Die Funktion GetUIThreadId() ist jedoch auf ein gültiges Hauptfenster-Handle angewiesen,
-                                                                     // das Handle muß deshalb vorher (also hier) ermittelt werden.
+   if (!GetUIThreadId())        return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
+                                                                     // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
 
 
    // (4) user-spezifische Init-Tasks ausführen
@@ -117,10 +118,8 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
             return(catch("stdlib.init(3)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
 
-         if (!GetAccountNumber()) {                                  // Accountnummer sofort ermitteln und cachen, da ein späterer Aufruf - falls in deinit() -
-            if (last_error == ERS_TERMINAL_NOT_YET_READY)            // u.U. den UI-Thread blockieren kann.
-               return(debug("stdlib.init()   GetAccountNumber() = 0", last_error));
-         }
+         if (!GetAccountNumber())                                    // Accountnummer sofort ermitteln (wird intern gecacht), da ein Aufruf im Tester in deinit()
+            return(last_error);                                      // u.U. den UI-Thread blockieren kann.
       }
    }
 
@@ -132,10 +131,9 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
    tickData[1] = Tick.Time;
    tickData[2] = Tick.prevTime;
 
-
-   catch("stdlib.init(0.8)");
-
-   return(last_error|catch("stdlib.init(4)"));
+   if (!last_error)
+      catch("stdlib.init(4)");
+   return(last_error);
 }
 
 
@@ -152,11 +150,11 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) { // throws ERS_
  * @return int - Fehlerstatus
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
-   // Library nach Recompile neu initialisieren
+   // Nach einem Recompile der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
-         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_YET_READY
+         if (IsError(stdlib.init(ec, iNull)))
             return(last_error);
       }
    }
@@ -199,11 +197,11 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   // Library nach Recompile neu initialisieren
+   // Nach einem Recompile der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
-         if (IsError(stdlib.init(ec, iNull))) // throws ERS_TERMINAL_NOT_YET_READY
+         if (IsError(stdlib.init(ec, iNull)))
             return(last_error);
       }
    }
@@ -350,12 +348,10 @@ int stdlib.GetLastError() {
 /**
  * Hilfsfunktion für Indicator.IsTesting(). Cacht das Ergebnis in der Library.
  *
- * @param  int execFlags - die Ausführung steuernde Flags (default: keine)
- *
  * @return int
  */
-int __Indicator.IsTesting(int execFlags=NULL) {
-   return(Indicator.IsTesting(execFlags));                           // verwendet die globale Implementierung in "include/core/library.mgh"
+int __Indicator.IsTesting() {
+   return(Indicator.IsTesting());                                    // verwendet die globale Implementierung in "include/core/library.mgh"
 }
 
 
@@ -6585,12 +6581,12 @@ int GetAccountHistory(int account, string results[][AH_COLUMNS]) {
  *
  * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
  *
- * @throws ERS_TERMINAL_NOT_YET_READY - falls die Account-Nummer während des Terminal-Starts noch nicht verfügbar ist
+ * @throws ERS_TERMINAL_NOT_YET_READY - falls die Account-Nummer während des Terminal-Starts noch nicht verfügbar ist (Titel des Hauptfensters noch nicht gesetzt)
  */
 int GetAccountNumber() {
-   static int static.result;
-   if (static.result != 0)
-      return(static.result);
+   static int tester.result;
+   if (tester.result != 0)
+      return(tester.result);
 
    int account = AccountNumber();
 
@@ -6602,22 +6598,24 @@ int GetAccountNumber() {
 
    if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetApplicationWindow());          // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
-      if (!StringLen(title))        return(_NULL(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!StringLen(title))        return(_NULL(debug("GetAccountNumber(2)->GetWindowText(hWndMain) = "+ StringToStr(title), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)                  return(_NULL(catch("GetAccountNumber(2)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (pos < 1)                  return(_NULL(catch("GetAccountNumber(3)   account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       string strValue = StringLeft(title, pos);
-      if (!StringIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(3)   account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (!StringIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)   account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
 
       account = StrToInteger(strValue);
    }
 
-   // Im Tester kann die Accountnummer gecacht werden und verhindert dadurch Deadlock-Probleme bei Verwendung von SendMessage() in deinit().
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(NULL);
-   if (isTesting == 1)
-      static.result = account;
-   return(account);                                                  // nicht die statische Variable zurückgeben (kann 0 sein)
+   // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden. stdlib.init() ruft daher
+   // für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
+   // Online darf nicht gecacht werden, da dann Accountwechsel zuverlässig erkannt werden müßten (was zu umständlich ist).
+   if (IsTesting())
+      tester.result = account;
+
+   return(account);                                                  // nicht die statische Testervariable zurückgeben (ist online immer 0)
 }
 
 
@@ -8320,7 +8318,7 @@ int GetApplicationWindow() {
    string terminalClassName = "MetaQuotes::MetaTrader::4.00";
 
 
-   // (1) mittels WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
+   // (1) mit WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
    if (IsChart) {
       hWnd = WindowHandle(Symbol(), NULL);
       if (hWnd != 0) {
@@ -10258,7 +10256,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
    double lotStep        = MarketInfo(symbol, MODE_LOTSTEP);
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathRound(MathPow(10, digits<<31>>31));
+   int    pipPoints      = MathRound(MathPow(10, digits & 1));
    double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    int    slippagePoints = MathRound(slippage * pipPoints);
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL  )/pipPoints;
@@ -10388,7 +10386,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
             if      (OrderType() == OP_BUY ) slippage = OrderOpenPrice() - ask;
             else if (OrderType() == OP_SELL) slippage = bid - OrderOpenPrice();
             else                             slippage = 0;
-         oe.setSlippage  (oe, NormalizeDouble(slippage/pips, digits<<31>>31));   // Gesamtslippage nach Requotes in Pip
+         oe.setSlippage  (oe, NormalizeDouble(slippage/pips, digits & 1));   // Gesamtslippage nach Requotes in Pip
 
          if (__LOG) log(StringConcatenate("OrderSendEx(30)   ", __OrderSendEx.SuccessMsg(oe)));
          if (!IsTesting())
@@ -10503,8 +10501,8 @@ private*/ string __OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string strSlippage = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0)) { strPrice    = StringConcatenate(strPrice, " (instead of ", NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat), ")");
-         if (slippage > 0)   strSlippage = StringConcatenate(" (", DoubleToStr( slippage, digits<<31>>31), " pip slippage)");
-         else                strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits<<31>>31), " pip positive slippage)");
+         if (slippage > 0)   strSlippage = StringConcatenate(" (", DoubleToStr( slippage, digits & 1), " pip slippage)");
+         else                strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits & 1), " pip positive slippage)");
       }
    string message = StringConcatenate("opened #", oe.Ticket(oe), " ", strType, " ", strLots, " ", oe.Symbol(oe), strComment , " at ", strPrice);
    if (NE(oe.StopLoss  (oe), 0)) message = StringConcatenate(message, ", sl=", NumberToStr(oe.StopLoss  (oe), priceFormat));
@@ -10725,7 +10723,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (OrderCloseTime() != 0)                                  return(_false(oe.setError(oe, catch("OrderModifyEx(3)   #"+ ticket +" is already closed", ERR_INVALID_TICKET, O_POP))));
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathRound(MathPow(10, digits<<31>>31));
+   int    pipPoints      = MathRound(MathPow(10, digits & 1));
    double stopDistance   = MarketInfo(OrderSymbol(), MODE_STOPLEVEL  )/pipPoints;
    double freezeDistance = MarketInfo(OrderSymbol(), MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -11392,7 +11390,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
    */
 
    int    pipDigits      = digits & (~1);
-   int    pipPoints      = MathRound(MathPow(10, digits<<31>>31));
+   int    pipPoints      = MathRound(MathPow(10, digits & 1));
    double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    int    slippagePoints = MathRound(slippage * pipPoints);
    string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
@@ -11542,8 +11540,8 @@ private*/ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0)) {
          strPrice    = StringConcatenate(strPrice, " (instead of ", NumberToStr(ifDouble(oe.Type(oe)==OP_BUY, oe.Bid(oe), oe.Ask(oe)), priceFormat), ")");
-         if (slippage > 0) strSlippage = StringConcatenate(" (", DoubleToStr( slippage, digits<<31>>31), " pip slippage)");
-         else              strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits<<31>>31), " pip positive slippage)");
+         if (slippage > 0) strSlippage = StringConcatenate(" (", DoubleToStr( slippage, digits & 1), " pip slippage)");
+         else              strSlippage = StringConcatenate(" (", DoubleToStr(-slippage, digits & 1), " pip positive slippage)");
       }
    int  remainder = oe.RemainingTicket(oe);
    string message = StringConcatenate("closed #", oe.Ticket(oe), " ", strType, " ", strLots, " ", strSymbol, strComment, ifString(!remainder, "", " partially"), " at ", strPrice);
