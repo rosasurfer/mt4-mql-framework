@@ -1775,7 +1775,7 @@ It can be one of the following values:</p>
         ;Honeydew;AliceBlue;LavenderBlush;MintCream;Snow;White;
       </keywords>
       <content>
-        <table style="FONT-SIZE: 8pt; FONT-FAMILY: Tahoma" cellspacing="1" cellpadding="2" bgcolor="#c0c0c0" border="0" width="96%">
+        <table style="font-size:8pt; font-family:Tahoma" cellspacing="1" cellpadding="2" bgcolor="#c0c0c0" border="0" width="96%">
         <tr align="center">
           <td style="background: black; color: white;" width="12.5%">Black</td>
           <td style="background: darkgreen; color: white" width="12.5%">DarkGreen</td>
@@ -2015,7 +2015,7 @@ It can be any of the following values:</p>
       </keywords>
       <content>
 <p>The <a href="help://common_MessageBox">MessageBox()</a> function return codes.<br/>
-If a message box has a <b>Cancel</b> button, the function returns the IDCANCEL value if either
+If a message box has a <b>Cancel</b> button, the function returns the <span class="constants">IDCANCEL</span> value if either
 the ESC key is pressed or the <b>Cancel</b> button is selected. If the message box has no
 <b>Cancel</b> button, pressing ESC has no effect.<br/>
 Note: MessageBox return codes defined in the WinUser32.mqh file</p>
@@ -2043,20 +2043,20 @@ To indicate the buttons displayed in the message box, specify one of the followi
 <tr><td class="constants">MB_YESNOCANCEL</td><td>0x00000003</td><td>The message box contains three push buttons: Yes, No, and Cancel.</td></tr>
 <tr><td class="constants">MB_YESNO</td><td>0x00000004</td><td>The message box contains two push buttons: Yes and No.</td></tr>
 <tr><td class="constants">MB_RETRYCANCEL</td><td>0x00000005</td><td>The message box contains two push buttons: Retry and Cancel.</td></tr>
-<tr><td class="constants">MB_CANCELTRYCONTINUE</td><td>0x00000006</td><td>Windows 2000: The message box contains three push buttons: Cancel, Try Again, Continue. Use this message box type instead of MB_ABORTRETRYIGNORE.</td></tr>
+<tr><td class="constants">MB_CANCELTRYCONTINUE</td><td>0x00000006</td><td>Windows 2000: The message box contains three push buttons: Cancel, Try Again, Continue. Use this message box type instead of <span class="constants">MB_ABORTRETRYIGNORE</span>.</td></tr>
 </table>
 <p>To display an icon in the message box, specify one of the following values.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="constants">MB_ICONSTOP, MB_ICONERROR, MB_ICONHAND</td><td>0x00000010</td><td>A stop-sign icon appears in the message box.</td></tr>
+<tr><td>MB_ICONSTOP, <span class="constants">MB_ICONERROR</span>, <span class="constants">MB_ICONHAND</span></td><td>0x00000010</td><td>A stop-sign icon appears in the message box.</td></tr>
 <tr><td class="constants">MB_ICONQUESTION</td><td>0x00000020</td><td>A question-mark icon appears in the message box.</td></tr>
-<tr><td class="constants">MB_ICONEXCLAMATION, MB_ICONWARNING</td><td>0x00000030</td><td>An exclamation-point icon appears in the message box.</td></tr>
-<tr><td class="constants">MB_ICONINFORMATION, MB_ICONASTERISK</td><td>0x00000040</td><td>An icon consisting of a lowercase letter i in a circle appears in the message box.</td></tr>
+<tr><td><span class="constants">MB_ICONEXCLAMATION</span>, <span class="constants">MB_ICONWARNING</span></td><td>0x00000030</td><td>An exclamation-point icon appears in the message box.</td></tr>
+<tr><td><span class="constants">MB_ICONINFORMATION</span>, <span class="constants">MB_ICONASTERISK</span></td><td>0x00000040</td><td>An icon consisting of a lowercase letter i in a circle appears in the message box.</td></tr>
 </table>
 <p>To indicate the default button, specify one of the following values.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="constants">MB_DEFBUTTON1</td><td>0x00000000</td><td>The first button is the default button. MB_DEFBUTTON1 is the default unless MB_DEFBUTTON2, MB_DEFBUTTON3, or MB_DEFBUTTON4 is specified.</td></tr>
+<tr><td class="constants">MB_DEFBUTTON1</td><td>0x00000000</td><td>The first button is the default button. <span class="constants">MB_DEFBUTTON1</span> is the default unless <span class="constants">MB_DEFBUTTON2</span>, <span class="constants">MB_DEFBUTTON3</span>, or <span class="constants">MB_DEFBUTTON4</span> is specified.</td></tr>
 <tr><td class="constants">MB_DEFBUTTON2</td><td>0x00000100</td><td>The second button is the default button.</td></tr>
 <tr><td class="constants">MB_DEFBUTTON3</td><td>0x00000200</td><td>The third button is the default button.</td></tr>
 <tr><td class="constants">MB_DEFBUTTON4</td><td>0x00000300</td><td>The fourth button is the default button.</td></tr>
@@ -2134,7 +2134,7 @@ Objects can have 1-3 coordinates related to type.
 <tr><td class="constants">OBJPROP_TIME3</td><td>4</td><td>datetime</td><td>Datetime value to set/get third coordinate time part.</td></tr>
 <tr><td class="constants">OBJPROP_PRICE3</td><td>5</td><td>double</td><td>Double value to set/get third coordinate price part.</td></tr>
 <tr><td class="constants">OBJPROP_COLOR</td><td>6</td><td>color</td><td>Color value to set/get object color.</td></tr>
-<tr><td class="constants">OBJPROP_STYLE</td><td>7</td><td>int</td><td>Value is one of STYLE_SOLID, STYLE_DASH, STYLE_DOT, STYLE_DASHDOT, STYLE_DASHDOTDOT constants to set/get object line style.</td></tr>
+<tr><td class="constants">OBJPROP_STYLE</td><td>7</td><td>int</td><td>Value is one of <span class="constants">STYLE_SOLID</span>, <span class="constants">STYLE_DASH</span>, <span class="constants">STYLE_DOT</span>, <span class="constants">STYLE_DASHDOT</span>, <span class="constants">STYLE_DASHDOTDOT</span> constants to set/get object line style.</td></tr>
 <tr><td class="constants">OBJPROP_WIDTH</td><td>8</td><td>int</td><td>Integer value to set/get object line width. Can be from 1 to 5.</td></tr>
 <tr><td class="constants">OBJPROP_BACK</td><td>9</td><td>bool</td><td>Boolean value to set/get background drawing flag for object.</td></tr>
 <tr><td class="constants">OBJPROP_RAY</td><td>10</td><td>bool</td><td>Boolean value to set/get ray flag of object.</td></tr>
@@ -2150,7 +2150,7 @@ Objects can have 1-3 coordinates related to type.
 <tr><td class="constants">OBJPROP_YDISTANCE</td><td>103</td><td>int</td><td>Integer value is to set/get anchor Y distance object property in pixels.</td></tr>
 <tr><td class="constants">OBJPROP_FIBOLEVELS</td><td>200</td><td>int</td><td>Integer value to set/get Fibonacci object level count. Can be from 0 to 32.</td></tr>
 <tr><td class="constants">OBJPROP_LEVELCOLOR</td><td>201</td><td>color</td><td>Color value to set/get object level line color.</td></tr>
-<tr><td class="constants">OBJPROP_LEVELSTYLE</td><td>202</td><td>int</td><td>Value is one of STYLE_SOLID, STYLE_DASH, STYLE_DOT, STYLE_DASHDOT, STYLE_DASHDOTDOT constants to set/get object level line style.</td></tr>
+<tr><td class="constants">OBJPROP_LEVELSTYLE</td><td>202</td><td>int</td><td>Value is one of <span class="constants">STYLE_SOLID</span>, <span class="constants">STYLE_DASH</span>, <span class="constants">STYLE_DOT</span>, <span class="constants">STYLE_DASHDOT</span>, <span class="constants">STYLE_DASHDOTDOT</span> constants to set/get object level line style.</td></tr>
 <tr><td class="constants">OBJPROP_LEVELWIDTH</td><td>203</td><td>int</td><td>Integer value to set/get object level line width. Can be from 1 to 5.</td></tr>
 <tr><td class="constants">OBJPROP_FIRSTLEVEL+<i>n</i></td><td>210+n</td><td>int</td><td>Integer value to set/get the value of Fibonacci object level with index <i>n</i>. Index <i>n</i> can be from 0 (number of levels -1), but not larger than 31.</td></tr>
 </table>
@@ -2344,7 +2344,7 @@ void SendMyMessage(string text)
 <tr><td class="constants">ERR_INTEGER_PARAMETER_EXPECTED</td><td>4063</td><td>Integer parameter expected.</td></tr>
 <tr><td class="constants">ERR_DOUBLE_PARAMETER_EXPECTED</td><td>4064</td><td>Double parameter expected.</td></tr>
 <tr><td class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</td><td>4065</td><td>Array as parameter expected.</td></tr>
-<tr><td class="constants">ERR_HISTORY_UPDATE</td><td>4066</td><td>Requested history data in updating state.</td></tr>
+<tr><td class="constants">ERS_HISTORY_UPDATE</td><td>4066</td><td>Status: requested history data is updating.</td></tr>
 <tr><td class="constants">ERR_TRADE_ERROR</td><td>4067</td><td>Some error in trading function.</td></tr>
 <tr><td class="constants">ERR_END_OF_FILE</td><td>4099</td><td>End of file.</td></tr>
 <tr><td class="constants">ERR_FILE_ERROR</td><td>4100</td><td>Some file error.</td></tr>
@@ -2809,23 +2809,23 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <content>
         <p>
          The client terminal stores the last error occurred during MQL program execution in the <i>last_error</i> variable (separately for each MQL program).
-       	The variable is reset to <span class="constants">NULL</span> before the execution of the init function. To read the <i>last_error</i> variable use the <a href="help://check_GetLastError">GetLastError</a> 
-       	function. With each call of that function the <i>last_error</i> variable is reset to <span class="constants">NULL</span>.
+         The variable is reset to <span class="constants">NULL</span> before the execution of the init function. To read the <i>last_error</i> variable use the <a href="help://check_GetLastError">GetLastError</a> 
+         function. With each call of that function the <i>last_error</i> variable is reset to <span class="constants">NULL</span>.
         </p>
         <p>
          There are a number of critical errors that cause an immediate stop of program execution:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-        <tr><td>ERR_WRONG_FUNCTION_POINTER</td><td>4001</td><td>At calling of an internal function, a wrong function pointer has been detected</td></tr>
-        <tr><td>ERR_NO_MEMORY_FOR_CALL_STACK</td><td>4003</td><td>At calling of an internal function, it is impossible to reallocate memory for the function calls stack</td></tr>
-        <tr><td>ERR_RECURSIVE_STACK_OVERFLOW</td><td>4004</td><td>The data stack is overflowed at the recursive function call</td></tr>
-        <tr><td>ERR_NO_MEMORY_FOR_PARAM_STRING</td><td>4006</td><td>At calling of an internal function, it is impossible to allocate memory for passing the string as a function parameter</td></tr>
-        <tr><td>ERR_NO_MEMORY_FOR_TEMP_STRING</td><td>4007</td><td>It is impossible to allocate the temporary buffer for string operations</td></tr>
-        <tr><td>ERR_NO_MEMORY_FOR_ARRAYSTRING</td><td>4010</td><td>At assignment, it is impossible to reallocate memory for a string in an array</td></tr>
-        <tr><td>ERR_TOO_LONG_STRING</td><td>4011</td><td>At assignment, too long resulting string to be placed into the service buffer (no possibility to reallocate for the service buffer)</td></tr>
-        <tr><td>ERR_REMAINDER_FROM_ZERO_DIVIDE</td><td>4012</td><td>Dividing by 0 when taking the remainder of the division</td></tr>
-        <tr><td>ERR_ZERO_DIVIDE</td><td>4013</td><td>Dividing by 0</td></tr>
-        <tr><td>ERR_UNKNOWN_COMMAND</td><td>4014</td><td>Unknown instruction</td></tr>
+        <tr><td><span class="constants">ERR_WRONG_FUNCTION_POINTER</span></td><td>4001</td><td>At calling of an internal function, a wrong function pointer has been detected</td></tr>
+        <tr><td><span class="constants">ERR_NO_MEMORY_FOR_CALL_STACK</span></td><td>4003</td><td>At calling of an internal function, it is impossible to reallocate memory for the function calls stack</td></tr>
+        <tr><td><span class="constants">ERR_RECURSIVE_STACK_OVERFLOW</span></td><td>4004</td><td>The data stack is overflowed at the recursive function call</td></tr>
+        <tr><td><span class="constants">ERR_NO_MEMORY_FOR_PARAM_STRING</span></td><td>4006</td><td>At calling of an internal function, it is impossible to allocate memory for passing the string as a function parameter</td></tr>
+        <tr><td><span class="constants">ERR_NO_MEMORY_FOR_TEMP_STRING</span></td><td>4007</td><td>It is impossible to allocate the temporary buffer for string operations</td></tr>
+        <tr><td><span class="constants">ERR_NO_MEMORY_FOR_ARRAYSTRING</span></td><td>4010</td><td>At assignment, it is impossible to reallocate memory for a string in an array</td></tr>
+        <tr><td><span class="constants">ERR_TOO_LONG_STRING</span></td><td>4011</td><td>At assignment, too long resulting string to be placed into the service buffer (no possibility to reallocate for the service buffer)</td></tr>
+        <tr><td><span class="constants">ERR_REMAINDER_FROM_ZERO_DIVIDE</span></td><td>4012</td><td>Dividing by 0 when taking the remainder of the division</td></tr>
+        <tr><td><span class="constants">ERR_ZERO_DIVIDE</span></td><td>4013</td><td>Dividing by 0</td></tr>
+        <tr><td><span class="constants">ERR_UNKNOWN_COMMAND</span></td><td>4014</td><td>Unknown instruction</td></tr>
         </table>
         <p>
          If the program stopped working due to a critical error, the code of this error can be read at the next execution of the start or the deinit function using
@@ -2837,159 +2837,159 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         </p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-        <tr><td>ERR_CANNOT_LOAD_LIBRARY</td><td>4018</td><td>At calling of an imported function, loading error of dll or ex4 library occurred</td></tr>
-        <tr><td>ERR_CANNOT_CALL_FUNCTION</td><td>4019</td><td>At calling of an imported function, it was found out that dll or ex4 library did not contain the called function</td></tr>
-        <tr><td>ERR_DLL_CALLS_NOT_ALLOWED</td><td>4017</td><td>At calling of an imported dll function, it was found out that dll imports were not allowed</td></tr>
-        <tr><td>ERR_EXTERNAL_CALLS_NOT_ALLOWED</td><td>4020</td><td>At calling of an ex4 function, it was found out that external ex4 imports were not allowed</td></tr>
+        <tr><td><span class="constants">ERR_CANNOT_LOAD_LIBRARY</span></td><td>4018</td><td>At calling of an imported function, loading error of dll or ex4 library occurred</td></tr>
+        <tr><td><span class="constants">ERR_CANNOT_CALL_FUNCTION</span></td><td>4019</td><td>At calling of an imported function, it was found out that dll or ex4 library did not contain the called function</td></tr>
+        <tr><td><span class="constants">ERR_DLL_CALLS_NOT_ALLOWED</span></td><td>4017</td><td>At calling of an imported dll function, it was found out that dll imports were not allowed</td></tr>
+        <tr><td><span class="constants">ERR_EXTERNAL_CALLS_NOT_ALLOWED</span></td><td>4020</td><td>At calling of an ex4 function, it was found out that external ex4 imports were not allowed</td></tr>
         </table>
         <p><br/>
          Other errors that do not interrupt program execution:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-        <tr><td>ERR_ARRAY_INDEX_OUT_OF_RANGE</td><td>4002</td><td>Attempt to access an array item number of which is out of the array range</td></tr>
-        <tr><td>ERR_NOT_INITIALIZED_STRING</td><td>4008</td><td>Not initialized string; no value was assigned to the string being an operand in an expression</td></tr>
-        <tr><td>ERR_NOT_INITIALIZED_ARRAYSTRING</td><td>4009</td><td>Not initialized string in the array string; no value was assigned to the string item being an operand in an expression</td></tr>
-        <tr><td>ERR_NO_MEMORY_FOR_RETURNED_STR</td><td>4021</td><td>It is impossible to reallocate memory for a string returned from function</td></tr>
+        <tr><td><span class="constants">ERR_ARRAY_INDEX_OUT_OF_RANGE</span></td><td>4002</td><td>Attempt to access an array item number of which is out of the array range</td></tr>
+        <tr><td><span class="constants">ERR_NOT_INITIALIZED_STRING</span></td><td>4008</td><td>Not initialized string; no value was assigned to the string being an operand in an expression</td></tr>
+        <tr><td><span class="constants">ERR_NOT_INITIALIZED_ARRAYSTRING</span></td><td>4009</td><td>Not initialized string in the array string; no value was assigned to the string item being an operand in an expression</td></tr>
+        <tr><td><span class="constants">ERR_NO_MEMORY_FOR_RETURNED_STR</span></td><td>4021</td><td>It is impossible to reallocate memory for a string returned from function</td></tr>
         </table>
         <p><br/>
-        The ERR_NO_MQLERROR (4000) code is never generated.
+        The <span class="constants">ERR_NO_MQLERROR</span> (4000) code is never generated.
         </p>
         <p>
          There are a number of errors which are possible only as a result of software or hardware failure. If any errors described below occur repeatedly, one should contact the developers.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-        <tr><td>ERR_WRONG_FUNCTION_POINTER</td><td>4001</td><td>At calling of an internal function, a wrong function pointer has been detected</td></tr>
-        <tr><td>ERR_UNKNOWN_COMMAND</td><td>4014</td><td>Unknown instruction</td></tr>
-        <tr><td>ERR_NOT_INITIALIZED_ARRAY</td><td>4016</td><td>Not initialized array</td></tr>
-        <tr><td>ERR_INVALID_FUNCTION_PARAMSCNT</td><td>4050</td><td>Invalid parameters count passed into built-in function</td></tr>
-        <tr><td>ERR_STRING_FUNCTION_INTERNAL</td><td>4052</td><td>String function internal error</td></tr>
-        <tr><td>ERR_TRADE_ERROR</td><td>4067</td><td>Trade function internal error</td></tr>
-        <tr><td>ERR_OBJECT_ERROR</td><td>4207</td><td>Object function internal error</td></tr>
+        <tr><td><span class="constants">ERR_WRONG_FUNCTION_POINTER</span></td><td>4001</td><td>At calling of an internal function, a wrong function pointer has been detected</td></tr>
+        <tr><td><span class="constants">ERR_UNKNOWN_COMMAND</span></td><td>4014</td><td>Unknown instruction</td></tr>
+        <tr><td><span class="constants">ERR_NOT_INITIALIZED_ARRAY</span></td><td>4016</td><td>Not initialized array</td></tr>
+        <tr><td><span class="constants">ERR_INVALID_FUNCTION_PARAMSCNT</span></td><td>4050</td><td>Invalid parameters count passed into built-in function</td></tr>
+        <tr><td><span class="constants">ERR_STRING_FUNCTION_INTERNAL</span></td><td>4052</td><td>String function internal error</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_ERROR</span></td><td>4067</td><td>Trade function internal error</td></tr>
+        <tr><td><span class="constants">ERR_OBJECT_ERROR</span></td><td>4207</td><td>Object function internal error</td></tr>
         </table>
         <p><br/>
          There are some functions that always set the <i>last_error</i> variable.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Function</th><th width="85%">Error codes</th></tr>
-        <tr><td><a href="help://account_AccountFreeMarginCheck">AccountFreeMarginCheck</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_UNKNOWN_SYMBOL (4106), ERR_NOT_ENOUGH_MONEY (134)</td></tr>
-        <tr><td><a href="help://trading_OrderSend">OrderSend</a></td><td>ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INVALID_PRICE_PARAM (4107), ERR_UNKNOWN_SYMBOL (4106), ERR_TRADE_NOT_ALLOWED (4109), ERR_LONGS_NOT_ALLOWED (4110), ERR_SHORTS_NOT_ALLOWED (4111), <a href="help://trading_errors">code returned by trade server</a></td></tr>
-        <tr><td><a href="help://trading_OrderClose">OrderClose</a></td><td>ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INVALID_PRICE_PARAM (4107), ERR_INVALID_TICKET (4108), ERR_UNKNOWN_SYMBOL (4106), ERR_TRADE_NOT_ALLOWED (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
-        <tr><td><a href="help://trading_OrderCloseBy">OrderCloseBy</a></td><td>ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INVALID_TICKET (4108), ERR_UNKNOWN_SYMBOL (4106), ERR_TRADE_NOT_ALLOWED (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
-        <tr><td><a href="help://trading_OrderDelete">OrderDelete</a></td><td>ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INVALID_TICKET (4108), ERR_UNKNOWN_SYMBOL (4106), ERR_TRADE_NOT_ALLOWED (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
-        <tr><td><a href="help://trading_OrderModify">OrderModify</a></td><td>ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INVALID_PRICE_PARAM (4107), ERR_INVALID_TICKET (4108), ERR_UNKNOWN_SYMBOL (4106), ERR_TRADE_NOT_ALLOWED (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
-        <tr><td><a href="help://check_GetLastError">GetLastError</a></td><td>ERR_NO_ERROR (0)</td></tr>
+        <tr><td><a href="help://account_AccountFreeMarginCheck">AccountFreeMarginCheck</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_NOT_ENOUGH_MONEY</span> (134)</td></tr>
+        <tr><td><a href="help://trading_OrderSend">OrderSend</a></td><td><span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INVALID_PRICE_PARAM</span> (4107), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_TRADE_NOT_ALLOWED</span> (4109), <span class="constants">ERR_LONGS_NOT_ALLOWED</span> (4110), <span class="constants">ERR_SHORTS_NOT_ALLOWED</span> (4111), <a href="help://trading_errors">code returned by trade server</a></td></tr>
+        <tr><td><a href="help://trading_OrderClose">OrderClose</a></td><td><span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INVALID_PRICE_PARAM</span> (4107), <span class="constants">ERR_INVALID_TICKET</span> (4108), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
+        <tr><td><a href="help://trading_OrderCloseBy">OrderCloseBy</a></td><td><span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INVALID_TICKET</span> (4108), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
+        <tr><td><a href="help://trading_OrderDelete">OrderDelete</a></td><td><span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INVALID_TICKET</span> (4108), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
+        <tr><td><a href="help://trading_OrderModify">OrderModify</a></td><td><span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INVALID_PRICE_PARAM</span> (4107), <span class="constants">ERR_INVALID_TICKET</span> (4108), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
+        <tr><td><a href="help://check_GetLastError">GetLastError</a></td><td><span class="constants">ERR_NO_ERROR</span> (0)</td></tr>
         </table>
         <p><br/>
          Most other functions change the <i>last_error</i> variable only if an error occurs:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Function</th><th width="85%">Error codes</th></tr>
-        <tr><td><a href="help://array_ArrayBsearch">ArrayBsearch</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayCopy">ArrayCopy</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayCopyRates">ArrayCopyRates</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062),</td></tr>
-        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_SERIES_NOT_AVAILABLE (4054), ERR_INCOMPATIBLE_ARRAYS (4056), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_HISTORY_UPDATE (4066), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayDimension">ArrayDimension</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArrayGetAsSeries">ArrayGetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArrayInitialize">ArrayInitialize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayIsSeries">ArrayIsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArrayMaximum">ArrayMaximum</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayMinimum">ArrayMinimum</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayRange">ArrayRange</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INTEGER_PARAMETER_EXPECTED (4063), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArrayResize">ArrayResize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArraySize">ArraySize</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://array_ArraySort">ArraySort</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053), ERR_SERIES_NOT_AVAILABLE (4054), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileClose">FileClose</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileDelete">FileDelete</a></td><td>ERR_WRONG_FILE_NAME (4101), ERR_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileFlush">FileFlush</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileIsEnding">FileIsEnding</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileIsLineEnding">FileIsLineEnding</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileOpen">FileOpen</a></td><td>ERR_TOO_MANY_OPENED_FILES (4102), ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_FILE_ERROR (4100), ERR_CANNOT_OPEN_FILE (4103)</td></tr>
-        <tr><td><a href="help://files_FileOpenHistory">FileOpenHistory</a></td><td>ERR_TOO_MANY_OPENED_FILES (4102), ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_FILE_ERROR (4100), ERR_CANNOT_OPEN_FILE (4103)</td></tr>
-        <tr><td><a href="help://files_FileReadArray">FileReadArray</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_ARRAY_ERROR (4053), ERR_FILE_ERROR (4100), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileReadDouble">FileReadDouble</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileReadInteger">FileReadInteger</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileReadNumber">FileReadNumber</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileReadString">FileReadString</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100), ERR_TOO_LONG_STRING (4011), ERR_END_OF_FILE (4099)</td></tr>
-        <tr><td><a href="help://files_FileSeek">FileSeek</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileSize">FileSize</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileTell">FileTell</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://files_FileWrite">FileWrite</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileWriteDouble">FileWriteDouble</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileWriteInteger">FileWriteInteger</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100)</td></tr>
-        <tr><td><a href="help://files_FileWriteString">FileWriteString</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://files_FileWriteArray">FileWriteArray</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_INCOMPATIBLE_FILEACCESS (4104), ERR_FILE_ERROR (4100),</td></tr>
-        <tr><td><a href="help://globals_GlobalVariableCheck">GlobalVariableCheck</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://globals_GlobalVariableDel">GlobalVariableDel</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLES_PROCESSING (4057)</td></tr>
-        <tr><td><a href="help://globals_GlobalVariableGet">GlobalVariableGet</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
-        <tr><td><a href="help://globals_GlobalVariablesDeleteAll">GlobalVariablesDeleteAll</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLES_PROCESSING (4057)</td></tr>
-        <tr><td><a href="help://globals_GlobalVariableSet">GlobalVariableSet</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLES_PROCESSING (4057), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
-        <tr><td><a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)</td></tr>
-        <tr><td><a href="help://indicators_iCustom">iCustom</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://indicators">technical indicators</a>, <a href="help://series">series access functions</a></td><td>ERR_HISTORY_UPDATE (4066)</td></tr>
-        <tr><td><a href="help://indicators">technical indicators OnArray</a></td><td>ERR_ARRAY_AS_PARAMETER_EXPECTED (4065), ERR_ARRAY_ERROR (4053)</td></tr>
-        <tr><td><a href="help://customind_IndicatorBuffers">IndicatorBuffers</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_IndicatorDigits">IndicatorDigits</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_IndicatorShortName">IndicatorShortName</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://common_MarketInfo">MarketInfo</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_UNKNOWN_SYMBOL (4106), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://math_MathArccos">MathArccos</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://math_MathArcsin">MathArcsin</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://math_MathMod">MathMod</a></td><td>ERR_ZERO_DIVIDE (4013)</td></tr>
-        <tr><td><a href="help://math_MathSqrt">MathSqrt</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://common_MessageBox">MessageBox</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://objects_ObjectCreate">ObjectCreate</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_UNKNOWN_OBJECT_TYPE (4203), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_OBJECT_ALREADY_EXISTS (4200), ERR_NO_SPECIFIED_SUBWINDOW (4206)</td></tr>
-        <tr><td><a href="help://objects_ObjectDelete">ObjectDelete</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202)</td></tr>
-        <tr><td><a href="help://objects_ObjectDescription">ObjectDescription</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202)</td></tr>
-        <tr><td><a href="help://objects_ObjectFind">ObjectFind</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204)</td></tr>
-        <tr><td><a href="help://objects_ObjectGet">ObjectGet</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202), ERR_UNKNOWN_OBJECT_PROPERTY (4201)</td></tr>
-        <tr><td><a href="help://objects_ObjectGetFiboDescription">ObjectGetFiboDescription</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_OBJECT_DOES_NOT_EXIST (4202), ERR_UNKNOWN_OBJECT_TYPE (4203), ERR_UNKNOWN_OBJECT_PROPERTY (4201)</td></tr>
-        <tr><td><a href="help://objects_ObjectGetShiftByValue">ObjectGetShiftByValue</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202), ERR_OBJECT_COORDINATES_ERROR (4205)</td></tr>
-        <tr><td><a href="help://objects_ObjectGetValueByShift">ObjectGetValueByShift</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202), ERR_OBJECT_COORDINATES_ERROR (4205)</td></tr>
-        <tr><td><a href="help://objects_ObjectMove">ObjectMove</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_OBJECT_DOES_NOT_EXIST (4202)</td></tr>
-        <tr><td><a href="help://objects_ObjectName">ObjectName</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_ARRAY_INDEX_OUT_OF_RANGE (4002)</td></tr>
-        <tr><td><a href="help://objects_ObjectSet">ObjectSet</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202), ERR_UNKNOWN_OBJECT_PROPERTY (4201)</td></tr>
-        <tr><td><a href="help://objects_ObjectSetText">ObjectSetText</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202)</td></tr>
-        <tr><td><a href="help://objects_ObjectSetFiboDescription">ObjectSetFiboDescription</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_OBJECT_DOES_NOT_EXIST (4202), ERR_UNKNOWN_OBJECT_TYPE (4203), ERR_UNKNOWN_OBJECT_PROPERTY (4201)</td></tr>
-        <tr><td><a href="help://objects_ObjectType">ObjectType</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NO_OBJECT_NAME (4204), ERR_OBJECT_DOES_NOT_EXIST (4202)</td></tr>
-        <tr><td><a href="help://trading_OrderClosePrice">OrderClosePrice</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderCloseTime">OrderCloseTime</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderComment">OrderComment</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderCommission">OrderCommission</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderExpiration">OrderExpiration</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderLots">OrderLots</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderMagicNumber">OrderMagicNumber</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderOpenPrice">OrderOpenPrice</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderOpenTime">OrderOpenTime</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderPrint">OrderPrint</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderProfit">OrderProfit</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderStopLoss">OrderStopLoss</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderSwap">OrderSwap</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderSymbol">OrderSymbol</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderTakeProfit">OrderTakeProfit</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderTicket">OrderTicket</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://trading_OrderType">OrderType</a></td><td>ERR_NO_ORDER_SELECTED (4105)</td></tr>
-        <tr><td><a href="help://common_PlaySound">PlaySound</a></td><td>ERR_WRONG_FILE_NAME (4101)</td></tr>
-        <tr><td><a href="help://common_SendFTP">SendFTP</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_CUSTOM_INDICATOR_ERROR (4055), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://common_SendMail">SendMail</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_FUNCTION_NOT_CONFIRMED (4060), ERR_SEND_MAIL_ERROR (4061)</td></tr>
-        <tr><td><a href="help://common_SendNotification">SendNotification</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOTIFICATION_SEND_ERROR (4250), ERR_NOTIFICATION_WRONG_PARAMETER (4251), ERR_NOTIFICATION_WRONG_SETTINGS (4252), ERR_NOTIFICATION_TOO_FREQUENT (4253)</td></tr>
-        <tr><td><a href="help://customind_SetIndexArrow">SetIndexArrow</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexBuffer">SetIndexBuffer</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_SERIES_NOT_AVAILABLE (4054), ERR_INCOMPATIBLE_ARRAYS (4056)</td></tr>
-        <tr><td><a href="help://customind_SetIndexDrawBegin">SetIndexDrawBegin</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexEmptyValue">SetIndexEmptyValue</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexLabel">SetIndexLabel</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://customind_SetIndexShift">SetIndexShift</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexStyle">SetIndexStyle</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://customind_SetLevelValue">SetLevelValue</a></td><td>ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
-        <tr><td><a href="help://common_Sleep">Sleep</a></td><td>ERR_CUSTOM_INDICATOR_ERROR (4055)</td></tr>
-        <tr><td><a href="help://strings_StringFind">StringFind</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://strings_StringGetChar">StringGetChar</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOT_INITIALIZED_STRING (4008), ERR_ARRAY_INDEX_OUT_OF_RANGE (4002)</td></tr>
-        <tr><td><a href="help://strings_StringLen">StringLen</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://strings_StringSetChar">StringSetChar</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_INVALID_FUNCTION_PARAMVALUE (4051), ERR_NOT_INITIALIZED_STRING (4008), ERR_TOO_LONG_STRING (4011), ERR_ARRAY_INDEX_OUT_OF_RANGE (4002)</td></tr>
-        <tr><td><a href="help://strings_StringSubstr">StringSubstr</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062), ERR_TOO_LONG_STRING (4011)</td></tr>
-        <tr><td><a href="help://strings_StringTrimLeft">StringTrimLeft</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://strings_StringTrimRight">StringTrimRight</a></td><td>ERR_STRING_PARAMETER_EXPECTED (4062)</td></tr>
-        <tr><td><a href="help://windows_WindowIsVisible">WindowIsVisible</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059)</td></tr>
-        <tr><td><a href="help://windows_WindowFind">WindowFind</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOT_INITIALIZED_STRING (4008)</td></tr>
-        <tr><td><a href="help://windows_WindowHandle">WindowHandle</a></td><td>ERR_FUNC_NOT_ALLOWED_IN_TESTING (4059), ERR_STRING_PARAMETER_EXPECTED (4062), ERR_NOT_INITIALIZED_STRING (4008)</td></tr>
-        <tr><td><a href="help://windows_WindowScreenShot">WindowScreenShot</a></td><td>ERR_WRONG_FILE_NAME (4101), ERR_INVALID_FUNCTION_PARAMVALUE (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayBsearch">ArrayBsearch</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayCopy">ArrayCopy</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INCOMPATIBLE_ARRAYS</span> (4056), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayCopyRates">ArrayCopyRates</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INCOMPATIBLE_ARRAYS</span> (4056), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062),</td></tr>
+        <tr><td><a href="help://array_ArrayCopySeries">ArrayCopySeries</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_SERIES_NOT_AVAILABLE</span> (4054), <span class="constants">ERR_INCOMPATIBLE_ARRAYS</span> (4056), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERS_HISTORY_UPDATE</span> (4066), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayDimension">ArrayDimension</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053)</td></tr>
+        <tr><td><a href="help://array_ArrayGetAsSeries">ArrayGetAsSeries</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053)</td></tr>
+        <tr><td><a href="help://array_ArrayInitialize">ArrayInitialize</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayIsSeries">ArrayIsSeries</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053)</td></tr>
+        <tr><td><a href="help://array_ArrayMaximum">ArrayMaximum</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayMinimum">ArrayMinimum</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayRange">ArrayRange</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArrayResize">ArrayResize</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://array_ArraySetAsSeries">ArraySetAsSeries</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053)</td></tr>
+        <tr><td><a href="help://array_ArraySize">ArraySize</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053)</td></tr>
+        <tr><td><a href="help://array_ArraySort">ArraySort</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_SERIES_NOT_AVAILABLE</span> (4054), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileClose">FileClose</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileDelete">FileDelete</a></td><td><span class="constants">ERR_WRONG_FILE_NAME</span> (4101), <span class="constants">ERR_FILE_ERROR</span> (4100)</td></tr>
+        <tr><td><a href="help://files_FileFlush">FileFlush</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileIsEnding">FileIsEnding</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileIsLineEnding">FileIsLineEnding</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileOpen">FileOpen</a></td><td><span class="constants">ERR_TOO_MANY_OPENED_FILES</span> (4102), <span class="constants">ERR_WRONG_FILE_NAME</span> (4101), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_FILE_ERROR</span> (4100), <span class="constants">ERR_CANNOT_OPEN_FILE</span> (4103)</td></tr>
+        <tr><td><a href="help://files_FileOpenHistory">FileOpenHistory</a></td><td><span class="constants">ERR_TOO_MANY_OPENED_FILES</span> (4102), <span class="constants">ERR_WRONG_FILE_NAME</span> (4101), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_FILE_ERROR</span> (4100), <span class="constants">ERR_CANNOT_OPEN_FILE</span> (4103)</td></tr>
+        <tr><td><a href="help://files_FileReadArray">FileReadArray</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_ARRAY_ERROR</span> (4053), <span class="constants">ERR_FILE_ERROR</span> (4100), <span class="constants">ERR_END_OF_FILE</span> (4099)</td></tr>
+        <tr><td><a href="help://files_FileReadDouble">FileReadDouble</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_END_OF_FILE</span> (4099)</td></tr>
+        <tr><td><a href="help://files_FileReadInteger">FileReadInteger</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_END_OF_FILE</span> (4099)</td></tr>
+        <tr><td><a href="help://files_FileReadNumber">FileReadNumber</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_FILE_ERROR</span> (4100), <span class="constants">ERR_END_OF_FILE</span> (4099)</td></tr>
+        <tr><td><a href="help://files_FileReadString">FileReadString</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_FILE_ERROR</span> (4100), <span class="constants">ERR_TOO_LONG_STRING</span> (4011), <span class="constants">ERR_END_OF_FILE</span> (4099)</td></tr>
+        <tr><td><a href="help://files_FileSeek">FileSeek</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileSize">FileSize</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileTell">FileTell</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://files_FileWrite">FileWrite</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_FILE_ERROR</span> (4100)</td></tr>
+        <tr><td><a href="help://files_FileWriteDouble">FileWriteDouble</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_FILE_ERROR</span> (4100)</td></tr>
+        <tr><td><a href="help://files_FileWriteInteger">FileWriteInteger</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_FILE_ERROR</span> (4100)</td></tr>
+        <tr><td><a href="help://files_FileWriteString">FileWriteString</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_FILE_ERROR</span> (4100), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://files_FileWriteArray">FileWriteArray</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_INCOMPATIBLE_FILEACCESS</span> (4104), <span class="constants">ERR_FILE_ERROR</span> (4100),</td></tr>
+        <tr><td><a href="help://globals_GlobalVariableCheck">GlobalVariableCheck</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://globals_GlobalVariableDel">GlobalVariableDel</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_GLOBAL_VARIABLES_PROCESSING</span> (4057)</td></tr>
+        <tr><td><a href="help://globals_GlobalVariableGet">GlobalVariableGet</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)</td></tr>
+        <tr><td><a href="help://globals_GlobalVariablesDeleteAll">GlobalVariablesDeleteAll</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_GLOBAL_VARIABLES_PROCESSING</span> (4057)</td></tr>
+        <tr><td><a href="help://globals_GlobalVariableSet">GlobalVariableSet</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_GLOBAL_VARIABLES_PROCESSING</span> (4057), <span class="constants">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)</td></tr>
+        <tr><td><a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)</td></tr>
+        <tr><td><a href="help://indicators_iCustom">iCustom</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicators">technical indicators</a>, <a href="help://series">series access functions</a></td><td><span class="constants">ERS_HISTORY_UPDATE</span> (4066)</td></tr>
+        <tr><td><a href="help://indicators">technical indicators OnArray</a></td><td><span class="constants">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constants">ERR_ARRAY_ERROR</span> (4053)</td></tr>
+        <tr><td><a href="help://customind_IndicatorBuffers">IndicatorBuffers</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_IndicatorDigits">IndicatorDigits</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_IndicatorShortName">IndicatorShortName</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://common_MarketInfo">MarketInfo</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://math_MathArccos">MathArccos</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://math_MathArcsin">MathArcsin</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://math_MathMod">MathMod</a></td><td><span class="constants">ERR_ZERO_DIVIDE</span> (4013)</td></tr>
+        <tr><td><a href="help://math_MathSqrt">MathSqrt</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://common_MessageBox">MessageBox</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://objects_ObjectCreate">ObjectCreate</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_UNKNOWN_OBJECT_TYPE</span> (4203), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_OBJECT_ALREADY_EXISTS</span> (4200), <span class="constants">ERR_NO_SPECIFIED_SUBWINDOW</span> (4206)</td></tr>
+        <tr><td><a href="help://objects_ObjectDelete">ObjectDelete</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202)</td></tr>
+        <tr><td><a href="help://objects_ObjectDescription">ObjectDescription</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202)</td></tr>
+        <tr><td><a href="help://objects_ObjectFind">ObjectFind</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204)</td></tr>
+        <tr><td><a href="help://objects_ObjectGet">ObjectGet</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202), <span class="constants">ERR_UNKNOWN_OBJECT_PROPERTY</span> (4201)</td></tr>
+        <tr><td><a href="help://objects_ObjectGetFiboDescription">ObjectGetFiboDescription</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202), <span class="constants">ERR_UNKNOWN_OBJECT_TYPE</span> (4203), <span class="constants">ERR_UNKNOWN_OBJECT_PROPERTY</span> (4201)</td></tr>
+        <tr><td><a href="help://objects_ObjectGetShiftByValue">ObjectGetShiftByValue</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202), <span class="constants">ERR_OBJECT_COORDINATES_ERROR</span> (4205)</td></tr>
+        <tr><td><a href="help://objects_ObjectGetValueByShift">ObjectGetValueByShift</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202), <span class="constants">ERR_OBJECT_COORDINATES_ERROR</span> (4205)</td></tr>
+        <tr><td><a href="help://objects_ObjectMove">ObjectMove</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202)</td></tr>
+        <tr><td><a href="help://objects_ObjectName">ObjectName</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_ARRAY_INDEX_OUT_OF_RANGE</span> (4002)</td></tr>
+        <tr><td><a href="help://objects_ObjectSet">ObjectSet</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202), <span class="constants">ERR_UNKNOWN_OBJECT_PROPERTY</span> (4201)</td></tr>
+        <tr><td><a href="help://objects_ObjectSetText">ObjectSetText</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202)</td></tr>
+        <tr><td><a href="help://objects_ObjectSetFiboDescription">ObjectSetFiboDescription</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202), <span class="constants">ERR_UNKNOWN_OBJECT_TYPE</span> (4203), <span class="constants">ERR_UNKNOWN_OBJECT_PROPERTY</span> (4201)</td></tr>
+        <tr><td><a href="help://objects_ObjectType">ObjectType</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NO_OBJECT_NAME</span> (4204), <span class="constants">ERR_OBJECT_DOES_NOT_EXIST</span> (4202)</td></tr>
+        <tr><td><a href="help://trading_OrderClosePrice">OrderClosePrice</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderCloseTime">OrderCloseTime</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderComment">OrderComment</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderCommission">OrderCommission</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderExpiration">OrderExpiration</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderLots">OrderLots</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderMagicNumber">OrderMagicNumber</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderOpenPrice">OrderOpenPrice</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderOpenTime">OrderOpenTime</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderPrint">OrderPrint</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderProfit">OrderProfit</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderStopLoss">OrderStopLoss</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderSwap">OrderSwap</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderSymbol">OrderSymbol</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderTakeProfit">OrderTakeProfit</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderTicket">OrderTicket</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://trading_OrderType">OrderType</a></td><td><span class="constants">ERR_NO_ORDER_SELECTED</span> (4105)</td></tr>
+        <tr><td><a href="help://common_PlaySound">PlaySound</a></td><td><span class="constants">ERR_WRONG_FILE_NAME</span> (4101)</td></tr>
+        <tr><td><a href="help://common_SendFTP">SendFTP</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://common_SendMail">SendMail</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_FUNCTION_NOT_CONFIRMED</span> (4060), <span class="constants">ERR_SEND_MAIL_ERROR</span> (4061)</td></tr>
+        <tr><td><a href="help://common_SendNotification">SendNotification</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NOTIFICATION_SEND_ERROR</span> (4250), <span class="constants">ERR_NOTIFICATION_WRONG_PARAMETER</span> (4251), <span class="constants">ERR_NOTIFICATION_WRONG_SETTINGS</span> (4252), <span class="constants">ERR_NOTIFICATION_TOO_FREQUENT</span> (4253)</td></tr>
+        <tr><td><a href="help://customind_SetIndexArrow">SetIndexArrow</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_SetIndexBuffer">SetIndexBuffer</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_SERIES_NOT_AVAILABLE</span> (4054), <span class="constants">ERR_INCOMPATIBLE_ARRAYS</span> (4056)</td></tr>
+        <tr><td><a href="help://customind_SetIndexDrawBegin">SetIndexDrawBegin</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_SetIndexEmptyValue">SetIndexEmptyValue</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_SetIndexLabel">SetIndexLabel</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://customind_SetIndexShift">SetIndexShift</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_SetIndexStyle">SetIndexStyle</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://customind_SetLevelValue">SetLevelValue</a></td><td><span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://common_Sleep">Sleep</a></td><td><span class="constants">ERR_CUSTOM_INDICATOR_ERROR</span> (4055)</td></tr>
+        <tr><td><a href="help://strings_StringFind">StringFind</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://strings_StringGetChar">StringGetChar</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NOT_INITIALIZED_STRING</span> (4008), <span class="constants">ERR_ARRAY_INDEX_OUT_OF_RANGE</span> (4002)</td></tr>
+        <tr><td><a href="help://strings_StringLen">StringLen</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://strings_StringSetChar">StringSetChar</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constants">ERR_NOT_INITIALIZED_STRING</span> (4008), <span class="constants">ERR_TOO_LONG_STRING</span> (4011), <span class="constants">ERR_ARRAY_INDEX_OUT_OF_RANGE</span> (4002)</td></tr>
+        <tr><td><a href="help://strings_StringSubstr">StringSubstr</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_TOO_LONG_STRING</span> (4011)</td></tr>
+        <tr><td><a href="help://strings_StringTrimLeft">StringTrimLeft</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://strings_StringTrimRight">StringTrimRight</a></td><td><span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://windows_WindowIsVisible">WindowIsVisible</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059)</td></tr>
+        <tr><td><a href="help://windows_WindowFind">WindowFind</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NOT_INITIALIZED_STRING</span> (4008)</td></tr>
+        <tr><td><a href="help://windows_WindowHandle">WindowHandle</a></td><td><span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> (4059), <span class="constants">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constants">ERR_NOT_INITIALIZED_STRING</span> (4008)</td></tr>
+        <tr><td><a href="help://windows_WindowScreenShot">WindowScreenShot</a></td><td><span class="constants">ERR_WRONG_FILE_NAME</span> (4101), <span class="constants">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
         </table>
         <p><br/>
          Some other functions never change the <i>last_error</i> variable:<br/>
@@ -3166,7 +3166,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       keywords=;AccountFreeMarginCheck;
       <content>
       Returns free margin that remains after the specified position has been opened at the current price on the current account. If the free margin
-      is insufficient, an <a href="help://constants_errors">error</a> 134 (ERR_NOT_ENOUGH_MONEY) will be generated.
+      is insufficient, an <a href="help://constants_errors">error</a> 134 (<span class="constants">ERR_NOT_ENOUGH_MONEY</span>) will be generated.
       </content>
       example=if(AccountFreeMarginCheck(Symbol(),OP_BUY,Lots)&lt;=0 || GetLastError()==134) return;
       <parameter>
@@ -3354,11 +3354,11 @@ else
       <parameter>
         type=int
         name=direction
-        def_value=MODE_ASCEND
+        def_value=<span class="constants">MODE_ASCEND</span>
         <description>
 Search direction. It can be any of the following values:<br/>
-MODE_ASCEND searching in forward direction,<br/>
-MODE_DESCEND searching in backward direction.
+<span class="constants">MODE_ASCEND</span> searching in forward direction,<br/>
+<span class="constants">MODE_DESCEND</span> searching in backward direction.
         </description>
       </parameter>
     </function>
@@ -3425,7 +3425,7 @@ When accessed the first dimension of the destination array holds the rates bar o
 4 - close<br/>
 5 - volume<br/>
 <br/>
-If data from another time series than the current chart is requested the error <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
+If data from another time series than the current chart is requested the status <a href="help://constants_errors">ERS_HISTORY_UPDATE</a> might be triggered and
 set in the <a href="help://runtime_errors">last_error</a> variable, in which case the data needs to be re-requested (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
 <br/>
 
@@ -3449,11 +3449,11 @@ Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß gg
 <br/>
 <span style="color:red">Fehler:</span>
 <br/>
-Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler ERR_ARRAY_ERROR ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind.
-Dies gilt auch im Tester. In diesem Fall muß der Fehler ERR_ARRAY_ERROR wie ERS_HISTORY_UPDATE interpretiert werden.<br/>
+Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="constants">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind.
+Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="constants">ERR_ARRAY_ERROR</span> wie <span class="constants">ERR_SERIES_NOT_AVAILABLE</span> interpretiert werden.<br/>
 <br/>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [ERS_HISTORY_UPDATE] - <span style="color:green">korrekt</span><br/>
-EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [ERR_ARRAY_ERROR] - <span style="color:red">Fehler</span><br/>
+EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned  0  [<span class="constants">ERS_HISTORY_UPDATE</span>] - <span style="color:green">korrekt</span><br/>
+EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) returned -1  [<span class="constants">ERR_ARRAY_ERROR</span>] - <span style="color:red">Fehler</span><br/>
 
 
 
@@ -3506,10 +3506,10 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
         this access is redirected. Excluded are arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>
         in custom indicators. In this case the data is indeed copied.<br/><br/>
         If data is copied from a time series with different symbol and/or timeframe, it is possible that the necessary data will lack.
-        In this case the <a href="help://constants_errors">error</a> ERS_HISTORY_UPDATE (4066 - requested history data is updated) will
+        In this case the <a href="help://constants_errors">status</a> <span class="constants">ERS_HISTORY_UPDATE</span> (4066 - requested history data is updated) will
         be placed into the <a href="help://runtime_errors">last_error</a> variable and it will be necessary to repeat the copying (after some time).<br/><br/>
 
-        Note: If the parameter series_index is MODE_TIME, the array to be passed to the function must be of type datetime.
+        Note: If the parameter series_index is <span class="constants">MODE_TIME</span>, the array to be passed to the function must be of type datetime.
       </content>
       <example>
 datetime daytimes[];
@@ -3859,11 +3859,11 @@ for(int i=0; i&lt;count; i++)
       <parameter>
         type=int
         name=sort_dir
-        def_value=MODE_ASCEND
+        def_value=<span class="constants">MODE_ASCEND</span>
         <description>
 Array sorting direction. It can be any of the following values:<br/>
-MODE_ASCEND - sort ascending,<br/>
-MODE_DESCEND - sort descending.
+<span class="constants">MODE_ASCEND</span> - sort ascending,<br/>
+<span class="constants">MODE_DESCEND</span> - sort descending.
         </description>
       </parameter>
     </function>
@@ -4582,9 +4582,9 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
         def_value=TIME_DATE|TIME_MINUTES
         <description>
 Optional data output mode can be one or combination of:<br/>
-TIME_DATE gets result as &quot;yyyy.mm.dd&quot;,<br/>
-TIME_MINUTES gets result as &quot;hh:mi&quot;,<br/>
-TIME_SECONDS gets result as &quot;hh:mi:ss&quot;.
+<span class="constants">TIME_DATE</span> gets result as &quot;yyyy.mm.dd&quot;,<br/>
+<span class="constants">TIME_MINUTES</span> gets result as &quot;hh:mi&quot;,<br/>
+<span class="constants">TIME_SECONDS</span> gets result as &quot;hh:mi:ss&quot;.
         </description>
       </parameter>
     </function>
@@ -5521,7 +5521,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
         Returns logical <span class="constants">true</span> if file pointer is at the end of the file, otherwise returns <span class="constants">false</span>.
         To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.
         If the file end is reached during reading, the <a href="help://check_GetLastError">GetLastError()</a> function will return
-        <a href="help://constants_errors">error</a> ERR_END_OF_FILE (4099).
+        <a href="help://constants_errors">error</a> <span class="constants">ERR_END_OF_FILE</span> (4099).
       </content>
       <example>
   if(FileIsEnding(h1))
@@ -5569,11 +5569,11 @@ Opens file for input and/or output. Returns a file handle for the opened file or
 To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
 Notes: Files can only be opened in the <em>terminal_directory\experts\files</em> folder (<em>terminal_directory\tester\files</em>
 if for expert testing) or in its subfolders.<br/>
-FILE_BIN and FILE_CSV modes cannot be used simultaneously.<br/>
-If FILE_WRITE does not combine with FILE_READ, a zero-length file will be opened. If even the file containd some data, they will be deleted.
-If there is a need to add data to an existing file, it must be opened using combination of FILE_READ | FILE_WRITE.<br/>
-If FILE_READ does not combine with FILE_WRITE, the file will be opened only if it already exists. If the file does not exist, it can be created
-using the FILE_WRITE mode.<br/>
+ <span class="constants">FILE_BIN</span> and <span class="constants">FILE_CSV</span> modes cannot be used simultaneously.<br/>
+If <span class="constants">FILE_WRITE</span> does not combine with <span class="constants">FILE_READ</span>, a zero-length file will be opened. If even the file containd some data, they will be deleted.
+If there is a need to add data to an existing file, it must be opened using combination of <span class="constants">FILE_READ</span> | <span class="constants">FILE_WRITE</span>.<br/>
+If <span class="constants">FILE_READ</span> does not combine with <span class="constants">FILE_WRITE</span>, the file will be opened only if it already exists. If the file does not exist, it can be created
+using the <span class="constants">FILE_WRITE</span> mode.<br/>
 No more than 32 files can be opened within an executable module simultaneously. Handles of files opened in the same module cannot be passed to other modules (libraries).
       </content>
       <example>
@@ -5593,7 +5593,7 @@ No more than 32 files can be opened within an executable module simultaneously. 
       <parameter>
         type=int
         name=mode
-        description=Opening mode. It can be one or combination of values: FILE_BIN, FILE_CSV, FILE_READ, FILE_WRITE.
+        description=Opening mode. It can be one or combination of values: <span class="constants">FILE_BIN</span>, <span class="constants">FILE_CSV</span>, <span class="constants">FILE_READ</span>, <span class="constants">FILE_WRITE</span>.
       </parameter>
       <parameter>
         type=int
@@ -5634,7 +5634,7 @@ not data pumping is needed to chart it.
       <parameter>
         type=int
         name=mode
-        description=Opening mode. Can be one or combination of values: FILE_BIN, FILE_CSV, FILE_READ, FILE_WRITE.
+        description=Opening mode. Can be one or combination of values: <span class="constants">FILE_BIN</span>, <span class="constants">FILE_CSV</span>, <span class="constants">FILE_READ</span>, <span class="constants">FILE_WRITE</span>.
       </parameter>
       <parameter>
         type=int
@@ -5713,8 +5713,8 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <parameter>
         type=int
         name=size
-        def_value=DOUBLE_VALUE
-        description=Number format size. Can be DOUBLE_VALUE(8 bytes) or FLOAT_VALUE(4 bytes).
+        def_value=<span class="constants">DOUBLE_VALUE</span>
+        description=Number format size. Can be <span class="constants">DOUBLE_VALUE</span>(8 bytes) or <span class="constants">FLOAT_VALUE</span>(4 bytes).
       </parameter>
     </function>
 
@@ -5747,8 +5747,8 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <parameter>
         type=int
         name=size
-        def_value=LONG_VALUE
-        description=Format size. Can be CHAR_VALUE(1 byte), SHORT_VALUE(2 bytes) or LONG_VALUE(4 bytes).
+        def_value=<span class="constants">LONG_VALUE</span>
+        description=Format size. Can be <span class="constants">CHAR_VALUE</span>(1 byte), <span class="constants">SHORT_VALUE</span>(2 bytes) or <span class="constants">LONG_VALUE</span>(4 bytes).
       </parameter>
     </function>
 
@@ -5847,9 +5847,9 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
         name=origin
         <description>
 Initial position. Value can be one of the following constants:<br/>
-SEEK_CUR - from current position,<br/>
-SEEK_SET - from begin,<br/>
-SEEK_END - from end of file.
+<span class="constants">SEEK_CUR</span> - from current position,<br/>
+<span class="constants">SEEK_SET</span> - from begin,<br/>
+<span class="constants">SEEK_END</span> - from end of file.
         </description>
       </parameter>
     </function>
@@ -5993,7 +5993,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=int
       <content>
 The function writes a double value with floating point to a binary file.
-If the format is specified as FLOAT_VALUE, the value will be written as a 4-bytes floating point number (of the float type),
+If the format is specified as <span class="constants">FLOAT_VALUE</span>, the value will be written as a 4-bytes floating point number (of the float type),
 otherwise, it will be written in the 8-bytes floating point format (of the double type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
 To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
@@ -6024,11 +6024,11 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <parameter>
         type=int
         name=size
-        def_value=DOUBLE_VALUE
+        def_value=<span class="constants">DOUBLE_VALUE</span>
         <description>
           Optional format flag. It can be any of the following values:<br/>
-          DOUBLE_VALUE (8 bytes, default)<br/>
-          FLOAT_VALUE (4 bytes).
+          <span class="constants">DOUBLE_VALUE</span> (8 bytes, default)<br/>
+          <span class="constants">FLOAT_VALUE</span> (4 bytes).
         </description>
       </parameter>
     </function>
@@ -6039,9 +6039,9 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=int
       <content>
 The function writes the integer value to a binary file.
- If the size is SHORT_VALUE, the value will be written as a 2-byte integer (the short type),
- if the size is CHAR_VALUE, the value will be written as a 1-byte integer (the char type), and
- if the size is LONG_VALUE, the value will be written as a 4-byte integer (the long int type).<br/>
+ If the size is <span class="constants">SHORT_VALUE</span>, the value will be written as a 2-byte integer (the short type),
+ if the size is <span class="constants">CHAR_VALUE</span>, the value will be written as a 1-byte integer (the char type), and
+ if the size is <span class="constants">LONG_VALUE</span>, the value will be written as a 4-byte integer (the long int type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
 To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
       </content>
@@ -6071,10 +6071,10 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <parameter>
         type=int
         name=size
-        def_value=LONG_VALUE
+        def_value=<span class="constants">LONG_VALUE</span>
         <description>
 Optional format flag. It can be any of the following values:<br/>
-CHAR_VALUE (1 byte),<br/>SHORT_VALUE (2 bytes),<br/>LONG_VALUE (4 bytes, default).
+ <span class="constants">CHAR_VALUE</span> (1 byte),<br/><span class="constants">SHORT_VALUE</span> (2 bytes),<br/><span class="constants">LONG_VALUE</span> (4 bytes, default).
         </description>
       </parameter>
     </function>
@@ -6249,7 +6249,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=bool
       <content>
 Sets the new value of the existing global variable if the current value equals to the third parameter <i>check_value</i>. If there
-is no global variable, the function will generate <a href="help://constants_errors">error</a> ERR_GLOBAL_VARIABLE_NOT_FOUND (4058)
+is no global variable, the function will generate <a href="help://constants_errors">error</a> <span class="constants">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)
 and return <span class="constants">false</span>. When successfully executed, the function returns <span class="constants">true</span>, otherwise, it returns <span class="constants">false</span>. To get detailed error information,
 call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 If the current value of the global variable differs from the <i>check_value</i>, the function will return <span class="constants">false</span>.<br/>
@@ -6361,8 +6361,8 @@ several experts working simultaneously within one client terminal.
       caption=MathArccos()
       type=double
       <content>
-The MathArccos function returns the arccosine of <i>x</i> within the range 0 to &#x3C0; (in radians).
-If <i>x</i> is less than -1 or exceeds 1, the MathArccos returns NaN (indeterminate value).
+The function returns the arccosine of <i>x</i> within the range 0 to &#x3C0; (in radians).
+If <i>x</i> is less than -1 or exceeds 1, MathArccos() returns <span class="constants">NaN</span> (Not-a-Number).
       </content>
       <example>
   double x=0.32696, y;
@@ -6385,8 +6385,8 @@ If <i>x</i> is less than -1 or exceeds 1, the MathArccos returns NaN (indetermin
       caption=MathArcsin()
       type=double
       <content>
-The MathArcsin function returns the arcsine of <i>x</i> in the range -&#x3C0;/2 to &#x3C0;/2 radians.
-If <i>x</i> is less than -1 or exceeds 1, the arcsine returns NaN (indeterminate value).
+The function returns the arcsine of <i>x</i> in the range -&#x3C0;/2 to &#x3C0;/2 radians.
+If <i>x</i> is less than -1 or exceeds 1, Matharcsin() returns <span class="constants">NaN</span> (Not-a-Number).
       </content>
       <example>
   double x=0.32696, y;
@@ -6482,7 +6482,7 @@ that exceeds or equals to <i>x</i>.
       type=double
       <content>
 Returns the value of <b>e</b> raised to the power of <i>d</i>.
-At overflow, the function returns INF (infinity), and it returns 0 at underflow.
+At overflow, the function returns <span class="constants">INF</span> (Infinite), and it returns 0 at underflow.
       </content>
       <example>
   double x=2.302585093,y;
@@ -6527,8 +6527,8 @@ The MathFloor function returns a numeric value representing the largest integer 
       type=double
       <content>
 The MathLog function returns the natural logarithm of <i>x</i> if successful.
-If <i>x</i> is negative, these functions return NaN (indeterminate value).
-If <i>x</i> is 0, they return INF (infinity).
+If <i>x</i> is negative, it returns <span class="constants">NaN</span> (Not-a-Number).
+If <i>x</i> is 0, it returns <span class="constants">INF</span> (Infinite).
       </content>
       <example>
   double x=9000.0,y;
@@ -6710,7 +6710,7 @@ The <a href="help://math_MathSrand">MathSrand</a> function must be used to seed 
       type=double
       <content>
 The MathSqrt function returns the square root of <i>x</i>.
-If <i>x</i> is negative, MathSqrt returns an indefinite (same as a quiet NaN).
+If <i>x</i> is negative, it returns <span class="constants">NaN</span> (Not-a-Number).
       </content>
       <example>
   double question=45.35, answer;
@@ -6758,7 +6758,7 @@ Calling MathRand before any call to MathSrand generates the same sequence as cal
       type=double
       <content>
 MathTan returns the tangent of <i>x</i>. If <i>x</i> is greater than or equal to 263, or less than or equal to -263,
-a loss of significance in the result occurs, in which case the function returns an indefinite (same as a quiet NaN).
+a loss of significance in the result occurs and the function returns <span class="constants">NaN</span> (Not-a-Number).
       </content>
       <example>
   double pi=3.1415926535;
@@ -6789,14 +6789,14 @@ a loss of significance in the result occurs, in which case the function returns 
       type=bool
       <content>
 Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending 
-on the object type. Specified coordinates for objects of type OBJ_LABEL are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set 
+on the object type. Specified coordinates for objects of type <span class="constants">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set 
 <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
 If the function succeeds it returns <span class="constants">true</span>, otherwise it returns <span class="constants">false</span>. To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 <br/>
 
 Notes:<br/>
 - The main chart window always exists and has the index 0. Chart subwindows (if any) are indexed starting from 1.<br/>
-- Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example OBJ_VLINE), a price value (any) needs to be passed, too.<br/>
+- Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="constants">OBJ_VLINE</span>), a price value (any) needs to be passed, too.<br/>
       </content>
 
 <example>
@@ -6886,7 +6886,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       caption=ObjectDescription()
       type=string
       <content>
-Return object description. For objects of OBJ_TEXT and OBJ_LABEL types, the text drawn by these objects will be returned.<br/>
+Return object description. For objects of <span class="constants">OBJ_TEXT</span> and <span class="constants">OBJ_LABEL</span> types, the text drawn by these objects will be returned.<br/>
 To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSetText">ObjectSetText()</a> function.
      </content>
@@ -7198,9 +7198,9 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       caption=ObjectSetText()
       type=bool
       <content>
-Changes the object description. For objects of OBJ_TEXT and OBJ_LABEL the description is shown as text in the chart.
+Changes the object description. For objects of <span class="constants">OBJ_TEXT</span> and <span class="constants">OBJ_LABEL</span> the description is shown as text in the chart.
 Returns <span class="constants">true</span> on success, otherwise <span class="constants">false</span>. Call <a href="help://check_GetLastError">GetLastError()</a> to get detailed error information.<br/>
-The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of OBJ_TEXT and OBJ_LABEL only.
+The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of <span class="constants">OBJ_TEXT</span> and <span class="constants">OBJ_LABEL</span> only.
 For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.
 <br/><b>See also</b> <a href="help://objects_ObjectDescription">ObjectDescription()</a>.
       </content>
@@ -7417,17 +7417,17 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringSubstr()
       type=string
       <content>
-			Extracts a substring of the given length starting at the given position.<br/>
-			Returns a copy of the extracted substring if possible, otherwise an empty string.
+         Extracts a substring of the given length starting at the given position.<br/>
+         Returns a copy of the extracted substring if possible, otherwise an empty string.
          <br/>
          <br/>
          <span style="color:red">Fehler:</span>
          <br/>
-			(1) Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.<br/>
+         (1) Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.<br/>
          <br/>
-			(2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="constants">NULL</span>). StringSubstr(value, start, length=0) 
-			gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.<br/>
-			Workaround: <span style="color:blue">StringSubstrFix()</span> benutzen
+         (2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="constants">NULL</span>). StringSubstr(value, start, length=0) 
+         gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.<br/>
+         Workaround: <span style="color:blue">StringSubstrFix()</span> benutzen
       </content>
       <example>
   string text = &quot;The quick brown dog jumps over the lazy fox&quot;;
@@ -7457,7 +7457,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringTrimLeft()
       type=string
       <content>
-			The function trims line feed characters, spaces and tabs in the left part of the string. Returns a copy of the trimmed string if possible, otherwise an empty string.
+         The function trims line feed characters, spaces and tabs in the left part of the string. Returns a copy of the trimmed string if possible, otherwise an empty string.
       </content>
       <example>
   string str1 = &quot;  Hello world   &quot;;
@@ -7476,7 +7476,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringTrimRight()
       type=string
       <content>
-			The function trims line feed characters, spaces and tabs in the right part of the string. Returns a copy of the trimmed string if possible, otherwise an empty string.
+         The function trims line feed characters, spaces and tabs in the right part of the string. Returns a copy of the trimmed string if possible, otherwise an empty string.
       </content>
       <example>
   string str1 = &quot;  Hello world   &quot;;
@@ -7502,7 +7502,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
     Any indicator can be calculated on the data of not only current chart, but also on the data of any available symbol/period.
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
     that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
-    <a href="help://constants_errors">error</a> ERR_HISTORY_UPDATE (4066 - the requested history data are under updating) will be placed
+    <a href="help://constants_errors">status</a> <span class="constants">ERS_HISTORY_UPDATE</span> (4066 - requested history data is updating) will be placed
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).
     </content>
 
@@ -7626,9 +7626,9 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
         name=mode
         <description>
 Data source, identifier of a line of the indicator. It can be any of the following values:<br/>
-MODE_GATORJAW - Gator Jaw (blue) balance line,<br/>
-MODE_GATORTEETH - Gator Teeth (red) balance line,<br/>
-MODE_GATORLIPS - Gator Lips (green) balance line.
+<span class="constants">MODE_GATORJAW</span> - Gator Jaw (blue) balance line,<br/>
+<span class="constants">MODE_GATORTEETH</span> - Gator Teeth (red) balance line,<br/>
+<span class="constants">MODE_GATORLIPS</span> - Gator Lips (green) balance line.
         </description>
       </parameter>
       <parameter>
@@ -9040,7 +9040,7 @@ MODE_GATORLIPS - Gator Lips (green) balance line.
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
     that the corresponding chart was not opened in the client terminal and the necessary data must be requested from the server. In this case,
-    <a href="help://constants_errors">error</a> ERR_HISTORY_UPDATE (4066 - the requested history data are under updating) will be placed
+    <a href="help://constants_errors">status</a> <span class="constants">ERS_HISTORY_UPDATE</span> (4066 - requested history data is updating) will be placed
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/><br/>
     At testing price data of the same symbol but of another timeframe are modelled exactly with the exception of volume. Volume of another timeframe is not modelled.
     Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
@@ -9396,7 +9396,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
     Trading functions can be used in experts and scripts. Trading functions can be called only if the "Allow live trading" property of this particular expert is checked.<br/><br/>
     To trade from experts and scripts, only one thread was provided that was launched in the program trade context (context of
     automated trading from experts and scripts). This is why, if this context is occupied with an expert trading operation,
-    another expert or script cannot call trading functions at that moment due to <a href="help://constants_errors">error</a> 146 (ERR_TRADE_CONTEXT_BUSY).
+    another expert or script cannot call trading functions at that moment due to <a href="help://constants_errors">error</a> 146 (<span class="constants">ERR_TRADE_CONTEXT_BUSY</span>).
     To check whether it is possible to trade or not, one has to use the <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a> function.
     To make a clear sharing of access to the trading context, one can use a semaphore on the basis of a global variable
     the value of which must be changed using the <a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition()</a> function.
@@ -9423,56 +9423,56 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <p>Error codes returned from trade server.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-        <tr><td>ERR_NO_ERROR</td><td>0</td><td>Trade operation succeeded.</td></tr>
-        <tr><td>ERR_NO_RESULT</td><td>1</td><td><a href="help://trading_OrderModify">OrderModify</a> attempts to replace the values already set with the same values.
+        <tr><td><span class="constants">ERR_NO_ERROR</span></td><td>0</td><td>Trade operation succeeded.</td></tr>
+        <tr><td><span class="constants">ERR_NO_RESULT</span></td><td>1</td><td><a href="help://trading_OrderModify">OrderModify</a> attempts to replace the values already set with the same values.
                                                  One or more values must be changed, then modification attempt can be repeated.</td></tr>
-        <tr><td>ERR_COMMON_ERROR</td><td>2</td><td>Common error. All attempts to trade must be stopped until reasons are clarified. Restart of operation system and client terminal will possibly be needed.</td></tr>
-        <tr><td>ERR_INVALID_TRADE_PARAMETERS</td><td>3</td><td>Invalid parameters were passed to the trading function, for example, wrong symbol, unknown
+        <tr><td><span class="constants">ERR_COMMON_ERROR</span></td><td>2</td><td>Common error. All attempts to trade must be stopped until reasons are clarified. Restart of operation system and client terminal will possibly be needed.</td></tr>
+        <tr><td><span class="constants">ERR_INVALID_TRADE_PARAMETERS</span></td><td>3</td><td>Invalid parameters were passed to the trading function, for example, wrong symbol, unknown
                                                  <a href="help://constants_trading">trade operation</a>, negative slippage, non-existing ticket number, etc.
                                                  The program logic must be changed.</td></tr>
-        <tr><td>ERR_SERVER_BUSY</td><td>4</td><td>Trade server is busy. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
-        <tr><td>ERR_OLD_VERSION</td><td>5</td><td>Old version of the client terminal. The latest version of the client terminal must be installed.</td></tr>
-        <tr><td>ERR_NO_CONNECTION</td><td>6</td><td>No connection to the trade server. It is necessary to make sure that connection has not been broken (for example, using
+        <tr><td><span class="constants">ERR_SERVER_BUSY</span></td><td>4</td><td>Trade server is busy. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
+        <tr><td><span class="constants">ERR_OLD_VERSION</span></td><td>5</td><td>Old version of the client terminal. The latest version of the client terminal must be installed.</td></tr>
+        <tr><td><span class="constants">ERR_NO_CONNECTION</span></td><td>6</td><td>No connection to the trade server. It is necessary to make sure that connection has not been broken (for example, using
                                                  the <a href="help://check_IsConnected">IsConnected</a> function) and repeat the attempt  after a certain period of time (over 5 seconds).</td></tr>
-        <tr><td>ERR_TOO_FREQUENT_REQUESTS</td><td>8</td><td>Requests are too frequent. The frequency of requesting must be reduced, the program logic must be changed.</td></tr>
-        <tr><td>ERR_ACCOUNT_DISABLED</td><td>64</td><td>The account was disabled. All attempts to trade must be stopped.</td></tr>
-        <tr><td>ERR_INVALID_ACCOUNT</td><td>65</td><td>The account number is invalid. All attempts to trade must be stopped.</td></tr>
-        <tr><td>ERR_TRADE_TIMEOUT</td><td>128</td><td>Timeout for the trade has been reached. Before retry (at least, in 1-minute time),
+        <tr><td><span class="constants">ERR_TOO_FREQUENT_REQUESTS</span></td><td>8</td><td>Requests are too frequent. The frequency of requesting must be reduced, the program logic must be changed.</td></tr>
+        <tr><td><span class="constants">ERR_ACCOUNT_DISABLED</span></td><td>64</td><td>The account was disabled. All attempts to trade must be stopped.</td></tr>
+        <tr><td><span class="constants">ERR_INVALID_ACCOUNT</span></td><td>65</td><td>The account number is invalid. All attempts to trade must be stopped.</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_TIMEOUT</span></td><td>128</td><td>Timeout for the trade has been reached. Before retry (at least, in 1-minute time),
                                                  it is necessary to make sure that trading operation has not really succeeded (a new position has not been opened, or the existing order has not
                                                  been modified or deleted, or the existing position has not been closed)</td></tr>
-        <tr><td>ERR_INVALID_PRICE</td><td>129</td><td>Invalid bid or ask price, perhaps, unnormalized price. After 5-second (or more) delay, it is necessary to refresh
+        <tr><td><span class="constants">ERR_INVALID_PRICE</span></td><td>129</td><td>Invalid bid or ask price, perhaps, unnormalized price. After 5-second (or more) delay, it is necessary to refresh
                                                  <a href="help://predefined_variables">data</a> using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
                                                  If the error does not disappear, all attempts to trade must be stopped, the program logic must be changed.</td></tr>
-        <tr><td>ERR_INVALID_STOPS</td><td>130</td><td>Stops are too close, or prices are ill-calculated or unnormalized (or in the open price of a pending
+        <tr><td><span class="constants">ERR_INVALID_STOPS</span></td><td>130</td><td>Stops are too close, or prices are ill-calculated or unnormalized (or in the open price of a pending
                                                  order). The attempt can be repeated only if the error occurred due to the price obsolescense. After 5-second (or more) delay, it is necessary to refresh
                                                  <a href="help://predefined_variables">data</a> using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
                                                  If the error does not disappear, all attempts to trade must be stopped, the program logic must be changed.</td></tr>
-        <tr><td>ERR_INVALID_TRADE_VOLUME</td><td>131</td><td>Invalid trade volume, error in the volume granularity. All attempts to trade must be stopped, and the program logic must be changed.</td></tr>
-        <tr><td>ERR_MARKET_CLOSED</td><td>132</td><td>Market is closed. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
-        <tr><td>ERR_TRADE_DISABLED</td><td>133</td><td>Trade is disabled. All attempts to trade must be stopped.</td></tr>
-        <tr><td>ERR_NOT_ENOUGH_MONEY</td><td>134</td><td>Not enough money to make an operation. The trade with the same parameters must not be repeated. After 5-second (or more) delay, the attempt can be repeated
+        <tr><td><span class="constants">ERR_INVALID_TRADE_VOLUME</span></td><td>131</td><td>Invalid trade volume, error in the volume granularity. All attempts to trade must be stopped, and the program logic must be changed.</td></tr>
+        <tr><td><span class="constants">ERR_MARKET_CLOSED</span></td><td>132</td><td>Market is closed. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_DISABLED</span></td><td>133</td><td>Trade is disabled. All attempts to trade must be stopped.</td></tr>
+        <tr><td><span class="constants">ERR_NOT_ENOUGH_MONEY</span></td><td>134</td><td>Not enough money to make an operation. The trade with the same parameters must not be repeated. After 5-second (or more) delay, the attempt can be repeated
                                                  with a smaller volume, but it is necessary to make sure that there is enough money to complete the operation.</td></tr>
-        <tr><td>ERR_PRICE_CHANGED</td><td>135</td><td>The price has changed. The <a href="help://predefined_variables">data</a> can be refreshed without any delay using the
+        <tr><td><span class="constants">ERR_PRICE_CHANGED</span></td><td>135</td><td>The price has changed. The <a href="help://predefined_variables">data</a> can be refreshed without any delay using the
                                                  <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.</td></tr>
-        <tr><td>ERR_OFF_QUOTES</td><td>136</td><td>No quotes. The broker has not supplied with prices or refused, for any reason (for example, no prices at the session start, unconfirmed prices, fast market).
+        <tr><td><span class="constants">ERR_OFF_QUOTES</span></td><td>136</td><td>No quotes. The broker has not supplied with prices or refused, for any reason (for example, no prices at the session start, unconfirmed prices, fast market).
                                                  After 5-second (or more) delay, it is necessary to refresh <a href="help://predefined_variables">data</a> using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.</td></tr>
-        <tr><td>ERR_REQUOTE</td><td>138</td><td>The requested price has become out of date or bid and ask prices have been mixed up.
+        <tr><td><span class="constants">ERR_REQUOTE</span></td><td>138</td><td>The requested price has become out of date or bid and ask prices have been mixed up.
                                                  The <a href="help://predefined_variables">data</a> can be refreshed without any delay using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
                                                  If the error does not disappear, all attempts to trade must be stopped, the program logic must be changed.</td></tr>
-        <tr><td>ERR_ORDER_LOCKED</td><td>139</td><td>The order has been locked and under processing. All attempts to make trading operations must be stopped, and the program logic must be changed.</td></tr>
-        <tr><td>ERR_LONG_POSITIONS_ONLY_ALLOWED</td><td>140</td><td>Only buying operation is allowed. The SELL operation must not be repeated.</td></tr>
-        <tr><td>ERR_TOO_MANY_REQUESTS</td><td>141</td><td>Too many requests. The frequency of requesting must be reduced, the program logic must be changed.</td></tr>
+        <tr><td><span class="constants">ERR_ORDER_LOCKED</span></td><td>139</td><td>The order has been locked and under processing. All attempts to make trading operations must be stopped, and the program logic must be changed.</td></tr>
+        <tr><td><span class="constants">ERR_LONG_POSITIONS_ONLY_ALLOWED</span></td><td>140</td><td>Only buying operation is allowed. The SELL operation must not be repeated.</td></tr>
+        <tr><td><span class="constants">ERR_TOO_MANY_REQUESTS</span></td><td>141</td><td>Too many requests. The frequency of requesting must be reduced, the program logic must be changed.</td></tr>
         <tr><td>&nbsp;</td><td>142</td><td>The order has been enqueued. It is not an error but an interaction code between the client terminal and the trade server. This code can be got rarely, when the disconnection and the reconnection happen during the execution of a trade operation. This code should be processed in the same way as error 128.</td></tr>
         <tr><td>&nbsp;</td><td>143</td><td>The order was accepted by the dealer for execution. It is an interaction code between the client terminal and the trade server. It can appear for the same reason as code 142.  This code should be processed in the same way as error 128.</td></tr>
         <tr><td>&nbsp;</td><td>144</td><td>The order was discarded by the client during manual confirmation. It is an interaction code between the client terminal and the trade server.</td></tr>
-        <tr><td>ERR_TRADE_MODIFY_DENIED</td><td>145</td><td>Modifying has been denied since the order is too close to market and locked for possible soon execution.
+        <tr><td><span class="constants">ERR_TRADE_MODIFY_DENIED</span></td><td>145</td><td>Modifying has been denied since the order is too close to market and locked for possible soon execution.
                                                  The <a href="help://predefined_variables">data</a> can be refreshed after more than 15 seconds using the <a href="help://windows_RefreshRates">RefreshRates</a> function, and
                                                  a retry can be made.</td></tr>
-        <tr><td>ERR_TRADE_CONTEXT_BUSY</td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://check_IsTradeContextBusy">IsTradeContextBusy</a> function has returned <span class="constants">false</span>.</td></tr>
-        <tr><td>ERR_TRADE_EXPIRATION_DENIED</td><td>147</td><td>The use of pending order expiration date has been denied by the broker. The operation can only be repeated if the expiration parameter has been zeroized.</td></tr>
-        <tr><td>ERR_TRADE_TOO_MANY_ORDERS</td><td>148</td><td>The amount of open and pending orders has reached the limit set by the broker. New open positions and pending orders can be placed only after the existing positions or orders have been closed or deleted.</td></tr>
-        <tr><td>ERR_TRADE_HEDGE_PROHIBITED</td><td>149</td><td>An attempt to open a position opposite to the existing one when hedging is disabled. First the existing opposite position should be closed, all attempts of such trade operations must be stopped, or the program logic must be changed.</td></tr>
-        <tr><td>ERR_TRADE_PROHIBITED_BY_FIFO</td><td>150</td><td>An attempt to close a symbol position contravening the FIFO rule. First earlier existing position(s) should be closed, all attempts of such trade operations must be stopped, or the program logic must be changed.</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_CONTEXT_BUSY</span></td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://check_IsTradeContextBusy">IsTradeContextBusy</a> function has returned <span class="constants">false</span>.</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_EXPIRATION_DENIED</span></td><td>147</td><td>The use of pending order expiration date has been denied by the broker. The operation can only be repeated if the expiration parameter has been zeroized.</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_TOO_MANY_ORDERS</span></td><td>148</td><td>The amount of open and pending orders has reached the limit set by the broker. New open positions and pending orders can be placed only after the existing positions or orders have been closed or deleted.</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_HEDGE_PROHIBITED</span></td><td>149</td><td>An attempt to open a position opposite to the existing one when hedging is disabled. First the existing opposite position should be closed, all attempts of such trade operations must be stopped, or the program logic must be changed.</td></tr>
+        <tr><td><span class="constants">ERR_TRADE_PROHIBITED_BY_FIFO</span></td><td>150</td><td>An attempt to close a symbol position contravening the FIFO rule. First earlier existing position(s) should be closed, all attempts of such trade operations must be stopped, or the program logic must be changed.</td></tr>
         </table><br/>
       </content>
     </text>
@@ -9728,9 +9728,9 @@ If the function succeeds, the returned value will be <span class="constants">tru
 If the function fails, the returned value will be <span class="constants">false</span>.
 To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
 Notes: Open price and expiration time can be changed only for pending orders.<br/>
-If unchanged values are passed as the function parameters, the <a href="help://constants_errors">error</a> 1 (ERR_NO_RESULT) will be generated.<br/>
+If unchanged values are passed as the function parameters, the <a href="help://constants_errors">error</a> 1 (<span class="constants">ERR_NO_RESULT</span>) will be generated.<br/>
 Pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified
-in the <i>expiration</i> parameter, the <a href="help://constants_errors">error</a> 147 (ERR_TRADE_EXPIRATION_DENIED) will be generated.
+in the <i>expiration</i> parameter, the <a href="help://constants_errors">error</a> 147 (<span class="constants">ERR_TRADE_EXPIRATION_DENIED</span>) will be generated.
       </content>
       <example>
   if(TrailingStop&gt;0)
@@ -9887,18 +9887,18 @@ They also differ from each other by their <a href="help://trading_OrderType">ord
         name=select
         <description>
 Selecting flags. It can be any of the following values:<br/>
-SELECT_BY_POS - index in the order pool,<br/>
-SELECT_BY_TICKET - index is order ticket.
+<span class="constants">SELECT_BY_POS</span> - index in the order pool,<br/>
+<span class="constants">SELECT_BY_TICKET</span> - index is order ticket.
         </description>
       </parameter>
       <parameter>
         type=int
         name=pool
-        def_value=MODE_TRADES
+        def_value=<span class="constants">MODE_TRADES</span>
         <description>
-Optional order pool index. Used when the selected parameter is SELECT_BY_POS. It can be any of the following values:<br/>
-MODE_TRADES (default)- order selected from trading pool(opened and pending orders),<br/>
-MODE_HISTORY - order selected from history pool (closed and canceled order).
+Optional order pool index. Used when the selected parameter is <span class="constants">SELECT_BY_POS</span>. It can be any of the following values:<br/>
+<span class="constants">MODE_TRADES</span> (default)- order selected from trading pool(opened and pending orders),<br/>
+<span class="constants">MODE_HISTORY</span> - order selected from history pool (closed and canceled order).
         </description>
       </parameter>
     </function>
@@ -9912,26 +9912,26 @@ The main function used to open a position or place a pending order.<br/>
 Returns number of the ticket assigned to the order by the trade server or -1 if it fails.
 To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
 Notes:<br/>
-At opening of a market order (OP_SELL or OP_BUY), only the latest prices of <a href="help://predefined_variables_Bid">Bid</a> (for selling) or
+At opening of a market order (<span class="constants">OP_SELL</span> or <span class="constants">OP_BUY</span>), only the latest prices of <a href="help://predefined_variables_Bid">Bid</a> (for selling) or
 <a href="help://predefined_variables_Ask">Ask</a> (for buying) can be used as open price. If operation is performed with a security differing from
-the current one, the <a href="help://common_MarketInfo">MarketInfo()</a> function must be used with MODE_BID or MODE_ASK parameter
+the current one, the <a href="help://common_MarketInfo">MarketInfo()</a> function must be used with <span class="constants">MODE_BID</span> or <span class="constants">MODE_ASK</span> parameter
 for the latest quotes for this security to be obtained. Calculated or unnormalized price cannot be applied.
 If there has not been the requested open price in the price thread or it has not been normalized according to the <a href="help://predefined_variables_Digits">amount
-of digits after decimal point</a>, the <a href="help://constants_errors">error</a> 129 (ERR_INVALID_PRICE) will be generated. If the requested
-open price is fully out of date, the <a href="help://constants_errors">error</a> 138 (ERR_REQUOTE) will be generated independently on the <i>slippage</i>
+of digits after decimal point</a>, the <a href="help://constants_errors">error</a> 129 (<span class="constants">ERR_INVALID_PRICE</span>) will be generated. If the requested
+open price is fully out of date, the <a href="help://constants_errors">error</a> 138 (<span class="constants">ERR_REQUOTE</span>) will be generated independently on the <i>slippage</i>
 parameter. If the requested price is out of date, but present in the thread, the position will be opened at the current price and only if
 the current price lies within the range of <i>price</i>+-<i>slippage</i>.<br/><br/>
 StopLoss and TakeProfit levels cannot be too close to the market. The minimal distance of stop levels in points can be obtained using the
-<a href="help://common_MarketInfo">MarketInfo()</a> function with MODE_STOPLEVEL parameter. In the case of erroneous or unnormalized stop levels, the
-<a href="help://constants_errors">error</a> 130 (ERR_INVALID_STOPS) will be generated.<br/><br/>
+<a href="help://common_MarketInfo">MarketInfo()</a> function with <span class="constants">MODE_STOPLEVEL</span> parameter. In the case of erroneous or unnormalized stop levels, the
+<a href="help://constants_errors">error</a> 130 (<span class="constants">ERR_INVALID_STOPS</span>) will be generated.<br/><br/>
 At placing of a pending order, the open price cannot be too close to the market. The minimal distance of the pending price from the current market one
-in points can be obtained using the <a href="help://common_MarketInfo">MarketInfo()</a> function with the MODE_STOPLEVEL parameter. In case of false open price
-of a pending order, the <a href="help://constants_errors">error</a> 130 (ERR_INVALID_STOPS) will be generated.<br/><br/>
+in points can be obtained using the <a href="help://common_MarketInfo">MarketInfo()</a> function with the <span class="constants">MODE_STOPLEVEL</span> parameter. In case of false open price
+of a pending order, the <a href="help://constants_errors">error</a> 130 (<span class="constants">ERR_INVALID_STOPS</span>) will be generated.<br/><br/>
 Applying of pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified
-in the <i>expiration</i> parameter, the <a href="help://constants_errors">error</a> 147 (ERR_TRADE_EXPIRATION_DENIED) will be generated.<br/><br/>
+in the <i>expiration</i> parameter, the <a href="help://constants_errors">error</a> 147 (<span class="constants">ERR_TRADE_EXPIRATION_DENIED</span>) will be generated.<br/><br/>
 On some trade servers, the <a href="help://trading_OrdersTotal">total amount</a> of open and pending orders can be limited.
 If this limit has been exceeded, no new position will be opened (or no pending order will be placed) and trade server will return <a href="help://constants_errors">error</a>
-148 (ERR_TRADE_TOO_MANY_ORDERS).
+148 (<span class="constants">ERR_TRADE_TOO_MANY_ORDERS</span>).
       </content>
       <example>
   int ticket;
@@ -10146,12 +10146,12 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       type=int
       <content>
 Returns order operation type for the currently selected order. It can be any of the following values:<br/>
-OP_BUY - buying position,<br/>
-OP_SELL - selling position,<br/>
-OP_BUYLIMIT - buy limit pending position,<br/>
-OP_BUYSTOP - buy stop pending position,<br/>
-OP_SELLLIMIT - sell limit pending position,<br/>
-OP_SELLSTOP - sell stop pending position.<br/>
+<span class="constants">OP_BUY</span> - buying position,<br/>
+<span class="constants">OP_SELL</span> - selling position,<br/>
+<span class="constants">OP_BUYLIMIT</span> - buy limit pending position,<br/>
+<span class="constants">OP_BUYSTOP</span> - buy stop pending position,<br/>
+<span class="constants">OP_SELLLIMIT</span> - sell limit pending position,<br/>
+<span class="constants">OP_SELLSTOP</span> - sell stop pending position.<br/>
 Note: order must be selected by <a href="help://trading_OrderSelect">OrderSelect()</a> function.
       </content>
       <example>
@@ -10348,8 +10348,8 @@ it means that the chart window has not been fully filled out and there is a spac
       <br/>
       <span style="color:red">Achtung:</span>
       <br/>
-		(1) WindowHandle() löst in EA's beim Testen mit VisualMode=<span class="constants">false</span> ERR_FUNC_NOT_ALLOWED_IN_TESTING aus. In Indikatoren löst WindowHandle() in diesem Fall keinen Fehler aus, 
-		gibt jedoch 0 zurück.<br/>
+      (1) WindowHandle() löst in EA's beim Testen mit VisualMode=<span class="constants">false</span> <span class="constants">ERR_FUNC_NOT_ALLOWED_IN_TESTING</span> aus. In Indikatoren löst WindowHandle() in diesem Fall keinen Fehler aus, 
+      gibt jedoch 0 zurück.<br/>
       <br/>
       (2) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in deinit() 0 zurück.<br/>
       Workaround: Frameworkvariable __WND_HANDLE benutzen.
@@ -10578,7 +10578,7 @@ Horizontal chart scale for screen shot. Can be in the range from 0 to 5.
         type=int
         name=chart_mode
         <description>
-Chart displaying mode. It can take the following values: CHART_BAR (0 is a sequence of bars), CHART_CANDLE (1 is a sequence of candlesticks), CHART_LINE (2 is a close prices line).
+Chart displaying mode. It can take the following values: <span class="constants">CHART_BAR</span> (0 is a sequence of bars), <span class="constants">CHART_CANDLE</span> (1 is a sequence of candlesticks), <span class="constants">CHART_LINE</span> (2 is a close prices line).
  If no value or negative value has been set, the chart will be shown in its current mode.
         </description>
         def_value=-1
