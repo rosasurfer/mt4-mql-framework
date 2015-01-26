@@ -16,6 +16,39 @@ extern int    __lpSuperContext;
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
+   /*
+   Das Chartfenster existiert und läßt sich immer eindeutig bestimmen, auch wenn WindowHandle() 0 zurückgibt.
+   ----------------------------------------------------------------------------------------------------------
+
+   int hWndChart = WindowHandle(Symbol(), NULL);
+   catch("init()");
+   debug("init()  hWndChart=0x"+ IntToHexStr(hWndChart) +" ("+ hWndChart +")", last_error);
+
+   if (!hWndChart) {
+      int hWndMain = GetApplicationWindow();
+      int hWndNext = GetWindow(hWndMain, GW_CHILD);               // level 1
+
+      while (hWndNext != 0) {
+         string class = GetClassName(hWndNext);
+         debug("init()  "+ IntToHexStr(hWndNext) +": "+ class +" "+ StringToStr(GetWindowText(hWndNext)));
+
+         if (class == "MDIClient") {
+            int hSubWndNext = GetWindow(hWndNext, GW_CHILD);         // level 2
+            while (hSubWndNext != 0) {
+               debug("init()  -> "+ IntToHexStr(hSubWndNext) +": "+ GetClassName(hSubWndNext) +" "+ StringToStr(GetWindowText(hSubWndNext)));
+
+               int hSubSubWndNext = GetWindow(hSubWndNext, GW_CHILD);      // level 3
+               while (hSubSubWndNext != 0) {
+                  debug("init()     -> "+ IntToHexStr(hSubSubWndNext) +": "+ GetClassName(hSubSubWndNext) +" "+ StringToStr(GetWindowText(hSubSubWndNext)));
+                  hSubSubWndNext = GetWindow(hSubSubWndNext, GW_HWNDNEXT); // level 3
+               }
+               hSubWndNext = GetWindow(hSubWndNext, GW_HWNDNEXT);    // level 2
+            }
+         }
+         hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);             // level 1
+      }
+   }
+   */
    if (__STATUS_OFF)
       return(last_error);
 
@@ -160,8 +193,9 @@ int start() {
       return(last_error);
    }
 
-   if (!__WND_HANDLE)                                                      // Workaround um WindowHandle()-Bug ab Build 418
-      __WND_HANDLE = WindowHandle(Symbol(), NULL);
+
+   if (!__WND_HANDLE)
+      __WND_HANDLE = WindowHandle(Symbol(), NULL);                         // Workaround um WindowHandle()-Bug ab Build 418 (siehe dort)
 
 
    Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
