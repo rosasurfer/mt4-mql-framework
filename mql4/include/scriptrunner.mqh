@@ -32,9 +32,8 @@ bool RunScript(string scriptName, string parameters="") {
    if (parameters == "0")                                            // (string) NULL
       parameters = "";
 
-   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
-   if (!hWnd)
-      return(!catch("RunScript(3)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(false);
 
    // Parameter hinterlegen
    if (!SetScriptParameters(parameters))
@@ -44,7 +43,7 @@ bool RunScript(string scriptName, string parameters="") {
                                                                      // was nur mit einem String-Array im Indikator oder Expert gegeben ist.
    // Script starten
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(script[0])))
-      return(!catch("RunScript(4)->user32::PostMessageA()", ERR_WIN32_ERROR));
+      return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(true);
 
@@ -159,9 +158,8 @@ bool QC.StartScriptParameterSender() {
    if (hQC.ScriptParameterSender != 0)
       return(true);
 
-   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
-   if (!hWnd)
-      return(!catch("QC.StartScriptParameterSender(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(false);
 
    qc.ScriptParameterChannel = "ScriptParameters.0x"+ IntToHexStr(hWnd);
 
@@ -169,9 +167,9 @@ bool QC.StartScriptParameterSender() {
       // Der Channel muß bereits existieren, ohne können keine Parameter hinterlegt worden sein.
       int result = QC_CheckChannel(qc.ScriptParameterChannel);
       if (result < QC_CHECK_CHANNEL_EMPTY) {
-         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.StartScriptParameterSender(2)  you cannot manually call this script (channel \""+ qc.ScriptParameterChannel +"\" doesn't exist)",                ERR_RUNTIME_ERROR));
-         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartScriptParameterSender(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR  ));
-                                               return(!catch("QC.StartScriptParameterSender(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR  ));
+         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.StartScriptParameterSender(1)  you cannot manually call this script (channel \""+ qc.ScriptParameterChannel +"\" doesn't exist)",                ERR_RUNTIME_ERROR));
+         if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartScriptParameterSender(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR  ));
+                                               return(!catch("QC.StartScriptParameterSender(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR  ));
       }
       // Messagebuffer initialisieren (Sender-Handle wird auch zum Lesen benutzt)
       if (!ArraySize(qc.ScriptParameterBuffer))
@@ -180,7 +178,7 @@ bool QC.StartScriptParameterSender() {
 
    hQC.ScriptParameterSender = QC_StartSender(qc.ScriptParameterChannel);
    if (!hQC.ScriptParameterSender)
-      return(!catch("QC.StartScriptParameterSender(5)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.ScriptParameterChannel +"\")", ERR_WIN32_ERROR));
+      return(!catch("QC.StartScriptParameterSender(4)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.ScriptParameterChannel +"\")", ERR_WIN32_ERROR));
 
    return(true);
 }

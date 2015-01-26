@@ -145,13 +145,16 @@ bool Script.IsTesting() {
    if (static.resolved)
       return(static.result);
 
-   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
-   if (!hWnd)
-      return(!catch("Script.IsTesting(2)->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(false);
 
-   static.result = StringEndsWith(GetWindowText(GetParent(hWnd)), "(visual)");      // "(visual)" ist nicht internationalisiert
+   string title = GetWindowText(GetParent(hWnd));
+   if (!StringLen(title))
+      return(!catch("Script.IsTesting(1)  cannot determine testing status,  hWndChart="+ hWnd +",  title(hWndChart)="+ StringToStr(title) +"  in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
+   static.result = StringEndsWith(title, "(visual)");                               // "(visual)" ist nicht internationalisiert
    static.resolved = true;
+
    return(static.result);
 }
 
@@ -186,13 +189,11 @@ int Indicator.IsTesting() {
       static.result = false;
    }
    else {
-      string title;
-
       // Indikator läuft im UI-Thread in Indicator::init|deinit(), entweder im Hauptchart oder im Testchart
-      int hWndChart = WindowHandle(Symbol(), NULL); if (!hWndChart) hWndChart = __WND_HANDLE;
-      if (hWndChart != 0)
-         title = GetWindowText(GetParent(hWndChart));
+      int hWndChart = WindowHandleEx(NULL);
+      if (!hWndChart) return(EMPTY);
 
+      string title = GetWindowText(GetParent(hWndChart));
       if (!StringLen(title))
          return(_EMPTY(debug("Indicator.IsTesting(2)  cannot determine testing status,  hWndChart="+ hWndChart +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 

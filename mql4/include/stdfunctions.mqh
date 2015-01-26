@@ -13,7 +13,6 @@ string   __NAME__;                                          // Name des aktuelle
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     IsOfflineChart;                                    // ob der Chart ein Offline-Chart ist
-int      __WND_HANDLE;                                      // Window-Handle des aktuellen Charts: Workaround um WindowHandle()-Bug ab Build 418
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 int        LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
@@ -1505,9 +1504,6 @@ string PeriodDescription(int period=NULL) {
  * @param  string soundfile
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: Global definiert, da vom Errorhandling referenziert.
  */
 int PlaySoundEx(string soundfile) {
    string filename = StringReplace(soundfile, "/", "\\");
@@ -1531,9 +1527,6 @@ int PlaySoundEx(string soundfile) {
  * @param  int    flags
  *
  * @return int - Tastencode
- *
- *
- * NOTE: Global definiert, da vom Errorhandling referenziert.
  */
 int ForceMessageBox(string caption, string message, int flags=MB_OK) {
    string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(NULL));
@@ -1550,6 +1543,9 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 }
 
 
+#define GW_CHILD     5
+
+
 /**
  * Dropin-Ersatz für WindowHandle()
  *
@@ -1560,30 +1556,36 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
  *                           das Handle des aktuellen Charts zurückgegeben.
  * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
  *
- * @return int - Fensterhandle oder NULL, falls ein Fehler auftrat
+ * @return int - Fensterhandle oder NULL, falls das Fenster nicht gefunden wurde oder ein Fehler auftrat
  */
 int WindowHandleEx(string symbol, int timeframe=NULL) {
+   static int static.hWndSelf = 0;                                   // mit Initializer   (wird in Indikatoren bei jedem init-Cycle zurückgesetzt, ist aber verschmerzbar)
    int hWnd, error;
-   string sNull;
+
 
    // (1) normaler WindowHandle()-Aufruf mit Symbol und Timeframe
    if (symbol != "0") {                                              // (string) NULL
       hWnd  = WindowHandle(symbol, timeframe);
       error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
+      if (IsError(error)) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
          return(!catch("WindowHandleEx(1)", error));
+
+      if (symbol!=Symbol() || (timeframe && timeframe!=Period())) {  // bei anderem als dem eigenem Fenster immer Rückkehr
+         SetLastError(NO_ERROR);                                     // um ein nicht gefundenes Fenster von einem Fehler unterscheiden zu können
+         return(hWnd);
+      }
+
+      if (hWnd != 0) {                                               // eigenes Fenster
+         if (!static.hWndSelf)                                       // Handle speichern, falls noch nicht geschehen
+            static.hWndSelf = hWnd;
+         return(hWnd);
+      }
    }
 
 
-   // (2) erweiterter Aufruf: eigenes Fenster ermitteln und Ergebnis cachen
-   static int static.hWndSelf = 0;                                   // mit Initializer   (wird in Indikatoren bei jedem init-Cycle zurückgesetzt, ist aber verschmerzbar)
-   if (static.hWndSelf != 0) {
-      //debug("WindowHandleEx()  static.hWndSelf is set");
+   // (2) eigenes Fenster per WinAPI ermitteln
+   if (static.hWndSelf != 0)
       return(static.hWndSelf);
-   }
-   else {
-      //debug("WindowHandleEx()  static.hWndSelf is not set");
-   }
 
    hWnd  = WindowHandle(Symbol(), NULL);
    error = GetLastError();
@@ -1591,22 +1593,24 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       return(!catch("WindowHandleEx(2)", error));
 
    if (!hWnd) {
+      string sNull;
       int hWndMain = GetApplicationWindow();
       int hWndMdi  = FindWindowExA(hWndMain, NULL, "MDIClient", sNull);
-      if (!hWndMdi) return(!catch("WindowHandleEx(3)  MDIClient window not found", ERR_RUNTIME_ERROR));
+      if (!hWndMdi)        return(!catch("WindowHandleEx(3)  MDIClient window not found", ERR_RUNTIME_ERROR));
 
       // es muß genau ein ChildWindow des MDIClient-Windows mit leerer Titelzeile geben
       int hWndChild1 = FindWindowExA(hWndMdi, NULL, sNull, sNull);   // lpWindow: Null-Pointer oder Leerstring (egal)
-      if (!hWndChild1) return(!catch("WindowHandleEx(4)  no MDI child window without title found", ERR_RUNTIME_ERROR));
+      if (!hWndChild1)     return(!catch("WindowHandleEx(4)  no MDI child window without title found", ERR_RUNTIME_ERROR));
 
       int hWndChild2 = FindWindowExA(hWndMdi, hWndChild1, sNull, sNull);
       if (hWndChild2 != 0) return(!catch("WindowHandleEx(5)  multiple MDI child windows without title found: 0x"+ IntToHexStr(hWndChild1) +", 0x"+ IntToHexStr(hWndChild2), ERR_RUNTIME_ERROR));
 
       hWnd = GetWindow(hWndChild1, GW_CHILD);                        // dieses ChildWindow hat genau ein Child, das gesuchte Chart-Handle
-      if (!hWnd) return(!catch("WindowHandleEx(6)  no chart window inside MDI child window 0x"+ IntToHexStr(hWndChild1) +" found", ERR_RUNTIME_ERROR));
+      if (!hWnd)           return(!catch("WindowHandleEx(6)  no chart window inside MDI child window 0x"+ IntToHexStr(hWndChild1) +" found", ERR_RUNTIME_ERROR));
 
-      static.hWndSelf = hWnd;
    }
+
+   static.hWndSelf = hWnd;
    return(hWnd);
 }
 
@@ -2748,9 +2752,11 @@ void __DummyCalls() {
    int    ArrayPushString(string array[], string value);
    int    Chart.Expert.Properties();
    void   DummyCalls();                                              // Library-Stub: kann lokal überschrieben werden (muß aber nicht)
+   int    GetApplicationWindow();
    bool   GetConfigBool(string section, string key, bool defaultValue);
    int    GetCustomLogID();
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
+   string IntToHexStr(int integer);
    bool   IsFile(string filename);
    bool   ReverseStringArray(string array[]);
    bool   SendSMS(string receiver, string message);
@@ -2769,7 +2775,9 @@ void __DummyCalls() {
    void   OutputDebugStringA(string lpMessage);                      // funktioniert nur für Admins zuverlässig
 
 #import "user32.dll"
+   int    FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+   int    GetWindow(int hWnd, int cmd);
 
 #import "winmm.dll"
    bool   PlaySoundA(string lpSound, int hMod, int fSound);

@@ -39,7 +39,14 @@ int init() {
    }
 
 
-   // (2) stdlib initialisieren
+   // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
+   if (!WindowHandleEx(NULL)) {
+      UpdateProgramStatus();
+      if (__STATUS_OFF) return(last_error);
+   }
+
+
+   // (3) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);//throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) {
@@ -48,7 +55,7 @@ int init() {
    }
 
 
-   // (3) in Experts immer auch die HistoryLib initialisieren
+   // (4) in Experts immer auch die HistoryLib initialisieren
    error = history.init(__ExecutionContext);
    if (IsError(error)) {
       UpdateProgramStatus(SetLastError(error));
@@ -56,7 +63,7 @@ int init() {
    }
 
                                                                               // #define INIT_TIMEZONE               in stdlib.init()
-   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   // (5) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
    int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -81,7 +88,7 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
-   // (5) ggf. EA's aktivieren
+   // (6) ggf. EA's aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);
@@ -92,13 +99,13 @@ int init() {
    }
 
 
-   // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
+   // (7) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (7) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (8) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -133,7 +140,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (9) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (IsTesting()) {
       Test.fromDate    = TimeCurrent();                                       // für Teststatistiken
       Test.startMillis = GetTickCount();
@@ -169,13 +176,6 @@ int start() {
          Tester.Stop();                                                    // oder das Ende von start() evt. nicht mehr ausgeführt wird.
       return(last_error);
    }
-
-
-   if (!__WND_HANDLE) {
-      if (!IsTesting() || IsVisualMode())                                  // Workaround um WindowHandle()-Bug ab Build 418
-         __WND_HANDLE = WindowHandle(Symbol(), NULL);                      // im Tester bei VisualMode=Off löst WindowHandle() ERR_FUNC_NOT_ALLOWED_IN_TESTER aus
-   }
-
 
    Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
