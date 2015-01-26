@@ -2,23 +2,33 @@
  * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail, SMS, HTML-Request und/oder ICQ.
  *
  *
- * Zu überwachende Order-Events werden mit Indikator-Inputparametern konfiguriert. Ein so konfigurierter EventTracker überwacht alle Symbole des Accounts,
- * nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen von allen laufenden EventTrackern für die Orderüberwachung
- * zu konfigurieren. Order-Events:
- *  - Orderausführung fehlgeschlagen
- *  - Position geöffnet
- *  - Position geschlossen
+ * (1) Order-Events
+ *     Zu überwachende Order-Events werden mit Indikator-Inputparametern konfiguriert. Ein so konfigurierter EventTracker überwacht alle Symbole des Accounts,
+ *     nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen von allen laufenden EventTrackern für die Orderüberwachung
+ *     zu konfigurieren. Events:
+ *      - Orderausführung fehlgeschlagen
+ *      - Position geöffnet
+ *      - Position geschlossen
  *
- * Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
- * EventTracker je Instrument zu laden. Preis-Events:
- *  - neues Tages-High/Low (mit konfigurierbarem Mindestabstand zwischen zwei aufeinanderfolgenden gleichen Events)
- *  - neues Wochen-High/Low (einmal je Richtung)
- *  - Bruch Vortages-Range
- *  - Bruch Vorwochen-Range
+ *
+ * (2) Preis-Events
+ *     Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
+ *     EventTracker je Instrument zu laden. Events:
+ *      - neues Tages-High/Low (mit konfigurierbarer Wartezeit zwischen zwei aufeinanderfolgenden gleichen Events)
+ *      - neues Wochen-High/Low (mit konfigurierbarer Wartezeit)
+ *      - Bruch der Vortages-Range
+ *      - Bruch der Vorwochen-Range
+ *      - Erreichen des Vorvortages-Close
+ *      - Erreichen des Vorvorwochen-Close
+ *
+ *     Pattern:
+ *      - neues Inside-Range-Pattern auf Tagesbasis
+ *      - neues Inside-Range-Pattern auf Wochenbasis
+ *      - Bruch Inside-Range-Pattern auf Tagesbasis
+ *      - Bruch Inside-Range-Pattern auf Wochenbasis
+ *
  *
  * Die Art der Benachrichtigung (akustisch, E-Mail, SMS, HTML-Request und/oder ICQ) kann je Event einzeln konfiguriert werden.
- *
- *
  *
  *
  * TODO:
