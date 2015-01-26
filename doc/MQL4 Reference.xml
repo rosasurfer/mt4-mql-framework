@@ -10354,10 +10354,10 @@ it means that the chart window has not been fully filled out and there is a spac
       <span style="color:red">Fehler:</span>
       <br/>
       (1) Bis Build ??? kann die Funktion bei Terminal-Start in init() und in start() 0 zurückgeben, solange der Fenstertitel noch nicht gesetzt ist (das Fenster existiert immer).<br/>
-      Workaround: Frameworkvariable <span class="constant">__WND_HANDLE</span> benutzen.<br/>
+      Workaround: WindowHandleEx() benutzen<br/>
       <br/>
       (2) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in deinit() 0 zurück, obwohl das Fenster existiert und der Fenstertitel gesetzt ist.<br/>
-      Workaround: Frameworkvariable <span class="constant">__WND_HANDLE</span> benutzen.<br/>
+      Workaround: WindowHandleEx() benutzen<br/>
       </content>
       <example>
 int hWnd = WindowHandle("USDX", PERIOD_H1);
