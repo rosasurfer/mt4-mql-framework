@@ -106,7 +106,7 @@ int onStart() {
       result = dll_GetIntValue(i);
    }
    int endTime = GetTickCount();
-   debug("onStart(0.1)   dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   debug("onStart(0.1)  dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
 
    // MQL
@@ -115,7 +115,7 @@ int onStart() {
       result = mql_GetIntValue(i);
    }
    endTime = GetTickCount();
-   debug("onStart(0.2)   mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   debug("onStart(0.2)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
 
    // MQL-Library
@@ -124,7 +124,7 @@ int onStart() {
       result = ex4_GetIntValue(i);
    }
    endTime = GetTickCount();
-   debug("onStart(0.3)   lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   debug("onStart(0.3)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
 
    // 20.000.000 Durchläufe:

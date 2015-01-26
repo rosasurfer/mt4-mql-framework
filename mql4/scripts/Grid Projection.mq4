@@ -77,7 +77,7 @@ int onStart() {
    double tickSize        = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue       = MarketInfo(Symbol(), MODE_TICKVALUE);
    double equity          = aum.value + MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-      if (!Close[0] || !tickSize || !tickValue || equity <= 0) return(catch("onStart(1)   unexpected NULL value for calculations", ERR_RUNTIME_ERROR));
+      if (!Close[0] || !tickSize || !tickValue || equity <= 0) return(catch("onStart(1)  unexpected NULL value for calculations", ERR_RUNTIME_ERROR));
    double lotValue        = Close[0]/tickSize * tickValue;                          // Value eines Lots in Account-Currency
    double unleveragedLots = equity/lotValue;                                        // ungehebelte Lotsize (Leverage 1:1)
 
@@ -188,14 +188,14 @@ bool RefreshExternalAssets() {
       aum.currency = "";
       return(!catch("RefreshExternalAssets(1)"));
    }
-   if (value < 0) return(!catch("RefreshExternalAssets(2)   invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (value < 0) return(!catch("RefreshExternalAssets(2)  invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
    key = "AuM.Currency";
    string currency = GetIniString(file, section, key, "");
    if (!StringLen(currency)) {
-      if (!IsIniKey(file, section, key)) return(!catch("RefreshExternalAssets(3)   missing ini entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-                                         return(!catch("RefreshExternalAssets(4)   invalid ini entry ["+ section +"]->"+ key +"=\"\" (empty value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (!IsIniKey(file, section, key)) return(!catch("RefreshExternalAssets(3)  missing ini entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+                                         return(!catch("RefreshExternalAssets(4)  invalid ini entry ["+ section +"]->"+ key +"=\"\" (empty value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
    aum.value    = value;
    aum.currency = StringToUpper(currency);

@@ -18,7 +18,7 @@ bool FindChartSequences(string ids[], int status[]) {
       int sizeOfValues = Explode(text, ",", values, NULL);
 
       for (int i=0; i < sizeOfValues; i++) {
-         if (Explode(values[i], "|", data, NULL) != 2) return(!catch("FindChartSequences(1)   illegal chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (Explode(values[i], "|", data, NULL) != 2) return(!catch("FindChartSequences(1)  illegal chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
 
          // Sequenz-ID
          strValue  = StringTrim(data[0]);
@@ -27,7 +27,7 @@ bool FindChartSequences(string ids[], int status[]) {
             test     = true;
             strValue = StringRight(strValue, -1);
          }
-         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(2)   illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(2)  illegal sequence id in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int iValue = StrToInteger(strValue);
          if (iValue == 0)
             continue;
@@ -35,14 +35,14 @@ bool FindChartSequences(string ids[], int status[]) {
 
          // Sequenz-Status
          strValue = StringTrim(data[1]);
-         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(3)   illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (!StringIsDigit(strValue))                 return(!catch("FindChartSequences(3)  illegal sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          iValue = StrToInteger(strValue);
-         if (!IsValidSequenceStatus(iValue))           return(!catch("FindChartSequences(4)   invalid sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
+         if (!IsValidSequenceStatus(iValue))           return(!catch("FindChartSequences(4)  invalid sequence status in chart label "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_RUNTIME_ERROR));
          int sequenceStatus = iValue;
 
          ArrayPushString(ids,    strSequenceId );
          ArrayPushInt   (status, sequenceStatus);
-         //debug("FindChartSequences()   "+ label +" = "+ strSequenceId +"|"+ sequenceStatus);
+         //debug("FindChartSequences()  "+ label +" = "+ strSequenceId +"|"+ sequenceStatus);
       }
    }
    return(ArraySize(ids) != 0);
@@ -160,7 +160,7 @@ string StatusToStr(int status) {
       case STATUS_STOPPING     : return("STATUS_STOPPING"     );
       case STATUS_STOPPED      : return("STATUS_STOPPED"      );
    }
-   return(_emptyStr(catch("StatusToStr()   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
@@ -179,5 +179,5 @@ bool IsStopTriggered(int type, double price) {
    if (type == OP_BUY     ) return(Bid <= price);                    // Long-StopLoss
    if (type == OP_SELL    ) return(Ask >= price);                    // Short-StopLoss
 
-   return(!catch("IsStopTriggered()   illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
+   return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
 }

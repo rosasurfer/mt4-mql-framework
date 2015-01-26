@@ -75,7 +75,7 @@ int DeinitReason() {
  */
 bool IsExpert() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsExpert()   library not initialized", ERR_RUNTIME_ERROR));
+      return(!catch("IsExpert()  library not initialized", ERR_RUNTIME_ERROR));
    return(__TYPE__ & T_EXPERT != 0);
 }
 
@@ -87,7 +87,7 @@ bool IsExpert() {
  */
 bool IsScript() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsScript()   library not initialized", ERR_RUNTIME_ERROR));
+      return(!catch("IsScript()  library not initialized", ERR_RUNTIME_ERROR));
    return(__TYPE__ & T_SCRIPT);
 }
 
@@ -99,7 +99,7 @@ bool IsScript() {
  */
 bool IsIndicator() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsIndicator()   library not initialized", ERR_RUNTIME_ERROR));
+      return(!catch("IsIndicator()  library not initialized", ERR_RUNTIME_ERROR));
    return(__TYPE__ & T_INDICATOR != 0);
 }
 
@@ -121,7 +121,7 @@ bool IsLibrary() {
  */
 bool Expert.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("Expert.IsTesting()   library not initialized", ERR_RUNTIME_ERROR));
+      return(!catch("Expert.IsTesting()  library not initialized", ERR_RUNTIME_ERROR));
 
    if (IsTesting()) /*&&*/ if (IsExpert())                           // IsTesting() allein reicht nicht, da auch in Indikatoren TRUE zurückgeben werden kann.
       return(true);
@@ -136,7 +136,7 @@ bool Expert.IsTesting() {
  */
 bool Script.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("Script.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    if (!IsScript())
       return(false);
@@ -166,7 +166,7 @@ bool Script.IsTesting() {
  */
 int Indicator.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_EMPTY(catch("Indicator.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR)));
+      return(_EMPTY(catch("Indicator.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR)));
 
    if (!IsIndicator())
       return(false);                                                 // (int) bool
@@ -194,7 +194,7 @@ int Indicator.IsTesting() {
          title = GetWindowText(GetParent(hWndChart));
 
       if (!StringLen(title))
-         return(_EMPTY(debug("Indicator.IsTesting(2)   cannot determine testing status,  hWndChart="+ hWndChart +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+         return(_EMPTY(debug("Indicator.IsTesting(2)  cannot determine testing status,  hWndChart="+ hWndChart +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       static.result = StringEndsWith(title, "(visual)");             // Unterscheidung durch "...(visual)" im Fenstertitel
 
@@ -217,13 +217,13 @@ int Indicator.IsTesting() {
  */
 int This.IsTesting() {
    if (__TYPE__ == T_LIBRARY)
-      return(_EMPTY(catch("This.IsTesting(1)   library not initialized", ERR_RUNTIME_ERROR)));
+      return(_EMPTY(catch("This.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR)));
 
    if (   IsExpert()) return(   Expert.IsTesting());                 // (int) bool
    if (   IsScript()) return(   Script.IsTesting());                 // (int) bool
    if (IsIndicator()) return(Indicator.IsTesting());                 //       int
 
-   return(_EMPTY(catch("This.IsTesting(2)   unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY(catch("This.IsTesting(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -234,7 +234,7 @@ int This.IsTesting() {
  */
 bool IsSuperContext() {
    if (__TYPE__ == T_LIBRARY)
-      return(!catch("IsSuperContext()   library not initialized", ERR_RUNTIME_ERROR));
+      return(!catch("IsSuperContext()  library not initialized", ERR_RUNTIME_ERROR));
    return(__lpSuperContext != 0);
 }
 

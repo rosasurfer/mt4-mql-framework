@@ -59,8 +59,8 @@ string BAR.toStr(/*BAR*/double bar[], bool debugger=false) {
    debugger = debugger!=0;
 
    int dimensions = ArrayDimension(bar);
-   if (dimensions > 2)                                  return(_emptyStr(catch("BAR.toStr(1)   too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_emptyStr(catch("BAR.toStr(2)   invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (dimensions > 2)                                  return(_emptyStr(catch("BAR.toStr(1)  too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_emptyStr(catch("BAR.toStr(2)  invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    string line, lines[]; ArrayResize(lines, 0);
 
@@ -74,7 +74,7 @@ string BAR.toStr(/*BAR*/double bar[], bool debugger=false) {
                               ", close=" , NumberToStr(bar.Close (bar), ".+"),
                               ", volume=",             bar.Volume(bar), "}");
       if (debugger)
-         debug("BAR.toStr()   "+ line);
+         debug("BAR.toStr()  "+ line);
       ArrayPushString(lines, line);
    }
    else {
@@ -89,7 +89,7 @@ string BAR.toStr(/*BAR*/double bar[], bool debugger=false) {
                                            ", close=" , NumberToStr(bars.Close (bar, i), ".+"),
                                            ", volume=",             bars.Volume(bar, i), "}");
          if (debugger)
-            debug("BAR.toStr()   "+ line);
+            debug("BAR.toStr()  "+ line);
          ArrayPushString(lines, line);
       }
    }

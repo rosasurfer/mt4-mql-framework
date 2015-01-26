@@ -19,7 +19,7 @@ bool icChartInfos(int timeframe) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icChartInfos(1)", error));
-      warn("icChartInfos(2)   ERS_HISTORY_UPDATE (tick="+ Tick +")");      // TODO: geladene Bars prüfen
+      warn("icChartInfos(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");      // TODO: geladene Bars prüfen
    }
    error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)

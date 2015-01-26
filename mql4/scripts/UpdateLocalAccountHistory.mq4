@@ -93,7 +93,7 @@ int onStart() {
          // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
 
          if (!StringIStartsWith(comments[i], "close hedge by #"))
-            return(catch("onStart(2)   #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+            return(catch("onStart(2)  #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          // Gegenstück der Order suchen
          ticket = StrToInteger(StringSubstr(comments[i], 16));
@@ -101,8 +101,8 @@ int onStart() {
             if (tickets[n] == ticket)
                break;
          }
-         if (n == orders) return(catch("onStart(3)   cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
-         if (i == n     ) return(catch("onStart(4)   both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (n == orders) return(catch("onStart(3)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
+         if (i == n     ) return(catch("onStart(4)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR));
 
          int first  = Min(i, n);
          int second = Max(i, n);
@@ -137,7 +137,7 @@ int onStart() {
    if (histSize > 0) {
       lastTicket  = StrToInteger(history[histSize-1][I_AH_TICKET ]);
       lastBalance = StrToDouble (history[histSize-1][I_AH_BALANCE]);
-      //debug("onStart()   lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
+      //debug("onStart()  lastTicket = "+ lastTicket +"   lastBalance = "+ NumberToStr(lastBalance, ", .2"));
    }
    if (!orders) {
       if (NE(lastBalance, AccountBalance())) {
@@ -163,7 +163,7 @@ int onStart() {
    }
    if (iFirstTicketToSave == orders) {                                     // alle Tickets sind bereits in der CSV-Datei vorhanden
       if (NE(lastBalance, AccountBalance()))
-         return(catch("onStart(8)   data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
+         return(catch("onStart(8)  data error: balance mismatch between history file ("+ NumberToStr(lastBalance, ", .2") +") and account ("+ NumberToStr(AccountBalance(), ", .2") +")", ERR_RUNTIME_ERROR));
       PlaySoundEx("Windows Confirm.wav");
       MessageBox("History is up-to-date.", __NAME__, MB_ICONINFORMATION|MB_OK);
       return(catch("onStart(9)"));
@@ -179,7 +179,7 @@ int onStart() {
       lastBalance     = balances[i];
    }
    if (NE(lastBalance, AccountBalance())) {
-      if (__LOG) log("onStart(11)   balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
+      if (__LOG) log("onStart(11)  balance mismatch: calculated = "+ NumberToStr(lastBalance, ", .2") +"   current = "+ NumberToStr(AccountBalance(), ", .2"));
       PlaySoundEx("Windows Notify.wav");
       MessageBox("Balance mismatch, more history data needed.", __NAME__, MB_ICONEXCLAMATION|MB_OK);
       return(catch("onStart(12)"));

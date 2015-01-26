@@ -25,13 +25,13 @@ int onStart() {
    double a = -5;
    double b = MathLog(a);
 
-   debug("onStart()   b="+ StringRight(DoubleToStrEx(b, 16), -1) +" or "+ b);
+   debug("onStart()  b="+ StringRight(DoubleToStrEx(b, 16), -1) +" or "+ b);
 
    int    ints   [2]; ints   [0] = a; ints   [1] = a*2;
    double doubles[2]; doubles[0] = a; doubles[1] = b;
 
-   debug("onStart()   addr(ints)   =0x"+ IntToHexStr(GetIntsAddress(ints)));
-   debug("onStart()   addr(doubles)=0x"+ IntToHexStr(GetDoublesAddress(doubles)));
+   debug("onStart()  addr(ints)   =0x"+ IntToHexStr(GetIntsAddress(ints)));
+   debug("onStart()  addr(doubles)=0x"+ IntToHexStr(GetDoublesAddress(doubles)));
 
 
    //[2192] MetaTrader::EURUSD,M30::TestScript::onStart()   a=-5  b=- or -1.#IND0000

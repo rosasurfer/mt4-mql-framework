@@ -17,9 +17,9 @@ int __DEINIT_FLAGS__[];
  */
 int onInit() {
 
-   debug("onStart()   "+ (3 & 1));
-   debug("onStart()   "+ (4 & 1));
-   debug("onStart()   "+ (5 & 1));
+   debug("onStart()  "+ (3 & 1));
+   debug("onStart()  "+ (4 & 1));
+   debug("onStart()  "+ (5 & 1));
 }
 
 
@@ -36,7 +36,7 @@ int onTick() {
       if (atr == EMPTY)                                                   return(last_error);
       if (last_error==ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
 
-   //debug("onTick(1)   Tick="+ Tick +"  atr("+ periods +")["+ bar +"]="+ NumberToStr(atr, ".+"));
+   //debug("onTick(1)  Tick="+ Tick +"  atr("+ periods +")["+ bar +"]="+ NumberToStr(atr, ".+"));
 
    return(last_error);
 }

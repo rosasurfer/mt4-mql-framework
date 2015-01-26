@@ -23,7 +23,7 @@ int onStart() {
    // WinExec() kehrt ohne zu warten zurück
    int result = WinExec(file, SW_SHOWNORMAL);
    if (result < 32)
-      return(catch("onStart(1)->kernel32::WinExec(cmd=\""+ file +"\")   "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      return(catch("onStart(1)->kernel32::WinExec(cmd=\""+ file +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    return(catch("onStart(2)"));
 }

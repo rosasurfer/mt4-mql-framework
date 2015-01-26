@@ -181,13 +181,13 @@ int onTick() {
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onChartCommand(1)   empty parameter commands = {}"));
+   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if      (commands[i] == "Timeframe=Up"  ) { if (!SwitchSuperTimeframe(STF_UP  )) return(false); }
       else if (commands[i] == "Timeframe=Down") { if (!SwitchSuperTimeframe(STF_DOWN)) return(false); }
       else
-         warn("onChartCommand(2)   unknown chart command \""+ commands[i] +"\"");
+         warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
    }
    return(!catch("onChartCommand(3)"));
 }
@@ -246,7 +246,7 @@ bool SwitchSuperTimeframe(int direction) {
          case  INT_MAX      : PlaySoundEx("Plonk.wav" );         break;   // Plonk, we hit a wall!
       }
    }
-   else warn("SwitchSuperTimeframe(1)   unknown parameter direction = "+ direction);
+   else warn("SwitchSuperTimeframe(1)  unknown parameter direction = "+ direction);
 
    CheckSuperTimeframeAvailability();                                   // Verfügbarkeit der Einstellung prüfen
    return(true);

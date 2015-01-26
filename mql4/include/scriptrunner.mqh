@@ -26,8 +26,8 @@ int    hQC.ScriptParameterSender;
  *                Nicht, ob das Script erfolgreich gestartet und/oder ausgeführt wurde.
  */
 bool RunScript(string scriptName, string parameters="") {
-   if (IsScript())             return(!catch("RunScript(1)   invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
-   if (!StringLen(scriptName)) return(!catch("RunScript(2)   invalid parameter scriptName=\"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (IsScript())             return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
+   if (!StringLen(scriptName)) return(!catch("RunScript(2)  invalid parameter scriptName=\"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (parameters == "0")                                            // (string) NULL
       parameters = "";
@@ -89,7 +89,7 @@ bool SetScriptParameters(string parameters) {
  */
 int GetScriptParameters(string paramNames[], string paramValues[]) {
    if (!IsScript())
-      return(_EMPTY(catch("GetScriptParameters(1)   invalid calling context (not a script)", ERR_RUNTIME_ERROR)));
+      return(_EMPTY(catch("GetScriptParameters(1)  invalid calling context (not a script)", ERR_RUNTIME_ERROR)));
 
    string parameters = "";
 
@@ -103,16 +103,16 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
    int result = QC_CheckChannel(qc.ScriptParameterChannel);
    if (result < QC_CHECK_CHANNEL_EMPTY) {
       if      (result == QC_CHECK_CHANNEL_ERROR) catch("GetScriptParameters(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR);
-      else if (result == QC_CHECK_CHANNEL_NONE ) catch("GetScriptParameters(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")   channel doesn't exist",              ERR_WIN32_ERROR);
-      else                                       catch("GetScriptParameters(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")   unexpected return value = "+ result, ERR_WIN32_ERROR);
+      else if (result == QC_CHECK_CHANNEL_NONE ) catch("GetScriptParameters(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR);
+      else                                       catch("GetScriptParameters(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR);
    }
    else if (result > QC_CHECK_CHANNEL_EMPTY) {
       // get messages
       result = QC_GetMessages3(hQC.ScriptParameterSender, qc.ScriptParameterBuffer, QC_MAX_BUFFER_SIZE);
       if (result != QC_GET_MSG3_SUCCESS) {
-         if      (result == QC_GET_MSG3_CHANNEL_EMPTY) catch("GetScriptParameters(5)->MT4iQuickChannel::QC_GetMessages3()   QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR);
-         else if (result == QC_GET_MSG3_INSUF_BUFFER ) catch("GetScriptParameters(6)->MT4iQuickChannel::QC_GetMessages3()   buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR);
-         else                                          catch("GetScriptParameters(7)->MT4iQuickChannel::QC_GetMessages3()   unexpected return value = "+ result,                                     ERR_WIN32_ERROR);
+         if      (result == QC_GET_MSG3_CHANNEL_EMPTY) catch("GetScriptParameters(5)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR);
+         else if (result == QC_GET_MSG3_INSUF_BUFFER ) catch("GetScriptParameters(6)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR);
+         else                                          catch("GetScriptParameters(7)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR);
       }
       else {
          parameters = qc.ScriptParameterBuffer[0];
@@ -169,9 +169,9 @@ bool QC.StartScriptParameterSender() {
       // Der Channel muß bereits existieren, ohne können keine Parameter hinterlegt worden sein.
       int result = QC_CheckChannel(qc.ScriptParameterChannel);
       if (result < QC_CHECK_CHANNEL_EMPTY) {
-         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.StartScriptParameterSender(2)   you cannot manually call this script (channel \""+ qc.ScriptParameterChannel +"\" doesn't exist)",                ERR_RUNTIME_ERROR));
+         if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.StartScriptParameterSender(2)  you cannot manually call this script (channel \""+ qc.ScriptParameterChannel +"\" doesn't exist)",                ERR_RUNTIME_ERROR));
          if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartScriptParameterSender(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR  ));
-                                               return(!catch("QC.StartScriptParameterSender(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")   unexpected return value = "+ result, ERR_WIN32_ERROR  ));
+                                               return(!catch("QC.StartScriptParameterSender(4)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR  ));
       }
       // Messagebuffer initialisieren (Sender-Handle wird auch zum Lesen benutzt)
       if (!ArraySize(qc.ScriptParameterBuffer))
@@ -204,7 +204,7 @@ bool QC.StopScriptParameterSender() {
    qc.ScriptParameterChannel = "";
 
    if (!QC_ReleaseSender(hTmp))
-      return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")   error stopping sender", ERR_WIN32_ERROR));
+      return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")  error stopping sender", ERR_WIN32_ERROR));
 
    return(true);
 }

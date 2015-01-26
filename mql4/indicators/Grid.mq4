@@ -120,7 +120,7 @@ int DrawGrid() {
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       toFXT = firstWeekDay;
    }
-   //debug("DrawGrid()   from \""+ GetDayOfWeek(fromFXT, false) +" "+ TimeToStr(fromFXT) +"\" to \""+ GetDayOfWeek(toFXT, false) +" "+ TimeToStr(toFXT) +"\"");
+   //debug("DrawGrid()  from \""+ GetDayOfWeek(fromFXT, false) +" "+ TimeToStr(fromFXT) +"\" to \""+ GetDayOfWeek(toFXT, false) +" "+ TimeToStr(toFXT) +"\"");
 
 
    // (2) Separatoren zeichnen
@@ -214,8 +214,8 @@ int DrawGrid() {
  * @return datetime - erster Wochentag des Monats oder -1 (EMPTY), falls ein Fehler auftrat
  */
 datetime GetFirstWeekdayOfMonth(int year, int month) {
-   if (year  < 1970 || 2037 < year ) return(_EMPTY(catch("GetFirstWeekdayOfMonth(1)   illegal parameter year = "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (month <    1 ||   12 < month) return(_EMPTY(catch("GetFirstWeekdayOfMonth(2)   invalid parameter month = "+ month, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (year  < 1970 || 2037 < year ) return(_EMPTY(catch("GetFirstWeekdayOfMonth(1)  illegal parameter year = "+ year +" (not between 1970 and 2037)", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (month <    1 ||   12 < month) return(_EMPTY(catch("GetFirstWeekdayOfMonth(2)  invalid parameter month = "+ month, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StringRight("0"+month, 2), ".01 00:00:00"));
 

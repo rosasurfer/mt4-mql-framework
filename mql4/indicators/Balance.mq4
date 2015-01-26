@@ -46,7 +46,7 @@ int onInit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iBalance) == 0)                                     // kann bei Terminal-Start auftreten
-      return(debug("onTick(1)   size(iBalance) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(debug("onTick(1)  size(iBalance) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // Alle Werte komplett ...
    if (!ValidBars) {

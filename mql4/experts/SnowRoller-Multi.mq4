@@ -97,7 +97,7 @@ int onTick() {
    int signal;
 
    if (IsStartSignal(signal)) {
-      //debug("IsStartSignal(0.1)   "+ TimeToStr(TimeCurrent()) +"   signal "+ ifString(signal>0, "up", "down"));
+      //debug("IsStartSignal(0.1)  "+ TimeToStr(TimeCurrent()) +"   signal "+ ifString(signal>0, "up", "down"));
       Strategy.CreateSequence(ifInt(signal>0, D_LONG, D_SHORT));
    }
    return(last_error);
@@ -114,7 +114,7 @@ int onTick() {
  */
 int Strategy.CreateSequence(int direction) {
    if (IsLastError())                                    return(0);
-   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_NULL(catch("Strategy.CreateSequence(1)   illegal parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_NULL(catch("Strategy.CreateSequence(1)  illegal parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    // (1) Sequenz erzeugen
    int    sid      = CreateSequenceId();
@@ -128,13 +128,13 @@ int Strategy.CreateSequence(int direction) {
    if (sid < SID_MIN) {
       if (sid == 0)
          return(0);
-      return(_int(sid, debug("Strategy.CreateSequence()   "+ directionDescr[direction] +" sequence denied")));
+      return(_int(sid, debug("Strategy.CreateSequence()  "+ directionDescr[direction] +" sequence denied")));
    }
 
    int hSeq = Strategy.AddSequence(sid, test, direction, gridSize, lotSize, status);
    if (hSeq < 0)
       return(0);
-   debug("Strategy.CreateSequence()   "+ directionDescr[direction] +" sequence created: "+ sid);
+   debug("Strategy.CreateSequence()  "+ directionDescr[direction] +" sequence created: "+ sid);
 
 
    // (2) Sequenz starten
@@ -154,15 +154,15 @@ int Strategy.CreateSequence(int direction) {
  */
 bool StartSequence(int hSeq) {
    if (IsLastError())                              return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (sequence.status[hSeq] != STATUS_WAITING)    return(!catch("StartSequence(2)   cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (sequence.status[hSeq] != STATUS_WAITING)    return(!catch("StartSequence(2)  cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   if (__LOG) log("StartSequence(3)   starting sequence "+ sequence.id[hSeq]);
+   if (__LOG) log("StartSequence(3)  starting sequence "+ sequence.id[hSeq]);
    SetCustomLog(sequence.id[hSeq], NULL);                            // TODO: statt Sequenz-ID Log-Handle verwenden
-   if (__LOG) log("StartSequence(4)   starting sequence");
+   if (__LOG) log("StartSequence(4)  starting sequence");
 
 
    sequence.status[hSeq] = STATUS_STARTING;
@@ -219,7 +219,7 @@ bool StartSequence(int hSeq) {
 
 
    RedrawStartStop(hSeq);
-   if (__LOG) log(StringConcatenate("StartSequence(6)   sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
+   if (__LOG) log(StringConcatenate("StartSequence(6)  sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
    return(!last_error|catch("StartSequence(7)"));
 }
 
@@ -232,7 +232,7 @@ bool StartSequence(int hSeq) {
 void RedrawStartStop(int hSeq) {
    if (IsLastError())                              return;
    if (!IsChart)                                   return;
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    return(_NULL(catch("RedrawStartStop(2)", ERR_NOT_IMPLEMENTED)));
 }
@@ -279,13 +279,13 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
    test = test!=0;
 
    if (IsLastError())                                    return( EMPTY);
-   if (sid < SID_MIN || sid > SID_MAX)                   return(_EMPTY(catch("Strategy.AddSequence(1)   invalid parameter sid = "+ sid, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (IntInArray(sequence.id, sid))                     return(_EMPTY(catch("Strategy.AddSequence(2)   sequence "+ sid +" already exists", ERR_RUNTIME_ERROR)));
-   if (BoolInArray(sequence.test, !test))                return(_EMPTY(catch("Strategy.AddSequence(3)   illegal mix of test/non-test sequences: tried to add "+ sid +" (test="+ test +"), found "+ sequence.id[SearchBoolArray(sequence.test, !test)] +" (test="+ (!test) +")", ERR_RUNTIME_ERROR)));
-   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_EMPTY(catch("Strategy.AddSequence(4)   invalid parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (gridSize <= 0)                                    return(_EMPTY(catch("Strategy.AddSequence(5)   invalid parameter gridSize = "+ gridSize, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (lotSize <= 0)                                     return(_EMPTY(catch("Strategy.AddSequence(6)   invalid parameter lotSize = "+ NumberToStr(lotSize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (!IsValidSequenceStatus(status))                   return(_EMPTY(catch("Strategy.AddSequence(7)   invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (sid < SID_MIN || sid > SID_MAX)                   return(_EMPTY(catch("Strategy.AddSequence(1)  invalid parameter sid = "+ sid, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (IntInArray(sequence.id, sid))                     return(_EMPTY(catch("Strategy.AddSequence(2)  sequence "+ sid +" already exists", ERR_RUNTIME_ERROR)));
+   if (BoolInArray(sequence.test, !test))                return(_EMPTY(catch("Strategy.AddSequence(3)  illegal mix of test/non-test sequences: tried to add "+ sid +" (test="+ test +"), found "+ sequence.id[SearchBoolArray(sequence.test, !test)] +" (test="+ (!test) +")", ERR_RUNTIME_ERROR)));
+   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_EMPTY(catch("Strategy.AddSequence(4)  invalid parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (gridSize <= 0)                                    return(_EMPTY(catch("Strategy.AddSequence(5)  invalid parameter gridSize = "+ gridSize, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (lotSize <= 0)                                     return(_EMPTY(catch("Strategy.AddSequence(6)  invalid parameter lotSize = "+ NumberToStr(lotSize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsValidSequenceStatus(status))                   return(_EMPTY(catch("Strategy.AddSequence(7)  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    int size=ArraySize(sequence.id), hSeq=size;
    Strategy.ResizeArrays(size+1);
@@ -314,7 +314,7 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
  */
 double GridBase.Reset(int hSeq, datetime time, double value) {
    if (IsLastError())                              return(0);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("GridBase.Reset(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("GridBase.Reset(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    return(_NULL(catch("GridBase.Reset(2)", ERR_NOT_IMPLEMENTED)));
 }
@@ -334,8 +334,8 @@ double GridBase.Reset(int hSeq, datetime time, double value) {
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                                return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdateOpenPositions(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (sequence.status[hSeq] != STATUS_STARTING)     return(!catch("UpdateOpenPositions(2)   cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdateOpenPositions(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (sequence.status[hSeq] != STATUS_STARTING)     return(!catch("UpdateOpenPositions(2)  cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE));
 
    return(!catch("UpdateOpenPositions(4)", ERR_NOT_IMPLEMENTED));
@@ -351,8 +351,8 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  */
 bool UpdatePendingOrders(int hSeq) {
    if (IsLastError())                                return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdatePendingOrders(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(!catch("UpdatePendingOrders(2)   cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdatePendingOrders(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(!catch("UpdatePendingOrders(2)  cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE));
 
    return(!catch("UpdatePendingOrders(4)", ERR_NOT_IMPLEMENTED));
@@ -368,7 +368,7 @@ bool UpdatePendingOrders(int hSeq) {
  */
 bool InitStatusLocation(int hSeq) {
    if (IsLastError())                              return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("InitStatusLocation(1)   invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("InitStatusLocation(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if      (IsTesting())         sequence.statusFile[hSeq][0] = "presets\\";
    else if (sequence.test[hSeq]) sequence.statusFile[hSeq][0] = "presets\\tester\\";
@@ -442,8 +442,8 @@ bool IsStartSignal(int &lpSignal) {
 
          if (trend==1 || trend==-1) {
             lpSignal = trend;
-            if (__LOG) log(StringConcatenate("IsStartSignal(1)   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
-                     debug(StringConcatenate("IsStartSignal(2)   start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+            if (__LOG) log(StringConcatenate("IsStartSignal(1)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
+                     debug(StringConcatenate("IsStartSignal(2)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));
             return(true);
          }
       }
@@ -543,7 +543,7 @@ bool ValidateConfiguration(bool interactive) {
    double maxLot  = MarketInfo(Symbol(), MODE_MAXLOT );
    double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
    int error = GetLastError();
-   if (IsError(error))                           return(_false(catch("ValidateConfiguration(3)   symbol=\""+ Symbol() +"\"", error)));
+   if (IsError(error))                           return(_false(catch("ValidateConfiguration(3)  symbol=\""+ Symbol() +"\"", error)));
    if (LT(LotSize, minLot))                      return(_false(ValidateConfig.HandleError("ValidateConfiguration(4)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MinLot="+  NumberToStr(minLot, ".+" ) +")", interactive)));
    if (GT(LotSize, maxLot))                      return(_false(ValidateConfig.HandleError("ValidateConfiguration(5)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")", interactive)));
    if (MathModFix(LotSize, lotStep) != 0)        return(_false(ValidateConfig.HandleError("ValidateConfiguration(6)", "Invalid LotSize = "+ NumberToStr(LotSize, ".+") +" (LotStep="+ NumberToStr(lotStep, ".+") +")", interactive)));
@@ -715,7 +715,7 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(!catch("RestoreStickyStatus(1)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreStickyStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
@@ -723,7 +723,7 @@ bool RestoreStickyStatus() {
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(!catch("RestoreStickyStatus(2)   illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreStickyStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }

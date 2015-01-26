@@ -43,7 +43,7 @@ int onInit() {
    if      (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(2)   invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Moneymanagement
    if (!isLfxInstrument) {
@@ -51,9 +51,9 @@ int onInit() {
       section="Moneymanagement"; key=stdSymbol +".Leverage";
       string sValue = GetLocalConfigString(section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue)) return(catch("onInit(3)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue < 0.1)             return(catch("onInit(4)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue < 0.1)             return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.customLeverage   = dValue;
          mm.isCustomLeverage = true;
       }
@@ -66,9 +66,9 @@ int onInit() {
       if (!mm.isCustomLeverage) {
          key    = "Volatility";
          sValue = GetLocalConfigString(section, key, DoubleToStr(DEFAULT_VOLATILITY, 2));
-         if (!StringIsNumeric(sValue)) return(catch("onInit(5)   invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          dValue = StrToDouble(sValue);
-         if (dValue <= 0)              return(catch("onInit(6)   invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue <= 0)              return(catch("onInit(6)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.vola = dValue;
       }
    }

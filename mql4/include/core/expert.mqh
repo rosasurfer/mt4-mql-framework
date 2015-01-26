@@ -64,11 +64,11 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                   // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                     // - synthetisches Symbol im Offline-Chart
-            return(UpdateProgramStatus(debug("init(1)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+            return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
          UpdateProgramStatus(catch("init(2)", error));
          if (__STATUS_OFF) return(last_error);
       }
-      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -76,7 +76,7 @@ int init() {
          UpdateProgramStatus(catch("init(4)", error));
          if (__STATUS_OFF) return(last_error);
       }
-      if (!tickValue)      return(UpdateProgramStatus(debug("init(5)   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!tickValue)      return(UpdateProgramStatus(debug("init(5)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
@@ -97,35 +97,40 @@ int init() {
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
-                                                                              // User-Routinen *können*, müssen aber nicht implementiert werden.
-   // (7) user-spezifische init()-Routinen aufrufen                           //
-   onInit();                                                                  // Preprocessing-Hook
-   UpdateProgramStatus();                                                     //
-   if (__STATUS_OFF) return(last_error);                                      //
-                                                                              //
-   switch (UninitializeReason()) {                                            //
-      case REASON_PARAMETERS : error = onInitParameterChange(); break;        //
-      case REASON_CHARTCHANGE: error = onInitChartChange();     break;        //
-      case REASON_ACCOUNT    : error = onInitAccountChange();   break;        //
-      case REASON_CHARTCLOSE : error = onInitChartClose();      break;        //
-      case REASON_UNDEFINED  : error = onInitUndefined();       break;        //
-      case REASON_REMOVE     : error = onInitRemove();          break;        //
-      case REASON_RECOMPILE  : error = onInitRecompile();       break;        //
-      // build > 509
-      case REASON_TEMPLATE   : error = onInitTemplate();        break;        //
-      case REASON_INITFAILED : error = onInitFailed();          break;        //
-      case REASON_CLOSE      : error = onInitClose();           break;        //
 
-      default: return(UpdateProgramStatus(catch("init(6)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+   // (7) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   //
+   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
+   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
+   // (falls implementiert) -1 zurückgeben.
+   error = onInit();                                                          // Preprocessing-Hook
+                                                                              //
+   if (!error) {                                                              //
+      switch (UninitializeReason()) {                                         //
+         case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
+         case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
+         case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
+         case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
+         case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
+         case REASON_REMOVE     : error = onInitRemove();          break;     //
+         case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
+         // build > 509                                                       //
+         case REASON_TEMPLATE   : error = onInitTemplate();        break;     //
+         case REASON_INITFAILED : error = onInitFailed();          break;     //
+         case REASON_CLOSE      : error = onInitClose();           break;     //
+                                                                              //
+         default: return(UpdateProgramStatus(catch("init(6)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+      }                                                                       //
    }                                                                          //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
    UpdateProgramStatus();                                                     //
-   if (__STATUS_OFF) return(last_error);                                      //
                                                                               //
-   afterInit();                                                               // Postprocessing-Hook
-
-   UpdateProgramStatus();
-   ShowStatus(NO_ERROR);
-   if (__STATUS_OFF) return(last_error);
+   if (error != -1) {                                                         //
+      afterInit();                                                            // Postprocessing-Hook
+      UpdateProgramStatus();                                                  //
+   }                                                                          //
+   ShowStatus(last_error);                                                    //
+   if (__STATUS_OFF) return(last_error);                                      //
 
 
    // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
@@ -141,7 +146,8 @@ int init() {
       }
    }
 
-   return(UpdateProgramStatus(catch("init(7)")));
+   UpdateProgramStatus(catch("init(7)"));
+   return(last_error);
 }
 
 
@@ -156,7 +162,7 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-      debug("start(1)   "+ msg);
+      debug("start(1)  "+ msg);
       ShowStatus(last_error);
 
       if (IsTesting())                                                     // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
@@ -183,7 +189,7 @@ int start() {
       __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          int error = init();                                               // init() erneut aufrufen
@@ -212,7 +218,7 @@ int start() {
 
    // (3) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)
-      return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)   Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
+      return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
    // (4) stdLib benachrichtigen
@@ -264,11 +270,15 @@ int deinit() {
    }
 
 
-   // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
+   // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
+   //
+   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
+   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
+   // (falls implementiert) -1 zurückgeben.
    int error = onDeinit();                                                       // Preprocessing-Hook
                                                                                  //
-   if (error != -1) {                                                            // - deinit() bricht *nicht* ab, falls eine der User-Routinen einen Fehler zurückgibt.
-      switch (UninitializeReason()) {                                            // - deinit() bricht ab, falls eine der User-Routinen -1 zurückgibt.
+   if (!error) {                                                                 //
+      switch (UninitializeReason()) {                                            //
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
@@ -276,21 +286,24 @@ int deinit() {
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
-         // build > 509
+         // build > 509                                                          //
          case REASON_TEMPLATE   : error = onDeinitTemplate();        break;      //
          case REASON_INITFAILED : error = onDeinitFailed();          break;      //
          case REASON_CLOSE      : error = onDeinitClose();           break;      //
-
-         default: return(UpdateProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+                                                                                 //
+         default: return(UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                          //
    }                                                                             //
+   UpdateProgramStatus();                                                        //
                                                                                  //
-   if (error != -1)                                                              //
+   if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
+      UpdateProgramStatus();                                                     //
+   }                                                                             //
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
-   if (error != -1) {
+   if (!error) {
       // ...
    }
 
@@ -300,7 +313,9 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   return(UpdateProgramStatus(last_error));
+
+   UpdateProgramStatus(catch("deinit(2)"));
+   return(last_error);
 }
 
 
@@ -410,7 +425,7 @@ int This.IsTesting() {
  * @return int - Fehlerstatus
  */
 int InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
 
    // (1) Speicher für Programm- und LogFileName alloziieren
@@ -772,7 +787,7 @@ int afterInit() {
 int onDeinit() {
    double test.duration = (Test.stopMillis-Test.startMillis)/1000.;
    double test.days     = (Test.toDate-Test.fromDate) * 1. /DAYS;
-   debug("onDeinit()   time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
+   debug("onDeinit()  time="+ DoubleToStr(test.duration, 1) +" sec   days="+ Round(test.days) +"   ("+ DoubleToStr(test.duration/test.days, 3) +" sec/day)");
    return(last_error);
 }
 

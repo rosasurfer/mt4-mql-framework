@@ -111,19 +111,19 @@ int onInit() {
       string values[];
       if (Explode(sValue, "=>", values, 2) == 1) {
          timeframe = StrToPeriod(sValue);
-         if (timeframe == -1)                     return(catch("onInit(1)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         if (timeframe == -1)                     return(catch("onInit(1)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          MA.Timeframe = PeriodDescription(timeframe);
       }
       else {
          timeframe      = StrToPeriod(StringTrim(values[1]));
          timeframeAlias = StrToPeriod(StringTrim(values[0]));
 
-         if (timeframe==-1 || timeframeAlias==-1) return(catch("onInit(2)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         if (timeframeAlias < timeframe)          return(catch("onInit(3)   Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         if (timeframe==-1 || timeframeAlias==-1) return(catch("onInit(2)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         if (timeframeAlias < timeframe)          return(catch("onInit(3)  Invalid input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
 
          if (timeframeAlias > timeframe) {                           // Timeframes > W1 können nicht immer auf einen kleineren Timeframe heruntergerechnet werden
             if (timeframeAlias==PERIOD_MN1 || (timeframeAlias==PERIOD_Q1 && timeframe!=PERIOD_MN1))
-                                                  return(catch("onInit(4)   Illegal input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+                                                  return(catch("onInit(4)  Illegal input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_INPUT_PARAMVALUE));
             MA.Timeframe = PeriodDescription(timeframeAlias) +"=>"+ PeriodDescription(timeframe);
          }
          else /*timeframeAlias == timeframe*/ {
@@ -136,12 +136,12 @@ int onInit() {
 
    // (1.2) MA.Periods
    sValue = StringTrim(MA.Periods);
-   if (!StringIsNumeric(sValue))                  return(catch("onInit(5)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (!StringIsNumeric(sValue))                  return(catch("onInit(5)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    double dValue = StrToDouble(sValue);
-   if (dValue <= 0)                               return(catch("onInit(6)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (dValue <= 0)                               return(catch("onInit(6)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
 
    if (!timeframeAlias) {
-      if (MathModFix(dValue, 1) != 0)             return(catch("onInit(7)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+      if (MathModFix(dValue, 1) != 0)             return(catch("onInit(7)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
       ma.periods = MathRound(dValue);
    }
    else {
@@ -151,7 +151,7 @@ int onInit() {
          case PERIOD_M1 :                                            // kann nicht auftreten
          case PERIOD_MN1: break;                                     // wird vorher abgefangen
          case PERIOD_Q1:                                             // kommt nur in Kombination mit timeframe=PERIOD_MN1 vor
-            if (MathModFix(dValue, 1) != 0)       return(catch("onInit(8)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+            if (MathModFix(dValue, 1) != 0)       return(catch("onInit(8)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
             ma.periods = Round(dValue) * 3;                          // 3 Monate je Quartal
             break;
 
@@ -164,13 +164,13 @@ int onInit() {
          case PERIOD_W1 : dMinutes = dValue * 5 * PERIOD_D1;  break; // 5 Handelstage je Woche
       }
       if (dMinutes != 0) {
-         if (MathModFix(dMinutes, 1) != 0)        return(catch("onInit(9)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+         if (MathModFix(dMinutes, 1) != 0)        return(catch("onInit(9)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
          int iMinutes = MathRound(dMinutes);
-         if (iMinutes%timeframe != 0)             return(catch("onInit(10)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+         if (iMinutes%timeframe != 0)             return(catch("onInit(10)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
          ma.periods = iMinutes/timeframe;
       }
    }
-   if (ma.periods < 1)                            return(catch("onInit(11)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
+   if (ma.periods < 1)                            return(catch("onInit(11)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMVALUE));
    MA.Periods = NumberToStr(dValue, ".+");
 
    // (1.3) MA.Method
@@ -180,7 +180,7 @@ int onInit() {
    }
    else sValue = MA.Method;
    ma.method = StrToMovAvgMethod(sValue);
-   if (ma.method == -1)                           return(catch("onInit(12)   Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+   if (ma.method == -1)                           return(catch("onInit(12)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.Method = MovAvgMethodDescription(ma.method);
 
    // (1.4) MA.AppliedPrice
@@ -191,11 +191,11 @@ int onInit() {
    else sValue = MA.AppliedPrice;
    ma.appliedPrice = StrToPriceType(sValue);
    if (ma.appliedPrice==-1 || ma.appliedPrice > PRICE_WEIGHTED)
-                                                  return(catch("onInit(13)   Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+                                                  return(catch("onInit(13)  Invalid input parameter MA.AppliedPrice = \""+ MA.AppliedPrice +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.AppliedPrice = PriceTypeDescription(ma.appliedPrice);
 
    // (1.5) Max.Values
-   if (Max.Values < -1)                           return(catch("onInit(14)   Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
+   if (Max.Values < -1)                           return(catch("onInit(14)  Invalid input parameter Max.Values = "+ Max.Values, ERR_INVALID_INPUT_PARAMVALUE));
 
    // (1.6) Colors
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;    // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
@@ -272,7 +272,7 @@ int onDeinit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(bufferMA) == 0)                                        // kann bei Terminal-Start auftreten
-      return(debug("onTick(1)   size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(debug("onTick(1)  size(bufferMA) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor vollständiger Neuberechnung Buffer zurücksetzen
    if (!ValidBars) {
@@ -379,13 +379,13 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
-   if (!size) return(!warn("onChartCommand(1)   empty parameter commands = {}"));
+   if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
       if      (commands[i] == "Periods=Up"  ) { if (!ModifyMaPeriods(MA_PERIODS_UP  )) return(false); }
       else if (commands[i] == "Periods=Down") { if (!ModifyMaPeriods(MA_PERIODS_DOWN)) return(false); }
       else
-         warn("onChartCommand(2)   unknown chart command \""+ commands[i] +"\"");
+         warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
    }
    return(!catch("onChartCommand(3)"));
 }
@@ -403,7 +403,7 @@ bool ModifyMaPeriods(int direction) {
    }
    else if (direction == MA_PERIODS_UP) {
    }
-   else warn("ModifyMaPeriods(1)   unknown parameter direction = "+ direction);
+   else warn("ModifyMaPeriods(1)  unknown parameter direction = "+ direction);
 
    return(true);
 }
@@ -428,7 +428,7 @@ void SetIndicatorStyles() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()   inputs: ",
+   return(StringConcatenate("init()  inputs: ",
 
                             "MA.Periods=\"",               MA.Periods                           , "\"; ",
                             "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",

@@ -160,7 +160,7 @@ int onStart() {
       // (7) LFX-Order aktualisieren und speichern
       /*LFX_ORDER*/int lo[];
       int result = LFX.GetOrder(magics[i], lo);
-      if (result < 1) { if (!result) return(last_error); return(catch("onStart(5)   LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
+      if (result < 1) { if (!result) return(last_error); return(catch("onStart(5)  LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
          lo.setCloseTime (lo, TimeGMT() );
          lo.setClosePrice(lo, closePrice);
          lo.setProfit    (lo, profit    );
@@ -177,7 +177,7 @@ int onStart() {
 
       // (8) Logmessage ausgeben
       string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-      if (__LOG) log("onStart(4)   "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+      if (__LOG) log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), lfxFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
 
       // (9) LFX-Terminal benachrichtigen
