@@ -16,39 +16,9 @@ extern int    __lpSuperContext;
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
-   /*
-   Das Chartfenster existiert und läßt sich immer eindeutig bestimmen, auch wenn WindowHandle() 0 zurückgibt.
-   ----------------------------------------------------------------------------------------------------------
+   //debug("init()    WindowHandle()="+ WindowHandle(Symbol(),NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
 
-   int hWndChart = WindowHandle(Symbol(), NULL);
-   catch("init()");
-   debug("init()  hWndChart=0x"+ IntToHexStr(hWndChart) +" ("+ hWndChart +")", last_error);
 
-   if (!hWndChart) {
-      int hWndMain = GetApplicationWindow();
-      int hWndNext = GetWindow(hWndMain, GW_CHILD);               // level 1
-
-      while (hWndNext != 0) {
-         string class = GetClassName(hWndNext);
-         debug("init()  "+ IntToHexStr(hWndNext) +": "+ class +" "+ StringToStr(GetWindowText(hWndNext)));
-
-         if (class == "MDIClient") {
-            int hSubWndNext = GetWindow(hWndNext, GW_CHILD);         // level 2
-            while (hSubWndNext != 0) {
-               debug("init()  -> "+ IntToHexStr(hSubWndNext) +": "+ GetClassName(hSubWndNext) +" "+ StringToStr(GetWindowText(hSubWndNext)));
-
-               int hSubSubWndNext = GetWindow(hSubWndNext, GW_CHILD);      // level 3
-               while (hSubSubWndNext != 0) {
-                  debug("init()     -> "+ IntToHexStr(hSubSubWndNext) +": "+ GetClassName(hSubSubWndNext) +" "+ StringToStr(GetWindowText(hSubSubWndNext)));
-                  hSubSubWndNext = GetWindow(hSubSubWndNext, GW_HWNDNEXT); // level 3
-               }
-               hSubWndNext = GetWindow(hSubWndNext, GW_HWNDNEXT);    // level 2
-            }
-         }
-         hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);             // level 1
-      }
-   }
-   */
    if (__STATUS_OFF)
       return(last_error);
 
@@ -187,6 +157,8 @@ int init() {
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int start() {
+   //debug("start()   WindowHandle()="+ WindowHandle(Symbol(),NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
+
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                         // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
@@ -296,6 +268,8 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
+   //debug("deinit()  WindowHandle()="+ WindowHandle(Symbol(),NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
+
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());

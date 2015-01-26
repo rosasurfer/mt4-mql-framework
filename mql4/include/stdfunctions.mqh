@@ -1551,6 +1551,67 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 
 
 /**
+ * Dropin-Ersatz für WindowHandle()
+ *
+ * Wie WindowHandle(), kann aber zusätzlich das Fensterhandle des aktuellen Charts ermitteln, wenn WindowHandle() 0 zurückgibt.
+ * Außerdem wird im Tester nicht der Fehler ERR_FUNC_NOT_ALLOWED_IN_TESTER ausgelöst.
+ *
+ * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll. Wenn NULL, wird unabhängig vom zweiten Parameter
+ *                           das Handle des aktuellen Charts zurückgegeben.
+ * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
+ *
+ * @return int - Fensterhandle oder NULL, falls ein Fehler auftrat
+ */
+int WindowHandleEx(string symbol, int timeframe=NULL) {
+   int hWnd, error;
+   string sNull;
+
+   // (1) normaler WindowHandle()-Aufruf mit Symbol und Timeframe
+   if (symbol != "0") {                                              // (string) NULL
+      hWnd  = WindowHandle(symbol, timeframe);
+      error = GetLastError();
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
+         return(!catch("WindowHandleEx(1)", error));
+   }
+
+
+   // (2) erweiterter Aufruf: eigenes Fenster ermitteln und Ergebnis cachen
+   static int static.hWndSelf = 0;                                   // mit Initializer   (wird in Indikatoren bei jedem init-Cycle zurückgesetzt, ist aber verschmerzbar)
+   if (static.hWndSelf != 0) {
+      //debug("WindowHandleEx()  static.hWndSelf is set");
+      return(static.hWndSelf);
+   }
+   else {
+      //debug("WindowHandleEx()  static.hWndSelf is not set");
+   }
+
+   hWnd  = WindowHandle(Symbol(), NULL);
+   error = GetLastError();
+   if (IsError(error)) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
+      return(!catch("WindowHandleEx(2)", error));
+
+   if (!hWnd) {
+      int hWndMain = GetApplicationWindow();
+      int hWndMdi  = FindWindowExA(hWndMain, NULL, "MDIClient", sNull);
+      if (!hWndMdi) return(!catch("WindowHandleEx(3)  MDIClient window not found", ERR_RUNTIME_ERROR));
+
+      // es muß genau ein ChildWindow des MDIClient-Windows mit leerer Titelzeile geben
+      int hWndChild1 = FindWindowExA(hWndMdi, NULL, sNull, sNull);   // lpWindow: Null-Pointer oder Leerstring (egal)
+      if (!hWndChild1) return(!catch("WindowHandleEx(4)  no MDI child window without title found", ERR_RUNTIME_ERROR));
+
+      int hWndChild2 = FindWindowExA(hWndMdi, hWndChild1, sNull, sNull);
+      if (hWndChild2 != 0) return(!catch("WindowHandleEx(5)  multiple MDI child windows without title found: 0x"+ IntToHexStr(hWndChild1) +", 0x"+ IntToHexStr(hWndChild2), ERR_RUNTIME_ERROR));
+
+      hWnd = GetWindow(hWndChild1, GW_CHILD);                        // dieses ChildWindow hat genau ein Child, das gesuchte Chart-Handle
+      if (!hWnd) return(!catch("WindowHandleEx(6)  no chart window inside MDI child window 0x"+ IntToHexStr(hWndChild1) +" found", ERR_RUNTIME_ERROR));
+
+      static.hWndSelf = hWnd;
+   }
+   return(hWnd);
+}
+
+
+/**
  * Ob der angegebene Wert einen Fehler darstellt.
  *
  * @param  int value
@@ -2639,6 +2700,7 @@ void __DummyCalls() {
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
+   WindowHandleEx(NULL);
 }
 
 

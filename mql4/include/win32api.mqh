@@ -62,6 +62,7 @@
    int  ShellExecuteA(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
 
 #import "user32.dll"
+   int  FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
