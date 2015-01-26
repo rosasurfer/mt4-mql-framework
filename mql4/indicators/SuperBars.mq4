@@ -3,11 +3,11 @@
  */
 #property indicator_chart_window
 
+#include <win32api.mqh>
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
-#include <win32api.mqh>
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
