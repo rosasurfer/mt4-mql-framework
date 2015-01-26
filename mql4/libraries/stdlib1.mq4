@@ -75,7 +75,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
    if (!GetApplicationWindow()) return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
    if (!GetUIThreadId())        return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
-                                                                     // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
+   if (!WindowHandleEx(NULL))   return(last_error);                  // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
 
 
    // (4) user-spezifische Init-Tasks ausführen
@@ -1033,9 +1033,8 @@ int Chart.Expert.Properties() {
    if (isTesting == 1)
       return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
-   int hWnd = WindowHandle(Symbol(), NULL);
-   if (!hWnd)
-      return(catch("Chart.Expert.Properties(2)->WindowHandle() = 0", ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
 
    if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
@@ -4196,9 +4195,8 @@ int WM_MT4() {
  * @return int - Fehlerstatus
  */
 int Chart.Objects.UnselectAll() {
-   int hWnd = WindowHandle(Symbol(), NULL);
-   if (!hWnd)
-      return(catch("Chart.Objects.UnselectAll()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
 
    PostMessageA(hWnd, WM_COMMAND, IDC_CHART_OBJECTS_UNSELECTALL, 0);
    return(NO_ERROR);
@@ -4211,9 +4209,8 @@ int Chart.Objects.UnselectAll() {
  * @return int - Fehlerstatus
  */
 int Chart.Refresh() {
-   int hWnd = WindowHandle(Symbol(), NULL);
-   if (!hWnd)
-      return(catch("Chart.Refresh()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
 
    PostMessageA(hWnd, WM_COMMAND, IDC_CHART_REFRESH, 0);
    return(NO_ERROR);
@@ -4230,9 +4227,8 @@ int Chart.Refresh() {
 int Chart.SendTick(bool sound=false) {
    sound = sound!=0;
 
-   int hWnd = WindowHandle(Symbol(), NULL);
-   if (!hWnd)
-      return(catch("Chart.SendTick()->WindowHandle() = 0", ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
 
    int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
 
@@ -8320,16 +8316,13 @@ int GetApplicationWindow() {
 
    // (1) mit WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
    if (IsChart) {
-      hWnd = WindowHandle(Symbol(), NULL);
-      if (hWnd != 0) {
+      hWnd = WindowHandle(Symbol(), NULL);               // !!!!!! Hier nicht WindowHandleEx() verwenden, da das zu einer rekursiven Schleife führt !!!!!!
+      if (hWnd != 0) {                                   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          hWnd = GetAncestor(hWnd, GA_ROOT);
-         if (GetClassName(hWnd) != terminalClassName) {
-            catch("GetApplicationWindow(1)  wrong top-level window found (class \""+ GetClassName(hWnd) +"\"), hChild originates from WindowHandle()", ERR_RUNTIME_ERROR);
-            hWnd = 0;
-         }
-         else {
+         if (GetClassName(hWnd) == terminalClassName)
             return(hWnd);
-         }
+         warn("GetApplicationWindow(1)  unknown terminal top-level window found (class \""+ GetClassName(hWnd) +"\"), hWndChild originated from WindowHandle()", ERR_RUNTIME_ERROR);
+         hWnd = 0;
       }
    }
 

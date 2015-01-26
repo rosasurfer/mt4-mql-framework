@@ -16,9 +16,6 @@ extern int    __lpSuperContext;
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
-   //debug("init()    WindowHandle()="+ WindowHandle(Symbol(),NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
-
-
    if (__STATUS_OFF)
       return(last_error);
 
@@ -36,7 +33,14 @@ int init() {
    }
 
 
-   // (2) stdlib initialisieren
+   // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
+   if (!WindowHandleEx(NULL)) {
+      UpdateProgramStatus();
+      if (__STATUS_OFF) return(last_error);
+   }
+
+
+   // (3) stdlib initialisieren
    int tickData[3];
    int error = stdlib.init(__ExecutionContext, tickData);
    if (IsError(error)) {
@@ -50,12 +54,12 @@ int init() {
    Tick.prevTime = tickData[2];
 
 
-   // (3) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
+   // (4) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
    if (__LOG) /*&&*/ if (IsSuperContext())
       log(InputsToStr());
 
 
-   // (4) user-spezifische Init-Tasks ausführen
+   // (5) user-spezifische Init-Tasks ausführen
    int initFlags = ec.InitFlags(__ExecutionContext);
 
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -81,7 +85,7 @@ int init() {
 
 
    /*
-   (5) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
+   (6) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
 
    Da sich die verfügbaren UninitializeReasons und ihre Bedeutung in den einzelnen Terminalversionen ändern, wird der
    UninitializeReason in ein im aktuellen Kontext in allen Terminalversionen einheitliches Init-Szenario "übersetzt".
@@ -130,7 +134,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                                                          //
 
 
-   // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INIT_REASON_PARAMETERS) {
       error = Chart.SendTick(false);                                    // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
       if (IsError(error)) {
@@ -157,18 +161,11 @@ int init() {
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int start() {
-   //debug("start()   WindowHandle()="+ WindowHandle(Symbol(),NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
-
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       Comment(NL + NL + NL + msg);                                         // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
       return(last_error);
    }
-
-
-   if (!__WND_HANDLE)
-      __WND_HANDLE = WindowHandle(Symbol(), NULL);                         // Workaround um WindowHandle()-Bug ab Build 418 (siehe dort)
-
 
    Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
    Tick.prevTime = Tick.Time;
@@ -268,8 +265,6 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   //debug("deinit()  WindowHandle()="+ WindowHandle(Symbol(),NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
-
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());

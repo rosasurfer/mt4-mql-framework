@@ -3272,15 +3272,14 @@ bool StoreWindowStatus() {
    // Konfiguration in Terminalkonfiguration speichern (oder lˆschen)
    string file    = GetLocalConfigPath();
    string section = "WindowStatus";
-      int hWnd    = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
-      if (!hWnd) return(!catch("StoreWindowStatus(1)->WindowHandle() = 0 in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
    string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
    if (mode.extern) {
-      if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+      if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
    }
    else if (!DeleteIniKey(file, section, key))                    return(!SetLastError(stdlib.GetLastError()));
 
-   return(!catch("StoreWindowStatus(3)"));
+   return(!catch("StoreWindowStatus(2)"));
 }
 
 
@@ -3302,13 +3301,11 @@ bool RestoreWindowStatus() {
    }
    // Bei Miﬂerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
    if (!restoreSignal.success) {
-      int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
-      if (hWnd != 0) {
-         string section = "WindowStatus";
-         string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
-         signal = GetLocalConfigString(section, key, "");
-         restoreSignal.success = (signal=="" || ParseSignal(signal, empty, empty));
-      }
+      int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
+      string section = "WindowStatus";
+      string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
+      signal = GetLocalConfigString(section, key, "");
+      restoreSignal.success = (signal=="" || ParseSignal(signal, empty, empty));
    }
    if (restoreSignal.success)
       TrackSignal(signal);

@@ -21,7 +21,14 @@ int init() {
    }
 
 
-   // (2) stdlib initialisieren
+   // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
+   if (!WindowHandleEx(NULL)) {
+      UpdateProgramStatus();
+      if (__STATUS_OFF) return(last_error);
+   }
+
+
+   // (3) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);
    if (IsError(error)) {
@@ -30,7 +37,7 @@ int init() {
    }
 
                                                                               // #define INIT_TIMEZONE               in stdlib.init()
-   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
    int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -51,7 +58,7 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
-   // (4) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (5) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -99,9 +106,6 @@ int start() {
       debug("start(1)  "+ msg);
       return(last_error);
    }
-
-   if (!__WND_HANDLE)                                                         // Workaround um WindowHandle()-Bug ab Build 418
-      __WND_HANDLE = WindowHandle(Symbol(), NULL);
 
 
    Tick++;                                                                    // einfacher Zähler, der konkrete Wert hat keine Bedeutung
@@ -286,13 +290,16 @@ bool Script.IsTesting() {
    if (static.resolved)
       return(static.result);
 
-   int hWnd = WindowHandle(Symbol(), NULL); if (!hWnd) hWnd = __WND_HANDLE;
-   if (!hWnd)
-      return(!catch("Script.IsTesting()->WindowHandle() = 0 in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(false);
 
-   static.result = StringEndsWith(GetWindowText(GetParent(hWnd)), "(visual)");   // "(visual)" ist nicht internationalisiert
+   string title = GetWindowText(GetParent(hWnd));
+   if (!StringLen(title))
+      return(!catch("Script.IsTesting(1)  cannot determine testing status,  hWndChart="+ hWnd +",  title(hWndChart)="+ StringToStr(title) +"  in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
+   static.result = StringEndsWith(title, "(visual)");                // "(visual)" ist nicht internationalisiert
    static.resolved = true;
+
    return(static.result);
 }
 
@@ -341,7 +348,7 @@ int InitExecutionContext() {
    int deinitFlags = SumInts(__DEINIT_FLAGS__);
 
    __NAME__        = names[0];
-   IsChart         = !IsTesting() || IsVisualMode();
+   IsChart         = true;
  //IsOfflineChart  = IsChart && ???
    __LOG           = true;
    __LOG_CUSTOM    = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
