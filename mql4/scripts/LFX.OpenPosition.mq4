@@ -125,7 +125,7 @@ int onStart() {
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      if (IsError(catch("onStart(1)   \""+ symbols[i] +"\"")))                         // TODO: auf ERR_UNKNOWN_SYMBOL prüfen
+      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                         // TODO: auf ERR_UNKNOWN_SYMBOL prüfen
          return(last_error);
 
       // (2.2) Werte auf ungültige MarketInfo()-Daten prüfen
@@ -176,7 +176,7 @@ int onStart() {
       else                                { if (lotStep < 100.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
       // (2.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)   Too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      if (GT(roundedLots[i], maxLot)) return(catch("onStart(3)  Too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       // (2.6) bei zu geringer Equity Leverage erhöhen und Details für spätere Warnung hinterlegen
       if (LT(roundedLots[i], minLot)) {
@@ -273,7 +273,7 @@ int onStart() {
 
    // (8) Logmessage ausgeben
    string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-   if (__LOG) log("onStart(7)   "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
+   if (__LOG) log("onStart(7)  "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), lfxFormat) +")");
 
 
    // (9) Order freigeben

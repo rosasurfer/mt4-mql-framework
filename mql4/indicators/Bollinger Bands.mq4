@@ -49,14 +49,14 @@ double wALMA[];                                                      // ALMA-Gew
  */
 int onInit() {
    // MA.Periods
-   if (MA.Periods < 2)                return(catch("onInit(1)   Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
+   if (MA.Periods < 2)                return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA.Timeframe
    MA.Timeframe = StringToUpper(StringTrim(MA.Timeframe));
    if (MA.Timeframe == "CURRENT")     MA.Timeframe = "";
    if (MA.Timeframe == ""       ) int maTimeframe = Period();
    else                               maTimeframe = StrToPeriod(MA.Timeframe);
-   if (maTimeframe == -1)             return(catch("onInit(2)   Invalid config/input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (maTimeframe == -1)             return(catch("onInit(2)  Invalid config/input parameter MA.Timeframe = \""+ MA.Timeframe +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA.Methods
    string values[];
@@ -68,7 +68,7 @@ int onInit() {
    else if (value == "EMA" ) maMethod1 = MODE_EMA;
    else if (value == "LWMA") maMethod1 = MODE_LWMA;
    else if (value == "ALMA") maMethod1 = MODE_ALMA;
-   else                               return(catch("onInit(3)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else                               return(catch("onInit(3)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // MA.Method 2
    if (size == 2) {
@@ -77,9 +77,9 @@ int onInit() {
       else if (value == "EMA" ) maMethod2 = MODE_EMA;
       else if (value == "LWMA") maMethod2 = MODE_LWMA;
       else if (value == "ALMA") maMethod2 = MODE_ALMA;
-      else                            return(catch("onInit(4)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      else                            return(catch("onInit(4)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
-   else if (size > 2)                 return(catch("onInit(5)   Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else if (size > 2)                 return(catch("onInit(5)  Invalid input parameter MA.Methods = \""+ MA.Methods +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    ALMA = (maMethod1==MODE_ALMA || maMethod2==MODE_ALMA);
 
    // AppliedPrice
@@ -91,25 +91,25 @@ int onInit() {
    else if (chr == "M") appliedPrice = PRICE_MEDIAN;
    else if (chr == "T") appliedPrice = PRICE_TYPICAL;
    else if (chr == "W") appliedPrice = PRICE_WEIGHTED;
-   else                               return(catch("onInit(6)   Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   else                               return(catch("onInit(6)  Invalid input parameter AppliedPrice = \""+ AppliedPrice +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviations
    size = Explode(Deviations, ",", values, NULL);
-   if (size > 2)                      return(catch("onInit(7)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (size > 2)                      return(catch("onInit(7)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 1
    value = StringTrim(values[0]);
-   if (!StringIsNumeric(value))       return(catch("onInit(8)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(value))       return(catch("onInit(8)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    deviation1 = StrToDouble(value);
-   if (deviation1 <= 0)               return(catch("onInit(9)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (deviation1 <= 0)               return(catch("onInit(9)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Deviation 2
    if (maMethod2 != -1) {
       if (size == 2) {
          value = StringTrim(values[1]);
-         if (!StringIsNumeric(value)) return(catch("onInit(10)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(value)) return(catch("onInit(10)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          deviation2 = StrToDouble(value);
-         if (deviation2 <= 0)         return(catch("onInit(11)   Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (deviation2 <= 0)         return(catch("onInit(11)  Invalid input parameter Deviations = \""+ Deviations +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else
          deviation2 = deviation1;
@@ -223,7 +223,7 @@ int onDeinit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (ArraySize(iUpperBand1) == 0)                                  // kann bei Terminal-Start auftreten
-      return(debug("onTick(1)   size(iUpperBand1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(debug("onTick(1)  size(iUpperBand1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // vor Neuberechnung alle Indikatorwerte zurücksetzen
    if (!ValidBars) {
@@ -283,8 +283,8 @@ int onTick() {
       ArrayCopy(array1, iMovAvg,     0, 0, startBar+1);
       ArrayCopy(array2, iUpperBand1, 0, 0, startBar+1);
 
-      debug("onTick(2)   IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
-      debug("onTick(3)   iMovAvg = "+ DoublesToStr(array1, ", "));
+      debug("onTick(2)  IsReverseIndexedDoubleArray(iMovAvg) = "+ IsReverseIndexedDoubleArray(iMovAvg));
+      debug("onTick(3)  iMovAvg = "+ DoublesToStr(array1, ", "));
 
       start()  iMovAvg     = {1.61582234, 1.61550427, 1.61522141, 1.61491031, 1.61461975, 1.61433817, 1.61409116, 1.61388254, 1.61369392, 1.61348614, 1.61329017, 1.61313936}
                iUpperBand1 = {302939849.67705119, 302939849.67673314, 302939849.67645031, 302939849.67613918, 302939849.6758486, 302939849.67556703, 302939849.67532003, 302939849.67511141, 302939849.67492276, 302939849.67471498, 302939849.674519, 302939849.6743682}

@@ -16,6 +16,7 @@ bool     IsOfflineChart;                                    // ob der Chart ein 
 int      __WND_HANDLE;                                      // Window-Handle des aktuellen Charts: Workaround um WindowHandle()-Bug ab Build 418
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
+int        LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind
 string   __SMS.receiver;                                    // Empfänger-Nr. für SMS-Benachrichtigungen
 
@@ -26,6 +27,7 @@ bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Inpu
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
 int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
+
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
@@ -56,6 +58,16 @@ int      last_error;                                        // der letzte Fehler
 #define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
 #define NL                          "\n"                    // new line (MQL schreibt 0x0D0A)
 #define TAB                         "\t"                    // tab
+
+
+// Log level
+#define L_OFF                 INT_MIN                       // Test mit: if (LOG_LEVEL >= Event)
+#define L_FATAL                 10000                       // ist umgekehrt zu log4j
+#define L_ERROR                 20000
+#define L_WARN                  30000
+#define L_INFO                  40000
+#define L_DEBUG                 50000
+#define L_ALL                 INT_MAX
 
 
 // Magic characters
@@ -860,9 +872,6 @@ int start.RelaunchInputDialog() {
  * @param  int    error   - Fehlercode
  *
  * @return int - derselbe Fehlercode
- *
- *
- * NOTE: In der Headerdatei implementiert, um den vollständigen Namen des laufenden Programms anzeigen zu können.
  */
 int debug(string message, int error=NO_ERROR) {
    string name;
@@ -903,7 +912,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    // rekursive Aufrufe abfangen (treten nur in einer nicht-initialisierten Library auf)
    static bool recursive = false;                                    // mit Initializer: in EA's ok
    if (recursive)                                                    //                  in Indikatoren nur im aktuellen init-Cycle ok (vertretbar)
-      return(debug("catch()   recursive error: "+ location, error));
+      return(debug("catch()  recursive error: "+ location, error));
    recursive = true;
 
 
@@ -1503,7 +1512,7 @@ string PeriodDescription(int period=NULL) {
 int PlaySoundEx(string soundfile) {
    string filename = StringReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
-   if (!IsFile(fullName)) return(catch("PlaySoundEx(1)   file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
+   if (!IsFile(fullName)) return(catch("PlaySoundEx(1)  file not found: \""+ fullName +"\"", ERR_FILE_NOT_FOUND));
 
    if (IsTesting()) PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
    else             PlaySound(filename);
@@ -1629,7 +1638,7 @@ int HandleEvent(int event, int criteria=NULL) {
       case EVENT_EXTERNAL_CMD   : if (EventListener.ExternalCommand(sResults, criteria)) { status = true; onExternalCommand(sResults); } break;
 
       default:
-         return(!catch("HandleEvent(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
+         return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
    }
    return(status);                                                   // (int) bool
 }
@@ -1757,7 +1766,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    orderKeep = orderKeep!=0;
 
    if (ticket <= 0)
-      return(!catch("WaitForTicket(1)   illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (orderKeep) {
       if (!OrderPush("WaitForTicket(2)"))
@@ -1767,8 +1776,8 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())       warn(StringConcatenate("WaitForTicket(3)   #", ticket, " not yet accessible"));
-      else if (i && !(i%10)) warn(StringConcatenate("WaitForTicket(4)   #", ticket, " not yet accessible after ", DoubleToStr(i*delay/1000., 1), " s"));
+      if (IsTesting())       warn(StringConcatenate("WaitForTicket(3)  #", ticket, " not yet accessible"));
+      else if (i && !(i%10)) warn(StringConcatenate("WaitForTicket(4)  #", ticket, " not yet accessible after ", DoubleToStr(i*delay/1000., 1), " s"));
       Sleep(delay);
       i++;
    }
@@ -1804,7 +1813,7 @@ double PipValue(double lots=1, bool hideErrors=false) {
          return(0);
       }
       if (!TickSize) {
-         if (!hideErrors) catch("PipValue(2)   illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
+         if (!hideErrors) catch("PipValue(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
          return(0);
       }
    }
@@ -1813,7 +1822,7 @@ double PipValue(double lots=1, bool hideErrors=false) {
    error = GetLastError();
    if (!error) {
       if (!tickValue) {
-         if (!hideErrors) catch("PipValue(3)   illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
+         if (!hideErrors) catch("PipValue(3)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
          return(0);
       }
       return(Pip/TickSize * tickValue * lots);
@@ -1836,7 +1845,7 @@ bool IsLogging() {
    string name = __NAME__;
    if (IsLibrary()) {
       if (!StringLen(__NAME__))
-         return(!catch("IsLogging(1)   library not initialized", ERR_RUNTIME_ERROR));
+         return(!catch("IsLogging(1)  library not initialized", ERR_RUNTIME_ERROR));
       name = StringSubstr(__NAME__, 0, StringFind(__NAME__, ":")) ;
    }
 
@@ -1952,7 +1961,7 @@ bool LE(double double1, double double2, int digits=8) {
  */
 bool EQ(double double1, double double2, int digits=8) {
    if (digits < 0 || digits > 8)
-      return(!catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)
@@ -1979,7 +1988,7 @@ bool EQ(double double1, double double2, int digits=8) {
       case 15: return(diff <= 0.000000000000001 );
       case 16: return(diff <= 0.0000000000000001);
    }
-   return(!catch("EQ()   illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
+   return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
    */
 }
 
@@ -2533,7 +2542,7 @@ bool StringIsNull(string value) {
  *       anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()   too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);

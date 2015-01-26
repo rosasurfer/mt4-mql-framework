@@ -279,7 +279,7 @@ double ConvertCurrency(double amount, string from, string to) {
 
    static bool done;
    if (!done) {
-      //debug("ConvertCurrency()   "+ NumberToStr(amount, ".2+") +" "+ from +" = "+ NumberToStr(result, ".2+R") +" "+ to);
+      //debug("ConvertCurrency()  "+ NumberToStr(amount, ".2+") +" "+ from +" = "+ NumberToStr(result, ".2+R") +" "+ to);
       done = true;
    }
    return(result);

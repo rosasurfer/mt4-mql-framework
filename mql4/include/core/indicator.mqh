@@ -60,11 +60,11 @@ int init() {
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
          if (error == ERR_UNKNOWN_SYMBOL)                                  // - synthetisches Symbol im Offline-Chart
-                           return(UpdateProgramStatus(debug("init(1)   MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+                           return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
          UpdateProgramStatus(catch("init(2)", error));
          if (__STATUS_OFF) return(last_error);
       }
-      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)   MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!TickSize)       return(UpdateProgramStatus(debug("init(3)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -72,13 +72,13 @@ int init() {
          UpdateProgramStatus(catch("init(5)", error));
          if (__STATUS_OFF) return(last_error);
       }
-      if (!tickValue)      return(UpdateProgramStatus(debug("init(6)   MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!tickValue)      return(UpdateProgramStatus(debug("init(6)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                       // noch nicht implementiert
 
 
    /*
-   (5) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen jedoch nicht implementiert sein.
+   (5) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
 
    Da sich die verfügbaren UninitializeReasons und ihre Bedeutung in den einzelnen Terminalversionen ändern, wird der
    UninitializeReason in ein im aktuellen Kontext in allen Terminalversionen einheitliches Init-Szenario "übersetzt".
@@ -94,36 +94,37 @@ int init() {
    - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
    - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
 
-   Gibt eine dieser Funktionen einen normalen Fehler zurück, führt init() einen vorhandenen Postprocessing-Hook aus und bricht danach ab.
-   Gibt eine dieser Funktionen -1 zurück, bricht init() sofort ab und ein vorhandener Postprocessing-Hook wird nicht ausgeführt.
+   Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
+   Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
+   (falls implementiert) -1 zurückgeben.
    */
-   int initReason = InitReason();
-   if (!initReason) {
-      UpdateProgramStatus();
-      if (__STATUS_OFF) return(last_error);
-   }
-
-   if (onInit() == -1)                                                                                         // Preprocessing-Hook
-      return(UpdateProgramStatus(last_error));                                                                 //
-                                                                                                               //
-   switch (initReason) {                                                                                       //
-      case INIT_REASON_USER             : error = onInit.User();             break;                            //
-      case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;                            // falsche Werte für Point und Digits in neuem Chartfenster
-      case INIT_REASON_PROGRAM          : error = onInit.Program();          break;                            //
-      case INIT_REASON_PROGRAM_CLEARTEST: error = onInit.ProgramClearTest(); break;                            //
-      case INIT_REASON_PARAMETERS       : error = onInit.Parameters();       break;                            //
-      case INIT_REASON_TIMEFRAMECHANGE  : error = onInit.TimeframeChange();  break;                            //
-      case INIT_REASON_SYMBOLCHANGE     : error = onInit.SymbolChange();     break;                            //
-      case INIT_REASON_RECOMPILE        : error = onInit.Recompile();        break;                            //
-      default:                                                                                                 //
-         return(UpdateProgramStatus(catch("init(7)   unknown initReason = "+ initReason, ERR_RUNTIME_ERROR))); //
-   }                                                                                                           //
-   if (error == -1)                                                                                            //
-      return(UpdateProgramStatus(last_error));                                                                 //
-                                                                                                               //
-   afterInit();                                                                                                // Postprocessing-Hook
-   UpdateProgramStatus();
-   if (__STATUS_OFF) return(last_error);
+   error = onInit();                                                                                              // Preprocessing-Hook
+                                                                                                                  //
+   if (!error) {                                                                                                  //
+      int initReason = InitReason();                                                                              //
+      if (!initReason) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }                           //
+                                                                                                                  //
+      switch (initReason) {                                                                                       //
+         case INIT_REASON_USER             : error = onInit.User();             break;                            //
+         case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;                            // falsche Werte für Point und Digits in neuem Chartfenster
+         case INIT_REASON_PROGRAM          : error = onInit.Program();          break;                            //
+         case INIT_REASON_PROGRAM_CLEARTEST: error = onInit.ProgramClearTest(); break;                            //
+         case INIT_REASON_PARAMETERS       : error = onInit.Parameters();       break;                            //
+         case INIT_REASON_TIMEFRAMECHANGE  : error = onInit.TimeframeChange();  break;                            //
+         case INIT_REASON_SYMBOLCHANGE     : error = onInit.SymbolChange();     break;                            //
+         case INIT_REASON_RECOMPILE        : error = onInit.Recompile();        break;                            //
+         default:                                                                                                 //
+            return(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));  //
+      }                                                                                                           //
+   }                                                                                                              //
+   if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                                                        //
+   UpdateProgramStatus();                                                                                         //
+                                                                                                                  //
+   if (error != -1) {                                                                                             //
+      afterInit();                                                                                                // Postprocessing-Hook
+      UpdateProgramStatus();                                                                                      //
+   }                                                                                                              //
+   if (__STATUS_OFF) return(last_error);                                                                          //
 
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
@@ -134,8 +135,8 @@ int init() {
          if (__STATUS_OFF) return(last_error);
       }
    }
-
-   return(UpdateProgramStatus(catch("init(8)")));
+   UpdateProgramStatus(catch("init(8)"));
+   return(last_error);
 }
 
 
@@ -182,7 +183,7 @@ int start() {
       __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(2)   init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          error = init();                                                   // init() erneut aufrufen
@@ -211,7 +212,7 @@ int start() {
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)
-      return(UpdateProgramStatus(SetLastError(debug("start(3)   Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
+      return(UpdateProgramStatus(SetLastError(debug("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
 
    /*
    // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
@@ -266,12 +267,18 @@ int deinit() {
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
+   // User-Routinen *können*, müssen aber nicht implementiert werden.
+   //
+   // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
+   // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
+   // (falls implementiert) -1 zurückgeben.
 
-   // (1) User-spezifische deinit()-Routinen aufrufen                            // User-Routinen *können*, müssen aber nicht implementiert werden.
+
+   // (1) User-spezifische deinit()-Routinen aufrufen                            //
    int error = onDeinit();                                                       // Preprocessing-Hook
                                                                                  //
-   if (error != -1) {                                                            // - gibt eine der User-Routinen einen normalen Fehler zurück, bricht deinit() *nicht* ab
-      switch (UninitializeReason()) {                                            // - gibt eine der User-Routinen -1 zurück, bricht deinit() ab
+   if (!error) {                                                                 //
+      switch (UninitializeReason()) {                                            //
          case REASON_PARAMETERS : error = onDeinitParameterChange(); break;      //
          case REASON_CHARTCHANGE: error = onDeinitChartChange();     break;      //
          case REASON_ACCOUNT    : error = onDeinitAccountChange();   break;      //
@@ -279,20 +286,24 @@ int deinit() {
          case REASON_UNDEFINED  : error = onDeinitUndefined();       break;      //
          case REASON_REMOVE     : error = onDeinitRemove();          break;      //
          case REASON_RECOMPILE  : error = onDeinitRecompile();       break;      //
-         // build > 509
+         // build > 509                                                          //
          case REASON_TEMPLATE   : error = onDeinitTemplate();        break;      //
          case REASON_INITFAILED : error = onDeinitFailed();          break;      //
          case REASON_CLOSE      : error = onDeinitClose();           break;      //
-
-         default: return(UpdateProgramStatus(catch("deinit(1)   unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+                                                                                 //
+         default: return(UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                          //
    }                                                                             //
-   if (error != -1)                                                              //
+   UpdateProgramStatus();                                                        //
+                                                                                 //
+   if (error != -1) {                                                            //
       error = afterDeinit();                                                     // Postprocessing-Hook
+      UpdateProgramStatus();
+   }
 
 
    // (2) User-spezifische Deinit-Tasks ausführen
-   if (error != -1) {
+   if (!error) {
       // ...
    }
 
@@ -302,7 +313,8 @@ int deinit() {
    if (IsError(error))
       SetLastError(error);
 
-   return(UpdateProgramStatus(last_error));
+   UpdateProgramStatus(catch("deinit(2)"));
+   return(last_error);
 }
 
 
@@ -444,7 +456,7 @@ int InitReason() {
    // (1) REASON_PARAMETERS
    if (uninitializeReason == REASON_PARAMETERS) {
       // innerhalb iCustom(): nie
-      if (IsSuperContext()) return(!catch("InitReason(1)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (IsSuperContext()) return(!catch("InitReason(1)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator oder Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei VisualMode=On), Input-Dialog
       if (Init.IsNoTick())  return(INIT_REASON_USER      );             // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators
       else                  return(INIT_REASON_PARAMETERS);             // Parameter-Wechsel eines vorhandenen Indikators
@@ -454,7 +466,7 @@ int InitReason() {
    // (2) REASON_CHARTCHANGE
    if (uninitializeReason == REASON_CHARTCHANGE) {
       // innerhalb iCustom(): nie
-      if (IsSuperContext())           return(!catch("InitReason(2)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (IsSuperContext())           return(!catch("InitReason(2)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
       if (Init.IsNewSymbol(Symbol())) return(INIT_REASON_SYMBOLCHANGE   );
       else                            return(INIT_REASON_TIMEFRAMECHANGE);
@@ -472,7 +484,7 @@ int InitReason() {
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
       if (IsTesting() && !IsVisualMode() && currentThread==uiThread) {  // versionsunabhängig
          if (build <= 229)   return(INIT_REASON_PROGRAM_CLEARTEST);
-                             return(!catch("InitReason(3)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+                             return(!catch("InitReason(3)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       }
       return(INIT_REASON_PROGRAM);
    }
@@ -481,19 +493,19 @@ int InitReason() {
    // (4) REASON_REMOVE
    if (uninitializeReason == REASON_REMOVE) {
       // außerhalb iCustom(): nie
-      if (!IsSuperContext())                               return(!catch("InitReason(4)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsSuperContext())                               return(!catch("InitReason(4)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
-      if (!IsTesting() || currentThread!=uiThread)         return(!catch("InitReason(5)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsTesting() || currentThread!=uiThread)         return(!catch("InitReason(5)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       if (!IsVisualMode()) { if (388<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
       else                 { if (578<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
-      return(!catch("InitReason(6)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      return(!catch("InitReason(6)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
    }
 
 
    // (5) REASON_RECOMPILE
    if (uninitializeReason == REASON_RECOMPILE) {
       // innerhalb iCustom(): nie
-      if (IsSuperContext())  return(!catch("InitReason(7)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (IsSuperContext())  return(!catch("InitReason(7)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
       return(INIT_REASON_RECOMPILE);
    }
@@ -502,11 +514,11 @@ int InitReason() {
    // (6) REASON_CHARTCLOSE
    if (uninitializeReason == REASON_CHARTCLOSE) {
       // außerhalb iCustom(): nie
-      if (!IsSuperContext())  return(!catch("InitReason(8)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsSuperContext())  return(!catch("InitReason(8)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
-      if (!IsTesting() || currentThread!=uiThread) return(!catch("InitReason(9)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsTesting() || currentThread!=uiThread) return(!catch("InitReason(9)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       if (build >= 633)                            return(INIT_REASON_PROGRAM_CLEARTEST);
-      return(!catch("InitReason(10)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      return(!catch("InitReason(10)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
    }
 
 
@@ -515,9 +527,9 @@ int InitReason() {
       case REASON_TEMPLATE:      // build > 509
       case REASON_INITFAILED:    // ...
       case REASON_CLOSE:         // ...
-         return(!catch("InitReason(11)   unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+         return(!catch("InitReason(11)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
    }
-   return(!catch("InitReason(12)   unknown UninitializeReason = "+ uninitializeReason +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+   return(!catch("InitReason(12)  unknown UninitializeReason = "+ uninitializeReason +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
 }
 
 
@@ -540,7 +552,7 @@ int DeinitReason() {
  * NOTE: Der EXECUTION_CONTEXT im Hauptmodul *kann* nach jedem init-Cycle an einer neuen Adresse liegen (ec.Signature ist NICHT konstant).
  */
 int InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)   signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
 
    // (1) globale Variablen initialisieren (werden später ggf. mit Werten aus restauriertem oder SuperContext überschrieben)
@@ -562,7 +574,7 @@ int InitExecutionContext() {
       // (3.1) temporäre Kopie eines existierenden SuperContexts erstellen und die betroffenen globalen Variablen überschreiben
       int super[EXECUTION_CONTEXT.intSize], chartProperties;
       if (__lpSuperContext != NULL) {
-         if (__lpSuperContext < 0x00010000) return(catch("InitExecutionContext(2)   invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
+         if (__lpSuperContext < 0x00010000) return(catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
          CopyMemory(__lpSuperContext, GetBufferAddress(super), EXECUTION_CONTEXT.size);
 
          IsChart        = (ec.ChartProperties(super) & CP_CHART   && 1);

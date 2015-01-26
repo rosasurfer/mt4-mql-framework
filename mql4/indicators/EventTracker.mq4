@@ -120,8 +120,8 @@ bool Configure() {
          orderAlerts.sms          = StringIsPhoneNumber(orderAlerts.sms.receiver);
 
          if (!orderAlerts.sms) {
-            if (sValue == "system") return(!catch("Configure(1)   "+ ifString(orderAlerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ orderAlerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            else                    return(!catch("Configure(2)   Invalid input parameter Order.Alerts.SMS.Receiver = \""+ Order.Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            if (sValue == "system") return(!catch("Configure(1)  "+ ifString(orderAlerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ orderAlerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else                    return(!catch("Configure(2)  Invalid input parameter Order.Alerts.SMS.Receiver = \""+ Order.Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE));
          }
       }
       else orderAlerts.sms = false;
@@ -152,7 +152,7 @@ bool Configure() {
    if (__SMS.alerts) {
       __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
       // TODO: Rufnummer validieren
-      //if (!StringIsDigit(__SMS.receiver)) return(!catch("Configure(1)   invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      //if (!StringIsDigit(__SMS.receiver)) return(!catch("Configure(1)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       if (!StringLen(__SMS.receiver))
          __SMS.alerts = false;
    }
@@ -160,7 +160,7 @@ bool Configure() {
 
 
    if (true) {
-      debug("Configure()   "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                                    "; ",
+      debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                                    "; ",
                                                 "orders.sound=", BoolToStr(orderAlerts.sound),                                               "; ",
                                                 "orders.mail=" , ifString(orderAlerts.mail, "\""+ orderAlerts.mail.receiver +"\"", "false"), "; ",
                                                 "orders.sms="  , ifString(orderAlerts.sms,  "\""+ orderAlerts.sms.receiver  +"\"", "false"), "; ",
@@ -360,7 +360,7 @@ bool onOrderFail(int tickets[]) {
          if (!SendSMS(__SMS.receiver, message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onOrderFail(2)   "+ message);
+      else if (__LOG) log("onOrderFail(2)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -400,7 +400,7 @@ bool onPositionOpen(int tickets[]) {
          if (!SendSMS(__SMS.receiver, message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onPositionOpen(2)   "+ message);
+      else if (__LOG) log("onPositionOpen(2)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -441,7 +441,7 @@ bool onPositionClose(int tickets[]) {
          if (!SendSMS(__SMS.receiver, message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onPositionClose(2)   "+ message);
+      else if (__LOG) log("onPositionClose(2)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -457,7 +457,7 @@ bool onPositionClose(int tickets[]) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()   inputs: ",
+   return(StringConcatenate("init()  inputs: ",
 
                             "Track.Orders="                , BoolToStr(Track.Orders),       "; ",
                             "Order.Alerts.Sound="          , BoolToStr(Order.Alerts.Sound), "; ",

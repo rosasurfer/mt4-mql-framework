@@ -68,7 +68,7 @@ int onInit() {
    if (SMS.Alerts) {
       // SMS.Receiver
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
-      if (!StringIsDigit(SMS.Receiver))                SMS.Alerts = _false(catch("onInit(1)   invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsDigit(SMS.Receiver))                SMS.Alerts = _false(catch("onInit(1)  invalid config value SMS.Receiver = \""+ SMS.Receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    __SMS.alerts   = SMS.Alerts;
    __SMS.receiver = SMS.Receiver;
@@ -82,25 +82,25 @@ int onInit() {
       // MovingAverage.Timeframe zuerst, da Gültigkeit von Periods davon abhängt
       string strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Timeframe", MovingAverage.Timeframe);
       MovingAverage.Timeframe = StrToPeriod(strValue);
-      if (MovingAverage.Timeframe == -1)               Track.MovingAverage = _false(catch("onInit(2)   invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (MovingAverage.Timeframe == -1)               Track.MovingAverage = _false(catch("onInit(2)  invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
-      if (MovingAverage.Timeframe >= PERIOD_MN1)       Track.MovingAverage = _false(catch("onInit(3)   unsupported config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (MovingAverage.Timeframe >= PERIOD_MN1)       Track.MovingAverage = _false(catch("onInit(3)  unsupported config value [EventTracker."+ StdSymbol() +"] MovingAverage.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
       // MovingAverage.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Method", MovingAverageMethodDescription(MovingAverage.Method));
       MovingAverage.Method = StrToMovAvgMethod(strValue);
-      if (MovingAverage.Method == -1)                  Track.MovingAverage = _false(catch("onInit(4)   invalid config value [EventTracker."+ StdSymbol() +"] MovingAverage.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (MovingAverage.Method == -1)                  Track.MovingAverage = _false(catch("onInit(4)  invalid config value [EventTracker."+ StdSymbol() +"] MovingAverage.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
    if (Track.MovingAverage) {
       // MovingAverage.Periods
       MovingAverage.Periods = GetConfigDouble("EventTracker."+ StdSymbol(), "MovingAverage.Periods", MovingAverage.Periods);
-      if (LE(MovingAverage.Periods, 0))                Track.MovingAverage = _false(catch("onInit(5)   invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (LE(MovingAverage.Periods, 0))                Track.MovingAverage = _false(catch("onInit(5)  invalid or missing config value [EventTracker."+ StdSymbol() +"] MovingAverage.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
-      if (MathModFix(MovingAverage.Periods, 0.5) != 0) Track.MovingAverage = _false(catch("onInit(6)   illegal config value [EventTracker."+ StdSymbol() +"] MovingAverage.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (MathModFix(MovingAverage.Periods, 0.5) != 0) Track.MovingAverage = _false(catch("onInit(6)  illegal config value [EventTracker."+ StdSymbol() +"] MovingAverage.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.MovingAverage) {
       // max. Timeframe für EventListener.BarOpen soll H1 sein
@@ -124,25 +124,25 @@ int onInit() {
    if (Track.BollingerBands) {
       // BollingerBands.MA.Periods
       BollingerBands.MA.Periods = GetConfigInt("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", BollingerBands.MA.Periods);
-      if (BollingerBands.MA.Periods < 2)               Track.BollingerBands = _false(catch("onInit(7)   invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (BollingerBands.MA.Periods < 2)               Track.BollingerBands = _false(catch("onInit(7)  invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Periods = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Periods", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Timeframe
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Timeframe", BollingerBands.MA.Timeframe);
       BollingerBands.MA.Timeframe = StrToPeriod(strValue);
-      if (BollingerBands.MA.Timeframe == -1)           Track.BollingerBands = _false(catch("onInit(8)   invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (BollingerBands.MA.Timeframe >= PERIOD_MN1)   Track.BollingerBands = _false(catch("onInit(9)   unsupported config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (BollingerBands.MA.Timeframe == -1)           Track.BollingerBands = _false(catch("onInit(8)  invalid or missing config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (BollingerBands.MA.Timeframe >= PERIOD_MN1)   Track.BollingerBands = _false(catch("onInit(9)  unsupported config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Timeframe = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
       BollingerBands.MA.Method = StrToMovAvgMethod(strValue);
-      if (BollingerBands.MA.Method == -1)              Track.BollingerBands = _false(catch("onInit(10)   invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (BollingerBands.MA.Method == -1)              Track.BollingerBands = _false(catch("onInit(10)  invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // BollingerBands.Deviation
       BollingerBands.Deviation = GetConfigDouble("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", BollingerBands.Deviation);
-      if (LE(BollingerBands.Deviation, 0))             Track.BollingerBands = _false(catch("onInit(11)   invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (LE(BollingerBands.Deviation, 0))             Track.BollingerBands = _false(catch("onInit(11)  invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.Deviation = \""+ GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.Deviation", "") +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
       // max. Indikator-Timeframe soll H1 sein
@@ -180,7 +180,7 @@ int onTick() {
    static int loginData[3];                                          // { Login.PreviousAccount, Login.CurrentAccount, Login.Servertime }
    EventListener.AccountChange(loginData, 0);                        // Der Eventlistener schreibt unabhängig vom Egebnis immer die aktuellen Accountdaten ins Array.
    if (TimeCurrent() < loginData[2]) {
-      //debug("onTick()   old tick=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\"   login=\""+ TimeToStr(loginData[2], TIME_FULL) +"\"");
+      //debug("onTick()  old tick=\""+ TimeToStr(TimeCurrent(), TIME_FULL) +"\"   login=\""+ TimeToStr(loginData[2], TIME_FULL) +"\"");
       return(catch("onTick()"));
    }
    */
@@ -197,7 +197,7 @@ int onTick() {
    if (Track.MovingAverage) {
       int iNull[];
       if (EventListener.BarOpen(iNull, movingAverage.TimeframeFlag)) {
-         debug("onTick()   BarOpen=true");
+         debug("onTick()  BarOpen=true");
 
          int    timeframe   = MovingAverage.Timeframe;
          string maPeriods   = NumberToStr(MovingAverage.Periods, ".+");
@@ -270,7 +270,7 @@ int HandleEvent.alt(int event, int criteria=NULL) {
       case EVENT_POSITION_CLOSE : if (EventListener.PositionClose(iResults, criteria)) { status = true; onPositionClose(iResults); } break;
 
       default:
-         return(!catch("HandleEvent.alt(1)   unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
+         return(!catch("HandleEvent.alt(1)  unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
    }
    return(status);                                                   // (int) bool
 }
@@ -304,14 +304,14 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    if (!accountNumber[0]) {                                          // erster Aufruf
       accountNumber  [0] = account;
       accountInitTime[0] = mql.GetSystemTime();
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach erstem Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
+      //debug("EventListener.PositionOpen()  Account "+ account +" nach erstem Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
    else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit
       accountNumber  [0] = account;
       accountInitTime[0] = mql.GetSystemTime();
       ArrayResize(knownPendings,  0);                                // gespeicherte Orderdaten löschen
       ArrayResize(knownPositions, 0);
-      //debug("EventListener.PositionOpen()   Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
+      //debug("EventListener.PositionOpen()  Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
 
 
@@ -337,7 +337,7 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
          ArrayResize(knownPendings, pendings+1);                     // neue, unbekannte Pending-Order
          knownPendings[pendings][0] = ticket;
          knownPendings[pendings][1] = type;
-         //debug("EventListener.PositionOpen()   pending order #", ticket, " added: ", OperationTypeDescription(type));
+         //debug("EventListener.PositionOpen()  pending order #", ticket, " added: ", OperationTypeDescription(type));
       }
 
       // (2.2) Positionen
@@ -381,12 +381,12 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
 
          ArrayResize(knownPositions, positions+1);
          knownPositions[positions] = ticket;
-         //debug("EventListener.PositionOpen()   position #", ticket, " added: ", OperationTypeDescription(type));
+         //debug("EventListener.PositionOpen()  position #", ticket, " added: ", OperationTypeDescription(type));
       }
    }
 
    bool eventStatus = (ArraySize(tickets) > 0);
-   //debug("EventListener.PositionOpen()   eventStatus: "+ eventStatus);
+   //debug("EventListener.PositionOpen()  eventStatus: "+ eventStatus);
 
    int error = GetLastError();
    if (!error)
@@ -422,12 +422,12 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
 
    if (!accountNumber[0]) {
       accountNumber[0] = account;
-      //debug("EventListener.PositionClose()   Account "+ account +" nach 1. Lib-Aufruf initialisiert");
+      //debug("EventListener.PositionClose()  Account "+ account +" nach 1. Lib-Aufruf initialisiert");
    }
    else if (accountNumber[0] != account) {
       accountNumber[0] = account;
       ArrayResize(knownPositions, 0);
-      //debug("EventListener.PositionClose()   Account "+ account +" nach Accountwechsel initialisiert");
+      //debug("EventListener.PositionClose()  Account "+ account +" nach Accountwechsel initialisiert");
    }
    else {
       // alle beim letzten Aufruf offenen Positionen prüfen             // TODO: bei offenen Orders und dem ersten Login in einen anderen Account crasht alles
@@ -475,12 +475,12 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
          noOfKnownPositions++;
          ArrayResize(knownPositions, noOfKnownPositions);
          knownPositions[noOfKnownPositions-1] = OrderTicket();
-         //debug("EventListener.PositionClose()   open position #", ticket, " added: ", OperationTypeDescription(OrderType()));
+         //debug("EventListener.PositionClose()  open position #", ticket, " added: ", OperationTypeDescription(OrderType()));
       }
    }
 
    bool eventStatus = (ArraySize(tickets) > 0);
-   //debug("EventListener.PositionClose()   eventStatus: "+ eventStatus);
+   //debug("EventListener.PositionClose()  eventStatus: "+ eventStatus);
 
    int error = GetLastError();
    if (!error)
@@ -516,7 +516,7 @@ bool onPositionOpen(int tickets[]) {
          if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onPositionOpen(3)   "+ message);
+      else if (__LOG) log("onPositionOpen(3)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -554,7 +554,7 @@ bool onPositionClose(int tickets[]) {
          if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onPositionClose(3)   "+ message);
+      else if (__LOG) log("onPositionClose(3)  "+ message);
    }
 
    // ggf. Sound abspielen
@@ -579,7 +579,7 @@ bool CheckBollingerBands() {
    if (EventListener.BandsCrossing(BollingerBands.MA.Periods, BollingerBands.MA.Timeframe, BollingerBands.MA.Method, BollingerBands.Deviation, event, DeepSkyBlue)) {
       int    crossing = MathRound(event[CROSSING_TYPE]);
       double value    = ifDouble(crossing==CROSSING_LOW, event[CROSSING_LOW_VALUE], event[CROSSING_HIGH_VALUE]);
-      debug("CheckBollingerBands(0.1)   new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_FULL) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
+      debug("CheckBollingerBands(0.1)  new "+ ifString(crossing==CROSSING_LOW, "low", "high") +" bands crossing at "+ TimeToStr(TimeCurrent(), TIME_FULL) + ifString(crossing==CROSSING_LOW, "  <= ", "  => ") + NumberToStr(value, PriceFormat));
 
       // ggf. SMS verschicken
       if (__SMS.alerts) {
@@ -587,7 +587,7 @@ bool CheckBollingerBands() {
          if (!SendSMS(__SMS.receiver, StringConcatenate(TimeToStr(TimeLocal(), TIME_MINUTES), " ", message)))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("CheckBollingerBands(2)   "+ message);
+      else if (__LOG) log("CheckBollingerBands(2)  "+ message);
 
       // ggf. Sound abspielen
       if (Sound.Alerts)
@@ -675,8 +675,8 @@ int iOHLCBarRange(string symbol, int period, int from, int to, double &results[]
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCBarRange(1)   invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCBarRange(2)   invalid parameter to = "+ to, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCBarRange(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to   < 0) return(catch("iOHLCBarRange(2)  invalid parameter to = "+ to, ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (from < to) {
       int tmp = from;
@@ -783,8 +783,8 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCTimeRange(1)   invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCTimeRange(2)   invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (to   < 0) return(catch("iOHLCTimeRange(2)  invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
 
    if (from > to) {
       datetime tmp = from;
@@ -836,7 +836,7 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
    results[MODE_HIGH ] = iHigh (symbol, period, highBar);
    results[MODE_LOW  ] = iLow  (symbol, period, lowBar );
    results[MODE_CLOSE] = iClose(symbol, period, toBar  );
-   //debug("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")   period="+ PeriodDescription(period));
+   //debug("iOHLCTimeRange()    from="+ TimeToStr(from, TIME_DATE|TIME_MINUTES) +" (bar="+ fromBar +")   to="+ TimeToStr(to, TIME_DATE|TIME_MINUTES) +" (bar="+ toBar +")  period="+ PeriodDescription(period));
 
    return(catch("iOHLCTimeRange(3)"));
 }
@@ -857,7 +857,7 @@ int iOHLCBar(string symbol, int period, int bar, double &results[]) {
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLCBar(1)   invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLCBar(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 
@@ -889,7 +889,7 @@ int iOHLCBar(string symbol, int period, int bar, double &results[]) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("init()   inputs: ",
+   return(StringConcatenate("init()  inputs: ",
 
                             "Sound.Alerts=",                BoolToStr(Sound.Alerts)                     , "; ",
 
@@ -904,7 +904,7 @@ string InputsToStr() {
 
                             "Track.MovingAverage=",         BoolToStr(Track.MovingAverage)              , "; ",
                     ifString(Track.MovingAverage,
-          StringConcatenate("MovingAverage.Periods=",       NumberToStr(MovingAverage.Periods, ".1+")   , "; ",
+          StringConcatenate("MovingAverage.Periods=",       NumberToStr(MovingAverage.Periods, ".1+")  , "; ",
                             "MovingAverage.Timeframe=",     MovingAverage.Timeframe                     , "; ",
                             "MovingAverage.Method=",        MovingAverage.Method                        , "; "), ""),
 

@@ -46,29 +46,29 @@ int onInit() {
          break;
       }
    }
-   if (i >= size) return(catch("onInit(1)   missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (i >= size) return(catch("onInit(1)  missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
 
 
    // (2) Scriptparameter validieren, Format: "LFX:{iTicket}:{sAction}", z.B. "LFX:428371265:open"
-   if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)   invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)  invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
    int pos = StringFind(command, ":", 4);
-   if (pos == -1)                                   return(catch("onInit(3)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (pos == -1)                                   return(catch("onInit(3)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
    string sValue = StringSubstrFix(command, 4, pos-4);
-   if (!StringIsDigit(sValue))                      return(catch("onInit(4)   invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (!StringIsDigit(sValue))                      return(catch("onInit(4)  invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
    lfxTicket = StrToInteger(sValue);
-   if (!lfxTicket)                                  return(catch("onInit(5)   invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (!lfxTicket)                                  return(catch("onInit(5)  invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
    action = StringToLower(StringSubstr(command, pos+1));
-   if (action!="open" && action!="close")           return(catch("onInit(6)   invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (action!="open" && action!="close")           return(catch("onInit(6)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
 
 
    // (3) ggf. Leverage-Konfiguration einlesen und validieren
    if (action == "open") {
       if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
-                                                    return(catch("onInit(7)   Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
+                                                    return(catch("onInit(7)  Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
       sValue = GetGlobalConfigString("MoneyManagement", "BasketLeverage", "");
-      if (!StringIsNumeric(sValue))                 return(catch("onInit(8)   Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      if (!StringIsNumeric(sValue))                 return(catch("onInit(8)  Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       leverage = StrToDouble(sValue);
-      if (leverage < 1)                             return(catch("onInit(9)   Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+      if (leverage < 1)                             return(catch("onInit(9)  Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
 
@@ -78,7 +78,7 @@ int onInit() {
       __SMS.receiver = GetConfigString("SMS", "Receiver", "");
       if (!StringLen(__SMS.receiver)) {
          __SMS.alerts = false;
-         return(catch("onInit(10)   missing setting [SMS]->Receiver", ERR_INVALID_CONFIG_PARAMVALUE));
+         return(catch("onInit(10)  missing setting [SMS]->Receiver", ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
    return(catch("onInit(11)"));
@@ -104,12 +104,12 @@ int onDeinit() {
 int onStart() {
    // Order holen
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
-   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)   LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
+   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
 
    // Action ausführen
    if      (action == "open" ) OpenOrder    (lfxOrder);
    else if (action == "close") ClosePosition(lfxOrder);
-   else                        warn("onStart(2)   unknown action command \""+ action +"\"");
+   else                        warn("onStart(2)  unknown action command \""+ action +"\"");
 
    return(last_error);
 }
@@ -182,7 +182,7 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
  */
 bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    subPositions = 0;
-   if (!lo.IsPending(lo)) return(!catch("OpenOrder.Execute(1)   #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
+   if (!lo.IsPending(lo)) return(!catch("OpenOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
 
    // (1) Trade-Parameter einlesen
    string lfxCurrency  = lo.Currency(lo);
@@ -219,7 +219,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      if (IsError(catch("OpenOrder.Execute(2)   \""+ symbols[i] +"\""))) return(false);
+      if (IsError(catch("OpenOrder.Execute(2)  \""+ symbols[i] +"\""))) return(false);
 
       // (3.2) auf ungültige MarketInfo()-Daten prüfen
       errorMsg = "";
@@ -238,7 +238,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
             retry++;
             continue;
          }                                                                             // TODO: auf ERR_CONCURRENT_MODIFICATION prüfen
-         return(!catch("OpenOrder.Execute(3)   invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA));
+         return(!catch("OpenOrder.Execute(3)  invalid MarketInfo() data: "+ errorMsg, ERR_INVALID_MARKET_DATA));
       }
 
       // (3.4) Lotsize berechnen
@@ -263,7 +263,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       else                                { if (lotStep < 100.  ) roundedLots[i] =       MathRound(MathRound(roundedLots[i]/100   ) * 100      ); }   // 1200-...: Vielfaches von 100
 
       // (3.5) Lotsize validieren
-      if (GT(roundedLots[i], maxLot)) return(!catch("OpenOrder.Execute(4)   #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
+      if (GT(roundedLots[i], maxLot)) return(!catch("OpenOrder.Execute(4)  #"+ lo.Ticket(lo) +" too large trade volume for "+ GetSymbolName(symbols[i]) +": "+ NumberToStr(roundedLots[i], ".+") +" lot (maxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_TRADE_VOLUME));
 
       // (3.6) bei zu geringer Equity Leverage erhöhen und Details für Warnung in (3.8) hinterlegen
       if (LT(roundedLots[i], minLot)) {
@@ -277,7 +277,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    realUnits = NormalizeDouble(realUnits * units, 1);
 
    // (3.8) bei Leverageüberschreitung Warnung ausgeben, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0) warn("OpenOrder.Execute(5)   #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
+   if (StringLen(overLeverageMsg) > 0) warn("OpenOrder.Execute(5)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
 
 
    // (4) Directions der Teilpositionen bestimmen
@@ -289,7 +289,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
-   if (__LOG) log("OpenOrder.Execute(6)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+   if (__LOG) log("OpenOrder.Execute(6)  "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
 
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
@@ -331,7 +331,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (7) Logmessage ausgeben
    string priceFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-   if (__LOG) log("OpenOrder.Execute(7)   "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), priceFormat) +")");
+   if (__LOG) log("OpenOrder.Execute(7)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), priceFormat) +")");
 
    return(!catch("OpenOrder.Execute(8)"));
 }
@@ -366,13 +366,13 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       // (2.1) Order neu einlesen und gespeicherten OpenError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(!catch("OpenOrder.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("OpenOrder.Save(1)->LFX.GetOrder()  order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
       if (!isOpenError)
-         if (__LOG) log("OpenOrder.Save(3)   over-writing LFX_ORDER.OpenError (was ERR_CONCURRENT_MODIFICATION)");
+         if (__LOG) log("OpenOrder.Save(3)  over-writing LFX_ORDER.OpenError (was ERR_CONCURRENT_MODIFICATION)");
 
       lo.setVersion(lo, lo.Version(stored));
       if (!LFX.SaveOrder(lo))                                        // diesmal ohne irgendwelche Fehler abzufangen
@@ -431,7 +431,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
  * @return bool - Erfolgsstatus
  */
 bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
-   if (!lo.IsOpen(lo)) return(!catch("ClosePosition.Execute(1)   #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPending(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
+   if (!lo.IsOpen(lo)) return(!catch("ClosePosition.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPending(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
 
 
    // (1) zu schließende Einzelpositionen selektieren
@@ -446,14 +446,14 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
          ArrayPushInt(tickets, OrderTicket());
    }
    int ticketsSize = ArraySize(tickets);
-   if (!ticketsSize) return(!catch("ClosePosition.Execute(2)   #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR));
+   if (!ticketsSize) return(!catch("ClosePosition.Execute(2)  #"+ lo.Ticket(lo) +" no matching open subpositions found ", ERR_RUNTIME_ERROR));
 
 
    // (2) Einzelpositionen schließen
    double slippage    = 0.1;
    color  markerColor = CLR_NONE;
    int    oeFlags     = NULL;
-   if (__LOG) log("ClosePosition.Execute(3)   "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+   if (__LOG) log("ClosePosition.Execute(3)  "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
 
    /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
    if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
@@ -488,7 +488,7 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    int    counter     = StrToInteger(oldComment);
    string priceFormat = ifString(lo.Currency(lo)=="JPY", ".2'", ".4'");
 
-   if (__LOG) log("ClosePosition.Execute(4)   "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), priceFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   if (__LOG) log("ClosePosition.Execute(4)  "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), priceFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    return(true);
 }
@@ -523,13 +523,13 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       // (2.1) Order neu einlesen und gespeicherten CloseError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(!catch("ClosePosition.Save(1)->LFX.GetOrder()   order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()   concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("ClosePosition.Save(1)->LFX.GetOrder()  order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
       if (!isCloseError)
-         if (__LOG) log("ClosePosition.Save(3)   over-writing LFX_ORDER.CloseError (was ERR_CONCURRENT_MODIFICATION)");
+         if (__LOG) log("ClosePosition.Save(3)  over-writing LFX_ORDER.CloseError (was ERR_CONCURRENT_MODIFICATION)");
 
       lo.setVersion(lo, lo.Version(stored));
       if (!LFX.SaveOrder(lo))                                        // diesmal ohne irgendwelche Fehler abzufangen
