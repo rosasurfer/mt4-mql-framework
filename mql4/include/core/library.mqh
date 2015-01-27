@@ -150,7 +150,7 @@ bool Script.IsTesting() {
 
    string title = GetWindowText(GetParent(hWnd));
    if (!StringLen(title))
-      return(!catch("Script.IsTesting(1)  cannot determine testing status,  hWndChart="+ hWnd +",  title(hWndChart)="+ StringToStr(title) +"  in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(1)  cannot determine testing status,  hWndChart=0x"+ IntToHexStr(hWnd) +",  title(hWndChart)="+ StringToStr(title) +"  in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(title, "(visual)");                               // "(visual)" ist nicht internationalisiert
    static.resolved = true;
@@ -195,7 +195,7 @@ int Indicator.IsTesting() {
 
       string title = GetWindowText(GetParent(hWndChart));
       if (!StringLen(title))
-         return(_EMPTY(debug("Indicator.IsTesting(2)  cannot determine testing status,  hWndChart="+ hWndChart +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+         return(_EMPTY(debug("Indicator.IsTesting(2)  cannot determine testing status,  hWndChart=0x"+ IntToHexStr(hWndChart) +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       static.result = StringEndsWith(title, "(visual)");             // Unterscheidung durch "...(visual)" im Fenstertitel
 
