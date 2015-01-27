@@ -67,12 +67,14 @@
    int  GetAncestor(int hWnd, int cmd);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
    int  GetDesktopWindow();
+   int  GetDlgCtrlID(int hWndCtl);
    int  GetDlgItem(int hDlg, int nIDDlgItem);
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
+   bool IsWindow(int hWnd);
    int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    int  MessageBoxExA(int hWnd, string lpText, string lpCaption, int style, int wLanguageId);
    bool PostMessageA(int hWnd, int msg, int wParam, int lParam);

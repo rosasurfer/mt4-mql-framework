@@ -73,9 +73,9 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
 
 
    // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
-   if (!GetApplicationWindow()) return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
-   if (!GetUIThreadId())        return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
-   if (!WindowHandleEx(NULL))   return(last_error);                  // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
+   if (!WindowHandleEx(NULL))   return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
+   if (!GetApplicationWindow()) return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
+   if (!GetUIThreadId())        return(last_error);                  // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
 
 
    // (4) user-spezifische Init-Tasks ausführen
@@ -6106,25 +6106,6 @@ int DecreasePeriod(int period = 0) {
 
 
 /**
- * Konvertiert einen Double in einen String und entfernt abschließende Nullstellen.
- *
- * @param  double value
- *
- * @return string
- */
-string DoubleToStrTrim(double value) {
-   string result = value;
-
-   int digits = Max(1, CountDecimals(value));                        // mindestens eine Dezimalstelle wird erhalten
-
-   if (digits < 8)
-      result = StringLeft(result, digits-8);
-
-   return(result);
-}
-
-
-/**
  * Konvertiert die angegebene FXT-Zeit (Forex Time) nach GMT.
  *
  * @param  datetime fxtTime - FXT-Zeit
@@ -8528,6 +8509,9 @@ string InitReasonToStr(int reason) {
  * NOTE: Ruft intern SendMessage() auf, deshalb nicht nach EA-Stop bei VisualMode=On benutzen, da sonst UI-Thread-Deadlock.
  */
 string GetWindowText(int hWnd) {
+   if (hWnd <= 0)       return(!catch("GetWindowText(1)  invalid parameter hWnd = "+ hWnd, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (!IsWindow(hWnd)) return(!catch("GetWindowText(2)  not an existing window hWnd = 0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
+
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
@@ -8538,11 +8522,6 @@ string GetWindowText(int hWnd) {
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
    }
-
-   if (!chars) {
-      // GetLastWin32Error() prüfen, hWnd könnte ungültig sein
-   }
-
    return(buffer[0]);
 }
 
@@ -9707,12 +9686,16 @@ color Color.ModifyHSV(color rgb, double mod_hue, double mod_saturation, double m
  * @return string
  */
 string DoubleToStrEx(double value, int digits) {
+   string sValue = value;
+   if (StringGetChar(sValue, 3) == '#')                              // "-1.#IND0000" => NaN
+      return(sValue);                                                // "-1.#INF0000" => Infinite
+
    if (digits < 0 || digits > 16)
       return(_emptyStr(catch("DoubleToStrEx()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
    /*
-   double decimals[17] = { 1.0,     // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
-                          10.0,     // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
+   double decimals[17] = { 1.0,                                      // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
+                          10.0,                                      // als in einer Zeile stehend und gibt bei Fehlern falsche Zeilennummern zurück.
                          100.0,
                         1000.0,
                        10000.0,
@@ -9827,6 +9810,11 @@ string StringRepeat(string input, int times) {
  * @return string - formatierter Wert oder Leerstring, falls ein Fehler auftrat
  */
 string NumberToStr(double number, string mask) {
+   string sNumber = number;
+   if (StringGetChar(sNumber, 3) == '#')                             // "-1.#IND0000" => NaN
+      return(sNumber);                                               // "-1.#INF0000" => Infinite
+
+
    // --- Beginn Maske parsen -------------------------
    int maskLen = StringLen(mask);
 
@@ -12623,6 +12611,57 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
    ArrayResize(oe, 0);
    return(true);
+}
+
+
+/**
+ * Listet alle ChildWindows eines Parent-Windows auf und schickt die Ausgabe an die Debug-Ausgabe.
+ *
+ * @param  int  hWnd      - Handle des Parent-Windows
+ * @param  bool recursive - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EnumChildWindows(int hWnd, bool recursive=false) {
+   recursive = recursive!=0;
+   if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd=0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
+
+   string padding, class, title, sId;
+   int    id;
+
+   static int sublevel;
+   if (!sublevel) {
+      class = GetClassName(hWnd);
+      title = GetWindowText(hWnd);
+      id    = GetDlgCtrlID(hWnd);
+      sId   = ifString(id, " ("+ id +")", "");
+      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" "+ StringToStr(title) + sId);
+   }
+   sublevel++;
+   padding = StringRepeat(" ", (sublevel-1)<<1);
+
+   int i, hWndNext=GetWindow(hWnd, GW_CHILD);
+   while (hWndNext != 0) {
+      i++;
+      class = GetClassName(hWndNext);
+      title = GetWindowText(hWndNext);
+      id    = GetDlgCtrlID(hWndNext);
+      sId   = ifString(id, " ("+ id +")", "");
+      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" "+ StringToStr(title) + sId);
+
+      if (recursive) {
+         if (!EnumChildWindows(hWndNext, true)) {
+            sublevel--;
+            return(false);
+         }
+      }
+      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
+   }
+   if (!sublevel) /*&&*/ if (!i) debug("EnumChildWindows(.)  "+ padding +"-> (no child windows)");
+
+   sublevel--;
+   return(!catch("EnumChildWindows(3)"));
 }
 
 

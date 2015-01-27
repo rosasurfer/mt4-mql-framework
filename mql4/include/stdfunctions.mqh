@@ -1543,7 +1543,9 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 }
 
 
-#define GW_CHILD     5
+#define GW_HWNDLAST     1
+#define GW_HWNDPREV     3
+#define GW_CHILD        5
 
 
 /**
@@ -1593,21 +1595,23 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       return(!catch("WindowHandleEx(2)", error));
 
    if (!hWnd) {
-      string sNull;
       int hWndMain = GetApplicationWindow();
-      int hWndMdi  = FindWindowExA(hWndMain, NULL, "MDIClient", sNull);
-      if (!hWndMdi)        return(!catch("WindowHandleEx(3)  MDIClient window not found", ERR_RUNTIME_ERROR));
+      int hWndMdi  = GetDlgItem(hWndMain, IDD_MDI_CLIENT);
+      if (!hWndMdi) return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
 
-      // es muß genau ein ChildWindow des MDIClient-Windows mit leerer Titelzeile geben
-      int hWndChild1 = FindWindowExA(hWndMdi, NULL, sNull, sNull);   // lpWindow: Null-Pointer oder Leerstring (egal)
-      if (!hWndChild1)     return(!catch("WindowHandleEx(4)  no MDI child window without title found", ERR_RUNTIME_ERROR));
+      // Es muß genau ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order:
+      int    hWndChild = GetWindow(hWndMdi,   GW_CHILD   ); if (!hWndChild)           return(!catch("WindowHandleEx(4)  no child window of MDIClient window found", ERR_RUNTIME_ERROR));
+      int    hWndLast  = GetWindow(hWndChild, GW_HWNDLAST); if (!hWndLast)            return(!catch("WindowHandleEx(5)  no last child window of MDIClient window found", ERR_WIN32_ERROR));
+      string title     = GetWindowText(hWndLast);           if (StringLen(title) > 0) return(!catch("WindowHandleEx(6)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"", ERR_RUNTIME_ERROR));
+      int    hWndPrev  = GetWindow(hWndLast,  GW_HWNDPREV);
+      if (hWndPrev != 0) {
+         title = GetWindowText(hWndPrev);
+         if (!StringLen(title)) return(!catch("WindowHandleEx(7)  multiple MDI child windows without a title found: 0x"+ IntToHexStr(hWndPrev) +", 0x"+ IntToHexStr(hWndLast), ERR_RUNTIME_ERROR));
+      }
 
-      int hWndChild2 = FindWindowExA(hWndMdi, hWndChild1, sNull, sNull);
-      if (hWndChild2 != 0) return(!catch("WindowHandleEx(5)  multiple MDI child windows without title found: 0x"+ IntToHexStr(hWndChild1) +", 0x"+ IntToHexStr(hWndChild2), ERR_RUNTIME_ERROR));
-
-      hWnd = GetWindow(hWndChild1, GW_CHILD);                        // dieses ChildWindow hat genau ein Child, das gesuchte Chart-Handle
-      if (!hWnd)           return(!catch("WindowHandleEx(6)  no chart window inside MDI child window 0x"+ IntToHexStr(hWndChild1) +" found", ERR_RUNTIME_ERROR));
-
+      // Dieses letzte Child in Z order hat selbst genau ein Child, das gesuchte MetaTrader-WindowHandle:
+      hWnd = GetWindow(hWndLast, GW_CHILD);
+      if (!hWnd)                return(!catch("WindowHandleEx(8)  no MetaTrader chart window inside of last MDIClient window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
    }
 
    static.hWndSelf = hWnd;
@@ -2756,6 +2760,7 @@ void __DummyCalls() {
    bool   GetConfigBool(string section, string key, bool defaultValue);
    int    GetCustomLogID();
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
+   string GetWindowText(int hWnd);
    string IntToHexStr(int integer);
    bool   IsFile(string filename);
    bool   ReverseStringArray(string array[]);
@@ -2775,8 +2780,8 @@ void __DummyCalls() {
    void   OutputDebugStringA(string lpMessage);                      // funktioniert nur für Admins zuverlässig
 
 #import "user32.dll"
-   int    FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+   int    GetDlgItem(int hDlg, int nIDDlgItem);
    int    GetWindow(int hWnd, int cmd);
 
 #import "winmm.dll"

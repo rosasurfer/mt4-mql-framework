@@ -552,6 +552,7 @@
 
    // Win32-Funktionen (an MQL angepaﬂt)
    void     CopyMemory(int source, int destination, int bytes);      // intern als MoveMemory() implementiert
+   bool     EnumChildWindows(int hWnd, bool recursive);
    string   GetClassName(int hWnd);
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);

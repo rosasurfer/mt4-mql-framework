@@ -22,23 +22,31 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   double a = -5;
-   double b = MathLog(a);
+   debug("onStart()  MathArccos(-1.1)  = "+ MathArccos(-1.1), GetLastError());
+   debug("onStart()  MathArccos( 1.1)  = "+ MathArccos( 1.1), GetLastError());
 
-   debug("onStart()  b="+ StringRight(DoubleToStrEx(b, 16), -1) +" or "+ b);
+   debug("onStart()  MathArcsin(-1.1)  = "+ MathArcsin(-1.1), GetLastError());
+   debug("onStart()  MathArcsin( 1.1)  = "+ MathArcsin( 1.1), GetLastError());
 
-   int    ints   [2]; ints   [0] = a; ints   [1] = a*2;
-   double doubles[2]; doubles[0] = a; doubles[1] = b;
+   debug("onStart()  MathTan(  0°) = "+ MathTan(        0)  , GetLastError());
+   debug("onStart()  MathTan( 45°) = "+ MathTan(Math.PI/4)  , GetLastError());
+   debug("onStart()  MathTan( 90°) = "+ MathTan(Math.PI/2)  , GetLastError());
+   debug("onStart()  MathTan(405°) = "+ MathTan(Math.PI*2.25), GetLastError());
 
-   debug("onStart()  addr(ints)   =0x"+ IntToHexStr(GetIntsAddress(ints)));
-   debug("onStart()  addr(doubles)=0x"+ IntToHexStr(GetDoublesAddress(doubles)));
+   double a = MathLog(-1);
+   double b = MathLog( 0);
+   double c = -1* b;
 
+   debug("onStart()  MathLog(-1)    = "+ a +" * -1 = "+ (-1*a) +"  (a!=a) => "+ BoolToStr(a != a), GetLastError());
+   debug("onStart()  MathLog( 0)    = "+ b +" * -1 =  "+ (c)   +"  (b!=b) => "+ BoolToStr(b != b), GetLastError());
+   debug("onStart()  -1.#INF + -1.#INF = "+ (b + b)+"  (b+b==b) => "+ BoolToStr(b+b == b), GetLastError());
+   debug("onStart()  -1.#INF - -1.#INF = "+ (b - b), GetLastError());
+   debug("onStart()   1.#INF +  1.#INF =  "+ (c + c)+"  (c+c==c) => "+ BoolToStr(c+c == c), GetLastError());
+   debug("onStart()   1.#INF -  1.#INF = "+ (c - c), GetLastError());
 
-   //[2192] MetaTrader::EURUSD,M30::TestScript::onStart()   a=-5  b=- or -1.#IND0000
+   debug("onStart()  MathSqrt(-1)   = "+ MathSqrt(-1)      , GetLastError());
 
-
-
-   return(catch("onStart(2)"));
+   return(catch("onStart(10)"));
 
 
 
