@@ -169,9 +169,7 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-      debug("start(1)  "+ msg);
       ShowStatus(last_error);
-
       if (IsTesting())                                                     // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
          Tester.Stop();                                                    // oder das Ende von start() evt. nicht mehr ausgeführt wird.
       return(last_error);
@@ -594,6 +592,28 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 }
 
 
+#define WM_COMMAND      0x0111
+
+
+/**
+ * Stoppt den Tester. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return int - Fehlerstatus
+ */
+int Tester.Stop() {
+   if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   if (Tester.IsStopped())          return(NO_ERROR);                // skipping
+   if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);                // SendMessage() darf in deinit() nicht mehr benutzt werden
+
+   int hWnd = GetApplicationWindow();
+   if (!hWnd) return(last_error);
+
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
+   return(NO_ERROR);
+}
+
+
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -636,10 +656,11 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    Chart.SendTick(bool sound);
    void   CopyMemory(int source, int destination, int bytes);
    string CreateString(int length);
+   int    GetApplicationWindow();
    bool   IntInArray(int haystack[], int needle);
    int    PeriodFlag(int period);
    int    SumInts(int array[]);
-   int    Tester.Stop();
+   bool   Tester.IsStopped();
    int    Toolbar.Experts(bool enable);
 
 #import "StdLib.dll"
@@ -662,7 +683,10 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
 
-   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugger);
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
+
+#import "user32.dll"
+   int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
 #import
 
 

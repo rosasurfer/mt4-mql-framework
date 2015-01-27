@@ -290,34 +290,34 @@ int    onTick()                  { return(NO_ERROR); }
 
 
 // alt
-int    onInitParameterChange()   {                                                                                                             return(NO_ERROR);  }
-int    onInitChartChange()       {                                                                                                             return(NO_ERROR);  }
+int    onInitParameterChange()   {                                                                                                            return(NO_ERROR);  }
+int    onInitChartChange()       {                                                                                                            return(NO_ERROR);  }
 int    onInitAccountChange()     {                                   return(catch("onInitAccountChange()  unexpected UninitializeReason",   ERR_RUNTIME_ERROR)); }
-int    onInitChartClose()        {                                                                                                             return(NO_ERROR);  }
-int    onInitUndefined()         {                                                                                                             return(NO_ERROR);  }
-int    onInitRemove()            {                                                                                                             return(NO_ERROR);  }
-int    onInitRecompile()         {                                                                                                             return(NO_ERROR);  }
+int    onInitChartClose()        {                                                                                                            return(NO_ERROR);  }
+int    onInitUndefined()         {                                                                                                            return(NO_ERROR);  }
+int    onInitRemove()            {                                                                                                            return(NO_ERROR);  }
+int    onInitRecompile()         {                                                                                                            return(NO_ERROR);  }
 int    onInitTemplate()          { /*build > 509*/                   return(catch("onInitTemplate()  unexpected UninitializeReason",        ERR_RUNTIME_ERROR)); }
 int    onInitFailed()            { /*build > 509*/                   return(catch("onInitFailed()  unexpected UninitializeReason",          ERR_RUNTIME_ERROR)); }
 int    onInitClose()             { /*build > 509*/                   return(catch("onInitClose()  unexpected UninitializeReason",           ERR_RUNTIME_ERROR)); }
 
-int    onDeinit()                {                                                                                                             return(NO_ERROR);  }
-int    onDeinitParameterChange() {                                                                                                             return(NO_ERROR);  }
-int    onDeinitChartChange()     {                                                                                                             return(NO_ERROR);  }
+int    onDeinit()                {                                                                                                            return(NO_ERROR);  }
+int    onDeinitParameterChange() {                                                                                                            return(NO_ERROR);  }
+int    onDeinitChartChange()     {                                                                                                            return(NO_ERROR);  }
 int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()  unexpected UninitializeReason", ERR_RUNTIME_ERROR));
                                    /*if (IsIndicator()) _warn("onDeinitAccountChange()  unexpected UninitializeReason");*/                    return(NO_ERROR);  }
 int    onDeinitChartClose()      { /*if (IsIndicator()) _warn("onDeinitChartClose()  unexpected UninitializeReason");*/                       return(NO_ERROR);  }
 int    onDeinitUndefined()       { if (IsExpert()) if (!IsTesting()) return(catch("onDeinitUndefined()  unexpected UninitializeReason",     ERR_RUNTIME_ERROR));
                                    /*if (IsIndicator()) _warn("onDeinitUndefined()  unexpected UninitializeReason");*/                        return(NO_ERROR);  }
-int    onDeinitRemove()          {                                                                                                             return(NO_ERROR);  }
-int    onDeinitRecompile()       {                                                                                                             return(NO_ERROR);  }
+int    onDeinitRemove()          {                                                                                                            return(NO_ERROR);  }
+int    onDeinitRecompile()       {                                                                                                            return(NO_ERROR);  }
 int    onDeinitTemplate()        { /*build > 509*/                     /*_warn("onDeinitTemplate()  unexpected UninitializeReason");*/        return(NO_ERROR);  }
 int    onDeinitFailed()          { /*build > 509*/                     /*_warn("onDeinitFailed()  unexpected UninitializeReason");  */        return(NO_ERROR);  }
 int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
-int    afterDeinit()             {                                                                                                             return(NO_ERROR);  }
+int    afterDeinit()             {                                                                                                            return(NO_ERROR);  }
 
-string InputsToStr()             {                                       return("InputsToStr()  function not implemented"); }
-int    ShowStatus(int error)     { if (IsExpert()) Comment("\n\n\n\nShowStatus() not implemented");        return(error); }
+string InputsToStr()             {                                                  return("InputsToStr()  function not implemented"); }
+int    ShowStatus(int error)     { Comment("\n\n\n\nShowStatus() not implemented"); return(error); }
 
 
 /**
@@ -1092,28 +1092,6 @@ bool Tester.IsPaused() {
       return(false);
 
    return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_PAUSERESUME)) == ">>");
-}
-
-
-/**
- * Stoppt den Tester. Der Aufruf ist nur im Tester möglich.
- *
- * @return int - Fehlerstatus
- */
-int Tester.Stop() {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
-   if (!isTesting)                                        return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   if (Tester.IsStopped())             return(NO_ERROR);             // skipping
-   if (!IsScript())
-      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
-
-   int hWnd = GetApplicationWindow();
-   if (!hWnd)
-      return(last_error);
-
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
-   return(NO_ERROR);
 }
 
 
@@ -5404,62 +5382,6 @@ string StringRight(string value, int n) {
    if (n > 0) return(StringSubstr(value, StringLen(value)-n));
    if (n < 0) return(StringSubstr(value, -n                ));
    return("");
-}
-
-
-/**
- * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
- * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
- *
- * @param  string object
- * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
- * @param  int    length - wenn negativ, Anzahl der zurückzugebenden Zeichen links vom Startindex
- *
- * @return string
- */
-string StringSubstrFix(string object, int start, int length=INT_MAX) {
-   if (length == 0)
-      return("");
-
-   if (start < 0)
-      start = Max(0, start + StringLen(object));
-
-   if (length < 0) {
-      start += 1 + length;
-      length = Abs(length);
-   }
-   return(StringSubstr(object, start, length));
-}
-
-
-/**
- * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
- *
- * @param  string object  - Ausgangsstring
- * @param  string search  - Suchstring
- * @param  string replace - Ersatzstring
- *
- * @return string - modifizierter String
- */
-string StringReplace(string object, string search, string replace) {
-   if (!StringLen(object)) return(object);
-   if (!StringLen(search)) return(object);
-   if (search == replace)  return(object);
-
-   int from=0, found=StringFind(object, search);
-   if (found == -1)
-      return(object);
-
-   string result = "";
-
-   while (found > -1) {
-      result = StringConcatenate(result, StringSubstrFix(object, from, found-from), replace);
-      from   = found + StringLen(search);
-      found  = StringFind(object, search, from);
-   }
-   result = StringConcatenate(result, StringSubstr(object, from));
-
-   return(result);
 }
 
 

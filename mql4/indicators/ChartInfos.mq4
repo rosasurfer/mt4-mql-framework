@@ -3713,7 +3713,6 @@ string InputsToStr() {
    string   ShortAccountCompany();
    bool     StringEndsWith(string object, string postfix);
    bool     StringIEndsWith(string object, string postfix);
-   string   StringSubstrFix(string object, int start, int length);
    string   StringToUpper(string value);
    string   UninitializeReasonToStr(int reason);
 

@@ -39,6 +39,14 @@ string label.description = "Description";                // Label für Chartanzei
  * @return int - Fehlerstatus
  */
 int onInit() {
+   /*
+   debug("onInit()  WindowHandle()="+ WindowHandle(Symbol(), NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
+   int hWnd = GetApplicationWindow();           if (!hWnd) return(SetLastError(stdlib.GetLastError()));
+   int hMdi = GetDlgItem(hWnd, IDD_MDI_CLIENT); if (!hMdi) return(SetLastError(ERR_RUNTIME_ERROR));
+   if (!EnumChildWindows(hMdi, false))                     return(SetLastError(stdlib.GetLastError()));
+   */
+
+
    // (1) Parametervalidierung
    // Colors
    if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung

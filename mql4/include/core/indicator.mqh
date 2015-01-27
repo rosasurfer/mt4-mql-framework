@@ -750,7 +750,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
 
-   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool debugger);
+   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();
