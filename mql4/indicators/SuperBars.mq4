@@ -889,7 +889,7 @@ bool RestoreWindowStatus() {
    bool success = false;
    int  timeframe;
 
-   // Versuchen, die Konfiguration aus dem Chart zu restaurieren (ist nach Laden eines neuen Templates nicht vorhanden).
+   // Versuchen, die Konfiguration aus dem Chart zu restaurieren (ist dort nach Laden eines neuen Templates nicht vorhanden).
    string label = __NAME__ +".sticky.timeframe", empty="";
    if (ObjectFind(label) == 0) {
       string sValue = ObjectDescription(label);
