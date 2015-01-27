@@ -50,9 +50,9 @@ int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
 
 
    // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
-   if (!GetApplicationWindow()) return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
-   if (!GetUIThreadId())        return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
-   if (!WindowHandleEx(NULL))   return(last_error);                  // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
+   if (!WindowHandleEx(NULL))   return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
+   if (!GetApplicationWindow()) return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
+   if (!GetUIThreadId())        return(last_error);                  // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
 
    return(catch("history.init(1)"));
 }
