@@ -908,15 +908,16 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else                               {                               GetLastError(); }
 
 
-   // rekursive Aufrufe abfangen (treten nur in einer nicht-initialisierten Library auf)
-   static bool recursive = false;                                    // mit Initializer: in EA's ok
-   if (recursive)                                                    //                  in Indikatoren nur im aktuellen init-Cycle ok (vertretbar)
-      return(debug("catch()  recursive error: "+ location, error));
-   recursive = true;
+   // rekursive Fehler erkennen und abfangen                         // mit Initializer: hält in EA's immer
+   static bool recursive = false;                                    //                  hält in Indikatoren bis zum nächsten init-Cycle (ok)
 
 
    if (error != NO_ERROR) {
-      // (1) Fehler zusätzlich an Debug-Ausgabe schicken
+      if (recursive)
+         return(debug("catch()  recursive error: "+ location, error));
+      recursive = true;
+
+      // (1) Fehler immer auch an Debug-Ausgabe schicken
       debug("ERROR: "+ location, error);
 
 
@@ -971,12 +972,12 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
       // (5) last_error setzen
       SetLastError(error, NULL);                                                                // je nach Moduletyp unterschiedlich implementiert
+      recursive = false;
    }
 
    if (orderPop)
       OrderPop(location);
 
-   recursive = false;
    return(error); __DummyCalls();
 }
 
@@ -1488,6 +1489,62 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_Q1 : return("Q1" );     // 1 quarter
    }
    return(StringConcatenate("unknown period (", period, ")"));
+}
+
+
+/**
+ * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
+ *
+ * @param  string object  - Ausgangsstring
+ * @param  string search  - Suchstring
+ * @param  string replace - Ersatzstring
+ *
+ * @return string - modifizierter String
+ */
+string StringReplace(string object, string search, string replace) {
+   if (!StringLen(object)) return(object);
+   if (!StringLen(search)) return(object);
+   if (search == replace)  return(object);
+
+   int from=0, found=StringFind(object, search);
+   if (found == -1)
+      return(object);
+
+   string result = "";
+
+   while (found > -1) {
+      result = StringConcatenate(result, StringSubstrFix(object, from, found-from), replace);
+      from   = found + StringLen(search);
+      found  = StringFind(object, search, from);
+   }
+   result = StringConcatenate(result, StringSubstr(object, from));
+
+   return(result);
+}
+
+
+/**
+ * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
+ * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
+ *
+ * @param  string object
+ * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
+ * @param  int    length - wenn negativ, Anzahl der zurückzugebenden Zeichen links vom Startindex
+ *
+ * @return string
+ */
+string StringSubstrFix(string object, int start, int length=INT_MAX) {
+   if (length == 0)
+      return("");
+
+   if (start < 0)
+      start = Max(0, start + StringLen(object));
+
+   if (length < 0) {
+      start += 1 + length;
+      length = Abs(length);
+   }
+   return(StringSubstr(object, start, length));
 }
 
 
@@ -2705,6 +2762,8 @@ void __DummyCalls() {
    Sign(NULL);
    start.RelaunchInputDialog();
    StringIsNull(NULL);
+   StringReplace(NULL, NULL, NULL);
+   StringSubstrFix(NULL, NULL);
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
@@ -2768,7 +2827,6 @@ void __DummyCalls() {
    string StdSymbol();
    bool   StringContains(string object, string substring);
    string StringLeft(string value, int n);
-   string StringReplace(string object, string search, string replace);
    string StringRight(string value, int n);
    string StringPadRight(string input, int length, string pad_string);
 

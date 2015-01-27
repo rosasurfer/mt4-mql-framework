@@ -23,7 +23,13 @@ extern int    iParameter = 12345;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   //debug("onInit()  IsExpertEnabled="+ IsExpertEnabled() +"  IsTradeAllowed="+ IsTradeAllowed());
+   /*
+   debug("onInit()  WindowHandle()="+ WindowHandle(Symbol(), NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
+   int hWnd = GetApplicationWindow();           if (!hWnd) return(SetLastError(stdlib.GetLastError()));
+   int hMdi = GetDlgItem(hWnd, IDD_MDI_CLIENT); if (!hMdi) return(SetLastError(ERR_RUNTIME_ERROR));
+   if (!EnumChildWindows(hMdi, false))                     return(SetLastError(stdlib.GetLastError()));
+   */
+
    return(0);
 }
 

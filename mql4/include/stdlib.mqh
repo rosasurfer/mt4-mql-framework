@@ -68,7 +68,6 @@
    int      Chart.SendTick(bool sound);
    int      MarketWatch.Symbols();
    int      Tester.Pause();
-   int      Tester.Stop();
 
 
    // Arrays

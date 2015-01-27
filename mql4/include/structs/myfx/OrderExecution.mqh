@@ -164,13 +164,13 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 /**
  * Gibt die lesbare Repräsentation ein oder mehrerer ORDER_EXECUTION-Strukturen zurück.
  *
- * @param  int  oe[]     - ORDER_EXECUTION
- * @param  bool debugger - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  int  oe[]        - ORDER_EXECUTION
+ * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string - lesbarer String oder Leerstring, falls ein Fehler auftrat
  */
-string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugger=false) {
-   debugger = debugger!=0;
+string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false) {
+   outputDebug = outputDebug!=0;
 
    int dimensions = ArrayDimension(oe);
 
@@ -211,7 +211,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugger=false) {
                                      ", comment=\""      ,                    oe.Comment        (oe), "\"",
                                      ", remainingTicket=",                    oe.RemainingTicket(oe),
                                      ", remainingLots="  ,        NumberToStr(oe.RemainingLots  (oe), ".+"), "}");
-      if (debugger)
+      if (outputDebug)
          debug("ORDER_EXECUTION.toStr()  "+ line);
       ArrayPushString(lines, line);
    }
@@ -248,7 +248,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugger=false) {
                                                   ", comment=\""      ,                    oes.Comment        (oe, i), "\"",
                                                   ", remainingTicket=",                    oes.RemainingTicket(oe, i),
                                                   ", remainingLots="  ,        NumberToStr(oes.RemainingLots  (oe, i), ".+"), "}");
-         if (debugger)
+         if (outputDebug)
             debug("ORDER_EXECUTION.toStr()  "+ line);
          ArrayPushString(lines, line);
       }
@@ -452,5 +452,5 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool debugger=false) {
 //   int      oes.setRemainingTicket(/*ORDER_EXECUTION*/int oe[][], int i, int      ticket    );
 //   double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int oe[][], int i, double   lots      );
 
-//   string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[], bool debugger);
+//   string   ORDER_EXECUTION.toStr (/*ORDER_EXECUTION*/int oe[], bool outputDebug);
 //#import

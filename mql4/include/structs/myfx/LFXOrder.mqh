@@ -199,13 +199,13 @@ double   los.setClosePrice         (/*LFX_ORDER*/int &lo[][], int i, double   cl
 /**
  * Gibt die lesbare Repräsentation einer oder mehrerer LFX_ORDER-Strukturen zurück.
  *
- * @param  int  lo[]     - LFX_ORDER
- * @param  bool debugger - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
+ * @param  int  lo[]        - LFX_ORDER
+ * @param  bool outputDebug - ob die Ausgabe zusätzlich zum Debugger geschickt werden soll (default: nein)
  *
  * @return string - lesbarer String oder Leerstring, falls ein fehler auftrat
  */
-string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
-   debugger =debugger!=0;
+string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
+   outputDebug = outputDebug!=0;
 
    int dimensions = ArrayDimension(lo);
 
@@ -244,7 +244,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
                                      ", comment=\""          ,                    lo.Comment            (lo), "\"",
                                      ", modificationTime="   ,           ifString(lo.ModificationTime   (lo), "'"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"'", "0"),
                                      ", version="            ,                    lo.Version            (lo), "}");
-      if (debugger)
+      if (outputDebug)
          debug("LFX_ORDER.toStr()  "+ line);
       ArrayPushString(lines, line);
    }
@@ -279,7 +279,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
                                                   ", comment=\""          ,                    los.Comment            (lo, i), "\"",
                                                   ", modificationTime="   ,           ifString(los.ModificationTime   (lo, i), "'"+ TimeToStr(los.ModificationTime(lo, i), TIME_FULL) +"'", "0"),
                                                   ", version="            ,                    los.Version            (lo, i), "}");
-         if (debugger)
+         if (outputDebug)
             debug("LFX_ORDER.toStr()  "+ line);
          ArrayPushString(lines, line);
       }
@@ -501,5 +501,5 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger=false) {
 //   double   los.setTakeProfit         (/*LFX_ORDER*/int lo[][], int i, double   takeProfit         );
 //   double   los.setClosePrice         (/*LFX_ORDER*/int lo[][], int i, double   closePrice         );
 
-//   string   LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool debugger);
+//   string   LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug);
 //#import
