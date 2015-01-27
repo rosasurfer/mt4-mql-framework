@@ -6362,7 +6362,7 @@ several experts working simultaneously within one client terminal.
       type=double
       <content>
 The function returns the arccosine of <i>x</i> within the range 0 to &#x3C0; (in radians).
-If <i>x</i> is less than -1 or exceeds 1, MathArccos() returns <span class="constant">NaN</span> (Not-a-Number).
+If <i>x</i> is less than -1 or exceeds 1, MathArccos() returns <span class="constant">NaN</span> (indefinite Not-a-Number).
       </content>
       <example>
   double x=0.32696, y;
@@ -6386,7 +6386,7 @@ If <i>x</i> is less than -1 or exceeds 1, MathArccos() returns <span class="cons
       type=double
       <content>
 The function returns the arcsine of <i>x</i> in the range -&#x3C0;/2 to &#x3C0;/2 radians.
-If <i>x</i> is less than -1 or exceeds 1, Matharcsin() returns <span class="constant">NaN</span> (Not-a-Number).
+If <i>x</i> is less than -1 or exceeds 1, Matharcsin() returns <span class="constant">NaN</span> (indefinite Not-a-Number).
       </content>
       <example>
   double x=0.32696, y;
@@ -6527,8 +6527,8 @@ The MathFloor function returns a numeric value representing the largest integer 
       type=double
       <content>
 The MathLog function returns the natural logarithm of <i>x</i> if successful.
-If <i>x</i> is negative, it returns <span class="constant">NaN</span> (Not-a-Number).
-If <i>x</i> is 0, it returns <span class="constant">INF</span> (Infinite).
+If <i>x</i> is negative, it returns <span class="constant">NaN</span> (indefinite Not-a-Number).
+If <i>x</i> is 0, it returns <span class="constant">INF</span> (infinity).
       </content>
       <example>
   double x=9000.0,y;
@@ -6710,7 +6710,7 @@ The <a href="help://math_MathSrand">MathSrand</a> function must be used to seed 
       type=double
       <content>
 The MathSqrt function returns the square root of <i>x</i>.
-If <i>x</i> is negative, it returns <span class="constant">NaN</span> (Not-a-Number).
+If <i>x</i> is negative, it returns <span class="constant">NaN</span> (quiet indefinite Not-a-Number).
       </content>
       <example>
   double question=45.35, answer;
