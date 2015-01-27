@@ -1,8 +1,5 @@
 /**
  * Hinterlegt den Chart mit Bars übergeordneter Timeframes. Die Änderung des Timeframes erfolgt per Hotkey.
- *
- *
- * TODO: Fehler bei ETH-Berechnung in Build 225
  */
 #property indicator_chart_window
 
