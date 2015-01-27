@@ -126,6 +126,8 @@ int onStart() {
    endTime = GetTickCount();
    debug("onStart(0.3)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
 
+   return(last_error);
+
 
    // 20.000.000 Durchläufe:
    // +-----------+----------+-------------------+-------------------------+------------+
@@ -143,6 +145,19 @@ int onStart() {
    // |           | mql      |                   |  1.888 sec |            |            |
    // |           | mql::lib |                   | 28.783 sec | 31.809 sec |            |
    // +-----------+----------+-------------------+------------+------------+------------+
-
-   return(last_error);
+   //
+   // Auswertung:
+   // -----------
+   //  - Build 225 war am schnellsten. Nicht verwunderlich, da der Code ungeschützt und nicht in einem Protection-Wrapper läuft.
+   //  - Die Geschwindigkeit aller getesteten geschützten Builds (ab 500) ist annähernd gleich.
+   //  - MQL- und MQL-Library-Aufrufe sind in den getesteten geschützten Builds ca. 25% langsamer als im ungeschützten Build 225.
+   //  - DLL-Aufrufe sind in den getesteten geschützten Builds erheblich langsamer, von fast doppelt so schnell wie reine MQL-Aufrufe
+   //    in Build 225 über 35% langsamer in Build 500 zu 45% langsamer in Build 670. Trotzdem sind sie in Build 670 immer noch 8-10 mal
+   //    schneller als MQL-Library-Aufrufe (in Build 225 waren sie noch bis zu 25 mal schneller).
+   //
+   // Fazit:
+   // ------
+   //  - MQL-Libraries sind möglichst zu vermeiden und durch DLL-Aufrufe zu ersetzen.
+   //  - Ob eine Funktionalität in reinem MQL oder in einer DLL schneller ist, muß von Fall zu Fall geprüft werden.
+   //    Innerhalb einer DLL kann der Geschwindigkeitsverlust zu reinem MQL in den ungeschützten Builds mit Leichtigkeit wettgemacht werden.
 }*/
