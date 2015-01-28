@@ -36,7 +36,7 @@ int onInit() {
    // AppliedPrice
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";
-   if (!IsVisualMode()) {                                            // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
+   if (!IsVisualModeFix()) {                                         // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
       section="AppliedPrice"; key=stdSymbol;
       price = StringToLower(GetGlobalConfigString(section, key, "median"));
    }

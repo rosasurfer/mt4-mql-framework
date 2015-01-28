@@ -459,17 +459,17 @@ int InitReason() {
    // (1) REASON_PARAMETERS
    if (uninitializeReason == REASON_PARAMETERS) {
       // innerhalb iCustom(): nie
-      if (IsSuperContext()) return(!catch("InitReason(1)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (IsSuperContext()) return(!catch("InitReason(1)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): erste Parameter-Eingabe bei neuem Indikator oder Parameter-Wechsel bei vorhandenem Indikator (auch im Tester bei VisualMode=On), Input-Dialog
-      if (Init.IsNoTick())  return(INIT_REASON_USER      );             // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators
-      else                  return(INIT_REASON_PARAMETERS);             // Parameter-Wechsel eines vorhandenen Indikators
+      if (Init.IsNoTick())  return(INIT_REASON_USER      );                // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators
+      else                  return(INIT_REASON_PARAMETERS);                // Parameter-Wechsel eines vorhandenen Indikators
    }
 
 
    // (2) REASON_CHARTCHANGE
    if (uninitializeReason == REASON_CHARTCHANGE) {
       // innerhalb iCustom(): nie
-      if (IsSuperContext())           return(!catch("InitReason(2)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (IsSuperContext())           return(!catch("InitReason(2)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): nach Symbol- oder Timeframe-Wechsel bei vorhandenem Indikator, kein Input-Dialog
       if (Init.IsNewSymbol(Symbol())) return(INIT_REASON_SYMBOLCHANGE   );
       else                            return(INIT_REASON_TIMEFRAMECHANGE);
@@ -480,14 +480,14 @@ int InitReason() {
    if (uninitializeReason == REASON_UNDEFINED) {
       // außerhalb iCustom(): je nach Umgebung
       if (!IsSuperContext()) {
-         if (build < 654)             return(INIT_REASON_TEMPLATE);     // wenn Template mit Indikator geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
+         if (build < 654)             return(INIT_REASON_TEMPLATE);        // wenn Template mit Indikator geladen wird (auch bei Terminal-Start und im Tester bei VisualMode=On|Off), kein Input-Dialog
          if (WindowOnDropped() >= 0)  return(INIT_REASON_TEMPLATE);
-         else                         return(INIT_REASON_USER    );     // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators, Input-Dialog
+         else                         return(INIT_REASON_USER    );        // erste Parameter-Eingabe eines manuell zum Chart hinzugefügten Indikators, Input-Dialog
       }
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
-      if (IsTesting() && !IsVisualMode() && currentThread==uiThread) {  // versionsunabhängig
+      if (IsTesting() && !IsVisualModeFix() && currentThread==uiThread) {  // versionsunabhängig
          if (build <= 229)   return(INIT_REASON_PROGRAM_CLEARTEST);
-                             return(!catch("InitReason(3)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+                             return(!catch("InitReason(3)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       }
       return(INIT_REASON_PROGRAM);
    }
@@ -496,19 +496,19 @@ int InitReason() {
    // (4) REASON_REMOVE
    if (uninitializeReason == REASON_REMOVE) {
       // außerhalb iCustom(): nie
-      if (!IsSuperContext())                               return(!catch("InitReason(4)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsSuperContext())                                  return(!catch("InitReason(4)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
-      if (!IsTesting() || currentThread!=uiThread)         return(!catch("InitReason(5)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
-      if (!IsVisualMode()) { if (388<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
-      else                 { if (578<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
-      return(!catch("InitReason(6)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsTesting() || currentThread!=uiThread)            return(!catch("InitReason(5)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsVisualModeFix()) { if (388<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
+      else                    { if (578<=build && build<=628) return(INIT_REASON_PROGRAM_CLEARTEST); }
+      return(!catch("InitReason(6)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
    }
 
 
    // (5) REASON_RECOMPILE
    if (uninitializeReason == REASON_RECOMPILE) {
       // innerhalb iCustom(): nie
-      if (IsSuperContext())  return(!catch("InitReason(7)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (IsSuperContext())  return(!catch("InitReason(7)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // außerhalb iCustom(): bei Reload nach Recompilation, vorhandener Indikator, kein Input-Dialog
       return(INIT_REASON_RECOMPILE);
    }
@@ -517,11 +517,11 @@ int InitReason() {
    // (6) REASON_CHARTCLOSE
    if (uninitializeReason == REASON_CHARTCLOSE) {
       // außerhalb iCustom(): nie
-      if (!IsSuperContext())  return(!catch("InitReason(8)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsSuperContext())  return(!catch("InitReason(8)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       // innerhalb iCustom(): je nach Umgebung, kein Input-Dialog
-      if (!IsTesting() || currentThread!=uiThread) return(!catch("InitReason(9)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      if (!IsTesting() || currentThread!=uiThread) return(!catch("InitReason(9)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
       if (build >= 633)                            return(INIT_REASON_PROGRAM_CLEARTEST);
-      return(!catch("InitReason(10)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+      return(!catch("InitReason(10)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
    }
 
 
@@ -530,9 +530,9 @@ int InitReason() {
       case REASON_TEMPLATE:      // build > 509
       case REASON_INITFAILED:    // ...
       case REASON_CLOSE:         // ...
-         return(!catch("InitReason(11)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+         return(!catch("InitReason(11)  unexpected UninitializeReason = "+ UninitializeReasonToStr(uninitializeReason) +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
    }
-   return(!catch("InitReason(12)  unknown UninitializeReason = "+ uninitializeReason +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualMode() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
+   return(!catch("InitReason(12)  unknown UninitializeReason = "+ uninitializeReason +" (SuperContext="+ IsSuperContext() +", Testing="+ IsTesting() +", VisualMode="+ IsVisualModeFix() +", IsUiThread="+ (currentThread==uiThread) +", build="+ build +")", ERR_RUNTIME_ERROR));
 }
 
 
@@ -589,6 +589,7 @@ int InitExecutionContext() {
     //ec.setSignature          ...wird später gesetzt
       ec.setName              (__ExecutionContext, __NAME__);
       ec.setType              (__ExecutionContext, __TYPE__);
+      ec.setVisualMode        (__ExecutionContext, IsVisualMode()           );
       ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
@@ -748,6 +749,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
    int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
+   bool   ec.setVisualMode        (/*EXECUTION_CONTEXT*/int ec[], bool   visualMode        );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
 
    string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);

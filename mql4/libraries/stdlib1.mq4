@@ -623,7 +623,7 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
    ArrayCopy(ec, __ExecutionContext);
 
 
-   if (!catch("Indicator.InitExecutionContext"))
+   if (!catch("Indicator.InitExecutionContext(1)"))
       return(NO_ERROR);
 
    ArrayInitialize(ec,                 0);
@@ -1083,7 +1083,7 @@ bool Tester.IsPaused() {
       testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
    }
    else {
-      if (!IsVisualMode())                                                                         // EA/Indikator aus iCustom()
+      if (!IsVisualModeFix())                                                                      // EA/Indikator aus iCustom()
          return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
       testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
    }
@@ -8204,52 +8204,6 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
 /**
- * Gibt das Handle des Terminal-Hauptfensters zurück.
- *
- * @return int - Handle oder 0, falls ein Fehler auftrat
- */
-int GetApplicationWindow() {
-   static int hWnd;                                                  // ohne Initializer, @see MQL.doc
-   if (hWnd != 0)
-      return(hWnd);
-
-   // ClassName des Terminal-Hauptfensters (alle Builds)
-   string terminalClassName = "MetaQuotes::MetaTrader::4.00";
-
-
-   // (1) mit WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
-   if (IsChart) {
-      hWnd = WindowHandle(Symbol(), NULL);               // !!!!!! Hier nicht WindowHandleEx() verwenden, da das zu einer rekursiven Schleife führt !!!!!!
-      if (hWnd != 0) {                                   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         hWnd = GetAncestor(hWnd, GA_ROOT);
-         if (GetClassName(hWnd) == terminalClassName)
-            return(hWnd);
-         warn("GetApplicationWindow(1)  unknown terminal top-level window found (class \""+ GetClassName(hWnd) +"\"), hWndChild originated from WindowHandle()", ERR_RUNTIME_ERROR);
-         hWnd = 0;
-      }
-   }
-
-
-   // (2) ohne WindowHandle() alle Top-Level-Windows durchlaufen
-   int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
-
-   while (hWndNext != 0) {
-      GetWindowThreadProcessId(hWndNext, processId);
-      if (processId[0]==myProcessId) /*&&*/ if (GetClassName(hWndNext)==terminalClassName)
-         break;
-      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
-   }
-   if (!hWndNext) {
-      catch("GetApplicationWindow(2)  cannot find application main window", ERR_RUNTIME_ERROR);
-      hWnd = 0;
-   }
-   hWnd = hWndNext;
-
-   return(hWnd);
-}
-
-
-/**
  * Gibt das Fensterhandle des Strategy Testers zurück. Wird die Funktion nicht aus dem Tester heraus aufgerufen, ist es möglich,
  * daß das Fenster noch nicht existiert.
  *
@@ -8301,26 +8255,6 @@ int GetTesterWindow() {
       if (__LOG) log("GetTesterWindow(4)  Strategy Tester window not found");   // Fenster existiert noch nicht
 
    return(hWndTester);
-}
-
-
-/**
- * Gibt die ID des Userinterface-Threads zurück.
- *
- * @return int - Thread-ID (nicht das Pseudo-Handle) oder 0, falls ein Fehler auftrat
- */
-int GetUIThreadId() {
-   static int threadId;                                              // ohne Initializer, @see MQL.doc
-   if (threadId != 0)
-      return(threadId);
-
-   int iNull[], hWnd=GetApplicationWindow();
-   if (!hWnd)
-      return(0);
-
-   threadId = GetWindowThreadProcessId(hWnd, iNull);
-
-   return(threadId);
 }
 
 
@@ -8444,32 +8378,6 @@ string GetWindowText(int hWnd) {
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
    }
-   return(buffer[0]);
-}
-
-
-/**
- * Gibt den Klassennamen des angegebenen Fensters zurück.
- *
- * @param  int hWnd - Handle des Fensters
- *
- * @return string - Klassenname oder Leerstring, falls ein Fehler auftrat
- */
-string GetClassName(int hWnd) {
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-
-   while (chars >= bufferSize-1) {                                   // GetClassNameA() gibt beim Abschneiden zu langer Klassennamen {bufferSize-1} zurück.
-      bufferSize <<= 1;
-      InitializeStringBuffer(buffer, bufferSize);
-      chars = GetClassNameA(hWnd, buffer[0], bufferSize);
-   }
-
-   if (!chars)
-      return(_emptyStr(catch("GetClassName()->user32::GetClassNameA()", ERR_WIN32_ERROR)));
-
    return(buffer[0]);
 }
 

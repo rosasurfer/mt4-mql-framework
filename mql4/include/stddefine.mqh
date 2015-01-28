@@ -1600,7 +1600,10 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 }
 
 
+#define GA_ROOT         2
+
 #define GW_HWNDLAST     1
+#define GW_HWNDNEXT     2
 #define GW_HWNDPREV     3
 #define GW_CHILD        5
 
@@ -1608,71 +1611,193 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 /**
  * Dropin-Ersatz für WindowHandle()
  *
- * Wie WindowHandle(), kann aber das Fensterhandle des aktuellen Charts auch dann ermitteln, wenn WindowHandle() dies nicht kann.
- * Kann auch im Tester verwendet werden und löst dabei nicht den Fehler ERR_FUNC_NOT_ALLOWED_IN_TESTER aus.
+ * Wie WindowHandle(), kann aber das Fensterhandle des aktuellen Charts in allen Fällen ermitteln, in denen WindowHandle() dies nicht kann.
  *
- * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll. Wenn NULL, wird unabhängig vom zweiten Parameter
- *                           das Handle des aktuellen Charts zurückgegeben.
+ * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll.
+ *                           Ist dieser Parameter NULL und es wurde kein Timeframe angegeben (kein zweiter Parameter oder NULL), wird das Handle des aktuellen
+ *                           Chartfensters zurückgegeben oder -1, falls das Programm kein Chartfenster hat (im Tester bei VisualMode=Off).
+ *                           Ist dieser oder der zweite Parameter nicht NULL, wird das eigene Chartfenster bei der Suche nicht berücksichtigt und das Handle
+ *                           des ersten passenden weiteren Chartfensters zurückgegeben (in Z order) oder NULL, falls kein weiteres solches Chartfenster existiert.
  * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
  *
- * @return int - Fensterhandle oder NULL, falls kein entsprechendes Fenster existiert oder ein Fehler auftrat
+ * @return int - Fensterhandle oder NULL, falls kein entsprechendes Fenster existiert oder ein Fehler auftrat;
+ *               -1, falls das Handle des eigenen Chartfensters gesucht ist und das Programm keinen Chart hat (im Tester bei VisualMode=Off)
  */
 int WindowHandleEx(string symbol, int timeframe=NULL) {
    static int static.hWndSelf = 0;                                   // mit Initializer gegen Testerbug: wird in Library bei jedem lib::init() zurückgesetzt
-   int hWnd, error;
+   bool self = (symbol=="0" && !timeframe);                          // (string) NULL
 
 
-   if (symbol != "0") {                                              // (string) NULL
-      // (1) normaler WindowHandle()-Aufruf mit Symbol und Timeframe
-      hWnd  = WindowHandle(symbol, timeframe);
-      error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
-         return(!catch("WindowHandleEx(1)", error));
+   // (1) manuelle Suche nach eigenem Chart
+   if (self) {
+      if (static.hWndSelf != 0)
+         return(static.hWndSelf);
 
-      if (symbol!=Symbol() || (timeframe && timeframe!=Period())) {  // bei anderem als dem eigenem Fenster immer Rückkehr,
-         SetLastError(NO_ERROR);                                     // um ein nicht gefundenes Fenster von einem Fehler unterscheiden zu können
-         return(hWnd);
+      if (IsTesting()) /*&&*/ if (!IsVisualModeFix()) {              // Expert/Indikator im Tester bei VisualMode=Off: kein Chart
+         static.hWndSelf = -1;                                       // Rückgabewert -1
+         return(static.hWndSelf);
       }
 
-      if (hWnd != 0) {                                               // eigenes Fenster
-         if (!static.hWndSelf)                                       // Handle speichern, falls noch nicht geschehen
-            static.hWndSelf = hWnd;
-         return(hWnd);
+      int hWnd  = WindowHandle(Symbol(), NULL);
+      int error = GetLastError();
+      if (IsError(error)) return(!catch("WindowHandleEx(1)", error));
+
+      if (!hWnd) {
+         int hWndMain = GetApplicationWindow();               if (!hWndMain) return(NULL);
+         int hWndMdi  = GetDlgItem(hWndMain, IDD_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(2)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+
+         bool missingWnd = false;
+         string title, sError;
+
+         // Es muß genau ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order:
+         int hWndChild = GetWindow(hWndMdi, GW_CHILD);               // das erste Child in Z order
+         if (!hWndChild) {
+            missingWnd = true; sError = "WindowHandleEx(3)  no child window of MDIClient window found";
+         }
+         else {
+            int hWndLast = GetWindow(hWndChild, GW_HWNDLAST);        // das letzte Child in Z order
+            title = GetWindowText(hWndLast);
+            if (StringLen(title) > 0) {
+               missingWnd = true; sError = "WindowHandleEx(4)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"";
+            }
+         }
+
+         // Ein Indikator im Template "Tester.tpl" wird im Tester bei VisualMode=Off im UI-Thread geladen und seine init()-Funktion ausgeführt,
+         // obwohl für den Test kein Chart existiert. Nur in dieser Kombination ist ein fehlendes Chartfenster ein gültiger Zustand.
+         if (missingWnd) {
+            if (IsIndicator()) /*&&*/ if (__WHEREAMI__!=FUNC_START) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
+               static.hWndSelf = -1;                                 // Rückgabewert -1
+               return(static.hWndSelf);
+            }
+            return(!catch(sError +" in context "+ ModuleTypeDescription(ec.Type(__ExecutionContext)) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+         }
+
+         // Dieses letzte Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow mit dem MetaTrader-WindowHandle() ist.
+         hWnd = GetWindow(hWndLast, GW_CHILD);
+         if (!hWnd) return(!catch("WindowHandleEx(5)  no MetaTrader chart window inside of last MDIClient window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
       }
+
+      static.hWndSelf = hWnd;
+      return(hWnd);
    }
 
 
-   // (2) eigenes Fenster per WinAPI ermitteln
-   if (static.hWndSelf != 0)
-      return(static.hWndSelf);
+   if (symbol == "0") symbol = Symbol();                             // (string) NULL
+   if (!timeframe) timeframe = Period();
+   string periodDescription  = PeriodDescription(timeframe);
 
-   hWnd  = WindowHandle(Symbol(), NULL);
+
+   // (2) eingebaute Suche nach fremdem Chart
+   hWnd  = WindowHandle(symbol, timeframe);
    error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
-      return(!catch("WindowHandleEx(2)", error));
+   if (!error)                                  return(hWnd);
+   if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(6)", error));
 
-   if (!hWnd) {
-      int hWndMain = GetApplicationWindow();
-      int hWndMdi  = GetDlgItem(hWndMain, IDD_MDI_CLIENT);
-      if (!hWndMdi) return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
 
-      // Es muß genau ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order:
-      int    hWndChild = GetWindow(hWndMdi,   GW_CHILD   ); if (!hWndChild)           return(!catch("WindowHandleEx(4)  no child window of MDIClient window found", ERR_RUNTIME_ERROR));
-      int    hWndLast  = GetWindow(hWndChild, GW_HWNDLAST); if (!hWndLast)            return(!catch("WindowHandleEx(5)  no last child window of MDIClient window found", ERR_WIN32_ERROR));
-      string title     = GetWindowText(hWndLast);           if (StringLen(title) > 0) return(!catch("WindowHandleEx(6)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"", ERR_RUNTIME_ERROR));
-      int    hWndPrev  = GetWindow(hWndLast,  GW_HWNDPREV);
-      if (hWndPrev != 0) {
-         title = GetWindowText(hWndPrev);
-         if (!StringLen(title)) return(!catch("WindowHandleEx(7)  multiple MDI child windows without a title found: 0x"+ IntToHexStr(hWndPrev) +", 0x"+ IntToHexStr(hWndLast), ERR_RUNTIME_ERROR));
+   // (3) manuelle Suche nach fremdem Chart (dem ersten passenden in Z order)
+   hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
+   hWndMdi   = GetDlgItem(hWndMain, IDD_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+   hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
+   hWnd      = 0;
+
+   while (hWndChild != NULL) {
+      title = GetWindowText(hWndChild);
+      if (title == periodDescription) {
+         // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow mit dem MetaTrader-WindowHandle() ist.
+         hWnd = GetWindow(hWndChild, GW_CHILD);
+         if (!hWnd) return(!catch("WindowHandleEx(8)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
+         break;
       }
+      hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order
+   }
+   return(hWnd);
+}
 
-      // Dieses letzte Child in Z order hat selbst genau ein Child, das gesuchte MetaTrader-WindowHandle:
-      hWnd = GetWindow(hWndLast, GW_CHILD);
-      if (!hWnd)                return(!catch("WindowHandleEx(8)  no MetaTrader chart window inside of last MDIClient window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
+
+/**
+ * Gibt das Handle des Terminal-Hauptfensters zurück.
+ *
+ * @return int - Handle oder 0, falls ein Fehler auftrat
+ */
+int GetApplicationWindow() {
+   static int hWnd;                                                  // ohne Initializer, @see MQL.doc
+   if (hWnd != 0)
+      return(hWnd);
+
+   // ClassName des Terminal-Hauptfensters (alle Builds)
+   string terminalClassName = "MetaQuotes::MetaTrader::4.00";
+
+
+   // (1) mit WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
+   if (IsChart) {
+      hWnd = WindowHandle(Symbol(), NULL);               // !!!!!! Hier nicht WindowHandleEx() verwenden, da das zu einer rekursiven Schleife führt !!!!!!
+      if (hWnd != 0) {                                   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+         hWnd = GetAncestor(hWnd, GA_ROOT);
+         if (GetClassName(hWnd) == terminalClassName)
+            return(hWnd);
+         warn("GetApplicationWindow(1)  unknown terminal top-level window found (class \""+ GetClassName(hWnd) +"\"), hWndChild originated from WindowHandle()", ERR_RUNTIME_ERROR);
+         hWnd = 0;
+      }
    }
 
-   static.hWndSelf = hWnd;
+
+   // (2) ohne WindowHandle() alle Top-Level-Windows durchlaufen
+   int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
+
+   while (hWndNext != 0) {
+      GetWindowThreadProcessId(hWndNext, processId);
+      if (processId[0]==myProcessId) /*&&*/ if (GetClassName(hWndNext)==terminalClassName)
+         break;
+      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
+   }
+   if (!hWndNext) {
+      catch("GetApplicationWindow(2)  cannot find application main window", ERR_RUNTIME_ERROR);
+      hWnd = 0;
+   }
+   hWnd = hWndNext;
+
    return(hWnd);
+}
+
+
+/**
+ * Gibt den Klassennamen des angegebenen Fensters zurück.
+ *
+ * @param  int hWnd - Handle des Fensters
+ *
+ * @return string - Klassenname oder Leerstring, falls ein Fehler auftrat
+ */
+string GetClassName(int hWnd) {
+   int    bufferSize = 255;
+   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
+
+   int chars = GetClassNameA(hWnd, buffer[0], bufferSize);
+
+   while (chars >= bufferSize-1) {                                   // GetClassNameA() gibt beim Abschneiden zu langer Klassennamen {bufferSize-1} zurück.
+      bufferSize <<= 1;
+      InitializeStringBuffer(buffer, bufferSize);
+      chars = GetClassNameA(hWnd, buffer[0], bufferSize);
+   }
+
+   if (!chars)
+      return(_emptyStr(catch("GetClassName()->user32::GetClassNameA()", ERR_WIN32_ERROR)));
+
+   return(buffer[0]);
+}
+
+
+/**
+ * Ob das aktuelle Programm im Tester läuft und der VisualMode-Status aktiv ist.
+ *
+ * Bugfix für IsVisualMode(). IsVisualMode() wird in Libraries zwischen aufeinanderfolgenden Tests nicht zurückgesetzt und gibt bis zur
+ * Neuinitialisierung den Status des ersten Tests zurück.
+ *
+ * @return bool
+ */
+bool IsVisualModeFix() {
+   if (IsTesting())
+      return(ec.VisualMode(__ExecutionContext));
+   return(false);
 }
 
 
@@ -2678,6 +2803,26 @@ int ArrayUnshiftString(string array[], string value) {
 
 
 /**
+ * Gibt die ID des Userinterface-Threads zurück.
+ *
+ * @return int - Thread-ID (nicht das Pseudo-Handle) oder 0, falls ein Fehler auftrat
+ */
+int GetUIThreadId() {
+   static int threadId;                                              // ohne Initializer, @see MQL.doc
+   if (threadId != 0)
+      return(threadId);
+
+   int iNull[], hWnd=GetApplicationWindow();
+   if (!hWnd)
+      return(0);
+
+   threadId = GetWindowThreadProcessId(hWnd, iNull);
+
+   return(threadId);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -2726,6 +2871,7 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);
+   GetUIThreadId();
    GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
@@ -2820,8 +2966,10 @@ void __DummyCalls() {
    int    GetCustomLogID();
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
    string GetWindowText(int hWnd);
+   int    InitializeStringBuffer(string buffer[], int length);
    string IntToHexStr(int integer);
    bool   IsFile(string filename);
+   string ModuleTypeDescription(int type);
    bool   ReverseStringArray(string array[]);
    bool   SendSMS(string receiver, string message);
    string StdSymbol();
@@ -2830,17 +2978,27 @@ void __DummyCalls() {
    string StringRight(string value, int n);
    string StringPadRight(string input, int length, string pad_string);
 
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int    ec.Type      (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec.VisualMode(/*EXECUTION_CONTEXT*/int ec[]);
+
 #import "StdLib.dll"
    int    GetLastWin32Error();
    bool   IsBuiltinTimeframe(int timeframe);
 
 #import "kernel32.dll"
+   int    GetCurrentProcessId();
+   int    GetCurrentThreadId();
    void   OutputDebugStringA(string lpMessage);                      // funktioniert nur für Admins zuverlässig
 
 #import "user32.dll"
-   int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+   int    GetAncestor(int hWnd, int cmd);
+   int    GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
    int    GetDlgItem(int hDlg, int nIDDlgItem);
+   int    GetTopWindow(int hWnd);
    int    GetWindow(int hWnd, int cmd);
+   int    GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
+   int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
 
 #import "winmm.dll"
    bool   PlaySoundA(string lpSound, int hMod, int fSound);

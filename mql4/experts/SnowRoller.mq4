@@ -549,7 +549,7 @@ bool StopSequence() {
 
    // (8) ggf. Tester stoppen
    if (IsTesting()) {
-      if      (        IsVisualMode()) Tester.Pause();
+      if      (     IsVisualModeFix()) Tester.Pause();
       else if (!IsWeekendStopSignal()) Tester.Stop();
    }
    return(!last_error|catch("StopSequence(7)"));

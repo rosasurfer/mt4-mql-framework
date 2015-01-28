@@ -29,7 +29,6 @@ int onInit() {
    int hMdi = GetDlgItem(hWnd, IDD_MDI_CLIENT); if (!hMdi) return(SetLastError(ERR_RUNTIME_ERROR));
    if (!EnumChildWindows(hMdi, false))                     return(SetLastError(stdlib.GetLastError()));
    */
-
    return(0);
 }
 
@@ -52,7 +51,7 @@ int onTick() {
    static bool done;
    if (!done) {
       int currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
-      debug("onTick(1)     "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  ec="+ lpLocalContext +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
+      debug("onTick(1)     "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  ec="+ lpLocalContext +"  Visual="+ IsVisualModeFix() +"  Testing="+ IsTesting());
       done = true;
    }
 

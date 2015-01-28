@@ -191,16 +191,19 @@ int Indicator.IsTesting() {
    else {
       // Indikator läuft im UI-Thread in Indicator::init|deinit(), entweder im Hauptchart oder im Testchart
       int hWndChart = WindowHandleEx(NULL);
-      if (!hWndChart) return(EMPTY);
+      if (hWndChart == -1) {                                         // Indikator läuft in init() im Tester bei VisualMode=Off
+         static.result = true;
+      }
+      else {
+         string title = GetWindowText(GetParent(hWndChart));
+         if (!StringLen(title))
+            return(_EMPTY(debug("Indicator.IsTesting(2)  cannot determine testing status,  hWndChart=0x"+ IntToHexStr(hWndChart) +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
-      string title = GetWindowText(GetParent(hWndChart));
-      if (!StringLen(title))
-         return(_EMPTY(debug("Indicator.IsTesting(2)  cannot determine testing status,  hWndChart=0x"+ IntToHexStr(hWndChart) +",  title(hWndChart)="+ StringToStr(title) +"  in context Indicator::"+ __whereamiDescription(__WHEREAMI__), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+         static.result = StringEndsWith(title, "(visual)");             // Unterscheidung durch "...(visual)" im Fenstertitel
 
-      static.result = StringEndsWith(title, "(visual)");             // Unterscheidung durch "...(visual)" im Fenstertitel
-
-      // TODO: Gesamte Erkennung in DLL auslagern, die das Terminal-Hauptfenster per Subclassing überwacht. Der Test anhand einer ins file-Verzeichnis geschriebenen Datei
-      //       funktioniert nicht, da die Datei im Tester bei VisualMode=Off auch ins Online-Verzeichnis geschrieben wird. Indicator::init() läuft schließlich im UI-Thread.
+         // TODO: Gesamte Erkennung in DLL auslagern, die das Terminal-Hauptfenster per Subclassing überwacht. Der Test anhand einer ins file-Verzeichnis geschriebenen Datei
+         //       funktioniert auch nicht, da die Datei im Tester bei VisualMode=Off auch ins Online-Verzeichnis geschrieben wird. Indicator::init() läuft schließlich im UI-Thread.
+      }
    }
 
    static.resolved = true;

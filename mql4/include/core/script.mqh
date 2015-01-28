@@ -9,9 +9,14 @@
  * @return int - Fehlerstatus
  */
 int init() {
-   if (__STATUS_OFF) return(last_error);
+   if (__STATUS_OFF)
+      return(last_error);
 
-   __WHEREAMI__ = FUNC_INIT;
+   if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
+      __WHEREAMI__ = FUNC_INIT;
+      prev_error   = NO_ERROR;
+      last_error   = NO_ERROR;
+   }
 
 
    // (1) EXECUTION_CONTEXT initialisieren
@@ -366,6 +371,7 @@ int InitExecutionContext() {
    ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
    ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
    ec.setType              (__ExecutionContext, __TYPE__                                                                );
+   ec.setVisualMode        (__ExecutionContext, false                                                                   );
    ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
    ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
@@ -518,6 +524,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
    int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
+   bool   ec.setVisualMode        (/*EXECUTION_CONTEXT*/int ec[], bool visualMode        );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
 
    string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug       );
