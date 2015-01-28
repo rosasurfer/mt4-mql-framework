@@ -34,7 +34,7 @@
   .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
   .constant     { font-weight:normal; color:#980000; }
-  .function     { font-weight:normal; color:blue;    }
+  .function     { font-weight:normal; color:#42639C; }
   .number       { font-weight:normal; color:#7070FF; }
   </styles>
 
@@ -55,7 +55,7 @@
 
       <p>Programs written in MQL4 have different features and purposes:</p>
       <ul><li><p>
-          An <strong>Expert Advisors</strong> (short: expert) is a mechanical trading system linked to a specific chart.
+          An <strong>Expert Advisor</strong> (in short: expert) is a mechanical trading system linked to a specific chart.
           An expert is executed for every incoming tick of a given symbol. The expert will not be executed for a new tick if it is still processing 
           the previous one (i.e. the expert has not yet completed its processing).
           The expert can both inform you about a possibility to trade and trade at an account automatically, sending orders directly to the trade server. 
@@ -70,9 +70,9 @@
           tickwise but on explicite request.<br/>
           Scripts are stored in the directory <em>{terminal_dictionary}\experts\scripts</em>.</p></li>
         <li><p>
-          A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself.<br/>
-          Libraries are recommended to be stored in the directory <em>{terminal_directory}\experts\libraries</em>.<br/>
-          The use of include files is to be preferred over the use of libraries because of the additional processing burden of library function calls.<br/>
+          A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself. The use of include files is to be 
+          preferred over the use of libraries because of the additional processing burden of library function calls.<br/>
+          Libraries are stored in the directory <em>{terminal_directory}\experts\libraries</em>.<br/>
           </p></li>
       </ul>
     </content>
@@ -255,7 +255,7 @@ bool c = 1;</pre>
         <p>The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.</p>
         <br/>
          <br/>
-         <span style="color:red">Fehler:</span>
+         <span style="color:red">Bug:</span>
          <br/>
          Ausdrücke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch für
          die Übergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="constant">true</span> oder
@@ -3441,7 +3441,7 @@ Stattdessen verhält es sich ab Zuweisung wie ein gewöhnlicher Integer und muß gg
 (4) Das Target-Array kann nach Zuweisung nicht mehr mittels ArrayResize() oder ArrayInitialize() verändert werden.
 <br/>
 <br/>
-<span style="color:red">Fehler:</span>
+<span style="color:red">Bug:</span>
 <br/>
 Wird die Funktion während des Ladens einer Zeitreihe erneut aufgerufen, wird der Fehler <span class="constant">ERR_ARRAY_ERROR</span> ausgelöst, solange noch keine lokalen Kurse existieren bzw. eingetroffen sind.
 Dies gilt auch im Tester. In diesem Fall muß der Fehler <span class="constant">ERR_ARRAY_ERROR</span> wie <span class="constant">ERR_SERIES_NOT_AVAILABLE</span> interpretiert werden.<br/>
@@ -4057,10 +4057,17 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       caption=IsVisualMode()
       type=bool
       <content>
-      Returns <span class="constant">true</span> if the expert is tested with checked &quot;Visual Mode&quot; button, otherwise returns <span class="constant">false</span>.
+      Returns <span class="constant">true</span> if the expert is tested with checked &quot;Visual Mode&quot; button, otherwise returns <span class="constant">false</span>.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zurückgesetzt wird. 
+      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zurück (getested mit Build 225-670).<br/>
+      <br/>
+      Workaround: Den VisualMode-Status aus dem Hauptmodul über den Execution-Context in die Library übermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
       </content>
       <example>
-  if(IsVisualMode()) Comment("Visual mode turned on");
+  if (IsVisualModeFix()) Comment("Visual mode certainly turned on");
       </example>
     </function>
 
@@ -7415,7 +7422,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
          Returns a copy of the extracted substring if possible, otherwise an empty string.
          <br/>
          <br/>
-         <span style="color:red">Fehler:</span>
+         <span style="color:red">Bug:</span>
          <br/>
          (1) Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.<br/>
          <br/>
@@ -10345,7 +10352,7 @@ it means that the chart window has not been fully filled out and there is a spac
       - WindowHandle() löst in EA's beim Testen mit VisualMode=Off <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> aus, in gleichzeitig per iCustom() geladenen 
       Indikatoren jedoch nicht.<br/>
       <br/>
-      <span style="color:red">Fehler:</span>
+      <span style="color:red">Bug:</span>
       <br/>
       (1) Bis Build ??? kann die Funktion bei Terminal-Start in init() und in start() 0 zurückgeben, solange der Fenstertitel noch nicht gesetzt ist (das Fenster existiert immer).<br/>
       Workaround: WindowHandleEx() benutzen<br/>
@@ -10505,7 +10512,7 @@ Note: For custom indicators, this value is undefined.
       Redraws the current chart forcedly. It is normally used after the objects properties have been changed.
       <br/>
       <br/>
-      <span style="color:red">Fehler:</span>
+      <span style="color:red">Bug:</span>
       Funktioniert im Tester bei Aufruf durch Script nicht. Stattdessen muß das Win32-API zum Neuzeichnen des Fensters verwendet werden.
       </content>
       <example>
@@ -10643,8 +10650,8 @@ The value will be <span class="constant">true</span> only if the expert or scrip
   </group>
 
   <group>
-    tag=obsolete
-    caption=Obsolete functions
+    tag=deprecated
+    caption=Deprecated functions
     <content>
       <p>In further development of MQL4, some functions were renamed and moved from one group to another in order
       to systematize them better. The old function names are not highlighted or linked to the
@@ -10667,6 +10674,15 @@ The value will be <span class="constant">true</span> only if the expert or scrip
       <tr><td>ServerAddress</td><td><a href="help://account_AccountServer">AccountServer</a></td></tr>
       <tr><td>TimeOnDropped</td><td><a href="help://windows_WindowTimeOnDropped">WindowTimeOnDropped</a></td></tr>
       </table><br/>
+    </content>
+  </group>
+
+  <group>
+    tag=expander
+    caption=MT4 Expander
+    <content>
+      <p>Der Expander des Fortschritts</p>
+      <br/>
     </content>
   </group>
 
