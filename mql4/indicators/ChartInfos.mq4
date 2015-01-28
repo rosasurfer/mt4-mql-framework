@@ -207,7 +207,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           return(last_error);
    }
 
-   if (IsVisualMode())                                               // nur im Tester
+   if (IsVisualModeFix())                                            // nur im Tester
       UpdateTime();
    return(last_error);
 }
@@ -1337,7 +1337,7 @@ bool CreateLabels() {
 
 
    // Time-Label: nur im Tester bei VisualMode = ON
-   if (IsVisualMode()) {
+   if (IsVisualModeFix()) {
       if (ObjectFind(label.time) == 0)
          ObjectDelete(label.time);
       if (ObjectCreate(label.time, OBJ_LABEL, 0, 0, 0)) {
@@ -1744,7 +1744,7 @@ bool UpdateOHLC() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateTime() {
-   if (!IsVisualMode())
+   if (!IsVisualModeFix())
       return(true);
 
    static datetime lastTime;

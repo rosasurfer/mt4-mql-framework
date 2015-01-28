@@ -40,12 +40,13 @@ string label.description = "Description";                // Label für Chartanzei
  */
 int onInit() {
    /*
-   debug("onInit()  WindowHandle()="+ WindowHandle(Symbol(), NULL) +"  WindowHandleEx()="+ WindowHandleEx(NULL));
-   int hWnd = GetApplicationWindow();           if (!hWnd) return(SetLastError(stdlib.GetLastError()));
-   int hMdi = GetDlgItem(hWnd, IDD_MDI_CLIENT); if (!hMdi) return(SetLastError(ERR_RUNTIME_ERROR));
-   if (!EnumChildWindows(hMdi, false))                     return(SetLastError(stdlib.GetLastError()));
+   EnumChildWindows(GetDlgItem(GetApplicationWindow(), IDD_MDI_CLIENT), false);
+   int hWnd = WindowHandleEx(NULL);
+   if (hWnd == -1) string title = "no chart window";
+   else                   title = "title=\""+ GetWindowText(GetParent(hWnd)) +"\"";
+   debug("onInit()  thread="+ ifString(GetCurrentThreadId()==GetUIThreadId(), "UI", "tester") +", "+ title +", context=Indicator::"+ __whereamiDescription(__WHEREAMI__));
+   debug("onInit()  Indicator.IsTesting="+ Indicator.IsTesting() +"  hWnd.orig="+ WindowHandle(Symbol(), NULL)); GetLastError();
    */
-
 
    // (1) Parametervalidierung
    // Colors
