@@ -60,8 +60,8 @@ int      last_error;                                        // der letzte Fehler
 
 
 // Log level
-#define L_OFF                 INT_MIN                       // Test mit: if (LOG_LEVEL >= Event)
-#define L_FATAL                 10000                       // ist umgekehrt zu log4j
+#define L_OFF                 INT_MIN                       // Tests umgekehrt zu log4j mit: if (LOG_LEVEL >= Event)
+#define L_FATAL                 10000
 #define L_ERROR                 20000
 #define L_WARN                  30000
 #define L_INFO                  40000
@@ -1608,28 +1608,28 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 /**
  * Dropin-Ersatz für WindowHandle()
  *
- * Wie WindowHandle(), kann aber zusätzlich das Fensterhandle des aktuellen Charts ermitteln, wenn WindowHandle() 0 zurückgibt.
- * Außerdem wird im Tester nicht der Fehler ERR_FUNC_NOT_ALLOWED_IN_TESTER ausgelöst.
+ * Wie WindowHandle(), kann aber das Fensterhandle des aktuellen Charts auch dann ermitteln, wenn WindowHandle() dies nicht kann.
+ * Kann auch im Tester verwendet werden und löst dabei nicht den Fehler ERR_FUNC_NOT_ALLOWED_IN_TESTER aus.
  *
  * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll. Wenn NULL, wird unabhängig vom zweiten Parameter
  *                           das Handle des aktuellen Charts zurückgegeben.
  * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
  *
- * @return int - Fensterhandle oder NULL, falls das Fenster nicht gefunden wurde oder ein Fehler auftrat
+ * @return int - Fensterhandle oder NULL, falls kein entsprechendes Fenster existiert oder ein Fehler auftrat
  */
 int WindowHandleEx(string symbol, int timeframe=NULL) {
-   static int static.hWndSelf = 0;                                   // mit Initializer   (wird in Indikatoren bei jedem init-Cycle zurückgesetzt, ist aber verschmerzbar)
+   static int static.hWndSelf = 0;                                   // mit Initializer gegen Testerbug: wird in Library bei jedem lib::init() zurückgesetzt
    int hWnd, error;
 
 
-   // (1) normaler WindowHandle()-Aufruf mit Symbol und Timeframe
    if (symbol != "0") {                                              // (string) NULL
+      // (1) normaler WindowHandle()-Aufruf mit Symbol und Timeframe
       hWnd  = WindowHandle(symbol, timeframe);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (error!=ERR_FUNC_NOT_ALLOWED_IN_TESTER)
          return(!catch("WindowHandleEx(1)", error));
 
-      if (symbol!=Symbol() || (timeframe && timeframe!=Period())) {  // bei anderem als dem eigenem Fenster immer Rückkehr
+      if (symbol!=Symbol() || (timeframe && timeframe!=Period())) {  // bei anderem als dem eigenem Fenster immer Rückkehr,
          SetLastError(NO_ERROR);                                     // um ein nicht gefundenes Fenster von einem Fehler unterscheiden zu können
          return(hWnd);
       }
