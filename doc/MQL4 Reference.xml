@@ -45,41 +45,35 @@
     <content>
       <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts. 
       You can start learning the language using Sergey Kovalyov's book <i>Programming in Algorithmic Language MQL4</i> published by 
-      <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a> You can download the Book in .chm format at
+      <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a> You can download the book in .chm format at
       <a href="http://www.mql4.com/files/mql4bookenglish.chm?source=metaeditor_help">http://www.mql4.com/files/mql4bookenglish.chm</a> (size 2.0 Mb).</p>
 
-      <p>A large amount of functions necessary for analysis of the current and
-      previously income quotes, as well as basic arithmetic and logic operations are included in MQL4
-      structure. There are also basic indicators built in and commands of order
-      placement and control.</p>
+      <p>A large amount of functions necessary for analysis of the current and previously income quotes, as well as basic arithmetic and logic operations 
+      are included in MQL4 structure. There are also basic indicators built in and commands of order placement and control.</p>
 
-      <p>The MetaEditor 4 (text editor) that highlights different constructions of MQL4
-      language is used for writing the program code. It helps users to orientate themselves in
-      the expert system text quite easily. We use MetaQuotes Language Dictionary as a Help System for MQL4 language.
-      An abridged guide contains functions divided into categories, operations, reserved words, and other language
-      constructions and allows finding the description of every element we use.</p>
+      <p>The MetaEditor (a text editor with syntax highlighting for MQL4) is used for writing program code.</p>
 
-      <p>Programs written in MetaQuotes Language 4 have different features and purposes:</p>
+      <p>Programs written in MQL4 have different features and purposes:</p>
       <ul><li><p>
-          <strong>Expert Advisor</strong> is a mechanical trading system linked to a specific chart.
-          An Advisor is executed for every incoming tick of a given symbol. The Advisor will not be executed for a new
-          tick if it is still processing the previous one (i.e. the Advisor has not yet completed its processing).
-          The Advisor can both inform you about a possibility to trade and trade at an account automatically, sending orders
-          directly to the trade server. Like most trading platforms the terminal supports the testing of strategies on historic data
-          and can display trade entries and exits in the chart.<br/>
-          Experts are stored in the directory <em>terminal_directory\experts</em>.</p></li>
-        <li><p><strong>Custom Indicator</strong> is a technical indicator written independently in addition to those
-          already built-in into the client terminal. Like built-in indicators, they cannot trade and are intended for analytical functionality.<br/>
-          Custom Indicators are stored in the directory <em>terminal_directory\experts\indicators</em>.</p></li>
-        <li><p><strong>Script</strong> is a program for the single non-repetitive execution of one or more actions. Unlike Expert Advisors, Scripts are not run 
+          An <strong>Expert Advisors</strong> (short: expert) is a mechanical trading system linked to a specific chart.
+          An expert is executed for every incoming tick of a given symbol. The expert will not be executed for a new tick if it is still processing 
+          the previous one (i.e. the expert has not yet completed its processing).
+          The expert can both inform you about a possibility to trade and trade at an account automatically, sending orders directly to the trade server. 
+          The terminal supports testing of trade strategies built with experts on historic data and can display trade entries and exits in the chart.<br/>
+          Experts are stored in the directory <em>{terminal_directory}\experts</em>.</p></li>
+        <li><p>
+          A <strong>Custom Indicator</strong> is a technical indicator written independently in addition to those
+          already built-in into the client terminal. Like built-in indicators they cannot trade and are intended for analytical functionality.<br/>
+          Custom Indicators are stored in the directory <em>{terminal_directory}\experts\indicators</em>.</p></li>
+        <li><p>
+          A <strong>Script</strong> is a program for the single non-repetitive execution of one or more actions. Unlike Expert Advisors, Scripts are not run 
           tickwise but on explicite request.<br/>
-          Scripts are stored in the directory <em>terminal_dictionary\experts\scripts</em>.</p></li>
-        <li><p><strong>Library</strong> is a set of custom functions most frequently used. Libraries cannot be executed by themself.<br/>
-          Libraries are recommended to be stored in the directory <em>terminal_directory\experts\libraries</em>.</p></li>
-        <li><p><strong>Include file</strong> is the source code of frequently used blocks of custom programs.
-          Such files can be included into the source codes of any other file at compile time.
-          The use of include files is to be preferred over the use of libraries because of the additional processing burden of calls of library functions.<br/>
-          Include files are recommended to be stored in the directory <em>terminal_directory\experts\include</em></p></li>
+          Scripts are stored in the directory <em>{terminal_dictionary}\experts\scripts</em>.</p></li>
+        <li><p>
+          A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself.<br/>
+          Libraries are recommended to be stored in the directory <em>{terminal_directory}\experts\libraries</em>.<br/>
+          The use of include files is to be preferred over the use of libraries because of the additional processing burden of library function calls.<br/>
+          </p></li>
       </ul>
     </content>
 
@@ -1314,7 +1308,7 @@ void ShowCopyright()
     <text>
       tag=basics_preprocessor_compilation
       caption=Controlling compilation
-        <keywords>
+      <keywords>
       ;#property;property;link;copyright;stacksize;indicator_chart_window;indicator_separate_window;indicator_buffers;
       ;indicator_minimum;indicator_maximum;indicator_color1;indicator_color2;indicator_color3;indicator_color4;
       ;indicator_color5;indicator_color6;indicator_color7;indicator_color8;indicator_level1;indicator_level2;
@@ -2345,7 +2339,7 @@ void SendMyMessage(string text)
 <tr><td class="constant">ERR_DOUBLE_PARAMETER_EXPECTED</td><td>4064</td><td>Double parameter expected.</td></tr>
 <tr><td class="constant">ERR_ARRAY_AS_PARAMETER_EXPECTED</td><td>4065</td><td>Array as parameter expected.</td></tr>
 <tr><td class="constant">ERS_HISTORY_UPDATE</td><td>4066</td><td>Status: requested history data is updating.</td></tr>
-<tr><td class="constant">ERR_TRADE_ERROR</td><td>4067</td><td>Some error in trading function.</td></tr>
+<tr><td class="constant">ERR_TRADE_ERROR</td><td>4067</td><td>Some error in trade function.</td></tr>
 <tr><td class="constant">ERR_END_OF_FILE</td><td>4099</td><td>End of file.</td></tr>
 <tr><td class="constant">ERR_FILE_ERROR</td><td>4100</td><td>Some file error.</td></tr>
 <tr><td class="constant">ERR_WRONG_FILE_NAME</td><td>4101</td><td>Wrong file name.</td></tr>
@@ -2684,8 +2678,10 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </content>
     <text>
       tag=runtime_start
-      caption=Program Run
-      keywords=;init;deinit;start;
+      caption=init(), start(), deinit()
+      <keywords>
+      ;init;start;deinit;
+      </keywords>
       <content>
         <p>
         Immediately after the program has been attached to the chart, it starts working with the init() function. The init()
@@ -2727,53 +2723,51 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </text>
     <text>
       tag=runtime_imports
-      caption=Imported functions call
+      caption=Imported functions
       keywords=;init;deinit;start;
       <content>
         <p>
-        To <a href="help://basics_preprocessor_import">import functions</a> during execution of an mql4 program, the so-called late binding is used.
-        This means that, until the imported function is called, the corresponding module (ex4 or dll) will not be loaded.
-        MQL4 and DLL libraries are executed in the calling module thread.<br/><br/>
+        To <a href="help://basics_preprocessor_import">import functions</a> at MQL4 runtime, so-called late binding is used.
+        This means that, until the imported function is called, the corresponding module (ex4 or DLL) will not be loaded.
+        MQL4 and DLL libraries are executed in the thread of the calling module.<br/><br/>
 
-        It is not recommended to use a fully qualified name of the module to be loaded like <em>Drive:\Directory\FileName.Ext</em>.
-      MQL4 libraries are loaded from the <em>terminal_dir\experts\libraries</em> folder. If the library has not been found,
-      there will be made an attempt to load the library from the <em>terminal_dir\experts</em> folder.<br/><br/>
+        It is not recommended to use a fully qualified filename name for the module to load like <em>Drive:\Directory\FileName.Ext</em>.
+      MQL4 libraries are loaded from the <em>{terminal_dir}\experts\libraries</em> folder. If the library is not found there an attempt will 
+      be made to load the library from the <em>{terminal_dir}\experts</em> folder.<br/><br/>
 
         System libraries (DLLs) are loaded by the rules of the operation system. If the library has already been loaded
-      (by another expert, for example, or from another client terminal launched at the same time), the library
-      already loaded will be referenced to. Otherwise, the searching will be preformed in the following order:<br/>
-        1. The <em>terminal_dir\experts\libraries</em> directory.<br/>
-        2. The directory from which the <em>terminal_dir</em> client terminal was launched.<br/>
+      (by another expert, for example, or from another client terminal running at the same time), the library
+      already loaded will be used. Otherwise, searching will be performed in the following order:<br/>
+        1. The <em>{terminal_dir}\experts\libraries</em> directory.<br/>
+        2. The <em>{terminal_dir}</em> directory.<br/>
         3. The current directory.<br/>
-        4. The system directory of <em>windows_dir\SYSTEM32</em> (or <em>windows_dir\SYSTEM</em> for Win98).<br/>
-        5. The directory where <em>windows_dir</em> operation system was installed.<br/>
-        6. Directories listed in the PATH environment system variable.<br/><br/>
+        4. The Windows system directory <em>{windows_dir}\System32</em> (or <em>{windows_dir}\System</em> for Win98).<br/>
+        5. The root directory of the drive where the operation system was installed.<br/>
+        6. The directories listed in the PATH environment system variable.<br/><br/>
 
-        If a DLL uses another DLL in its work, the former one will not be loaded if the latter one is unavailable.<br/><br/>
+        If a DLL references another DLL, the former one will not be loaded if the latter one is unavailable.<br/><br/>
 
-        Unlike system libraires, custom libraries (MQL4) are loaded for every calling module separately, independently on whether
-        the called library has been loaded by any other module. For example, the caller.ex4 module calls functions from lib1.ex4 and
-      lib2.ex4 libraries. The lib1.ex4 library, in its turn, calls functions from the lib2.ex4 library. In this case,
-      one more copy of the lib1.ex4 library and two copies of the lib2.ex4 library will be loaded, regardless that all calls
-        come from the same caller.ex4 module.<br/><br/>
+        Unlike system libraries, MQL4 libraries are loaded separately for every calling module, independently on whether
+        the called library has already been loaded by another MQL4 module. For example, the caller.ex4 module calls functions from lib1.ex4 and
+        lib2.ex4 libraries. The lib1.ex4 library by itself calls functions from the lib2.ex4 library, too. In this case one copy of the lib1.ex4 
+        library and two copies of the lib2.ex4 library will be loaded, regardless that all calls come from the same caller.ex4 module.<br/><br/>
 
-        Functions imported from DLL into an mql4 program must provide linkage convention accepted for Windows API functions.
-        To provide such a convention, the key word __stdcall specific for compilers of Microsoft(r) company is used in the source codes
-      of programs written in C or C++ language. The above linkage convention is characterized by the following:<br/>
-         - calling function (in our case, it is an mql4 program) must "see" the called (imported from DLL) function prototype
-       in order to put parameters onto the stack in a proper way;<br/>
-         - calling function (in our case, it is an mql4 program) puts parameters onto the stack in the reversed order, i.e., from right
-       to left; it is this order in which the imported function reads parameters passed to it;<br/>
-         - parameters are passed by their values, except for those explicitely passed by a link (in our case, these are lines);<br/>
-         - on reading the parameters passed to it, the imported function will flush the stack by itself.<br/><br/>
+        DLL functions imported into an MQL4 program must provide linkage conventions accepted for Windows API functions.
+        To provide such a convention, the keyword __stdcall (Microsoft compilers) is used in C/C++ source codes. The above linkage convention 
+        is characterized by the following:<br/>
+        - the caller (in our case, it's an MQL4 program) must "see" the called function prototype in order to be able to put parameters onto the 
+          stack;<br/>
+        - the caller puts parameters onto the stack in reversed order, i.e. from right to left; it is this order in which the imported function 
+          reads parameters passed to it;<br/>
+        - parameters are passed by value, except for those explicitely passed by reference (in MQL4 those are strings and arrays);<br/>
+        - after reading of the passed parameters the called function rewinds the stack by itself<br/><br/>
 
-         At describing of the imported <a href="help://basics_functions">function</a> prototype, it is useless to use parameters with
-       default values as all parameters must be passed explicitely to the imported function.<br/><br/>
+        An import declaration cannot specify parameters with default values as all parameters must be passed explicitely to the imported function.<br/><br/>
 
-         If the call for an imported function failed (expert settings do not allow DLL imports, or the corresponding
-       library could not be loaded for any reason), the expert stops working putting the corresponding message into the "expert stopped"
-       journal. At that, the expert will not be launched until it is re-initialized. An expert can be re-initialized as a result of
-       recompiling or opening of the expert properties table and pressing of OK button.
+       If calling of an imported function failes (MQL4 settings do not allow DLL imports, or the corresponding library could not be loaded), 
+       the program stops with the journal message "expert stopped". After that, the program's start() function will not be executed again until 
+       the program is re-initialized. A loaded program can be re-initialized by recompiling it or by opening its input properties dialog and pressing the 
+       OK button.
         </p>
       </content>
     </text>
@@ -2804,7 +2798,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       ;ERR_LONGS_NOT_ALLOWED;ERR_SHORTS_NOT_ALLOWED;ERR_OBJECT_ALREADY_EXISTS;ERR_UNKNOWN_OBJECT_PROPERTY;
       ;ERR_OBJECT_DOES_NOT_EXIST;ERR_UNKNOWN_OBJECT_TYPE;ERR_NO_OBJECT_NAME;ERR_OBJECT_COORDINATES_ERROR;
       ;ERR_NO_SPECIFIED_SUBWINDOW;ERR_TRADE_MODIFY_DENIED;ERR_TRADE_CONTEXT_BUSY;ERR_TRADE_EXPIRATION_DENIED;
-      ;ERR_OBJECT_ERROR,ERR_TRADE_ERROR,
+      ;ERR_OBJECT_ERROR;ERR_TRADE_ERROR,
       </keywords>
       <content>
         <p>
@@ -3172,7 +3166,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <parameter>
         type=string
         name=symbol
-        description=Symbol for trading operation.
+        description=Symbol for trade operation.
       </parameter>
       <parameter>
         type=int
@@ -4434,7 +4428,7 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
     <content>
     A group of functions that provide conversion of data from one format into another.<br/><br/>
     The <a href="help://convert_NormalizeDouble">NormalizeDouble()</a> function must be specially noted as it provides the necessary accuracy
-     of the price presentation. In trading operations, no unnormalized prices may be used if their accuracy even a digit exceeds that required by the trade server.
+     of the price presentation. In trade operations, no unnormalized prices may be used if their accuracy even a digit exceeds that required by the trade server.
     </content>
 
     <function>
@@ -9387,16 +9381,16 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
 
   <group>
     tag=trading
-    caption=Trading functions
+    caption=Trade functions
     <content>
-    A group of functions intended for trading management.<br/><br/>
-    Trading functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
+    A group of functions intended for trade management.<br/><br/>
+    Trade functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
     <a href="help://trading_OrderCloseBy">OrderCloseBy</a>, <a href="help://trading_OrderDelete">OrderDelete</a>, and <a href="help://trading_OrderModify">OrderModify</a>
     cannot be called from custom indicators.<br/><br/>
-    Trading functions can be used in experts and scripts. Trading functions can be called only if the "Allow live trading" property of this particular expert is checked.<br/><br/>
+    Trade functions can be used in experts and scripts. Trade functions can be called only if the "Allow live trading" property of this particular expert is checked.<br/><br/>
     To trade from experts and scripts, only one thread was provided that was launched in the program trade context (context of
-    automated trading from experts and scripts). This is why, if this context is occupied with an expert trading operation,
-    another expert or script cannot call trading functions at that moment due to <a href="help://constants_errors">error</a> 146 (<span class="constant">ERR_TRADE_CONTEXT_BUSY</span>).
+    automated trading from experts and scripts). This is why, if this context is occupied with an expert trade operation,
+    another expert or script cannot call trade functions at that moment due to <a href="help://constants_errors">error</a> 146 (<span class="constant">ERR_TRADE_CONTEXT_BUSY</span>).
     To check whether it is possible to trade or not, one has to use the <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a> function.
     To make a clear sharing of access to the trading context, one can use a semaphore on the basis of a global variable
     the value of which must be changed using the <a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition()</a> function.
@@ -9404,7 +9398,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
 
     <text>
       tag=trading_errors
-      caption=Execution errors
+      caption=Trade execution errors
       <keywords>
       ;ERR_NO_ERROR;ERR_NO_RESULT;ERR_COMMON_ERROR;ERR_INVALID_TRADE_PARAMETERS;ERR_SERVER_BUSY;
       ;ERR_OLD_VERSION;ERR_NO_CONNECTION;ERR_TOO_FREQUENT_REQUESTS;
@@ -9414,7 +9408,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
       ;ERR_TOO_MANY_REQUESTS;ERR_TRADE_MODIFY_DENIED;ERR_TRADE_CONTEXT_BUSY;ERR_TRADE_EXPIRATION_DENIED;
       </keywords>
       <content>
-        <p>Any trading operation (functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
+        <p>Any trade operation (functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
         <a href="help://trading_OrderCloseBy">OrderCloseBy</a>, <a href="help://trading_OrderDelete">OrderDelete</a> or <a href="help://trading_OrderModify">OrderModify</a>)
         can fail, for a number of reasons, and return either negative <a href="help://trading_OrderSend">ticket number</a> or <span class="constant">false</span>.
         One can find out about the reason for fail by calling of the <a href="help://check_GetLastError">GetLastError()</a> function.
@@ -9427,7 +9421,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td><span class="constant">ERR_NO_RESULT</span></td><td>1</td><td><a href="help://trading_OrderModify">OrderModify</a> attempts to replace the values already set with the same values.
                                                  One or more values must be changed, then modification attempt can be repeated.</td></tr>
         <tr><td><span class="constant">ERR_COMMON_ERROR</span></td><td>2</td><td>Common error. All attempts to trade must be stopped until reasons are clarified. Restart of operation system and client terminal will possibly be needed.</td></tr>
-        <tr><td><span class="constant">ERR_INVALID_TRADE_PARAMETERS</span></td><td>3</td><td>Invalid parameters were passed to the trading function, for example, wrong symbol, unknown
+        <tr><td><span class="constant">ERR_INVALID_TRADE_PARAMETERS</span></td><td>3</td><td>Invalid parameters were passed to the trade function, for example, wrong symbol, unknown
                                                  <a href="help://constants_trading">trade operation</a>, negative slippage, non-existing ticket number, etc.
                                                  The program logic must be changed.</td></tr>
         <tr><td><span class="constant">ERR_SERVER_BUSY</span></td><td>4</td><td>Trade server is busy. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
@@ -9438,7 +9432,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td><span class="constant">ERR_ACCOUNT_DISABLED</span></td><td>64</td><td>The account was disabled. All attempts to trade must be stopped.</td></tr>
         <tr><td><span class="constant">ERR_INVALID_ACCOUNT</span></td><td>65</td><td>The account number is invalid. All attempts to trade must be stopped.</td></tr>
         <tr><td><span class="constant">ERR_TRADE_TIMEOUT</span></td><td>128</td><td>Timeout for the trade has been reached. Before retry (at least, in 1-minute time),
-                                                 it is necessary to make sure that trading operation has not really succeeded (a new position has not been opened, or the existing order has not
+                                                 it is necessary to make sure that trade operation has not really succeeded (a new position has not been opened, or the existing order has not
                                                  been modified or deleted, or the existing position has not been closed)</td></tr>
         <tr><td><span class="constant">ERR_INVALID_PRICE</span></td><td>129</td><td>Invalid bid or ask price, perhaps, unnormalized price. After 5-second (or more) delay, it is necessary to refresh
                                                  <a href="help://predefined_variables">data</a> using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
@@ -9459,7 +9453,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
         <tr><td><span class="constant">ERR_REQUOTE</span></td><td>138</td><td>The requested price has become out of date or bid and ask prices have been mixed up.
                                                  The <a href="help://predefined_variables">data</a> can be refreshed without any delay using the <a href="help://windows_RefreshRates">RefreshRates</a> function and make a retry.
                                                  If the error does not disappear, all attempts to trade must be stopped, the program logic must be changed.</td></tr>
-        <tr><td><span class="constant">ERR_ORDER_LOCKED</span></td><td>139</td><td>The order has been locked and under processing. All attempts to make trading operations must be stopped, and the program logic must be changed.</td></tr>
+        <tr><td><span class="constant">ERR_ORDER_LOCKED</span></td><td>139</td><td>The order has been locked and under processing. All attempts to make trade operations must be stopped, and the program logic must be changed.</td></tr>
         <tr><td><span class="constant">ERR_LONG_POSITIONS_ONLY_ALLOWED</span></td><td>140</td><td>Only buying operation is allowed. The SELL operation must not be repeated.</td></tr>
         <tr><td><span class="constant">ERR_TOO_MANY_REQUESTS</span></td><td>141</td><td>Too many requests. The frequency of requesting must be reduced, the program logic must be changed.</td></tr>
         <tr><td>&nbsp;</td><td>142</td><td>The order has been enqueued. It is not an error but an interaction code between the client terminal and the trade server. This code can be got rarely, when the disconnection and the reconnection happen during the execution of a trade operation. This code should be processed in the same way as error 128.</td></tr>
@@ -10673,26 +10667,6 @@ The value will be <span class="constant">true</span> only if the expert or scrip
       <tr><td>ServerAddress</td><td><a href="help://account_AccountServer">AccountServer</a></td></tr>
       <tr><td>TimeOnDropped</td><td><a href="help://windows_WindowTimeOnDropped">WindowTimeOnDropped</a></td></tr>
       </table><br/>
-    </content>
-  </group>
-
-  <group>
-   tag=MQL5_migrate
-   caption=Upgrade to MQL5
-   <content>
-<p>In 2010, MetaQuotes Software Corp. released the new <a href="http://www.metatrader5.com/en" title="MetaTrader 5" target="_blank">MetaTrader 5</a> online trading platform. In the new platform, we have implemented a lot of traders' wishes and added the ability to trade various exchange-traded instruments.</p>
-<p>The MetaTrader 5 Client Terminal is now equipped with a new multi-currency tester, which allows using all the available computer cores during optimization. Moreover, by connecting remote testing agents, the time of Expert Advisor optimization can be hundred times reduced. The tester provides the most convenient and easy way to add, delete and control remote agents.</p>
-<p>MetaEditor 5 allows debugging of programs, contains built-in code completion and provides many other improvements. With the new <a href="http://www.metatrader5.com/en/metaeditor/help/MQL5_wizard" title="MQL5 Wizard" target="_blank">MQL5 Wizard</a>, you need only four mouse clicks to create your own trading robot even if you don't have programming skills. You go through the required steps selecting the type of trading signals, the money management block and the Trailing Stop system, and you get an Expert Advisor ready for compilation and use.</p>
-<p>In the new MQL5 programming language the following features have been implemented:</p>
-<ul>
-  <li>object-oriented programming (OOP)</li>
-  <li>processing of trade and custom events</li>
-  <li>a large number of new graphical objects and properties</li>
-</ul>
-
-<p>The execution speed of MQL5 programs has greatly increased and is now very close to the speed of C++. Developers of MQL5 programs do not need to transfer heavy mathematical calculations to DLLs.</p>
-<p>To make the new language study as convenient as possible, the <a href="http://www.mql5.com/en" title="www.mql5.com/en" target="_blank">MQL5.community</a> website contains a lot of new <a href="http://www.mql5.com/en/articles" title="Articles about MQL5" target="_blank">articles</a> and codes, the on-line language reference and the new <a href="http://www.mql5.com/en/job" title="Order programs in MQL4" target="_blank">Jobs</a> service, where you can order programs in MQL4 and MQL5. More services will be added soon: account monitoring, Expert Advisors store, signals sales and a site of remote testing agents.</p>
-<p>If you know MQL4 it will be easy for you to adapt to MQL5. The new features are worth it.</p>
     </content>
   </group>
 
