@@ -1036,7 +1036,7 @@ int Chart.Expert.Properties() {
    int hWnd = WindowHandleEx(NULL);
    if (!hWnd) return(last_error);
 
-   if (!PostMessageA(hWnd, WM_COMMAND, IDC_CHART_EXPERT_PROPERTIES, 0))
+   if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
       return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(NO_ERROR);
@@ -1061,7 +1061,7 @@ int Tester.Pause() {
    if (!hWnd)
       return(last_error);
 
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_PAUSERESUME, 0);
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
    return(NO_ERROR);
 }
 
@@ -1080,7 +1080,7 @@ bool Tester.IsPaused() {
 
    if (IsScript()) {
       // VisualMode = true;
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start";    // muß im Script reichen
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
    }
    else {
       if (!IsVisualModeFix())                                                                      // EA/Indikator aus iCustom()
@@ -1091,7 +1091,7 @@ bool Tester.IsPaused() {
    if (testerStopped)
       return(false);
 
-   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_PAUSERESUME)) == ">>");
+   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME)) == ">>");
 }
 
 
@@ -1106,7 +1106,7 @@ bool Tester.IsStopped() {
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
-      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_STARTSTOP)) == "Start");            // muß im Script reichen
+      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");            // muß im Script reichen
    }
    return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
 }                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
@@ -1898,11 +1898,11 @@ int Toolbar.Experts(bool enable) {
 
    if (enable) {
       if (!IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, IDC_EXPERTS_ONOFF, 0);
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
    }
    else /*disable*/ {
       if (IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, IDC_EXPERTS_ONOFF, 0);
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
    }
    return(NO_ERROR);
 }
@@ -1918,7 +1918,7 @@ int MarketWatch.Symbols() {
    if (!hWnd)
       return(last_error);
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_MARKETWATCH_SYMBOLS, 0);
+   PostMessageA(hWnd, WM_COMMAND, ID_MARKETWATCH_SYMBOLS, 0);
    return(NO_ERROR);
 }
 
@@ -4176,7 +4176,7 @@ int Chart.Objects.UnselectAll() {
    int hWnd = WindowHandleEx(NULL);
    if (!hWnd) return(last_error);
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_CHART_OBJECTS_UNSELECTALL, 0);
+   PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
    return(NO_ERROR);
 }
 
@@ -4190,7 +4190,7 @@ int Chart.Refresh() {
    int hWnd = WindowHandleEx(NULL);
    if (!hWnd) return(last_error);
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_CHART_REFRESH, 0);
+   PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
    return(NO_ERROR);
 }
 
@@ -4214,7 +4214,7 @@ int Chart.SendTick(bool sound=false) {
       PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 0);
    }
    else if (Tester.IsPaused()) {
-      SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_TICK, 0);
+      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
 
    if (sound)

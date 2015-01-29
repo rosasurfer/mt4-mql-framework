@@ -58,7 +58,7 @@ int onInit() {
 
 
    // (2) ETH/Future-Status ermitteln
-   string futures[] = {"BRENT","DJIA","DJTA","EURUSD","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
+   string futures[] = {"BRENT","DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
    eth.likeFuture = StringInArray(futures, StdSymbol());
 
 

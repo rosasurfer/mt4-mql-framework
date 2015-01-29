@@ -235,7 +235,7 @@ int start() {
 
 
    // (6) im Tester
-   if (IsVisualModeFix())
+   if (IsVisualMode())
       icChartInfos(PERIOD_H1);                                             // nur bei Tester::VisualMode=On ChartInfos per iCustom() anzeigen (ist Online nicht notwendig)
 
 
@@ -610,7 +610,7 @@ int Tester.Stop() {
    int hWnd = GetApplicationWindow();
    if (!hWnd) return(last_error);
 
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_STARTSTOP, 0);
+   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
    return(NO_ERROR);
 }
 

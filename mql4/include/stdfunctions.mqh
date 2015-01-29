@@ -768,54 +768,59 @@ int      last_error;                                        // der letzte Fehler
 #define MT4_MQL_REFRESH                     12349     // Rescan und Reload modifizierter .ex4-Files
 
 
-// MT4 command ids (Menüpunkte, Toolbars, Hotkeys)
-#define IDC_EXPERTS_ONOFF                   33020     // Toolbar: Experts on/off                    Ctrl+E
-
-#define IDC_CHART_REFRESH                   33324     // Chart: Refresh
-#define IDC_CHART_STEPFORWARD               33197     //        eine Bar vorwärts                      F12
-#define IDC_CHART_STEPBACKWARD              33198     //        eine Bar rückwärts               Shift+F12
-#define IDC_CHART_EXPERT_PROPERTIES         33048     //        Expert Properties-Dialog                F7
-#define IDC_CHART_OBJECTS_UNSELECTALL       35462     //        Objects: Unselect All
-
-#define IDC_MARKETWATCH_SYMBOLS             33171     // Market Watch: Symbols
-
-#define IDC_TESTER_TICK     IDC_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
+// ID Naming and Numbering Conventions
+//
+// @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
 
 
-// MT4 item ids (Fenster, Controls)
+// MT4 command ids (Menüs, Toolbars, Hotkeys)
+#define ID_EXPERTS_ONOFF                    33020     // Toolbar: Experts on/off                    Ctrl+E
+
+#define ID_CHART_REFRESH                    33324     // Chart: Refresh
+#define ID_CHART_STEPFORWARD                33197     //        eine Bar vorwärts                      F12
+#define ID_CHART_STEPBACKWARD               33198     //        eine Bar rückwärts               Shift+F12
+#define ID_CHART_EXPERT_PROPERTIES          33048     //        Expert Properties-Dialog                F7
+#define ID_CHART_OBJECTS_UNSELECTALL        35462     //        Objects: Unselect All
+
+#define ID_MARKETWATCH_SYMBOLS              33171     // Market Watch: Symbols
+
+#define ID_TESTER_TICK       ID_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
+
+
+// MT4 control ids (Controls, Fenster)
 #define IDD_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
-#define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked *inside* the main application window
-#define IDD_UNDOCKED_CONTAINER              59423     // window containing one undocked/floating child window (ggf. mehrere, sind kein Top-Level-Window)
+#define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked to the main application window
+#define IDD_UNDOCKED_CONTAINER              59423     // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
 
 #define IDD_MARKETWATCH                        80     // Market Watch
-#define IDD_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols
-#define IDD_MARKETWATCH_TICKCHART           35442     // Market Watch - Tick Chart
+#define IDC_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols
+#define IDC_MARKETWATCH_TICKCHART           35442     // Market Watch - Tick Chart
 
 #define IDD_NAVIGATOR                          82     // Navigator
-#define IDD_NAVIGATOR_COMMON                35439     // Navigator - Common
-#define IDD_NAVIGATOR_FAVOURITES            35440     // Navigator - Favourites
+#define IDC_NAVIGATOR_COMMON                35439     // Navigator - Common
+#define IDC_NAVIGATOR_FAVOURITES            35440     // Navigator - Favourites
 
 #define IDD_TERMINAL                           81     // Terminal
-#define IDD_TERMINAL_TRADE                  33217     // Terminal - Trade
-#define IDD_TERMINAL_ACCOUNTHISTORY         33208     // Terminal - Account History
-#define IDD_TERMINAL_NEWS                   33211     // Terminal - News
-#define IDD_TERMINAL_ALERTS                 33206     // Terminal - Alerts
-#define IDD_TERMINAL_MAILBOX                33210     // Terminal - Mailbox
-#define IDD_TERMINAL_COMPANY                 4078     // Terminal - Company
-#define IDD_TERMINAL_MARKET                  4081     // Terminal - Market
-#define IDD_TERMINAL_SIGNALS                 1405     // Terminal - Signals
-#define IDD_TERMINAL_CODEBASE               33212     // Terminal - Code Base
-#define IDD_TERMINAL_EXPERTS                35434     // Terminal - Experts
-#define IDD_TERMINAL_JOURNAL                33209     // Terminal - Journal
+#define IDC_TERMINAL_TRADE                  33217     // Terminal - Trade
+#define IDC_TERMINAL_ACCOUNTHISTORY         33208     // Terminal - Account History
+#define IDC_TERMINAL_NEWS                   33211     // Terminal - News
+#define IDC_TERMINAL_ALERTS                 33206     // Terminal - Alerts
+#define IDC_TERMINAL_MAILBOX                33210     // Terminal - Mailbox
+#define IDC_TERMINAL_COMPANY                 4078     // Terminal - Company
+#define IDC_TERMINAL_MARKET                  4081     // Terminal - Market
+#define IDC_TERMINAL_SIGNALS                 1405     // Terminal - Signals
+#define IDC_TERMINAL_CODEBASE               33212     // Terminal - Code Base
+#define IDC_TERMINAL_EXPERTS                35434     // Terminal - Experts
+#define IDC_TERMINAL_JOURNAL                33209     // Terminal - Journal
 
 #define IDD_TESTER                             83     // Tester
 #define IDD_TESTER_SETTINGS                 33215     // Tester - Settings
-#define IDC_TESTER_PAUSERESUME               1402     // Tester - Settings Pause/Resume button
-#define IDC_TESTER_STARTSTOP                 1034     // Tester - Settings Start/Stop button
-#define IDD_TESTER_RESULTS                  33214     // Tester - Results
-#define IDD_TESTER_GRAPH                    33207     // Tester - Graph
-#define IDD_TESTER_REPORT                   33213     // Tester - Report
-#define IDD_TESTER_JOURNAL   IDD_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402     // Tester - Settings Pause/Resume button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034     // Tester - Settings Start/Stop button
+#define IDC_TESTER_RESULTS                  33214     // Tester - Results
+#define IDC_TESTER_GRAPH                    33207     // Tester - Graph
+#define IDC_TESTER_REPORT                   33213     // Tester - Report
+#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
 
 
 // Flags zur Fehlerbehandlung                         // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
