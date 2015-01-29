@@ -22,6 +22,11 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   debug("onStart()  MathLog(+0)="+ MathLog(+0) +"  MathLog(-0)="+ MathLog(-0));
+
+   return(catch("onStart(10)"));
+
+
    debug("onStart()  MathArccos(-1.1)  = "+ MathArccos(-1.1), GetLastError());
    debug("onStart()  MathArccos( 1.1)  = "+ MathArccos( 1.1), GetLastError());
 

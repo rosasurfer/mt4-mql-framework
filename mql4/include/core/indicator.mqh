@@ -557,6 +557,10 @@ int DeinitReason() {
 int InitExecutionContext() {
    if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
+
 
    // (1) globale Variablen initialisieren (werden später ggf. mit Werten aus restauriertem oder SuperContext überschrieben)
    __NAME__       = WindowExpertName();
