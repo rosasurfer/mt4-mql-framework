@@ -6,6 +6,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdlib.mqh>
+#include <win32api.mqh>
 #include <history.mqh>
 #include <structs/mt4/HISTORY_HEADER.mqh>
 
@@ -21,11 +22,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-
-   debug("onStart()  MathLog(+0)="+ MathLog(+0) +"  MathLog(-0)="+ MathLog(-0));
-
-   return(catch("onStart(10)"));
-
 
    debug("onStart()  MathArccos(-1.1)  = "+ MathArccos(-1.1), GetLastError());
    debug("onStart()  MathArccos( 1.1)  = "+ MathArccos( 1.1), GetLastError());

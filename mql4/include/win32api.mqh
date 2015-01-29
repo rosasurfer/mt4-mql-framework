@@ -62,6 +62,7 @@
    int  ShellExecuteA(int hWnd, string lpOperation, string lpFile, string lpParameters, string lpDirectory, int nShowCmd);
 
 #import "user32.dll"
+   bool DestroyWindow(int hWnd);
    int  FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
@@ -78,6 +79,7 @@
    int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    int  MessageBoxExA(int hWnd, string lpText, string lpCaption, int style, int wLanguageId);
    bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
+   bool RedrawWindow(int hWnd, int lpRectUpdate, int hRgnUpdate, int flags);
    int  RegisterWindowMessageA(string lpString);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    bool SetWindowTextA(int hWnd, string lpString);
@@ -314,6 +316,25 @@
 #define GW_OWNER                                      4
 #define GW_CHILD                                      5
 #define GW_ENABLEDPOPUP                               6
+
+
+// RedrawWindow() flags
+#define RDW_INVALIDATE                           0x0001
+#define RDW_INTERNALPAINT                        0x0002
+#define RDW_ERASE                                0x0004
+
+#define RDW_VALIDATE                             0x0008
+#define RDW_NOINTERNALPAINT                      0x0010
+#define RDW_NOERASE                              0x0020
+
+#define RDW_NOCHILDREN                           0x0040
+#define RDW_ALLCHILDREN                          0x0080
+
+#define RDW_UPDATENOW                            0x0100
+#define RDW_ERASENOW                             0x0200
+
+#define RDW_FRAME                                0x0400
+#define RDW_NOFRAME                              0x0800
 
 
 // Handles
