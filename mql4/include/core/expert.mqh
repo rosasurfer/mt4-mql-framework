@@ -425,6 +425,10 @@ int This.IsTesting() {
 int InitExecutionContext() {
    if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
+   N_INF = MathLog(0);
+   P_INF = -N_INF;
+   NaN   =  N_INF - N_INF;
+
 
    // (1) Speicher für Programm- und LogFileName alloziieren
    string names[2]; names[0] = WindowExpertName();                                              // Programm-Name (Länge konstant)

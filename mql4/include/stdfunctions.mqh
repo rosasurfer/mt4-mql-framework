@@ -59,6 +59,12 @@ int      last_error;                                        // der letzte Fehler
 #define TAB                         "\t"                    // tab
 
 
+// Special double values, werden in init() definiert, da nicht constant deklarierbar (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
+double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
+double  P_INF;                                              //  1.#INF: positive infinity
+double  N_INF;                                              // -1.#INF: negative infinity
+
+
 // Log level
 #define L_OFF                 INT_MIN                       // Tests umgekehrt zu log4j mit: if (LOG_LEVEL >= Event)
 #define L_FATAL                 10000
@@ -1616,24 +1622,25 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 /**
  * Dropin-Ersatz für WindowHandle()
  *
- * Wie WindowHandle(), kann aber das Fensterhandle des aktuellen Charts in allen Fällen ermitteln, in denen WindowHandle() dies nicht kann.
+ * Wie WindowHandle(), kann jedoch ein Fensterhandle auch dann ermitteln, wenn WindowHandle() dies nicht kann. Kann bei der Suche ausdrücklich nur das eigene
+ * oder ausdrücklich nur ein fremdes Fenster berücksichtigen. Funktioniert auch im Tester bei VisualMode=Off.
  *
  * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll.
- *                           Ist dieser Parameter NULL und es wurde kein Timeframe angegeben (kein zweiter Parameter oder NULL), wird das Handle des aktuellen
- *                           Chartfensters zurückgegeben oder -1, falls das Programm kein Chartfenster hat (im Tester bei VisualMode=Off).
- *                           Ist dieser oder der zweite Parameter nicht NULL, wird das eigene Chartfenster bei der Suche nicht berücksichtigt und das Handle
- *                           des ersten passenden weiteren Chartfensters zurückgegeben (in Z order) oder NULL, falls kein weiteres solches Chartfenster existiert.
+ *                           Ist dieser Parameter NULL und es wurde kein Timeframe angegeben (kein zweiter Parameter oder NULL), wird das Handle des eigenen
+ *                           Chartfensters zurückgegeben oder -1, falls das Programm selbst keinen Chart hat (im Tester bei VisualMode=Off).
+ *                           Ist dieser oder der zweite Parameter nicht NULL, wird das Handle des ersten passenden fremden Chartfensters zurückgegeben (in Z order)
+ *                           oder NULL, falls kein solches Chartfenster existiert. Das eigene Chartfenster wird bei dieser Suche nicht berücksichtigt.
  * @param int    timeframe - Timeframe des Charts, dessen Handle ermittelt werden soll (default: der aktuelle Timeframe)
  *
- * @return int - Fensterhandle oder NULL, falls kein entsprechendes Fenster existiert oder ein Fehler auftrat;
- *               -1, falls das Handle des eigenen Chartfensters gesucht ist und das Programm keinen Chart hat (im Tester bei VisualMode=Off)
+ * @return int - Fensterhandle oder NULL, falls kein entsprechendes Chartfenster existiert oder ein Fehler auftrat;
+ *               -1, falls das Handle des eigenen Chartfensters gesucht ist und das Programm selbst keinen Chart hat (im Tester bei VisualMode=Off)
  */
 int WindowHandleEx(string symbol, int timeframe=NULL) {
    static int static.hWndSelf = 0;                                   // mit Initializer gegen Testerbug: wird in Library bei jedem lib::init() zurückgesetzt
    bool self = (symbol=="0" && !timeframe);                          // (string) NULL
 
 
-   // (1) manuelle Suche nach eigenem Chart
+   // (1) Suche nach eigenem Chart
    if (self) {
       if (static.hWndSelf != 0)
          return(static.hWndSelf);
@@ -1699,7 +1706,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
    if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(6)", error));
 
 
-   // (3) manuelle Suche nach fremdem Chart (dem ersten passenden in Z order)
+   // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
    hWndMdi   = GetDlgItem(hWndMain, IDD_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
@@ -2303,6 +2310,7 @@ bool GT(double double1, double double2, int digits=8) {
  * @return bool
  */
 bool IsNaN(double value) {
+   // Bug Build 225: der Ausdruck (NaN==NaN) ist TRUE
    string s = value;
    return(s == "-1.#IND0000");
 }
