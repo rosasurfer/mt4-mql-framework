@@ -51,7 +51,7 @@ int onTick() {
    static bool done;
    if (!done) {
       int currentThread=GetCurrentThreadId(), uiThread=GetUIThreadId();
-      debug("onTick(1)     "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  ec="+ lpLocalContext +"  Visual="+ IsVisualModeFix() +"  Testing="+ IsTesting());
+      debug("onTick(1)     "+ ifString(currentThread==uiThread, "ui", "  ") +"thread="+ GetCurrentThreadId() +"  ec="+ lpLocalContext +"  Visual="+ IsVisualMode() +"  Testing="+ IsTesting());
       done = true;
    }
 
