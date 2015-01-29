@@ -794,19 +794,22 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // MT4 control ids (Controls, Fenster)
-#define IDD_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
-#define IDD_DOCKABLES_CONTAINER             59422     // window containing all child windows docked to the main application window
-#define IDD_UNDOCKED_CONTAINER              59423     // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
+#define IDC_TOOLBAR                         59419     // Toolbar
+#define IDC_TOOLBAR_SEARCHBOX               38213     // Suche
+#define IDC_STATUSBAR                       59393     // Statusbar
+#define IDC_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
+#define IDC_DOCKABLES_CONTAINER             59422     // window containing all child windows docked to the main application window
+#define IDC_UNDOCKED_CONTAINER              59423     // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
 
-#define IDD_MARKETWATCH                        80     // Market Watch
+#define IDC_MARKETWATCH                        80     // Market Watch
 #define IDC_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols
 #define IDC_MARKETWATCH_TICKCHART           35442     // Market Watch - Tick Chart
 
-#define IDD_NAVIGATOR                          82     // Navigator
+#define IDC_NAVIGATOR                          82     // Navigator
 #define IDC_NAVIGATOR_COMMON                35439     // Navigator - Common
 #define IDC_NAVIGATOR_FAVOURITES            35440     // Navigator - Favourites
 
-#define IDD_TERMINAL                           81     // Terminal
+#define IDC_TERMINAL                           81     // Terminal
 #define IDC_TERMINAL_TRADE                  33217     // Terminal - Trade
 #define IDC_TERMINAL_ACCOUNTHISTORY         33208     // Terminal - Account History
 #define IDC_TERMINAL_NEWS                   33211     // Terminal - News
@@ -819,8 +822,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define IDC_TERMINAL_EXPERTS                35434     // Terminal - Experts
 #define IDC_TERMINAL_JOURNAL                33209     // Terminal - Journal
 
-#define IDD_TESTER                             83     // Tester
-#define IDD_TESTER_SETTINGS                 33215     // Tester - Settings
+#define IDC_TESTER                             83     // Tester
+#define IDC_TESTER_SETTINGS                 33215     // Tester - Settings
 #define IDC_TESTER_SETTINGS_PAUSERESUME      1402     // Tester - Settings Pause/Resume button
 #define IDC_TESTER_SETTINGS_STARTSTOP        1034     // Tester - Settings Start/Stop button
 #define IDC_TESTER_RESULTS                  33214     // Tester - Results
@@ -1656,7 +1659,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
       if (!hWnd) {
          int hWndMain = GetApplicationWindow();               if (!hWndMain) return(NULL);
-         int hWndMdi  = GetDlgItem(hWndMain, IDD_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(2)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+         int hWndMdi  = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(2)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
 
          bool missingWnd = false;
          string title, sError;
@@ -1708,7 +1711,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
    // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-   hWndMdi   = GetDlgItem(hWndMain, IDD_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
    hWnd      = 0;
 
