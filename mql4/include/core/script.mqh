@@ -504,6 +504,7 @@ int UpdateProgramStatus(int value=NULL) {
    string CreateString(int length);
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
+   string StringToStr(string value);
    int    SumInts(int array[]);
    string __whereamiDescription(int id);
 
