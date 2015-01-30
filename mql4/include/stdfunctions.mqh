@@ -2973,7 +2973,7 @@ void __DummyCalls() {
    int    ec.hChart   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.TestFlags(/*EXECUTION_CONTEXT*/int ec[]);
 
-#import "StdLib.dll"
+#import "MT4Expander.dll"
    int    GetLastWin32Error();
    bool   IsBuiltinTimeframe(int timeframe);
 

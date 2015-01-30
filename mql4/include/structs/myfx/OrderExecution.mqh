@@ -330,7 +330,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
    string OperationTypeToStr(int type);
    string StringToStr(string value);
 
-#import "StdLib.dll"
+#import "MT4Expander.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import
