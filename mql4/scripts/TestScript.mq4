@@ -23,6 +23,11 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   Test();
+
+   return(catch("onStart(1)"));
+
+
    debug("onStart()  MathArccos(-1.1)  = "+ MathArccos(-1.1), GetLastError());
    debug("onStart()  MathArccos( 1.1)  = "+ MathArccos( 1.1), GetLastError());
 
