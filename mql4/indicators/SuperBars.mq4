@@ -39,15 +39,6 @@ string label.description = "Description";                // Label für Chartanzei
  * @return int - Fehlerstatus
  */
 int onInit() {
-   /*
-   EnumChildWindows(GetDlgItem(GetApplicationWindow(), IDD_MDI_CLIENT), false);
-   int hWnd = WindowHandleEx(NULL);
-   if (hWnd == -1) string title = "no chart window";
-   else                   title = "title=\""+ GetWindowText(GetParent(hWnd)) +"\"";
-   debug("onInit()  thread="+ ifString(GetCurrentThreadId()==GetUIThreadId(), "UI", "tester") +", "+ title +", context=Indicator::"+ __whereamiDescription(__WHEREAMI__));
-   debug("onInit()  Indicator.IsTesting="+ Indicator.IsTesting() +"  hWnd.orig="+ WindowHandle(Symbol(), NULL)); GetLastError();
-   */
-
    // (1) Parametervalidierung
    // Colors
    if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung

@@ -1,11 +1,13 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail, SMS, HTML-Request und/oder ICQ.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail, SMS, HTML-Request oder ICQ.
  *
  *
  * (1) Order-Events
  *     Zu überwachende Order-Events werden mit Indikator-Inputparametern konfiguriert. Ein so konfigurierter EventTracker überwacht alle Symbole des Accounts,
  *     nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen von allen laufenden EventTrackern für die Orderüberwachung
- *     zu konfigurieren. Events:
+ *     zu konfigurieren.
+ *
+ *     Events:
  *      - Orderausführung fehlgeschlagen
  *      - Position geöffnet
  *      - Position geschlossen
@@ -13,22 +15,29 @@
  *
  * (2) Preis-Events
  *     Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
- *     EventTracker je Instrument zu laden. Events:
- *      - neues Tages-High/Low (mit konfigurierbarer Wartezeit zwischen zwei aufeinanderfolgenden gleichen Events)
- *      - neues Wochen-High/Low (mit konfigurierbarer Wartezeit)
+ *     EventTracker je Instrument zu laden.
+ *
+ *     Events:
+ *      - Erreichen der 10%-Schwelle der Tages-Range
+ *      - Bruch der Tages-Range = neues Tages-High/Low (mit konfigurierbarer Wartezeit)
+ *      - Erreichen der 10%-Schwelle der Vortages-Range
  *      - Bruch der Vortages-Range
- *      - Bruch der Vorwochen-Range
  *      - Erreichen des Vorvortages-Close
+ *
+ *      - Erreichen der 10%-Schwelle der Wochen-Range
+ *      - Bruch der Wochen-Range = neues Wochen-High/Low (mit konfigurierbarer Wartezeit)
+ *      - Erreichen der 10%-Schwelle der Vorwochen-Range
+ *      - Bruch der Vorwochen-Range
  *      - Erreichen des Vorvorwochen-Close
  *
  *     Pattern:
  *      - neues Inside-Range-Pattern auf Tagesbasis
  *      - neues Inside-Range-Pattern auf Wochenbasis
- *      - Bruch Inside-Range-Pattern auf Tagesbasis
- *      - Bruch Inside-Range-Pattern auf Wochenbasis
+ *      - Auflösung eines Inside-Range-Pattern auf Tagesbasis
+ *      - Auflösung eines Inside-Range-Pattern auf Wochenbasis
  *
  *
- * Die Art der Benachrichtigung (akustisch, E-Mail, SMS, HTML-Request und/oder ICQ) kann je Event einzeln konfiguriert werden.
+ * Die Art der Benachrichtigung (akustisch, E-Mail, SMS, HTML-Request, ICQ) kann je Event einzeln konfiguriert werden.
  *
  *
  * TODO:
@@ -97,9 +106,6 @@ bool     priceAlerts.http;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   if (This.IsTesting() == -1)
-      return(last_error);
-
    // Konfiguration einlesen. Ist die AccountNumber() beim Terminalstart noch nicht verfügbar, wird der Aufruf in onTick() wiederholt.
    if (!Configure())
       return(last_error);
