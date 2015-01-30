@@ -204,7 +204,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    string UninitializeReasonToStr(int reason);
    string __whereamiToStr(int id);
 
-#import "StdLib.dll"
+#import "MT4Expander.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
    string GetString(int address);

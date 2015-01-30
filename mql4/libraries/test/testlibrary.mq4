@@ -70,7 +70,7 @@ int ex4_GetIntValue(int value) {
 
 
 /*
-#import "StdLib.dll"
+#import "MT4Expander.dll"
    int dll_GetIntValue(int value);
 #import "test/testlibrary.ex4"
    int ex4_GetIntValue(int value);
