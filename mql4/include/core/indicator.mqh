@@ -4,6 +4,8 @@
 extern string ___________________________;
 extern int    __lpSuperContext;
 
+#include <functions/IsTesting.mqh>
+
 
 /**
  * Globale init()-Funktion für Indikatoren.
@@ -27,7 +29,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (IsError(InitExecutionContext())) {
+   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -87,19 +89,20 @@ int init() {
    /*
    (6) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
 
-   Da sich die verfügbaren UninitializeReasons und ihre Bedeutung in den einzelnen Terminalversionen ändern, wird der
-   UninitializeReason in ein im aktuellen Kontext in allen Terminalversionen einheitliches Init-Szenario "übersetzt".
+   Die vom Terminal bereitgestellten UninitializeReasons und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
+   und können nicht zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien verwendet werden.
+   Abhilfe: Expander-Funktion InitReason() und die neueingeführten Variablen INIT_REASON_*.
 
-   Init-Szenarien:
-   ---------------
-   - onInit.User()             - bei Laden durch den User                               -      Input-Dialog
-   - onInit.Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-   - onInit.Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
-   - onInit.ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-   - onInit.Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
-   - onInit.TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
-   - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
-   - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+   Init-Szenario                   User-Routine                Beschreibung
+   -------------                   ------------                ------------
+   INIT_REASON_USER              - onInit.User()             - bei Laden durch den User                               -      Input-Dialog
+   INIT_REASON_TEMPLATE          - onInit.Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+   INIT_REASON_PROGRAM           - onInit.Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
+   INIT_REASON_PROGRAM_CLEARTEST - onInit.ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+   INIT_REASON_PARAMETERS        - onInit.Parameters()       - nach Änderung der Indikatorparameter                   -      Input-Dialog
+   INIT_REASON_TIMEFRAMECHANGE   - onInit.TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
+   INIT_REASON_SYMBOLCHANGE      - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
+   INIT_REASON_RECOMPILE         - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
 
    Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -174,7 +177,7 @@ int start() {
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {         // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {         // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          UpdateProgramStatus(catch("start(1)", error));                    // nicht sicher detektiert werden kann
          if (__STATUS_OFF) return(last_error);
       }
@@ -362,56 +365,7 @@ bool IsLibrary() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
- *
- * @return bool
- */
-bool Script.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
- *
- * @throws ERS_TERMINAL_NOT_YET_READY - Falls der Teststatus während des Terminal-Starts noch nicht bestimmt werden kann. Wird still gesetzt, der Rückgabewert
- *                                      der Funktion ist in diesem Fall -1 (EMPTY).
- */
-int Indicator.IsTesting() {
-   int isTesting = __Indicator.IsTesting();
-   if (isTesting == -1)
-      SetLastError(stdlib.GetLastError());
-   return(isTesting);                                                // In stdlib1 implementiert, damit das Ergebnis gecacht werden kann.
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
- *
- * @throws ERS_TERMINAL_NOT_YET_READY - Falls der Teststatus während des Terminal-Starts noch nicht bestimmt werden kann. Wird still gesetzt, der Rückgabewert
- *                                      der Funktion ist in diesem Fall -1 (EMPTY).
- */
-int This.IsTesting() {
-   return(Indicator.IsTesting());
-}
-
-
-/**
- * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann außer in deinit() überall aufgerufen werden.
+ * Gibt die ID des aktuellen oder letzten Init()-Szenarios zurück. Kann nicht in deinit() aufgerufen werden.
  *
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
@@ -452,8 +406,8 @@ int InitReason() {
 
    int uninitializeReason = UninitializeReason();
    int build              = GetTerminalBuild(); if (!build) return(_NULL(SetLastError(stdlib.GetLastError())));
-   int currentThread      = GetCurrentThreadId();
    int uiThread           = GetUIThreadId();
+   int currentThread      = GetCurrentThreadId();
 
 
    // (1) REASON_PARAMETERS
@@ -549,67 +503,78 @@ int DeinitReason() {
 /**
  * Initialisiert den EXECUTION_CONTEXT des Indikators.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Der EXECUTION_CONTEXT im Hauptmodul *kann* nach jedem init-Cycle an einer neuen Adresse liegen (ec.Signature ist NICHT konstant).
+ * NOTE: Der EXECUTION_CONTEXT im Hauptmodul *kann* nach jedem init-Cycle an einer anderen Adresse liegen (ec.Signature ist NICHT konstant).
  */
-int InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+bool InitExecutionContext() {
+   if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
    NaN   =  N_INF - N_INF;
 
 
-   // (1) globale Variablen initialisieren (werden später ggf. mit Werten aus restauriertem oder SuperContext überschrieben)
-   __NAME__       = WindowExpertName();
-   IsChart        = !IsTesting() || IsVisualMode();                  // TODO: Vorläufig ignorieren wir, daß ein Template-Indikator im Test bei VisualMode=Off
- //IsOfflineChart = IsChart && ???                                   //       in Indicator::init() IsChart=On signalisiert.
-   __LOG          = true;
-   __LOG_CUSTOM   = false;                                           // Custom-Logging gibt es nur für Strategien/Experts
+   // (1) globale Variablen initialisieren (werden in (3) ggf. mit Werten aus restauriertem oder SuperContext überschrieben)
+   int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
+   int hChartWindow = 0;
+      if (hChart == -1) hChart       = 0;
+      else              hChartWindow = GetParent(hChart);
+   int testFlags;
+      if (This.IsTesting()) {
+         testFlags              |= TF_TESTING;
+         if (IsChart) testFlags |= TF_VISUAL;
+      }
+
+   __NAME__     = WindowExpertName();
+   IsChart      = (hChart != 0);
+   __LOG        = true;
+   __LOG_CUSTOM = false;                                             // Custom-Logging gibt es vorerst nur für Experts
 
 
-   // (2) in Library gespeicherten EXECUTION_CONTEXT restaurieren
+   // (2) in Library zwischengespeicherten letzten EXECUTION_CONTEXT zurückholen
    int error = Indicator.InitExecutionContext(__ExecutionContext);
-   if (IsError(error))
-      return(SetLastError(error));
+   if (IsError(error)) return(!SetLastError(error));
 
 
-   // (3) Context ggf. initialisieren
+   // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
    if (!ec.Signature(__ExecutionContext)) {
-      // (3.1) temporäre Kopie eines existierenden SuperContexts erstellen und die betroffenen globalen Variablen überschreiben
-      int super[EXECUTION_CONTEXT.intSize], chartProperties;
-      if (__lpSuperContext != NULL) {
-         if (__lpSuperContext < 0x00010000) return(catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a pointer)", ERR_INVALID_INPUT_PARAMVALUE));
-         CopyMemory(__lpSuperContext, GetBufferAddress(super), EXECUTION_CONTEXT.size);
 
-         IsChart        = (ec.ChartProperties(super) & CP_CHART   && 1);
-         IsOfflineChart = (ec.ChartProperties(super) & CP_OFFLINE && IsChart);
-         __LOG          =  ec.Logging        (super);
+      // (3.1) Existiert ein SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
+      if (__lpSuperContext != NULL) {
+         if (__lpSuperContext < 0x00010000) return(!catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_INPUT_PARAMVALUE));
+         int superCopy[EXECUTION_CONTEXT.intSize];
+         CopyMemory(__lpSuperContext, GetBufferAddress(superCopy), EXECUTION_CONTEXT.size);
+
+         hChart       = ec.hChart      (superCopy);
+         hChartWindow = ec.hChartWindow(superCopy);
+         testFlags    = ec.TestFlags   (superCopy);
+         IsChart      = (hChart != 0);
+         __LOG        = ec.Logging     (superCopy);
+         ArrayResize(superCopy, 0);
       }
 
       // (3.2) Context-Variablen setzen
-    //ec.setSignature          ...wird später gesetzt
-      ec.setName              (__ExecutionContext, __NAME__);
-      ec.setType              (__ExecutionContext, __TYPE__);
-      ec.setVisualMode        (__ExecutionContext, IsVisualMode()           );
-      ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
+    //ec.setSignature          ...wird in (3.4) gesetzt
+      ec.setName              (__ExecutionContext, __NAME__                 );
+      ec.setType              (__ExecutionContext, __TYPE__                 );
+      ec.setHChart            (__ExecutionContext, hChart                   );
+      ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
+      ec.setTestFlags         (__ExecutionContext, testFlags                );
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
-    //ec.setUninitializeReason ...wird später gesetzt
-    //ec.setWhereami           ...wird später gesetzt
+    //ec.setUninitializeReason ...wird in (3.4) gesetzt
+    //ec.setWhereami           ...wird in (3.4) gesetzt
       ec.setLogging           (__ExecutionContext, __LOG                    );
     //ec.setLpLogFile         ...bereits gesetzt
     //ec.setLastError         ...bereits NULL
    }
    else {
-      // (3.3) Context war bereits initialisiert, globale Variablen und variable Context-Werte aktualisieren
-      IsChart        = (ec.ChartProperties(__ExecutionContext) & CP_CHART   && 1);
-      IsOfflineChart = (ec.ChartProperties(__ExecutionContext) & CP_OFFLINE && IsChart);
-      __LOG          =  ec.Logging        (__ExecutionContext);
-
+      // (3.3) Context war bereits initialisiert, globale Variablen aktualisieren
+      IsChart = ec.hChart (__ExecutionContext) && 1;
+      __LOG   = ec.Logging(__ExecutionContext);
    }
 
    // (3.4) Signature und variable Context-Werte aktualisieren
@@ -632,9 +597,11 @@ int InitExecutionContext() {
    PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   if (IsError(catch("InitExecutionContext(4)")))
-      ArrayInitialize(__ExecutionContext, 0);
-   return(last_error);
+   if (!catch("InitExecutionContext(4)"))
+      return(true);
+
+   ArrayInitialize(__ExecutionContext, 0);
+   return(false);
 }
 
 
@@ -724,7 +691,6 @@ int UpdateProgramStatus(int value=NULL) {
    bool   Init.IsNewSymbol(string symbol);
    void   Init.StoreSymbol(string symbol);
    int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
-   int  __Indicator.IsTesting();
    string InputsToStr();
 
    int    Chart.SendTick(bool sound);
@@ -738,13 +704,15 @@ int UpdateProgramStatus(int value=NULL) {
    int    GetBufferAddress(int buffer[]);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.ChartProperties      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int    chartProperties   );
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
+   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
+   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
@@ -753,7 +721,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
    int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
-   bool   ec.setVisualMode        (/*EXECUTION_CONTEXT*/int ec[], bool   visualMode        );
+   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
 
    string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);

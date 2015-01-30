@@ -2,6 +2,7 @@
 #define __TYPE__         T_EXPERT
 #define __lpSuperContext NULL
 
+#include <functions/IsTesting.mqh>
 #include <history.mqh>
 #include <iCustom/ChartInfos.mqh>
 
@@ -33,7 +34,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext)) /**/ if (IsError(InitExecutionContext())) {
+   if (!ec.Signature(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -378,52 +379,12 @@ bool IsLibrary() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   return(IsTesting());
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
- *
- * @return bool
- */
-bool Script.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
- */
-int Indicator.IsTesting() {
-   return(false);                                                    // (int) bool
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
- */
-int This.IsTesting() {
-   return(Expert.IsTesting());
-}
-
-
-/**
  * Initialisiert den EXECUTION_CONTEXT des Experts.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+bool InitExecutionContext() {
+   if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -441,43 +402,49 @@ int InitExecutionContext() {
 
 
    // (2) globale Variablen initialisieren
-   int initFlags   = SumInts(__INIT_FLAGS__  );
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   int initFlags    = SumInts(__INIT_FLAGS__  );
+   int deinitFlags  = SumInts(__DEINIT_FLAGS__);
+   int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
+   int hChartWindow = 0;
+      if (hChart == -1) hChart       = 0;
+      else              hChartWindow = GetParent(hChart);
 
-   __NAME__        = names[0];
-   IsChart         = !IsTesting() || IsVisualMode();
- //IsOfflineChart  = IsChart && ???
-   __LOG           = IsLogging();
-   __LOG_CUSTOM    = initFlags & INIT_CUSTOMLOG;
+   __NAME__       = names[0];
+   IsChart        = !IsTesting() || IsVisualMode();
+   __LOG          = IsLogging();
+   __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
 
-   PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints       = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
    // (3) EXECUTION_CONTEXT initialisieren
    ArrayInitialize(__ExecutionContext, 0);
 
-   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
-   ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
-   ec.setType              (__ExecutionContext, __TYPE__                                                                );
-   ec.setVisualMode        (__ExecutionContext, IsVisualMode()                                                          );
-   ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
+   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                                                                 );
+   ec.setLpName            (__ExecutionContext, lpNames[0]                                                                                                           );
+   ec.setType              (__ExecutionContext, __TYPE__                                                                                                             );
+   ec.setHChart            (__ExecutionContext, hChart                                                                                                               );
+   ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                         );
+   ec.setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TESTING, 0) | ifInt(IsVisualMode(), TF_VISUAL, 0) | ifInt(IsOptimization(), TF_OPTIMIZATION, 0));
  //ec.setLpSuperContext    ...bereits initialisiert
-   ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
-   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
-   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                            );
-   ec.setLogging           (__ExecutionContext, __LOG                                                                   );
-   ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
+   ec.setInitFlags         (__ExecutionContext, initFlags                                                                                                            );
+   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                          );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                 );
+   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                                                                         );
+   ec.setLogging           (__ExecutionContext, __LOG                                                                                                                );
+   ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                                                                           );
  //ec.setLastError         ...bereits initialisiert
 
 
-   if (IsError(catch("InitExecutionContext(2)")))
-      ArrayInitialize(__ExecutionContext, 0);
-   return(last_error);
+   if (!catch("InitExecutionContext(2)"))
+      return(true);
+
+   ArrayInitialize(__ExecutionContext, 0);
+   return(false);
 }
 
 
@@ -676,8 +643,9 @@ int Tester.Stop() {
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
+   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int  hChart            );
+   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int  hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
@@ -686,7 +654,7 @@ int Tester.Stop() {
    int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
    int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
-   bool   ec.setVisualMode        (/*EXECUTION_CONTEXT*/int ec[], bool visualMode        );
+   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
 
    string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);

@@ -2,6 +2,8 @@
 #define __TYPE__         T_SCRIPT
 #define __lpSuperContext NULL
 
+#include <functions/IsTesting.mqh>
+
 
 /**
  * Globale init()-Funktion für Scripte.
@@ -20,7 +22,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (IsError(InitExecutionContext())) {
+   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -122,7 +124,7 @@ int start() {
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {            // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da IsOfflineChart beim ersten Tick
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {            // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          UpdateProgramStatus(catch("start(2)", error));                       // nicht sicher detektiert werden kann
          if (__STATUS_OFF) return(last_error);
       }
@@ -130,13 +132,12 @@ int start() {
 
 
    // (1) init() war immer erfolgreich
-   __WHEREAMI__                    = FUNC_START;
-   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
+   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars)                                                                 // Bars kann 0 sein, wenn das Script auf einem leeren Chart gestartet wird (Waiting for update...)
-      return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))); // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
+   if (!Bars)                                                                                //       Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+      return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
                                                                                              //       andere brauchen die aktuelle Zeitreihe nicht.
 
    // (3) stdLib benachrichtigen
@@ -276,66 +277,12 @@ bool IsLibrary() {
 
 
 /**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Expert ist.
- *
- * @return bool
- */
-bool Expert.IsTesting() {
-   return(false);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufendes Script ist.
- *
- * @return bool
- */
-bool Script.IsTesting() {
-   static bool static.resolved, static.result;
-   if (static.resolved)
-      return(static.result);
-
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(false);
-
-   string title = GetWindowText(GetParent(hWnd));
-   if (!StringLen(title))
-      return(!catch("Script.IsTesting(1)  cannot determine testing status,  hWndChart=0x"+ IntToHexStr(hWnd) +",  title(hWndChart)="+ StringToStr(title) +"  in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
-
-   static.result = StringEndsWith(title, "(visual)");                // "(visual)" ist nicht internationalisiert
-   static.resolved = true;
-
-   return(static.result);
-}
-
-
-/**
- * Ob das aktuell ausgeführte Programm ein im Tester laufender Indikator ist.
- *
- * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
- */
-int Indicator.IsTesting() {
-   return(false);                                                    // (int) bool
-}
-
-
-/**
- * Ob das aktuelle Programm im Tester ausgeführt wird.
- *
- * @return int - TRUE (1), FALSE (0) oder EMPTY (-1), falls ein Fehler auftrat
- */
-int This.IsTesting() {
-   return(Script.IsTesting());
-}
-
-
-/**
  * Initialisiert den EXECUTION_CONTEXT des Scripts.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(catch("InitExecutionContext(1)  ec.Signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+bool InitExecutionContext() {
+   if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  ec.Signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -353,20 +300,21 @@ int InitExecutionContext() {
 
 
    // (2) globale Variablen initialisieren
-   int initFlags   = SumInts(__INIT_FLAGS__  );
-   int deinitFlags = SumInts(__DEINIT_FLAGS__);
+   int initFlags    = SumInts(__INIT_FLAGS__  );
+   int deinitFlags  = SumInts(__DEINIT_FLAGS__);
+   int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
+   int hChartWindow = GetParent(hChart);
 
-   __NAME__        = names[0];
-   IsChart         = true;
- //IsOfflineChart  = IsChart && ???
-   __LOG           = true;
-   __LOG_CUSTOM    = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
+   __NAME__       = names[0];
+   IsChart        = true;
+   __LOG          = true;
+   __LOG_CUSTOM   = false;                                                                     // Custom-Logging gibt es nur für Strategien/Experts
 
-   PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints       = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
    // (3) EXECUTION_CONTEXT initialisieren
@@ -375,8 +323,9 @@ int InitExecutionContext() {
    ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
    ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
    ec.setType              (__ExecutionContext, __TYPE__                                                                );
-   ec.setVisualMode        (__ExecutionContext, false                                                                   );
-   ec.setChartProperties   (__ExecutionContext, ifInt(IsOfflineChart, CP_OFFLINE_CHART, 0) | ifInt(IsChart, CP_CHART, 0));
+   ec.setHChart            (__ExecutionContext, hChart                                                                  );
+   ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                            );
+   ec.setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_TESTING | TF_VISUAL, 0)                    );
    ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
@@ -385,9 +334,11 @@ int InitExecutionContext() {
    ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
 
 
-   if (IsError(catch("InitExecutionContext(2)")))
-      ArrayInitialize(__ExecutionContext, 0);
-   return(last_error);
+   if (!catch("InitExecutionContext(2)"))
+      return(true);
+
+   ArrayInitialize(__ExecutionContext, 0);
+   return(false);
 }
 
 
@@ -504,7 +455,6 @@ int UpdateProgramStatus(int value=NULL) {
    string CreateString(int length);
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
-   string StringToStr(string value);
    int    SumInts(int array[]);
    string __whereamiDescription(int id);
 
@@ -519,8 +469,9 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec.setChartProperties   (/*EXECUTION_CONTEXT*/int ec[], int  chartProperties   );
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
+   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int  hChart            );
+   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int  hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
@@ -529,7 +480,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
    int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
-   bool   ec.setVisualMode        (/*EXECUTION_CONTEXT*/int ec[], bool visualMode        );
+   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
 
    string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug       );

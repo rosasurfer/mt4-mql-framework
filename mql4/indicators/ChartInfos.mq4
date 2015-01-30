@@ -345,8 +345,7 @@ bool ToggleOpenOrders() {
    // Anzeigestatus im Chart speichern
    SetOpenOrderDisplayStatus(status);
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-   if (isTesting == 1)
+   if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
 }
@@ -572,8 +571,7 @@ bool ToggleTradeHistory() {
    // Anzeigestatus im Chart speichern
    SetTradeHistoryDisplayStatus(status);
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-   if (isTesting == 1)
+   if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
@@ -892,8 +890,7 @@ bool ToggleAuM() {
    // Anzeigestatus im Chart speichern
    SetAuMDisplayStatus(status);
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-   if (isTesting == 1)
+   if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleAuM(2)"));
 }
@@ -1336,7 +1333,7 @@ bool CreateLabels() {
    else GetLastError();
 
 
-   // Time-Label: nur im Tester bei VisualMode = ON
+   // Time-Label: nur im Tester bei VisualMode=On
    if (IsVisualModeFix()) {
       if (ObjectFind(label.time) == 0)
          ObjectDelete(label.time);
@@ -1739,7 +1736,7 @@ bool UpdateOHLC() {
 
 
 /**
- * Aktualisiert die Zeitanzeige (nur im Tester bei VisualMode = On).
+ * Aktualisiert die Zeitanzeige (nur im Tester bei VisualMode=On).
  *
  * @return bool - Erfolgsstatus
  */

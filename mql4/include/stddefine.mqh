@@ -12,7 +12,6 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
-bool     IsOfflineChart;                                    // ob der Chart ein Offline-Chart ist
 bool     __LOG;                                             // ob das Logging aktiviert ist
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 int        LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
@@ -201,10 +200,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define INIT_CUSTOMLOG              8           // das Programm verwendet ein eigenes Logfile
 
 
-// Chart-Property-Flags
-#define CP_CHART                    1           // impliziert VisualMode=On
-#define CP_OFFLINE                  2           // nur in Verbindung mit CP_CHART gesetzt
-#define CP_OFFLINE_CHART            3           // kurz für: CP_OFFLINE|CP_CHART
+// Tester-Statusflags
+#define TF_TESTING                  1           // das Programm läuft im Tester
+#define TF_VISUAL                   3           // das Programm läuft im Tester mit VisualMode=On (schließt TF_TESTING ein)
+#define TF_OPTIMIZATION             5           // das Programm läuft im Tester mit Optimization=On (schließt TF_TESTING ein)
 
 
 // Object property ids, siehe ObjectSet()
@@ -410,21 +409,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define Bands.MODE_LOWER               2        // unteres Band
 
 
-// EXECUTION_CONTEXT Array-Indizes
-#define EC_SIGNATURE                   0
-#define EC_LPNAME                      1
-#define EC_TYPE                        2
-#define EC_CHART_PROPERTIES            3
-#define EC_LPSUPER_CONTEXT             4
-#define EC_INIT_FLAGS                  5
-#define EC_DEINIT_FLAGS                6
-#define EC_UNINITIALIZE_REASON         7
-#define EC_WHEREAMI                    8
-#define EC_LOGGING                     9
-#define EC_LPLOGFILE                  10
-#define EC_LAST_ERROR                 11
-
-
 // Sorting modes, siehe ArraySort()
 #define MODE_ASC                       1        // aufsteigend
 #define MODE_DESC                      2        // absteigend
@@ -504,14 +488,10 @@ double  N_INF;                                              // -1.#INF: negative
 
 // Event-Identifier
 #define EVENT_BAR_OPEN            0x0001
-#define EVENT_ORDER_PLACE         0x0002
-#define EVENT_ORDER_CHANGE        0x0004
-#define EVENT_ORDER_CANCEL        0x0008
-#define EVENT_ACCOUNT_CHANGE      0x0040
-#define EVENT_ACCOUNT_PAYMENT     0x0080        // Ein- oder Auszahlung
-#define EVENT_CHART_CMD           0x0100        // Chart-Command             (aktueller Chart)
-#define EVENT_INTERNAL_CMD        0x0200        // terminal-internes Command (globale Variablen)
-#define EVENT_EXTERNAL_CMD        0x0400        // externes Command          (QuickChannel)
+#define EVENT_ACCOUNT_CHANGE      0x0002
+#define EVENT_CHART_CMD           0x0004        // Chart-Command             (aktueller Chart)
+#define EVENT_INTERNAL_CMD        0x0008        // terminal-internes Command (globale Variablen)
+#define EVENT_EXTERNAL_CMD        0x0040        // externes Command          (QuickChannel)
 
 
 // Array-Identifier zum Zugriff auf verschiedene Pivotlevel, siehe iPivotLevel()
@@ -1075,7 +1055,7 @@ int warnSMS(string message, int error=NO_ERROR) {
    int _error = warn(message, error);
 
    if (__SMS.alerts) {
-      if (!This.IsTesting()) {                                             // (bool) int
+      if (!This.IsTesting()) {
          // Programmnamen um Instanz-ID erweitern
          string name, name_wId;
          if (StringLen(__NAME__) > 0) name = __NAME__;
@@ -1538,7 +1518,7 @@ string StringReplace(string object, string search, string replace) {
 
 
 /**
- * Bugfix für StringSubstr(string, start, length=0), die MQL-Funktion gibt für length=0 Unfug zurück.
+ * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
  * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
  *
  * @param  string object
@@ -1648,12 +1628,23 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       if (static.hWndSelf != 0)
          return(static.hWndSelf);
 
-      if (IsTesting()) /*&&*/ if (!IsVisualModeFix()) {              // Expert/Indikator im Tester bei VisualMode=Off: kein Chart
-         static.hWndSelf = -1;                                       // Rückgabewert -1
-         return(static.hWndSelf);
+      int hWnd = ec.hChart(__ExecutionContext);
+      if (hWnd > 0) {
+         static.hWndSelf = hWnd;                                     // Zuerst wird ein bereits im ExcecutionContext gespeichertes eigenes ChartHandle abgefragt.
+         return(static.hWndSelf);                                    // (vor allem für Libraries)
       }
 
-      int hWnd  = WindowHandle(Symbol(), NULL);
+      if (IsTesting()) {
+         if (IsLibrary()) bool visualMode = IsVisualModeFix();       // Vorsicht: InitExecutionContext() benutzt WindowHandleEx(), IsVisualModeFix() seinerseits ist auf einen
+         else                  visualMode = IsVisualMode();          //           initialisierten ExecutionContext angewiesen
+
+         if (!visualMode) {                                          // Expert/Indikator im Tester bei VisualMode=Off: kein Chart
+            static.hWndSelf = -1;                                    // Rückgabewert -1
+            return(static.hWndSelf);
+         }
+      }
+
+      hWnd      = WindowHandle(Symbol(), NULL);
       int error = GetLastError();
       if (IsError(error)) return(!catch("WindowHandleEx(1)", error));
 
@@ -1664,10 +1655,10 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
          bool missingWnd = false;
          string title, sError;
 
-         // Es muß genau ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order:
+         // Da WindowHandle() 0 zurückgab, muß es ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order
          int hWndChild = GetWindow(hWndMdi, GW_CHILD);               // das erste Child in Z order
          if (!hWndChild) {
-            missingWnd = true; sError = "WindowHandleEx(3)  no child window of MDIClient window found";
+            missingWnd = true; sError = "WindowHandleEx(3)  no child windows of MDIClient window found";
          }
          else {
             int hWndLast = GetWindow(hWndChild, GW_HWNDLAST);        // das letzte Child in Z order
@@ -1678,7 +1669,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
          }
 
          // Ein Indikator im Template "Tester.tpl" wird im Tester bei VisualMode=Off im UI-Thread geladen und seine init()-Funktion ausgeführt,
-         // obwohl für den Test kein Chart existiert. Nur in dieser Kombination ist ein fehlendes Chartfenster ein gültiger Zustand.
+         // obwohl für den Test nie ein Chart existieren wird. Nur in dieser Kombination ist ein fehlendes Chartfenster ein gültiger Zustand.
          if (missingWnd) {
             if (IsIndicator()) /*&&*/ if (__WHEREAMI__!=FUNC_START) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
                static.hWndSelf = -1;                                 // Rückgabewert -1
@@ -1689,7 +1680,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // Dieses letzte Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow mit dem MetaTrader-WindowHandle() ist.
          hWnd = GetWindow(hWndLast, GW_CHILD);
-         if (!hWnd) return(!catch("WindowHandleEx(5)  no MetaTrader chart window inside of last MDIClient window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
+         if (!hWnd) return(!catch("WindowHandleEx(5)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
       }
 
       static.hWndSelf = hWnd;
@@ -1702,24 +1693,25 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
    string periodDescription  = PeriodDescription(timeframe);
 
 
-   // (2) eingebaute Suche nach fremdem Chart
+
+   // (2) eingebaute Suche nach fremdem Chart                        // TODO: WindowHandle() wird das Handle des eigenen Charts nicht überspringen, wenn dieser auf die Parameter paßt
    hWnd  = WindowHandle(symbol, timeframe);
    error = GetLastError();
    if (!error)                                  return(hWnd);
    if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(6)", error));
 
 
+                                                                     // TODO: das Handle des eigenen Charts überspringen, wenn dieser auf die Parameter paßt
    // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
    hWnd      = 0;
 
    while (hWndChild != NULL) {
       title = GetWindowText(hWndChild);
-      if (title == periodDescription) {
-         // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow mit dem MetaTrader-WindowHandle() ist.
-         hWnd = GetWindow(hWndChild, GW_CHILD);
+      if (title == periodDescription) {                              // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
+         hWnd = GetWindow(hWndChild, GW_CHILD);                      // mit dem MetaTrader-WindowHandle() ist.
          if (!hWnd) return(!catch("WindowHandleEx(8)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
          break;
       }
@@ -1805,14 +1797,12 @@ string GetClassName(int hWnd) {
  * Ob das aktuelle Programm im Tester läuft und der VisualMode-Status aktiv ist.
  *
  * Bugfix für IsVisualMode(). IsVisualMode() wird in Libraries zwischen aufeinanderfolgenden Tests nicht zurückgesetzt und gibt bis zur
- * Neuinitialisierung den Status des ersten Tests zurück.
+ * Neuinitialisierung der Library den Status des ersten Tests zurück.
  *
  * @return bool
  */
 bool IsVisualModeFix() {
-   if (IsTesting())
-      return(ec.VisualMode(__ExecutionContext));
-   return(false);
+   return(ec.TestFlags(__ExecutionContext) & TF_VISUAL == TF_VISUAL);
 }
 
 
@@ -1863,15 +1853,11 @@ int ResetLastError() {
 bool HandleEvents(int events) {
    int status = 0;
 
-   if (events & EVENT_BAR_OPEN        != 0) status |= HandleEvent(EVENT_BAR_OPEN       );
-   if (events & EVENT_ORDER_PLACE     != 0) status |= HandleEvent(EVENT_ORDER_PLACE    );
-   if (events & EVENT_ORDER_CHANGE    != 0) status |= HandleEvent(EVENT_ORDER_CHANGE   );
-   if (events & EVENT_ORDER_CANCEL    != 0) status |= HandleEvent(EVENT_ORDER_CANCEL   );
-   if (events & EVENT_ACCOUNT_CHANGE  != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE );
-   if (events & EVENT_ACCOUNT_PAYMENT != 0) status |= HandleEvent(EVENT_ACCOUNT_PAYMENT);
-   if (events & EVENT_CHART_CMD       != 0) status |= HandleEvent(EVENT_CHART_CMD      );
-   if (events & EVENT_INTERNAL_CMD    != 0) status |= HandleEvent(EVENT_INTERNAL_CMD   );
-   if (events & EVENT_EXTERNAL_CMD    != 0) status |= HandleEvent(EVENT_EXTERNAL_CMD   );
+   if (events & EVENT_BAR_OPEN       != 0) status |= HandleEvent(EVENT_BAR_OPEN      );
+   if (events & EVENT_ACCOUNT_CHANGE != 0) status |= HandleEvent(EVENT_ACCOUNT_CHANGE);
+   if (events & EVENT_CHART_CMD      != 0) status |= HandleEvent(EVENT_CHART_CMD     );
+   if (events & EVENT_INTERNAL_CMD   != 0) status |= HandleEvent(EVENT_INTERNAL_CMD  );
+   if (events & EVENT_EXTERNAL_CMD   != 0) status |= HandleEvent(EVENT_EXTERNAL_CMD  );
 
    return(status != 0);
 }
@@ -1893,15 +1879,11 @@ int HandleEvent(int event, int criteria=NULL) {
    string sResults[];
 
    switch (event) {
-      case EVENT_BAR_OPEN       : if (EventListener.BarOpen        (iResults, criteria)) { status = true; onBarOpen        (iResults); } break;
-      case EVENT_ORDER_PLACE    : if (EventListener.OrderPlace     (iResults, criteria)) { status = true; onOrderPlace     (iResults); } break;
-      case EVENT_ORDER_CHANGE   : if (EventListener.OrderChange    (iResults, criteria)) { status = true; onOrderChange    (iResults); } break;
-      case EVENT_ORDER_CANCEL   : if (EventListener.OrderCancel    (iResults, criteria)) { status = true; onOrderCancel    (iResults); } break;
-      case EVENT_ACCOUNT_CHANGE : if (EventListener.AccountChange  (iResults, criteria)) { status = true; onAccountChange  (iResults); } break;
-      case EVENT_ACCOUNT_PAYMENT: if (EventListener.AccountPayment (iResults, criteria)) { status = true; onAccountPayment (iResults); } break;
-      case EVENT_CHART_CMD      : if (EventListener.ChartCommand   (sResults, criteria)) { status = true; onChartCommand   (sResults); } break;
-      case EVENT_INTERNAL_CMD   : if (EventListener.InternalCommand(sResults, criteria)) { status = true; onInternalCommand(sResults); } break;
-      case EVENT_EXTERNAL_CMD   : if (EventListener.ExternalCommand(sResults, criteria)) { status = true; onExternalCommand(sResults); } break;
+      case EVENT_BAR_OPEN      : if (EventListener.BarOpen        (iResults, criteria)) { status = true; onBarOpen        (iResults); } break;
+      case EVENT_ACCOUNT_CHANGE: if (EventListener.AccountChange  (iResults, criteria)) { status = true; onAccountChange  (iResults); } break;
+      case EVENT_CHART_CMD     : if (EventListener.ChartCommand   (sResults, criteria)) { status = true; onChartCommand   (sResults); } break;
+      case EVENT_INTERNAL_CMD  : if (EventListener.InternalCommand(sResults, criteria)) { status = true; onInternalCommand(sResults); } break;
+      case EVENT_EXTERNAL_CMD  : if (EventListener.ExternalCommand(sResults, criteria)) { status = true; onExternalCommand(sResults); } break;
 
       default:
          return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
@@ -2944,8 +2926,8 @@ void __DummyCalls() {
    bool   IsLibrary();
    bool   Expert.IsTesting();
    bool   Script.IsTesting();
-   int    Indicator.IsTesting();
-   int    This.IsTesting();
+   bool   Indicator.IsTesting();
+   bool   This.IsTesting();
    int    InitReason();
    int    DeinitReason();
    bool   IsSuperContext();
@@ -2953,24 +2935,16 @@ void __DummyCalls() {
 */
 #import "stdlib1.ex4"
    bool   EventListener.AccountChange  (int    data[], int criteria);
-   bool   EventListener.AccountPayment (int    data[], int criteria);
    bool   EventListener.BarOpen        (int    data[], int criteria);
    bool   EventListener.ChartCommand   (string data[], int criteria);
    bool   EventListener.ExternalCommand(string data[], int criteria);
    bool   EventListener.InternalCommand(string data[], int criteria);
-   bool   EventListener.OrderCancel    (int    data[], int criteria);
-   bool   EventListener.OrderChange    (int    data[], int criteria);
-   bool   EventListener.OrderPlace     (int    data[], int criteria);
 
    bool   onAccountChange  (int    data[]);
-   bool   onAccountPayment (int    data[]);
    bool   onBarOpen        (int    data[]);
    bool   onChartCommand   (string data[]);
    bool   onExternalCommand(string data[]);
    bool   onInternalCommand(string data[]);
-   bool   onOrderCancel    (int    data[]);
-   bool   onOrderChange    (int    data[]);
-   bool   onOrderPlace     (int    data[]);
 
    int    ArrayPopInt(int array[]);
    int    ArrayPushInt(int array[], int value);
@@ -2995,8 +2969,9 @@ void __DummyCalls() {
    string StringPadRight(string input, int length, string pad_string);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.Type      (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec.VisualMode(/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.Type     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.hChart   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.TestFlags(/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "StdLib.dll"
    int    GetLastWin32Error();

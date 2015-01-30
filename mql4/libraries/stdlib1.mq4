@@ -57,12 +57,11 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    // (2) globale Variablen (re-)initialisieren
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
 
-   __TYPE__      |=                   ec.Type           (ec);
-   __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami       (ec);
-   IsChart        =                  (ec.ChartProperties(ec) & CP_CHART   && 1);
-   IsOfflineChart =                  (ec.ChartProperties(ec) & CP_OFFLINE && IsChart);
-   __LOG          =                   ec.Logging        (ec);
+   __TYPE__      |=                   ec.Type    (ec);
+   __NAME__       = StringConcatenate(ec.Name    (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.Whereami(ec);
+   IsChart        =                  (ec.hChart  (ec)!=0);
+   __LOG          =                   ec.Logging (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -118,7 +117,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
          if (!SetWindowTextA(GetTesterWindow(), "Tester"))           // Titelzeile des Testers zurücksetzen (ist u.U. noch vom letzten Test modifiziert)
             return(catch("stdlib.init(3)->user32::SetWindowTextA()", ERR_WIN32_ERROR));   // TODO: Warten, bis die Titelzeile gesetzt ist
 
-         if (!GetAccountNumber())                                    // Accountnummer sofort ermitteln (wird intern gecacht), da ein Aufruf im Tester in deinit()
+         if (!GetAccountNumber())//throws ERS_TERMINAL_NOT_YET_READY // Accountnummer sofort ermitteln (wird intern gecacht), da ein Aufruf im Tester in deinit()
             return(last_error);                                      // u.U. den UI-Thread blockieren kann.
       }
    }
@@ -159,8 +158,8 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
       }
    }
 
-   __WHEREAMI__                    = FUNC_START;
-   __ExecutionContext[EC_WHEREAMI] = FUNC_START;
+   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
+
 
    if (Tick != tick) {
       // (1) erster Aufruf bei erstem Tick ...
@@ -346,16 +345,6 @@ int stdlib.GetLastError() {
 
 
 /**
- * Hilfsfunktion für Indicator.IsTesting(). Cacht das Ergebnis in der Library.
- *
- * @return int
- */
-int __Indicator.IsTesting() {
-   return(Indicator.IsTesting());                                    // verwendet die globale Implementierung in "include/core/library.mgh"
-}
-
-
-/**
  * Öffnet eine einzelne Datei im Texteditor.
  *
  * @param  string filename - Dateiname
@@ -363,8 +352,7 @@ int __Indicator.IsTesting() {
  * @return bool - Erfolgsstatus
  */
 bool EditFile(string filename) {
-   if (!StringLen(filename))
-      return(!catch("EditFile(1)  invalid parameter filename = "+ StringToStr(filename), ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename = "+ StringToStr(filename), ERR_INVALID_FUNCTION_PARAMVALUE));
 
    string file[1]; file[0] = filename;
    return(EditFiles(file));
@@ -619,7 +607,7 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
    }
 
 
-   // (2) Context ins Hauptmodul kopieren
+   // (2) Context ins übergeordnete Modul zurückkopieren (also in den übergebenen Parameter)
    ArrayCopy(ec, __ExecutionContext);
 
 
@@ -912,8 +900,7 @@ bool AquireLock(string mutexName, bool wait) {
    int      error, duration, seconds=1;
    string   globalVarName = mutexName;
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-   if (isTesting == 1)
+   if (This.IsTesting())
       globalVarName = StringConcatenate("tester.", mutexName);
 
    // (2) no, run until lock is aquired
@@ -982,8 +969,7 @@ bool ReleaseLock(string mutexName) {
 
       string globalVarName = mutexName;
 
-      int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-      if (isTesting == 1)
+      if (This.IsTesting())
          globalVarName = StringConcatenate("tester.", mutexName);
 
       if (!GlobalVariableSet(globalVarName, 0)) {
@@ -1029,9 +1015,7 @@ bool ReleaseLocks(bool warn=false) {
  * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
  */
 int Chart.Expert.Properties() {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
-   if (isTesting == 1)
-      return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+   if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = WindowHandleEx(NULL);
    if (!hWnd) return(last_error);
@@ -1049,11 +1033,10 @@ int Chart.Expert.Properties() {
  * @return int - Fehlerstatus
  */
 int Tester.Pause() {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
-   if (!isTesting)
-      return(catch("Tester.Pause()  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(catch("Tester.Pause()  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsPaused())              return(NO_ERROR);             // skipping
+
    if (!IsScript())
       if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
 
@@ -1061,7 +1044,8 @@ int Tester.Pause() {
    if (!hWnd)
       return(last_error);
 
-   SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
+   int result = SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
+
    return(NO_ERROR);
 }
 
@@ -1072,14 +1056,13 @@ int Tester.Pause() {
  * @return bool
  */
 bool Tester.IsPaused() {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-   if (!isTesting)                                        return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    bool testerStopped;
-   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
+   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
 
    if (IsScript()) {
-      // VisualMode = true;
+      // VisualMode=On
       testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
    }
    else {
@@ -1101,11 +1084,10 @@ bool Tester.IsPaused() {
  * @return bool
  */
 bool Tester.IsStopped() {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-   if (!isTesting)                                        return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
-      int hWndSettings = GetDlgItem(GetTesterWindow(), IDD_TESTER_SETTINGS);
+      int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
       return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");            // muß im Script reichen
    }
    return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
@@ -1586,11 +1568,12 @@ int InitializeStringBuffer(string &buffer[], int length) {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0)
-      return(_emptyStr(catch("CreateString()  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (length < 0) return(_emptyStr(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_FUNCTION_PARAMVALUE)));
 
-   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");        // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
-   int strLen = StringLen(newStr);                                   // Daher wird auch beim Initialisieren StringConcatenate() verwendet (siehe MQL.doc).
+   if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
+                                                                     // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
+   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");
+   int    strLen = StringLen(newStr);
 
    while (strLen < length) {
       newStr = StringConcatenate(newStr, MAX_STRING_LITERAL);
@@ -1886,8 +1869,7 @@ int SortTicketsChronological(int &tickets[]) {
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
-   if (isTesting == 1)                                    return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
+   if (This.IsTesting()) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
@@ -3514,7 +3496,7 @@ string StringToStr(string value) {
    if (IsError(error)) {
       if (error == ERR_NOT_INITIALIZED_STRING)
          return("NULL");
-      return(_emptyStr(catch("StringToStr()", error)));
+      return(_emptyStr(catch("StringToStr(1)", error)));
    }
    return(StringConcatenate("\"", value, "\""));
 }
@@ -4208,9 +4190,7 @@ int Chart.SendTick(bool sound=false) {
    int hWnd = WindowHandleEx(NULL);
    if (!hWnd) return(last_error);
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(last_error);
-
-   if (!isTesting) {
+   if (!This.IsTesting()) {
       PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 0);
    }
    else if (Tester.IsPaused()) {
@@ -5163,8 +5143,7 @@ string BoolToStr(bool value) {
 datetime TimeGMT() {
    datetime gmt;
 
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(NULL);
-   if (isTesting == 1) {
+   if (This.IsTesting()) {
       // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
       //       nicht die modellierte, sondern die aktuelle reale Zeit.
       gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
@@ -6070,8 +6049,7 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  * NOTE: Diese Implementierung stimmt mit der Implementierung in "include\core\expert.mqh" für Experts überein.
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
-   int indicator.IsTesting = Indicator.IsTesting();
-   if (indicator.IsTesting==1) /*&&*/ if (!IsSuperContext())            // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
+   if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())            // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
       return(!catch("EventListener.BarOpen()  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)
@@ -6173,62 +6151,6 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
    if (!error)
       return(eventStatus);
    return(!catch("EventListener.AccountChange()", error));
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein AccountPayment-Event aufgetreten ist.
- *
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.AccountPayment(int results[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein OrderPlace-Event aufgetreten ist.
- *
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.OrderPlace(int results[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein OrderChange-Event aufgetreten ist.
- *
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.OrderChange(int results[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
-}
-
-
-/**
- * Prüft, ob seit dem letzten Aufruf ein OrderCancel-Event aufgetreten ist.
- *
- * @param  int results[] - im Erfolgsfall eventspezifische Detailinformationen
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.OrderCancel(int results[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
 }
 
 
@@ -6497,7 +6419,7 @@ int GetAccountNumber() {
 
    if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
       string title = GetWindowText(GetApplicationWindow());          // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
-      if (!StringLen(title))        return(_NULL(debug("GetAccountNumber(2)->GetWindowText(hWndMain) = "+ StringToStr(title), SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!StringLen(title))        return(_NULL(debug("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
       if (pos < 1)                  return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
@@ -7392,12 +7314,8 @@ string ShellExecuteErrorDescription(int error) {
  */
 string EventToStr(int event) {
    switch (event) {
-      case EVENT_BAR_OPEN       : return("EVENT_BAR_OPEN"       );
-      case EVENT_ORDER_PLACE    : return("EVENT_ORDER_PLACE"    );
-      case EVENT_ORDER_CHANGE   : return("EVENT_ORDER_CHANGE"   );
-      case EVENT_ORDER_CANCEL   : return("EVENT_ORDER_CANCEL"   );
-      case EVENT_ACCOUNT_CHANGE : return("EVENT_ACCOUNT_CHANGE" );
-      case EVENT_ACCOUNT_PAYMENT: return("EVENT_ACCOUNT_PAYMENT");
+      case EVENT_BAR_OPEN      : return("EVENT_BAR_OPEN"       );
+      case EVENT_ACCOUNT_CHANGE: return("EVENT_ACCOUNT_CHANGE" );
    }
    return(_emptyStr(catch("EventToStr()  unknown event: "+ event, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
@@ -7412,8 +7330,7 @@ string EventToStr(int event) {
  *               EMPTY_VALUE, falls  ein Fehler auftrat
  */
 int GetLocalToGmtTimeOffset() {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return( EMPTY_VALUE);
-   if (isTesting == 1)                                    return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
+   if (This.IsTesting()) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
 
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);
 
@@ -7425,6 +7342,8 @@ int GetLocalToGmtTimeOffset() {
          offset += tzi.DaylightBias(tzi);
       offset *= -60;
    }
+
+   ArrayResize(tzi, 0);
    return(offset);
 }
 
@@ -8032,18 +7951,19 @@ string PeriodFlagToStr(int flags) {
 
 
 /**
- * Gibt die lesbare Version eines ChartProperty-Flags zurück.
+ * Gibt die lesbare Version eines Test-Flags zurück.
  *
- * @param  int flags - Kombination verschiedener ChartProperty-Flags
+ * @param  int flags - Kombination von Test-Flags
  *
  * @return string
  */
-string ChartPropertiesToStr(int flags) {
+string TestFlagsToStr(int flags) {
    string result = "";
 
-   if (!flags)                  result = StringConcatenate(result, "|0"         );
-   if (flags & CP_CHART   && 1) result = StringConcatenate(result, "|CP_CHART"  );
-   if (flags & CP_OFFLINE && 1) result = StringConcatenate(result, "|CP_OFFLINE");
+   if (!flags)                                     result = StringConcatenate(result, "|0"              );
+   if (flags & TF_TESTING && 1                   ) result = StringConcatenate(result, "|TF_TESTING"     );
+   if (flags & TF_VISUAL       == TF_VISUAL      ) result = StringConcatenate(result, "|TF_VISUAL"      );
+   if (flags & TF_OPTIMIZATION == TF_OPTIMIZATION) result = StringConcatenate(result, "|TF_OPTIMIZATION");
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -8223,10 +8143,10 @@ int GetTesterWindow() {
    int hWndMain = GetApplicationWindow();
    if (!hWndMain)
       return(0);
-   int hWnd = GetDlgItem(hWndMain, IDD_DOCKABLES_CONTAINER);                     // Container für im Hauptfenster angedockte Fenster
+   int hWnd = GetDlgItem(hWndMain, IDC_DOCKABLES_CONTAINER);                     // Container für im Hauptfenster angedockte Fenster
    if (!hWnd)
       return(_NULL(catch("GetTesterWindow(1)  cannot find main parent window of docked child windows")));
-   hWndTester = GetDlgItem(hWnd, IDD_TESTER);
+   hWndTester = GetDlgItem(hWnd, IDC_TESTER);
    if (hWndTester != 0)
       return(hWndTester);
 
@@ -8238,10 +8158,10 @@ int GetTesterWindow() {
 
       if (processId[0] == me) {
          if (StringStartsWith(GetWindowText(hNext), "Tester")) {
-            hWnd = GetDlgItem(hNext, IDD_UNDOCKED_CONTAINER);                    // Container für nicht angedockten Tester
+            hWnd = GetDlgItem(hNext, IDC_UNDOCKED_CONTAINER);                    // Container für nicht angedockten Tester
             if (!hWnd)
                return(_NULL(catch("GetTesterWindow(2)  cannot find children of top-level Tester window")));
-            hWndTester = GetDlgItem(hWnd, IDD_TESTER);
+            hWndTester = GetDlgItem(hWnd, IDC_TESTER);
             if (!hWndTester)
                return(_NULL(catch("GetTesterWindow(3)  cannot find sub-children of top-level Tester window")));
             break;
@@ -8355,18 +8275,18 @@ string InitReasonToStr(int reason) {
 
 
 /**
- * Gibt den Titelzeilentext des angegebenen Fensters oder den Text des angegebenen Windows-Control zurück.
+ * Gibt den Titelzeilentext des angegebenen Fensters oder den Text des angegebenen Windows-Controls zurück.
  *
  * @param  int hWnd - Handle
  *
  * @return string - Text oder Leerstring, falls ein Fehler auftrat
  *
  *
- * NOTE: Ruft intern SendMessage() auf, deshalb nicht nach EA-Stop bei VisualMode=On benutzen, da sonst UI-Thread-Deadlock.
+ * NOTE: Ruft intern SendMessage() auf, deshalb nicht im Tester bei VisualMode=On in Expert::deinit() benutzen, da sonst UI-Thread-Deadlock.
  */
 string GetWindowText(int hWnd) {
-   if (hWnd <= 0)       return(!catch("GetWindowText(1)  invalid parameter hWnd = "+ hWnd, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (!IsWindow(hWnd)) return(!catch("GetWindowText(2)  not an existing window hWnd = 0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
+   if (hWnd <= 0)       return(_emptyStr(catch("GetWindowText(1)  invalid parameter hWnd = "+ hWnd, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!IsWindow(hWnd)) return(_emptyStr(catch("GetWindowText(2)  not an existing window hWnd = 0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR)));
 
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
@@ -9163,10 +9083,11 @@ bool IsDirectory(string filename) {
  * @return bool
  */
 bool IsMqlFile(string filename) {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
 
-   if (IsScript() || !isTesting) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                 mqlDir = "\\tester";
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_root}\tester\" zugreifen.
+
+   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   else                                        mqlDir = "\\tester";
    return(IsFile(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  filename)));
 }
 
@@ -9179,10 +9100,11 @@ bool IsMqlFile(string filename) {
  * @return bool
  */
 bool IsMqlDirectory(string dirname) {
-   int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
 
-   if (IsScript() || !isTesting) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                 mqlDir = "\\tester";
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_root}\tester\" zugreifen.
+
+   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   else                                        mqlDir = "\\tester";
    return(IsDirectory(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  dirname)));
 }
 
@@ -12466,7 +12388,7 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
       title = GetWindowText(hWnd);
       id    = GetDlgCtrlID(hWnd);
       sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" "+ StringToStr(title) + sId);
+      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ sId);
    }
    sublevel++;
    padding = StringRepeat(" ", (sublevel-1)<<1);
@@ -12478,7 +12400,7 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
       title = GetWindowText(hWndNext);
       id    = GetDlgCtrlID(hWndNext);
       sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" "+ StringToStr(title) + sId);
+      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ sId);
 
       if (recursive) {
          if (!EnumChildWindows(hWndNext, true)) {
@@ -12511,10 +12433,6 @@ void Tester.ResetGlobalArrays() {
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
 /*abstract*/ bool onBarOpen        (int    data[]) { return(!catch("onBarOpen()",         ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onAccountChange  (int    data[]) { return(!catch("onAccountChange()",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onAccountPayment (int    data[]) { return(!catch("onAccountPayment()",  ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onOrderPlace     (int    data[]) { return(!catch("onOrderPlace()",      ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onOrderChange    (int    data[]) { return(!catch("onOrderChange()",     ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onOrderCancel    (int    data[]) { return(!catch("onOrderCancel()",     ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onChartCommand   (string data[]) { return(!catch("onChartCommand()",    ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onInternalCommand(string data[]) { return(!catch("onInternalCommand()", ERR_NOT_IMPLEMENTED)); }
 /*abstract*/ bool onExternalCommand(string data[]) { return(!catch("onExternalCommand()", ERR_NOT_IMPLEMENTED)); }
@@ -12541,7 +12459,6 @@ void Tester.ResetGlobalArrays() {
    int    ec.Signature               (/*EXECUTION_CONTEXT*/int ec[]                        );
    string ec.Name                    (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.Type                    (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.ChartProperties         (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.InitFlags               (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]                        );

@@ -1,6 +1,6 @@
 /**
- * Je Modultyp implementierte Statusfunktionen (core):
- * ---------------------------------------------------
+ * Je Modultyp unterschiedlich implementierte Funktionen (core):
+ * -------------------------------------------------------------
  *  bool IsExpert();
  *  bool IsScript();
  *  bool IsIndicator();
@@ -8,8 +8,8 @@
  *
  *  bool Expert.IsTesting();
  *  bool Script.IsTesting();
- *  int  Indicator.IsTesting();
- *  int  This.IsTesting();
+ *  bool Indicator.IsTesting();
+ *  bool This.IsTesting();
  *
  *  int  InitReason();
  *  int  DeinitReason();
@@ -273,10 +273,6 @@
    // Event-Listener: Diese allgemeinen Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
    bool     EventListener.BarOpen        (int    data[], int criteria);
    bool     EventListener.AccountChange  (int    data[], int criteria);
-   bool     EventListener.AccountPayment (int    data[], int criteria);
-   bool     EventListener.OrderPlace     (int    data[], int criteria);
-   bool     EventListener.OrderChange    (int    data[], int criteria);
-   bool     EventListener.OrderCancel    (int    data[], int criteria);
    bool     EventListener.ChartCommand   (string data[], int criteria);
    bool     EventListener.InternalCommand(string data[], int criteria);
    bool     EventListener.ExternalCommand(string data[], int criteria);
@@ -285,10 +281,6 @@
    // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
    bool     onBarOpen        (int    data[]);
    bool     onAccountChange  (int    data[]);
-   bool     onAccountPayment (int    data[]);
-   bool     onOrderPlace     (int    data[]);
-   bool     onOrderChange    (int    data[]);
-   bool     onOrderCancel    (int    data[]);
    bool     onChartCommand   (string data[]);
    bool     onInternalCommand(string data[]);
    bool     onExternalCommand(string data[]);
@@ -517,7 +509,6 @@
    string   StringsToStr    (string array[], string separator);
 
 #import "stdlib1.ex4"
-   string   ChartPropertiesToStr(int flags);
    string   InitFlagsToStr(int flags);
    string   DateToStr(datetime time, string mask);
    string   DeinitFlagsToStr(int flags);
@@ -540,6 +531,7 @@
    string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorDescription(int error);
    string   SwapCalculationModeToStr(int mode);
+   string   TestFlagsToStr(int flags);
    string   UninitializeReasonDescription(int reason);
    string   UninitializeReasonToStr      (int reason);
    string   InitReasonDescription(int reason);

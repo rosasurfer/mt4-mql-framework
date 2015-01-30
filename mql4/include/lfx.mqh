@@ -48,8 +48,7 @@ bool LFX.InitAccountData() {
       // Daten des TradeAccounts
       string section = "LFX";
       string key     = "MRUTradeAccount";
-      int isTesting = This.IsTesting(); if (isTesting == -1) return(false);
-      if (isTesting == 1)
+      if (This.IsTesting())
          key = key + ".Tester";
       _account = GetLocalConfigInt(section, key, 0);
       if (_account <= 0) {

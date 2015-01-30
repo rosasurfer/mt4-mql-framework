@@ -33,13 +33,13 @@ int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
 
    // (2) globale Variablen (re-)initialisieren
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
+   int hChart    = ec.hChart   (ec);
 
-   __TYPE__      |=                   ec.Type           (ec);
-   __NAME__       = StringConcatenate(ec.Name           (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami       (ec);
-   IsChart        =                  (ec.ChartProperties(ec) & CP_CHART   && 1);
-   IsOfflineChart =                  (ec.ChartProperties(ec) & CP_OFFLINE && IsChart);
-   __LOG          =                   ec.Logging        (ec);
+   __TYPE__      |=                   ec.Type    (ec);
+   __NAME__       = StringConcatenate(ec.Name    (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.Whereami(ec);
+   IsChart        = (hChart != 0);
+   __LOG          =                   ec.Logging (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
