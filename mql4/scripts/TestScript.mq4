@@ -12,8 +12,7 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   int Test1(string s1, int i1, string s2);
-   int Test2(string s1, int i1, string s2);
+   int Test(string s1, int i1, string s2);
 #import
 
 
@@ -24,8 +23,12 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   debug("onStart()  Test1="+ Test1("hello s1 world", 123, " REM"));
-   //debug("onStart()  Test2="+ Test2("hello s2 world", 456, " REM"));
+
+   Test("hello world", 0, "REM");
+   //debug("onStart()  Test()=");
+
+   // MetaTrader::Expander.cpp::Test(245)  s1="hello world"  i1=0000007B  s2="REM"
+
 
    return(catch("onStart(1)"));
 
