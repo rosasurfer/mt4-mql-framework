@@ -601,7 +601,7 @@
    int      stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int      GetBoolsAddress  (bool   array[]);
    int      GetIntsAddress   (int    array[]);  int GetBufferAddress(int buffer[]); // Alias
    int      GetDoublesAddress(double array[]);

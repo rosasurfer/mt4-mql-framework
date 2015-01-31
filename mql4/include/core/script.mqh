@@ -458,7 +458,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    SumInts(int array[]);
    string __whereamiDescription(int id);
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 

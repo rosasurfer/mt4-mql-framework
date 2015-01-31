@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 #include <structs/mt4/HISTORY_HEADER.mqh>
 
 
-#import "StdLib.Release.dll"
+#import "Expander.Release.dll"
    bool Test();
 #import
 

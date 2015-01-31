@@ -31,7 +31,7 @@ bool icChartInfos(int timeframe) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int GetBufferAddress(int buffer[]);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
