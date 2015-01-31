@@ -1355,48 +1355,47 @@ void ShowCopyright()
 
     <text>
       tag=basics_preprocessor_include
-      caption=Including of files
+      caption=Include files
       keywords=;include;
       <content>
-        <p>The <em>#include</em> command line can be placed anywhere in the program, but usually all inclusions
-      are placed at the beginning of the source code. Call format:</p>
+        <p>The <em>#include</em> directive can be placed anywhere in the program, but usually all inclusions are placed at the beginning of the source code.<br/>
+        Call format:</p>
       <pre class="docmql4"><i>#include &lt;file_name&gt;
 #include &quot;file_name&quot;;</i></pre><br/>
+
+        <p>If the file name is enclosed in brackets the file will be searched in the standard directory <em>{terminal_directory}\experts\include</em>.</p>
+
+        <p>If the file name is enclosed in quotation marks, it is searched in the current directory (where the main file of the source code is located). 
+        The standard directory is not searched.</p>
 
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">
 #include &lt;WinUser32.mqh&gt;
 #include "mylib.mqh"</pre><br/>
 
-        <p>Preprocessor replaces this line with the content of the file WinUser32.mqh. Angle brackets mean that the <em>WinUser32.mqh</em> file will be
-taken from the default directory (usually <em>terminal_directory\experts\include</em>). The current directory is not searched.</p>
-
-        <p>If the file name is enclosed in quotation marks, the search will be performed in the current directory
-      (where the main file of the source code is located). The standard directory is not searched in.</p>
+        <p>The preprocessor replaces the line of the directive with the content of the file WinUser32.mqh.</p>
       </content>
     </text>
 
     <text>
       tag=basics_preprocessor_import
-      caption=Importing of functions
+      caption=Imported functions
       keywords=;import;DLL;EX4;
       <content>
-        <p>Functions are imported from compiled MQL4 modules (*.ex4 files) and from operating system modules (*.dll
-      files). The module name is specified in the <em>#import</em> directive. For compiler to be able to form the imported
-      function call and pass parameters in a proper way, the full description of functions is needed. Functions descriptions
-      follow the <em>#import &quot;module name&quot;</em> immediately. The new <em>#import</em> command (can be without
-      parameters) completes the imported functions description block.</p>
+        <p>Functions can be imported from compiled MQL4 modules (*.ex4 files) or from operating system modules (*.dll
+      files). The module name is specified in the <em>#import</em> directive.<br/>
+      For each function to import a function declaration is needed. Declarations follow the <em>#import &quot;module name&quot;</em> directive. 
+      The next <em>#import</em> directive or an empty directive (without a module name) finishes the declaration block.</p>
         <pre class="docmql4"><i>#import "file_name"
     func1 define;
     func2 define;
     ...
     funcN define;
 #import</i></pre><br/>
-<p>Imported functions must have their unique names. Functions having the same names cannot be imported simultaneously
-from different modules. Imported functions names may not coincide with those of built-in functions.</p>
-<p>Since the imported functions are out of the module to be compiled, the compiler cannot check correctness of parameters
-passed. This is why, to avoid runtime errors, it is necessary to declare the compliance of types and order of parameters precisely.
-The parameters passed to imported functions (both from EX4 and from DLL modules) cannot have values by default.</p>
+<p>Imported functions must have unique names. Functions having the same name from different modules cannot be imported simultaneously. Imported function 
+names may not overlap with names of built-in functions.</p>
+<p>Since the functions are imported from another module the compiler cannot check the correctness of passed parameters. Parameters of imported functions 
+cannot have default values.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">#import "user32.dll"
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int uType);<br/>
@@ -2659,7 +2658,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 
   <group>
     tag=runtime
-    caption=Program Run
+    caption=Program Execution
     <content>
     For an MQL4 program to work, it must be compiled (the "Compile" button or F5). It must be compiled
     without any errors (warnings are allowed, but they must be analyzed). At this, in the corresponding directory, <em>terminal_dir\experts</em>,
@@ -2745,17 +2744,14 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         5. The root directory of the drive where the operation system was installed.<br/>
         6. The directories listed in the PATH environment system variable.<br/><br/>
 
-        If a DLL references another DLL, the former one will not be loaded if the latter one is unavailable.<br/><br/>
+        Unlike system libraries MQL4 libraries are loaded separately for every calling module, independently on whether the called library has 
+        already been loaded by another MQL4 module. For example, the caller.ex4 module calls functions from lib1.ex4 and lib2.ex4 libraries. 
+        The lib1.ex4 library by itself calls functions from the lib2.ex4 library, too. In this case one copy of the lib1.ex4 library and two 
+        copies of the lib2.ex4 library will be loaded, regardless that all calls come from the same caller.ex4 module.<br/><br/>
 
-        Unlike system libraries, MQL4 libraries are loaded separately for every calling module, independently on whether
-        the called library has already been loaded by another MQL4 module. For example, the caller.ex4 module calls functions from lib1.ex4 and
-        lib2.ex4 libraries. The lib1.ex4 library by itself calls functions from the lib2.ex4 library, too. In this case one copy of the lib1.ex4 
-        library and two copies of the lib2.ex4 library will be loaded, regardless that all calls come from the same caller.ex4 module.<br/><br/>
-
-        DLL functions imported into an MQL4 program must provide linkage conventions accepted for Windows API functions.
-        To provide such a convention, the keyword __stdcall (Microsoft compilers) is used in C/C++ source codes. The above linkage convention 
-        is characterized by the following:<br/>
-        - the caller (in our case, it's an MQL4 program) must "see" the called function prototype in order to be able to put parameters onto the 
+        DLL functions imported into an MQL4 program must provide linkage conventions accepted for Windows API functions. To provide such a 
+        convention, the keyword __stdcall (Microsoft compilers) is used in C/C++ source codes. It is characterized by the following:<br/>
+        - the caller (the terminal) must "see" the called function prototype in order to be able to put parameters onto the 
           stack;<br/>
         - the caller puts parameters onto the stack in reversed order, i.e. from right to left; it is this order in which the imported function 
           reads parameters passed to it;<br/>
@@ -2764,10 +2760,9 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 
         An import declaration cannot specify parameters with default values as all parameters must be passed explicitely to the imported function.<br/><br/>
 
-       If calling of an imported function failes (MQL4 settings do not allow DLL imports, or the corresponding library could not be loaded), 
-       the program stops with the journal message "expert stopped". After that, the program's start() function will not be executed again until 
-       the program is re-initialized. A loaded program can be re-initialized by recompiling it or by opening its input properties dialog and pressing the 
-       OK button.
+       If calling of an imported function fails (MQL4 settings do not allow DLL imports or the corresponding library could not be loaded), the program stops 
+       with the journal message "expert stopped" and the program's start() function will not be executed again until the program is re-initialized. A loaded 
+       program can be re-initialized by recompiling it or by opening its input properties dialog and pressing the OK button.
         </p>
       </content>
     </text>
