@@ -12,7 +12,8 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   bool Test();
+   int Test1(string s1, int i1, string s2);
+   int Test2(string s1, int i1, string s2);
 #import
 
 
@@ -23,7 +24,8 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   Test();
+   debug("onStart()  Test1="+ Test1("hello s1 world", 123, " REM"));
+   //debug("onStart()  Test2="+ Test2("hello s2 world", 456, " REM"));
 
    return(catch("onStart(1)"));
 
