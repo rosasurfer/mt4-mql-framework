@@ -23,12 +23,8 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-
    Test("hello world", 0, "REM");
    //debug("onStart()  Test()=");
-
-   // MetaTrader::Expander.cpp::Test(245)  s1="hello world"  i1=0000007B  s2="REM"
-
 
    return(catch("onStart(1)"));
 

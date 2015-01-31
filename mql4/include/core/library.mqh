@@ -90,7 +90,7 @@ bool IsExpert() {
 bool IsScript() {
    if (__TYPE__ == T_LIBRARY) return(!catch("IsScript()  library not initialized", ERR_RUNTIME_ERROR));
 
-   return(__TYPE__ & T_SCRIPT);
+   return(__TYPE__ & T_SCRIPT != 0);
 }
 
 
