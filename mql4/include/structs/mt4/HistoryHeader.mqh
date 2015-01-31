@@ -150,7 +150,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
    string JoinStrings(string array[], string separator);
    string StringToStr(string value);
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import

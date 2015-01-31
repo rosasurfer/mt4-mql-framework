@@ -12447,7 +12447,7 @@ void Tester.ResetGlobalArrays() {
    string TicketsToStr.Lots(int array[], string separator);
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int    GetBoolsAddress  (bool   array[]);
    int    GetBufferAddress (int    array[]);
    int    GetDoublesAddress(double array[]);

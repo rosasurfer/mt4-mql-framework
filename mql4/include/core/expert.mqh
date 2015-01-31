@@ -635,7 +635,7 @@ int Tester.Stop() {
    bool   Tester.IsStopped();
    int    Toolbar.Experts(bool enable);
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 

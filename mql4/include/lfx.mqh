@@ -677,6 +677,6 @@ void DummyCalls() {
    int      StrToOperationType(string value);
    datetime TimeGMT();
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int      GetIntsAddress(int array[]);
 #import

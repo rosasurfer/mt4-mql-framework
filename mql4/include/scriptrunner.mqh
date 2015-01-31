@@ -5,7 +5,7 @@
    string ModuleTypeDescription(int type);
    int    MT4InternalMsg();
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int    GetStringAddress(string value);
 #import
 

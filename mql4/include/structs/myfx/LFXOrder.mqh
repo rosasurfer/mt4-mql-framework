@@ -363,7 +363,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 
-#import "MT4Expander.dll"
+#import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import
