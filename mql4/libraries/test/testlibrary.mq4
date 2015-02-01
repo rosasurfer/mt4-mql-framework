@@ -93,40 +93,42 @@ int mql_GetIntValue(int value) {
  *
 int onStart() {
 
-   int result, n=20000000;
-
-   dll_GetIntValue(0);
-   mql_GetIntValue(0);
-   ex4_GetIntValue(0);
+   int n = 1000000;
+   string result;
 
 
-   // DLL
-   int startTime = GetTickCount();
-   for (int i=0; i < n; i++) {
-      result = dll_GetIntValue(i);
-   }
-   int endTime = GetTickCount();
-   debug("onStart(0.1)  dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   mql_DwordToHexStr(0);
+   DwordToHexStr(0);
+   dll_DwordToHexStr(0);
 
 
    // MQL
-   startTime = GetTickCount();
-   for (i=0; i < n; i++) {
-      result = mql_GetIntValue(i);
+   int startTime = GetTickCount();
+   for (int i=0; i < n; i++) {
+      result = mql_DwordToHexStr(i);
    }
-   endTime = GetTickCount();
-   debug("onStart(0.2)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   int endTime = GetTickCount();
+   debug("onStart(0.1)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
 
 
    // MQL-Library
    startTime = GetTickCount();
    for (i=0; i < n; i++) {
-      result = ex4_GetIntValue(i);
+      result = DwordToHexStr(i);
    }
    endTime = GetTickCount();
-   debug("onStart(0.3)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec");
+   debug("onStart(0.2)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
 
-   return(last_error);
+
+   // DLL
+   startTime = GetTickCount();
+   for (i=0; i < n; i++) {
+      result = dll_DwordToHexStr(i);
+   }
+   endTime = GetTickCount();
+   debug("onStart(0.3)  dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
+
+   return(catch("onStart(1)"));
 
 
    // 20.000.000 Durchläufe:

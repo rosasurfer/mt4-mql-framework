@@ -12,8 +12,9 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   int    Test(string s1, int i1, string s2);
-   int    StringTest();
+
+   string StringTest();
+
 #import
 
 
@@ -24,110 +25,9 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   /*
-   int n = 1000000;
-   string result;
-
-
-   mql_DwordToHexStr(0);
-   DwordToHexStr(0);
-   dll_DwordToHexStr(0);
-
-
-   // MQL
-   int startTime = GetTickCount();
-   for (int i=0; i < n; i++) {
-      result = mql_DwordToHexStr(i);
-   }
-   int endTime = GetTickCount();
-   debug("onStart(0.1)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
-
-
-   // MQL-Library
-   startTime = GetTickCount();
-   for (i=0; i < n; i++) {
-      result = DwordToHexStr(i);
-   }
-   endTime = GetTickCount();
-   debug("onStart(0.2)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
-
-
-   // DLL
-   startTime = GetTickCount();
-   for (i=0; i < n; i++) {
-      result = dll_DwordToHexStr(i);
-   }
-   endTime = GetTickCount();
-   debug("onStart(0.3)  dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
-   */
-
-
-
-
-
-
-
-
-
-
-
 
    return(catch("onStart(1)"));
 
-   /*
-   int result = StringTest();
-   debug("onStart()  StringTest() = 0x"+ IntToHexStr(result));
-   */
-
-   /*
-   string result = StringTest();
-   debug("onStart()  StringTest() = "+ result);
-   debug("onStart()  addr(result) = 0x"+ IntToHexStr(GetStringAddress(result)));
-   */
-
-   /*
-   string results[1]; results[0] = StringTest();
-   debug("onStart()  StringTest() = "+ results[0]);
-   */
-
-   string results[1];
-   debug("onStart()  results="+ StringsToStr(results, NULL));
-   int resultsAddr = GetStringsAddress(results);
-
-   int mqlStr[2];
-   int mqlStrAddr = GetBufferAddress(mqlStr);
-   CopyMemory(resultsAddr, mqlStrAddr, 8);
-   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
-
-   /*
-   results[0] = StringConcatenate("erster string (18)", "");
-   debug("onStart()  results="+ StringsToStr(results, NULL));
-   resultsAddr = GetStringsAddress(results);
-   debug("onStart()  addr(results) = 0x"+ IntToHexStr(resultsAddr));
-   CopyMemory(resultsAddr, mqlStrAddr, 8);
-   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
-
-   results[0] = StringConcatenate("zweiter, ", "etwas längerer string (35)");
-   debug("onStart()  results="+ StringsToStr(results, NULL));
-   resultsAddr = GetStringsAddress(results);
-   debug("onStart()  addr(results) = 0x"+ IntToHexStr(resultsAddr));
-   CopyMemory(resultsAddr, mqlStrAddr, 8);
-   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
-   */
-
-   results[0] = StringTest();
-   debug("onStart()  results="+ StringsToStr(results, NULL));
-   CopyMemory(resultsAddr, mqlStrAddr, 8);
-   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
-
-   debug("onStart()  addr(results[0]) = 0x"+ IntToHexStr(GetStringAddress(results[0])));
-
-   //"MetaTrader::%s%s::%s(%d)  %s"
-   //"MetaTrader::%s%s::%s(%d)  %s MetaTrader::%s%s::%s(%d)  %s MetaTrader::%s%s::%s(%d)  %s MetaTrader::%s%s::%s(%d)  %s";
-
-
-
-   return(catch("onStart(1)"));
 
 
    debug("onStart()  MathArccos(-1.1)  = "+ MathArccos(-1.1), GetLastError());
@@ -171,6 +71,8 @@ int onStart() {
 
    int header[]; hf.Header(hHst, header);
    HISTORY_HEADER.toStr(header, true);
+
+   return(catch("onStart()"));
 }
 
 /*
@@ -189,62 +91,3 @@ int OnDeinit(int reason);
 int DebugMarketInfo(string location);
 int FileReadLines(string filename, string lines[], bool skipEmptyLines);
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
