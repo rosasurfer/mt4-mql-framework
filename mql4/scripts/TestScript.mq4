@@ -13,9 +13,7 @@ int __DEINIT_FLAGS__[];
 
 #import "Expander.Release.dll"
    int    Test(string s1, int i1, string s2);
-
-   //int    StringTest();
-   string StringTest();
+   int    StringTest();
 #import
 
 
@@ -25,6 +23,57 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+
+   /*
+   int n = 1000000;
+   string result;
+
+
+   mql_DwordToHexStr(0);
+   DwordToHexStr(0);
+   dll_DwordToHexStr(0);
+
+
+   // MQL
+   int startTime = GetTickCount();
+   for (int i=0; i < n; i++) {
+      result = mql_DwordToHexStr(i);
+   }
+   int endTime = GetTickCount();
+   debug("onStart(0.1)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
+
+
+   // MQL-Library
+   startTime = GetTickCount();
+   for (i=0; i < n; i++) {
+      result = DwordToHexStr(i);
+   }
+   endTime = GetTickCount();
+   debug("onStart(0.2)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
+
+
+   // DLL
+   startTime = GetTickCount();
+   for (i=0; i < n; i++) {
+      result = dll_DwordToHexStr(i);
+   }
+   endTime = GetTickCount();
+   debug("onStart(0.3)  dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
+   */
+
+
+
+
+
+
+
+
+
+
+
+
+   return(catch("onStart(1)"));
+
    /*
    int result = StringTest();
    debug("onStart()  StringTest() = 0x"+ IntToHexStr(result));

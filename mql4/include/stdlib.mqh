@@ -491,7 +491,6 @@
    string   IntegerToHexStr(int decimal);
    string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                          // Alias
    string   WordToHexStr(int word);
-   string   DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);                // Alias + MetaQuotes-Alias
    string   StringToHexStr(string value);
 
 #import "stdlib2.ex4"
