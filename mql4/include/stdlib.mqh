@@ -331,7 +331,7 @@
    bool     GE(double a, double b, int digits);
 
    bool     IsNaN(double value);
-   bool     IsInfinite(double value);
+   bool     IsInfinity(double value);
 
    int      Div       (int    a, int    b, int    onZero);
    double   MathDiv   (double a, double b, double onZero);
@@ -375,8 +375,8 @@
 
    string   StringTrim(string value);
    string   StringPad     (string input, int length, string pad_string, int pad_type);
-   string   StringPadLeft (string input, int length, string pad_string);   string StringLeftPad (string input, int length, string pad_string);
-   string   StringPadRight(string input, int length, string pad_string);   string StringRightPad(string input, int length, string pad_string);
+   string   StringPadLeft (string input, int length, string pad_string);   string StringLeftPad (string input, int length, string pad_string);  // Alias
+   string   StringPadRight(string input, int length, string pad_string);   string StringRightPad(string input, int length, string pad_string);  // Alias
 
    string   StringToLower(string value);
    string   StringToUpper(string value);
@@ -429,7 +429,7 @@
    bool     IsEmpty      (double   value);
    bool     IsEmptyString(string   value);
    bool     IsEmptyValue (double   value);
-   bool     IsNaT        (datetime value);
+   bool     IsNaT        (datetime value);         // Not-A-Time
 
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
