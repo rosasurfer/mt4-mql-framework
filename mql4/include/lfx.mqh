@@ -60,10 +60,7 @@ bool LFX.InitAccountData() {
    else {
       // Daten des aktuellen Accounts
       _account = GetAccountNumber();
-      if (!_account) {
-         if (LOG_LEVEL >= L_DEBUG) debug("LFX.InitAccountData(4)  leave", last_error);
-         return(!SetLastError(stdlib.GetLastError()));
-      }
+      if (!_account) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // AccountCurrency
