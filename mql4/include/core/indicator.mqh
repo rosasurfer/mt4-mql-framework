@@ -697,7 +697,6 @@ int UpdateProgramStatus(int value=NULL) {
    void   CopyMemory(int source, int destination, int bytes);
    int    GetUIThreadId();
    string InitReasonToStr(int reason);
-   string IntToHexStr(int integer);
    int    SumInts(int array[]);
 
 #import "Expander.dll"

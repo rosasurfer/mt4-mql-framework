@@ -3017,6 +3017,7 @@ void __DummyCalls() {
    StringIsNull(NULL);
    StringReplace(NULL, NULL, NULL);
    StringSubstrFix(NULL, NULL);
+   TimeframeDescription(NULL);
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
@@ -3066,7 +3067,6 @@ void __DummyCalls() {
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
    string GetWindowText(int hWnd);
    int    InitializeStringBuffer(string buffer[], int length);
-   string IntToHexStr(int integer);
    bool   IsFile(string filename);
    string ModuleTypeDescription(int type);
    bool   ReverseStringArray(string array[]);
@@ -3082,19 +3082,20 @@ void __DummyCalls() {
    int    ec.hChart   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.TestFlags(/*EXECUTION_CONTEXT*/int ec[]);
 
-#import "Expander.dll"
+#import "expander.dll"
+   string DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);   // eigener + MetaQuotes-Alias
    int    GetLastWin32Error();
    bool   IsBuiltinTimeframe(int timeframe);
 
 #import "kernel32.dll"
    int    GetCurrentProcessId();
    int    GetCurrentThreadId();
-   void   OutputDebugStringA(string lpMessage);                      // funktioniert nur für Admins zuverlässig
+   void   OutputDebugStringA(string lpMessage);                                                                // funktioniert nur für Admins zuverlässig
 
 #import "user32.dll"
    int    GetAncestor(int hWnd, int cmd);
    int    GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
-   int    GetDlgItem(int hDlg, int nIDDlgItem);
+   int    GetDlgItem(int hDlg, int itemId);
    int    GetTopWindow(int hWnd);
    int    GetWindow(int hWnd, int cmd);
    int    GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
