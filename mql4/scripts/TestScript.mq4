@@ -12,7 +12,10 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   int Test(string s1, int i1, string s2);
+   int    Test(string s1, int i1, string s2);
+
+   //int    StringTest();
+   string StringTest();
 #import
 
 
@@ -22,9 +25,58 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   /*
+   int result = StringTest();
+   debug("onStart()  StringTest() = 0x"+ IntToHexStr(result));
+   */
 
-   Test("hello world", 0, "REM");
-   //debug("onStart()  Test()=");
+   /*
+   string result = StringTest();
+   debug("onStart()  StringTest() = "+ result);
+   debug("onStart()  addr(result) = 0x"+ IntToHexStr(GetStringAddress(result)));
+   */
+
+   /*
+   string results[1]; results[0] = StringTest();
+   debug("onStart()  StringTest() = "+ results[0]);
+   */
+
+   string results[1];
+   debug("onStart()  results="+ StringsToStr(results, NULL));
+   int resultsAddr = GetStringsAddress(results);
+
+   int mqlStr[2];
+   int mqlStrAddr = GetBufferAddress(mqlStr);
+   CopyMemory(resultsAddr, mqlStrAddr, 8);
+   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
+
+   /*
+   results[0] = StringConcatenate("erster string (18)", "");
+   debug("onStart()  results="+ StringsToStr(results, NULL));
+   resultsAddr = GetStringsAddress(results);
+   debug("onStart()  addr(results) = 0x"+ IntToHexStr(resultsAddr));
+   CopyMemory(resultsAddr, mqlStrAddr, 8);
+   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
+
+   results[0] = StringConcatenate("zweiter, ", "etwas längerer string (35)");
+   debug("onStart()  results="+ StringsToStr(results, NULL));
+   resultsAddr = GetStringsAddress(results);
+   debug("onStart()  addr(results) = 0x"+ IntToHexStr(resultsAddr));
+   CopyMemory(resultsAddr, mqlStrAddr, 8);
+   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
+   */
+
+   results[0] = StringTest();
+   debug("onStart()  results="+ StringsToStr(results, NULL));
+   CopyMemory(resultsAddr, mqlStrAddr, 8);
+   debug("onStart()  mqlStr={"+ mqlStr[0] +", 0x"+ IntToHexStr(mqlStr[1]) +"}");
+
+   debug("onStart()  addr(results[0]) = 0x"+ IntToHexStr(GetStringAddress(results[0])));
+
+   //"MetaTrader::%s%s::%s(%d)  %s"
+   //"MetaTrader::%s%s::%s(%d)  %s MetaTrader::%s%s::%s(%d)  %s MetaTrader::%s%s::%s(%d)  %s MetaTrader::%s%s::%s(%d)  %s";
+
+
 
    return(catch("onStart(1)"));
 
@@ -75,9 +127,9 @@ int onStart() {
 /*
 TODO Build 600+:
 ----------------
-UnintializeReason()
--------------------
-- wird in EXECUTION_CONTEXT gespeichert
+UninitializeReason()
+--------------------
+- in EXECUTION_CONTEXT speichern
 - in InitReason und DeinitReason auftrennen
 
 int init();

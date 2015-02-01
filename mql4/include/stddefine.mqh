@@ -2396,22 +2396,23 @@ bool GT(double double1, double double2, int digits=8) {
  * @return bool
  */
 bool IsNaN(double value) {
-   // Bug Build 225: der Ausdruck (NaN==NaN) ist TRUE
+   // Bug Builds < 509: der Ausdruck (NaN==NaN) ist TRUE
    string s = value;
    return(s == "-1.#IND0000");
 }
 
 
 /**
- * Ob der Wert eines Doubles Infinite ist.
+ * Ob der Wert eines Doubles positiv oder negativ unendlich (Infinity) ist.
  *
  * @param  double value
  *
  * @return bool
  */
-bool IsInfinite(double value) {
-   string s = value;
-   return(s == "-1.#INF0000");
+bool IsInfinity(double value) {
+   if (!value)                               // 0
+      return(false);
+   return(value+value == value);             // 1.#INF oder -1.#INF
 }
 
 
@@ -2982,7 +2983,7 @@ void __DummyCalls() {
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
    IsError(NULL);
-   IsInfinite(NULL);
+   IsInfinity(NULL);
    IsLastError();
    IsLogging();
    IsNaN(NULL);
