@@ -13,12 +13,11 @@ string   __NAME__;                                          // Name des aktuelle
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     __LOG;                                             // ob das Logging aktiviert ist
+int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
-int        LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind
 string   __SMS.receiver;                                    // Empfänger-Nr. für SMS-Benachrichtigungen
 
-bool     __STATUS_TERMINAL_NOT_READY;                       // Terminal noch nicht bereit
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
 bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
@@ -29,7 +28,7 @@ int      __STATUS_OFF.reason;                               // Ursache für Progr
 
 double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pips sind gradzahlig)
-int      PipPoint, PipPoints;                               // Auflösung eines Pips des aktuellen Symbols (Anzahl der Punkte auf der Dezimalskala je Pip)
+int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick;
@@ -39,18 +38,18 @@ int      ValidBars;
 int      ChangedBars;
 
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs des Programms
-int      last_error;                                        // der letzte Fehler des aktuellen start()-Aufrufs des Programms
+int      last_error;                                        // der letzte Fehler des aktuellen MQL-Rootfunktionsaufrufs des Programms (init, start oder deinit)
 
 
 // Special constants
 #define NULL                        0
 #define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648                              (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647                              (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647 (signed)                     (datetime) INT_MAX = '2038-01-19 03:14:07'
 #define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
-#define EMPTY_VALUE           INT_MAX                       // empty custom indicator value (Integer, kein Double)                              max(datetime) = '2037-12-31 23:59:59'
-#define EMPTY                      -1
-#define CLR_NONE                   -1                       // no color
-#define WHOLE_ARRAY                 0
+#define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                  max(datetime) = '2037-12-31 23:59:59'
+#define EMPTY                      -1                       // MetaQuotes
+#define CLR_NONE                   -1                       // MetaQuotes: no color = 0xFFFFFFFF, im Gegensatz zu weiß = 0x00FFFFFF
+#define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_SYMBOL_LENGTH          11
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 #define MAX_PATH                  260                       // for example the maximum path on drive D is "D:\some-256-characters-path-string<NUL>"
@@ -65,7 +64,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Log level
-#define L_OFF                 INT_MIN                       // Tests umgekehrt zu log4j mit: if (LOG_LEVEL >= Event)
+#define L_OFF                 INT_MIN                       // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= Event)
 #define L_FATAL                 10000
 #define L_ERROR                 20000
 #define L_WARN                  30000
@@ -74,9 +73,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define L_ALL                 INT_MAX
 
 
-// Magic characters
-#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Platzhalter zur Visualisierung von NUL-Bytes in Strings,          siehe BufferToStr()
-#define PLACEHOLDER_CTL_CHAR        '•'                     // 0x95 - Platzhalter zur Visualisierung von Control-Characters in Strings, siehe BufferToStr()
+// Magic characters zur Markierung/Visualisierung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
+#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Ersatzzeichen für NUL-Bytes
+#define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 - Ersatzzeichen für Control-Characters
 
 
 // Mathematische Konstanten
@@ -1584,6 +1583,14 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_Q1 : return("Q1" );     // 1 quarter
    }
    return(StringConcatenate("unknown period (", period, ")"));
+}
+
+
+/**
+ * Alias
+ */
+string TimeframeDescription(int timeframe=NULL) {
+   return(PeriodDescription(timeframe));
 }
 
 

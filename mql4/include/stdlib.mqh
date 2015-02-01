@@ -488,7 +488,7 @@
 
    string   IntegerToBinaryStr(int integer);
 
-   string   IntegerToHexStr(int integer);
+   string   IntegerToHexStr(int decimal);
    string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                          // Alias
    string   WordToHexStr(int word);
    string   DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);                // Alias + MetaQuotes-Alias
@@ -502,7 +502,7 @@
    string   OperationTypesToStr(int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
    string   DoublesToStr    (double array[], string separator);
-   string   DoublesToStrEx  (double array[], string separator, int digits/*=0...16*/);
+   string   DoublesToStrEx  (double array[], string separator, int digits/*=0..16*/);
    string   iBufferToStr    (double array[], string separator);
    string   MoneysToStr     (double array[], string separator);
    string   RatesToStr      (double array[], string separator); string PricesToStr(double array[], string separator);   // Alias
@@ -519,14 +519,14 @@
    string   MessageBoxCmdToStr(int cmd);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr      (int type);
-   string   MovAvgMethodDescription(int method);   string MovingAverageMethodDescription(int method); // Alias
-   string   MovAvgMethodToStr      (int method);   string MovingAverageMethodToStr      (int method); // Alias
+   string   MaMethodDescription(int method);   string MovingAverageMethodDescription(int method);                       // Alias
+   string   MaMethodToStr      (int method);   string MovingAverageMethodToStr      (int method);                       // Alias
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr      (int type);
    string   PeriodFlagToStr(int flag);
-   string   PeriodDescription(int period);         string TimeframeDescription(int timeframe);        // Alias
-   string   PeriodToStr      (int period);         string TimeframeToStr      (int timeframe);        // Alias
+   string   PeriodDescription(int period);     string TimeframeDescription(int timeframe);                              // Alias
+   string   PeriodToStr      (int period);     string TimeframeToStr      (int timeframe);                              // Alias
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorDescription(int error);

@@ -181,7 +181,7 @@ int onInit() {
    else sValue = MA.Method;
    ma.method = StrToMovAvgMethod(sValue);
    if (ma.method == -1)                           return(catch("onInit(12)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-   MA.Method = MovAvgMethodDescription(ma.method);
+   MA.Method = MaMethodDescription(ma.method);
 
    // (1.4) MA.AppliedPrice
    if (Explode(MA.AppliedPrice, "*", values, 2) > 1) {

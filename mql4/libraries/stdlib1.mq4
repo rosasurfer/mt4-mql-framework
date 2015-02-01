@@ -1400,7 +1400,7 @@ string GetTerminalVersion() {
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
    //     infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………
    string Z                  = CharToStr(PLACEHOLDER_NUL_CHAR);
-   string C                  = CharToStr(PLACEHOLDER_CTL_CHAR);
+   string C                  = CharToStr(PLACEHOLDER_CTRL_CHAR);
    string key.ProductVersion = StringConcatenate(C,Z,"P",Z,"r",Z,"o",Z,"d",Z,"u",Z,"c",Z,"t",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
    string key.FileVersion    = StringConcatenate(C,Z,"F",Z,"i",Z,"l",Z,"e",Z,"V",Z,"e",Z,"r",Z,"s",Z,"i",Z,"o",Z,"n",Z,Z);
 
@@ -1504,13 +1504,6 @@ int InitializeByteBuffer(int buffer[], int length) {
 
 /**
  * Alias
- *
- * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Zeichen.
- *
- * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
- * @param  int length   - Anzahl der im Buffer zu speichernden Zeichen
- *
- * @return int - Fehlerstatus
  */
 int InitializeCharBuffer(int buffer[], int length) {
    return(InitializeByteBuffer(buffer, length));
@@ -3566,7 +3559,7 @@ string BufferToStr(int buffer[]) {
          int char = integer & 0xFF;                                     // ein einzelnes Byte des Integers lesen     // +---+------------+------+
          if (char < 0x20) {                                             // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
             if (char == 0x00) char = PLACEHOLDER_NUL_CHAR;              // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
-            else              char = PLACEHOLDER_CTL_CHAR;              // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+            else              char = PLACEHOLDER_CTRL_CHAR;             // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
          }                                                                                                           // | 3 | 0xFF000000 |   4  |
          result = StringConcatenate(result, CharToStr(char));                                                        // +---+------------+------+
          integer >>= 8;
@@ -3603,7 +3596,7 @@ private*/string __BuffersToStr(int buffer[][]) {
             int char = integer & 0xFF;                                  // ein einzelnes Byte des Integers lesen     // +---+------------+------+
             if (char < 0x20) {                                          // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
                if (char == 0x00) char = PLACEHOLDER_NUL_CHAR;           // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
-               else              char = PLACEHOLDER_CTL_CHAR;           // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+               else              char = PLACEHOLDER_CTRL_CHAR;          // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
             }                                                                                                        // | 3 | 0xFF000000 |   4  |
             result = StringConcatenate(result, CharToStr(char));                                                     // +---+------------+------+
             integer >>= 8;
@@ -3877,7 +3870,7 @@ int ExplodeStrings(int buffer[], string &results[]) {
 
 
 /**
- * Alias für ExplodeStringsA()
+ * Alias
  */
 int ExplodeStringsA(int buffer[], string results[]) {
    return(ExplodeStrings(buffer, results));
@@ -4139,10 +4132,6 @@ int MT4InternalMsg() {
 
 /**
  * Alias
- *
- * MetaTrader4_Internal_Message. Pseudo-Konstante, wird beim ersten Zugriff initialisiert.
- *
- * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
  */
 int WM_MT4() {
    return(MT4InternalMsg());
@@ -5405,15 +5394,7 @@ string StringPadLeft(string input, int pad_length, string pad_string=" ") {
 
 
 /**
- * Alias für StringPadLeft()
- *
- * Erweitert einen String mit einem anderen String linksseitig auf eine gewünschte Mindestlänge.
- *
- * @param  string input      - Ausgangsstring
- * @param  int    pad_length - gewünschte Mindestlänge
- * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
- *
- * @return string
+ * Alias
  */
 string StringLeftPad(string input, int pad_length, string pad_string=" ") {
    return(StringPadLeft(input, pad_length, pad_string));
@@ -5438,15 +5419,7 @@ string StringPadRight(string input, int pad_length, string pad_string=" ") {
 
 
 /**
- * Alias für StringPadRight
- *
- * Erweitert einen String mit einem anderen String rechtsseitig auf eine gewünschte Mindestlänge.
- *
- * @param  string input      - Ausgangsstring
- * @param  int    pad_length - gewünschte Mindestlänge
- * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
- *
- * @return string
+ * Alias
  */
 string StringRightPad(string input, int pad_length, string pad_string=" ") {
    return(StringPadRight(input, pad_length, pad_string));
@@ -5966,7 +5939,7 @@ string IntegerToHexString(int integer) {
  * Beispiel: IntegerToBinaryStr(109) => "1101101"
  */
 string IntegerToBinaryStr(int integer) {
-   if (integer == 0)
+   if (!integer)
       return("0");
 
    string result;
@@ -7373,28 +7346,22 @@ string SwapCalculationModeToStr(int mode) {
  *
  * @return string
  */
-string MovAvgMethodToStr(int method) {
+string MaMethodToStr(int method) {
    switch (method) {
       case MODE_SMA : return("MODE_SMA" );
       case MODE_EMA : return("MODE_EMA" );
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   return(_emptyStr(catch("MovAvgMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
 /**
  * Alias
- *
- * Gibt die lesbare Konstante einer MovingAverage-Methode zurück.
- *
- * @param  int type - MA-Methode
- *
- * @return string
  */
 string MovingAverageMethodToStr(int method) {
-   return(MovAvgMethodToStr(method));
+   return(MaMethodToStr(method));
 }
 
 
@@ -7405,28 +7372,22 @@ string MovingAverageMethodToStr(int method) {
  *
  * @return string
  */
-string MovAvgMethodDescription(int method) {
+string MaMethodDescription(int method) {
    switch (method) {
       case MODE_SMA : return("SMA" );
       case MODE_EMA : return("EMA" );
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
    }
-   return(_emptyStr(catch("MovAvgMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_FUNCTION_PARAMVALUE)));
 }
 
 
 /**
  * Alias
- *
- * Gibt die lesbare Beschreibung einer MovingAverage-Methode zurück.
- *
- * @param  int type - MA-Methode
- *
- * @return string
  */
 string MovingAverageMethodDescription(int method) {
-   return(MovAvgMethodDescription(method));
+   return(MaMethodDescription(method));
 }
 
 
@@ -7828,12 +7789,6 @@ int StrToPeriod(string value) {
 
 /**
  * Alias
- *
- * Gibt den Integer-Wert eines Timeframe-Bezeichners zurück.
- *
- * @param  string timeframe - M1, M5, M15, M30 etc.
- *
- * @return int - Timeframe-Code oder -1, wenn der Bezeichner ungültig ist
  */
 int StrToTimeframe(string timeframe) {
    return(StrToPeriod(timeframe));
@@ -7869,29 +7824,9 @@ string PeriodToStr(int period=NULL) {
 
 /**
  * Alias
- *
- * Gibt die lesbare Konstante einer Timeframe-ID zurück.
- *
- * @param  int timeframe - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktueller Timeframe)
- *
- * @return string
  */
 string TimeframeToStr(int timeframe=NULL) {
    return(PeriodToStr(timeframe));
-}
-
-
-/**
- * Alias
- *
- * Gibt die Beschreibung eines Timeframe-Codes zurück.
- *
- * @param  int timeframe - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktueller Timeframe)
- *
- * @return string
- */
-string TimeframeDescription(int timeframe=NULL) {
-   return(PeriodDescription(timeframe));
 }
 
 
@@ -8560,7 +8495,7 @@ int ObjectRegister(string label) {
 
 
 /**
- * Alias für ObjectRegister()
+ * Alias
  */
 int RegisterObject(string label) {
    return(ObjectRegister(label));
