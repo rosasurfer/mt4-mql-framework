@@ -68,9 +68,6 @@ extern string Order.Alerts.HTTP.Url      = "";                       // vollstän
 #include <core/indicator.mqh>
 
 
-bool     isConfigured;
-
-
 // OrderTracker
 bool     track.orders;
 
@@ -106,8 +103,7 @@ bool     priceAlerts.http;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Konfiguration einlesen. Ist die AccountNumber() beim Terminalstart noch nicht verfügbar, wird der Aufruf in onTick() wiederholt.
-   if (!Configure())
+   if (!Configure())                                                 // Konfiguration einlesen
       return(last_error);
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
@@ -116,12 +112,12 @@ int onInit() {
 
 
 /**
- * Konfiguriert diesen EventTracker.
+ * Konfiguriert den EventTracker.
  *
  * @return bool - Erfolgsstatus
  */
 bool Configure() {
-   // (1) Konfiguration des OrderTrackers auswerten
+   // (1) Konfiguration des OrderTrackers einlesen und auswerten
    track.orders = Track.Orders;
    if (track.orders) {
       // (1.1) Order.Alerts.Sound
@@ -147,7 +143,7 @@ bool Configure() {
    }
 
 
-   // (2) Konfiguration des PriceTrackers auswerten
+   // (2) Konfiguration des PriceTrackers einlesen und auswerten
    int account = GetAccountNumber();
    if (!account) return(!SetLastError(stdlib.GetLastError()));
 
@@ -174,20 +170,17 @@ bool Configure() {
    }
 
 
-
-   if (true) {
+   int error = catch("Configure(2)");
+   if (!error) {
       debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                                    "; ",
-                                                "orders.sound=", BoolToStr(orderAlerts.sound),                                               "; ",
-                                                "orders.mail=" , ifString(orderAlerts.mail, "\""+ orderAlerts.mail.receiver +"\"", "false"), "; ",
-                                                "orders.sms="  , ifString(orderAlerts.sms,  "\""+ orderAlerts.sms.receiver  +"\"", "false"), "; ",
-                                                "orders.http=" , ifString(orderAlerts.http, "\""+ orderAlerts.http.url      +"\"", "false"), "; "
-                                              //"orders.icq="  , ifString(orderAlerts.icq,  "\""+ orderAlerts.icq.contact   +"\"", "false"), "; "
-                              )
-      );
+                                               "orders.sound=", BoolToStr(orderAlerts.sound),                                               "; ",
+                                               "orders.mail=" , ifString(orderAlerts.mail, "\""+ orderAlerts.mail.receiver +"\"", "false"), "; ",
+                                               "orders.sms="  , ifString(orderAlerts.sms,  "\""+ orderAlerts.sms.receiver  +"\"", "false"), "; ",
+                                               "orders.http=" , ifString(orderAlerts.http, "\""+ orderAlerts.http.url      +"\"", "false"), "; "
+                                             //"orders.icq="  , ifString(orderAlerts.icq,  "\""+ orderAlerts.icq.contact   +"\"", "false"), "; "
+      ));
    }
-
-   isConfigured = !catch("Configure(2)");
-   return(isConfigured);
+   return(!error);
 }
 
 
@@ -197,12 +190,7 @@ bool Configure() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) endgültige Prüfung, ob der EventTracker konfiguriert ist
-   if (!isConfigured) /*&&*/ if (!Configure())
-      return(last_error);
-
-
-   // (2) Pending- und Limit-Orders überwachen
+   // (1) Pending- und Limit-Orders überwachen
    if (Track.Orders) {
       int failedOrders   []; ArrayResize(failedOrders,    0);
       int openedPositions[]; ArrayResize(openedPositions, 0);

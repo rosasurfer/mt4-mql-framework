@@ -1116,40 +1116,6 @@ string StringToHexStr(string value) {
 
 
 /**
- * Gibt die lesbare Konstante einer Root-Function ID zurück.
- *
- * @param  int id
- *
- * @return string - lesbare Konstante oder Leerstring, wenn die übergebene ID ungültig ist
- */
-string __whereamiToStr(int id) {
-   switch (id) {
-      case FUNC_INIT  : return("FUNC_INIT"  );
-      case FUNC_START : return("FUNC_START" );
-      case FUNC_DEINIT: return("FUNC_DEINIT");
-   }
-   return(_emptyStr(catch("__whereamiToStr()  unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
-}
-
-
-/**
- * Gibt die lesbare Beschreibung einer Root-Function ID zurück.
- *
- * @param  int id
- *
- * @return string - lesbare Beschreibung oder Leerstring, wenn die übergebene ID ungültig ist
- */
-string __whereamiDescription(int id) {
-   switch (id) {
-      case FUNC_INIT  : return("init()"  );
-      case FUNC_START : return("start()" );
-      case FUNC_DEINIT: return("deinit()");
-   }
-   return(_emptyStr(catch("__whereamiDescription()  unknown root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
-}
-
-
-/**
  * Gibt den Offset der angegebenen GMT-Zeit zu FXT (Forex Time) zurück.
  *
  * @param  datetime gmtTime - GMT-Zeit
