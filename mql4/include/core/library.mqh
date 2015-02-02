@@ -166,7 +166,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    GetUIThreadId();
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
-   string __whereamiDescription(int id);
 
 #import "stdlib2.ex4"
    int    GetTerminalRuntime();

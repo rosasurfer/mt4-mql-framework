@@ -900,13 +900,11 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
    else                               {                               GetLastError(); }
 
-
-   // rekursive Fehler erkennen und abfangen                         // mit Initializer: hält in EA's immer
-   static bool recursive = false;                                    //                  hält in Indikatoren bis zum nächsten init-Cycle (ok)
-
+   static bool recursive = false;                                             // mit Initializer: hält in EA's immer
+                                                                              //                  hält in Indikatoren bis zum nächsten init-Cycle (ok)
 
    if (error != NO_ERROR) {
-      if (recursive)
+      if (recursive)                                                          // rekursive Fehler abfangen
          return(debug("catch()  recursive error: "+ location, error));
       recursive = true;
 
@@ -917,7 +915,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
       // (2) Programmnamen um Instanz-ID erweitern
       string name, nameInstanceId;
       if (StringLen(__NAME__) > 0) name = __NAME__;
-      else                         name = WindowExpertName();        // falls __NAME__ noch nicht definiert ist
+      else                         name = WindowExpertName();                 // falls __NAME__ noch nicht definiert ist
 
       int logId = GetCustomLogID();
       if (!logId)       nameInstanceId = name;
@@ -948,7 +946,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          string caption = StringConcatenate("Strategy Tester ", Symbol(), ",", PeriodDescription(NULL));
 
          pos = StringFind(message, ") ");
-         if (pos == -1) message = StringConcatenate("ERROR in ", message);                      // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
+         if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
          else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
                         message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
 
@@ -964,7 +962,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
 
       // (5) last_error setzen
-      SetLastError(error, NULL);                                                                // je nach Moduletyp unterschiedlich implementiert
+      SetLastError(error, NULL);                                              // je nach Moduletyp unterschiedlich implementiert
       recursive = false;
    }
 
@@ -2930,6 +2928,40 @@ int GetUIThreadId() {
 
 
 /**
+ * Gibt die lesbare Konstante einer Root-Function ID zurück.
+ *
+ * @param  int id
+ *
+ * @return string - lesbare Konstante oder Leerstring, wenn die übergebene ID ungültig ist
+ */
+string __whereamiToStr(int id) {
+   switch (id) {
+      case FUNC_INIT  : return("FUNC_INIT"  );
+      case FUNC_START : return("FUNC_START" );
+      case FUNC_DEINIT: return("FUNC_DEINIT");
+   }
+   return(_emptyStr(catch("__whereamiToStr()  unknown MQL root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung einer Root-Function ID zurück.
+ *
+ * @param  int id
+ *
+ * @return string - lesbare Beschreibung oder Leerstring, wenn die übergebene ID ungültig ist
+ */
+string __whereamiDescription(int id) {
+   switch (id) {
+      case FUNC_INIT  : return("init()"  );
+      case FUNC_START : return("start()" );
+      case FUNC_DEINIT: return("deinit()");
+   }
+   return(_emptyStr(catch("__whereamiDescription()  unknown MQL root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -2954,11 +2986,13 @@ void __DummyCalls() {
    UpdateProgramStatus();
 
    __log.custom(NULL);
+   __whereamiDescription(NULL);
+   __whereamiToStr(NULL);
    _bool(NULL);
    _double(NULL);
-   _emptyStr();
    _EMPTY();
    _EMPTY_VALUE();
+   _emptyStr();
    _false();
    _int(NULL);
    _last_error();

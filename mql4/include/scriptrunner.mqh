@@ -1,5 +1,4 @@
 #import "stdlib1.ex4"
-   string __whereamiDescription(int id);
    int    Explode(string input, string separator, string results[], int limit);
    int    InitializeStringBuffer(string buffer[], int length);
    string ModuleTypeDescription(int type);

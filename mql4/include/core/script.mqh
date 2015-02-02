@@ -456,7 +456,6 @@ int UpdateProgramStatus(int value=NULL) {
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
    int    SumInts(int array[]);
-   string __whereamiDescription(int id);
 
 #import "Expander.dll"
    int    GetBufferAddress(int buffer[]);

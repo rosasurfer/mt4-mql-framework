@@ -201,7 +201,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    string StringToStr(string value);
    string TestFlagsToStr(int flags);
    string UninitializeReasonToStr(int reason);
-   string __whereamiToStr(int id);
 
 #import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
