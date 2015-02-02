@@ -1503,6 +1503,7 @@ bool UpdatePositions() {
             ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
             ObjectSet    (label, OBJPROP_YDISTANCE, yDist + (lines-1)*(positions.fontSize+8));
             ObjectSetText(label, " ", 1);
+            //ObjectSetText(label, " ", positions.fontSize, positions.fontName, CLR_NONE);
             ObjectRegister(label);
          }
          else GetLastError();
