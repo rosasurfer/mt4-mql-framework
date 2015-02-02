@@ -14,6 +14,7 @@ int __DEINIT_FLAGS__[];
 #import "Expander.Release.dll"
 
    string StringTest();
+   string DwordToHexStr2(int value);
 
 #import
 
@@ -25,6 +26,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   debug("onStart()  -1 = "+ DwordToHexStr2(-1));
 
    return(catch("onStart(1)"));
 
