@@ -48,27 +48,24 @@
       <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a> You can download the book in .chm format at
       <a href="http://www.mql4.com/files/mql4bookenglish.chm?source=metaeditor_help">http://www.mql4.com/files/mql4bookenglish.chm</a> (size 2.0 Mb).</p>
 
-      <p>A large amount of functions necessary for analysis of the current and previously income quotes, as well as basic arithmetic and logic operations 
-      are included in MQL4 structure. There are also basic indicators built in and commands of order placement and control.</p>
-
-      <p>The MetaEditor (a text editor with syntax highlighting for MQL4) is used for writing program code.</p>
+      <p>MQL4 offers a large amount of built-in functions for arithmetical and logical operations, price analysis and order management.</p>
 
       <p>Programs written in MQL4 have different features and purposes:</p>
       <ul><li><p>
-          An <strong>Expert Advisor</strong> (in short: expert) is a mechanical trading system linked to a specific chart.
-          An expert is executed for every incoming tick of a given symbol. The expert will not be executed for a new tick if it is still processing 
+          An <strong>Expert Advisor</strong> (short: an expert) is a mechanical trading system linked to a specific chart.
+          An expert is executed for every incoming tick of a given instrument. The expert will not be executed for a new tick if it is still processing 
           the previous one (i.e. the expert has not yet completed its processing).
-          The expert can both inform you about a possibility to trade and trade at an account automatically, sending orders directly to the trade server. 
-          The terminal supports testing of trade strategies built with experts on historic data and can display trade entries and exits in the chart.<br/>
+          The expert can both signal trade possibilities and trade automatically, ie. sending orders to the trade server. 
+          The terminal supports testing of trading strategies on historical data. An expert can display trade entries and exits in the chart.<br/>
           Experts are stored in the directory <em>{terminal_directory}\experts</em>.</p></li>
         <li><p>
-          A <strong>Custom Indicator</strong> is a technical indicator written independently in addition to those
-          already built-in into the client terminal. Like built-in indicators they cannot trade and are intended for analytical functionality.<br/>
+          A <strong>Custom Indicator</strong> is a technical indicator written in addition to those already built-in into the client terminal. Like built-in indicators 
+          custom indicators cannot trade and are intended for analytical functionality.<br/>
           Custom Indicators are stored in the directory <em>{terminal_directory}\experts\indicators</em>.</p></li>
         <li><p>
-          A <strong>Script</strong> is a program for the single non-repetitive execution of one or more actions. Unlike Expert Advisors, Scripts are not run 
+          A <strong>Script</strong> is a program for the single non-repetitive execution of user defined actions. Unlike Expert Advisors, scripts are not run 
           tickwise but on explicite request.<br/>
-          Scripts are stored in the directory <em>{terminal_dictionary}\experts\scripts</em>.</p></li>
+          Scripts are stored in the directory <em>{terminal_directory}\experts\scripts</em>.</p></li>
         <li><p>
           A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself. The use of include files is to be 
           preferred over the use of libraries because of the additional processing burden of library function calls.<br/>
