@@ -3,9 +3,8 @@
  *
  *
  * (1) Order-Events
- *     Zu überwachende Order-Events werden mit Indikator-Inputparametern konfiguriert. Ein so konfigurierter EventTracker überwacht alle Symbole des Accounts,
- *     nicht nur das des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen von allen laufenden EventTrackern für die Orderüberwachung
- *     zu konfigurieren.
+ *     Die Orderüberwachung wird im Indikator aktiviert/deaktiviert. Ein so aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das
+ *     des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
  *
  *     Events:
  *      - Orderausführung fehlgeschlagen
@@ -14,8 +13,8 @@
  *
  *
  * (2) Preis-Events
- *     Zu überwachende Preis-Events werden in der Account-Konfiguration je Instrument konfiguriert. Es liegt in der Verantwortung des Benutzers, nur einen
- *     EventTracker je Instrument zu laden.
+ *     Die Preisüberwachung wird im Indikator aktiviert/deaktiviert und die einzelnen Events in der Account-Konfiguration je Instrument konfiguriert. Es liegt
+ *     in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für die Preisüberwachung zu aktivieren.
  *
  *     Events:
  *      - Erreichen der 10%-Schwelle der Tages-Range
@@ -56,45 +55,46 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern bool   Track.Orders               = false;
 
-extern bool   Order.Alerts.Sound         = true;                     // alle Alerts bis auf Sounds sind per Default inaktiv
-extern string Order.Alerts.Mail.Receiver = "email@address.tld";      // E-Mailadresse    ("system" => global konfigurierte Adresse)
-extern string Order.Alerts.SMS.Receiver  = "phone-number";           // Telefonnummer    ("system" => global konfigurierte Nummer )
-extern string Order.Alerts.HTTP.Url      = "";                       // vollständige URL ("system" => global konfigurierte URL    )
-//     string Order.Alerts.ICQ.Contact   = "user-id";                // ICQ-Kontakt      ("system" => global konfigurierte User-ID)
+extern bool   Track.Order.Events   = false;
+extern bool   Track.Price.Events   = false;
+
+extern string __________________________;
+
+extern bool   Alerts.Sound         = true;                           // alle Order-Alerts bis auf Sounds sind per Default inaktiv
+extern string Alerts.Mail.Receiver = "email@address.tld";            // E-Mailadresse    ("system" => global konfigurierte Adresse)
+extern string Alerts.SMS.Receiver  = "phone-number";                 // Telefonnummer    ("system" => global konfigurierte Nummer )
+extern string Alerts.HTTP.Url      = "url";                          // vollständige URL ("system" => global konfigurierte URL    )
+extern string Alerts.ICQ.UserID    = "contact-id";                   // ICQ-Kontakt      ("system" => global konfigurierte User-ID)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 
 
-// OrderTracker
 bool     track.orders;
+bool     track.price;
 
-bool     orderAlerts.sound;
+bool     alerts.sound;
 string   sound.orderFailed    = "speech/OrderExecutionFailed.wav";
 string   sound.positionOpened = "speech/OrderFilled.wav";
 string   sound.positionClosed = "speech/PositionClosed.wav";
 
-bool     orderAlerts.mail;
-string   orderAlerts.mail.receiver = "";
+bool     alerts.mail;
+string   alerts.mail.receiver = "";
 
-bool     orderAlerts.sms;
-string   orderAlerts.sms.receiver = "";
+bool     alerts.sms;
+string   alerts.sms.receiver = "";
 
-bool     orderAlerts.http;
-string   orderAlerts.http.url = "";
+bool     alerts.http;
+string   alerts.http.url = "";
 
+bool     alerts.icq;
+string   alerts.icq.userId = "";
+
+
+// interne Variablen
 int      orders.knownOrders.ticket[];                                // vom letzten Aufruf bekannte offene Orders
 int      orders.knownOrders.type  [];
-
-
-// PriceTracker
-bool     track.price;
-bool     priceAlerts.sound;
-bool     priceAlerts.mail;
-bool     priceAlerts.sms;
-bool     priceAlerts.http;
 
 
 /**
@@ -118,66 +118,75 @@ int onInit() {
  */
 bool Configure() {
    // (1) Konfiguration des OrderTrackers einlesen und auswerten
-   track.orders = Track.Orders;
+   track.orders = Track.Order.Events;
    if (track.orders) {
-      // (1.1) Order.Alerts.Sound
-      orderAlerts.sound = Order.Alerts.Sound;
-
-      // (1.2) Order.Alerts.Mail.Receiver = "email@address.tld";
-
-      // (1.3) Order.Alerts.SMS.Receiver  = "phone-number";
-      string sValue = StringToLower(StringTrim(Order.Alerts.SMS.Receiver));
-      if (StringLen(sValue) && sValue!="phone-number") {
-         orderAlerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
-         orderAlerts.sms          = StringIsPhoneNumber(orderAlerts.sms.receiver);
-
-         if (!orderAlerts.sms) {
-            if (sValue == "system") return(!catch("Configure(1)  "+ ifString(orderAlerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ orderAlerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            else                    return(!catch("Configure(2)  Invalid input parameter Order.Alerts.SMS.Receiver = \""+ Order.Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE));
-         }
-      }
-      else orderAlerts.sms = false;
-
-      // (1.4) Order.Alerts.HTTP.Url      = "";
-      // (1.5) Order.Alerts.ICQ.Contact   = "user-id";
    }
 
 
    // (2) Konfiguration des PriceTrackers einlesen und auswerten
-   int account = GetAccountNumber();
-   if (!account) return(!SetLastError(stdlib.GetLastError()));
+   track.price = Track.Price.Events;
+   if (track.price) {
+      int account = GetAccountNumber();
+      if (!account) return(!SetLastError(stdlib.GetLastError()));
 
-   string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+      string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+      string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+
+      /*
+      - neues Tages-High/Low
+      - neues Wochen-High/Low
+      - Bruch Vortages-Range
+      - Bruch Vorwochen-Range
+      */
+   }
 
 
-   /*
-   - neues Tages-High/Low
-   - neues Wochen-High/Low
-   - Bruch Vortages-Range
-   - Bruch Vorwochen-Range
-   */
+   // (3) Alert-Methoden auswerten
+   if (track.orders || track.price) {
+
+      // (3.1) Order.Alerts.Sound
+      alerts.sound = Alerts.Sound;
+
+      // (3.2) Alerts.Mail.Receiver
+
+      // (3.3) Alerts.SMS.Receiver
+      string sValue = StringToLower(StringTrim(Alerts.SMS.Receiver));
+      if (sValue != "") {
+         alerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
+         alerts.sms          = StringIsPhoneNumber(alerts.sms.receiver);
+         if (!alerts.sms) {
+            if (sValue == "system") return(!catch("Configure(1)  "+ ifString(alerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ alerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else                    return(!catch("Configure(2)  Invalid input parameter Alerts.SMS.Receiver = \""+ Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+         }
+      }
+      else alerts.sms = false;
+
+      // (3.4) Alerts.HTTP.Url
+      // (3.5) Alerts.ICQ.UserID
 
 
-   // SMS.Alerts
-   __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
-   if (__SMS.alerts) {
-      __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
-      // TODO: Rufnummer validieren
-      //if (!StringIsDigit(__SMS.receiver)) return(!catch("Configure(1)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!StringLen(__SMS.receiver))
-         __SMS.alerts = false;
+
+      // SMS.Alerts
+      __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
+      if (__SMS.alerts) {
+         __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
+         // TODO: Rufnummer validieren
+         //if (!StringIsDigit(__SMS.receiver)) return(!catch("Configure(1)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringLen(__SMS.receiver))
+            __SMS.alerts = false;
+      }
    }
 
 
    int error = catch("Configure(2)");
    if (!error) {
-      debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                                    "; ",
-                                               "orders.sound=", BoolToStr(orderAlerts.sound),                                               "; ",
-                                               "orders.mail=" , ifString(orderAlerts.mail, "\""+ orderAlerts.mail.receiver +"\"", "false"), "; ",
-                                               "orders.sms="  , ifString(orderAlerts.sms,  "\""+ orderAlerts.sms.receiver  +"\"", "false"), "; ",
-                                               "orders.http=" , ifString(orderAlerts.http, "\""+ orderAlerts.http.url      +"\"", "false"), "; "
-                                             //"orders.icq="  , ifString(orderAlerts.icq,  "\""+ orderAlerts.icq.contact   +"\"", "false"), "; "
+      debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                          "; ",
+                                               "track.price=",  BoolToStr(track.price),                                           "; ",
+                                               "alerts.sound=", BoolToStr(alerts.sound),                                          "; ",
+                                               "alerts.mail=" , ifString(alerts.mail, "\""+ alerts.mail.receiver +"\"", "false"), "; ",
+                                               "alerts.sms="  , ifString(alerts.sms,  "\""+ alerts.sms.receiver  +"\"", "false"), "; ",
+                                               "alerts.http=" , ifString(alerts.http, "\""+ alerts.http.url      +"\"", "false"), "; ",
+                                               "alerts.icq="  , ifString(alerts.icq,  "\""+ alerts.icq.userId    +"\"", "false"), "; "
       ));
    }
    return(!error);
@@ -191,7 +200,7 @@ bool Configure() {
  */
 int onTick() {
    // (1) Pending- und Limit-Orders überwachen
-   if (Track.Orders) {
+   if (track.orders) {
       int failedOrders   []; ArrayResize(failedOrders,    0);
       int openedPositions[]; ArrayResize(openedPositions, 0);
       int closedPositions[]; ArrayResize(closedPositions, 0);
@@ -342,7 +351,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
  * @return bool - Erfolgsstatus
  */
 bool onOrderFail(int tickets[]) {
-   if (!Track.Orders)
+   if (!track.orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -368,7 +377,7 @@ bool onOrderFail(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (orderAlerts.sound)
+   if (alerts.sound)
       PlaySoundEx(sound.orderFailed);
    return(!catch("onOrderFail(3)"));
 }
@@ -382,7 +391,7 @@ bool onOrderFail(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionOpen(int tickets[]) {
-   if (!Track.Orders)
+   if (!track.orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -408,7 +417,7 @@ bool onPositionOpen(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (orderAlerts.sound)
+   if (alerts.sound)
       PlaySoundEx(sound.positionOpened);
    return(!catch("onPositionOpen(3)"));
 }
@@ -422,7 +431,7 @@ bool onPositionOpen(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionClose(int tickets[]) {
-   if (!Track.Orders)
+   if (!track.orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -449,7 +458,7 @@ bool onPositionClose(int tickets[]) {
    }
 
    // ggf. Sound abspielen
-   if (orderAlerts.sound)
+   if (alerts.sound)
       PlaySoundEx(sound.positionClosed);
    return(!catch("onPositionClose(3)"));
 }
@@ -463,12 +472,13 @@ bool onPositionClose(int tickets[]) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Track.Orders="                , BoolToStr(Track.Orders),       "; ",
-                            "Order.Alerts.Sound="          , BoolToStr(Order.Alerts.Sound), "; ",
-                            "Order.Alerts.Mail.Receiver=\"", Order.Alerts.Mail.Receiver,  "\"; ",
-                            "Order.Alerts.SMS.Receiver=\"" , Order.Alerts.SMS.Receiver,   "\"; ",
-                            "Order.Alerts.HTTP.Url=\""     , Order.Alerts.HTTP.Url,       "\"; "
-                          //"Order.Alerts.ICQ.Contact=\""  , Order.Alerts.ICQ.Contact,    "\"; "
+                            "Track.Order.Events="    , BoolToStr(Track.Order.Events),  "; ",
+                            "Track.Price.Events="    , BoolToStr(Track.Price.Events),  "; ",
+                            "Alerts.Sound="          , BoolToStr(Alerts.Sound),        "; ",
+                            "Alerts.Mail.Receiver=\"", Alerts.Mail.Receiver,         "\"; ",
+                            "Alerts.SMS.Receiver=\"" , Alerts.SMS.Receiver,          "\"; ",
+                            "Alerts.HTTP.Url=\""     , Alerts.HTTP.Url,              "\"; ",
+                            "Alerts.ICQ.UserID=\""   , Alerts.ICQ.UserID,            "\"; "
                             )
    );
 }
