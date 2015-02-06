@@ -4277,6 +4277,8 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
    else if (StringStartsWith(server, "integral-"          )) return("Global Prime"    );     // demo
    else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
+   else if (StringStartsWith(server, "jfd-demo"           )) return("JFD Brokers"     );
+   else if (StringStartsWith(server, "jfd-live"           )) return("JFD Brokers"     );
    else if (StringStartsWith(server, "liteforex-"         )) return("LiteForex"       );
    else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
    else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
@@ -7958,6 +7960,8 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
+   else if (StringStartsWith(directory, "jfd-demo"           )) timezone = "Europe/London";
+   else if (StringStartsWith(directory, "jfd-live"           )) timezone = "Europe/London";
    else if (StringStartsWith(directory, "liteforex-"         )) timezone = "Europe/Minsk";
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
    else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
