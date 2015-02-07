@@ -61,9 +61,9 @@ bool sa.InheritHandle     (/*SECURITY_ATTRIBUTES*/int sa[]) { return(sa[2] != 0)
  *
  * struct STARTUPINFO {
  *    DWORD  cb;                          //  4      => si[ 0]
- *    LPTSTR lpReserved;                  //  4      => si[ 1]
- *    LPTSTR lpDesktop;                   //  4      => si[ 2]
- *    LPTSTR lpTitle;                     //  4      => si[ 3]
+ *    LPSTR  lpReserved;                  //  4      => si[ 1]
+ *    LPSTR  lpDesktop;                   //  4      => si[ 2]
+ *    LPSTR  lpTitle;                     //  4      => si[ 3]
  *    DWORD  dwX;                         //  4      => si[ 4]
  *    DWORD  dwY;                         //  4      => si[ 5]
  *    DWORD  dwXSize;                     //  4      => si[ 6]

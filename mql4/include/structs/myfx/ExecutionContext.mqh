@@ -4,7 +4,7 @@
  *                                    size         offset
  * struct EXECUTION_CONTEXT {         ----         ------
  *    int    signature;                  4      => ec[ 0]      // Signatur                                        (konstant)   => Validierung des Speicherblocks
- *    LPTSTR lpName;                     4      => ec[ 1]      // Zeiger auf Programmnamen                        (konstant)   => wie heiße ich
+ *    LPSTR  lpName;                     4      => ec[ 1]      // Zeiger auf Programmnamen                        (konstant)   => wie heiße ich
  *    int    type;                       4      => ec[ 2]      // Programmtyp                                     (konstant)   => was bin ich
  *    int    hChart;                     4      => ec[ 3]      // Chart         (Handle für Ticks)                (konstant)   => habe ich einen Chart und welchen
  *    int    hChartWindow;               4      => ec[ 4]      // Chart-Fenster (Handle für Titelzeile)           (konstant)   => ...
@@ -15,7 +15,7 @@
  *    int    uninitializeReason;         4      => ec[ 9]      // letzter Uninitialize-Reason                     (variabel)   => woher komme ich
  *    int    whereami;                   4      => ec[10]      // MQL-Rootfunktion des Programms                  (variabel)   => wo bin ich
  *    BOOL   logging;                    4      => ec[11]      // Logstatus                                       (konstant)   => wie verhalte ich mich
- *    LPTSTR lpLogFile;                  4      => ec[12]      // Zeiger auf Pfad und Namen der Logdatei          (konstant)   => wie verhalte ich mich
+ *    LPSTR  lpLogFile;                  4      => ec[12]      // Zeiger auf Pfad und Namen der Logdatei          (konstant)   => wie verhalte ich mich
  *    int    lastError;                  4      => ec[13]      // letzter aufgetretener Fehler                    (variabel)   => welche Fehler sind aufgetreten
  * } ec;                              = 56 byte = int[14]
  *
@@ -68,7 +68,7 @@ int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                   
 int    ec.setSignature         (/*EXECUTION_CONTEXT*/int &ec[], int    signature         ) { ec[ 0] = signature;          return(signature         ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpName            (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) { ec[ 1] = lpName;             return(lpName            ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setName              (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
-   if (!StringLen(name))           return(_emptyStr(catch("ec.setName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!StringLen(name))           return(_emptyStr(catch("ec.setName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_PATH) return(_emptyStr(catch("ec.setName(2)  illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpName = ec.lpName(ec);
    if (!lpName)                    return(_emptyStr(catch("ec.setName(3)  no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
@@ -85,7 +85,7 @@ int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami 
 bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[11] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) { ec[12] = lpLogFile;          return(lpLogFile         ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
-   if (!StringLen(logFile))           return(_emptyStr(catch("ec.setLogFile(1)  invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!StringLen(logFile))           return(_emptyStr(catch("ec.setLogFile(1)  invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_PARAMETER)));
    if (StringLen(logFile) > MAX_PATH) return(_emptyStr(catch("ec.setLogFile(2)  illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpLogFile = ec.lpLogFile(ec);
    if (!lpLogFile)                    return(_emptyStr(catch("ec.setLogFile(3)  no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
@@ -110,8 +110,8 @@ int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError
 string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=false) {
    outputDebug = outputDebug!=0;
 
-   if (ArrayDimension(ec) > 1)                     return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (ArrayDimension(ec) > 1)                     return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
+   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
 
    string result = StringConcatenate("{signature="         ,               ifString(!ec.Signature         (ec), "0", "0x"+ IntToHexStr(ec.Signature(ec))),
                                     ", name=\""            ,                         ec.Name              (ec), "\"");
@@ -174,7 +174,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    outputDebug = outputDebug!=0;
 
    // TODO: prüfen, ob lpContext ein gültiger Zeiger ist
-   if (lpContext <= 0)                return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = "+ lpContext, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (lpContext <= 0)                return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = "+ lpContext, ERR_INVALID_PARAMETER)));
 
    int ec[EXECUTION_CONTEXT.intSize];
    CopyMemory(lpContext, GetBufferAddress(ec), EXECUTION_CONTEXT.size);

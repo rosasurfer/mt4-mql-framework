@@ -379,7 +379,7 @@ string DoublesToStrEx(double values[][], string separator, int digits) {
  *
 private*/string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
    if (digits < 0 || digits > 16)
-      return(_emptyStr(catch("__DoublesToStrEx(1)  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE)));
+      return(_emptyStr(catch("__DoublesToStrEx(1)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
 
    if (separator == "0")                                             // (string) NULL
       separator = ", ";
@@ -854,7 +854,7 @@ int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
    int array.dim1   = ArrayRange(array, 0);
    int array.dim2   = ArrayRange(array, 1);
    if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
-   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
    // Ausgangsarray vergrößern
    int newSize = array.dim1 + 1;
@@ -888,9 +888,9 @@ int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
  */
 int ArrayInsertString(string &array[], int offset, string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
    int size = ArraySize(array);
-   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
 
    // Einfügen am Anfang des Arrays
    if (offset == 0)
@@ -921,9 +921,9 @@ int ArrayInsertString(string &array[], int offset, string value) {
  */
 int ArrayInsertStrings(string array[], int offset, string values[]) {
    if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)  invalid parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
    int sizeOfArray = ArraySize(array);
-   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)  invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)  invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_PARAMETER)));
    if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
    int sizeOfValues = ArraySize(values);
 

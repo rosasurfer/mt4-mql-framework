@@ -88,7 +88,8 @@
 #define ERR_ARRAY_INVALID                                          4029    // invalid array
 #define ERR_CHART_NOREPLY                                          4030    // no reply from chart
 #define ERR_INVALID_FUNCTION_PARAMSCNT                             4050    // invalid parameters count
-#define ERR_INVALID_FUNCTION_PARAMVALUE                            4051    // invalid parameter value
+#define ERR_INVALID_PARAMETER                                      4051    // invalid parameter
+#define ERR_INVALID_FUNCTION_PARAMVALUE           ERR_INVALID_PARAMETER    // Metaquotes Alias
 #define ERR_STRING_FUNCTION_INTERNAL                               4052    // internal string function error
 #define ERR_ARRAY_ERROR                                            4053
 #define ERR_SERIES_NOT_AVAILABLE                                   4054    // requested time series not available

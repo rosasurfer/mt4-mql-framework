@@ -26,7 +26,7 @@ int    hQC.ScriptParameterSender;
  */
 bool RunScript(string scriptName, string parameters="") {
    if (IsScript())             return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
-   if (!StringLen(scriptName)) return(!catch("RunScript(2)  invalid parameter scriptName=\"\"", ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (!StringLen(scriptName)) return(!catch("RunScript(2)  invalid parameter scriptName=\"\"", ERR_INVALID_PARAMETER));
 
    if (parameters == "0")                                            // (string) NULL
       parameters = "";

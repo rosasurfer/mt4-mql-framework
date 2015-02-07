@@ -816,9 +816,10 @@ double  N_INF;                                              // -1.#INF: negative
 #define MUTE_ERR_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED
 #define MUTE_ERR_CONCUR_MODIFICATION            4     // ERR_CONCURRENT_MODIFICATION
 #define MUTE_ERR_SERIES_NOT_AVAILABLE           8     // ERR_SERIES_NOT_AVAILABLE
-#define MUTE_ERS_HISTORY_UPDATE                16     // ERS_HISTORY_UPDATE            (Status)
-#define MUTE_ERS_EXECUTION_STOPPING            32     // ERS_EXECUTION_STOPPING        (Status)
-#define MUTE_ERS_TERMINAL_NOT_YET_READY        64     // ERS_TERMINAL_NOT_YET_READY    (Status)
+#define MUTE_ERR_INVALID_PARAMETER             16     // ERR_INVALID_PARAMETER
+#define MUTE_ERS_HISTORY_UPDATE                32     // ERS_HISTORY_UPDATE            (Status)
+#define MUTE_ERS_EXECUTION_STOPPING            64     // ERS_EXECUTION_STOPPING        (Status)
+#define MUTE_ERS_TERMINAL_NOT_YET_READY       128     // ERS_TERMINAL_NOT_YET_READY    (Status)
 
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                            1
@@ -1244,7 +1245,7 @@ string ErrorDescription(int error) {
       case ERR_EX4_CALLS_NOT_ALLOWED      : return("EX4 library calls not allowed"                             ); //   4020
       case ERR_NO_MEMORY_FOR_RETURNED_STR : return("no memory for temp string returned from function"          ); //   4021
       case ERR_SYSTEM_BUSY                : return("system busy"                                               ); //   4022
-      case ERR_DLL_EXCEPTION              : return("DLL function call exception"                               ); //   4023
+      case ERR_DLL_EXCEPTION              : return("DLL exception"                                             ); //   4023
       case ERR_INTERNAL_ERROR             : return("internal error"                                            ); //   4024
       case ERR_OUT_OF_MEMORY              : return("out of memory"                                             ); //   4025
       case ERR_INVALID_POINTER            : return("invalid pointer"                                           ); //   4026
@@ -1253,7 +1254,7 @@ string ErrorDescription(int error) {
       case ERR_ARRAY_INVALID              : return("invalid array"                                             ); //   4029
       case ERR_CHART_NOREPLY              : return("no reply from chart"                                       ); //   4030
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("invalid function parameter count"                          ); //   4050 invalid parameters count
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("invalid function parameter value"                          ); //   4051 invalid parameter value
+      case ERR_INVALID_PARAMETER          : return("invalid parameter"                                         ); //   4051 invalid parameter
       case ERR_STRING_FUNCTION_INTERNAL   : return("internal string function error"                            ); //   4052
       case ERR_ARRAY_ERROR                : return("array error"                                               ); //   4053 array error
       case ERR_SERIES_NOT_AVAILABLE       : return("requested time series not available"                       ); //   4054 time series not available
@@ -1445,7 +1446,7 @@ string ErrorToStr(int error) {
       case ERR_ARRAY_INVALID              : return("ERR_ARRAY_INVALID"              ); //   4029
       case ERR_CHART_NOREPLY              : return("ERR_CHART_NOREPLY"              ); //   4030
       case ERR_INVALID_FUNCTION_PARAMSCNT : return("ERR_INVALID_FUNCTION_PARAMSCNT" ); //   4050
-      case ERR_INVALID_FUNCTION_PARAMVALUE: return("ERR_INVALID_FUNCTION_PARAMVALUE"); //   4051
+      case ERR_INVALID_PARAMETER          : return("ERR_INVALID_PARAMETER"          ); //   4051
       case ERR_STRING_FUNCTION_INTERNAL   : return("ERR_STRING_FUNCTION_INTERNAL"   ); //   4052
       case ERR_ARRAY_ERROR                : return("ERR_ARRAY_ERROR"                ); //   4053
       case ERR_SERIES_NOT_AVAILABLE       : return("ERR_SERIES_NOT_AVAILABLE"       ); //   4054
@@ -1560,9 +1561,6 @@ string ErrorToStr(int error) {
  * @param  int period - Timeframe-Code bzw. Anzahl der Minuten je Chart-Bar (default: aktuelle Periode)
  *
  * @return string
- *
- *
- * NOTE: In der Headerdatei implementiert, damit Logging/Debugging möglichst nicht die StdLib laden müssen, was im Fehlerfall unnötige Folgefehler auslösen kann.
  */
 string PeriodDescription(int period=NULL) {
    if (period == NULL)
@@ -1992,7 +1990,7 @@ int HandleEvent(int event, int criteria=NULL) {
       case EVENT_EXTERNAL_CMD  : if (EventListener.ExternalCommand(sResults, criteria)) { status = true; onExternalCommand(sResults); } break;
 
       default:
-         return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
+         return(!catch("HandleEvent(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
    }
    return(status);                                                   // (int) bool
 }
@@ -2120,7 +2118,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
    orderKeep = orderKeep!=0;
 
    if (ticket <= 0)
-      return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
    if (orderKeep) {
       if (!OrderPush("WaitForTicket(2)"))
@@ -2315,7 +2313,7 @@ bool LE(double double1, double double2, int digits=8) {
  */
 bool EQ(double double1, double double2, int digits=8) {
    if (digits < 0 || digits > 8)
-      return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)
@@ -2342,7 +2340,7 @@ bool EQ(double double1, double double2, int digits=8) {
       case 15: return(diff <= 0.000000000000001 );
       case 16: return(diff <= 0.0000000000000001);
    }
-   return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_FUNCTION_PARAMVALUE));
+   return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
    */
 }
 
@@ -2940,7 +2938,7 @@ string __whereamiToStr(int id) {
       case FUNC_START : return("FUNC_START" );
       case FUNC_DEINIT: return("FUNC_DEINIT");
    }
-   return(_emptyStr(catch("__whereamiToStr()  unknown MQL root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("__whereamiToStr()  unknown MQL root function id = "+ id, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -2957,7 +2955,81 @@ string __whereamiDescription(int id) {
       case FUNC_START : return("start()" );
       case FUNC_DEINIT: return("deinit()");
    }
-   return(_emptyStr(catch("__whereamiDescription()  unknown MQL root function id = "+ id, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("__whereamiDescription()  unknown MQL root function id = "+ id, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Gibt die lesbare Konstante einer Timeframe-ID zurück.
+ *
+ * @param  int period    - Timeframe-ID (default: aktuelle Periode)
+ * @param  int execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
+ *
+ * @return string
+ */
+string PeriodToStr(int period=NULL, int execFlags=NULL) {
+   if (period == NULL)
+      period = Period();
+
+   switch (period) {
+      case PERIOD_M1 : return("PERIOD_M1" );     // 1 minute
+      case PERIOD_M5 : return("PERIOD_M5" );     // 5 minutes
+      case PERIOD_M15: return("PERIOD_M15");     // 15 minutes
+      case PERIOD_M30: return("PERIOD_M30");     // 30 minutes
+      case PERIOD_H1 : return("PERIOD_H1" );     // 1 hour
+      case PERIOD_H4 : return("PERIOD_H4" );     // 4 hour
+      case PERIOD_D1 : return("PERIOD_D1" );     // 1 day
+      case PERIOD_W1 : return("PERIOD_W1" );     // 1 week
+      case PERIOD_MN1: return("PERIOD_MN1");     // 1 month
+      case PERIOD_Q1 : return("PERIOD_Q1" );     // 1 quarter
+   }
+
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_emptyStr(catch("PeriodToStr()  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+   else                                         return(_emptyStr(SetLastError(ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+string TimeframeToStr(int timeframe=NULL, int execFlags=NULL) {
+   return(PeriodToStr(timeframe, execFlags));
+}
+
+
+/**
+ * Gibt die numerische Konstante einer MovingAverage-Methode zurück.
+ *
+ * @param  string value     - MA-Methode: [MODE_][SMA|EMA|LWMA|ALMA]
+ * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
+ *
+ * @return int - MA-Konstante oder -1 (EMPTY), falls ein Fehler auftrat
+ */
+int StrToMaMethod(string value, int execFlags=NULL) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringStartsWith(str, "MODE_"))
+      str = StringRight(str, -5);
+
+   if (str ==         "SMA" ) return(MODE_SMA );
+   if (str == ""+ MODE_SMA  ) return(MODE_SMA );
+   if (str ==         "EMA" ) return(MODE_EMA );
+   if (str == ""+ MODE_EMA  ) return(MODE_EMA );
+   if (str ==         "LWMA") return(MODE_LWMA);
+   if (str == ""+ MODE_LWMA ) return(MODE_LWMA);
+   if (str ==         "ALMA") return(MODE_ALMA);
+   if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
+
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ StringToStr(value), ERR_INVALID_PARAMETER)));
+   else                                         return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+int StrToMovingAverageMethod(string value, int execFlags=NULL) {
+   return(StrToMaMethod(value, execFlags));
 }
 
 
@@ -3039,6 +3111,7 @@ void __DummyCalls() {
    NE(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
+   PeriodToStr(NULL);
    PipValue();
    ResetLastError();
    Round(NULL);
@@ -3051,7 +3124,10 @@ void __DummyCalls() {
    StringIsNull(NULL);
    StringReplace(NULL, NULL, NULL);
    StringSubstrFix(NULL, NULL);
+   StrToMaMethod(NULL);
+   StrToMovingAverageMethod(NULL);
    TimeframeDescription(NULL);
+   TimeframeToStr(NULL);
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
@@ -3094,7 +3170,7 @@ void __DummyCalls() {
    int    ArrayPushInt(int array[], int value);
    int    ArrayPushString(string array[], string value);
    int    Chart.Expert.Properties();
-   void   DummyCalls();                                              // Library-Stub: kann lokal überschrieben werden (muß aber nicht)
+   void   DummyCalls();                                              // Library-Stub: *kann* lokal überschrieben werden
    int    GetApplicationWindow();
    bool   GetConfigBool(string section, string key, bool defaultValue);
    int    GetCustomLogID();
@@ -3110,6 +3186,10 @@ void __DummyCalls() {
    string StringLeft(string value, int n);
    string StringRight(string value, int n);
    string StringPadRight(string input, int length, string pad_string);
+   bool   StringStartsWith(string object, string prefix);
+   string StringToStr(string value);
+   string StringToUpper(string value);
+   string StringTrim(string value);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.Type     (/*EXECUTION_CONTEXT*/int ec[]);

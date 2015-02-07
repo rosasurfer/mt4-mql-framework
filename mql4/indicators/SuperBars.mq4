@@ -92,7 +92,7 @@ int onDeinit() {
  *
  * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (default: NULL = aktuelle Periode)
- * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still abgefangen werden sollen (default: keine)
+ * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
  * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
  *
