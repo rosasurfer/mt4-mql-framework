@@ -90,7 +90,7 @@ int onInit() {
    if (Track.MovingAverage) {
       // MovingAverage.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "MovingAverage.Method", MovingAverageMethodDescription(MovingAverage.Method));
-      MovingAverage.Method = StrToMovAvgMethod(strValue);
+      MovingAverage.Method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
       if (MovingAverage.Method == -1)                  Track.MovingAverage = _false(catch("onInit(4)  invalid config value [EventTracker."+ StdSymbol() +"] MovingAverage.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
@@ -136,7 +136,7 @@ int onInit() {
    if (Track.BollingerBands) {
       // BollingerBands.MA.Method
       strValue = GetConfigString("EventTracker."+ StdSymbol(), "BollingerBands.MA.Method", MovingAverageMethodDescription(BollingerBands.MA.Method));
-      BollingerBands.MA.Method = StrToMovAvgMethod(strValue);
+      BollingerBands.MA.Method = StrToMaMethod(strValue, MUTE_ERR_INVALID_PARAMETER);
       if (BollingerBands.MA.Method == -1)              Track.BollingerBands = _false(catch("onInit(10)  invalid config value [EventTracker."+ StdSymbol() +"] BollingerBands.MA.Method = \""+ strValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    }
    if (Track.BollingerBands) {
@@ -270,7 +270,7 @@ int HandleEvent.alt(int event, int criteria=NULL) {
       case EVENT_POSITION_CLOSE : if (EventListener.PositionClose(iResults, criteria)) { status = true; onPositionClose(iResults); } break;
 
       default:
-         return(!catch("HandleEvent.alt(1)  unknown event = "+ event, ERR_INVALID_FUNCTION_PARAMVALUE));
+         return(!catch("HandleEvent.alt(1)  unknown event = "+ event, ERR_INVALID_PARAMETER));
    }
    return(status);                                                   // (int) bool
 }
@@ -675,8 +675,8 @@ int iOHLCBarRange(string symbol, int period, int from, int to, double &results[]
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCBarRange(1)  invalid parameter from = "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCBarRange(2)  invalid parameter to = "+ to, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCBarRange(1)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER));
+   if (to   < 0) return(catch("iOHLCBarRange(2)  invalid parameter to = "+ to, ERR_INVALID_PARAMETER));
 
    if (from < to) {
       int tmp = from;
@@ -783,8 +783,8 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
-   if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_FUNCTION_PARAMVALUE));
-   if (to   < 0) return(catch("iOHLCTimeRange(2)  invalid parameter to: "  + to  , ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (from < 0) return(catch("iOHLCTimeRange(1)  invalid parameter from: "+ from, ERR_INVALID_PARAMETER));
+   if (to   < 0) return(catch("iOHLCTimeRange(2)  invalid parameter to: "  + to  , ERR_INVALID_PARAMETER));
 
    if (from > to) {
       datetime tmp = from;
@@ -857,7 +857,7 @@ int iOHLCBar(string symbol, int period, int bar, double &results[]) {
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
    if (bar < 0)
-      return(catch("iOHLCBar(1)  invalid parameter bar = "+ bar, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(catch("iOHLCBar(1)  invalid parameter bar = "+ bar, ERR_INVALID_PARAMETER));
    if (ArraySize(results) != 4)
       ArrayResize(results, 4);
 

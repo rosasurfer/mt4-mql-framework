@@ -160,7 +160,7 @@ string StatusToStr(int status) {
       case STATUS_STOPPING     : return("STATUS_STOPPING"     );
       case STATUS_STOPPED      : return("STATUS_STOPPED"      );
    }
-   return(_emptyStr(catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   return(_emptyStr(catch("StatusToStr()  invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -179,5 +179,5 @@ bool IsStopTriggered(int type, double price) {
    if (type == OP_BUY     ) return(Bid <= price);                    // Long-StopLoss
    if (type == OP_SELL    ) return(Ask >= price);                    // Short-StopLoss
 
-   return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE));
+   return(!catch("IsStopTriggered()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER));
 }

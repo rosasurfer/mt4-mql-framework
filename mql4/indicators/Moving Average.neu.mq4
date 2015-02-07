@@ -179,7 +179,7 @@ int onInit() {
       sValue   = values[size-1];
    }
    else sValue = MA.Method;
-   ma.method = StrToMovAvgMethod(sValue);
+   ma.method = StrToMaMethod(sValue, MUTE_ERR_INVALID_PARAMETER);
    if (ma.method == -1)                           return(catch("onInit(12)  Invalid input parameter MA.Method = \""+ MA.Method +"\"", ERR_INVALID_INPUT_PARAMVALUE));
    MA.Method = MaMethodDescription(ma.method);
 

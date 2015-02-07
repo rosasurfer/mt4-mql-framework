@@ -460,7 +460,7 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
-   int      StrToMovAvgMethod(string method);
+   int      StrToMaMethod(string method, int execFlags); int StrToMovingAverageMethod(string method, int execFlags); // Alias
    int      StrToPeriod(string value);  int StrToTimeframe(string value);              // Alias
    int      PeriodFlag(int period);
    int      StrToOperationType(string value);
@@ -524,8 +524,8 @@
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr      (int type);
    string   PeriodFlagToStr(int flag);
-   string   PeriodDescription(int period);     string TimeframeDescription(int timeframe);                              // Alias
-   string   PeriodToStr      (int period);     string TimeframeToStr      (int timeframe);                              // Alias
+   string   PeriodDescription(int period);          string TimeframeDescription(int timeframe);                         // Alias
+   string   PeriodToStr(int period, int execFlags); string TimeframeToStr(int timeframe, int execFlags);                // Alias
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorDescription(int error);
@@ -590,7 +590,7 @@
    int      afterDeinit();
 
    string   InputsToStr();
-   int      ShowStatus(int error);                                   // EA's
+   int      ShowStatus(int error);
    void     DummyCalls();
 
 

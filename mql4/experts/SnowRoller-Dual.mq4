@@ -1202,7 +1202,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
    if (IsLastError())                            return(false);
    if (IsTest()) /*&&*/ if (!IsTesting())        return(!catch("Grid.AddPosition(1)", ERR_ILLEGAL_STATE));
    if (sequence.status[hSeq] != STATUS_STARTING) return(!catch("Grid.AddPosition(2)  cannot add market position to "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
-   if (!level)                                   return(!catch("Grid.AddPosition(3)  illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (!level)                                   return(!catch("Grid.AddPosition(3)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(type) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
@@ -1296,12 +1296,12 @@ int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXEC
    if (sequence.status[hSeq]!=STATUS_STARTING) /*&&*/ if (sequence.status[hSeq]!=STATUS_PROGRESSING) return(_NULL(catch("SubmitMarketOrder(2)  cannot submit market order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUY) {
-      if (level <= 0) return(_NULL(catch("SubmitMarketOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level <= 0) return(_NULL(catch("SubmitMarketOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    }
    else if (type == OP_SELL) {
-      if (level >= 0) return(_NULL(catch("SubmitMarketOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level >= 0) return(_NULL(catch("SubmitMarketOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    }
-   else               return(_NULL(catch("SubmitMarketOrder(5)  illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   else               return(_NULL(catch("SubmitMarketOrder(5)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
 
    double   price       = NULL;
    double   slippage    = 0.1;
@@ -1355,7 +1355,7 @@ int SubmitMarketOrder(int hSeq, int type, int level, bool clientSL, /*ORDER_EXEC
  * @return int - Index der gefundenen Position oder -1 (EMPTY), wenn keine offene Position des angegebenen Levels gefunden wurde
  */
 int Grid.FindOpenPosition(int hSeq, int level) {
-   if (!level) return(_EMPTY(catch("Grid.FindOpenPosition()  illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!level) return(_EMPTY(catch("Grid.FindOpenPosition()  illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
 
    int from = orders[hSeq][I_FROM];
    int to   = orders[hSeq][I_TO  ];
@@ -1933,7 +1933,7 @@ bool ProcessClientStops(int hSeq, int stops[]) {
    // (1) der Stop kann eine getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP) oder ein getriggerter Stop-Loss sein
    for (int i, n=0; n < sizeOfStops; n++) {
       i = stops[n];
-      if (i < ticketsFrom || i > ticketsTo)  return(!catch("ProcessClientStops(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_FUNCTION_PARAMVALUE));
+      if (i < ticketsFrom || i > ticketsTo)  return(!catch("ProcessClientStops(3)  illegal value "+ i +" in parameter stops = "+ IntsToStr(stops, NULL), ERR_INVALID_PARAMETER));
 
 
       // (2) getriggerte Pending-Order (OP_BUYSTOP, OP_SELLSTOP)
@@ -2284,7 +2284,7 @@ bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, 
    closedBySL = closedBySL!=0;
 
    if (offset < -1)
-      return(!catch("Grid.SetData(1)  illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+      return(!catch("Grid.SetData(1)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
    int from = orders[hSeq][I_FROM];
    int to   = orders[hSeq][I_TO  ];
@@ -2371,7 +2371,7 @@ bool Grid.SetData(int hSeq, int offset, int ticket, int level, double gridbase, 
 bool Grid.InsertElement(int offset) {
    int sizeOfTickets = ArraySize(orders.ticket);
 
-   if (offset < 0 || offset > sizeOfTickets) return(!catch("Grid.InsertElement(1)  illegal parameter offset = "+ offset, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (offset < 0 || offset > sizeOfTickets) return(!catch("Grid.InsertElement(1)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
    ArrayInsertInt   (orders.ticket,       offset, 0    );
    ArrayInsertInt   (orders.level,        offset, 0    );
@@ -2408,7 +2408,7 @@ bool Grid.InsertElement(int offset) {
  * @return bool - Erfolgsstatus
  */
 bool Grid.DropData(int i) {
-   if (i < 0 || i >= ArraySize(orders.ticket)) return(!catch("Grid.DropData(1)  illegal parameter i = "+ i, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (i < 0 || i >= ArraySize(orders.ticket)) return(!catch("Grid.DropData(1)  illegal parameter i = "+ i, ERR_INVALID_PARAMETER));
 
    // Einträge entfernen
    ArraySpliceInts   (orders.ticket,       i, 1);
@@ -2473,12 +2473,12 @@ int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
    if (sequence.status[hSeq]!=STATUS_PROGRESSING) /*&&*/ if (sequence.status[hSeq]!=STATUS_STARTING) return(_NULL(catch("SubmitStopOrder(2)  cannot submit stop order for "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR)));
 
    if (type == OP_BUYSTOP) {
-      if (level <= 0) return(_NULL(catch("SubmitStopOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level <= 0) return(_NULL(catch("SubmitStopOrder(3)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    }
    else if (type == OP_SELLSTOP) {
-      if (level >= 0) return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_FUNCTION_PARAMVALUE)));
+      if (level >= 0) return(_NULL(catch("SubmitStopOrder(4)  illegal parameter level = "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
    }
-   else               return(_NULL(catch("SubmitStopOrder(5)  illegal parameter type = "+ type, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   else               return(_NULL(catch("SubmitStopOrder(5)  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
 
    double   stopPrice   = gridbase[hSeq] + level*GridSize*Pips;
    double   slippage    = NULL;
@@ -2530,7 +2530,7 @@ int SubmitStopOrder(int hSeq, int type, int level, int oe[]) {
  */
 int CreateMagicNumber(int hSeq, int level) {
    if (sequence.id[hSeq] < SID_MIN) return(_EMPTY(catch("CreateMagicNumber(1)  illegal sequence.id = "+ sequence.id[hSeq], ERR_RUNTIME_ERROR)));
-   if (!level)                      return(_EMPTY(catch("CreateMagicNumber(2)  illegal parameter level = "+ level, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (!level)                      return(_EMPTY(catch("CreateMagicNumber(2)  illegal parameter level = "+ level, ERR_INVALID_PARAMETER)));
 
    // Für bessere Obfuscation ist die Reihenfolge der Werte [ea,level,sequence] und nicht [ea,sequence,level], was aufeinander folgende Werte wären.
    int ea       = STRATEGY_ID & 0x3FF << 22;                         // 10 bit (Bits größer 10 löschen und auf 32 Bit erweitern)  | Position in MagicNumber: Bits 23-32

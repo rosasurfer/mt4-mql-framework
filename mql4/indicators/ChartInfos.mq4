@@ -12,6 +12,11 @@
  *                         - Orderdaten stammen aus einer externen Quelle
  *                         - P/L-Daten stammen ebenfalls aus einer externen Quelle
  *                         - Orderlimits können überwacht und die externe Quelle vom Erreichen benachrichtigt werden
+ *
+ *
+ * TODO: MetaTrader berechnet den Equity-Wert "falsch" (Spread und Commission gehedgter Positionen werden doppelt berechnet). Geht der Spread
+ *       z.B. nachts in die Höhe, kann sich der Fehler je nach Menge der offenen gehedgten Positionen dramatisch auf die P/L-Prozentanzeige auswirken.
+ *       Zusätzlich verringert der Fehler in so einem Fall auch erheblich die verfügbare Margin.
  */
 #property indicator_chart_window
 

@@ -114,7 +114,7 @@ int onTick() {
  */
 int Strategy.CreateSequence(int direction) {
    if (IsLastError())                                    return(0);
-   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_NULL(catch("Strategy.CreateSequence(1)  illegal parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_NULL(catch("Strategy.CreateSequence(1)  illegal parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
 
    // (1) Sequenz erzeugen
    int    sid      = CreateSequenceId();
@@ -154,7 +154,7 @@ int Strategy.CreateSequence(int direction) {
  */
 bool StartSequence(int hSeq) {
    if (IsLastError())                              return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("StartSequence(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER));
    if (sequence.status[hSeq] != STATUS_WAITING)    return(!catch("StartSequence(2)  cannot start "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence "+ sequence.id[hSeq], ERR_RUNTIME_ERROR));
 
    if (Tick==1) /*&&*/ if (!ConfirmTick1Trade("StartSequence()", "Do you really want to start the new sequence "+ sequence.id[hSeq] +" now?"))
@@ -232,7 +232,7 @@ bool StartSequence(int hSeq) {
 void RedrawStartStop(int hSeq) {
    if (IsLastError())                              return;
    if (!IsChart)                                   return;
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER)));
 
    return(_NULL(catch("RedrawStartStop(2)", ERR_NOT_IMPLEMENTED)));
 }
@@ -279,13 +279,13 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
    test = test!=0;
 
    if (IsLastError())                                    return( EMPTY);
-   if (sid < SID_MIN || sid > SID_MAX)                   return(_EMPTY(catch("Strategy.AddSequence(1)  invalid parameter sid = "+ sid, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (sid < SID_MIN || sid > SID_MAX)                   return(_EMPTY(catch("Strategy.AddSequence(1)  invalid parameter sid = "+ sid, ERR_INVALID_PARAMETER)));
    if (IntInArray(sequence.id, sid))                     return(_EMPTY(catch("Strategy.AddSequence(2)  sequence "+ sid +" already exists", ERR_RUNTIME_ERROR)));
    if (BoolInArray(sequence.test, !test))                return(_EMPTY(catch("Strategy.AddSequence(3)  illegal mix of test/non-test sequences: tried to add "+ sid +" (test="+ test +"), found "+ sequence.id[SearchBoolArray(sequence.test, !test)] +" (test="+ (!test) +")", ERR_RUNTIME_ERROR)));
-   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_EMPTY(catch("Strategy.AddSequence(4)  invalid parameter direction = "+ direction, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (gridSize <= 0)                                    return(_EMPTY(catch("Strategy.AddSequence(5)  invalid parameter gridSize = "+ gridSize, ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (lotSize <= 0)                                     return(_EMPTY(catch("Strategy.AddSequence(6)  invalid parameter lotSize = "+ NumberToStr(lotSize, ".+"), ERR_INVALID_FUNCTION_PARAMVALUE)));
-   if (!IsValidSequenceStatus(status))                   return(_EMPTY(catch("Strategy.AddSequence(7)  invalid parameter status = "+ status, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (direction!=D_LONG) /*&&*/ if (direction!=D_SHORT) return(_EMPTY(catch("Strategy.AddSequence(4)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
+   if (gridSize <= 0)                                    return(_EMPTY(catch("Strategy.AddSequence(5)  invalid parameter gridSize = "+ gridSize, ERR_INVALID_PARAMETER)));
+   if (lotSize <= 0)                                     return(_EMPTY(catch("Strategy.AddSequence(6)  invalid parameter lotSize = "+ NumberToStr(lotSize, ".+"), ERR_INVALID_PARAMETER)));
+   if (!IsValidSequenceStatus(status))                   return(_EMPTY(catch("Strategy.AddSequence(7)  invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
 
    int size=ArraySize(sequence.id), hSeq=size;
    Strategy.ResizeArrays(size+1);
@@ -314,7 +314,7 @@ int Strategy.AddSequence(int sid, bool test, int direction, int gridSize, double
  */
 double GridBase.Reset(int hSeq, datetime time, double value) {
    if (IsLastError())                              return(0);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("GridBase.Reset(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE)));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("GridBase.Reset(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER)));
 
    return(_NULL(catch("GridBase.Reset(2)", ERR_NOT_IMPLEMENTED)));
 }
@@ -334,7 +334,7 @@ double GridBase.Reset(int hSeq, datetime time, double value) {
  */
 bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
    if (IsLastError())                                return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdateOpenPositions(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdateOpenPositions(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER));
    if (sequence.status[hSeq] != STATUS_STARTING)     return(!catch("UpdateOpenPositions(2)  cannot update positions of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdateOpenPositions(3)", ERR_ILLEGAL_STATE));
 
@@ -351,7 +351,7 @@ bool UpdateOpenPositions(int hSeq, datetime &lpOpenTime, double &lpOpenPrice) {
  */
 bool UpdatePendingOrders(int hSeq) {
    if (IsLastError())                                return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdatePendingOrders(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id))   return(!catch("UpdatePendingOrders(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER));
    if (sequence.status[hSeq] != STATUS_PROGRESSING)  return(!catch("UpdatePendingOrders(2)  cannot update orders of "+ sequenceStatusDescr[sequence.status[hSeq]] +" sequence", ERR_RUNTIME_ERROR));
    if (sequence.test[hSeq]) /*&&*/ if (!IsTesting()) return(!catch("UpdatePendingOrders(3)", ERR_ILLEGAL_STATE));
 
@@ -368,7 +368,7 @@ bool UpdatePendingOrders(int hSeq) {
  */
 bool InitStatusLocation(int hSeq) {
    if (IsLastError())                              return(false);
-   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("InitStatusLocation(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(!catch("InitStatusLocation(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER));
 
    if      (IsTesting())         sequence.statusFile[hSeq][0] = "presets\\";
    else if (sequence.test[hSeq]) sequence.statusFile[hSeq][0] = "presets\\tester\\";

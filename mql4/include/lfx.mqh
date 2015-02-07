@@ -156,7 +156,7 @@ int LFX.InstanceId(int magicNumber) {
  */
 int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // Parametervaliderung
-   if (ticket <= 0) return(!catch("LFX.GetOrder(1)  invalid parameter ticket = "+ ticket, ERR_INVALID_FUNCTION_PARAMVALUE));
+   if (ticket <= 0) return(!catch("LFX.GetOrder(1)  invalid parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
    int digits = ifInt(LFX.CurrencyId(ticket)==CID_JPY, 3, 5);
 

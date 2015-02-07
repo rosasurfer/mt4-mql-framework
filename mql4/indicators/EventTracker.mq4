@@ -14,22 +14,23 @@
  *
  * (2) Preis-Events
  *     Die Preisüberwachung wird im Indikator aktiviert/deaktiviert und die einzelnen Events in der Account-Konfiguration je Instrument konfiguriert. Es liegt
- *     in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für die Preisüberwachung zu aktivieren.
+ *     in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für die Preisüberwachung zu aktivieren. Mit den frei kombinierbaren Eventkeys
+ *     können beliebige Preis-Events formuliert werden.
  *
- *     Events:
- *      - Erreichen der 10%-Schwelle der Tages-Range
- *      - Bruch der Tages-Range = neues Tages-High/Low (mit konfigurierbarer Wartezeit)
- *      - Erreichen der 10%-Schwelle der Vortages-Range
- *      - Bruch der Vortages-Range
- *      - Erreichen des Vorvortages-Close
+ *      • Eventkey:      {Timeframe-Key}.{Signal-Key}
  *
- *      - Erreichen der 10%-Schwelle der Wochen-Range
- *      - Bruch der Wochen-Range = neues Wochen-High/Low (mit konfigurierbarer Wartezeit)
- *      - Erreichen der 10%-Schwelle der Vorwochen-Range
- *      - Bruch der Vorwochen-Range
- *      - Erreichen des Vorvorwochen-Close
+ *      • Timeframe-Key: {number}{[Day|Week|Month][s]}Ago            ; Singular und Plural der Timeframe-Bezeichner sind austauschbar
+ *                       Today                                       ; Synonym für 0DaysAgo
+ *                       Yesterday                                   ; Synonym für 1DayAgo
+ *                       This[Day|Week|Month]                        ; Synonym für 0[Days|Weeks|Months]Ago
+ *                       Last[Day|Week|Month]                        ; Synonym für 1[Day|Week|Month]Ago
  *
- *     Pattern:
+ *      • Signal-Key:    Close           = On | Off                  ; Erreichen des Close-Preises der Bar
+ *                       Range           = {90}%                     ; Erreichen der {x}%-Schwelle der Bar-Range
+ *                       RangeBreak      = On | Off                  ; Bruch der Bar-Range = neues High/Low
+ *                       RangeBreak.Wait = {5} [minute|hour][s]      ; Wartezeit, bevor das nächste neue High/Low signalisiert wird
+ *
+ *     Pattern und ihre Konfiguration:
  *      - neues Inside-Range-Pattern auf Tagesbasis
  *      - neues Inside-Range-Pattern auf Wochenbasis
  *      - Auflösung eines Inside-Range-Pattern auf Tagesbasis
@@ -57,7 +58,7 @@ int __DEINIT_FLAGS__[];
 
 
 extern bool   Track.Order.Events   = false;
-extern bool   Track.Price.Events   = false;
+extern bool   Track.Price.Events   = true;
 
 extern string __________________________;
 
@@ -71,30 +72,48 @@ extern string Alerts.ICQ.UserID    = "contact-id";                   // ICQ-Kont
 #include <core/indicator.mqh>
 
 
-bool     track.orders;
-bool     track.price;
-
-bool     alerts.sound;
-string   sound.orderFailed    = "speech/OrderExecutionFailed.wav";
-string   sound.positionOpened = "speech/OrderFilled.wav";
-string   sound.positionClosed = "speech/PositionClosed.wav";
-
-bool     alerts.mail;
-string   alerts.mail.receiver = "";
-
-bool     alerts.sms;
-string   alerts.sms.receiver = "";
-
-bool     alerts.http;
-string   alerts.http.url = "";
-
-bool     alerts.icq;
-string   alerts.icq.userId = "";
+bool   track.orders;
+bool   track.price;
 
 
-// interne Variablen
-int      orders.knownOrders.ticket[];                                // vom letzten Aufruf bekannte offene Orders
-int      orders.knownOrders.type  [];
+// Alert-Konfiguration
+bool   alerts.sound;
+string sound.orderFailed    = "speech/OrderExecutionFailed.wav";
+string sound.positionOpened = "speech/OrderFilled.wav";
+string sound.positionClosed = "speech/PositionClosed.wav";
+
+bool   alerts.mail;
+string alerts.mail.receiver = "";
+
+bool   alerts.sms;
+string alerts.sms.receiver = "";
+
+bool   alerts.http;
+string alerts.http.url = "";
+
+bool   alerts.icq;
+string alerts.icq.userId = "";
+
+
+// Order-Events
+int orders.knownOrders.ticket[];                                     // vom letzten Aufruf bekannte offene Orders
+int orders.knownOrders.type  [];
+
+
+// Price-Events
+#define ET_PRICESIGNAL_CLOSE        1
+#define ET_PRICESIGNAL_RANGE        2
+#define ET_PRICESIGNAL_RANGEBREAK   3
+
+#define I_PRICESIGNAL_ID            0                                // Signal-ID:       int
+#define I_PRICESIGNAL_ENABLED       1                                // SignalEnabled:   int 0|1
+#define I_PRICESIGNAL_TIMEFRAME     2                                // SignalTimeframe: int PERIOD_D1|PERIOD_W1|PERIOD_MN1
+#define I_PRICESIGNAL_BAR           3                                // SignalBar:       int 0..x
+#define I_PRICESIGNAL_PARAM1        4                                // SignalParam1:    int
+#define I_PRICESIGNAL_PARAM2        5                                // SignalParam2:    int
+#define I_PRICESIGNAL_PARAM3        6                                // SignalParam3:    int
+
+int price.signals[][7];
 
 
 /**
@@ -132,26 +151,40 @@ bool Configure() {
       string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
       string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
 
-      /*
-      - neues Tages-High/Low
-      - neues Wochen-High/Low
-      - Bruch Vortages-Range
-      - Bruch Vorwochen-Range
-      */
+      // Eventkey:      {Timeframe-Key}.{Signal-Key}
+      //
+      // Timeframe-Key: {number}{[Day|Week|Month][s]}Ago            ; Singular und Plural der Timeframe-Bezeichner sind austauschbar
+      //                Today                                       ; Synonym für 0DaysAgo
+      //                Yesterday                                   ; Synonym für 1DayAgo
+      //                This[Day|Week|Month]                        ; Synonym für 0[Days|Weeks|Months]Ago
+      //                Last[Day|Week|Month]                        ; Synonym für 1[Day|Week|Month]Ago
+      //
+      // Signal-Key:    Close           = On | Off                  ; Erreichen des Close-Preises der Bar
+      //                Range           = {90}%                     ; Erreichen der {x}%-Schwelle der Bar-Range
+      //                RangeBreak      = On | Off                  ; Bruch der Bar-Range = neues High/Low
+      //                RangeBreak.Wait = {5} [minute|hour][s]      ; Wartezeit, bevor das nächste neue High/Low signalisiert wird
+      //
+      // Yesterday.RangeBreak = 1
+      ArrayResize(price.signals, 1);
+      price.signals[0][I_PRICESIGNAL_ID       ] = ET_PRICESIGNAL_RANGEBREAK;
+      price.signals[0][I_PRICESIGNAL_ENABLED  ] = true;                       // (int) bool
+      price.signals[0][I_PRICESIGNAL_TIMEFRAME] = PERIOD_D1;
+      price.signals[0][I_PRICESIGNAL_BAR      ] = 1;
+      price.signals[0][I_PRICESIGNAL_PARAM1   ] = 15*MINUTES;                 // RangeBreak.Wait
+      price.signals[0][I_PRICESIGNAL_PARAM2   ] = NULL;
+      price.signals[0][I_PRICESIGNAL_PARAM3   ] = NULL;
    }
 
 
-   // (3) Alert-Methoden auswerten
+   // (3) Alert-Methoden einlesen und auswerten
    if (track.orders || track.price) {
-
       // (3.1) Order.Alerts.Sound
       alerts.sound = Alerts.Sound;
 
       // (3.2) Alerts.Mail.Receiver
-
       // (3.3) Alerts.SMS.Receiver
       string sValue = StringToLower(StringTrim(Alerts.SMS.Receiver));
-      if (sValue != "") {
+      if (sValue!="" && sValue!="phone-number") {
          alerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
          alerts.sms          = StringIsPhoneNumber(alerts.sms.receiver);
          if (!alerts.sms) {
@@ -164,22 +197,19 @@ bool Configure() {
       // (3.4) Alerts.HTTP.Url
       // (3.5) Alerts.ICQ.UserID
 
-
-
       // SMS.Alerts
       __SMS.alerts = GetIniBool(file, "EventTracker", "SMS.Alerts", false);
       if (__SMS.alerts) {
          __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
-         // TODO: Rufnummer validieren
-         //if (!StringIsDigit(__SMS.receiver)) return(!catch("Configure(1)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-         if (!StringLen(__SMS.receiver))
-            __SMS.alerts = false;
+         __SMS.alerts   = StringIsPhoneNumber(__SMS.receiver);
+         if (!__SMS.alerts) return(!catch("Configure(3)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
 
 
-   int error = catch("Configure(2)");
+   int error = catch("Configure(4)");
    if (!error) {
+      ShowStatus();
       debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                          "; ",
                                                "track.price=",  BoolToStr(track.price),                                           "; ",
                                                "alerts.sound=", BoolToStr(alerts.sound),                                          "; ",
@@ -199,7 +229,7 @@ bool Configure() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) Pending- und Limit-Orders überwachen
+   // (1) Order-Events überwachen
    if (track.orders) {
       int failedOrders   []; ArrayResize(failedOrders,    0);
       int openedPositions[]; ArrayResize(openedPositions, 0);
@@ -212,6 +242,66 @@ int onTick() {
       if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
       if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
    }
+
+
+   // (2) Price-Events überwachen
+   if (track.price) {
+      int size = ArrayRange(price.signals, 0);
+
+      for (int i=0; i < size; i++) {
+         if (price.signals[i][I_PRICESIGNAL_ENABLED] != 0) {
+            switch (price.signals[i][I_PRICESIGNAL_ID]) {
+               case ET_PRICESIGNAL_CLOSE     : CheckClosePriceSignal(i); break;
+               case ET_PRICESIGNAL_RANGE     : CheckRangeSignal     (i); break;
+               case ET_PRICESIGNAL_RANGEBREAK: CheckRangeBreakSignal(i); break;
+               default:
+                  catch("onTick(1)  unknow price signal["+ i +"] = "+ price.signals[i][I_PRICESIGNAL_ID], ERR_RUNTIME_ERROR);
+            }
+         }
+         if (__STATUS_OFF)
+            break;
+      }
+   }
+
+   return(ShowStatus(last_error));
+}
+
+
+/**
+ * Zeigt den aktuellen Laufzeitstatus optisch an. Ist immer aktiv.
+ *
+ * @param  int error - anzuzeigender Fehler (default: keiner)
+ *
+ * @return int - der übergebene Fehler oder der Fehlerstatus der Funktion, falls kein Fehler übergeben wurde
+ */
+int ShowStatus(int error=NULL) {
+   if (__STATUS_OFF)
+      error = __STATUS_OFF.reason;
+
+   string msg = __NAME__;
+   if (!error) msg = StringConcatenate(msg,                                      NL, NL);
+   else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, NL);
+
+   int size = ArrayRange(price.signals, 0);
+
+   for (int n, i=0; i < size; i++) {
+      n = i + 1;
+      switch (price.signals[i][I_PRICESIGNAL_ID]) {
+         case ET_PRICESIGNAL_CLOSE     : msg = StringConcatenate(msg, "Price signal ", n, " ", ifString(price.signals[i][I_PRICESIGNAL_ENABLED], "enabled", "disabled"), ":   Close of 1 day ago",      NL); break;
+         case ET_PRICESIGNAL_RANGE     : msg = StringConcatenate(msg, "Price signal ", n, " ", ifString(price.signals[i][I_PRICESIGNAL_ENABLED], "enabled", "disabled"), ":   Range of 1 day ago 10%",  NL); break;
+         case ET_PRICESIGNAL_RANGEBREAK: msg = StringConcatenate(msg, "Price signal ", n, " ", ifString(price.signals[i][I_PRICESIGNAL_ENABLED], "enabled", "disabled"), ":   Break of bar "+ price.signals[i][I_PRICESIGNAL_BAR] +" day ago", NL); break;
+         default:
+            return(catch("ShowStatus(1)  unknow price signal["+ i +"] = "+ price.signals[i][I_PRICESIGNAL_ID], ERR_RUNTIME_ERROR));
+      }
+   }
+
+   // etwas Abstand nach oben für Instrumentanzeige
+   Comment(StringConcatenate(NL, msg));
+   if (__WHEREAMI__ == FUNC_INIT)
+      WindowRedraw();
+
+   if (!catch("ShowStatus(3)"))
+      return(error);
    return(last_error);
 }
 
@@ -461,6 +551,59 @@ bool onPositionClose(int tickets[]) {
    if (alerts.sound)
       PlaySoundEx(sound.positionClosed);
    return(!catch("onPositionClose(3)"));
+}
+
+
+/**
+ * Prüft auf ein Price-Event.
+ *
+ * @param  int i - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CheckClosePriceSignal(int i) {
+   return(!catch("CheckClosePriceSignal(1)"));
+}
+
+
+/**
+ * Prüft auf ein Price-Event.
+ *
+ * @param  int i - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CheckRangeSignal(int i) {
+   return(!catch("CheckRangeSignal(1)"));
+}
+
+
+/**
+ * Prüft auf ein Price-Event.
+ *
+ * @param  int i - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return bool - ob ein neues Signal detektiert wurde
+ */
+bool CheckRangeBreakSignal(int i) {
+   if (!price.signals[i][I_PRICESIGNAL_ENABLED])
+      return(false);
+
+   debug("CheckRangeBreakSignal()  i="+ i);
+
+   int timeframe = price.signals[i][I_PRICESIGNAL_TIMEFRAME];
+   int bar       = price.signals[i][I_PRICESIGNAL_BAR      ];
+   int wait      = price.signals[i][I_PRICESIGNAL_PARAM1   ];
+
+   switch (timeframe) {
+      case PERIOD_D1 :
+      case PERIOD_W1 :
+      case PERIOD_MN1:
+
+      default: return(!catch("CheckRangeBreakSignal(1)  unsupported signal timeframe = "+ TimeframeToStr(timeframe, MUTE_ERR_INVALID_PARAMETER)));
+   }
+
+   return(!catch("CheckRangeBreakSignal(2)"));
 }
 
 
