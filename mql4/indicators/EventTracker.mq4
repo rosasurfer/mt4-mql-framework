@@ -595,6 +595,15 @@ bool CheckRangeBreakSignal(int i) {
    int bar       = price.signals[i][I_PRICESIGNAL_BAR      ];
    int wait      = price.signals[i][I_PRICESIGNAL_PARAM1   ];
 
+
+   // zur Berechnung zu nutzende Datenreihe bestimmen
+   // Anfangs- und Endzeitpunkt der Bar bestimmen
+   // High/Low-Kurse bestimmen
+
+
+
+
+
    switch (timeframe) {
       case PERIOD_D1 :
       case PERIOD_W1 :
@@ -602,7 +611,6 @@ bool CheckRangeBreakSignal(int i) {
 
       default: return(!catch("CheckRangeBreakSignal(1)  unsupported signal timeframe = "+ TimeframeToStr(timeframe, MUTE_ERR_INVALID_PARAMETER)));
    }
-
    return(!catch("CheckRangeBreakSignal(2)"));
 }
 

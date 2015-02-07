@@ -3034,6 +3034,25 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
 
 
 /**
+ * Gibt die lesbare Repräsentation eines Strings zurück (in Anführungszeichen). Für einen nicht initialisierten String (NULL-Pointer)
+ * wird der String NULL (ohne Anführungszeichen) zurückgegeben.
+ *
+ * @param  string value
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string StringToStr(string value) {
+   string tmp = value;                                               // ggf. NPE provozieren
+
+   int error = GetLastError();
+   if (!error)                              return(StringConcatenate("\"", value, "\""));
+   if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
+
+   return(_emptyStr(catch("StringToStr(1)", error)));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3187,7 +3206,6 @@ void __DummyCalls() {
    string StringRight(string value, int n);
    string StringPadRight(string input, int length, string pad_string);
    bool   StringStartsWith(string object, string prefix);
-   string StringToStr(string value);
    string StringToUpper(string value);
    string StringTrim(string value);
 

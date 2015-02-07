@@ -3441,24 +3441,6 @@ string JoinStrings(string values[], string separator) {
 
 
 /**
- * Gibt die lesbare Repräsentation eines Strings zurück (in Anführungszeichen). Für einen nicht initialisierten String (NULL-Pointer)
- * wird der String NULL (ohne Anführungszeichen) zurückgegeben.
- *
- * @param  string value
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string StringToStr(string value) {
-   string tmp = value;                                               // ggf. NPE provozieren
-
-   int error = GetLastError();
-   if (!error)                              return(StringConcatenate("\"", value, "\""));
-   if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
-                                            return(_emptyStr(catch("StringToStr(1)", error)));
-}
-
-
-/**
  * Addiert die Werte eines Integer-Arrays.
  *
  * @param  int values[] - Array mit Ausgangswerten

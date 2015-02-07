@@ -87,7 +87,7 @@ int onDeinit() {
 
 
 /**
- * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe.  Entspricht der manuellen Ermittlung
+ * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung
  * der Variable ChangedBars für eine andere als die aktuelle Datenreihe.
  *
  * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
@@ -306,7 +306,7 @@ bool CheckSuperTimeframeAvailability() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateSuperBars() {
-   // (1) bei Superbar-Timeframe-Wechsel vorm Aktualisieren alle vorhandenen Bars löschen
+   // (1) bei Superbar-Timeframe-Wechsel vorm Aktualisieren alle vorhandenen Superbars löschen
    static int static.lastTimeframe;
    bool timeframeChanged = (superBars.timeframe != static.lastTimeframe);  // der erste Aufruf (lastTimeframe==0) wird auch als Wechsel interpretiert
 
@@ -347,12 +347,12 @@ bool UpdateSuperBars() {
       // TODO: Wenn timeframeChanged=TRUE läßt sich der ganze Block sparen, es gilt immer: changedBars = Bars
       //       Allerdings müssen dann in DrawSuperBar() nochmal ERS_HISTORY_UPDATE und ERR_SERIES_NOT_AVAILABLE behandelt werden.
 
-      int prev_error      = last_error;
+      int oldError        = last_error;
       int changedBars.M15 = iChangedBars(NULL, PERIOD_M15, MUTE_ERS_HISTORY_UPDATE|MUTE_ERR_SERIES_NOT_AVAILABLE);
       if (changedBars.M15 == -1) {
-         if (last_error != ERR_SERIES_NOT_AVAILABLE)                       // ERR_SERIES_NOT_AVAILABLE ggf. unterdrücken und mit dem letzten vorherigen Fehler überschreiben
+         if (last_error != ERR_SERIES_NOT_AVAILABLE)
             return(false);
-         SetLastError(prev_error);
+         SetLastError(oldError);                                           // ERR_SERIES_NOT_AVAILABLE ggf. unterdrücken
       }
 
       if (changedBars.M15 > 0) {
@@ -377,7 +377,7 @@ bool UpdateSuperBars() {
    //
    // Schleife über alle Superbars von "jung" nach "alt"
    while (true) {
-      if (!GetPreviousSession(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
+      if (!GetPreviousPeriodTimes(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(false);
 
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
@@ -412,24 +412,24 @@ bool UpdateSuperBars() {
 
 
 /**
- * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Session und schreibt das Ergebnis in die übergebenen
- * Variablen. Ist der Parameter openTime.fxt nicht gesetzt, wird die jüngste Session (also ggf. die aktuelle) zurückgegeben.
+ * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Periode und schreibt das Ergebnis in die übergebenen
+ * Variablen. Ist der Parameter openTime.fxt NULL, wird die jüngste Periode (also ggf. die aktuelle) zurückgegeben.
  *
- * @param  int       timeframe     - Timeframe der zu ermittelnden Session
- * @param  datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Session in FXT-Zeit
- * @param  datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Session in FXT-Zeit
- * @param  datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Session in Serverzeit
- * @param  datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Session in Serverzeit
+ * @param  _IN_     int       timeframe     - Timeframe der zu ermittelnden Periode
+ * @param  _IN_OUT_ datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Periode in FXT-Zeit
+ * @param     _OUT_ datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Periode in FXT-Zeit
+ * @param     _OUT_ datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Periode in Serverzeit
+ * @param     _OUT_ datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
  *
  * @return bool - Erfolgsstatus
  */
-bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
+bool GetPreviousPeriodTimes(int timeframe, datetime &openTime.fxt, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
    int month, dom, dow;
 
 
    // (1) PERIOD_D1
    if (timeframe == PERIOD_D1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Tages initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens des nächsten Tages initialisieren
       if (!openTime.fxt)
          openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*DAY;
 
@@ -448,7 +448,7 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
    // (2) PERIOD_W1
    else if (timeframe == PERIOD_W1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der nächsten Woche initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens der nächsten Woche initialisieren
       if (!openTime.fxt)
          openTime.fxt = GmtToFxtTime(TimeGMT()) + 7*DAYS;
 
@@ -464,9 +464,9 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
    // (3) PERIOD_MN1
    else if (timeframe == PERIOD_MN1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Monats initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens des nächsten Monats initialisieren
       if (!openTime.fxt)                                                                                                // Sollte dies der übernächste Monat sein, wird dies
-         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*MONTH;                                                              // als Kurslücke interpretiert und übersprungen.
+         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*MONTH;                                                              // in der Folge als Kurslücke interpretiert und übersprungen.
 
       openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));    // 00:00 des aktuellen Tages
 
@@ -492,9 +492,9 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
 
    // (4) PERIOD_Q1
    else if (timeframe == PERIOD_Q1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Quartals initialisieren
+      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens des nächsten Quartals initialisieren
       if (!openTime.fxt)                                                                                             // Sollte dies das übernächste Quartal sein, wird dies
-         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*QUARTER;                                                         // als Kurslücke interpretiert und übersprungen.
+         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*QUARTER;                                                         // in der Folge als Kurslücke interpretiert und übersprungen.
 
       openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt)); // 00:00 des aktuellen Tages
 
@@ -533,14 +533,14 @@ bool GetPreviousSession(int timeframe, datetime &openTime.fxt, datetime &closeTi
       if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
       else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
    }
-   else return(!catch("GetPreviousSession(1) unsupported timeframe = "+ ifString(!timeframe, NULL, PeriodToStr(timeframe)), ERR_RUNTIME_ERROR));
+   else return(!catch("GetPreviousPeriodTimes(1) unsupported timeframe = "+ ifString(!timeframe, NULL, PeriodToStr(timeframe)), ERR_RUNTIME_ERROR));
 
 
    // (5) entsprechende Serverzeiten ermitteln
    openTime.srv  = FxtToServerTime(openTime.fxt );
    closeTime.srv = FxtToServerTime(closeTime.fxt);
 
-   return(!catch("GetPreviousSession(2)"));
+   return(!catch("GetPreviousPeriodTimes(2)"));
 }
 
 

@@ -198,7 +198,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    string ErrorToStr(int error);
    string InitFlagsToStr(int flags);
    string ModuleTypeToStr(int type);
-   string StringToStr(string value);
    string TestFlagsToStr(int flags);
    string UninitializeReasonToStr(int reason);
 

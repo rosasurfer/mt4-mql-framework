@@ -148,7 +148,6 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
    string BufferCharsToStr(int buffer[], int from, int length);
    void   CopyMemory(int source, int destination, int bytes);
    string JoinStrings(string array[], string separator);
-   string StringToStr(string value);
 
 #import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
