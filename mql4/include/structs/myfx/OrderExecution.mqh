@@ -328,7 +328,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
    string JoinStrings(string array[], string separator);
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
-   string StringToStr(string value);
 
 #import "Expander.dll"
    int    GetBufferAddress(int buffer[]);
