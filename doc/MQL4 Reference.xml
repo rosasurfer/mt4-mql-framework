@@ -3486,13 +3486,13 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
       caption=ArrayCopySeries()
       type=int
       <content>
-        Copies a pointer to a series array to a regular array variable and returns the number of the contained elements.<br/><br/>
+        Copies a pointer to a series array to a regular array variable and returns the number of the contained elements or -1 in case of an error.<br/><br/>
 
         No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected. 
         Excluded from this rule are custom indicators arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>. In those cases the data is indeed 
-        copied.<br/><br/>
-        If data is accessed from a different time series, it is possible that the necessary data will lack. In this case the <a href="help://constants_errors">status</a> 
-        <span class="constant">ERS_HISTORY_UPDATE</span> (4066 - requested history data is updated) is placed into the <a href="help://runtime_errors">last_error</a> variable.<br/>
+        copied. If data from a different time series is accessed the status code <span class="constant">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet)
+        exist the <a href="help://constants_errors">error code</a> <span class="constant">ERR_ARRAY_ERROR</span> is set and the function returns -1.
+        <br/>
         <br/>
         Note: If the parameter series_index is <span class="constant">MODE_TIME</span>, the array to be passed to the function must be of type datetime.
       </content>
@@ -9069,12 +9069,17 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       Searches for a bar by time. The function returns the offset of the bar covering the specified time.
       If such a bar is not found the function will return -1 or the offset of the nearest bar depending on the parameter <i>exact</i>.<br/>
       <br/>
-      <span style="color:red">Note:</span>
+      <span style="color:red">Notes:</span>
       <br/>
       exact = <span class="constant">true</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
       <br/>
-      exact = <span class="constant">false</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der vorhergehenden, älteren Bar.
-      Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
+      exact = <span class="constant">false</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der 
+      vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.<br/>
+      <br/>
+      Existieren keine Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw", oder ist der Timeframe kein Standard-Timeframe,
+      wird kein Fehler gemeldet.<br/>
+      <br/>
+		Ist das Symbol bekannt, wird u.U. der Status <span class="constant">ERS_HISTORY_UPDATE</span> gemeldet. 
       </content>
       <example>
   datetime some_time = D'2004.03.21 12:00';

@@ -278,10 +278,10 @@ bool UpdateSuperBars() {
       //       Allerdings müssen dann in DrawSuperBar() nochmal ERS_HISTORY_UPDATE und ERR_SERIES_NOT_AVAILABLE behandelt werden.
 
       int oldError        = last_error;
-      int changedBars.M15 = iChangedBars(NULL, PERIOD_M15, MUTE_ERS_HISTORY_UPDATE|MUTE_ERR_SERIES_NOT_AVAILABLE);
+      int changedBars.M15 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
       if (changedBars.M15 == -1) {
          if (last_error != ERR_SERIES_NOT_AVAILABLE) return(false);
-         SetLastError(oldError);                                           // ERR_SERIES_NOT_AVAILABLE ggf. unterdrücken
+         SetLastError(oldError);                                           // ERR_SERIES_NOT_AVAILABLE unterdrücken
       }
 
       if (changedBars.M15 > 0) {

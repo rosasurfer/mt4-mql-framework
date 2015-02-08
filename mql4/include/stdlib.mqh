@@ -475,8 +475,6 @@
 
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
-   int      iBarShiftNext(string symbol, int period, datetime time);
-   int      iBarShiftPrevious(string symbol, int period, datetime time);               // throws ERS_HISTORY_UPDATE
 
    int      ForceMessageBox(string caption, string message, int flags);
    int      PlaySoundEx(string soundfile);

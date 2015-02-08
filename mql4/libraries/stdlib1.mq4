@@ -32,8 +32,12 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
+
 #include <structs/pewa/ORDER_EXECUTION.mqh>
+
+#include <iFunctions/iBarShiftNext.mqh>
+#include <iFunctions/iBarShiftPrevious.mqh>
+#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 
 /**
