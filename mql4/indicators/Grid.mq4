@@ -16,6 +16,7 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
+#include <iFunctions/iBarShiftNext.mqh>
 
 
 /**
@@ -70,7 +71,7 @@ int DrawGrid() {
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
    datetime fromFXT = GetNextSessionStartTime.fxt(ServerToFxtTime(Time[Bars-1]) - 1*SECOND);
-   datetime toFXT   = GetNextSessionStartTime.fxt(GmtToFxtTime(TimeGMT()));   // nicht TimeCurrent() verwenden, kann 0 sein
+   datetime toFXT   = GetNextSessionStartTime.fxt(TimeFXT());                 // nicht TimeCurrent() verwenden, kann 0 sein
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {                                                // fromFXT bleibt unverändert
@@ -120,7 +121,7 @@ int DrawGrid() {
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       toFXT = firstWeekDay;
    }
-   //debug("DrawGrid()  from \""+ GetDayOfWeek(fromFXT, false) +" "+ TimeToStr(fromFXT) +"\" to \""+ GetDayOfWeek(toFXT, false) +" "+ TimeToStr(toFXT) +"\"");
+   //debug("DrawGrid()  from \""+ DateTimeToStr(fromFXT, "w, D.M.Y H:I") +"\" to \""+ DateTimeToStr(fromFXT, "w, D.M.Y H:I") +"\"");
 
 
    // (2) Separatoren zeichnen
@@ -137,11 +138,7 @@ int DrawGrid() {
       }
       else {                                                                  // Separator liegt innerhalb der Bar-Range, Zeit der ersten existierenden Bar verwenden
          bar = iBarShiftNext(NULL, NULL, separatorTime);
-         if (bar == EMPTY_VALUE) {                                            // ERS_HISTORY_UPDATE ???
-            if (SetLastError(stdlib.GetLastError()) != ERS_HISTORY_UPDATE)
-               catch("DrawGrid(1)", last_error);
-            return(last_error);
-         }
+         if (bar == EMPTY_VALUE) return(last_error);
          chartTime = Time[bar];
       }
 

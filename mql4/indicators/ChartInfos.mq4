@@ -29,10 +29,12 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 
 #include <core/script.ParameterProvider.mqh>
+#include <iFunctions/@ATR.mqh>
+#include <iFunctions/iBarShiftNext.mqh>
+#include <iFunctions/iBarShiftPrevious.mqh>
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
-#include <iFunctions/@ATR.mqh>
 
 
 // Kursanzeige
@@ -1715,10 +1717,10 @@ bool UpdateOHLC() {
 
    // (3) Baroffsets von Sessionbeginn und -ende ermitteln
    int openBar = iBarShiftNext(NULL, NULL, sessionStart);
-      if (openBar == EMPTY_VALUE) return(!SetLastError(stdlib.GetLastError()));  // Fehler
+      if (openBar == EMPTY_VALUE) return(false);                                 // Fehler
       if (openBar ==          -1) return(true);                                  // sessionStart ist zu jung für den Chart
    int closeBar = iBarShiftPrevious(NULL, NULL, sessionEnd);
-      if (closeBar == EMPTY_VALUE) return(!SetLastError(stdlib.GetLastError())); // Fehler
+      if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar ==          -1) return(true);                                 // sessionEnd ist zu alt für den Chart
    if (openBar < closeBar)
       return(!catch("UpdateOHLC(1)  illegal open/close bar offsets for session from="+ DateToStr(sessionStart, "w D.M.Y H:I") +" (bar="+ openBar +")  to="+ DateToStr(sessionEnd, "w D.M.Y H:I") +" (bar="+ closeBar +")", ERR_RUNTIME_ERROR));
@@ -3702,8 +3704,6 @@ string InputsToStr() {
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();
-   int      iBarShiftNext(string symbol, int period, datetime time);
-   int      iBarShiftPrevious(string symbol, int period, datetime time);
    bool     IsCurrency(string value);
    bool     IsFile(string filename);
    bool     IsGlobalConfigKey(string section, string key);

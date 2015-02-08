@@ -29,7 +29,7 @@ int init() {
    if (__WHEREAMI__ == NULL) {                                       // Aufruf durch Terminal
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
-      last_error   = NO_ERROR;
+      SetLastError(NO_ERROR);
    }
 
 
@@ -203,7 +203,7 @@ int start() {
    }
    else {
       prev_error = last_error;                                             // weiterer Tick: last_error sichern und zurücksetzen
-      last_error = NO_ERROR;
+      SetLastError(NO_ERROR);
    }
 
 
