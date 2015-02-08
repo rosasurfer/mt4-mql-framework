@@ -3486,15 +3486,14 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
       caption=ArrayCopySeries()
       type=int
       <content>
-        Copies a pointer to a series array to a regular array and returns the number of the contained elements.<br/><br/>
+        Copies a pointer to a series array to a regular array variable and returns the number of the contained elements.<br/><br/>
 
-        Because of the copied pointer there is no real memory allocation and no data is copied. When such an array is accessed
-        this access is redirected. Excluded are arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>
-        in custom indicators. In this case the data is indeed copied.<br/><br/>
-        If data is copied from a time series with different symbol and/or timeframe, it is possible that the necessary data will lack.
-        In this case the <a href="help://constants_errors">status</a> <span class="constant">ERS_HISTORY_UPDATE</span> (4066 - requested history data is updated) will
-        be placed into the <a href="help://runtime_errors">last_error</a> variable and it will be necessary to repeat the copying (after some time).<br/><br/>
-
+        No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected. 
+        Excluded from this rule are custom indicators arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>. In those cases the data is indeed 
+        copied.<br/><br/>
+        If data is accessed from a different time series, it is possible that the necessary data will lack. In this case the <a href="help://constants_errors">status</a> 
+        <span class="constant">ERS_HISTORY_UPDATE</span> (4066 - requested history data is updated) is placed into the <a href="help://runtime_errors">last_error</a> variable.<br/>
+        <br/>
         Note: If the parameter series_index is <span class="constant">MODE_TIME</span>, the array to be passed to the function must be of type datetime.
       </content>
       <example>
@@ -3543,7 +3542,7 @@ Print(TimeToStr(Time[shift]), " corresponds to ", dayshift, " day bar opened at 
       <parameter>
         type=int
         name=timeframe
-        def_value=0
+        def_value=<span class="constant">NULL</span>
         description=Timeframe of the time series to copy. It can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
       </parameter>
     </function>
