@@ -35,6 +35,8 @@ bool   Track.BreakPreviousRange    = false;
 
 #include <core/indicator.mqh>
 #include <iCustom/MovingAverage.mqh>
+#include <iFunctions/iBarShiftNext.mqh>
+#include <iFunctions/iBarShiftPrevious.mqh>
 
 
 #define EVENT_POSITION_OPEN       0x0010
@@ -812,10 +814,9 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
 
    // from- und toBar ermitteln (to zeigt auf Beginn der nächsten Bar)
    int fromBar = iBarShiftNext(symbol, period, from);
-   if (fromBar == EMPTY_VALUE)                                       // ERS_HISTORY_UPDATE ???
-      return(stdlib.GetLastError());
+      if (fromBar == EMPTY_VALUE) return(last_error);
 
-   int toBar = iBarShiftPrevious(symbol, period, to-1);
+   int toBar = iBarShiftPrevious(symbol, period, to-1); if (toBar == EMPTY_VALUE) return(last_error);
 
    if (fromBar==-1 || toBar==-1) {                                   // Zeitraum ist zu alt oder zu jung für den Chart
       results[MODE_OPEN ] = 0;

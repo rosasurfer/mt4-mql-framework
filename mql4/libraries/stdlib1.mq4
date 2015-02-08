@@ -32,6 +32,7 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
+#include <iFunctions/iBarShiftNext.mqh>
 #include <structs/pewa/ORDER_EXECUTION.mqh>
 
 
@@ -5092,6 +5093,18 @@ datetime TimeGMT() {
 
 
 /**
+ * Gibt die Terminal-Zeit in FXT zurück. Im Tester wird die FXT-Zeit der momentan im Tester modellierten Zeit zurückgegeben.
+ *
+ * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ */
+datetime TimeFXT() {
+   datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
+   return(fxt);
+}
+
+
+/**
  * Gibt immer die aktuelle lokale Zeit zurück (auch im Tester).  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
  * die modellierte Serverzeit zurück.
  *
@@ -8164,8 +8177,7 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
    for (int i=0; i < historySize; i++) {
       // Barindex des Zeitpunkts berechnen
       bar = iBarShiftNext(NULL, NULL, times[i]);
-      if (bar == EMPTY_VALUE)                                        // ERS_HISTORY_UPDATE ?
-         return(last_error);
+      if (bar == EMPTY_VALUE) return(last_error);
       if (bar == -1)                                                 // dieser und alle folgenden Werte sind zu neu für den Chart
          break;
 
@@ -8190,115 +8202,6 @@ int iAccountBalanceSeries(int account, double &buffer[]) {
    if (ArraySize(values) > 0) ArrayResize(values, 0);
 
    return(catch("iAccountBalanceSeries(2)"));
-}
-
-
-/**
- * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Zeitreihe und gibt bei nicht existierender Bar die letzte vorherige existierende Bar zurück.
- *
- * @param  string   symbol - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
- * @param  int      period - Periode der zu untersuchenden Zeitreihe (default: 0 = aktuelle Periode)
- * @param  datetime time   - Zeitpunkt
- *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für Zeitreihe);
- *               EMPTY_VALUE, falls ein Fehler auftrat
- *
- * @throws ERS_HISTORY_UPDATE
- */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=0*/, datetime time) {
-   if (symbol == "0")                                       // (string) NULL
-      symbol = Symbol();
-
-   if (time < 0)
-      return(_EMPTY_VALUE(catch("iBarShiftPrevious(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
-
-   /*
-   int iBarShift(symbol, period, time, exact=false);
-      exact = TRUE : Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
-      exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index
-                     der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
-   */
-
-   // Zeitreihe holen
-   datetime times[];
-   int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);
-   int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
-
-   if (!error) {
-      // Bars überprüfen
-      if (time < times[bars-1]) {
-         int bar = -1;                                      // Zeitpunkt ist zu alt für die Reihe
-      }
-      else {
-         bar   = iBarShift(symbol, period, time);
-         error = GetLastError();                            // ERS_HISTORY_UPDATE ???
-      }
-   }
-
-   if (error != NO_ERROR) {
-      SetLastError(error);
-      if (error != ERS_HISTORY_UPDATE)
-         catch("iBarShiftPrevious(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(bar);
-}
-
-
-/**
- * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Zeitreihe und gibt bei nicht existierender Bar die nächste existierende Bar zurück.
- *
- * @param  string   symbol - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
- * @param  int      period - Periode der zu untersuchenden Zeitreihe (default: NULL = aktuelle Periode)
- * @param  datetime time   - Zeitpunkt (Serverzeit)
- *
- * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu jung für die Zeitreihe);
- *               EMPTY_VALUE, falls ein Fehler auftrat
- *
- * @throws ERS_HISTORY_UPDATE
- */
-int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
-   if (symbol == "0")                                       // (string) NULL
-      symbol = Symbol();
-
-   if (time < 0)
-      return(_EMPTY_VALUE(catch("iBarShiftNext(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
-
-   /*
-   int iBarShift(symbol, period, time, exact=false);
-      exact = TRUE : Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
-      exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index
-                     der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
-   */
-   int bar   = iBarShift(symbol, period, time, true);
-   int error = GetLastError();                              // ERS_HISTORY_UPDATE ???
-
-   if (!error) /*&&*/ if (bar==-1) {                        // falls die Bar nicht existiert und auch kein Update läuft
-      // exact war TRUE, keine abdeckende Bar gefunden
-      // Datenreihe holen
-      datetime times[];
-      int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
-      error = GetLastError();                               // ERS_HISTORY_UPDATE ???
-
-      if (!error) {
-         // Bars überprüfen
-         if (time < times[bars-1]) {                        // Zeitpunkt ist zu alt für die Reihe, die älteste Bar zurückgeben
-            bar = bars-1;
-         }
-         else if (time < times[0]) {                        // Kurslücke, die nächste existierende Bar zurückgeben
-            bar   = iBarShift(symbol, period, time) - 1;
-            error = GetLastError();                         // ERS_HISTORY_UPDATE ???
-         }
-         //else: (time > times[0]) => bar=-1                // Zeitpunkt ist zu neu für die Reihe, bar bleibt -1
-      }
-   }
-
-   if (error != NO_ERROR) {
-      if (error == ERS_HISTORY_UPDATE) SetLastError(error);
-      else                             catch("iBarShiftNext(2)", error);
-      return(EMPTY_VALUE);
-   }
-   return(bar);
 }
 
 
@@ -9588,6 +9491,14 @@ string DateToStr(datetime time, string mask) {
       else                                 result = result + char;
    }
    return(result);
+}
+
+
+/**
+ * Alias
+ */
+string DateTimeToStr(datetime time, string format) {
+   return(DateToStr(time, format));
 }
 
 

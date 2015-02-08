@@ -12,13 +12,18 @@ int __DEINIT_FLAGS__[];
 
 extern color Color.BarUp        = C'193,255,193';        // Up-Bars
 extern color Color.BarDown      = C'255,213,213';        // Down-Bars
-extern color Color.BarUnchanged = C'232,232,232';        // (fast) unveränderte Bars
+extern color Color.BarUnchanged = C'232,232,232';        // nahezu unveränderte Bars
 extern color Color.ETH          = C'255,255,176';        // Extended-Hours
 extern color Color.CloseMarker  = C'164,164,164';        // Close-Marker
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
 #include <win32api.mqh>
+
+#include <iFunctions/iBarShiftNext.mqh>
+#include <iFunctions/iBarShiftPrevious.mqh>
+#include <iFunctions/iChangedBars.mqh>
+#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 
 int    superBars.timeframe;
@@ -83,81 +88,6 @@ int onDeinit() {
    if (!StoreWindowStatus())
       return(last_error);
    return(catch("onDeinit(1)"));
-}
-
-
-/**
- * Ermittelt die Anzahl der seit dem letzten Tick modifizierten Bars einer Datenreihe. Entspricht der manuellen Ermittlung
- * der Variable ChangedBars für eine andere als die aktuelle Datenreihe.
- *
- * @param  string symbol    - Symbol der zu untersuchenden Zeitreihe  (default: NULL = aktuelles Symbol)
- * @param  int    period    - Periode der zu untersuchenden Zeitreihe (default: NULL = aktuelle Periode)
- * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
- *
- * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
- *
- * @throws ERS_HISTORY_UPDATE       - Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERS_HISTORY_UPDATE gesetzt ist. In diesem Fall ist der
- *                                    Rückgabewert der Funktion bei Auftreten des Fehlers der Wert der modifizierten Bars. Anderenfalls ist er -1 (Fehler).
- *
- * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist. Der Rückgabewert
- *                                    der Funktion bei Auftreten dieses Fehlers ist unabhängig von diesem Flag immer -1 (Fehler).
- */
-int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL) {
-   if (symbol == "0")                                                // (string) NULL
-      symbol = Symbol();
-   /*
-   TODO:
-   -----
-   - statische Variablen müssen je Symbol und Periode zwichengespeichert werden
-   - statische Variablen in Library speichern, um Timeframewechsel zu überdauern
-   - statische Variablen bei Accountwechsel zurücksetzen
-   */
-
-   static int      prev.bars         = -1;
-   static datetime prev.lastBarTime  =  0;
-   static datetime prev.firstBarTime =  0;
-
-   int bars  = iBars(symbol, period);
-   int error = GetLastError();
-
-   // Fehlerbehandlung je nach execFlags
-   if (!bars || error) {
-      if (!bars && error!=ERR_SERIES_NOT_AVAILABLE) {
-         // - Beim ersten Zugriff auf die Datenreihe wird statt ERR_SERIES_NOT_AVAILABLE gewöhnlich ERS_HISTORY_UPDATE gesetzt.
-         // - Ohne Server-Connection ist nach Recompilation u.U. gar kein Fehler gesetzt (trotz fehlender Bars).
-         if (!error || error==ERS_HISTORY_UPDATE) error = ERR_SERIES_NOT_AVAILABLE;                // NO_ERROR und ERS_HISTORY_UPDATE überschreiben
-         else warn("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") = "+ bars, error);
-      }
-
-      if (error == ERR_SERIES_NOT_AVAILABLE) {
-         prev.bars = 0;
-         if (!execFlags & MUTE_ERR_SERIES_NOT_AVAILABLE) return(_EMPTY(catch("iChangedBars(2)->iBars("+ symbol +","+ PeriodDescription(period) +")", error)));
-         else                                            return(_EMPTY(SetLastError(error)));
-      }
-      else if (error!=ERS_HISTORY_UPDATE || !execFlags & MUTE_ERS_HISTORY_UPDATE) {
-         prev.bars = bars;                               return(_EMPTY(catch("iChangedBars(3)->iBars("+ symbol +","+ PeriodDescription(period) +")", error)));
-      }
-      SetLastError(error);                                                                         // ERS_HISTORY_UPDATE still setzen und fortfahren
-   }
-   // bars ist hier immer größer 0
-
-   datetime lastBarTime  = iTime(symbol, period, bars-1);
-   datetime firstBarTime = iTime(symbol, period, 0     );
-   int      changedBars;
-
-   if      (error==ERS_HISTORY_UPDATE || prev.bars==-1)       changedBars = bars;                  // erster Zugriff auf die Zeitreihe
-   else if (bars==prev.bars && lastBarTime==prev.lastBarTime) changedBars = 1;                     // Baranzahl gleich und älteste Bar noch dieselbe = normaler Tick (mit/ohne Lücke)
-   else if (firstBarTime != prev.firstBarTime)                changedBars = bars - prev.bars + 1;  // neue Bars zu Beginn hinzugekommen
-   else                                                       changedBars = bars;                  // neue Bars in Lücke eingefügt (nicht eindeutig => alle als modifiziert melden)
-
-   prev.bars         = bars;
-   prev.lastBarTime  = lastBarTime;
-   prev.firstBarTime = firstBarTime;
-
-   error = GetLastError();
-   if (!error)
-      return(changedBars);
-   return(_EMPTY(catch("iChangedBars(4)->iBars("+ symbol +","+ PeriodDescription(period) +")", error)));
 }
 
 
@@ -350,8 +280,7 @@ bool UpdateSuperBars() {
       int oldError        = last_error;
       int changedBars.M15 = iChangedBars(NULL, PERIOD_M15, MUTE_ERS_HISTORY_UPDATE|MUTE_ERR_SERIES_NOT_AVAILABLE);
       if (changedBars.M15 == -1) {
-         if (last_error != ERR_SERIES_NOT_AVAILABLE)
-            return(false);
+         if (last_error != ERR_SERIES_NOT_AVAILABLE) return(false);
          SetLastError(oldError);                                           // ERR_SERIES_NOT_AVAILABLE ggf. unterdrücken
       }
 
@@ -359,7 +288,7 @@ bool UpdateSuperBars() {
          datetime lastBarTime.M15 = iTime(NULL, PERIOD_M15, changedBars.M15-1);
 
          if (Time[changedBars-1] > lastBarTime.M15) {
-            int bar = iBarShiftPrevious(NULL, NULL, lastBarTime.M15);
+            int bar = iBarShiftPrevious(NULL, NULL, lastBarTime.M15); if (bar == EMPTY_VALUE) return(false);
             if (bar == -1) changedBars = Bars;                             // M15-Zeitpunkt ist zu alt für den aktuellen Chart
             else           changedBars = bar + 1;
          }
@@ -377,7 +306,7 @@ bool UpdateSuperBars() {
    //
    // Schleife über alle Superbars von "jung" nach "alt"
    while (true) {
-      if (!GetPreviousPeriodTimes(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
+      if (!iPreviousPeriodTimes(superTimeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))
          return(false);
 
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
@@ -386,10 +315,8 @@ bool UpdateSuperBars() {
          if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar: Server-Timezone westlich von FXT
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
       }
-      openBar = iBarShiftNext(NULL, NULL, openTime.srv);                   // ERS_HISTORY_UPDATE kann nicht auftreten, da der aktuelle Timeframe benutzt wird
-      if (openBar == EMPTY_VALUE) return(!SetLastError(warn("UpdateSuperBars(2)->iBarShiftNext() => EMPTY_VALUE", stdlib.GetLastError())));
-
-      closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND);
+      openBar  = iBarShiftNext    (NULL, NULL, openTime.srv);           if (openBar  == EMPTY_VALUE) return(false);
+      closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar == -1)                                                  // closeTime ist zu alt für den Chart => Abbruch
          break;
 
@@ -408,139 +335,6 @@ bool UpdateSuperBars() {
 
    static.lastTimeframe = superBars.timeframe;
    return(true);
-}
-
-
-/**
- * Ermittelt Beginn und Ende der dem Parameter openTime.fxt vorhergehenden Periode und schreibt das Ergebnis in die übergebenen
- * Variablen. Ist der Parameter openTime.fxt NULL, wird die jüngste Periode (also ggf. die aktuelle) zurückgegeben.
- *
- * @param  _IN_     int       timeframe     - Timeframe der zu ermittelnden Periode
- * @param  _IN_OUT_ datetime &openTime.fxt  - Variable zur Aufnahme des Beginns der resultierenden Periode in FXT-Zeit
- * @param     _OUT_ datetime &closeTime.fxt - Variable zur Aufnahme des Endes der resultierenden Periode in FXT-Zeit
- * @param     _OUT_ datetime &openTime.srv  - Variable zur Aufnahme des Beginns der resultierenden Periode in Serverzeit
- * @param     _OUT_ datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
- *
- * @return bool - Erfolgsstatus
- */
-bool GetPreviousPeriodTimes(int timeframe, datetime &openTime.fxt, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
-   int month, dom, dow;
-
-
-   // (1) PERIOD_D1
-   if (timeframe == PERIOD_D1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens des nächsten Tages initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*DAY;
-
-      // openTime.fxt auf 00:00 Uhr des vorherigen Tages setzen
-      openTime.fxt -= (1*DAY + TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));
-
-      // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeek(openTime.fxt);
-      if      (dow == SATURDAY) openTime.fxt -= 1*DAY;
-      else if (dow == SUNDAY  ) openTime.fxt -= 2*DAYS;
-
-      // closeTime.fxt auf 00:00 des folgenden Tages setzen
-      closeTime.fxt = openTime.fxt + 1*DAY;
-   }
-
-
-   // (2) PERIOD_W1
-   else if (timeframe == PERIOD_W1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens der nächsten Woche initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = GmtToFxtTime(TimeGMT()) + 7*DAYS;
-
-      // openTime.fxt auf Montag, 00:00 Uhr der vorherigen Woche setzen
-      openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));    // 00:00 des aktuellen Tages
-      openTime.fxt -= (TimeDayOfWeek(openTime.fxt)+6)%7 * DAYS;                                                         // Montag der aktuellen Woche
-      openTime.fxt -= 7*DAYS;                                                                                           // Montag der Vorwoche
-
-      // closeTime.fxt auf 00:00 des folgenden Samstags setzen
-      closeTime.fxt = openTime.fxt + 5*DAYS;
-   }
-
-
-   // (3) PERIOD_MN1
-   else if (timeframe == PERIOD_MN1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens des nächsten Monats initialisieren
-      if (!openTime.fxt)                                                                                                // Sollte dies der übernächste Monat sein, wird dies
-         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*MONTH;                                                              // in der Folge als Kurslücke interpretiert und übersprungen.
-
-      openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt));    // 00:00 des aktuellen Tages
-
-      // closeTime.fxt auf den 1. des folgenden Monats, 00:00 setzen
-      dom = TimeDay(openTime.fxt);
-      closeTime.fxt = openTime.fxt - (dom-1)*DAYS;                                                                      // erster des aktuellen Monats
-
-      // openTime.fxt auf den 1. des vorherigen Monats, 00:00 Uhr setzen
-      openTime.fxt  = closeTime.fxt - 1*DAYS;                                                                           // letzter Tag des vorherigen Monats
-      openTime.fxt -= (TimeDay(openTime.fxt)-1)*DAYS;                                                                   // erster Tag des vorherigen Monats
-
-      // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeek(openTime.fxt);
-      if      (dow == SATURDAY) openTime.fxt += 2*DAYS;
-      else if (dow == SUNDAY  ) openTime.fxt += 1*DAY;
-
-      // Wochenenden in closeTime.fxt überspringen
-      dow = TimeDayOfWeek(closeTime.fxt);
-      if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
-      else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
-   }
-
-
-   // (4) PERIOD_Q1
-   else if (timeframe == PERIOD_Q1) {
-      // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt mindestens des nächsten Quartals initialisieren
-      if (!openTime.fxt)                                                                                             // Sollte dies das übernächste Quartal sein, wird dies
-         openTime.fxt = GmtToFxtTime(TimeGMT()) + 1*QUARTER;                                                         // in der Folge als Kurslücke interpretiert und übersprungen.
-
-      openTime.fxt -= (TimeHour(openTime.fxt)*HOURS + TimeMinute(openTime.fxt)*MINUTES + TimeSeconds(openTime.fxt)); // 00:00 des aktuellen Tages
-
-      // closeTime.fxt auf den ersten Tag des folgenden Quartals, 00:00 setzen
-      switch (TimeMonth(openTime.fxt)) {
-         case JANUARY  :
-         case FEBRUARY :
-         case MARCH    : closeTime.fxt = openTime.fxt - (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.01.)
-         case APRIL    : closeTime.fxt = openTime.fxt -       (TimeDay(openTime.fxt)-1)*DAYS; break;
-         case MAY      : closeTime.fxt = openTime.fxt - (30+   TimeDay(openTime.fxt)-1)*DAYS; break;
-         case JUNE     : closeTime.fxt = openTime.fxt - (30+31+TimeDay(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.04.)
-         case JULY     : closeTime.fxt = openTime.fxt -       (TimeDay(openTime.fxt)-1)*DAYS; break;
-         case AUGUST   : closeTime.fxt = openTime.fxt - (31+   TimeDay(openTime.fxt)-1)*DAYS; break;
-         case SEPTEMBER: closeTime.fxt = openTime.fxt - (31+31+TimeDay(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.07.)
-         case OCTOBER  : closeTime.fxt = openTime.fxt -       (TimeDay(openTime.fxt)-1)*DAYS; break;
-         case NOVEMBER : closeTime.fxt = openTime.fxt - (31+   TimeDay(openTime.fxt)-1)*DAYS; break;
-         case DECEMBER : closeTime.fxt = openTime.fxt - (31+30+TimeDay(openTime.fxt)-1)*DAYS; break;                 // erster Tag des aktuellen Quartals (01.10.)
-      }
-
-      // openTime.fxt auf den ersten Tag des vorherigen Quartals, 00:00 Uhr setzen
-      openTime.fxt = closeTime.fxt - 1*DAY;                                                                          // letzter Tag des vorherigen Quartals
-      switch (TimeMonth(openTime.fxt)) {
-         case MARCH    : openTime.fxt -= (TimeDayOfYear(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.01.)
-         case JUNE     : openTime.fxt -= (30+31+TimeDay(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.04.)
-         case SEPTEMBER: openTime.fxt -= (31+31+TimeDay(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.07.)
-         case DECEMBER : openTime.fxt -= (31+30+TimeDay(openTime.fxt)-1)*DAYS; break;                                // erster Tag des vorherigen Quartals (01.10.)
-      }
-
-      // Wochenenden in openTime.fxt überspringen
-      dow = TimeDayOfWeek(openTime.fxt);
-      if      (dow == SATURDAY) openTime.fxt += 2*DAYS;
-      else if (dow == SUNDAY  ) openTime.fxt += 1*DAY;
-
-      // Wochenenden in closeTime.fxt überspringen
-      dow = TimeDayOfWeek(closeTime.fxt);
-      if      (dow == SUNDAY) closeTime.fxt -= 1*DAY;
-      else if (dow == MONDAY) closeTime.fxt -= 2*DAYS;
-   }
-   else return(!catch("GetPreviousPeriodTimes(1) unsupported timeframe = "+ ifString(!timeframe, NULL, PeriodToStr(timeframe)), ERR_RUNTIME_ERROR));
-
-
-   // (5) entsprechende Serverzeiten ermitteln
-   openTime.srv  = FxtToServerTime(openTime.fxt );
-   closeTime.srv = FxtToServerTime(closeTime.fxt);
-
-   return(!catch("GetPreviousPeriodTimes(2)"));
 }
 
 
@@ -631,14 +425,15 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
 
       int eth.openBar  = openBar;                                                      // reguläre OpenBar der 24h-Session
       int eth.closeBar = iBarShiftPrevious(NULL, NULL, eth.closeTime.srv-1*SECOND);    // openBar ist hier immer >= closeBar (Prüfung oben)
+         if (eth.closeBar == EMPTY_VALUE) return(false);
          if (eth.openBar <= eth.closeBar) break;                                       // Abbruch, wenn openBar nicht größer als closeBar (kein Platz zum Zeichnen)
 
-      int eth.M15.openBar = iBarShiftNext(NULL, PERIOD_M15, eth.openTime.srv);         // ERS_HISTORY_UPDATE kann nicht mehr aufreten, da schon iChangedBars(M15) aufgerufen wurde
-         if (eth.M15.openBar == EMPTY_VALUE) return(!warn("DrawSuperBar(1)->iBarShiftNext("+ Symbol() +",M15) => EMPTY_VALUE", stdlib.GetLastError()));
+      int eth.M15.openBar = iBarShiftNext(NULL, PERIOD_M15, eth.openTime.srv);
+         if (eth.M15.openBar == EMPTY_VALUE) return(false);
          if (eth.M15.openBar == -1)          break;                                    // Daten sind noch nicht da (HISTORY_UPDATE sollte laufen)
 
       int eth.M15.closeBar = iBarShiftPrevious(NULL, PERIOD_M15, eth.closeTime.srv-1*SECOND);
-         if (eth.M15.closeBar == EMPTY_VALUE)    return(!warn("DrawSuperBar(2)->iBarShiftPrevious() => EMPTY_VALUE", stdlib.GetLastError()));
+         if (eth.M15.closeBar == EMPTY_VALUE)    return(false);
          if (eth.M15.closeBar == -1) { drawETH = false; break; }                       // die vorhandenen Daten reichen nicht soweit zurück, Abbruch aller weiteren ETH's
          if (eth.M15.openBar < eth.M15.closeBar) break;                                // die vorhandenen Daten weisen eine Lücke auf
 

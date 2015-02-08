@@ -206,7 +206,7 @@ int start() {
    else {
       // normaler Tick
       prev_error = last_error;
-      last_error = NO_ERROR;
+      SetLastError(NO_ERROR);
 
       if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;

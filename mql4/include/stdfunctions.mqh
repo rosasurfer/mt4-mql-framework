@@ -1939,7 +1939,7 @@ bool IsLastError() {
  */
 int ResetLastError() {
    int error = last_error;
-   SetLastError(NO_ERROR, NULL);
+   SetLastError(NO_ERROR);
    return(error);
 }
 
@@ -2984,7 +2984,7 @@ string PeriodToStr(int period=NULL, int execFlags=NULL) {
       case PERIOD_Q1 : return("PERIOD_Q1" );     // 1 quarter
    }
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_emptyStr(catch("PeriodToStr()  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_emptyStr(catch("PeriodToStr(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
    else                                         return(_emptyStr(SetLastError(ERR_INVALID_PARAMETER)));
 }
 

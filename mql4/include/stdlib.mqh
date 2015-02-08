@@ -267,6 +267,7 @@
    datetime mql.GetSystemTime();
    string   GetDayOfWeek(datetime time, bool longFormat);
    bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime TimeFXT();
    datetime TimeGMT();
 
 
@@ -474,7 +475,7 @@
 
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
-   int      iBarShiftNext(string symbol, int period, datetime time);                   // throws ERS_HISTORY_UPDATE
+   int      iBarShiftNext(string symbol, int period, datetime time);
    int      iBarShiftPrevious(string symbol, int period, datetime time);               // throws ERS_HISTORY_UPDATE
 
    int      ForceMessageBox(string caption, string message, int flags);
@@ -509,7 +510,7 @@
 
 #import "stdlib1.ex4"
    string   InitFlagsToStr(int flags);
-   string   DateToStr(datetime time, string mask);
+   string   DateToStr(datetime time, string format);  string DateTimeToStr(datetime time, string format);               // Alias
    string   DeinitFlagsToStr(int flags);
    string   ErrorDescription(int error);
    string   ErrorToStr      (int error);
@@ -518,14 +519,14 @@
    string   MessageBoxCmdToStr(int cmd);
    string   ModuleTypeDescription(int type);
    string   ModuleTypeToStr      (int type);
-   string   MaMethodDescription(int method);   string MovingAverageMethodDescription(int method);                       // Alias
-   string   MaMethodToStr      (int method);   string MovingAverageMethodToStr      (int method);                       // Alias
+   string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
+   string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr      (int type);
    string   PeriodFlagToStr(int flag);
-   string   PeriodDescription(int period);          string TimeframeDescription(int timeframe);                         // Alias
-   string   PeriodToStr(int period, int execFlags); string TimeframeToStr(int timeframe, int execFlags);                // Alias
+   string   PeriodDescription(int period);            string TimeframeDescription(int timeframe);                       // Alias
+   string   PeriodToStr(int period, int execFlags);   string TimeframeToStr(int timeframe, int execFlags);              // Alias
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
    string   ShellExecuteErrorDescription(int error);
