@@ -817,9 +817,8 @@ double  N_INF;                                              // -1.#INF: negative
 #define MUTE_ERR_CONCUR_MODIFICATION            4     // ERR_CONCURRENT_MODIFICATION
 #define MUTE_ERR_SERIES_NOT_AVAILABLE           8     // ERR_SERIES_NOT_AVAILABLE
 #define MUTE_ERR_INVALID_PARAMETER             16     // ERR_INVALID_PARAMETER
-#define MUTE_ERS_HISTORY_UPDATE                32     // ERS_HISTORY_UPDATE            (Status)
-#define MUTE_ERS_EXECUTION_STOPPING            64     // ERS_EXECUTION_STOPPING        (Status)
-#define MUTE_ERS_TERMINAL_NOT_YET_READY       128     // ERS_TERMINAL_NOT_YET_READY    (Status)
+#define MUTE_ERS_EXECUTION_STOPPING            32     // ERS_EXECUTION_STOPPING        (Status)
+#define MUTE_ERS_TERMINAL_NOT_YET_READY        64     // ERS_TERMINAL_NOT_YET_READY    (Status)
 
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                            1
@@ -1578,7 +1577,7 @@ string PeriodDescription(int period=NULL) {
       case PERIOD_MN1: return("MN1");     // 1 month
       case PERIOD_Q1 : return("Q1" );     // 1 quarter
    }
-   return(StringConcatenate("unknown period (", period, ")"));
+   return(period);
 }
 
 

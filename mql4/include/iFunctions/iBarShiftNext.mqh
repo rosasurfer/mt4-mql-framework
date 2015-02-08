@@ -18,15 +18,22 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
    if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftNext(1)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER)));
 
    /*
-   int iBarShift(symbol, period, time, exact=false);
+   int iBarShift(symbol, period, time, exact=[true|false]);
       exact = TRUE : Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
       exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index
                      der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
+
+      Existieren keine entsprechenden Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw",
+      oder ist der Timeframe kein Standard-Timeframe, wird kein Fehler gemeldet.
+
+      Ist das Symbol bekannt, wird u.U. der Status ERS_HISTORY_UPDATE gemeldet.
    */
+
    int bar   = iBarShift(symbol, period, time, true);
    int error = GetLastError();
-      if (error == ERS_HISTORY_UPDATE) error = NO_ERROR;
-      if (error != NO_ERROR) return(_EMPTY_VALUE(catch("iBarShiftNext(2: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
+   if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)        // ERS_HISTORY_UPDATE ist kein Fehler
+      return(_EMPTY_VALUE(catch("iBarShiftNext(2: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
+
    if (bar != -1)
       return(bar);
 
@@ -34,24 +41,24 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
    // exact war TRUE und bar==-1: keine abdeckende Bar gefunden
    // Datenreihe holen
    datetime times[];
-   int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);
+   int bars = ArrayCopySeries(times, MODE_TIME, symbol, period);//throws ERR_ARRAY_ERROR, wenn solche Daten (noch) nicht existieren
    error    = GetLastError();
-      if (error == ERS_HISTORY_UPDATE) error = NO_ERROR;
-      if (error != NO_ERROR) return(_EMPTY_VALUE(catch("iBarShiftNext(3: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, error)));
-   if (!bars)                return(_EMPTY_VALUE(catch("iBarShiftNext(4: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, ERR_SERIES_NOT_AVAILABLE)));
+   if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)         // ERS_HISTORY_UPDATE ist kein Fehler              // aus ERR_ARRAY_ERROR => ERR_SERIES_NOT_AVAILABLE machen
+              return(_EMPTY_VALUE(catch("iBarShiftNext(3: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, ifInt(error==ERR_ARRAY_ERROR, ERR_SERIES_NOT_AVAILABLE, error))));
+   if (!bars) return(_EMPTY_VALUE(catch("iBarShiftNext(4: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, ERR_SERIES_NOT_AVAILABLE)));
 
 
    // Bars manuell überprüfen
-   if (time < times[bars-1]) {                                 // Zeitpunkt ist zu alt für die Reihe, die älteste Bar zurückgeben
+   if (time < times[bars-1]) {                                       // Zeitpunkt ist zu alt für die Reihe, die älteste Bar zurückgeben
       bar = bars-1;
    }
-   else if (time < times[0]) {                                 // Kurslücke, die nächste existierende Bar zurückgeben
+   else if (time < times[0]) {                                       // Kurslücke, die nächste existierende Bar zurückgeben
       bar   = iBarShift(symbol, period, time) - 1;
       error = GetLastError();
-      if (error == ERS_HISTORY_UPDATE) error = NO_ERROR;
-      if (error != NO_ERROR) return(_EMPTY_VALUE(catch("iBarShiftNext(5: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)     // ERS_HISTORY_UPDATE ist kein Fehler
+         return(_EMPTY_VALUE(catch("iBarShiftNext(5: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
    }
-   else /*time > times[0]*/ {                                  // Zeitpunkt ist zu jung für die Reihe
+   else /*time > times[0]*/ {                                        // Zeitpunkt ist zu jung für die Reihe
       //bar ist und bleibt -1
    }
    return(bar);
