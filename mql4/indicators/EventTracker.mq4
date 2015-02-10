@@ -603,7 +603,6 @@ bool CheckRangeBreakSignal(int index) {
 
    static bool done; if (done)
       return(false);
-   debug("CheckRangeBreakSignal(0.1)  timeframe="+ TimeframeToStr(timeframe) +"  bar="+ bar);
 
 
    // (1) Anfangs- und Endzeitpunkt der Bar und entsprechende Baroffsets innerhalb von PERIOD_H1 bestimmen
@@ -612,7 +611,7 @@ bool CheckRangeBreakSignal(int index) {
 
    for (int i=0; i<=bar; i++) {
       if (!iPreviousPeriodTimes(timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))     return(false);
-      //debug("CheckRangeBreakSignal(0.2)  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
+      //debug("CheckRangeBreakSignal(0.1)  bar="+ i +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
       openBar  = iBarShiftNext    (NULL, PERIOD_H1, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
       closeBar = iBarShiftPrevious(NULL, PERIOD_H1, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar == -1) {                                          // nicht ausreichende Daten zum Tracking: Signal deaktivieren und Rest weiterlaufen lassen
@@ -622,14 +621,13 @@ bool CheckRangeBreakSignal(int index) {
       if (openBar < closeBar)                                        // Datenlücke, weiter zu den nächsten verfügbaren Daten
          i--;
    }
-   //debug("CheckRangeBreakSignal(0.3)  bar="+ (i-1) +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
-   //debug("CheckRangeBreakSignal(0.4)  bar="+ (i-1) +"  openBar="+ openBar +"  closeBar="+ closeBar);
+   debug("CheckRangeBreakSignal(0.2)  bar="+ TimeframeDescription(timeframe) +","+ (i-1) +"  open="+ DateTimeToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateTimeToStr(closeTime.fxt, "w, D.M.Y H:I"));
 
 
    // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
    double H = iHigh(NULL, PERIOD_H1, iHighest(NULL, PERIOD_H1, MODE_HIGH, openBar-closeBar+1, closeBar));
    double L = iLow (NULL, PERIOD_H1, iLowest (NULL, PERIOD_H1, MODE_LOW , openBar-closeBar+1, closeBar));
-   debug("CheckRangeBreakSignal(0.5)  bar="+ (i-1) +"  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
+   debug("CheckRangeBreakSignal(0.3)  bar="+ TimeframeDescription(timeframe) +","+ (i-1) +"  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
 
 
 

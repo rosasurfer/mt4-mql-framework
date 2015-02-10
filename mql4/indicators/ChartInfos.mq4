@@ -2116,9 +2116,9 @@ bool ReadCustomPositionConfig() {
       ArrayResize(custom.position.conf.comments, 0);
    }
 
-   string keys[], values[], iniValue, comment, sHstValue, sHstValue1, sHstValue2, sGroupModifier, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string keys[], values[], iniValue, comment, sHstValue, sHstValue1, sHstValue2, hstValues[], sYY, sMM, sDD, sHH, sII, sSS, sGroupModifier, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double confSizeValue, confTypeValue, confValue, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
-   int    valuesSize, confSize, pos, ticket, offsetStartOfPosition=0;
+   int    valuesSize, hstValuesSize, iYY, iMM, iDD, iHH, iII, iSS, confSize, pos, ticket, offsetStartOfPosition=0;
    bool   isConfigEmpty, isConfigVirtual, isGrouped, groupByDay, groupByWeek, groupByMonth;
    if (!minLotSize) return(false);                                         // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
@@ -2158,7 +2158,7 @@ bool ReadCustomPositionConfig() {
                   continue;
 
                if (StringStartsWith(values[n], "H")) {                     // History
-                  continue;
+                  iYY=0; iMM=0; iDD=0; iHH=0; iII=0; iSS=0;
                   // H2014.01.15                                           - Trade-History eines einzelnen Tages
                   // H2014.01.15W            [GroupByDay]                  - Trade-History einer Woche (beliebiger Wochentag)
                   // H2014.01                [GroupBy[Week|Day]]           - Trade-History eines Monats
@@ -2166,12 +2166,12 @@ bool ReadCustomPositionConfig() {
                   // H2014.01.15-            [GroupBy[Month|Week|Day]]     - Trade-History ab einem Zeitpunkt
                   // H-2014.01.15            [GroupBy[Month|Week|Day]]     - Trade-History bis zu einem Zeitpunkt
                   // H2014.01.15-2014.01.18  [GroupBy[Month|Week|Day]]     - Trade-History von und bis zu einem Zeitpunkt
-                  sHstValue = StringSubstr(values[n], 1);
+                  sHstValue = StringTrimLeft(StringSubstr(values[n], 1));
 
                   // (1) auf GroupBy-Modifier prüfen
                   pos = StringFind(sHstValue, "GROUPBY");
                   if (pos >= 0) {
-                     sGroupModifier = StringTrimLeft(StringSubstr(sHstValue, pos+7));
+                     sGroupModifier = StringTrimLeft (StringSubstr   (sHstValue, pos+7 ));
                      sHstValue      = StringTrimRight(StringSubstrFix(sHstValue, 0, pos));
                      isGrouped      = true;
                      if      (sGroupModifier == "DAY"  ) groupByDay   = true;
@@ -2182,12 +2182,44 @@ bool ReadCustomPositionConfig() {
 
                   // (2) auf von-und-zu prüfen: "-"
                   pos = StringFind(sHstValue, "-");
-                  if (pos >= 0) {
-                     // "-" angegeben: splitten und beide Werte prüfen
+                  if (pos >= 0) {                                          // "-" angegeben: splitten und beide Werte prüfen
+                     sHstValue1 = StringTrimRight(StringSubstrFix(sHstValue, 0, pos));
+                     sHstValue2 = StringTrimLeft (StringSubstr   (sHstValue, pos+1 ));
+                     // 2014.01.15 hh:ii:ss | 2014.01.18 hh:ii:ss
+                     // 2014.01.15 hh:ii:ss | NULL
+                     //                NULL | 2014.01.15 hh:ii:ss
                   }
-                  else {
-                     // kein "-" angegeben
+                  else {                                                   // kein "-" angegeben
+                     if (!StringLen(sHstValue))                       return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     // 2014
+                     // 2014.01
+                     // 2014.01.15
+                     // 2014.01.15W          TODO: noch nicht implementiert
+                     hstValuesSize = Explode(sHstValue, ".", hstValues, NULL);
+                     if (hstValuesSize > 3)                           return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (hstValuesSize >= 1) {
+                        sYY = StringTrim(hstValues[0]);                    // Jahr prüfen
+                        if (StringLen(sYY) != 4)                      return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (!StringIsDigit(sYY))                      return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        iYY = StrToInteger(sYY);
+                        if (iYY < 1970 || 2015 < iYY)                 return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     }
+                     if (hstValuesSize >= 2) {
+                        sMM = StringTrim(hstValues[1]);                    // Monat prüfen
+                        if (StringLen(sMM) > 2)                       return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (!StringIsDigit(sMM))                      return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        iMM = StrToInteger(sMM);
+                        if (iMM < 1 || 12 < iMM)                      return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     }
+                     if (hstValuesSize == 3) {
+                        sDD = StringTrim(hstValues[2]);                    // Tag prüfen
+                        if (StringLen(sDD) > 2)                       return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (!StringIsDigit(sDD))                      return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (iDD < 1 || 31 < iDD)                      return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     }
                   }
+
+                  continue;
                }
 
                else if (StringStartsWith(values[n], "#")) {                // Ticket bzw. verbleibender Rest eines Tickets
