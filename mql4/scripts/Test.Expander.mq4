@@ -12,10 +12,15 @@ int __DEINIT_FLAGS__[];
 //#import "expander.debug.dll"
 #import "expander.release.dll"
 
-   string Test_StringFromStack(string value);
-   string Test_IntToHexStr(int value);
+   bool Expander_init  (int xec[]);
+   bool Expander_start (int xec[]);
+   bool Expander_deinit(int xec[]);
 
 #import
+
+
+#define I_XEC_ERROR     0
+#define I_XEC_MESSAGE   1
 
 
 /**
@@ -25,44 +30,14 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   /*ERROR_CONTEXT*/int xec[2];
 
-   Test.IntToHexStr();
+   Expander_start(xec);
+   debug("onStart(0.1)  exp.error="+ xec[I_XEC_ERROR] +"  errorMsg="+ GetString(xec[I_XEC_MESSAGE]));
+
+   Expander_start(xec);
+   debug("onStart(0.2)  exp.error="+ xec[I_XEC_ERROR] +"  errorMsg="+ GetString(xec[I_XEC_MESSAGE]));
 
 
    return(catch("onStart(1)"));
-   Test.StringFromStack();
-   Test.IntToHexStr();
-}
-
-
-/**
- * Tested einen von der DLL auf den Stack geschriebenen String.
- */
-void Test.StringFromStack() {
-   string result = "";
-
-   string in  = "........................................";    // length = 40
-   string out = Test_StringFromStack(in);
-
-   if (in == out) result = "in == out";
-   else           result = "in("+ StringLen(in) +") != out("+ StringLen(out) +"): "+ out;
-
-   debug("StringFromStack(1)  "+ result);
-}
-
-
-/**
- *
- */
-void Test.IntToHexStr() {
-   int hWnd = WindowHandleEx(NULL);
-
-   string s1 = Test_IntToHexStr(hWnd);
-   debug("IntToHexStr(1)  s1="+ StringToStr(s1));
-
-   string s2[1]; s2[0] = Test_IntToHexStr(hWnd);
-   debug("IntToHexStr(1)  s2="+ StringToStr(s2[0]));
-
-   string s3 = StringConcatenate("", IntToHexStr(hWnd));
-   debug("IntToHexStr(1)  s3="+ StringToStr(s3));
 }
