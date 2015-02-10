@@ -10,7 +10,7 @@
  *
  * Nicht mehr unterstützte MA-Typen:
  *  • SMMA - Smoothed Moving Average:        EMA anderer Periode (Relikt aus den 70'ern, läßt sich teilweise schneller als EMA berechnen)
- *  • TMA  - Triangular Moving Average:      doppelter SMA(SMA(n)), also verdoppelte Response-Zeit und verdoppeltes Lag
+ *  • TMA  - Triangular Moving Average:      doppelter SMA(SMA(n)), also smooth, aber verdoppeltes Lag (Response-Zeit)
  *
  * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
  *  • die Konfiguration "3 x D1=>H1"  wird interpretiert als "72 x H1"
