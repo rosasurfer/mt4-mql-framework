@@ -27,11 +27,9 @@ int __DEINIT_FLAGS__[];
 int onStart() {
 
    int bar = iBarShiftNext("USDZAX", 15, D'2014.06.05 18:34:23');
-
    debug("onStart()  bar="+ ifString(IsEmptyValue(bar), "EMPTY_VALUE", bar));
 
    return(catch("onStart(1)"));
-
 
 
    int result = Test();
