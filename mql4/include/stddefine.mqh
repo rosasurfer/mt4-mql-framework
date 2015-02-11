@@ -102,7 +102,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define YEARS                    YEAR
 
 
-// Wochentage, wie von DayOfWeek() und TimeDayOfWeek() zurückgegeben
+// auf Sonntag=0 basierende Wochentagskonstanten und ihre Abkürzungen (wie von DayOfWeek() und TimeDayOfWeek() zurückgegeben)
 #define SUNDAY                      0
 #define MONDAY                      1
 #define TUESDAY                     2
@@ -120,7 +120,35 @@ double  N_INF;                                              // -1.#INF: negative
 #define SAT                  SATURDAY
 
 
-// Monate, wie von Month() und TimeMonth() zurückgegeben
+// auf Januar=0 basierende Monatskonstanten und ihre Abkürzungen
+#define zJANUARY                    0
+#define zFEBRUARY                   1
+#define zMARCH                      2
+#define zAPRIL                      3
+#define zMAY                        4
+#define zJUNE                       5
+#define zJULY                       6
+#define zAUGUST                     7
+#define zSEPTEMBER                  8
+#define zOCTOBER                    9
+#define zNOVEMBER                  10
+#define zDECEMBER                  11
+
+#define zJAN                 zJANUARY
+#define zFEB                zFEBRUARY
+#define zMAR                   zMARCH
+#define zAPR                   zAPRIL
+#define zMAY                     zMAY
+#define zJUN                    zJUNE
+#define zJUL                    zJULY
+#define zAUG                  zAUGUST
+#define zSEP               zSEPTEMBER
+#define zOCT                 zOCTOBER
+#define zNOV                zNOVEMBER
+#define zDEC                zDECEMBER
+
+
+// auf Januar=1 basierende Monatskonstanten und ihre Abkürzungen (wie von Month() und TimeMonth() zurückgegeben)
 #define JANUARY                     1
 #define FEBRUARY                    2
 #define MARCH                       3
@@ -3052,6 +3080,56 @@ string StringToStr(string value) {
 
 
 /**
+ * Tests whether or not a given year is a leap year.
+ *
+ * @param  int year
+ *
+ * @return bool
+ */
+bool IsLeapYear(int year) {
+   if (year%  4 != 0) return(false);                                 // if      (year is not divisible by   4) then not leap year
+   if (year%100 != 0) return(true);                                  // else if (year is not divisible by 100) then     leap year
+   if (year%400 == 0) return(true);                                  // else if (year is     divisible by 400) then     leap year
+   return(false);                                                    // else                                        not leap year
+}
+
+
+/**
+ * Erzeugt einen datetime-Wert. Parameter, die außerhalb der gebräuchlichen Zeitgrenzen liegen, werden automatisch in die entsprechende Periode
+ * übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07' (INT_MAX) liegen.
+ *
+ * Beispiel: DateTime(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
+ *
+ * @param  int year    -
+ * @param  int month   - default: Januar
+ * @param  int day     - default: der 1. des Monats
+ * @param  int hours   - default: 0 Stunden
+ * @param  int minutes - default: 0 Minuten
+ * @param  int seconds - default: 0 Sekunden
+ *
+ * @return datetime - datetime-Wert oder NaT (Not-a-Time), falls ein Fehler auftrat
+ *
+ *
+ * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis D'2037.12.31 23:59:59'.
+ */
+datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
+   year += (Ceil(month/12.) - 1);
+   month = (12 + month%12) % 12;
+   if (!month)
+      month = 12;
+
+   string sDate = StringConcatenate(StringRight("000"+year, 4), ".", StringRight("0"+month, 2), ".01");
+   //debug("DateTime()  sDate="+ sDate +"  date("+ date +")="+ TimeToStr(date, TIME_FULL));
+
+   datetime date = StrToTime(sDate);
+   if (date < 0) return(_NaT(catch("DateTime()  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
+
+   int time = (day-1)*DAYS + hours*HOURS + minutes*MINUTES + seconds*SECONDS;
+   return(date + time);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3097,6 +3175,7 @@ void __DummyCalls() {
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    debug(NULL);
+   DateTime(NULL);
    Div(NULL, NULL);
    DummyCalls();
    EQ(NULL, NULL);
@@ -3116,6 +3195,7 @@ void __DummyCalls() {
    IsError(NULL);
    IsInfinity(NULL);
    IsLastError();
+   IsLeapYear(NULL);
    IsLogging();
    IsNaN(NULL);
    IsNaT(NULL);
