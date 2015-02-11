@@ -2161,7 +2161,7 @@ bool ReadCustomPositionConfig() {
                   iYY=0; iMM=0; iDD=0; iHH=0; iII=0; iSS=0;
                   isWeek=false; isGrouped=false; groupByDay=false; groupByWeek=false; groupByMonth=false;
                   // H2014.01.15                                           - Trade-History eines einzelnen Tages
-                  // H2014.01.15W            [GroupByDay]                  - Trade-History einer Woche (beliebiger Wochentag)
+                  // H2014.01.15W            [GroupByDay]                  - Trade-History einer Woche (beliebiger Tag der Woche)
                   // H2014.01                [GroupBy[Week|Day]]           - Trade-History eines Monats
                   // H2014                   [GroupBy[Month|Week|Day]]     - Trade-History eines Jahres
                   // H2014.01.15-            [GroupBy[Month|Week|Day]]     - Trade-History ab einem Zeitpunkt
@@ -2186,9 +2186,9 @@ bool ReadCustomPositionConfig() {
                   if (pos >= 0) {                                          // "-" angegeben: splitten und beide Werte prüfen
                      sHstValue1 = StringTrimRight(StringSubstrFix(sHstValue, 0, pos));
                      sHstValue2 = StringTrimLeft (StringSubstr   (sHstValue, pos+1 ));
-                     // 2014.01.15 hh:ii:ss | 2014.01.18 hh:ii:ss
-                     // 2014.01.15 hh:ii:ss | NULL
-                     //                NULL | 2014.01.15 hh:ii:ss
+                     // 2014.01.15 hh:ii:ss - 2014.01.18 hh:ii:ss
+                     // 2014.01.15 hh:ii:ss - NULL
+                     //                NULL - 2014.01.15 hh:ii:ss
                   }
                   else {                                                   // kein "-" angegeben
                      if (!StringLen(sHstValue))                       return(!catch("ReadCustomPositionConfig(3)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
