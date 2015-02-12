@@ -520,8 +520,8 @@
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
    string   NumberToStr(double number, string format);
-   string   OperationTypeDescription(int type);
-   string   OperationTypeToStr      (int type);
+   string   OperationTypeDescription(int type);       string OrderTypeDescription(int type);                            // Alias
+   string   OperationTypeToStr      (int type);       string OrderTypeToStr      (int type);                            // Alias
    string   PeriodFlagToStr(int flag);
    string   PeriodDescription(int period);            string TimeframeDescription(int timeframe);                       // Alias
    string   PeriodToStr(int period, int execFlags);   string TimeframeToStr(int timeframe, int execFlags);              // Alias

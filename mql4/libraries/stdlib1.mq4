@@ -7530,6 +7530,14 @@ string OperationTypeToStr(int type) {
 
 
 /**
+ * Alias
+ */
+string OrderTypeToStr(int type) {
+   return(OperationTypeToStr(type));
+}
+
+
+/**
  * Gibt die Beschreibung eines Operation-Types zurück.
  *
  * @param  int type - Operation-Type
@@ -7549,6 +7557,14 @@ string OperationTypeDescription(int type) {
       case OP_UNDEFINED: return("undefined" );
    }
    return(_emptyStr(catch("OperationTypeDescription()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+string OrderTypeDescription(int type) {
+   return(OperationTypeDescription(type));
 }
 
 

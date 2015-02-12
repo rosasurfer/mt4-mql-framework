@@ -2718,10 +2718,35 @@ bool ExtractPosition(double lotsize, int type, double value,
       if (!hstCache) {
          datetime hstFrom = lotsize;
          datetime hstTo   = value;
+
+         // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int orders = OrdersHistoryTotal();
+         int sortKeys[][3], n;                                       // {CloseTime, OpenTime, Ticket}
+         ArrayResize(sortKeys, orders);
+
+         for (i=0; i < orders; i++) {
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+               orders = i;
+               break;
+            }
+            if (OrderType() == OP_BALANCE) {
+               if (!StringICompare(OrderComment(), "Ex Dividend US500")) continue;
+            }
+            else if (OrderSymbol() != Symbol())                          continue;
+            else if (OrderType() > OP_SELL)                              continue;
+
+            sortKeys[n][0] = OrderCloseTime();
+            sortKeys[n][1] = OrderOpenTime();
+            sortKeys[n][2] = OrderTicket();
+            n++;
+         }
+         orders = n;
+         ArrayResize(sortKeys, orders);
+         SortClosedTickets(sortKeys);
+
+
 
          debug("ExtractPosition()  from="+ TimeToStr(hstFrom) +"  to="+ TimeToStr(hstTo) +"  history="+ orders +"  cache="+ _int(hstCache));
-
          hstCache = EMPTY_VALUE;
       }
       else {
@@ -4056,6 +4081,7 @@ string InputsToStr() {
    int      SearchStringArrayI(string haystack[], string needle);
    string   ShortAccountCompany();
    bool     StringEndsWith(string object, string postfix);
+   bool     StringICompare(string a, string b);
    bool     StringIEndsWith(string object, string postfix);
    string   StringToUpper(string value);
    string   UninitializeReasonToStr(int reason);

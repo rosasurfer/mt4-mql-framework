@@ -7,7 +7,7 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdlib.mqh>
 #include <win32api.mqh>
-#include <iFunctions/iBarShiftNext.mqh>
+//#include <iFunctions/iBarShiftNext.mqh>
 //#include <iFunctions/iBarShiftPrevious.mqh>
 //#include <iFunctions/iPreviousPeriodTimes.mqh>
 
@@ -26,8 +26,18 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   int bar = iBarShiftNext("USDZAX", 15, D'2014.06.05 18:34:23');
-   debug("onStart()  bar="+ ifString(IsEmptyValue(bar), "EMPTY_VALUE", bar));
+   // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
+   int orders = OrdersHistoryTotal();
+
+   for (int i=0; i < orders; i++) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))        // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+         break;
+
+      if (OrderType() == OP_BALANCE) {
+         debug("onStart()  ticket="+ OrderTicket() +"  type="+ OrderTypeToStr(OrderType()) +"  symbol="+ StringToStr(OrderSymbol()) +"  openTime="+ TimeToStr(OrderOpenTime()) +"  closeTime="+ TimeToStr(OrderCloseTime()) +"  comment="+ StringToStr(OrderComment()));
+      }
+   }
+
 
    return(catch("onStart(1)"));
 
