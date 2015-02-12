@@ -10012,8 +10012,8 @@ Color of the opening arrow on the chart. If parameter is omitted or has the valu
       caption=OrdersHistoryTotal()
       type=int
       <content>
-Returns the number of closed orders in the account history loaded into the terminal. The history list size depends on
-the current settings of the &quot;Account history&quot; tab of the terminal.
+			Returns the number of closed orders currently loaded into the terminal. The history size depends on the current settings of the &quot;Account history&quot; tab 
+			of the terminal.
       </content>
       <example>
   // retrieving info from trade history
@@ -10052,7 +10052,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       caption=OrdersTotal()
       type=int
       <content>
-      Returns the number of currently open orders (pending and market orders).<br/>
+      Returns the number of currently open order tickets (pending orders and open positions).<br/>
       </content>
       <example>
    int hFile = FileOpen("OrdersReport.csv", FILE_WRITE|FILE_CSV, "\t");
