@@ -52,7 +52,7 @@ int onInit() {
          case 'L': orderType = OP_BUY;  Close.Direction = "long";  break;
          case 'S': orderType = OP_SELL; Close.Direction = "short"; break;
          default:
-            return(HandleScriptError("onInit(1)", "Invalid parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(HandleScriptError("onInit(1)", "Invalid parameter Close.Direction = \""+ Close.Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
       }
    }
 
@@ -62,10 +62,10 @@ int onInit() {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0) {
          if (!StringIsDigit(sValue))
-            return(HandleScriptError("onInit(2)", "Invalid parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(HandleScriptError("onInit(2)", "Invalid parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
          if (iValue <= 0)
-            return(HandleScriptError("onInit(3)", "Invalid parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(HandleScriptError("onInit(3)", "Invalid parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(orderTickets, iValue);
       }
    }
@@ -76,10 +76,10 @@ int onInit() {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0) {
          if (!StringIsDigit(sValue))
-            return(HandleScriptError("onInit(4)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(HandleScriptError("onInit(4)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMETER));
          iValue = StrToInteger(sValue);
          if (iValue <= 0)
-            return(HandleScriptError("onInit(5)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMVALUE));
+            return(HandleScriptError("onInit(5)", "Invalid parameter Close.MagicNumbers = \""+ Close.MagicNumbers +"\"", ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(orderMagics, iValue);
       }
    }

@@ -46,19 +46,19 @@ int onInit() {
          break;
       }
    }
-   if (i >= size) return(catch("onInit(1)  missing script parameter (command)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (i >= size) return(catch("onInit(1)  missing script parameter (command)", ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) Scriptparameter validieren, Format: "LFX:{iTicket}:{sAction}", z.B. "LFX:428371265:open"
-   if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)  invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)  invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMETER));
    int pos = StringFind(command, ":", 4);
-   if (pos == -1)                                   return(catch("onInit(3)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (pos == -1)                                   return(catch("onInit(3)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMETER));
    string sValue = StringSubstrFix(command, 4, pos-4);
-   if (!StringIsDigit(sValue))                      return(catch("onInit(4)  invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (!StringIsDigit(sValue))                      return(catch("onInit(4)  invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMETER));
    lfxTicket = StrToInteger(sValue);
-   if (!lfxTicket)                                  return(catch("onInit(5)  invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (!lfxTicket)                                  return(catch("onInit(5)  invalid parameter command = \""+ command +"\" (ticket)", ERR_INVALID_INPUT_PARAMETER));
    action = StringToLower(StringSubstr(command, pos+1));
-   if (action!="open" && action!="close")           return(catch("onInit(6)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMVALUE));
+   if (action!="open" && action!="close")           return(catch("onInit(6)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMETER));
 
 
    // (3) ggf. Leverage-Konfiguration einlesen und validieren
@@ -104,7 +104,7 @@ int onDeinit() {
 int onStart() {
    // Order holen
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
-   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMVALUE)); }
+   if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMETER)); }
 
    // Action ausführen
    if      (action == "open" ) OpenOrder    (lfxOrder);
