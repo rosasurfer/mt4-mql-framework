@@ -69,7 +69,7 @@ bool   mode.remote;                                                  //   oder n
                                                                      //   Orderänderungen werden nicht automatisch erkannt.
 
 // individuelle Positionskonfiguration
-double custom.position.conf      [][3];                              // Format siehe ReadCustomPositionConfig()
+double custom.position.conf      [][4];                              // Format siehe ReadCustomPositionConfig()
 string custom.position.conf.comments[];
 
 
@@ -1913,7 +1913,7 @@ bool AnalyzePositions() {
    SetLastError(oldError);
 
    int    type, confLine;
-   double size, value, customLongPosition, customShortPosition, customTotalPosition, customRealized, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
+   double size, value, hstCache, customLongPosition, customShortPosition, customTotalPosition, customRealized, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    bool   isVirtual;
    int    customTickets    [];
    int    customTypes      [];
@@ -1927,9 +1927,10 @@ bool AnalyzePositions() {
    int confSize = ArrayRange(custom.position.conf, 0);
 
    for (i=0, confLine=0; i < confSize; i++) {
-      size  = custom.position.conf[i][0];
-      type  = custom.position.conf[i][1];
-      value = custom.position.conf[i][2];
+      size     = custom.position.conf[i][0];
+      type     = custom.position.conf[i][1];
+      value    = custom.position.conf[i][2];
+      hstCache = custom.position.conf[i][3];
 
       if (!type) {                                                      // type==NULL => "Zeilenende"
          // (2.3) individuelle Position zusammengefaßt speichern: Long + Short + Hedged
@@ -1952,9 +1953,12 @@ bool AnalyzePositions() {
          confLine++;
          continue;
       }
-      if (!ExtractPosition(size, type, value, _longPosition,      _shortPosition,      _totalPosition,                                    tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
-                           isVirtual,         customLongPosition, customShortPosition, customTotalPosition, customRealized, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
+      if (!ExtractPosition(size, type, value,
+                           _longPosition,      _shortPosition,      _totalPosition,                                          tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
+                           isVirtual, hstCache,
+                           customLongPosition, customShortPosition, customTotalPosition, customRealized, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
          return(false);
+      custom.position.conf[i][3] = hstCache;
    }
 
    // (2.4) reguläre (Rest-)Positionen einzeln speichern: Long, Short, Hedged
@@ -2609,13 +2613,14 @@ bool ReadCustomPositionConfig() {
  *
  * @param  _IN_OUT_ mixed  vars       - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
  * @param  _IN_OUT_ bool   isVirtual  - ob die extrahierte Position virtuell ist
+ * @param  _IN_OUT_ double hstCache   - Zwischenspeicher für historische Werte
  * @param  _IN_OUT_ mixed  customVars - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
  *
  * @return bool - Erfolgsstatus
  */
 bool ExtractPosition(double lotsize, int type, double value,
                      double       &longPosition, double       &shortPosition, double       &totalPosition,                                               int       &tickets[], int       &types[], double       &lots[], double       &openPrices[], double       &commissions[], double       &swaps[], double       &profits[],
-                     bool            &isVirtual,
+                     bool            &isVirtual, double &hstCache,
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, double &customRealized, double &customEquity, int &customTickets[], int &customTypes[], double &customLots[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
    int sizeTickets = ArraySize(tickets);
 
@@ -2710,11 +2715,21 @@ bool ExtractPosition(double lotsize, int type, double value,
    }
 
    else if (type == TYPE_HISTORY) {
-      // skip: not yet implemented
-      static bool done;
-      if (!done) {
-         debug("ExtractPosition()  type=TYPE_HISTORY  lotsize="+ TimeToStr(lotsize) +"  value="+ TimeToStr(value));
-         done = true;
+      if (!hstCache) {
+         datetime hstFrom = lotsize;
+         datetime hstTo   = value;
+         int orders = OrdersHistoryTotal();
+
+         debug("ExtractPosition()  from="+ TimeToStr(hstFrom) +"  to="+ TimeToStr(hstTo) +"  history="+ orders +"  cache="+ _int(hstCache));
+
+         hstCache = EMPTY_VALUE;
+      }
+      else {
+         static bool done;
+         if (!done) {
+            //debug("ExtractPosition()  type=TYPE_HISTORY  from="+ TimeToStr(lotsize) +"  to="+ TimeToStr(value) +"  cache="+ _int(hstCache));
+            done = true;
+         }
       }
    }
 
@@ -2764,7 +2779,7 @@ bool ExtractPosition(double lotsize, int type, double value,
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(EMPTY, type, value,
                                        longPosition,       shortPosition,       totalPosition,                                     tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
-                                       isVirtual,
+                                       isVirtual, hstCache,
                                        customLongPosition, customShortPosition, customTotalPosition, customRealized, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
                      return(false);
                }
