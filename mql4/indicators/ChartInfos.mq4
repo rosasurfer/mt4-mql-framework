@@ -2066,26 +2066,26 @@ int SearchMagicNumber(int array[], int number) {
  * Elemente im Format {Value, Type, Value}.  Ein NULL-Type-Element {*, NULL, *} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer eingelesenen
  * Konfiguration ist die Größe des Arrays immer != 0. Konfigurierte Zeilenkommentare werden in custom.position.conf.comments[] gespeichert.
  *
- *  Notation:                                                                                                          Arraydarstellung:                                       Konstanten:
- *  ---------                                                                                                          -----------------                                       -----------
- *   0.1#123456                                      - O.1 Lot eines Tickets (1)                                       {              0.1, 123456       , NULL             }   EMPTY:        -1
- *      #123456                                      - komplettes Ticket oder verbleibender Rest eines Tickets         {            EMPTY, 123456       , NULL             }   NULL:          0
- *   0.2L                                            - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)    {              0.2, TYPE_LONG    , NULL             }   TYPE_LONG:     1
- *   0.3S1.2345                                      - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2) {              0.3, TYPE_SHORT   , 1.2345           }   TYPE_SHORT:    2
- *      L                                            - ohne Lotsize: alle verbleibenden Long-Positionen                {            EMPTY, TYPE_LONG    , NULL             }   TYPE_HEDGE:    3
- *      S                                            - ohne Lotsize: alle verbleibenden Short-Positionen               {            EMPTY, TYPE_SHORT   , NULL             }   TYPE_HISTORY:  4
- *   H2014.01.15                                     - Trade-History eines einzelnen Tages                             {D2014.01.15 00:00, TYPE_HISTORY , D2014.01.15 23:59}   TYPE_REALIZED: 5
- *   H2014.01.15W[GroupByDay]                        - Trade-History einer Woche (beliebiger Wochentag) (3)            {D2014.01.12 00:00, TYPE_HISTORY , D2014.01.18 23:59}   TYPE_EQUITY:   6
- *   H2014.01[GroupBy[Week|Day]]                     - Trade-History eines Monats (3)                                  {D2014.01.01 00:00, TYPE_HISTORY , D2014.01.31 23:59}
- *   H2014[GroupBy[Month|Week|Day]]                  - Trade-History eines Jahres (3)                                  {D2014.01.01 00:00, TYPE_HISTORY , D2014.12.31 23:59}
- *   H2014.01.15-[GroupBy[Month|Week|Day]]           - Trade-History ab einem Zeitpunkt (3)(4)                         {D2014.01.15 00:00, TYPE_HISTORY , NULL             }
- *   H-2014.01.15[GroupBy[Month|Week|Day]]           - Trade-History bis zu einem Zeitpunkt (3)(4)                     {             NULL, TYPE_HISTORY , D2014.01.15 23:59}
- *   H2014.01.15-2014.01.18[GroupBy[Month|Week|Day]] - Trade-History von und bis zu einem Zeitpunkt (3)(4)             {D2014.01.15 00:00, TYPE_HISTORY , D2014.01.18 23:59}
- *   12.34                                           - dem P/L einer Position zuzuschlagender Betrag                   {             NULL, TYPE_REALIZED, 12.34            }
- *   EQ123.00                                        - für Equityberechnungen zu verwendender Wert                     {             NULL, TYPE_EQUITY  , 123.00           }
+ *  Notation:                                                                                                              Arraydarstellung:                                     Konstanten:
+ *  ---------                                                                                                              -----------------                                     -----------
+ *   0.1#123456                                          - O.1 Lot eines Tickets (1)                                       {             0.1, 123456       , NULL            }   EMPTY:        -1
+ *      #123456                                          - komplettes Ticket oder verbleibender Rest eines Tickets         {           EMPTY, 123456       , NULL            }   NULL:          0
+ *   0.2L                                                - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)    {             0.2, TYPE_LONG    , NULL            }   TYPE_LONG:     1
+ *   0.3S1.2345                                          - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2) {             0.3, TYPE_SHORT   , 1.2345          }   TYPE_SHORT:    2
+ *      L                                                - ohne Lotsize: alle verbleibenden Long-Positionen                {           EMPTY, TYPE_LONG    , NULL            }   TYPE_HEDGE:    3
+ *      S                                                - ohne Lotsize: alle verbleibenden Short-Positionen               {           EMPTY, TYPE_SHORT   , NULL            }   TYPE_HISTORY:  4
+ *   H2014.01.15                                         - Trade-History eines einzelnen Tages                             {2014.01.15 00:00, TYPE_HISTORY , 2014.01.15 23:59}   TYPE_REALIZED: 5
+ *   H2014.01.15W           [Group By Day]               - Trade-History einer Woche (beliebiger Wochentag) (3)            {2014.01.12 00:00, TYPE_HISTORY , 2014.01.18 23:59}   TYPE_EQUITY:   6
+ *   H2014.01               [Group By [Week|Day]]        - Trade-History eines Monats (3)                                  {2014.01.01 00:00, TYPE_HISTORY , 2014.01.31 23:59}
+ *   H2014                  [Group By [Month|Week|Day]]  - Trade-History eines Jahres (3)                                  {2014.01.01 00:00, TYPE_HISTORY , 2014.12.31 23:59}
+ *   H2014.01.15-           [Group By [Month|Week|Day]]  - Trade-History ab einem Zeitpunkt (3)(4)                         {2014.01.15 00:00, TYPE_HISTORY , NULL            }
+ *   H-2014.01.15           [Group By [Month|Week|Day]]  - Trade-History bis zu einem Zeitpunkt (3)(4)                     {            NULL, TYPE_HISTORY , 2014.01.15 23:59}
+ *   H2014.01.15-2014.01.18 [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem Zeitpunkt (3)(4)             {2014.01.15 00:00, TYPE_HISTORY , 2014.01.18 23:59}
+ *   12.34                                               - dem P/L einer Position zuzuschlagender Betrag                   {            NULL, TYPE_REALIZED, 12.34           }
+ *   EQ123.00                                            - für Equityberechnungen zu verwendender Wert                     {            NULL, TYPE_EQUITY  , 123.00          }
  *
- *   Kommentare (Text nach dem ersten Semikolon ";") - werden als Beschreibung angezeigt
- *   Kommentare in Kommentaren (nach weiterem ";")   - werden ignoriert
+ *   Kommentare (Text nach dem ersten Semikolon ";")     - werden als Beschreibung angezeigt
+ *   Kommentare in Kommentaren (nach weiterem ";")       - werden ignoriert
  *
  *  Beispiel:
  *  ---------
@@ -2120,7 +2120,7 @@ bool ReadCustomPositionConfig() {
       ArrayResize(custom.position.conf.comments, 0);
    }
 
-   string   keys[], values[], iniValue, comment, sHstValue, sHstValue1, sHstValue2, hstValues[], sTime, sYY, sMM, sDD, sHH, sII, sSS, sGroupModifier, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string   keys[], values[], iniValue, comment, sHstValue, sHstValue1, sHstValue2, hstValues[], sTime, sYY, sMM, sDD, sHH, sII, sSS, sGroupClause, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   confSizeValue, confTypeValue, confValue, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int      valuesSize, hstValuesSize, iYY, iMM, iDD, iHH, iII, iSS, confSize, pos, ticket, offsetStartOfPosition=0;
    datetime dtHstFrom, dtHstTo;
@@ -2166,24 +2166,26 @@ bool ReadCustomPositionConfig() {
                   iYY=0; iMM=0; iDD=0; iHH=0; iII=0; iSS=0;
                   isWeek=false; isGrouped=false; groupByDay=false; groupByWeek=false; groupByMonth=false;
                   // H2014.01.15                                           - Trade-History eines einzelnen Tages
-                  // H2014.01.15W            [GroupByDay]                  - Trade-History einer Woche (beliebiger Tag der Woche)
-                  // H2014.01                [GroupBy[Week|Day]]           - Trade-History eines Monats
-                  // H2014                   [GroupBy[Month|Week|Day]]     - Trade-History eines Jahres
-                  // H2014.01.15-            [GroupBy[Month|Week|Day]]     - Trade-History ab einem Zeitpunkt
-                  // H-2014.01.15            [GroupBy[Month|Week|Day]]     - Trade-History bis zu einem Zeitpunkt
-                  // H2014.01.15-2014.01.18  [GroupBy[Month|Week|Day]]     - Trade-History von und bis zu einem Zeitpunkt
+                  // H2014.01.15W            [Group By Day]                - Trade-History einer Woche (beliebiger Tag der Woche)
+                  // H2014.01                [Group By [Week|Day]]         - Trade-History eines Monats
+                  // H2014                   [Group By [Month|Week|Day]]   - Trade-History eines Jahres
+                  // H2014.01.15-            [Group By [Month|Week|Day]]   - Trade-History ab einem Zeitpunkt
+                  // H-2014.01.15            [Group By [Month|Week|Day]]   - Trade-History bis zu einem Zeitpunkt
+                  // H2014.01.15-2014.01.18  [Group By [Month|Week|Day]]   - Trade-History von und bis zu einem Zeitpunkt
                   sHstValue = StringTrim(StringSubstr(values[n], 1));
 
-                  // (1) auf GroupBy-Modifier prüfen
-                  pos = StringFind(sHstValue, "GROUPBY");
+                  // (1) auf Group-By-Modifier prüfen
+                  pos = StringFind(sHstValue, "GROUP ");
                   if (pos >= 0) {
-                     sGroupModifier = StringTrim(StringSubstr   (sHstValue, pos+7 ));
-                     sHstValue      = StringTrim(StringSubstrFix(sHstValue, 0, pos));
-                     isGrouped      = true;
-                     if      (sGroupModifier == "DAY"  ) groupByDay   = true;
-                     else if (sGroupModifier == "WEEK" ) groupByWeek  = true;
-                     else if (sGroupModifier == "MONTH") groupByMonth = true;
-                     else                                              return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (unknown \"group by\" modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     sGroupClause = StringTrim(StringSubstr   (sHstValue, pos+6 ));
+                     sHstValue    = StringTrim(StringSubstrFix(sHstValue, 0, pos));
+                     if (!StringStartsWith(sGroupClause, "BY "))          return(!catch("ReadCustomPositionConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (group clause in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     sGroupClause = StringTrim(StringSubstr(sGroupClause, 3));
+                     isGrouped    = true;
+                     if      (sGroupClause == "DAY"  ) groupByDay   = true;
+                     else if (sGroupClause == "WEEK" ) groupByWeek  = true;
+                     else if (sGroupClause == "MONTH") groupByMonth = true;
+                     else                                                 return(!catch("ReadCustomPositionConfig(3)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (group clause in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   }
 
                   // (2) auf von-und-zu prüfen: "-"
@@ -2192,188 +2194,239 @@ bool ReadCustomPositionConfig() {
                      // "-" angegeben: splitten und beide Werte prüfen
                      sHstValue1 = StringTrim(StringSubstrFix(sHstValue, 0, pos));
                      sHstValue2 = StringTrim(StringSubstr   (sHstValue, pos+1 ));
+                     if (StringStartsWith(sHstValue2, "H"))
+                        sHstValue2 = StringTrim(StringSubstr(sHstValue2, 1));
                      // 2014.01.15 hh:ii:ss - 2014.01.18 hh:ii:ss
                      // 2014.01.15 hh:ii:ss - NULL
                      //                NULL - 2014.01.15 hh:ii:ss
-                     if (!StringLen(sHstValue1)) {                     // "von"-Zeitpunkt prüfen
+                     if (!StringLen(sHstValue1)) {                        // "von"-Zeitpunkt prüfen
                         dtHstFrom = NULL;
                      }
                      else {
+                        // 2014
+                        // 2014.01
+                        // 2014.01.15
+                        // 2014.01.15W
+                        // 2014.01.15 12:34
+                        // 2014.01.15 12:34:56
                         hstValuesSize = Explode(sHstValue1, ".", hstValues, NULL);
-                        if (hstValuesSize != 3)                        return(!catch("ReadCustomPositionConfig(3)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        sYY = StringTrim(hstValues[0]);                // Jahr prüfen
-                        if (StringLen(sYY) != 4)                       return(!catch("ReadCustomPositionConfig(4)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sYY))                       return(!catch("ReadCustomPositionConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        iYY = StrToInteger(sYY);
-                        if (iYY < 1970 || 2015 < iYY)                  return(!catch("ReadCustomPositionConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                        sMM = StringTrim(hstValues[1]);                // Monat prüfen
-                        if (StringLen(sMM) > 2)                        return(!catch("ReadCustomPositionConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sMM))                       return(!catch("ReadCustomPositionConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        iMM = StrToInteger(sMM);
-                        if (iMM < 1 || 12 < iMM)                       return(!catch("ReadCustomPositionConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                        hstValues[2] = StringTrim(hstValues[2]);
-                        if (StringLen(hstValues[2]) <= 2) {            // nur Tag
-                           sDD = hstValues[2];
+                        if (hstValuesSize > 3)                            return(!catch("ReadCustomPositionConfig(4)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (hstValuesSize >= 1) {
+                           sYY = StringTrim(hstValues[0]);                // Jahr prüfen
+                           if (StringLen(sYY) != 4)                       return(!catch("ReadCustomPositionConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           if (!StringIsDigit(sYY))                       return(!catch("ReadCustomPositionConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           iYY = StrToInteger(sYY);
+                           if (iYY < 1970 || 2037 < iYY)                  return(!catch("ReadCustomPositionConfig(7)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         }
-                        else {                                         // Tag + Uhrzeit
-                           pos = StringFind(hstValues[2], " ");
-                           if (pos == -1)                              return(!catch("ReadCustomPositionConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           sDD   = StringTrim(StringSubstrFix(hstValues[2], 0, pos));
-                           sTime = StringTrim(StringSubstr   (hstValues[2], pos+1));
+                        if (hstValuesSize >= 2) {
+                           sMM = StringTrim(hstValues[1]);                // Monat prüfen
+                           if (StringLen(sMM) > 2)                        return(!catch("ReadCustomPositionConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           if (!StringIsDigit(sMM))                       return(!catch("ReadCustomPositionConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           iMM = StrToInteger(sMM);
+                           if (iMM < 1 || 12 < iMM)                       return(!catch("ReadCustomPositionConfig(10)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         }
-                                                                       // Tag prüfen
-                        if (!StringIsDigit(sDD))                       return(!catch("ReadCustomPositionConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (iDD < 1 || 31 < iDD)                       return(!catch("ReadCustomPositionConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (iDD > 28) {
-                           if (iMM == FEB) {
-                              if (iDD > 29)                            return(!catch("ReadCustomPositionConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              if (!IsLeapYear(iYY))                    return(!catch("ReadCustomPositionConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (hstValuesSize == 3) {
+                           hstValues[2] = StringTrim(hstValues[2]);
+                           if (StringEndsWith(hstValues[2], "W")) {       // Tag + Woche
+                              isWeek = true;
+                              sDD    = StringTrim(StringLeft(hstValues[2], -1));
                            }
-                           else if (iDD==31) /*&&*/ if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)
-                                                                       return(!catch("ReadCustomPositionConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        }
-
-                        if (StringLen(sTime) > 0) {                    // Zeit prüfen
-                           // hh:ii:ss
-                           hstValuesSize = Explode(sTime, ":", hstValues, NULL);
-                           if (hstValuesSize < 2 || 3 < hstValuesSize) return(!catch("ReadCustomPositionConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                           sHH = StringTrim(hstValues[0]);             // Stunden
-                           if (StringLen(sHH) > 2)                     return(!catch("ReadCustomPositionConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           if (!StringIsDigit(sHH))                    return(!catch("ReadCustomPositionConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           iHH = StrToInteger(sHH);
-                           if (iHH < 0 || 23 < iHH)                    return(!catch("ReadCustomPositionConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                           sII = StringTrim(hstValues[1]);             // Minuten
-                           if (StringLen(sII) > 2)                     return(!catch("ReadCustomPositionConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           if (!StringIsDigit(sII))                    return(!catch("ReadCustomPositionConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           iII = StrToInteger(sII);
-                           if (iII < 0 || 59 < iII)                    return(!catch("ReadCustomPositionConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                           if (hstValuesSize == 3) {
-                              sSS = StringTrim(hstValues[2]);          // Sekunden
-                              if (StringLen(sSS) > 2)                  return(!catch("ReadCustomPositionConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              if (!StringIsDigit(sSS))                 return(!catch("ReadCustomPositionConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              iSS = StrToInteger(sSS);
-                              if (iSS < 0 || 59 < iSS)                 return(!catch("ReadCustomPositionConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           else if (StringLen(hstValues[2]) <= 2) {       // nur Tag
+                              sDD = hstValues[2];
                            }
+                           else {                                         // Tag + Uhrzeit
+                              pos = StringFind(hstValues[2], " ");
+                              if (pos == -1)                              return(!catch("ReadCustomPositionConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              sDD   = StringTrim(StringSubstrFix(hstValues[2], 0, pos));
+                              sTime = StringTrim(StringSubstr   (hstValues[2], pos+1));
+                           }
+                                                                          // Tag prüfen
+                           if (!StringIsDigit(sDD))                       return(!catch("ReadCustomPositionConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           iDD = StrToInteger(sDD);
+                           if (iDD < 1 || 31 < iDD)                       return(!catch("ReadCustomPositionConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           if (iDD > 28) {
+                              if (iMM == FEB) {
+                                 if (iDD > 29)                            return(!catch("ReadCustomPositionConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                 if (!IsLeapYear(iYY))                    return(!catch("ReadCustomPositionConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              }
+                              else if (iDD==31) /*&&*/ if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)
+                                                                          return(!catch("ReadCustomPositionConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           }
+
+                           if (StringLen(sTime) > 0) {                    // Zeit prüfen
+                              // hh:ii:ss
+                              hstValuesSize = Explode(sTime, ":", hstValues, NULL);
+                              if (hstValuesSize < 2 || 3 < hstValuesSize) return(!catch("ReadCustomPositionConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+                              sHH = StringTrim(hstValues[0]);             // Stunden
+                              if (StringLen(sHH) > 2)                     return(!catch("ReadCustomPositionConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              if (!StringIsDigit(sHH))                    return(!catch("ReadCustomPositionConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              iHH = StrToInteger(sHH);
+                              if (iHH < 0 || 23 < iHH)                    return(!catch("ReadCustomPositionConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+                              sII = StringTrim(hstValues[1]);             // Minuten
+                              if (StringLen(sII) > 2)                     return(!catch("ReadCustomPositionConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              if (!StringIsDigit(sII))                    return(!catch("ReadCustomPositionConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              iII = StrToInteger(sII);
+                              if (iII < 0 || 59 < iII)                    return(!catch("ReadCustomPositionConfig(23)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+                              if (hstValuesSize == 3) {
+                                 sSS = StringTrim(hstValues[2]);          // Sekunden
+                                 if (StringLen(sSS) > 2)                  return(!catch("ReadCustomPositionConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                 if (!StringIsDigit(sSS))                 return(!catch("ReadCustomPositionConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                 iSS = StrToInteger(sSS);
+                                 if (iSS < 0 || 59 < iSS)                 return(!catch("ReadCustomPositionConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              }
+                           }
+                        }
+                        if (!iMM) {                                       // 2014-:       von Jahresbeginn
+                           iMM = 1;
+                           iDD = 1;
+                        }
+                        else if (!iDD) {                                  // 2014.01-:    von Monatsbeginn
+                           iDD = 1;
                         }
                         dtHstFrom = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
+                        if (isWeek)                                       // 2014.01.15W: von Wochenbeginn
+                           dtHstFrom -= (TimeDayOfWeek(dtHstFrom)+6)%7 * DAYS;
                      }
 
-                     if (!StringLen(sHstValue2)) {                     // "bis"-Zeitpunkt prüfen
+                     if (!StringLen(sHstValue2)) {                        // "bis"-Zeitpunkt prüfen
                         dtHstTo = NULL;
                      }
                      else {
+                        iYY=0; iMM=0; iDD=0; iHH=23; iII=59; iSS=59; isWeek=false; sTime="";
+                        // 2014
+                        // 2014.01
+                        // 2014.01.15
+                        // 2014.01.15W
+                        // 2014.01.15 12:34
+                        // 2014.01.15 12:34:56
                         hstValuesSize = Explode(sHstValue2, ".", hstValues, NULL);
-                        if (hstValuesSize != 3)                        return(!catch("ReadCustomPositionConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        sYY = StringTrim(hstValues[0]);                // Jahr prüfen
-                        if (StringLen(sYY) != 4)                       return(!catch("ReadCustomPositionConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sYY))                       return(!catch("ReadCustomPositionConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        iYY = StrToInteger(sYY);
-                        if (iYY < 1970 || 2015 < iYY)                  return(!catch("ReadCustomPositionConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                        sMM = StringTrim(hstValues[1]);                // Monat prüfen
-                        if (StringLen(sMM) > 2)                        return(!catch("ReadCustomPositionConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sMM))                       return(!catch("ReadCustomPositionConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        iMM = StrToInteger(sMM);
-                        if (iMM < 1 || 12 < iMM)                       return(!catch("ReadCustomPositionConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                        hstValues[2] = StringTrim(hstValues[2]);
-                        if (StringLen(hstValues[2]) <= 2) {            // nur Tag
-                           sDD = hstValues[2];
+                        if (hstValuesSize > 3)                            return(!catch("ReadCustomPositionConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (hstValuesSize >= 1) {
+                           sYY = StringTrim(hstValues[0]);                // Jahr prüfen
+                           if (StringLen(sYY) != 4)                       return(!catch("ReadCustomPositionConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           if (!StringIsDigit(sYY))                       return(!catch("ReadCustomPositionConfig(29)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           iYY = StrToInteger(sYY);
+                           if (iYY < 1970 || 2037 < iYY)                  return(!catch("ReadCustomPositionConfig(30)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         }
-                        else {                                         // Tag + Uhrzeit
-                           pos = StringFind(hstValues[2], " ");
-                           if (pos == -1)                              return(!catch("ReadCustomPositionConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           sDD   = StringTrim(StringSubstrFix(hstValues[2], 0, pos));
-                           sTime = StringTrim(StringSubstr   (hstValues[2], pos+1));
+                        if (hstValuesSize >= 2) {
+                           sMM = StringTrim(hstValues[1]);                // Monat prüfen
+                           if (StringLen(sMM) > 2)                        return(!catch("ReadCustomPositionConfig(31)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           if (!StringIsDigit(sMM))                       return(!catch("ReadCustomPositionConfig(32)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           iMM = StrToInteger(sMM);
+                           if (iMM < 1 || 12 < iMM)                       return(!catch("ReadCustomPositionConfig(33)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         }
-                                                                       // Tag prüfen
-                        if (!StringIsDigit(sDD))                       return(!catch("ReadCustomPositionConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (iDD < 1 || 31 < iDD)                       return(!catch("ReadCustomPositionConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (iDD > 28) {
-                           if (iMM == FEB) {
-                              if (iDD > 29)                            return(!catch("ReadCustomPositionConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              if (!IsLeapYear(iYY))                    return(!catch("ReadCustomPositionConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (hstValuesSize == 3) {
+                           hstValues[2] = StringTrim(hstValues[2]);
+                           if (StringEndsWith(hstValues[2], "W")) {       // Tag + Woche
+                              isWeek = true;
+                              sDD    = StringTrim(StringLeft(hstValues[2], -1));
                            }
-                           else if (iDD==31) /*&&*/ if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)
-                                                                       return(!catch("ReadCustomPositionConfig(38)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        }
-
-                        if (StringLen(sTime) > 0) {                    // Zeit prüfen
-                           // hh:ii:ss
-                           hstValuesSize = Explode(sTime, ":", hstValues, NULL);
-                           if (hstValuesSize < 2 || 3 < hstValuesSize) return(!catch("ReadCustomPositionConfig(39)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                           sHH = StringTrim(hstValues[0]);             // Stunden
-                           if (StringLen(sHH) > 2)                     return(!catch("ReadCustomPositionConfig(40)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           if (!StringIsDigit(sHH))                    return(!catch("ReadCustomPositionConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           iHH = StrToInteger(sHH);
-                           if (iHH < 0 || 23 < iHH)                    return(!catch("ReadCustomPositionConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                           sII = StringTrim(hstValues[1]);             // Minuten
-                           if (StringLen(sII) > 2)                     return(!catch("ReadCustomPositionConfig(43)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           if (!StringIsDigit(sII))                    return(!catch("ReadCustomPositionConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                           iII = StrToInteger(sII);
-                           if (iII < 0 || 59 < iII)                    return(!catch("ReadCustomPositionConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-
-                           if (hstValuesSize == 3) {
-                              sSS = StringTrim(hstValues[2]);          // Sekunden
-                              if (StringLen(sSS) > 2)                  return(!catch("ReadCustomPositionConfig(46)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              if (!StringIsDigit(sSS))                 return(!catch("ReadCustomPositionConfig(47)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              iSS = StrToInteger(sSS);
-                              if (iSS < 0 || 59 < iSS)                 return(!catch("ReadCustomPositionConfig(48)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           else if (StringLen(hstValues[2]) <= 2) {        // nur Tag
+                              sDD = hstValues[2];
                            }
+                           else {                                         // Tag + Uhrzeit
+                              pos = StringFind(hstValues[2], " ");
+                              if (pos == -1)                              return(!catch("ReadCustomPositionConfig(34)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              sDD   = StringTrim(StringSubstrFix(hstValues[2], 0, pos));
+                              sTime = StringTrim(StringSubstr   (hstValues[2], pos+1));
+                           }
+                                                                          // Tag prüfen
+                           if (!StringIsDigit(sDD))                       return(!catch("ReadCustomPositionConfig(35)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           iDD = StrToInteger(sDD);
+                           if (iDD < 1 || 31 < iDD)                       return(!catch("ReadCustomPositionConfig(36)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           if (iDD > 28) {
+                              if (iMM == FEB) {
+                                 if (iDD > 29)                            return(!catch("ReadCustomPositionConfig(37)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                 if (!IsLeapYear(iYY))                    return(!catch("ReadCustomPositionConfig(38)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              }
+                              else if (iDD==31) /*&&*/ if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)
+                                                                          return(!catch("ReadCustomPositionConfig(39)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                           }
+                           if (StringLen(sTime) > 0) {                    // Zeit prüfen
+                              // hh:ii:ss
+                              hstValuesSize = Explode(sTime, ":", hstValues, NULL);
+                              if (hstValuesSize < 2 || 3 < hstValuesSize) return(!catch("ReadCustomPositionConfig(40)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+                              sHH = StringTrim(hstValues[0]);             // Stunden
+                              if (StringLen(sHH) > 2)                     return(!catch("ReadCustomPositionConfig(41)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              if (!StringIsDigit(sHH))                    return(!catch("ReadCustomPositionConfig(42)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              iHH = StrToInteger(sHH);
+                              if (iHH < 0 || 23 < iHH)                    return(!catch("ReadCustomPositionConfig(43)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+                              sII = StringTrim(hstValues[1]);             // Minuten
+                              if (StringLen(sII) > 2)                     return(!catch("ReadCustomPositionConfig(44)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              if (!StringIsDigit(sII))                    return(!catch("ReadCustomPositionConfig(45)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              iII = StrToInteger(sII);
+                              if (iII < 0 || 59 < iII)                    return(!catch("ReadCustomPositionConfig(46)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              iSS = 0;
+
+                              if (hstValuesSize == 3) {
+                                 sSS = StringTrim(hstValues[2]);          // Sekunden
+                                 if (StringLen(sSS) > 2)                  return(!catch("ReadCustomPositionConfig(47)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                 if (!StringIsDigit(sSS))                 return(!catch("ReadCustomPositionConfig(48)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                 iSS = StrToInteger(sSS);
+                                 if (iSS < 0 || 59 < iSS)                 return(!catch("ReadCustomPositionConfig(49)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              }
+                           }
+                        }
+                        if (!iMM) {                                       // -2014:        bis Jahresende
+                           iMM = 12;
+                           iDD = 31;
+                        }
+                        else if (!iDD) {                                  // -2014.01:     bis Monatsende
+                           iMM++;                                         //               der letzte Tag des Monats ist der 0.-te Tag des nächsten Monats
                         }
                         dtHstTo = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
+                        if (isWeek)                                       // -2014.01.15W: bis Wochenende
+                           dtHstTo += (7-TimeDayOfWeek(dtHstTo))%7 * DAYS;
                      }
 
-                     if (!dtHstFrom && !dtHstTo)                       return(!catch("ReadCustomPositionConfig(49)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                     if (dtHstFrom && dtHstTo && dtHstFrom >= dtHstTo) return(!catch("ReadCustomPositionConfig(50)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (!dtHstFrom && !dtHstTo)                          return(!catch("ReadCustomPositionConfig(50)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (dtHstFrom && dtHstTo && dtHstFrom >= dtHstTo)    return(!catch("ReadCustomPositionConfig(51)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   }
 
                   else {
                      // kein "-" angegeben
-                     if (!StringLen(sHstValue))                        return(!catch("ReadCustomPositionConfig(51)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (!StringLen(sHstValue))                           return(!catch("ReadCustomPositionConfig(52)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                      // 2014
                      // 2014.01
                      // 2014.01.15
                      // 2014.01.15W
                      hstValuesSize = Explode(sHstValue, ".", hstValues, NULL);
-                     if (hstValuesSize > 3)                            return(!catch("ReadCustomPositionConfig(52)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                     if (hstValuesSize > 3)                               return(!catch("ReadCustomPositionConfig(53)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                      if (hstValuesSize >= 1) {
-                        sYY = StringTrim(hstValues[0]);                // Jahr prüfen
-                        if (StringLen(sYY) != 4)                       return(!catch("ReadCustomPositionConfig(53)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sYY))                       return(!catch("ReadCustomPositionConfig(54)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        sYY = StringTrim(hstValues[0]);                   // Jahr prüfen
+                        if (StringLen(sYY) != 4)                          return(!catch("ReadCustomPositionConfig(54)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (!StringIsDigit(sYY))                          return(!catch("ReadCustomPositionConfig(55)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         iYY = StrToInteger(sYY);
-                        if (iYY < 1970 || 2015 < iYY)                  return(!catch("ReadCustomPositionConfig(55)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (iYY < 1970 || 2037 < iYY)                     return(!catch("ReadCustomPositionConfig(56)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                      }
                      if (hstValuesSize >= 2) {
-                        sMM = StringTrim(hstValues[1]);                // Monat prüfen
-                        if (StringLen(sMM) > 2)                        return(!catch("ReadCustomPositionConfig(56)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sMM))                       return(!catch("ReadCustomPositionConfig(57)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        sMM = StringTrim(hstValues[1]);                   // Monat prüfen
+                        if (StringLen(sMM) > 2)                           return(!catch("ReadCustomPositionConfig(57)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (!StringIsDigit(sMM))                          return(!catch("ReadCustomPositionConfig(58)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         iMM = StrToInteger(sMM);
-                        if (iMM < 1 || 12 < iMM)                       return(!catch("ReadCustomPositionConfig(58)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (iMM < 1 || 12 < iMM)                          return(!catch("ReadCustomPositionConfig(59)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                      }
-                     if (hstValuesSize >= 3) {
-                        sDD = StringTrim(hstValues[2]);                // Tag prüfen
+                     if (hstValuesSize == 3) {
+                        sDD = StringTrim(hstValues[2]);                   // Tag prüfen
                         if (StringEndsWith(sDD, "W")) {
                            isWeek = true;
                            sDD    = StringTrim(StringLeft(sDD, -1));
                         }
-                        if (StringLen(sDD) > 2)                        return(!catch("ReadCustomPositionConfig(59)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (!StringIsDigit(sDD))                       return(!catch("ReadCustomPositionConfig(60)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                        if (iDD < 1 || 31 < iDD)                       return(!catch("ReadCustomPositionConfig(61)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (StringLen(sDD) > 2)                           return(!catch("ReadCustomPositionConfig(60)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (!StringIsDigit(sDD))                          return(!catch("ReadCustomPositionConfig(61)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (iDD < 1 || 31 < iDD)                          return(!catch("ReadCustomPositionConfig(62)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         if (iDD > 28) {
                            if (iMM == FEB) {
-                              if (iDD > 29)                            return(!catch("ReadCustomPositionConfig(62)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                              if (!IsLeapYear(iYY))                    return(!catch("ReadCustomPositionConfig(63)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              if (iDD > 29)                               return(!catch("ReadCustomPositionConfig(63)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                              if (!IsLeapYear(iYY))                       return(!catch("ReadCustomPositionConfig(64)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                            }
                            else if (iDD==31) /*&&*/ if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)
-                                                                       return(!catch("ReadCustomPositionConfig(64)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                                                                          return(!catch("ReadCustomPositionConfig(65)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         }
                      }
                      if (!iMM) {
@@ -2383,131 +2436,135 @@ bool ReadCustomPositionConfig() {
                      }
                      else if (!iDD) {
                         // 2014.01:     ein voller Monat
-                        if (groupByMonth)                              return(!catch("ReadCustomPositionConfig(65)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (groupByMonth)                                 return(!catch("ReadCustomPositionConfig(66)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         dtHstFrom = DateTime(iYY, iMM);
                         dtHstTo   = DateTime(iYY, iMM+1) - 1*SECOND;
                      }
                      else if (isWeek) {
                         // 2014.01.15W: eine volle Woche
-                        if (groupByWeek || groupByMonth)               return(!catch("ReadCustomPositionConfig(66)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (groupByWeek || groupByMonth)                  return(!catch("ReadCustomPositionConfig(67)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         dtHstFrom  = DateTime(iYY, iMM, iDD);
                         dtHstFrom -= (TimeDayOfWeek(dtHstFrom)+6)%7 * DAYS;
                         dtHstTo    = dtHstFrom + 1*WEEK - 1*SECOND;
                      }
                      else {
                         // 2014.01.15:  ein voller Tag
-                        if (isGrouped)                                 return(!catch("ReadCustomPositionConfig(67)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        if (isGrouped)                                    return(!catch("ReadCustomPositionConfig(68)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         dtHstFrom = DateTime(iYY, iMM, iDD);
                         dtHstTo   = dtHstFrom + 1*DAY - 1*SECOND;
                      }
                   }
-                  continue;
+                  //debug("ReadCustomPositionConfig()  dtHstFrom="+ TimeToStr(dtHstFrom, TIME_FULL) +"  dtHstTo="+ TimeToStr(dtHstTo, TIME_FULL));
+                  //debug("ReadCustomPositionConfig()  isGrouped="+ isGrouped +"  groupByDay="+ groupByDay +"  groupByWeek="+ groupByWeek +"  groupByMonth="+ groupByMonth);
+
+                  confSizeValue = dtHstFrom;
+                  confTypeValue = TYPE_HISTORY;
+                  confValue     = dtHstTo;
                }
 
-               else if (StringStartsWith(values[n], "#")) {            // Ticket bzw. verbleibender Rest eines Tickets
+               else if (StringStartsWith(values[n], "#")) {               // Ticket bzw. verbleibender Rest eines Tickets
                   strTicket = StringTrim(StringRight(values[n], -1));
-                  if (!StringIsDigit(strTicket))                       return(!catch("ReadCustomPositionConfig(68)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsDigit(strTicket))                          return(!catch("ReadCustomPositionConfig(69)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = EMPTY;
                   confTypeValue = StrToInteger(strTicket);
                   confValue     = NULL;
                }
 
-               else if (StringStartsWith(values[n], "L")) {            // alle verbleibenden Long-Positionen
-                  if (values[n] != "L")                                return(!catch("ReadCustomPositionConfig(69)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else if (StringStartsWith(values[n], "L")) {               // alle verbleibenden Long-Positionen
+                  if (values[n] != "L")                                   return(!catch("ReadCustomPositionConfig(70)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = EMPTY;
                   confTypeValue = TYPE_LONG;
                   confValue     = NULL;
                }
 
-               else if (StringStartsWith(values[n], "S")) {            // alle verbleibenden Short-Positionen
-                  if (values[n] != "S")                                return(!catch("ReadCustomPositionConfig(70)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else if (StringStartsWith(values[n], "S")) {               // alle verbleibenden Short-Positionen
+                  if (values[n] != "S")                                   return(!catch("ReadCustomPositionConfig(71)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = EMPTY;
                   confTypeValue = TYPE_SHORT;
                   confValue     = NULL;
                }
 
-               else if (StringStartsWith(values[n], "EQ")) {           // Equity
+               else if (StringStartsWith(values[n], "EQ")) {              // Equity
                   strSize = StringTrim(StringRight(values[n], -2));
-                  if (!StringIsNumeric(strSize))                       return(!catch("ReadCustomPositionConfig(71)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(72)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = NULL;
                   confTypeValue = TYPE_EQUITY;
                   confValue     = StrToDouble(strSize);
-                  if (confValue <= 0)                                  return(!catch("ReadCustomPositionConfig(72)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confValue <= 0)                                     return(!catch("ReadCustomPositionConfig(73)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
-               else if (StringIsNumeric(values[n])) {                  // P/L-Betrag
+               else if (StringIsNumeric(values[n])) {                     // P/L-Betrag
                   confSizeValue = NULL;
                   confTypeValue = TYPE_REALIZED;
                   confValue     = StrToDouble(values[n]);
                }
 
-               else if (StringEndsWith(values[n], "L")) {              // virtuelle Longposition zum aktuellen Preis
+               else if (StringEndsWith(values[n], "L")) {                 // virtuelle Longposition zum aktuellen Preis
                   strSize = StringTrim(StringLeft(values[n], -1));
-                  if (!StringIsNumeric(strSize))                       return(!catch("ReadCustomPositionConfig(73)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(74)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = StrToDouble(strSize);
-                  if (confSizeValue < 0)                               return(!catch("ReadCustomPositionConfig(74)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(confSizeValue, 0.001) != 0)           return(!catch("ReadCustomPositionConfig(75)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(75)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(76)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_LONG;
                   confValue     = NULL;
                }
 
-               else if (StringEndsWith(values[n], "S")) {              // virtuelle Shortposition zum aktuellen Preis
+               else if (StringEndsWith(values[n], "S")) {                 // virtuelle Shortposition zum aktuellen Preis
                   strSize = StringTrim(StringLeft(values[n], -1));
-                  if (!StringIsNumeric(strSize))                       return(!catch("ReadCustomPositionConfig(76)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(77)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = StrToDouble(strSize);
-                  if (confSizeValue < 0)                               return(!catch("ReadCustomPositionConfig(77)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(confSizeValue, 0.001) != 0)           return(!catch("ReadCustomPositionConfig(78)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(78)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(79)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_SHORT;
                   confValue     = NULL;
                }
 
-               else if (StringContains(values[n], "L")) {              // virtuelle Longposition zum angegebenen Preis
+               else if (StringContains(values[n], "L")) {                 // virtuelle Longposition zum angegebenen Preis
                   pos = StringFind(values[n], "L");
                   strSize = StringTrim(StringLeft(values[n], pos));
-                  if (!StringIsNumeric(strSize))                       return(!catch("ReadCustomPositionConfig(79)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(80)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = StrToDouble(strSize);
-                  if (confSizeValue < 0)                               return(!catch("ReadCustomPositionConfig(80)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(confSizeValue, 0.001) != 0)           return(!catch("ReadCustomPositionConfig(81)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(81)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(82)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_LONG;
                   strPrice = StringTrim(StringSubstr(values[n], pos+1));
-                  if (!StringIsNumeric(strPrice))                      return(!catch("ReadCustomPositionConfig(82)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strPrice))                         return(!catch("ReadCustomPositionConfig(83)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue = StrToDouble(strPrice);
-                  if (confValue <= 0)                                  return(!catch("ReadCustomPositionConfig(83)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confValue <= 0)                                     return(!catch("ReadCustomPositionConfig(84)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
-               else if (StringContains(values[n], "S")) {              // virtuelle Shortposition zum angegebenen Preis
+               else if (StringContains(values[n], "S")) {                 // virtuelle Shortposition zum angegebenen Preis
                   pos = StringFind(values[n], "S");
                   strSize = StringTrim(StringLeft(values[n], pos));
-                  if (!StringIsNumeric(strSize))                       return(!catch("ReadCustomPositionConfig(84)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(85)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue  = StrToDouble(strSize);
-                  if (confSizeValue < 0)                               return(!catch("ReadCustomPositionConfig(85)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(confSizeValue, 0.001) != 0)           return(!catch("ReadCustomPositionConfig(86)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(86)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(87)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_SHORT;
                   strPrice = StringTrim(StringSubstr(values[n], pos+1));
-                  if (!StringIsNumeric(strPrice))                      return(!catch("ReadCustomPositionConfig(87)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strPrice))                         return(!catch("ReadCustomPositionConfig(88)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue = StrToDouble(strPrice);
-                  if (confValue <= 0)                                  return(!catch("ReadCustomPositionConfig(88)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confValue <= 0)                                     return(!catch("ReadCustomPositionConfig(89)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
-               else if (StringContains(values[n], "#")) {              // Lotsizeangabe + # + Ticket
+               else if (StringContains(values[n], "#")) {                 // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
                   strSize = StringTrim(StringLeft(values[n], pos));
-                  if (!StringIsNumeric(strSize))                       return(!catch("ReadCustomPositionConfig(89)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(90)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue  = StrToDouble(strSize);
-                  if (confSizeValue && LT(confSizeValue, minLotSize))  return(!catch("ReadCustomPositionConfig(90)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  if (MathModFix(confSizeValue, lotStep) != 0)         return(!catch("ReadCustomPositionConfig(91)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  strTicket  = StringTrim(StringSubstr(values[n], pos+1));
-                  if (!StringIsDigit(strTicket))                       return(!catch("ReadCustomPositionConfig(92)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (confSizeValue && LT(confSizeValue, minLotSize))     return(!catch("ReadCustomPositionConfig(91)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  if (MathModFix(confSizeValue, lotStep) != 0)            return(!catch("ReadCustomPositionConfig(92)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  strTicket = StringTrim(StringSubstr(values[n], pos+1));
+                  if (!StringIsDigit(strTicket))                          return(!catch("ReadCustomPositionConfig(93)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = StrToInteger(strTicket);
                   confValue     = NULL;
                }
-
-               else                                                    return(!catch("ReadCustomPositionConfig(93)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else                                                       return(!catch("ReadCustomPositionConfig(94)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Die Konfiguration virtueller Positionen muß mit einer virtuellen Position beginnen, damit die virtuellen Lots später nicht von den realen Lots abgezogen werden, siehe (2).
                if (confSizeValue!=EMPTY && (confTypeValue==TYPE_LONG || confTypeValue==TYPE_SHORT)) {
                   if (!isConfigEmpty && !isConfigVirtual) {
-                     double tmp[3] = {0, TYPE_LONG, NULL};                 // am Anfang der Zeile virtuelle 0-Position einfügen
+                     double tmp[3] = {0, TYPE_LONG, NULL};                // am Anfang der Zeile virtuelle 0-Position einfügen
                      ArrayInsertDoubleArray(custom.position.conf, offsetStartOfPosition, tmp);
                   }
                   isConfigVirtual = true;
@@ -2522,22 +2579,24 @@ bool ReadCustomPositionConfig() {
                isConfigEmpty = false;
             }
 
-            if (!isConfigEmpty) {                                          // Zeilenende mit Leerelement markieren
+            if (!isConfigEmpty) {                                         // Zeilenende mit Leerelement markieren
                confSize = ArrayRange(custom.position.conf, 0);
-               ArrayResize(custom.position.conf, confSize+1);              // initialisiert Element mit {NULL, NULL, NULL}
+               ArrayResize(custom.position.conf, confSize+1);             // initialisiert Element mit {NULL, NULL, NULL}
                ArrayPushString(custom.position.conf.comments, comment);
-               offsetStartOfPosition = confSize + 1;                       // Start-Offset der nächsten Custom-Position (falls zutreffend)
+               offsetStartOfPosition = confSize + 1;                      // Start-Offset der nächsten Custom-Position (falls zutreffend)
             }
          }
       }
    }
 
    confSize = ArrayRange(custom.position.conf, 0);
-   if (!confSize) {                                                        // leere Konfiguration mit Leerelement {NULL, NULL, NULL} markieren
-      ArrayResize(custom.position.conf, 1);                                // initialisiert Element mit {NULL, NULL, NULL}
+   if (!confSize) {                                                       // leere Konfiguration mit Leerelement {NULL, NULL, NULL} markieren
+      ArrayResize(custom.position.conf, 1);                               // initialisiert Element mit {NULL, NULL, NULL}
       ArrayPushString(custom.position.conf.comments, "");
    }
-   return(!catch("ReadCustomPositionConfig(94)"));
+
+   //debug("ReadCustomPositionConfig()  conf="+ DoublesToStr(custom.position.conf, NULL));
+   return(!catch("ReadCustomPositionConfig(95)"));
 }
 
 
@@ -2545,7 +2604,7 @@ bool ReadCustomPositionConfig() {
  * Extrahiert aus den übergebenen Positionen eine Teilposition.
  *
  * @param  _IN_     double lotsize    - zu extrahierende Lotsize
- * @param  _IN_     int    type       - zu extrahierender Typ: virtualLong/virtualShort/Ticket/Betrag/Equity
+ * @param  _IN_     int    type       - zu extrahierender Typ: virtualLong/virtualShort/Ticket/History/Betrag/Equity
  * @param  _IN_     double value      - Wert: Preis/Betrag/Equity
  *
  * @param  _IN_OUT_ mixed  vars       - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
@@ -2647,6 +2706,15 @@ bool ExtractPosition(double lotsize, int type, double value,
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
          isVirtual = true;
+      }
+   }
+
+   else if (type == TYPE_HISTORY) {
+      // skip: not yet implemented
+      static bool done;
+      if (!done) {
+         debug("ExtractPosition()  type=TYPE_HISTORY  lotsize="+ TimeToStr(lotsize) +"  value="+ TimeToStr(value));
+         done = true;
       }
    }
 

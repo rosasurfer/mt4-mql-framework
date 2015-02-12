@@ -179,7 +179,7 @@
 // user defined errors: 65536-99999 (0x10000-0x1869F)
 #define ERR_RUNTIME_ERROR                                         65536    // runtime error
 #define ERR_NOT_IMPLEMENTED                                       65537    // feature not implemented
-#define ERR_INVALID_INPUT_PARAMVALUE                              65538    // invalid input parameter
+#define ERR_INVALID_INPUT_PARAMETER                               65538    // invalid input parameter
 #define ERR_INVALID_CONFIG_PARAMVALUE                             65539    // invalid configuration parameter
 #define ERS_TERMINAL_NOT_YET_READY                                65540    // terminal not yet ready                       // in Scripten Fehler, sonst Status
 #define ERR_INVALID_TIMEZONE_CONFIG                               65541    // invalid or missing timezone configuration
