@@ -690,19 +690,12 @@ int ShowTradeHistory() {
          ArrayPushDouble(profits    , OrderProfit()    );
          ArrayPushString(comments   , OrderComment()   );
       }
-      /*
-      for (i=0; i < orders; i++) {
-         if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(2)"))
-            return(-1);
-         debug("ShowTradeHistory(0.1)  #"+ OrderTicket() +"  from="+ TimeToStr(OrderOpenTime(), TIME_FULL) +"  to="+ TimeToStr(OrderCloseTime(), TIME_FULL) +", "+ OperationTypeDescription(OrderType()) +" "+ DoubleToStr(OrderLots(), 2) +" "+ OrderSymbol() +"  O="+ NumberToStr(OrderOpenPrice(), PriceFormat) +"  C="+ NumberToStr(OrderClosePrice(), PriceFormat) +" for "+ DoubleToStr(OrderProfit(), 2));
-      }
-      */
 
       // (1.3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
       for (i=0; i < orders; i++) {
          if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
-            // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
 
+            // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
             if (!StringIStartsWith(comments[i], "close hedge by #"))
                return(_EMPTY(catch("ShowTradeHistory(3)  #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
 
@@ -2423,6 +2416,7 @@ bool ReadCustomPositionConfig() {
                         }
                         if (StringLen(sDD) > 2)                           return(!catch("ReadCustomPositionConfig(60)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         if (!StringIsDigit(sDD))                          return(!catch("ReadCustomPositionConfig(61)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                        iDD = StrToInteger(sDD);
                         if (iDD < 1 || 31 < iDD)                          return(!catch("ReadCustomPositionConfig(62)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (history format in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         if (iDD > 28) {
                            if (iMM == FEB) {
@@ -2721,8 +2715,9 @@ bool ExtractPosition(double lotsize, int type, double value,
 
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int orders = OrdersHistoryTotal();
-         int sortKeys[][3], n;                                       // {CloseTime, OpenTime, Ticket}
+         int sortKeys[][3], n, hst.ticket;                           // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
+         string exDividend = "Ex Dividend "+ Symbol();
 
          for (i=0; i < orders; i++) {
             if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
@@ -2730,10 +2725,10 @@ bool ExtractPosition(double lotsize, int type, double value,
                break;
             }
             if (OrderType() == OP_BALANCE) {
-               if (!StringICompare(OrderComment(), "Ex Dividend US500")) continue;
+               if (!StringICompare(OrderComment(), exDividend)) continue;
             }
-            else if (OrderSymbol() != Symbol())                          continue;
-            else if (OrderType() > OP_SELL)                              continue;
+            else if (OrderSymbol() != Symbol())                 continue;
+            else if (OrderType() > OP_SELL)                     continue;
 
             sortKeys[n][0] = OrderCloseTime();
             sortKeys[n][1] = OrderOpenTime();
@@ -2744,15 +2739,85 @@ bool ExtractPosition(double lotsize, int type, double value,
          ArrayResize(sortKeys, orders);
          SortClosedTickets(sortKeys);
 
+         // (2) Tickets sortiert einlesen
+         int      hst.tickets    []; ArrayResize(hst.tickets    , 0);
+         int      hst.types      []; ArrayResize(hst.types      , 0);
+         double   hst.lotSizes   []; ArrayResize(hst.lotSizes   , 0);
+         datetime hst.openTimes  []; ArrayResize(hst.openTimes  , 0);
+         datetime hst.closeTimes []; ArrayResize(hst.closeTimes , 0);
+         double   hst.openPrices []; ArrayResize(hst.openPrices , 0);
+         double   hst.closePrices[]; ArrayResize(hst.closePrices, 0);
+         double   hst.commissions[]; ArrayResize(hst.commissions, 0);
+         double   hst.swaps      []; ArrayResize(hst.swaps      , 0);
+         double   hst.profits    []; ArrayResize(hst.profits    , 0);
+         string   hst.comments   []; ArrayResize(hst.comments   , 0);
 
+         for (i=0; i < orders; i++) {
+            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(1)"))
+               return(false);
+            ArrayPushInt   (hst.tickets    , OrderTicket()    );
+            ArrayPushInt   (hst.types      , OrderType()      );
+            ArrayPushDouble(hst.lotSizes   , OrderLots()      );
+            ArrayPushInt   (hst.openTimes  , OrderOpenTime()  );
+            ArrayPushInt   (hst.closeTimes , OrderCloseTime() );
+            ArrayPushDouble(hst.openPrices , OrderOpenPrice() );
+            ArrayPushDouble(hst.closePrices, OrderClosePrice());
+            ArrayPushDouble(hst.commissions, OrderCommission());
+            ArrayPushDouble(hst.swaps      , OrderSwap()      );
+            ArrayPushDouble(hst.profits    , OrderProfit()    );
+            ArrayPushString(hst.comments   , OrderComment()   );
+         }
 
-         debug("ExtractPosition()  from="+ TimeToStr(hstFrom) +"  to="+ TimeToStr(hstTo) +"  history="+ orders +"  cache="+ _int(hstCache));
-         hstCache = EMPTY_VALUE;
+         // (3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
+         for (i=0; i < orders; i++) {
+            if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {          // lotSize = 0: Hedge-Position
+
+               // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
+               if (!StringIStartsWith(hst.comments[i], "close hedge by #"))
+                  return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ StringToStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+
+               // Gegenstück suchen
+               hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
+               for (n=0; n < orders; n++) {
+                  if (hst.tickets[n] == hst.ticket)
+                     break;
+               }
+               if (n == orders) return(!catch("ExtractPosition(3)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ StringToStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               if (i == n     ) return(!catch("ExtractPosition(4)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ StringToStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+
+               int first  = Min(i, n);
+               int second = Max(i, n);
+
+               // Orderdaten korrigieren
+               if (i == first) {
+                  hst.lotSizes   [first] = hst.lotSizes   [second];  // alle Transaktionsdaten in der ersten Order speichern
+                  hst.commissions[first] = hst.commissions[second];
+                  hst.swaps      [first] = hst.swaps      [second];
+                  hst.profits    [first] = hst.profits    [second];
+               }
+               hst.closeTimes [first] = hst.openTimes [second];
+               hst.closePrices[first] = hst.openPrices[second];
+               hst.tickets   [second] = NULL;                        // hedgendes Ticket als verworfen markieren
+            }
+         }
+
+         // (4) Trades auswerten
+         double profit = 0;
+         for (i=0; i < orders; i++) {
+            if (!hst.tickets[i])                                       continue; // verworfene Hedges überspringen
+            if (hstFrom!=NULL) /*&&*/ if (hst.closeTimes[i] < hstFrom) continue;
+            if (hstTo  !=NULL) /*&&*/ if (hst.closeTimes[i] > hstTo  ) continue;
+            profit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
+         }
+         hstCache = NormalizeDouble(profit, 2);
+         if (!hstCache)
+            hstCache = EMPTY_VALUE;
+         debug("ExtractPosition()  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  history="+ orders +"  profit="+ DoubleToStr(hstCache, 2));
       }
       else {
          static bool done;
          if (!done) {
-            //debug("ExtractPosition()  type=TYPE_HISTORY  from="+ TimeToStr(lotsize) +"  to="+ TimeToStr(value) +"  cache="+ _int(hstCache));
+            //debug("ExtractPosition()  type=TYPE_HISTORY  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  cache="+ DoubleToStr(hstCache, 2));
             done = true;
          }
       }
@@ -2799,7 +2864,7 @@ bool ExtractPosition(double lotsize, int type, double value,
          // partielles Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == type) {
-               if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(1)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
+               if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(5)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotsize, lots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(EMPTY, type, value,
@@ -2832,7 +2897,7 @@ bool ExtractPosition(double lotsize, int type, double value,
          }
       }
    }
-   return(!catch("ExtractPosition(2)"));
+   return(!catch("ExtractPosition(6)"));
 }
 
 
