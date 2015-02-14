@@ -5770,16 +5770,6 @@ datetime GetNextSessionEndTime.fxt(datetime fxtTime) {
 
 
 /**
- * MetaQuotes-Alias
- *
- * Korrekter Vergleich zweier Doubles.
- */
-bool CompareDoubles(double double1, double double2) {
-   return(EQ(double1, double2));                                     // Die MetaQuotes-Funktion ist fehlerhaft.
-}
-
-
-/**
  * Gibt die hexadezimale Repräsentation einer Ganzzahl zurück.
  *
  * @param  int integer - Ganzzahl
@@ -9203,14 +9193,6 @@ string DoubleToStrEx(double value, int digits) {
 
    ArrayResize(decimals, 0);
    return(result);
-}
-
-
-/**
- * MetaQuotes-Alias für DoubleToStrEx()
- */
-string DoubleToStrMorePrecision(double value, int precision) {
-   return(DoubleToStrEx(value, precision));
 }
 
 
