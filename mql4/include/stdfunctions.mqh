@@ -2,6 +2,7 @@
  * Globale Konstanten, Variablen und Funktionen
  */
 #include <stderror.mqh>
+#include <metaquotes.mqh>                                   // MetaQuotes-Aliase
 #include <structs/sizes.mqh>
 
 
@@ -3174,6 +3175,7 @@ void __DummyCalls() {
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
+   CompareDoubles(NULL, NULL);
    debug(NULL);
    DateTime(NULL);
    Div(NULL, NULL);
@@ -3268,7 +3270,8 @@ void __DummyCalls() {
    int    ArrayPushInt(int array[], int value);
    int    ArrayPushString(string array[], string value);
    int    Chart.Expert.Properties();
-   void   DummyCalls();                                              // Library-Stub: *kann* lokal überschrieben werden
+   string DoubleToStrEx(double value, int digits);
+   void   DummyCalls();                                                    // Library-Stub: *kann* lokal überschrieben werden
    int    GetApplicationWindow();
    bool   GetConfigBool(string section, string key, bool defaultValue);
    int    GetCustomLogID();
@@ -3294,14 +3297,14 @@ void __DummyCalls() {
    int    ec.TestFlags(/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
-   string DwordToHexStr(int dword); string IntToHexStr(int integer); string IntegerToHexString(int integer);   // eigener + MetaQuotes-Alias
+   string DwordToHexStr(int dword); string IntToHexStr(int integer);       // Alias
    int    GetLastWin32Error();
    bool   IsBuiltinTimeframe(int timeframe);
 
 #import "kernel32.dll"
    int    GetCurrentProcessId();
    int    GetCurrentThreadId();
-   void   OutputDebugStringA(string lpMessage);                                                                // funktioniert nur für Admins zuverlässig
+   void   OutputDebugStringA(string lpMessage);                            // funktioniert nur für Admins
 
 #import "user32.dll"
    int    GetAncestor(int hWnd, int cmd);

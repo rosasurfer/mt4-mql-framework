@@ -322,7 +322,7 @@
 
 
    // Math, Numbers
-   bool     EQ(double a, double b, int digits); bool CompareDoubles(double a, double b);  // MetaQuotes-Alias
+   bool     EQ(double a, double b, int digits);
    bool     NE(double a, double b, int digits);
 
    bool     LT(double a, double b, int digits);
@@ -483,7 +483,7 @@
 
    // toString-Funktionen
    string   BoolToStr(bool value);
-   string   DoubleToStrEx(double value, int digits/*=0..16*/);  string DoubleToStrMorePrecision(double value, int precision);   // MetaQuotes-Alias
+   string   DoubleToStrEx(double value, int digits/*=0..16*/);
 
    string   IntegerToBinaryStr(int integer);
 
