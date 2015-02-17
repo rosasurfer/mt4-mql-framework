@@ -2117,7 +2117,7 @@ bool ReadCustomPositionConfig() {
       ArrayResize(custom.position.conf.comments, 0);
    }
 
-   string   keys[], values[], iniValue, comment, sHstValue, sHstValue1, sHstValue2, hstValues[], sTime, sYY, sMM, sDD, sHH, sII, sSS, sGroupClause, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string   keys[], values[], iniValue, comment, dtText, sHstValue, sHstValue1, sHstValue2, hstValues[], sTime, sYY, sMM, sDD, sHH, sII, sSS, sGroupClause, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   confSizeValue, confTypeValue, confValue, confCacheValue, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int      valuesSize, hstValuesSize, iYY, iMM, iDD, iHH, iII, iSS, confSize, pos, ticket, offsetStartOfPosition=0;
    datetime dtHstFrom, dtHstTo;
@@ -2137,7 +2137,8 @@ bool ReadCustomPositionConfig() {
          if (SearchStringArrayI(keys, keys[i]) == i) {                     // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
             iniValue = GetRawIniString(file, section, keys[i], "");
 
-            // Konfigurationskommentar auswerten
+            // Kommentar auswerten
+            comment = "";
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
                comment  = StringSubstr(iniValue, pos+1);
@@ -2146,11 +2147,10 @@ bool ReadCustomPositionConfig() {
                if (pos == -1) comment = StringTrim(comment);
                else           comment = StringTrim(StringLeft(comment, pos));
             }
-            else comment = "";
 
             // Konfigurationsdaten auswerten
-            isConfigEmpty   = true;                                        // ob der Parser für diese Zeile bereits gültige Konfigurationsdaten erkannt hat oder nicht
-            isConfigVirtual = false;                                       // ob diese Zeile virtuelle Konfigurationsdaten enthält oder nicht
+            isConfigEmpty   = true;                                        // ob diese Zeile bereits Konfigurationsdaten enthält
+            isConfigVirtual = false;                                       // ob diese Zeile eine virtuelle Position darstellt
             valuesSize      = Explode(StringToUpper(iniValue), ",", values, NULL);
 
             for (int n=0; n < valuesSize; n++) {
@@ -2159,7 +2159,7 @@ bool ReadCustomPositionConfig() {
                   continue;
 
                if (StringStartsWith(values[n], "H")) {                     // History
-                  sTime = "";
+                  sTime = ""; dtText = "";
                   iYY=0; iMM=0; iDD=0; iHH=0; iII=0; iSS=0;
                   isWeek=false; isGrouped=false; groupByDay=false; groupByWeek=false; groupByMonth=false;
                   // H2014.01.15                                           - Trade-History eines einzelnen Tages
@@ -2198,6 +2198,7 @@ bool ReadCustomPositionConfig() {
                      //                NULL - 2014.01.15 hh:ii:ss
                      if (!StringLen(sHstValue1)) {                        // "von"-Zeitpunkt prüfen
                         dtHstFrom = NULL;
+                        dtText    = "to";
                      }
                      else {
                         // 2014
@@ -2277,11 +2278,13 @@ bool ReadCustomPositionConfig() {
                            }
                         }
                         if (!iMM) {                                       // 2014-:       von Jahresbeginn
-                           iMM = 1;
-                           iDD = 1;
+                           iMM    = 1;
+                           iDD    = 1;
+                           //dtText = iYY;
                         }
                         else if (!iDD) {                                  // 2014.01-:    von Monatsbeginn
-                           iDD = 1;
+                           iDD    = 1;
+                           //dtText = iYY +"."+ StringRight("0"+iMM, 2);
                         }
                         dtHstFrom = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
                         if (isWeek)                                       // 2014.01.15W: von Wochenbeginn
@@ -2428,30 +2431,35 @@ bool ReadCustomPositionConfig() {
                         }
                      }
                      if (!iMM) {
-                        // 2014:        ein volles Jahr
+                        // 2014:        ein ganzes Jahr
                         dtHstFrom = DateTime(iYY);
                         dtHstTo   = DateTime(iYY+1) - 1*SECOND;
+                        dtText    = iYY;
                      }
                      else if (!iDD) {
-                        // 2014.01:     ein voller Monat
+                        // 2014.01:     ein ganzer Monat
                         if (groupByMonth)                                 return(!catch("ReadCustomPositionConfig(66)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         dtHstFrom = DateTime(iYY, iMM);
                         dtHstTo   = DateTime(iYY, iMM+1) - 1*SECOND;
+                        dtText    = DateToStr(dtHstFrom, "Y.M");
                      }
                      else if (isWeek) {
-                        // 2014.01.15W: eine volle Woche
+                        // 2014.01.15W: eine ganze Woche
                         if (groupByWeek || groupByMonth)                  return(!catch("ReadCustomPositionConfig(67)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         dtHstFrom  = DateTime(iYY, iMM, iDD);
                         dtHstFrom -= (TimeDayOfWeek(dtHstFrom)+6)%7 * DAYS;
                         dtHstTo    = dtHstFrom + 1*WEEK - 1*SECOND;
+                        dtText     = DateToStr(dtHstFrom, "!Week Y.M.D");
                      }
                      else {
-                        // 2014.01.15:  ein voller Tag
+                        // 2014.01.15:  ein ganzer Tag
                         if (isGrouped)                                    return(!catch("ReadCustomPositionConfig(68)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal group modifier in \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                         dtHstFrom = DateTime(iYY, iMM, iDD);
                         dtHstTo   = dtHstFrom + 1*DAY - 1*SECOND;
+                        dtText    = DateToStr(dtHstFrom, "Y.M.D");
                      }
                   }
+                  comment = StringConcatenate(comment, ifString(StringLen(comment), " + ", ""), dtText);
                   //debug("ReadCustomPositionConfig()  dtHstFrom="+ TimeToStr(dtHstFrom, TIME_FULL) +"  dtHstTo="+ TimeToStr(dtHstTo, TIME_FULL));
                   //debug("ReadCustomPositionConfig()  isGrouped="+ isGrouped +"  groupByDay="+ groupByDay +"  groupByWeek="+ groupByWeek +"  groupByMonth="+ groupByMonth);
 
@@ -2591,7 +2599,7 @@ bool ReadCustomPositionConfig() {
 
             if (!isConfigEmpty) {                                         // Zeilenende mit Leerelement markieren
                confSize = ArrayRange(custom.position.conf, 0);
-               ArrayResize(custom.position.conf, confSize+1);             // initialisiert Element mit {NULL, NULL, NULL, NULL}
+               ArrayResize    (custom.position.conf, confSize+1);          // initialisiert Element mit {NULL, NULL, NULL, NULL}
                ArrayPushString(custom.position.conf.comments, comment);
                offsetStartOfPosition = confSize + 1;                      // Start-Offset der nächsten Custom-Position (falls zutreffend)
             }
