@@ -8,7 +8,7 @@
 
 // globale Variablen, stehen überall zur Verfügung
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
-//int    __lpSuperContext;                                  // Zeiger auf ggf. existierenden SuperContext (wird je Modultyp definiert)
+//int    __lpSuperContext;                                  // der Zeiger auf einen ggf. existierenden SuperContext wird je Modultyp definiert
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
