@@ -2118,7 +2118,7 @@ bool ReadCustomPositionConfig() {
    }
 
    string   keys[], values[], iniValue, comment, sHstValue, sHstValue1, sHstValue2, hstValues[], sTime, sYY, sMM, sDD, sHH, sII, sSS, sGroupClause, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
-   double   confSizeValue, confTypeValue, confValue, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
+   double   confSizeValue, confTypeValue, confValue, confCacheValue, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int      valuesSize, hstValuesSize, iYY, iMM, iDD, iHH, iII, iSS, confSize, pos, ticket, offsetStartOfPosition=0;
    datetime dtHstFrom, dtHstTo;
    bool     isConfigEmpty, isConfigVirtual, isWeek, isGrouped, groupByDay, groupByWeek, groupByMonth;
@@ -2455,66 +2455,74 @@ bool ReadCustomPositionConfig() {
                   //debug("ReadCustomPositionConfig()  dtHstFrom="+ TimeToStr(dtHstFrom, TIME_FULL) +"  dtHstTo="+ TimeToStr(dtHstTo, TIME_FULL));
                   //debug("ReadCustomPositionConfig()  isGrouped="+ isGrouped +"  groupByDay="+ groupByDay +"  groupByWeek="+ groupByWeek +"  groupByMonth="+ groupByMonth);
 
-                  confSizeValue = dtHstFrom;
-                  confTypeValue = TYPE_HISTORY;
-                  confValue     = dtHstTo;
+                  confSizeValue  = dtHstFrom;
+                  confTypeValue  = TYPE_HISTORY;
+                  confValue      = dtHstTo;
+                  confCacheValue = EMPTY_VALUE;
                }
 
                else if (StringStartsWith(values[n], "#")) {               // Ticket bzw. verbleibender Rest eines Tickets
                   strTicket = StringTrim(StringRight(values[n], -1));
                   if (!StringIsDigit(strTicket))                          return(!catch("ReadCustomPositionConfig(69)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue = EMPTY;
-                  confTypeValue = StrToInteger(strTicket);
-                  confValue     = NULL;
+                  confSizeValue  = EMPTY;
+                  confTypeValue  = StrToInteger(strTicket);
+                  confValue      = NULL;
+                  confCacheValue = NULL;
                }
 
                else if (StringStartsWith(values[n], "L")) {               // alle verbleibenden Long-Positionen
                   if (values[n] != "L")                                   return(!catch("ReadCustomPositionConfig(70)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue = EMPTY;
-                  confTypeValue = TYPE_LONG;
-                  confValue     = NULL;
+                  confSizeValue  = EMPTY;
+                  confTypeValue  = TYPE_LONG;
+                  confValue      = NULL;
+                  confCacheValue = NULL;
                }
 
                else if (StringStartsWith(values[n], "S")) {               // alle verbleibenden Short-Positionen
                   if (values[n] != "S")                                   return(!catch("ReadCustomPositionConfig(71)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue = EMPTY;
-                  confTypeValue = TYPE_SHORT;
-                  confValue     = NULL;
+                  confSizeValue  = EMPTY;
+                  confTypeValue  = TYPE_SHORT;
+                  confValue      = NULL;
+                  confCacheValue = NULL;
                }
 
                else if (StringStartsWith(values[n], "EQ")) {              // Equity
                   strSize = StringTrim(StringRight(values[n], -2));
                   if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(72)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue = NULL;
-                  confTypeValue = TYPE_EQUITY;
-                  confValue     = StrToDouble(strSize);
+                  confSizeValue  = NULL;
+                  confTypeValue  = TYPE_EQUITY;
+                  confValue      = StrToDouble(strSize);
+                  confCacheValue = NULL;
                   if (confValue <= 0)                                     return(!catch("ReadCustomPositionConfig(73)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
                else if (StringIsNumeric(values[n])) {                     // P/L-Betrag
-                  confSizeValue = NULL;
-                  confTypeValue = TYPE_REALIZED;
-                  confValue     = StrToDouble(values[n]);
+                  confSizeValue  = NULL;
+                  confTypeValue  = TYPE_REALIZED;
+                  confValue      = StrToDouble(values[n]);
+                  confCacheValue = NULL;
                }
 
                else if (StringEndsWith(values[n], "L")) {                 // virtuelle Longposition zum aktuellen Preis
                   strSize = StringTrim(StringLeft(values[n], -1));
                   if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(74)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue = StrToDouble(strSize);
+                  confSizeValue  = StrToDouble(strSize);
                   if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(75)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(76)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = TYPE_LONG;
-                  confValue     = NULL;
+                  confTypeValue  = TYPE_LONG;
+                  confValue      = NULL;
+                  confCacheValue = NULL;
                }
 
                else if (StringEndsWith(values[n], "S")) {                 // virtuelle Shortposition zum aktuellen Preis
                   strSize = StringTrim(StringLeft(values[n], -1));
                   if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(77)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue = StrToDouble(strSize);
+                  confSizeValue  = StrToDouble(strSize);
                   if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(78)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(79)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = TYPE_SHORT;
-                  confValue     = NULL;
+                  confTypeValue  = TYPE_SHORT;
+                  confValue      = NULL;
+                  confCacheValue = NULL;
                }
 
                else if (StringContains(values[n], "L")) {                 // virtuelle Longposition zum angegebenen Preis
@@ -2527,42 +2535,45 @@ bool ReadCustomPositionConfig() {
                   confTypeValue = TYPE_LONG;
                   strPrice = StringTrim(StringSubstr(values[n], pos+1));
                   if (!StringIsNumeric(strPrice))                         return(!catch("ReadCustomPositionConfig(83)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confValue = StrToDouble(strPrice);
+                  confValue      = StrToDouble(strPrice);
                   if (confValue <= 0)                                     return(!catch("ReadCustomPositionConfig(84)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  confCacheValue = NULL;
                }
 
                else if (StringContains(values[n], "S")) {                 // virtuelle Shortposition zum angegebenen Preis
                   pos = StringFind(values[n], "S");
                   strSize = StringTrim(StringLeft(values[n], pos));
                   if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(85)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue  = StrToDouble(strSize);
+                  confSizeValue = StrToDouble(strSize);
                   if (confSizeValue < 0)                                  return(!catch("ReadCustomPositionConfig(86)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)              return(!catch("ReadCustomPositionConfig(87)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_SHORT;
                   strPrice = StringTrim(StringSubstr(values[n], pos+1));
                   if (!StringIsNumeric(strPrice))                         return(!catch("ReadCustomPositionConfig(88)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confValue = StrToDouble(strPrice);
+                  confValue      = StrToDouble(strPrice);
                   if (confValue <= 0)                                     return(!catch("ReadCustomPositionConfig(89)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+                  confCacheValue = NULL;
                }
 
                else if (StringContains(values[n], "#")) {                 // Lotsizeangabe + # + Ticket
                   pos = StringFind(values[n], "#");
                   strSize = StringTrim(StringLeft(values[n], pos));
                   if (!StringIsNumeric(strSize))                          return(!catch("ReadCustomPositionConfig(90)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confSizeValue  = StrToDouble(strSize);
+                  confSizeValue = StrToDouble(strSize);
                   if (confSizeValue && LT(confSizeValue, minLotSize))     return(!catch("ReadCustomPositionConfig(91)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, lotStep) != 0)            return(!catch("ReadCustomPositionConfig(92)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   strTicket = StringTrim(StringSubstr(values[n], pos+1));
                   if (!StringIsDigit(strTicket))                          return(!catch("ReadCustomPositionConfig(93)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = StrToInteger(strTicket);
-                  confValue     = NULL;
+                  confTypeValue  = StrToInteger(strTicket);
+                  confValue      = NULL;
+                  confCacheValue = NULL;
                }
                else                                                       return(!catch("ReadCustomPositionConfig(94)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Die Konfiguration virtueller Positionen muß mit einer virtuellen Position beginnen, damit die virtuellen Lots später nicht von den realen Lots abgezogen werden, siehe (2).
                if (confSizeValue!=EMPTY && (confTypeValue==TYPE_LONG || confTypeValue==TYPE_SHORT)) {
                   if (!isConfigEmpty && !isConfigVirtual) {
-                     double tmp[3] = {0, TYPE_LONG, NULL};                // am Anfang der Zeile virtuelle 0-Position einfügen
+                     double tmp[4] = {0, TYPE_LONG, NULL, NULL};          // am Anfang der Zeile virtuelle 0-Position einfügen
                      ArrayInsertDoubleArray(custom.position.conf, offsetStartOfPosition, tmp);
                   }
                   isConfigVirtual = true;
@@ -2574,12 +2585,13 @@ bool ReadCustomPositionConfig() {
                custom.position.conf[confSize][0] = confSizeValue;
                custom.position.conf[confSize][1] = confTypeValue;
                custom.position.conf[confSize][2] = confValue;
+               custom.position.conf[confSize][3] = confCacheValue;
                isConfigEmpty = false;
             }
 
             if (!isConfigEmpty) {                                         // Zeilenende mit Leerelement markieren
                confSize = ArrayRange(custom.position.conf, 0);
-               ArrayResize(custom.position.conf, confSize+1);             // initialisiert Element mit {NULL, NULL, NULL}
+               ArrayResize(custom.position.conf, confSize+1);             // initialisiert Element mit {NULL, NULL, NULL, NULL}
                ArrayPushString(custom.position.conf.comments, comment);
                offsetStartOfPosition = confSize + 1;                      // Start-Offset der nächsten Custom-Position (falls zutreffend)
             }
@@ -2588,8 +2600,8 @@ bool ReadCustomPositionConfig() {
    }
 
    confSize = ArrayRange(custom.position.conf, 0);
-   if (!confSize) {                                                       // leere Konfiguration mit Leerelement {NULL, NULL, NULL} markieren
-      ArrayResize(custom.position.conf, 1);                               // initialisiert Element mit {NULL, NULL, NULL}
+   if (!confSize) {                                                       // leere Konfiguration mit Leerelement markieren
+      ArrayResize(custom.position.conf, 1);                               // initialisiert Element mit {NULL, NULL, NULL, NULL}
       ArrayPushString(custom.position.conf.comments, "");
    }
 
@@ -2709,10 +2721,10 @@ bool ExtractPosition(double lotsize, int type, double value,
    }
 
    else if (type == TYPE_HISTORY) {
-      if (!hstCache) {
-         datetime hstFrom = lotsize;
-         datetime hstTo   = value;
+      datetime hstFrom = lotsize;
+      datetime hstTo   = value;
 
+      if (hstCache == EMPTY_VALUE) {
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int orders = OrdersHistoryTotal();
          int sortKeys[][3], n, hst.ticket;                           // {CloseTime, OpenTime, Ticket}
@@ -2802,31 +2814,24 @@ bool ExtractPosition(double lotsize, int type, double value,
          }
 
          // (4) Trades auswerten
-         double profit = 0;
+         double profit; n=0;
          for (i=0; i < orders; i++) {
             if (!hst.tickets[i])                                       continue; // verworfene Hedges überspringen
             if (hstFrom!=NULL) /*&&*/ if (hst.closeTimes[i] < hstFrom) continue;
             if (hstTo  !=NULL) /*&&*/ if (hst.closeTimes[i] > hstTo  ) continue;
             profit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
+            n++;
          }
          hstCache = NormalizeDouble(profit, 2);
-         if (!hstCache)
-            hstCache = EMPTY_VALUE;
-         debug("ExtractPosition()  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  history="+ orders +"  profit="+ DoubleToStr(hstCache, 2));
+         debug("ExtractPosition(0.1)  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  profit="+ DoubleToStr(hstCache, 2) +"  trades="+ n);
       }
-      else {
-         static bool done;
-         if (!done) {
-            //debug("ExtractPosition()  type=TYPE_HISTORY  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  cache="+ DoubleToStr(hstCache, 2));
-            done = true;
-         }
-      }
+      // Betrag zu customRealized hinzufügen (Ausgangsdaten bleiben unverändert)
+      customRealized += hstCache;
    }
 
    else if (type == TYPE_REALIZED) {
       // Betrag zu customRealized hinzufügen (Ausgangsdaten bleiben unverändert)
-      if (value != 0)                                                // 0.00-Beträge werden ignoriert
-         customRealized += value;
+      customRealized += value;
    }
 
    else if (type == TYPE_EQUITY) {
