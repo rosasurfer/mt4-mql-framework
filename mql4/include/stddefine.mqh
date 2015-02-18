@@ -2593,9 +2593,9 @@ bool IsEmptyString(string value) {
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return int - NaT (NotATime)
+ * @return datetime - NaT (NotATime)
  */
-int _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(NaT);
 }
 
