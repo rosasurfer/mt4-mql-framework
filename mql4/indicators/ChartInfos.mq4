@@ -2345,9 +2345,10 @@ bool CustomPositions.ReadConfig() {
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
  */
 bool CustomPositions.ParseHstEntry(string confValue, string &comment, double &hstFrom, double &hstTo, double &value2) {
-   string _confValue = StringTrim(StringToUpper(confValue));
-   if (!StringStartsWith(_confValue, "H"))        return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
-   _confValue = StringTrim(StringSubstr(_confValue, 1));
+   string confValue.orig = StringTrim(confValue);
+          confValue      = StringToUpper(confValue.orig);
+   if (!StringStartsWith(confValue, "H"))         return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
+   confValue = StringTrim(StringSubstr(confValue, 1));
 
    bool     isGrouped, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
@@ -2355,28 +2356,28 @@ bool CustomPositions.ParseHstEntry(string confValue, string &comment, double &hs
 
 
    // (1) auf Group-By-Modifier prüfen und Gruppierung parsen
-   int pos = StringFind(_confValue, "GROUP ");
+   int pos = StringFind(confValue, "GROUP ");
    if (pos >= 0) {
-      sGroupClause = StringTrim(StringSubstr   (_confValue, pos+6 ));
-      _confValue   = StringTrim(StringSubstrFix(_confValue, 0, pos));
-      if (!StringStartsWith(sGroupClause, "BY ")) return(!catch("CustomPositions.ParseHstEntry(2)  invalid history configuration in "+ StringToStr(confValue) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
+      sGroupClause = StringTrim(StringSubstr   (confValue, pos+6 ));
+      confValue    = StringTrim(StringSubstrFix(confValue, 0, pos));
+      if (!StringStartsWith(sGroupClause, "BY ")) return(!catch("CustomPositions.ParseHstEntry(2)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
       isGrouped    = true;
       sGroupClause = StringTrim(StringSubstr(sGroupClause, 3));
       if      (sGroupClause == "DAY"  ) groupByDay   = true;
       else if (sGroupClause == "WEEK" ) groupByWeek  = true;
       else if (sGroupClause == "MONTH") groupByMonth = true;
-      else                                        return(!catch("CustomPositions.ParseHstEntry(3)  invalid history configuration in "+ StringToStr(confValue) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
+      else                                        return(!catch("CustomPositions.ParseHstEntry(3)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
    }
 
 
    // (2) auf von-bis prüfen
-   pos = StringFind(_confValue, "-");
+   pos = StringFind(confValue, "-");
    if (pos >= 0) {                                                   // von-bis parsen
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StringTrim(StringSubstrFix(_confValue, 0, pos)), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StringTrim(StringSubstr   (_confValue, pos+1 )), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtFrom = ParseDateTime(StringTrim(StringSubstrFix(confValue, 0, pos)), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTime(StringTrim(StringSubstr   (confValue, pos+1 )), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYear(dtTo)+1)                  - 1*SECOND;     // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYear(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;     // Monatsende
@@ -2388,8 +2389,8 @@ bool CustomPositions.ParseHstEntry(string confValue, string &comment, double &hs
    }
    else {
       // {DateTime}                                                  // allgemeinen Zeitraum parsen
-      dtFrom = ParseDateTime(_confValue, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                          if (!dtFrom)       return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue), ERR_INVALID_CONFIG_PARAMVALUE));
+      dtFrom = ParseDateTime(confValue, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+                                                                                                                         if (!dtFrom)       return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
       if      (isFullYear1  ) dtTo = DateTime(TimeYear(dtFrom)+1)                    - 1*SECOND;     // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYear(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;     // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                 - 1*SECOND;     // Wochenende
@@ -2400,12 +2401,12 @@ bool CustomPositions.ParseHstEntry(string confValue, string &comment, double &hs
    }
    //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom) +"  dtTo="+ TimeToStr(dtTo));
 
-   //if (groupByMonth)                  return(!catch("CustomPositions.ParseHstEntry(5)  invalid history configuration in "+ StringToStr(confValue), ERR_INVALID_CONFIG_PARAMVALUE));
-   //if (groupByWeek || groupByMonth)   return(!catch("CustomPositions.ParseHstEntry(6)  invalid history configuration in "+ StringToStr(confValue), ERR_INVALID_CONFIG_PARAMVALUE));
-   //if (isGrouped)                     return(!catch("CustomPositions.ParseHstEntry(7)  invalid history configuration in "+ StringToStr(confValue), ERR_INVALID_CONFIG_PARAMVALUE));
+   //if (groupByMonth)                  return(!catch("CustomPositions.ParseHstEntry(5)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+   //if (groupByWeek || groupByMonth)   return(!catch("CustomPositions.ParseHstEntry(6)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+   //if (isGrouped)                     return(!catch("CustomPositions.ParseHstEntry(7)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
 
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue), ERR_INVALID_CONFIG_PARAMVALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
 
    hstFrom = dtFrom;
    hstTo   = dtTo;
