@@ -8,17 +8,17 @@
  *    int    type;                       4      => ec[ 2]      // Programmtyp                                     (konstant)   => was bin ich
  *    int    hChart;                     4      => ec[ 3]      // Chart         (Handle für Ticks)                (konstant)   => habe ich einen Chart und welchen
  *    int    hChartWindow;               4      => ec[ 4]      // Chart-Fenster (Handle für Titelzeile)           (konstant)   => ...
- *    int    testFlags;                  4      => ec[ 5]      // Tester-Flags: Off|On|VisualMode|Optimization    (konstant)   => laufe ich im Tester und wie
- *    LPTR   lpSuperContext;             4      => ec[ 6]      // übergeordneter Execution-Context                (konstant)   => wie wurde ich geladen
+ *    int    testFlags;                  4      => ec[ 5]      // Tester-Flags: Off|On|VisualMode|Optimization    (konstant)   => laufe ich im Tester und wenn ja, wie
+ *    LPTR   lpSuperContext;             4      => ec[ 6]      // übergeordneter Execution-Context                (konstant)   => laufe ich in einem anderen Programm
  *    int    initFlags;                  4      => ec[ 7]      // init-Flags                                      (konstant)   => wie werde ich initialisiert
  *    int    deinitFlags;                4      => ec[ 8]      // deinit-Flags                                    (konstant)   => wie werde ich deinitialisiert
  *    int    uninitializeReason;         4      => ec[ 9]      // letzter Uninitialize-Reason                     (variabel)   => woher komme ich
  *    int    whereami;                   4      => ec[10]      // MQL-Rootfunktion des Programms                  (variabel)   => wo bin ich
- *    BOOL   logging;                    4      => ec[11]      // Logstatus                                       (konstant)   => wie verhalte ich mich
- *    LPSTR  lpLogFile;                  4      => ec[12]      // Zeiger auf Pfad und Namen der Logdatei          (konstant)   => wie verhalte ich mich
+ *    BOOL   logging;                    4      => ec[11]      // Logstatus                                       (konstant)   => was logge ich
+ *    LPSTR  lpLogFile;                  4      => ec[12]      // Zeiger auf Pfad und Namen der Logdatei          (konstant)   => wohin logge ich
  *    int    lastError;                  4      => ec[13]      // letzter aufgetretener Fehler                    (variabel)   => welche Fehler sind aufgetreten
  * } ec;                              = 56 byte = int[14]
- *
+ *                                                                                                                                wer bin ich
  *
  * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  *
