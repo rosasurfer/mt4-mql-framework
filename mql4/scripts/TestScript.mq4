@@ -26,18 +26,6 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-   int orders = OrdersHistoryTotal();
-
-   for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))        // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
-         break;
-
-      if (OrderType() == OP_BALANCE) {
-         debug("onStart()  ticket="+ OrderTicket() +"  type="+ OrderTypeToStr(OrderType()) +"  symbol="+ StringToStr(OrderSymbol()) +"  openTime="+ TimeToStr(OrderOpenTime()) +"  closeTime="+ TimeToStr(OrderCloseTime()) +"  comment="+ StringToStr(OrderComment()));
-      }
-   }
-
 
    return(catch("onStart(1)"));
 

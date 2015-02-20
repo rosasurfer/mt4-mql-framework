@@ -15,6 +15,7 @@ int init() {
    if (IsTesting()) {                                             // Zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
       Tester.ResetGlobalArrays();                                 // Könnte ein Feature für die Optimization sein, um Daten testübergreifend verwalten zu können.
    }
+   //Expander_init(__ExecutionContext);
    return(catch("init()"));
 }
 
@@ -26,9 +27,10 @@ int init() {
  *
  *
  * NOTE: Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
- *       wenn die init()-Funktion implementiert wurde.
+ *       wenn die init()-Funktion aufgerufen werden soll.
  */
 int start() {
+   //Expander_start(__ExecutionContext);
    return(catch("start()", ERR_WRONG_JUMP));
 }
 
@@ -39,13 +41,14 @@ int start() {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: 1) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende = REASON_UNDEFINED) bricht das Terminal komplexere EA-deinit()-Funktionen
- *          verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
+ * NOTE: 1) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere EA-deinit()-Funktionen verfrüht und nicht
+ *          erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
  *
- *       2) Bei Testende wird diese deinit()-Funktion (wenn implementiert) u.U. zweimal aufgerufen. Beim zweiten mal ist die Library zurückgesetzt,
- *          der Variablen-Status also undefiniert.
-*/
+ *       2) Bei Testende wird diese deinit()-Funktion u.U. zweimal aufgerufen. Beim zweiten Mal ist die Library zurückgesetzt, der Variablen-Status also
+ *          undefiniert.
+ */
 int deinit() {
+   //Expander_deinit(__ExecutionContext);
    return(catch("deinit()"));
 }
 

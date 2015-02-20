@@ -33,6 +33,7 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
+   //Expander_init(__ExecutionContext);
 
 
    // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
@@ -234,6 +235,9 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
+   //Expander_start(__ExecutionContext);
+
+
    // (5) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       UpdateProgramStatus(SetLastError(stdlib.GetLastError()));
@@ -272,6 +276,10 @@ int deinit() {
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
+
+
+   //Expander_deinit(__ExecutionContext);
+
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
    //
