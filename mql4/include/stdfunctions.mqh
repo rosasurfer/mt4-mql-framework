@@ -3297,6 +3297,10 @@ void __DummyCalls() {
    int    ec.TestFlags(/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
+   bool   Expander_init  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   Expander_start (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   Expander_deinit(/*EXECUTION_CONTEXT*/int ec[]);
+
    string DwordToHexStr(int dword); string IntToHexStr(int integer);       // Alias
    int    GetLastWin32Error();
    bool   IsBuiltinTimeframe(int timeframe);

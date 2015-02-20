@@ -26,6 +26,7 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
+   //Expander_init(__ExecutionContext);
 
 
    // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
@@ -138,6 +139,9 @@ int start() {
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
    if (!Bars)                                                                                //       Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
+
+
+   //Expander_start(__ExecutionContext);
                                                                                              //       andere brauchen die aktuelle Zeitreihe nicht.
 
    // (3) stdLib benachrichtigen
@@ -165,6 +169,8 @@ int deinit() {
    __WHEREAMI__ =                               FUNC_DEINIT;
    ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+
+   //Expander_deinit(__ExecutionContext);
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.

@@ -2794,11 +2794,11 @@ bool ExtractPosition(double lotsize, int type, double value,
             n++;
          }
          hstCache = NormalizeDouble(profit, 2);
-         debug("ExtractPosition(0.1)  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  profit="+ DoubleToStr(hstCache, 2) +"  trades="+ n);
+         //debug("ExtractPosition(0.1)  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  profit="+ DoubleToStr(hstCache, 2) +"  trades="+ n);
       }
       // Betrag zu customHistory hinzufügen (Ausgangsdaten bleiben unverändert)
       customHistory += hstCache;
-      debug("ExtractPosition(0.2)  customHistory="+ DoubleToStr(customHistory, 2));
+      //debug("ExtractPosition(0.2)  customHistory="+ DoubleToStr(customHistory, 2));
    }
 
    else if (type == TYPE_REALIZED) {
