@@ -69,7 +69,7 @@ bool   mode.remote;                                                  //   oder n
                                                                      //   Orderänderungen werden nicht automatisch erkannt.
 
 // individuelle Positionskonfiguration
-double custom.position.conf      [][4];                              // Format siehe CustomPositions.ReadConfig()
+double custom.position.conf      [][5];                              // Format siehe CustomPositions.ReadConfig()
 string custom.position.conf.comments[];
 
 
@@ -81,9 +81,9 @@ double shortPosition;
 int    positions.idata[][3];                                         // Positionsdetails: [] = {PositionType, DirectionType, idxComment}
 double positions.ddata[][8];                                         //                   [] = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, FloatingProfit, RealizedProfit, HistoricalProfit, OpenEquity, Drawdown}
 
-#define TYPE_DEFAULT         0                                       // PositionTypes:    normale Position (intern oder extern)
-#define TYPE_CUSTOM          1                                       //                   individuell konfigurierte reale Position
-#define TYPE_VIRTUAL         2                                       //                   individuell konfigurierte virtuelle Position
+#define TYPE_DEFAULT         0                                       // PositionTypes:    normale offene Position                        (intern oder extern)
+#define TYPE_CUSTOM          1                                       //                   individuell konfigurierte reale Anzeige     (mit oder ohne History)
+#define TYPE_VIRTUAL         2                                       //                   individuell konfigurierte virtuelle Anzeige (mit oder ohne History)
 
 #define TYPE_LONG            1                                       // DirectionTypes
 #define TYPE_SHORT           2
@@ -165,13 +165,15 @@ string label.stopoutLevel    = "StopoutLevel";
 string label.time            = "Time";
 
 
-// Font-Settings der detaillierten Positionsanzeige
+// Font-Settings der CustomPositions-Anzeige
 string positions.fontName          = "MS Sans Serif";
 int    positions.fontSize          = 8;
+
 color  positions.fontColor.intern  = Blue;
 color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
+color  positions.fontColor.history = C'128,128,0';
 
 
 // Farben für Orderanzeige
@@ -1525,9 +1527,11 @@ bool UpdatePositions() {
    // interne/externe Positionsdaten
    for (int i=iePositions-1; i >= 0; i--) {
       line++;
-      if (positions.idata[i][I_POSITION_TYPE] == TYPE_VIRTUAL) fontColor = positions.fontColor.virtual;
-      else if (mode.intern)                                    fontColor = positions.fontColor.intern;
-      else                                                     fontColor = positions.fontColor.extern;
+      if    (positions.idata[i][I_POSITION_TYPE ] == TYPE_VIRTUAL) fontColor = positions.fontColor.virtual;
+      else if (mode.intern)
+         if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HISTORY) fontColor = positions.fontColor.history;
+         else                                                      fontColor = positions.fontColor.intern;
+      else                                                         fontColor = positions.fontColor.extern;
 
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HISTORY) {
          // History
@@ -1921,7 +1925,7 @@ bool AnalyzePositions() {
    SetLastError(oldError);
 
    int    type, confLine;
-   double size, value, hstCache, customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
+   double size, value1, value2, value3, customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    bool   isVirtual;
    int    customTickets    [];
    int    customTypes      [];
@@ -1935,10 +1939,11 @@ bool AnalyzePositions() {
    int confSize = ArrayRange(custom.position.conf, 0);
 
    for (i=0, confLine=0; i < confSize; i++) {
-      size     = custom.position.conf[i][0];
-      type     = custom.position.conf[i][1];
-      value    = custom.position.conf[i][2];
-      hstCache = custom.position.conf[i][3];
+      size   = custom.position.conf[i][0];
+      type   = custom.position.conf[i][1];
+      value1 = custom.position.conf[i][2];
+      value2 = custom.position.conf[i][3];
+      value3 = custom.position.conf[i][4];
 
       if (!type) {                                                      // type==NULL => "Zeilenende"
          // (2.3) individuelle Position zusammengefaßt speichern: Long + Short + Hedged
@@ -1962,12 +1967,14 @@ bool AnalyzePositions() {
          confLine++;
          continue;
       }
-      if (!ExtractPosition(size, type, value,
+      if (!ExtractPosition(size, type, value1, value2, value3,
                            _longPosition,      _shortPosition,      _totalPosition,                                                         tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
-                           isVirtual, hstCache,
+                           isVirtual,
                            customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
          return(false);
-      custom.position.conf[i][3] = hstCache;
+      custom.position.conf[i][2] = value1;
+      custom.position.conf[i][3] = value2;
+      custom.position.conf[i][4] = value3;
    }
 
    // (2.4) reguläre (Rest-)Positionen einzeln speichern: Long, Short, Hedged
@@ -2075,22 +2082,22 @@ int SearchMagicNumber(int array[], int number) {
  * @return bool - Erfolgsstatus
  *
  *
- * Füllt das Array custom.position.conf[][3] mit den Konfigurationsdaten des aktuellen Instruments aus der Accountkonfiguration. Das Array enthält danach Elemente
- * im Format {value, type, value, value}.  Ein NULL-Type-Element {*, NULL, *, *} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer eingelesenen
- * Konfiguration ist die Größe des Arrays niemals 0. Konfigurierte Positionskommentare werden in custom.position.conf.comments[] gespeichert.
+ * Füllt das Array custom.position.conf[][] mit den Konfigurationsdaten des aktuellen Instruments aus der Accountkonfiguration. Das Array enthält danach Elemente
+ * im Format {value, type, value1, ...}.  Ein NULL-Type-Element {*, NULL, *, ...} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer eingelesenen
+ * Konfiguration ist die Größe der ersten Dimension des Arrays niemals 0. Positionskommentare werden in custom.position.conf.comments[] gespeichert.
  *
  *  Notation:                                                                                                                 Arraydarstellung:
  *  ---------                                                                                                                 -----------------
- *   0.1#123456                                          - O.1 Lot eines Tickets (1)                                          {             0.1, 123456       , NULL            , NULL}
- *      #123456                                          - komplettes Ticket oder verbleibender Rest eines Tickets            {           EMPTY, 123456       , NULL            , NULL}
- *   0.2L                                                - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)       {             0.2, TYPE_LONG    , NULL            , NULL}
- *   0.3S1.2345                                          - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)    {             0.3, TYPE_SHORT   , 1.2345          , NULL}
- *      L                                                - ohne Lotsize: alle verbleibenden Long-Positionen                   {           EMPTY, TYPE_LONG    , NULL            , NULL}
- *      S                                                - ohne Lotsize: alle verbleibenden Short-Positionen                  {           EMPTY, TYPE_SHORT   , NULL            , NULL}
- *   H{DateTime}            [Group By [Month|Week|Day]]  - Trade-History eines typischen Zeitraums (3)(5)                     {2014.01.01 00:00, TYPE_HISTORY , 2014.12.31 23:59, NULL}
- *   H{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)   {2014.02.01 08:00, TYPE_HISTORY , 2014.02.10 18:00, NULL}
- *   12.34                                               - dem P/L einer Position zuzuschlagender Betrag                      {            NULL, TYPE_REALIZED, 12.34           , NULL}
- *   E123.00                                             - für Equityberechnungen zu verwendender Wert                        {            NULL, TYPE_EQUITY  , 123.00          , NULL}
+ *   0.1#123456                                          - O.1 Lot eines Tickets (1)                                          {             0.1, 123456       , NULL            , ...}
+ *      #123456                                          - komplettes Ticket oder verbleibender Rest eines Tickets            {           EMPTY, 123456       , NULL            , ...}
+ *   0.2L                                                - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)       {             0.2, TYPE_LONG    , NULL            , ...}
+ *   0.3S1.2345                                          - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)    {             0.3, TYPE_SHORT   , 1.2345          , ...}
+ *      L                                                - ohne Lotsize: alle verbleibenden Long-Positionen                   {           EMPTY, TYPE_LONG    , NULL            , ...}
+ *      S                                                - ohne Lotsize: alle verbleibenden Short-Positionen                  {           EMPTY, TYPE_SHORT   , NULL            , ...}
+ *   H{DateTime}            [Group By [Month|Week|Day]]  - Trade-History eines typischen Zeitraums (3)(5)                     {2014.01.01 00:00, TYPE_HISTORY , 2014.12.31 23:59, ...}
+ *   H{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)   {2014.02.01 08:00, TYPE_HISTORY , 2014.02.10 18:00, ...}
+ *   12.34                                               - dem P/L einer Position zuzuschlagender Betrag                      {            NULL, TYPE_REALIZED, 12.34           , ...}
+ *   E123.00                                             - für Equityberechnungen zu verwendender Wert                        {            NULL, TYPE_EQUITY  , 123.00          , ...}
  *
  *   Kommentare (Text nach dem ersten Semikolon ";")     - werden als Beschreibung angezeigt
  *   Kommentare in Kommentaren (nach weiterem ";")       - werden ignoriert
@@ -2107,10 +2114,10 @@ int SearchMagicNumber(int array[], int number) {
  *
  *  Resultierendes Array:
  *  ---------------------
- *  custom.position.conf = {{EMPTY, 111111,     NULL}, {  0.1, 222222,     NULL},                                {*, NULL, *},
- *                          {  0.2, TYPE_LONG,  NULL}, {EMPTY, 222222,     NULL},                                {*, NULL, *},
- *                          {EMPTY, TYPE_LONG,  NULL}, {EMPTY, TYPE_SHORT, NULL}, {NULL, TYPE_REALIZED, -34.45}, {*, NULL, *},
- *                          {  0.3, TYPE_SHORT, NULL},                                                           {*, NULL, *}
+ *  custom.position.conf = {{EMPTY, 111111,     NULL, ...}, {  0.1, 222222,     NULL, ...},                                     {*, NULL, *, ...},
+ *                          {  0.2, TYPE_LONG,  NULL, ...}, {EMPTY, 222222,     NULL, ...},                                     {*, NULL, *, ...},
+ *                          {EMPTY, TYPE_LONG,  NULL, ...}, {EMPTY, TYPE_SHORT, NULL, ...}, {NULL, TYPE_REALIZED, -34.45, ...}, {*, NULL, *, ...},
+ *                          {  0.3, TYPE_SHORT, NULL, ...},                                                                     {*, NULL, *, ...}
  *                         }
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
@@ -2129,8 +2136,8 @@ bool CustomPositions.ReadConfig() {
    }
 
    string   keys[], values[], iniValue, comment, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
-   double   confSizeValue, confTypeValue, confValue1, confValue2, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
-   int      valuesSize, confSize, pos, ticket, offsetStartOfPosition;
+   double   confSizeValue, confTypeValue, confValue1, confValue2, confValue3, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
+   int      valuesSize, confSize, pos, ticket, positionStartOffset;
    bool     isPositionEmpty, isPositionVirtual, isPositionGrouped;
    if (!minLotSize) return(false);                                    // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
@@ -2170,12 +2177,12 @@ bool CustomPositions.ReadConfig() {
                   continue;
 
                if (StringStartsWith(values[n], "H")) {                // History
-                  if (!CustomPositions.ParseHstEntry(values[n], comment, isPositionEmpty, isPositionGrouped, confSizeValue, confValue1, confValue2)) return(false);
-                  if (isPositionGrouped) {                            // bei Gruppierung wurde die Konfiguration bereits in CustomPositions.ParseHstEntry() gespeichert
+                  if (!CustomPositions.ParseHstEntry(values[n], comment, isPositionEmpty, isPositionGrouped, confSizeValue, confValue1, confValue2, confValue3)) return(false);
+                  if (isPositionGrouped) {
                      isPositionEmpty = false;
-                     continue;
+                     continue;                                        // gruppiert:       die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
                   }
-                  confTypeValue = TYPE_HISTORY;                       // die anderen Werte wurden schon in CustomPositions.ParseHstEntry() gesetzt
+                  confTypeValue = TYPE_HISTORY;                       // nicht gruppiert: die übrigen Variablen wurden bereits in CustomPositions.ParseHstEntry() gesetzt
                }
 
                else if (StringStartsWith(values[n], "#")) {           // Ticket bzw. verbleibender Rest eines Tickets
@@ -2185,6 +2192,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = StrToInteger(strTicket);
                   confValue1    = NULL;
                   confValue2    = NULL;
+                  confValue3    = NULL;
                }
 
                else if (StringStartsWith(values[n], "L")) {           // alle verbleibenden Long-Positionen
@@ -2193,6 +2201,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = TYPE_LONG;
                   confValue1    = NULL;
                   confValue2    = NULL;
+                  confValue3    = NULL;
                }
 
                else if (StringStartsWith(values[n], "S")) {           // alle verbleibenden Short-Positionen
@@ -2201,6 +2210,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = TYPE_SHORT;
                   confValue1    = NULL;
                   confValue2    = NULL;
+                  confValue3    = NULL;
                }
 
                else if (StringStartsWith(values[n], "E")) {           // Equity
@@ -2210,6 +2220,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = TYPE_EQUITY;
                   confValue1    = StrToDouble(strSize);
                   confValue2    = NULL;
+                  confValue3    = NULL;
                   if (confValue1 <= 0)                                return(!catch("CustomPositions.ReadConfig(6)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                }
 
@@ -2218,6 +2229,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = TYPE_REALIZED;
                   confValue1    = StrToDouble(values[n]);
                   confValue2    = NULL;
+                  confValue3    = NULL;
                }
 
                else if (StringEndsWith(values[n], "L")) {             // virtuelle Longposition zum aktuellen Preis
@@ -2229,6 +2241,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = TYPE_LONG;
                   confValue1    = NULL;
                   confValue2    = NULL;
+                  confValue3    = NULL;
                }
 
                else if (StringEndsWith(values[n], "S")) {             // virtuelle Shortposition zum aktuellen Preis
@@ -2240,6 +2253,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = TYPE_SHORT;
                   confValue1    = NULL;
                   confValue2    = NULL;
+                  confValue3    = NULL;
                }
 
                else if (StringContains(values[n], "L")) {             // virtuelle Longposition zum angegebenen Preis
@@ -2255,6 +2269,7 @@ bool CustomPositions.ReadConfig() {
                   confValue1 = StrToDouble(strPrice);
                   if (confValue1 <= 0)                                return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue2 = NULL;
+                  confValue3 = NULL;
                }
 
                else if (StringContains(values[n], "S")) {             // virtuelle Shortposition zum angegebenen Preis
@@ -2270,6 +2285,7 @@ bool CustomPositions.ReadConfig() {
                   confValue1 = StrToDouble(strPrice);
                   if (confValue1 <= 0)                                return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue2 = NULL;
+                  confValue3 = NULL;
                }
 
                else if (StringContains(values[n], "#")) {             // Lotsizeangabe + # + Ticket
@@ -2284,6 +2300,7 @@ bool CustomPositions.ReadConfig() {
                   confTypeValue = StrToInteger(strTicket);
                   confValue1    = NULL;
                   confValue2    = NULL;
+                  confValue3 = NULL;
                }
                else                                                   return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
@@ -2293,8 +2310,8 @@ bool CustomPositions.ReadConfig() {
                // Die Konfiguration virtueller Positionen muß mit einer virtuellen Position beginnen, damit die virtuellen Lots später nicht von den realen Lots abgezogen werden, siehe (2).
                if (confSizeValue!=EMPTY && (confTypeValue==TYPE_LONG || confTypeValue==TYPE_SHORT)) {
                   if (!isPositionEmpty && !isPositionVirtual) {
-                     double tmp[4] = {0, TYPE_LONG, NULL, NULL};          // am Anfang der Zeile virtuelle 0-Position einfügen
-                     ArrayInsertDoubleArray(custom.position.conf, offsetStartOfPosition, tmp);
+                     double tmp[4] = {0, TYPE_LONG, NULL, NULL, NULL};  // am Anfang der Zeile virtuelle 0-Position einfügen
+                     ArrayInsertDoubleArray(custom.position.conf, positionStartOffset, tmp);
                   }
                   isPositionVirtual = true;
                }
@@ -2306,22 +2323,23 @@ bool CustomPositions.ReadConfig() {
                custom.position.conf[confSize][1] = confTypeValue;
                custom.position.conf[confSize][2] = confValue1;
                custom.position.conf[confSize][3] = confValue2;
+               custom.position.conf[confSize][4] = confValue3;
                isPositionEmpty = false;
             }
 
-            if (!isPositionEmpty && !isPositionGrouped) {                  // Zeilenende mit Leerelement markieren
+            if (!isPositionEmpty) {                                        // Zeile mit Leerelement abschließen (markiert Zeilenende)
                confSize = ArrayRange(custom.position.conf, 0);
-               ArrayResize    (custom.position.conf, confSize+1);          // initialisiert Element mit {NULL, NULL, NULL, NULL}
+               ArrayResize    (custom.position.conf, confSize+1);          // initialisiert Element mit {*, NULL, ...}
                ArrayPushString(custom.position.conf.comments, comment);
+               positionStartOffset = confSize + 1;                         // Start-Offset der nächsten Custom-Position speichern (falls noch eine weitere Position folgt)
             }
-            offsetStartOfPosition = ArrayRange(custom.position.conf, 0);   // Start-Offset der nächsten Custom-Position (falls zutreffend)
          }
       }
    }
 
    confSize = ArrayRange(custom.position.conf, 0);
    if (!confSize) {                                                        // leere Konfiguration mit Leerelement markieren
-      ArrayResize(custom.position.conf, 1);                                // initialisiert Element mit {NULL, NULL, NULL, NULL}
+      ArrayResize(custom.position.conf, 1);                                // initialisiert Element mit {*, NULL, ...}
       ArrayPushString(custom.position.conf.comments, "");
    }
 
@@ -2334,33 +2352,34 @@ bool CustomPositions.ReadConfig() {
  * Parst einen History-Konfigurationseintrag.
  *
  * @param  _IN_     string confValue       - Konfigurationseintrag
- * @param  _IN_OUT_ string comment         - Kommentar des Konfigurationseintrags (wird ggf. erweitert)
+ * @param  _IN_OUT_ string confComment     - Kommentar des Konfigurationseintrags (wird neu definiert oder ggf. erweitert)
  * @param  _IN_OUT_ bool   isEmpty         - ob die Konfiguration der aktuellen Position noch leer ist
  * @param  _OUT_    bool   isGrouped       - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
  * @param  _OUT_    double hstFrom         - Beginnzeitpunkt der zu berücksichtigenden History
  * @param  _OUT_    double hstTo           - Endzeitpunkt der zu berücksichtigenden History
- * @param  _OUT_    double value2          - bei History-Einträgen als Cache benutzt
+ * @param  _OUT_    double value2          - Cache-Variable für den ermittelten P/L des angegebenen Zeitraums
+ * @param  _OUT_    double value3          - Cache-Variable für die Anzahl der Tickets in der History beim letzten Zugriff
  *
  * @return bool - Erfolgsstatus
  *
  *
  * Format:
  * -------
- *  H{DateTime}            [Group By [Month|Week|Day]]   • Trade-History eines typischen Zeitraums
- *  H{DateTime}-{DateTime} [Group By [Month|Week|Day]]   • Trade-History von und bis zu einem konkreten Zeitpunkt
+ *  H{DateTime}            [[Group] By] (Month|Week|Day)[ly]   • Trade-History eines typischen Zeitraums
+ *  H{DateTime}-{DateTime} [[Group] By] (Month|Week|Day)[ly]   • Trade-History von und bis zu einem konkreten Zeitpunkt
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
  */
-bool CustomPositions.ParseHstEntry(string confValue, string &comment, bool &isEmpty, bool &isGrouped, double &hstFrom, double &hstTo, double &value2) {
+bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &isEmpty, bool &isGrouped, double &hstFrom, double &hstTo, double &value2, double &value3) {
    string confValue.orig = StringTrim(confValue);
           confValue      = StringToUpper(confValue.orig);
    if (!StringStartsWith(confValue, "H")) return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
    confValue = StringTrim(StringSubstr(confValue, 1));
 
    isGrouped = false;
-   bool     groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
+   bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
-   string   sGroupClause, sValue1, sValue2;
+   string   sGroupClause, sValue1, sValue2, comment;
 
 
    // (1) auf Group-By-Modifier prüfen und Gruppierung parsen
@@ -2376,7 +2395,6 @@ bool CustomPositions.ParseHstEntry(string confValue, string &comment, bool &isEm
       else if (sGroupClause == "WEEK" ) groupByWeek  = true;
       else if (sGroupClause == "MONTH") groupByMonth = true;
       else return(!catch("CustomPositions.ParseHstEntry(3)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
-      //debug("ParseHstEntry(0.1)  isGrouped="+ isGrouped +"  groupByDay="+ groupByDay +"  groupByWeek="+ groupByWeek +"  groupByMonth="+ groupByMonth);
    }
 
 
@@ -2389,32 +2407,32 @@ bool CustomPositions.ParseHstEntry(string confValue, string &comment, bool &isEm
       dtFrom = ParseDateTime(StringTrim(StringSubstrFix(confValue, 0, pos)), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTime(StringTrim(StringSubstr   (confValue, pos+1 )), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
-         if      (isFullYear2  ) dtTo  = DateTime(TimeYear(dtTo)+1)                  - 1*SECOND;      // Jahresende
-         else if (isFullMonth2 ) dtTo  = DateTime(TimeYear(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;      // Monatsende
-         else if (isFullWeek2  ) dtTo += 1*WEEK                                      - 1*SECOND;      // Wochenende
-         else if (isFullDay2   ) dtTo += 1*DAY                                       - 1*SECOND;      // Tagesende
-      }                                                                                               // isFullHour2 und isFullMinute2 erweitern dtTo NICHT, die Zeit
-   }                                                                                                  // wird wörtlich genommen
+         if      (isFullYear2  ) dtTo  = DateTime(TimeYear(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime(TimeYear(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         else if (isFullWeek2  ) dtTo += 1*WEEK                                      - 1*SECOND;   // Wochenende
+         else if (isFullDay2   ) dtTo += 1*DAY                                       - 1*SECOND;   // Tagesende
+      }                                                                                            // isFullHour2 und isFullMinute2 erweitern dtTo NICHT, die Zeit wird wörtlich genommen
+   }
    else {
-      // {DateTime}                                                  // allgemeinen Zeitraum parsen
+      // {DateTime}                                                  // einzelnen Zeitraum parsen
+      isSingleTimespan = true;
       dtFrom = ParseDateTime(confValue, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
                                                                                                                          if (!dtFrom)       return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
-      if      (isFullYear1  ) dtTo = DateTime(TimeYear(dtFrom)+1)                    - 1*SECOND;      // Jahresende
-      else if (isFullMonth1 ) dtTo = DateTime(TimeYear(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;      // Monatsende
-      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                 - 1*SECOND;      // Wochenende
-      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                  - 1*SECOND;      // Tagesende
-      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                 - 1*SECOND;      // Ende der Stunde
-      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                               - 1*SECOND;      // Ende der Minute
+      if      (isFullYear1  ) dtTo = DateTime(TimeYear(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime(TimeYear(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                 - 1*SECOND;   // Wochenende
+      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                  - 1*SECOND;   // Tagesende
+      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                 - 1*SECOND;   // Ende der Stunde
+      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                               - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
    //debug("ParseHstEntry(0.2)  dtFrom="+ TimeToStr(dtFrom) +"  dtTo="+ TimeToStr(dtTo));
    if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
    if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
-   isEmpty = false;
 
 
-   // (3) ggf. Gruppierungen anlegen und direkt hier einfügen
    if (isGrouped) {
+      // (3) ggf. Gruppierungen anlegen und direkt hier mit Zeilenenden einfügen (nicht jedoch bei der letzten Gruppe)
       datetime groupFrom, groupTo, nextGroupFrom;
       if      (groupByMonth) groupFrom = DateTime(TimeYear(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAY - (TimeDayOfWeek(dtFrom)+6)%7 * DAYS;
@@ -2427,42 +2445,80 @@ bool CustomPositions.ParseHstEntry(string confValue, string &comment, bool &isEm
          groupTo   = nextGroupFrom - 1*SECOND;
          groupFrom = Max(groupFrom, dtFrom);
          groupTo   = Min(groupTo,   dtTo  );
+         comment   = TimeToStr(groupFrom, TIME_DATE) +" - "+ TimeToStr(groupTo, TIME_DATE);
          //debug("ParseHstEntry(0.4)  groupFrom="+ TimeToStr(groupFrom) +"  groupTo="+ TimeToStr(groupTo));
 
-         // Konfigurationen der einzelnen Gruppen hinzufügen
+         // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(custom.position.conf, 0);
          ArrayResize(custom.position.conf, confSize+1);
          custom.position.conf[confSize][0] = groupFrom;
          custom.position.conf[confSize][1] = TYPE_HISTORY;
          custom.position.conf[confSize][2] = groupTo;
          custom.position.conf[confSize][3] = EMPTY_VALUE;
-                                                                     // Zeilenende mit Leerelement markieren
-         ArrayResize    (custom.position.conf, confSize+2);          // initialisiert Element mit {NULL, NULL, NULL, NULL}
-         ArrayPushString(custom.position.conf.comments, TimeToStr(groupFrom, TIME_DATE) +" - "+ TimeToStr(groupTo, TIME_DATE));
+         custom.position.conf[confSize][4] = EMPTY_VALUE;
+         isEmpty = false;
+
+         // Zeile der globalen Konfiguration abschließen (außer bei der letzten Gruppe)
+         if (nextGroupFrom <= dtTo) {
+            ArrayResize    (custom.position.conf, confSize+2);       // initialisiert Element mit {*, NULL, ...}
+            ArrayPushString(custom.position.conf.comments, comment);
+         }
       }
-      return(true);
+   }
+   else {
+      // (4) normale Rückgabewerte ohne Gruppierung
+      if (isSingleTimespan) {
+         if      (isFullYear1  ) comment = DateToStr   (dtFrom, "Y");
+         else if (isFullMonth1 ) comment = DateToStr_de(dtFrom, "N Y");
+         else if (isFullWeek1  ) comment = DateToStr   (dtFrom, "!W!o!c!h!e !v!o!m D.M.Y");
+         else if (isFullDay1   ) comment = DateToStr   (dtFrom, "D.M.Y");
+         else if (isFullHour1  ) comment = DateToStr   (dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
+         else if (isFullMinute1) comment = DateToStr   (dtFrom, "D.M.Y H:I");
+         else                    comment = DateToStr   (dtFrom, "D.M.Y H:I:S");
+      }
+      else if (!hstTo) {
+         if      (isFullYear1  ) comment = "seit "+               DateToStr   (dtFrom, "Y");
+         else if (isFullMonth1 ) comment = "seit "+               DateToStr_de(dtFrom, "N Y");
+         else if (isFullWeek1  ) comment = "seit der Woche vom "+ DateToStr   (dtFrom, "D.M.Y");
+         else if (isFullDay1   ) comment = "seit "+               DateToStr   (dtFrom, "D.M.Y");
+         else if (isFullHour1  ) comment = "seit "+               DateToStr   (dtFrom, "D.M.Y H:I");
+         else if (isFullMinute1) comment = "seit "+               DateToStr   (dtFrom, "D.M.Y H:I");
+         else                    comment = "seit "+               DateToStr   (dtFrom, "D.M.Y H:I:S");
+      }
+      else if (!hstFrom) {
+         if      (isFullYear2  ) comment = "bis "+               DateToStr   (dtTo, "Y");
+         else if (isFullMonth2 ) comment = "bis "+               DateToStr_de(dtTo, "N Y");
+         else if (isFullWeek2  ) comment = "bis zur Woche vom "+ DateToStr   (dtTo, "D.M.Y");
+         else if (isFullDay2   ) comment = "bis "+               DateToStr   (dtTo, "D.M.Y");
+         else if (isFullHour2  ) comment = "bis "+               DateToStr   (dtTo, "D.M.Y H:I");
+         else if (isFullMinute2) comment = "bis "+               DateToStr   (dtTo, "D.M.Y H:I");
+         else                    comment = "bis "+               DateToStr   (dtTo, "D.M.Y H:I:S");
+      }
+      else {
+         comment = "von "+ TimeToStr(hstFrom, TIME_DATE) +" bis "+ TimeToStr(hstTo, TIME_DATE);
+      }
+
+      hstFrom     = dtFrom;
+      hstTo       = dtTo;
+      value2      = EMPTY_VALUE;
+      value3      = EMPTY_VALUE;
+      confComment = confComment + ifString(StringLen(confComment), " + ", "") + comment;
    }
 
-
-   // (4) normale Rückgabewerte ohne Gruppierung
-   hstFrom = dtFrom;
-   hstTo   = dtTo;
-   value2  = EMPTY_VALUE;
-   comment = StringConcatenate(comment, ifString(StringLen(comment), " + ", ""), confValue);
    return(true);
 }
 
 
 /**
- * Parst eine allgemein oder exakt formulierte Zeitpunktbeschreibung.
+ * Parst eine Zeitpunktbeschreibung. Kann ein allgemeiner Zeitraum (2014.03) oder ein genauer Zeitpunkt (2014.03.12 12:34:56) sein.
  *
  * @param  _IN_  string value    - zu parsender String
- * @param  _OUT_ bool   isYear   - ob ein allgemein formulierter Zeitpunkt ein Jahr beschreibt,    z.B. "2014"
- * @param  _OUT_ bool   isMonth  - ob ein allgemein formulierter Zeitpunkt einen Monat beschreibt, z.B. "2014.02"
- * @param  _OUT_ bool   isWeek   - ob ein allgemein formulierter Zeitpunkt eine Woche beschreibt,  z.B. "2014.02.15W"
- * @param  _OUT_ bool   isDay    - ob ein allgemein formulierter Zeitpunkt einen Tag beschreibt,   z.B. "2014.02.18"
- * @param  _OUT_ bool   isHour   - ob ein allgemein formulierter Zeitpunkt eine Stunde beschreibt, z.B. "2014.02.18 12:00"
- * @param  _OUT_ bool   isMinute - ob ein allgemein formulierter Zeitpunkt eine Minute beschreibt, z.B. "2014.02.18 12:34"
+ * @param  _OUT_ bool   isYear   - ob ein allgemein formulierter Zeitraum ein Jahr beschreibt,    z.B. "2014"
+ * @param  _OUT_ bool   isMonth  - ob ein allgemein formulierter Zeitraum einen Monat beschreibt, z.B. "2014.02"
+ * @param  _OUT_ bool   isWeek   - ob ein allgemein formulierter Zeitraum eine Woche beschreibt,  z.B. "2014.02.15W"
+ * @param  _OUT_ bool   isDay    - ob ein allgemein formulierter Zeitraum einen Tag beschreibt,   z.B. "2014.02.18"
+ * @param  _OUT_ bool   isHour   - ob ein allgemein formulierter Zeitraum eine Stunde beschreibt, z.B. "2014.02.18 12:00"
+ * @param  _OUT_ bool   isMinute - ob ein allgemein formulierter Zeitraum eine Minute beschreibt, z.B. "2014.02.18 12:34"
  *
  * @return datetime - Zeitpunkt oder NaT (Not-A-Time), falls ein Fehler auftrat
  */
@@ -2487,14 +2543,14 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
    // 2014.01.15 12:34
    // 2014.01.15 12:34:56
    int valuesSize = Explode(value, ".", values, NULL);
-   if (valuesSize > 3)                                               return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+   if (valuesSize > 3)                                        return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
 
    if (valuesSize >= 1) {
-      sYY = StringTrim(values[0]);                                   // Jahr prüfen
-      if (StringLen(sYY) != 4)                                       return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-      if (!StringIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      sYY = StringTrim(values[0]);                            // Jahr prüfen
+      if (StringLen(sYY) != 4)                                return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (!StringIsDigit(sYY))                                return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       iYY = StrToInteger(sYY);
-      if (iYY < 1970 || 2037 < iYY)                                  return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (iYY < 1970 || 2037 < iYY)                           return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       if (valuesSize == 1) {
          iMM    = 1;
          iDD    = 1;
@@ -2503,11 +2559,11 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
    }
 
    if (valuesSize >= 2) {
-      sMM = StringTrim(values[1]);                                   // Monat prüfen
-      if (StringLen(sMM) > 2)                                        return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-      if (!StringIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      sMM = StringTrim(values[1]);                            // Monat prüfen
+      if (StringLen(sMM) > 2)                                 return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (!StringIsDigit(sMM))                                return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       iMM = StrToInteger(sMM);
-      if (iMM < 1 || 12 < iMM)                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (iMM < 1 || 12 < iMM)                                return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       if (valuesSize == 2) {
          iDD     = 1;
          isMonth = true;
@@ -2516,66 +2572,66 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
    if (valuesSize == 3) {
       sDD = StringTrim(values[2]);
-      if (StringEndsWith(sDD, "W")) {                                // Tag + Woche: "2014.01.15 W"
+      if (StringEndsWith(sDD, "W")) {                         // Tag + Woche: "2014.01.15 W"
          isWeek = true;
          sDD    = StringTrim(StringLeft(sDD, -1));
       }
-      else if (StringLen(sDD) > 2) {                                 // Tag + Zeit:  "2014.01.15 12:34:56"
+      else if (StringLen(sDD) > 2) {                          // Tag + Zeit:  "2014.01.15 12:34:56"
          int pos = StringFind(sDD, " ");
-         if (pos == -1)                                              return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (pos == -1)                                       return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
          sTime = StringTrim(StringSubstr   (sDD, pos+1));
          sDD   = StringTrim(StringSubstrFix(sDD, 0, pos));
       }
-      else {                                                         // nur Tag
+      else {                                                  // nur Tag
          isDay = true;
       }
-                                                                     // Tag prüfen
-      if (StringLen(sDD) > 2)                                        return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-      if (!StringIsDigit(sDD))                                       return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+                                                              // Tag prüfen
+      if (StringLen(sDD) > 2)                                 return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (!StringIsDigit(sDD))                                return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       iDD = StrToInteger(sDD);
-      if (iDD < 1 || 31 < iDD)                                       return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+      if (iDD < 1 || 31 < iDD)                                return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       if (iDD > 28) {
          if (iMM == FEB) {
-            if (iDD > 29)                                            return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-            if (!IsLeapYear(iYY))                                    return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (iDD > 29)                                     return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (!IsLeapYear(iYY))                             return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
          }
          else if (iDD==31)
-            if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)        return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
       }
 
-      if (StringLen(sTime) > 0) {                                    // Zeit prüfen
+      if (StringLen(sTime) > 0) {                             // Zeit prüfen
          // hh:ii:ss
          valuesSize = Explode(sTime, ":", values, NULL);
-         if (valuesSize < 2 || 3 < valuesSize)                       return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (valuesSize < 2 || 3 < valuesSize)                return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
 
-         sHH = StringTrim(values[0]);                                // Stunden
-         if (StringLen(sHH) > 2)                                     return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (!StringIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         sHH = StringTrim(values[0]);                         // Stunden
+         if (StringLen(sHH) > 2)                              return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (!StringIsDigit(sHH))                             return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
          iHH = StrToInteger(sHH);
-         if (iHH < 0 || 23 < iHH)                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (iHH < 0 || 23 < iHH)                             return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
 
-         sII = StringTrim(values[1]);                                // Minuten
-         if (StringLen(sII) > 2)                                     return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-         if (!StringIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         sII = StringTrim(values[1]);                         // Minuten
+         if (StringLen(sII) > 2)                              return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (!StringIsDigit(sII))                             return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
          iII = StrToInteger(sII);
-         if (iII < 0 || 59 < iII)                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+         if (iII < 0 || 59 < iII)                             return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
          if (valuesSize == 2) {
             if (!iII) isHour   = true;
             else      isMinute = true;
          }
 
          if (valuesSize == 3) {
-            sSS = StringTrim(values[2]);                             // Sekunden
-            if (StringLen(sSS) > 2)                                  return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-            if (!StringIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+            sSS = StringTrim(values[2]);                      // Sekunden
+            if (StringLen(sSS) > 2)                           return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (!StringIsDigit(sSS))                          return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
             iSS = StrToInteger(sSS);
-            if (iSS < 0 || 59 < iSS)                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
+            if (iSS < 0 || 59 < iSS)                          return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
          }
       }
    }
 
    datetime result = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
-   if (isWeek)                                                       // wenn Woche, dann Zeit auf Wochenbeginn setzen
+   if (isWeek)                                                // wenn Woche, dann Zeit auf Wochenbeginn setzen
       result -= (TimeDayOfWeek(result)+6)%7 * DAYS;
    return(result);
 }
@@ -2586,18 +2642,19 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
  *
  * @param  _IN_     double lotsize    - zu extrahierende Lotsize
  * @param  _IN_     int    type       - zu extrahierender Typ: virtualLong/virtualShort/Ticket/History/Betrag/Equity
- * @param  _IN_     double value      - Wert: Preis/Betrag/Equity
+ * @param  _IN_OUT_ double value1     - Wert 1: Preis/Betrag/Equity (Änderungen bleiben erhalten)
+ * @param  _IN_OUT_ double value2     - sonstiger Wert 2            (Änderungen bleiben erhalten)
+ * @param  _IN_OUT_ double value3     - sonstiger Wert 3            (Änderungen bleiben erhalten)
  *
  * @param  _IN_OUT_ mixed  vars       - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
  * @param  _IN_OUT_ bool   isVirtual  - ob die extrahierte Position virtuell ist
- * @param  _IN_OUT_ double hstCache   - Zwischenspeicher für historische Werte
  * @param  _IN_OUT_ mixed  customVars - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
  *
  * @return bool - Erfolgsstatus
  */
-bool ExtractPosition(double lotsize, int type, double value,
-                     double       &longPosition, double       &shortPosition, double       &totalPosition,                                                                      int       &tickets[], int       &types[], double       &lots[], double       &openPrices[], double       &commissions[], double       &swaps[], double       &profits[],
-                     bool            &isVirtual, double &hstCache,
+bool ExtractPosition(double lotsize, int type, double &value1, double &value2, double &value3,
+                     double &longPosition,       double &shortPosition,       double &totalPosition,                                                                            int &tickets[],       int &types[],       double &lots[],       double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
+                     bool            &isVirtual,
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, double &customRealized, double &customHistory, double &customEquity, int &customTickets[], int &customTypes[], double &customLots[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
    int sizeTickets = ArraySize(tickets);
 
@@ -2631,7 +2688,7 @@ bool ExtractPosition(double lotsize, int type, double value,
       else {
          // virtuelle Long-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden ignoriert, es gibt nichts abzuziehen oder hinzuzufügen
-            double openPrice = ifDouble(value, value, Ask);
+            double openPrice = ifDouble(value1, value1, Ask);
             ArrayPushInt   (customTickets,     TYPE_LONG                                     );
             ArrayPushInt   (customTypes,       OP_BUY                                        );
             ArrayPushDouble(customLots,        lotsize                                       );
@@ -2676,7 +2733,7 @@ bool ExtractPosition(double lotsize, int type, double value,
       else {
          // virtuelle Short-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden ignoriert, es gibt nichts abzuziehen oder hinzuzufügen
-            openPrice = ifDouble(value, value, Bid);
+            openPrice = ifDouble(value1, value1, Bid);
             ArrayPushInt   (customTickets,     TYPE_SHORT                                    );
             ArrayPushInt   (customTypes,       OP_SELL                                       );
             ArrayPushDouble(customLots,        lotsize                                       );
@@ -2692,12 +2749,15 @@ bool ExtractPosition(double lotsize, int type, double value,
    }
 
    else if (type == TYPE_HISTORY) {
-      datetime hstFrom = lotsize;
-      datetime hstTo   = value;
+      datetime hstFrom    = lotsize;
+      datetime hstTo      = value1;
+      double   lastProfit = value2;
+      int      lastOrders = value3;                                  // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
 
-      if (hstCache == EMPTY_VALUE) {
+      int orders=OrdersHistoryTotal(), _orders=orders;
+
+      if (lastProfit==EMPTY_VALUE || orders!=lastOrders) {
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-         int orders = OrdersHistoryTotal();
          int sortKeys[][3], n, hst.ticket;                           // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
          string exDividend = "Ex Dividend "+ Symbol();
@@ -2785,30 +2845,31 @@ bool ExtractPosition(double lotsize, int type, double value,
          }
 
          // (4) Trades auswerten
-         double profit; n=0;
+         lastProfit=0; n=0;
          for (i=0; i < orders; i++) {
             if (!hst.tickets[i])                                       continue; // verworfene Hedges überspringen
             if (hstFrom!=NULL) /*&&*/ if (hst.closeTimes[i] < hstFrom) continue;
             if (hstTo  !=NULL) /*&&*/ if (hst.closeTimes[i] > hstTo  ) continue;
-            profit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
+            lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
          }
-         hstCache = NormalizeDouble(profit, 2);
-         //debug("ExtractPosition(0.1)  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  profit="+ DoubleToStr(hstCache, 2) +"  trades="+ n);
+         lastProfit = NormalizeDouble(lastProfit, 2);
+         value2     = lastProfit;
+         value3     = _orders;
+         //debug("ExtractPosition(0.1)  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
       }
       // Betrag zu customHistory hinzufügen (Ausgangsdaten bleiben unverändert)
-      customHistory += hstCache;
-      //debug("ExtractPosition(0.2)  customHistory="+ DoubleToStr(customHistory, 2));
+      customHistory += lastProfit;
    }
 
    else if (type == TYPE_REALIZED) {
       // Betrag zu customRealized hinzufügen (Ausgangsdaten bleiben unverändert)
-      customRealized += value;
+      customRealized += value1;
    }
 
    else if (type == TYPE_EQUITY) {
       // vorhandenen Betrag überschreiben (Ausgangsdaten bleiben unverändert)
-      customEquity = value;
+      customEquity = value1;
    }
 
    else {
@@ -2844,9 +2905,9 @@ bool ExtractPosition(double lotsize, int type, double value,
                if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(5)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotsize, lots[i])) {
                   // komplettes Ticket übernehmen
-                  if (!ExtractPosition(EMPTY, type, value,
+                  if (!ExtractPosition(EMPTY, type, value1, value2, value3,
                                        longPosition,       shortPosition,       totalPosition,                                                         tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
-                                       isVirtual, hstCache,
+                                       isVirtual,
                                        customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
                      return(false);
                }
@@ -3241,7 +3302,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
       positions.idata[size][I_POSITION_TYPE  ] = TYPE_DEFAULT;
       positions.idata[size][I_DIRECTION_TYPE ] = TYPE_LONG;
-      positions.idata[size][I_COMMENT        ] = -1;                  // kein Kommentar
+      positions.idata[size][I_COMMENT        ] = -1;                 // kein Kommentar
       positions.ddata[size][I_DIRECT_LOTSIZE ] = totalPosition;
       positions.ddata[size][I_HEDGED_LOTSIZE ] = 0;
          pipValue = PipValue(totalPosition, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
@@ -3263,7 +3324,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       commission     = 0;
       profit         = 0;
 
-      for (i=ticketsSize-1; i >= 0; i--) {                                 // jüngstes Ticket zuerst
+      for (i=ticketsSize-1; i >= 0; i--) {                           // jüngstes Ticket zuerst
          if (!tickets[i]    ) continue;
          if (!remainingShort) continue;
 
@@ -3300,7 +3361,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
       positions.idata[size][I_POSITION_TYPE  ] = TYPE_DEFAULT;
       positions.idata[size][I_DIRECTION_TYPE ] = TYPE_SHORT;
-      positions.idata[size][I_COMMENT        ] = -1;                  // kein Kommentar
+      positions.idata[size][I_COMMENT        ] = -1;                 // kein Kommentar
       positions.ddata[size][I_DIRECT_LOTSIZE ] = -totalPosition;
       positions.ddata[size][I_HEDGED_LOTSIZE ] = 0;
          pipValue = PipValue(-totalPosition, true);                  // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
@@ -3359,7 +3420,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
 
       positions.idata[size][I_POSITION_TYPE  ] = TYPE_DEFAULT;
       positions.idata[size][I_DIRECTION_TYPE ] = TYPE_HEDGE;
-      positions.idata[size][I_COMMENT        ] = -1;                  // kein Kommentar
+      positions.idata[size][I_COMMENT        ] = -1;                 // kein Kommentar
       positions.ddata[size][I_DIRECT_LOTSIZE ] = 0;
       positions.ddata[size][I_HEDGED_LOTSIZE ] = hedgedLotSize;
          pipValue = PipValue(hedgedLotSize, true);                   // TRUE = Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
@@ -4121,6 +4182,7 @@ string InputsToStr() {
    int      ArrayPushDouble(double array[], double value);
    string   BoolToStr(bool value);
    string   DateToStr(datetime time, string mask);
+   string   DateToStr_de(datetime time, string mask);
    bool     DeleteIniKey(string file, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFile(string filename);
