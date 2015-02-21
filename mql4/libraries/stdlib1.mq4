@@ -9426,7 +9426,7 @@ string NumberToStr(double number, string mask) {
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
 string DateToStr(datetime time, string mask) {
-   if (time < 0) return(_emptyStr(catch("DateToStr()  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
+   if (time < 0) return(_emptyStr(catch("DateToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
 
    if (!StringLen(mask))
       return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
@@ -9504,6 +9504,91 @@ string DateToStr(datetime time, string mask) {
  */
 string DateTimeToStr(datetime time, string format) {
    return(DateToStr(time, format));
+}
+
+
+/**
+ * Wie DateToStr(), gibt jedoch deutsche Monats- und Tagesnamen aus.
+ */
+string DateToStr_de(datetime time, string mask) {
+   if (time < 0) return(_emptyStr(catch("DateToStr_de(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
+
+   if (!StringLen(mask))
+      return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
+
+   string months[12] = {"","Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"};
+   string wdays [ 7] = {"Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Sonnabend"};
+
+   int dd  = TimeDay      (time);
+   int mm  = TimeMonth    (time);
+   int yy  = TimeYear     (time);
+   int dw  = TimeDayOfWeek(time);
+   int hr  = TimeHour     (time);
+   int min = TimeMinute   (time);
+   int sec = TimeSeconds  (time);
+
+   bool h12f = StringFind(StringToUpper(mask), "A") >= 0;
+
+   int h12 = 12;
+   if      (hr > 12) h12 = hr - 12;
+   else if (hr >  0) h12 = hr;
+
+   if (hr <= 12) string ampm = "am";
+   else                 ampm = "pm";
+
+   switch (MathMod(dd, 10)) {
+      case 1: string d10 = "st"; break;
+      case 2:        d10 = "nd"; break;
+      case 3:        d10 = "rd"; break;
+      default:       d10 = "th";
+   }
+   if (dd > 10) /*&&*/ if (dd < 14)
+      d10 = "th";
+
+   string result = "";
+
+   for (int i=0; i < StringLen(mask); i++) {
+      string char = StringSubstr(mask, i, 1);
+      if (char == "!") {
+         result = result + StringSubstr(mask, i+1, 1);
+         i++;
+         continue;
+      }
+      if      (char == "d")                result = result +                    dd;
+      else if (char == "D")                result = result + StringRight("0"+   dd, 2);
+      else if (char == "m")                result = result +                    mm;
+      else if (char == "M")                result = result + StringRight("0"+   mm, 2);
+      else if (char == "y")                result = result + StringRight("0"+   yy, 2);
+      else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
+      else if (char == "n")                result = result + StringSubstr(months[mm], 0, 3);
+      else if (char == "N")                result = result +              months[mm];
+      else if (char == "w")                result = result + StringSubstr(wdays [dw], 0, 3);
+      else if (char == "W")                result = result +              wdays [dw];
+      else if (char == "h") {
+         if (h12f)                         result = result +                    h12;
+         else                              result = result +                    hr; }
+      else if (char == "H") {
+         if (h12f)                         result = result + StringRight("0"+   h12, 2);
+         else                              result = result + StringRight("0"+   hr, 2);
+      }
+      else if (char == "i")                result = result +                    min;
+      else if (char == "I")                result = result + StringRight("0"+   min, 2);
+      else if (char == "s")                result = result +                    sec;
+      else if (char == "S")                result = result + StringRight("0"+   sec, 2);
+      else if (char == "a")                result = result + ampm;
+      else if (char == "A")                result = result + StringToUpper(ampm);
+      else if (char == "t" || char == "T") result = result + d10;
+      else                                 result = result + char;
+   }
+   return(result);
+}
+
+
+/**
+ * Alias
+ */
+string DateTimeToStr_de(datetime time, string format) {
+   return(DateToStr_de(time, format));
 }
 
 
