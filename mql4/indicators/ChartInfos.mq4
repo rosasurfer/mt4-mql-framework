@@ -3896,6 +3896,7 @@ bool ParseSignal(string value, string &provider, string &signal) {
    else if (value == "simpletrader.dayfox"      ) { provider="simpletrader"; signal="dayfox"      ; }
    else if (value == "simpletrader.fxviper"     ) { provider="simpletrader"; signal="fxviper"     ; }
    else if (value == "simpletrader.goldstar"    ) { provider="simpletrader"; signal="goldstar"    ; }
+   else if (value == "simpletrader.overtrader"  ) { provider="simpletrader"; signal="overtrader"  ; }
    else if (value == "simpletrader.smartscalper") { provider="simpletrader"; signal="smartscalper"; }
    else if (value == "simpletrader.smarttrader" ) { provider="simpletrader"; signal="smarttrader" ; }
    else if (value == "simpletrader.yenfortress" ) { provider="simpletrader"; signal="yenfortress" ; }
