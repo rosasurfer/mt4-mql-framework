@@ -3131,6 +3131,57 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 
 
 /**
+ * Fix für fehlerhafte interne Funktion TimeDay()
+ *
+ *
+ * Gibt den Tag des Monats eines Zeitpunkts zurück (1-31).
+ *
+ * @param  datetime time
+ *
+ * @return int
+ */
+int TimeDayFix(datetime time) {
+   if (!time)
+      return(1);
+   return(TimeDay(time));           // Fehler: 0 statt 1 für D'1970.01.01 00:00:00'
+}
+
+
+/**
+ * Fix für fehlerhafte interne Funktion TimeDayOfWeek()
+ *
+ *
+ * Gibt den Wochentag eines Zeitpunkts zurück (0=Sunday ... 6=Saturday).
+ *
+ * @param  datetime time
+ *
+ * @return int
+ */
+int TimeDayOfWeekFix(datetime time) {
+   if (!time)
+      return(3);
+   return(TimeDayOfWeek(time));     // Fehler: 0 (Sunday) statt 3 (Thursday) für D'1970.01.01 00:00:00'
+}
+
+
+/**
+ * Fix für fehlerhafte interne Funktion TimeYear()
+ *
+ *
+ * Gibt das Jahr eines Zeitpunkts zurück (1970-2037).
+ *
+ * @param  datetime time
+ *
+ * @return int
+ */
+int TimeYearFix(datetime time) {
+   if (!time)
+      return(1970);
+   return(TimeYear(time));          // Fehler: 1900 statt 1970 für D'1970.01.01 00:00:00'
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3226,8 +3277,11 @@ void __DummyCalls() {
    StringSubstrFix(NULL, NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
+   TimeDayFix(NULL);
+   TimeDayOfWeekFix(NULL);
    TimeframeDescription(NULL);
    TimeframeToStr(NULL);
+   TimeYearFix(NULL);
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
