@@ -2428,12 +2428,15 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
-   debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
+   //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
    if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
    if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    if (isGrouped) {
+      // TODO:  (1) {DateTime}-NULL  und  NULL-{DateTime} funktionieren noch nicht
+      //        (2) Performance verbessern
+
       // (3) ggf. Gruppierungen anlegen und direkt hier mit Zeilenenden einfügen (nicht jedoch bei der letzten Gruppe)
       datetime groupFrom, groupTo, nextGroupFrom;
       if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
@@ -2447,8 +2450,12 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
          groupTo   = nextGroupFrom - 1*SECOND;
          groupFrom = Max(groupFrom, dtFrom);
          groupTo   = Min(groupTo,   dtTo  );
-         comment   = TimeToStr(groupFrom, TIME_DATE) +" - "+ TimeToStr(groupTo, TIME_DATE);
-         //debug("ParseHstEntry(0.2)  groupFrom="+ TimeToStr(groupFrom) +"  groupTo="+ TimeToStr(groupTo));
+         //debug("ParseHstEntry(0.2)  group from="+ TimeToStr(groupFrom) +"  to="+ TimeToStr(groupTo));
+
+         // Kommentar erstellen
+         if      (groupByMonth) comment =               DateToStr(groupFrom, "Y O");
+         else if (groupByWeek ) comment = "Woche vom "+ DateToStr(groupFrom, "D.M.Y");
+         else if (groupByDay  ) comment =               DateToStr(groupFrom, "D.M.Y");
 
          // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(custom.position.conf, 0);
