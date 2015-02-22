@@ -312,8 +312,8 @@ bool UpdateSuperBars() {
       // Ab Chartperiode PERIOD_D1 wird der Bar-Timestamp vom Broker nur noch in vollen Tagen gesetzt und der Timezone-Offset kann einen Monatsbeginn
       // fälschlicherweise in den vorherigen oder nächsten Monat setzen. Dies muß nur in der Woche, nicht jedoch am Wochenende korrigiert werden.
       if (Period()==PERIOD_D1) /*&&*/ if (superTimeframe>=PERIOD_MN1) {
-         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeek(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;     // Sonntagsbar: Server-Timezone westlich von FXT
-         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeek(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt;    // Samstagsbar: Server-Timezone östlich von FXT
+         if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeekFix(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;  // Sonntagsbar: Server-Timezone westlich von FXT
+         if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeekFix(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt; // Samstagsbar: Server-Timezone östlich von FXT
       }
       openBar  = iBarShiftNext    (NULL, NULL, openTime.srv);           if (openBar  == EMPTY_VALUE) return(false);
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
@@ -367,10 +367,10 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
    string label;
    switch (superBars.timeframe) {
       case PERIOD_D1_ETH:
-      case PERIOD_D1    : label =          DateToStr(openTime.fxt, "w D.M.Y ");                            break; // "w D.M.Y" wird bereits vom Grid verwendet
-      case PERIOD_W1    : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y" );                            break;
-      case PERIOD_MN1   : label =          DateToStr(openTime.fxt,     "N Y" );                            break;
-      case PERIOD_Q1    : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYear(openTime.fxt); break;
+      case PERIOD_D1    : label =          DateToStr(openTime.fxt, "w D.M.Y ");                               break; // "w D.M.Y" wird bereits vom Grid verwendet
+      case PERIOD_W1    : label = "Week "+ DateToStr(openTime.fxt,   "D.M.Y" );                               break;
+      case PERIOD_MN1   : label =          DateToStr(openTime.fxt,     "N Y" );                               break;
+      case PERIOD_Q1    : label = ((TimeMonth(openTime.fxt)-1)/3+1) +". Quarter "+ TimeYearFix(openTime.fxt); break;
    }
 
    // (1.4) Superbar zeichnen

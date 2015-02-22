@@ -248,7 +248,7 @@ bool UpdateWeekendStop() {
 
    datetime friday, now=ServerToFxtTime(TimeCurrent());
 
-   switch (TimeDayOfWeek(now)) {
+   switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
       case MONDAY   : friday = now + 4*DAYS; break;
       case TUESDAY  : friday = now + 3*DAYS; break;

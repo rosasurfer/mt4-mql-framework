@@ -18,7 +18,7 @@
   td.l_code     { border-right:1px #a8afaa solid; }
   td.d_code     { border-right:1px #a8afaa solid; background:#e8e8ff; }
   td.d_code_e   { background:#e8e8ff; }
-  table.symbols { font-family:tahoma; font-size:8pt; border:thin solid #a8afaa;}
+  table.symbols { font-family:Tahoma; font-size:8pt; border:thin solid #a8afaa;}
 
   .docmenu      { width:200px; margin-right:15px; border-right:1px solid #DADADA; background-color:#f6f9fd; padding-left:10px; padding-right:10px; margin-bottom:5px; }
   .doctext      { margin-right:15px; padding-left:10px; padding-right:0px; margin-bottom:5px; padding-bottom:10px; padding-top:6px; }
@@ -34,8 +34,9 @@
   .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
   .constant     { font-weight:normal; color:#980000; }
-  .function     { font-weight:normal; color:#42639C; }
+  .function     { font-weight:normal; color:#8A2BE2; }  <!-- wie .docfunc -->
   .number       { font-weight:normal; color:#7070FF; }
+  .string       { font-weight:normal; color:#008080; }
   </styles>
 
   <group>
@@ -322,10 +323,10 @@ are not directly reflected in RGB. They represent a decimal value of the hexadec
 <p>Specific colors reflect the so-called <a href="help://constants_colors">Web colors set</a>.</p>
 
 <p class="doctabhdr">Examples:</p>
-<pre class="docmql4">
+<pre class="docmql4">		
 // symbol constants
-C'128,128,128'    // gray
-C'0x00,0x00,0xFF' // blue
+C<span class="string">'128,128,128'</span>    // gray
+C<span class="string">'0x00,0x00,0xFF'</span> // blue
 // named color
 Red
 Yellow
@@ -352,14 +353,14 @@ Either date (year, month, date) or time (hours, minutes, seconds), or both can b
 Datetime constant can vary from Jan 1, 1970 to Dec 31, 2037.</p>
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
-D'2004.01.01 00:00'     // New Year
-D'1980.07.19 12:30:27'
-D'19.07.1980 12:30:27'
-D'19.07.1980 12'        //equal to D'1980.07.19 12:00:00'
-D'01.01.2004'           //equal to D'01.01.2004 00:00:00'
-D'12:30:27'             //equal to D'[compilation date] 12:30:27'
-D''                     //equal to D'[compilation date] 00:00:00'</pre>
-
+D<span class="string">''2004.01.01 00:00'</span>     // New Year
+D<span class="string">''1980.07.19 12:30:27'</span>
+D<span class="string">''19.07.1980 12:30:27'</span>
+D<span class="string">''19.07.1980 12'</span>        //equal to D<span class="string">''1980.07.19 12:00:00'</span>
+D<span class="string">''01.01.2004'</span>           //equal to D<span class="string">''01.01.2004 00:00:00'</span>
+D<span class="string">''12:30:27'</span>             //equal to D<span class="string">''[compilation date] 12:30:27'</span>
+D<span class="string">'''</span>                     //equal to D<span class="string">''[compilation date] 00:00:00'</span>
+</pre>
       <p>Its internal representation is a long integer number of 4 bytes. The value represents the amount of seconds
         elapse from 00:00 Jan 1, 1970.</p>
       </content>
@@ -754,35 +755,32 @@ else
         <em>if</em> operator in the same block that has no <em>else</em> part.</p>
 
         <p class="doctabhdr">Examples:</p>
-        <pre class="docmql4">//   The else part refers to the second if operator:
-
-  if(x&gt;1)
-  if(y==2) z=5;
-  else     z=6;
-<br/>
-//   The else part refers to the first if operator:
-if(x&gt;l)
-  {
-   if(y==2) z=5;
-  }
-else        z=6;
+        <pre class="docmql4">// The else part refers to the second if operator:
+if (x &gt; 1)
+	if (y == 2) z = 5;
+	else     	z = 6;
 <br/>
 
-//   Nested operators
-if(x=='a')
-  {
-   y=1;
-  }
-else if(x=='b')
-  {
-   y=2;
-   z=3;
-  }
-else if(x=='c')
-  {
-   y = 4;
-  }
-else Print(&quot;ERROR&quot;);</pre>
+// The else part refers to the first if operator:
+if (x &gt; l) {
+	if (y == 2) z = 5;
+}
+else        	z = 6;
+<br/>
+
+// Nested operators
+if (x == <span class="string">'a'</span>) {
+	y = 1;
+}
+else if (x == <span class="string">'b'</span>) {
+	y = 2;
+	z = 3;
+}
+else if (x == <span class="string">'c'</span>) {
+	y = 4;
+}
+else Print(&quot;ERROR&quot;);
+</pre>
       </content>
     </text>
 
@@ -816,11 +814,11 @@ the same values.</p>
 <p class="doctabhdr">Example:</p>
 <pre class="docmql4">switch(x)
   {
-   case 'A':
+   case <span class="string">'A'</span>:
       Print(&quot;CASE A&quot;);
       break;
-   case 'B':
-   case 'C':
+   case <span class="string">'B'</span>:
+   case <span class="string">'C'</span>:
       Print(&quot;CASE B or C&quot;);
       break;
    default:
@@ -1033,8 +1031,8 @@ bool   bLog;
        representation in the properties window.</p>
         <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
-datetime tBegin_Data   = D'2004.01.01 00:00';
-color    cModify_Color = C'0x44,0xB9,0xE6';
+datetime tBegin_Data   = D<span class="string">'2004.01.01 00:00'</span>;
+color    cModify_Color = C<span class="string">'0x44,0xB9,0xE6'</span>;			
 </pre><br/>
 
         <p><b>Arrays</b></p>
@@ -2390,8 +2388,8 @@ void SendMyMessage(string text)
       <example>
   if(iRSI(NULL,0,14,PRICE_CLOSE,0)&lt;25)
     {
-     OrderSend(Symbol(),OP_BUY,Lots,Ask,3,Bid-StopLoss*Point,Ask+TakeProfit*Point,
-               &quot;My order #2&quot;,3,D'2005.10.10 12:30',Red);
+     OrderSend(Symbol(), OP_BUY, Lots, Ask, 3, Bid-StopLoss*Point, Ask+TakeProfit*Point,
+               &quot;My order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
      return;
     }
       </example>
@@ -2423,12 +2421,10 @@ void SendMyMessage(string text)
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
       <example>
-  if(iRSI(NULL,0,14,PRICE_CLOSE,0)&gt;75)
-    {
-     OrderSend(&quot;EURUSD&quot;,OP_SELL,Lots,Bid,3,Ask+StopLoss*Point,Bid-TakeProfit*Point,
-               &quot;My Order #2&quot;,3,D'2005.10.10 12:30',Red);
-     return(0);
-    }
+	if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &gt; 75) {
+		OrderSend(&quot;EURUSD&quot;, OP_SELL, Lots, Bid, 3, Ask+StopLoss*Point, Bid-TakeProfit*Point, &quot;My Order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
+		return(0);
+	}
       </example>
     </variable>
 
@@ -4238,14 +4234,14 @@ the MessageBox <a href="help://constants_messagebox">return code</a> values.<br/
 they are <a href="help://runtime_start">executed</a> within the user interface thread and may not decelerate it.
       </content>
       <example>
-  #include &lt;WinUser32.mqh&gt;
+	#include &lt;WinUser32.mqh&gt;
 
-  if(ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D'2004.02.20 12:30', 1.0045)==false)
-    {
-     int ret=MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
-     if(ret==IDNO) return(false);
-    }
-  // continue
+	if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
+		int ret = MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
+		if (ret == IDNO) 
+			return(false);
+	}
+	// continue
       </example>
       <parameter>
         type=string
@@ -4437,7 +4433,7 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       Conversion of the symbol code into a one-character string.
       </content>
       <example>
-  string str=&quot;WORL&quot; + CharToStr(44); // 44 is code for 'D'
+  string str=&quot;WORL&quot; + CharToStr(44); // 44 is character code for 'D'
   // the resulting string will be WORLD
       </example>
       <parameter>
@@ -5242,16 +5238,23 @@ SetLevelValue(1,3.14);
       caption=TimeDay()
       type=int
       <content>
-      Returns the day of the month (1 - 31) for the specified date.
+      Returns the day of the month (1 - 31) for the specified date.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 0 statt 1 zurück.<br/>
+      <br/>
+      Workaround: <span class="function">TimeDayFix()</span> verwenden<br/>
+		<br/>
       </content>
       <example>
-  int day=TimeDay(D'2003.12.31');
+  int day = TimeDay(D<span class="string">'2003.12.31'</span>);
   // day is 31
       </example>
       <parameter>
         type=datetime
         name=date
-        description=Datetime value.
+        description=Datetime value
       </parameter>
     </function>
 
@@ -5260,10 +5263,17 @@ SetLevelValue(1,3.14);
       caption=TimeDayOfWeek()
       type=int
       <content>
-      Returns the zero-based day of the week (0 - 6, 0 is Sunday) for the specified date.
+      Returns the zero-based day of the week (0 - 6, 0 is Sunday) for the specified date.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 0 (Sunday) statt 3 (Thursday) zurück.<br/>
+      <br/>
+      Workaround: <span class="function">TimeDayOfWeekFix()</span> verwenden<br/>
+		<br/>
       </content>
-      <example>
-  int weekday=TimeDayOfWeek(D'2004.11.2');
+      <example>						
+  int weekday=TimeDayOfWeek(D<span class="string">'2004.11.2'</span>);
   // day is 2 - Tuesday
       </example>
       <parameter>
@@ -5380,7 +5390,14 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=TimeYear()
       type=int
       <content>
-      Returns year for the specified date. The returned value can be within the range of 1970 to 2037.
+      Returns year for the specified date. The returned value can be within the range of 1970 to 2037.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zurück.<br/>
+      <br/>
+      Workaround: <span class="function">TimeYearFix()</span> verwenden<br/>
+		<br/>
       </content>
       <example>
   int y=TimeYear(TimeCurrent());
@@ -6791,9 +6808,9 @@ Notes:<br/>
 - Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="constant">OBJ_VLINE</span>), a price value (any) needs to be passed, too.<br/>
       </content>
 
-<example>
+<example>															  
 // new text object
-if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D'2004.02.20 12:30', 1.0045)) {
+if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
    Print(&quot;error: can't create text_object! error=&quot;, GetLastError());
    return(0);
 }
@@ -7041,9 +7058,9 @@ If the function succeeds, the returned value will be <span class="constant">true
 To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
 The object coordinates are numbered starting from 0.
      </content>
-      example=ObjectMove(&quot;MyTrend&quot;, 1, D'2005.02.25 12:30', 1.2345);
+      example=ObjectMove(&quot;MyTrend&quot;, 1, D<span class="string">'2005.02.25 12:30'</span>, 1.2345);
       <parameter>
-        type=string
+        type=string										 
         name=name
         description=Object name.
       </parameter>
@@ -7342,7 +7359,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       </content>
       <example>
   int charCode = StringGetChar(&quot;abcdefgh&quot;, 3);
-  // character code 'c' is 99
+  // character code <span class="string">'c'</span> is 99
       </example>
       <parameter>
         type=string
@@ -9080,9 +9097,9 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       wird kein Fehler gemeldet.<br/>
       <br/>
 		Ist das Symbol bekannt, wird u.U. der Status <span class="constant">ERS_HISTORY_UPDATE</span> gemeldet. 
-      </content>
+      </content>		  
       <example>
-  datetime some_time = D'2004.03.21 12:00';
+  datetime some_time = D<span class="string">'2004.03.21 12:00'</span>;
   int      offset    = iBarShift(&quot;EURUSD&quot;, PERIOD_M1, some_time);
   Print(&quot;offset of bar covering time &quot;, TimeToStr(some_time), &quot; is &quot;, offset);
       </example>

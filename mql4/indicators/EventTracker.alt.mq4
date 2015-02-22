@@ -807,7 +807,7 @@ int iOHLCTimeRange(string symbol, datetime from, datetime to, double &results[])
    if (period == PERIOD_H1) {
       period = Min(pHours[TimeHour(from)], pHours[TimeHour(to)]);
 
-      if (period==PERIOD_D1) /*&&*/ if (TimeDayOfWeek(from)==MONDAY) /*&&*/ if (TimeDayOfWeek(to)==SATURDAY)
+      if (period==PERIOD_D1) /*&&*/ if (TimeDayOfWeekFix(from)==MONDAY) /*&&*/ if (TimeDayOfWeekFix(to)==SATURDAY)
          period = PERIOD_W1;
       // die weitere Prüfung auf >= PERIOD_MN1 ist nicht sinnvoll
    }

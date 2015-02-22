@@ -13,9 +13,7 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-
    int   Test();
-
 #import
 
 
@@ -27,23 +25,9 @@ int __DEINIT_FLAGS__[];
 int onStart() {
 
 
-   return(catch("onStart(1)"));
-
-
    int result = Test();
    debug("onStart()   result="+ result);
    return(catch("onStart(1)"));
-
-
-   double a = MathLog(-1);
-   double b = MathLog( 0);
-   double c = -1* b;
-
-   debug("onStart()  MathLog(-1)    = "+ a +" * -1 = "+ (-1*a) +"  (a!=a) => "+ BoolToStr(a != a), GetLastError());
-   debug("onStart()  MathLog( 0)    = "+ b +" * -1 =  "+ (c)   +"  (b!=b) => "+ BoolToStr(b != b), GetLastError());
-   debug("onStart()  MathSqrt(-1)   = "+ MathSqrt(-1)      , GetLastError());
-
-   return(catch("onStart()"));
 }
 
 /*

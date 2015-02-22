@@ -1272,7 +1272,7 @@ void UpdateWeekendResumeTime() {
 
    datetime monday, stop=ServerToFxtTime(sequence.stop.time[ArraySize(sequence.stop.time)-1]);
 
-   switch (TimeDayOfWeek(stop)) {
+   switch (TimeDayOfWeekFix(stop)) {
       case SUNDAY   : monday = stop + 1*DAYS; break;
       case MONDAY   : monday = stop + 0*DAYS; break;
       case TUESDAY  : monday = stop + 6*DAYS; break;
@@ -1421,7 +1421,7 @@ void UpdateWeekendStop() {
 
    datetime friday, now=ServerToFxtTime(TimeCurrent());
 
-   switch (TimeDayOfWeek(now)) {
+   switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
       case MONDAY   : friday = now + 4*DAYS; break;
       case TUESDAY  : friday = now + 3*DAYS; break;

@@ -462,7 +462,7 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
     *  2 Wechsel:                          1975.04.01 00:00:00     DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Normalzeit -> DST -> Normalzeit
     */
    datetime toDST, toSTD;
-   int i, iMax=2037-1970, y=TimeYear(serverTime);
+   int i, iMax=2037-1970, y=TimeYearFix(serverTime);
 
 
    // letzter Wechsel
@@ -1131,7 +1131,7 @@ string StringToHexStr(string value) {
 int GetGmtToFxtTimeOffset(datetime gmtTime) {
    if (gmtTime < 0) return(_EMPTY_VALUE(catch("GetGmtToFxtTimeOffset(1)  invalid parameter gmtTime = "+ gmtTime, ERR_INVALID_PARAMETER)));
 
-   int offset, year=TimeYear(gmtTime)-1970;
+   int offset, year=TimeYearFix(gmtTime)-1970;
 
    // FXT
    if      (gmtTime < transitions.FXT[year][TR_TO_DST.gmt]) offset = -transitions.FXT[year][STD_OFFSET];
@@ -1206,7 +1206,7 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
       else                                     serverTimezone = "Europe/Kiev";
    }
 
-   int offset, year=TimeYear(serverTime)-1970;
+   int offset, year=TimeYearFix(serverTime)-1970;
 
    if (serverTimezone == "America/New_York") {
       if      (serverTime < transitions.America_New_York[year][TR_TO_DST.local]) offset = transitions.America_New_York[year][STD_OFFSET];
@@ -5482,7 +5482,7 @@ datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TI
    if (fxtTime < 0)
       return(_NaT(catch("GetSessionStartTime.srv(1)  illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
 
-   int dayOfWeek = TimeDayOfWeek(fxtTime);
+   int dayOfWeek = TimeDayOfWeekFix(fxtTime);
 
    if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
       return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
@@ -5667,7 +5667,7 @@ datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
       return(_NaT(catch("GetPrevSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(startTime);
+   int dow = TimeDayOfWeekFix(startTime);
    if      (dow == SATURDAY) startTime -= 1*DAY;
    else if (dow == SUNDAY  ) startTime -= 2*DAYS;
 
@@ -5707,7 +5707,7 @@ datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
       return(_NaT(catch("GetSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(startTime);
+   int dow = TimeDayOfWeekFix(startTime);
    if (dow == SATURDAY || dow == SUNDAY)
       return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
 
@@ -5745,7 +5745,7 @@ datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
    datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
 
    // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeek(startTime);
+   int dow = TimeDayOfWeekFix(startTime);
    if      (dow == SATURDAY) startTime += 2*DAYS;
    else if (dow == SUNDAY  ) startTime += 1*DAY;
 
@@ -6675,7 +6675,7 @@ bool IsConfigKey(string section, string key) {
 int GetFxtToGmtTimeOffset(datetime fxtTime) {
    if (fxtTime < 0) return(_EMPTY_VALUE(catch("GetFxtToGmtTimeOffset(1)  invalid parameter fxtTime = "+ fxtTime, ERR_INVALID_PARAMETER)));
 
-   int offset, year=TimeYear(fxtTime)-1970;
+   int offset, year=TimeYearFix(fxtTime)-1970;
 
    // FXT
    if      (fxtTime < transitions.FXT[year][TR_TO_DST.local]) offset = transitions.FXT[year][STD_OFFSET];
@@ -6860,7 +6860,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       else                                  serverTimezone = "Europe/Kiev";
    }
 
-   int offset, year=TimeYear(gmtTime)-1970;
+   int offset, year=TimeYearFix(gmtTime)-1970;
 
    if (serverTimezone == "America/New_York") {
       if      (gmtTime < transitions.America_New_York[year][TR_TO_DST.gmt]) offset = -transitions.America_New_York[year][STD_OFFSET];
@@ -7161,7 +7161,7 @@ string GetDayOfWeek(datetime time, bool longFormat=true) {
 
    static string weekDays[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
 
-   string day = weekDays[TimeDayOfWeek(time)];
+   string day = weekDays[TimeDayOfWeekFix(time)];
 
    if (!longFormat)
       day = StringSubstr(day, 0, 3);
@@ -9399,13 +9399,17 @@ string NumberToStr(double number, string mask) {
  *   Y      = 4 digit year
  *   m      = 1-2 digit month
  *   M      = 2 digit month
- *   n      = 3 char month name, e.g. Nov
- *   N      = full month name, e.g. November
+ *   n      = 3 char month name, e.g. Nov    (English)
+ *   N      = full month name, e.g. November (English)
+ *   o      = 3 char month name, e.g. Mär    (Deutsch)
+ *   O      = full month name, e.g. März     (Deutsch)
  *   d      = 1-2 digit day of month
  *   D      = 2 digit day of month
  *   T or t = append 'th' to day of month, e.g. 14th, 23rd, etc.
- *   w      = 3 char weekday name, e.g. Tue
- *   W      = full weekday name, e.g. Tuesday
+ *   w      = 3 char weekday name, e.g. Tue    (English)
+ *   W      = full weekday name, e.g. Tuesday  (English)
+ *   x      = 2 char weekday name, e.g. Di     (Deutsch)
+ *   X      = full weekday name, e.g. Dienstag (Deutsch)
  *   h      = 1-2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
  *   H      = 2 digit hour (defaults to 24-hour format unless 'a' or 'A' are included)
  *   a      = lowercase am/pm and 12-hour format
@@ -9431,16 +9435,18 @@ string DateToStr(datetime time, string mask) {
    if (!StringLen(mask))
       return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
 
-   string months[12] = {"","January","February","March","April","May","June","July","August","September","October","November","December"};
-   string wdays [ 7] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
+   string months_en[12] = {"","January","February","March","April","May","June","July","August","September","October","November","December"};
+   string months_de[12] = {"","Januar" ,"Februar" ,"März" ,"April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"};
+   string wdays_en [ 7] = {"Sunday" ,"Monday","Tuesday" ,"Wednesday","Thursday"  ,"Friday" ,"Saturday" };
+   string wdays_de [ 7] = {"Sonntag","Montag","Dienstag","Mittwoch" ,"Donnerstag","Freitag","Sonnabend"};
 
-   int dd  = TimeDay      (time);
-   int mm  = TimeMonth    (time);
-   int yy  = TimeYear     (time);
-   int dw  = TimeDayOfWeek(time);
-   int hr  = TimeHour     (time);
-   int min = TimeMinute   (time);
-   int sec = TimeSeconds  (time);
+   int dd  = TimeDayFix      (time);
+   int mm  = TimeMonth       (time);
+   int yy  = TimeYearFix     (time);
+   int dw  = TimeDayOfWeekFix(time);
+   int hr  = TimeHour        (time);
+   int min = TimeMinute      (time);
+   int sec = TimeSeconds     (time);
 
    bool h12f = StringFind(StringToUpper(mask), "A") >= 0;
 
@@ -9475,10 +9481,14 @@ string DateToStr(datetime time, string mask) {
       else if (char == "M")                result = result + StringRight("0"+   mm, 2);
       else if (char == "y")                result = result + StringRight("0"+   yy, 2);
       else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
-      else if (char == "n")                result = result + StringSubstr(months[mm], 0, 3);
-      else if (char == "N")                result = result +              months[mm];
-      else if (char == "w")                result = result + StringSubstr(wdays [dw], 0, 3);
-      else if (char == "W")                result = result +              wdays [dw];
+      else if (char == "n")                result = result + StringSubstr(months_en[mm], 0, 3);
+      else if (char == "N")                result = result +              months_en[mm];
+      else if (char == "w")                result = result + StringSubstr(wdays_en [dw], 0, 3);
+      else if (char == "W")                result = result +              wdays_en [dw];
+      else if (char == "o")                result = result + StringSubstr(months_de[mm], 0, 3);
+      else if (char == "O")                result = result +              months_de[mm];
+      else if (char == "x")                result = result + StringSubstr(wdays_de [dw], 0, 2);
+      else if (char == "X")                result = result +              wdays_de [dw];
       else if (char == "h") {
          if (h12f)                         result = result +                    h12;
          else                              result = result +                    hr; }
@@ -9504,91 +9514,6 @@ string DateToStr(datetime time, string mask) {
  */
 string DateTimeToStr(datetime time, string format) {
    return(DateToStr(time, format));
-}
-
-
-/**
- * Wie DateToStr(), gibt jedoch deutsche Monats- und Tagesnamen aus.
- */
-string DateToStr_de(datetime time, string mask) {
-   if (time < 0) return(_emptyStr(catch("DateToStr_de(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
-
-   if (!StringLen(mask))
-      return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
-
-   string months[12] = {"","Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"};
-   string wdays [ 7] = {"Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Sonnabend"};
-
-   int dd  = TimeDay      (time);
-   int mm  = TimeMonth    (time);
-   int yy  = TimeYear     (time);
-   int dw  = TimeDayOfWeek(time);
-   int hr  = TimeHour     (time);
-   int min = TimeMinute   (time);
-   int sec = TimeSeconds  (time);
-
-   bool h12f = StringFind(StringToUpper(mask), "A") >= 0;
-
-   int h12 = 12;
-   if      (hr > 12) h12 = hr - 12;
-   else if (hr >  0) h12 = hr;
-
-   if (hr <= 12) string ampm = "am";
-   else                 ampm = "pm";
-
-   switch (MathMod(dd, 10)) {
-      case 1: string d10 = "st"; break;
-      case 2:        d10 = "nd"; break;
-      case 3:        d10 = "rd"; break;
-      default:       d10 = "th";
-   }
-   if (dd > 10) /*&&*/ if (dd < 14)
-      d10 = "th";
-
-   string result = "";
-
-   for (int i=0; i < StringLen(mask); i++) {
-      string char = StringSubstr(mask, i, 1);
-      if (char == "!") {
-         result = result + StringSubstr(mask, i+1, 1);
-         i++;
-         continue;
-      }
-      if      (char == "d")                result = result +                    dd;
-      else if (char == "D")                result = result + StringRight("0"+   dd, 2);
-      else if (char == "m")                result = result +                    mm;
-      else if (char == "M")                result = result + StringRight("0"+   mm, 2);
-      else if (char == "y")                result = result + StringRight("0"+   yy, 2);
-      else if (char == "Y")                result = result + StringRight("000"+ yy, 4);
-      else if (char == "n")                result = result + StringSubstr(months[mm], 0, 3);
-      else if (char == "N")                result = result +              months[mm];
-      else if (char == "w")                result = result + StringSubstr(wdays [dw], 0, 3);
-      else if (char == "W")                result = result +              wdays [dw];
-      else if (char == "h") {
-         if (h12f)                         result = result +                    h12;
-         else                              result = result +                    hr; }
-      else if (char == "H") {
-         if (h12f)                         result = result + StringRight("0"+   h12, 2);
-         else                              result = result + StringRight("0"+   hr, 2);
-      }
-      else if (char == "i")                result = result +                    min;
-      else if (char == "I")                result = result + StringRight("0"+   min, 2);
-      else if (char == "s")                result = result +                    sec;
-      else if (char == "S")                result = result + StringRight("0"+   sec, 2);
-      else if (char == "a")                result = result + ampm;
-      else if (char == "A")                result = result + StringToUpper(ampm);
-      else if (char == "t" || char == "T") result = result + d10;
-      else                                 result = result + char;
-   }
-   return(result);
-}
-
-
-/**
- * Alias
- */
-string DateTimeToStr_de(datetime time, string format) {
-   return(DateToStr_de(time, format));
 }
 
 

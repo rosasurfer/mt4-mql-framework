@@ -508,8 +508,7 @@
 
 #import "stdlib1.ex4"
    string   InitFlagsToStr(int flags);
-   string   DateToStr   (datetime time, string format);  string DateTimeToStr   (datetime time, string format);         // Alias
-   string   DateToStr_de(datetime time, string format);  string DateTimeToStr_de(datetime time, string format);         // Alias
+   string   DateToStr(datetime time, string format);  string DateTimeToStr(datetime time, string format);               // Alias
    string   DeinitFlagsToStr(int flags);
    string   ErrorDescription(int error);
    string   ErrorToStr      (int error);

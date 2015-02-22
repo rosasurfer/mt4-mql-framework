@@ -2407,26 +2407,28 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       dtFrom = ParseDateTime(StringTrim(StringSubstrFix(confValue, 0, pos)), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTime(StringTrim(StringSubstr   (confValue, pos+1 )), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
-         if      (isFullYear2  ) dtTo  = DateTime(TimeYear(dtTo)+1)                  - 1*SECOND;   // Jahresende
-         else if (isFullMonth2 ) dtTo  = DateTime(TimeYear(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
-         else if (isFullWeek2  ) dtTo += 1*WEEK                                      - 1*SECOND;   // Wochenende
-         else if (isFullDay2   ) dtTo += 1*DAY                                       - 1*SECOND;   // Tagesende
-      }                                                                                            // isFullHour2 und isFullMinute2 erweitern dtTo NICHT, die Zeit wird wörtlich genommen
+         if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         else if (isFullWeek2  ) dtTo += 1*WEEK                                         - 1*SECOND;   // Wochenende
+         else if (isFullDay2   ) dtTo += 1*DAY                                          - 1*SECOND;   // Tagesende
+         else if (isFullHour2  ) dtTo -=                                                  1*SECOND;   // Ende der angegebenen Stunde
+         else if (isFullMinute2) dtTo -=                                                  1*SECOND;   // Ende der angegebenen Minute
+      }
    }
    else {
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
       dtFrom = ParseDateTime(confValue, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
                                                                                                                          if (!dtFrom)       return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
-      if      (isFullYear1  ) dtTo = DateTime(TimeYear(dtFrom)+1)                    - 1*SECOND;   // Jahresende
-      else if (isFullMonth1 ) dtTo = DateTime(TimeYear(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
-      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                 - 1*SECOND;   // Wochenende
-      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                  - 1*SECOND;   // Tagesende
-      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                 - 1*SECOND;   // Ende der Stunde
-      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                               - 1*SECOND;   // Ende der Minute
+      if      (isFullYear1  ) dtTo = DateTime(TimeYearFix(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
+      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                     - 1*SECOND;   // Tagesende
+      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                    - 1*SECOND;   // Ende der Stunde
+      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
-   //debug("ParseHstEntry(0.2)  dtFrom="+ TimeToStr(dtFrom) +"  dtTo="+ TimeToStr(dtTo));
+   debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
    if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
    if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
 
@@ -2434,19 +2436,19 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
    if (isGrouped) {
       // (3) ggf. Gruppierungen anlegen und direkt hier mit Zeilenenden einfügen (nicht jedoch bei der letzten Gruppe)
       datetime groupFrom, groupTo, nextGroupFrom;
-      if      (groupByMonth) groupFrom = DateTime(TimeYear(dtFrom), TimeMonth(dtFrom));
-      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAY - (TimeDayOfWeek(dtFrom)+6)%7 * DAYS;
+      if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
+      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAY - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAY;
 
       for (; groupFrom < dtTo; groupFrom=nextGroupFrom) {
-         if      (groupByMonth) nextGroupFrom = DateTime(TimeYear(groupFrom), TimeMonth(groupFrom)+1);
+         if      (groupByMonth) nextGroupFrom = DateTime(TimeYearFix(groupFrom), TimeMonth(groupFrom)+1);
          else if (groupByWeek ) nextGroupFrom = groupFrom + 7*DAYS;
          else if (groupByDay  ) nextGroupFrom = groupFrom + 1*DAY;
          groupTo   = nextGroupFrom - 1*SECOND;
          groupFrom = Max(groupFrom, dtFrom);
          groupTo   = Min(groupTo,   dtTo  );
          comment   = TimeToStr(groupFrom, TIME_DATE) +" - "+ TimeToStr(groupTo, TIME_DATE);
-         //debug("ParseHstEntry(0.4)  groupFrom="+ TimeToStr(groupFrom) +"  groupTo="+ TimeToStr(groupTo));
+         //debug("ParseHstEntry(0.2)  groupFrom="+ TimeToStr(groupFrom) +"  groupTo="+ TimeToStr(groupTo));
 
          // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(custom.position.conf, 0);
@@ -2468,36 +2470,98 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
    else {
       // (4) normale Rückgabewerte ohne Gruppierung
       if (isSingleTimespan) {
-         if      (isFullYear1  ) comment = DateToStr   (dtFrom, "Y");
-         else if (isFullMonth1 ) comment = DateToStr_de(dtFrom, "N Y");
-         else if (isFullWeek1  ) comment = DateToStr   (dtFrom, "!W!o!c!h!e !v!o!m D.M.Y");
-         else if (isFullDay1   ) comment = DateToStr   (dtFrom, "D.M.Y");
-         else if (isFullHour1  ) comment = DateToStr   (dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
-         else if (isFullMinute1) comment = DateToStr   (dtFrom, "D.M.Y H:I");
-         else                    comment = DateToStr   (dtFrom, "D.M.Y H:I:S");
+         if      (isFullYear1  ) comment =               DateToStr(dtFrom, "Y");
+         else if (isFullMonth1 ) comment =               DateToStr(dtFrom, "O Y");
+         else if (isFullWeek1  ) comment = "Woche vom "+ DateToStr(dtFrom, "D.M.Y");
+         else if (isFullDay1   ) comment =               DateToStr(dtFrom, "D.M.Y");
+         else if (isFullHour1  ) comment =               DateToStr(dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
+         else if (isFullMinute1) comment =               DateToStr(dtFrom, "D.M.Y H:I");
+         else                    comment =               DateToStr(dtFrom, "D.M.Y H:I:S");
       }
-      else if (!hstTo) {
-         if      (isFullYear1  ) comment = "seit "+               DateToStr   (dtFrom, "Y");
-         else if (isFullMonth1 ) comment = "seit "+               DateToStr_de(dtFrom, "N Y");
-         else if (isFullWeek1  ) comment = "seit der Woche vom "+ DateToStr   (dtFrom, "D.M.Y");
-         else if (isFullDay1   ) comment = "seit "+               DateToStr   (dtFrom, "D.M.Y");
-         else if (isFullHour1  ) comment = "seit "+               DateToStr   (dtFrom, "D.M.Y H:I");
-         else if (isFullMinute1) comment = "seit "+               DateToStr   (dtFrom, "D.M.Y H:I");
-         else                    comment = "seit "+               DateToStr   (dtFrom, "D.M.Y H:I:S");
+      else if (!dtTo) {
+         if      (isFullYear1  ) comment = "seit "+      DateToStr(dtFrom, "Y");
+         else if (isFullMonth1 ) comment = "seit "+      DateToStr(dtFrom, "O Y");
+         else if (isFullWeek1  ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y");
+         else if (isFullDay1   ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y");
+         else if (isFullHour1  ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
+         else if (isFullMinute1) comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
+         else                    comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I:S");
       }
-      else if (!hstFrom) {
-         if      (isFullYear2  ) comment = "bis "+               DateToStr   (dtTo, "Y");
-         else if (isFullMonth2 ) comment = "bis "+               DateToStr_de(dtTo, "N Y");
-         else if (isFullWeek2  ) comment = "bis zur Woche vom "+ DateToStr   (dtTo, "D.M.Y");
-         else if (isFullDay2   ) comment = "bis "+               DateToStr   (dtTo, "D.M.Y");
-         else if (isFullHour2  ) comment = "bis "+               DateToStr   (dtTo, "D.M.Y H:I");
-         else if (isFullMinute2) comment = "bis "+               DateToStr   (dtTo, "D.M.Y H:I");
-         else                    comment = "bis "+               DateToStr   (dtTo, "D.M.Y H:I:S");
+      else if (!dtFrom) {
+         if      (isFullYear2  ) comment =  "bis "+      DateToStr(dtTo,          "Y");
+         else if (isFullMonth2 ) comment =  "bis "+      DateToStr(dtTo,          "O Y");
+         else if (isFullWeek2  ) comment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
+         else if (isFullDay2   ) comment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
+         else if (isFullHour2  ) comment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
+         else if (isFullMinute2) comment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
+         else                    comment =  "bis "+      DateToStr(dtTo,          "D.M.Y H:I:S");
       }
       else {
-         comment = "von "+ TimeToStr(hstFrom, TIME_DATE) +" bis "+ TimeToStr(hstTo, TIME_DATE);
+         // von und bis angegeben
+         if      (isFullYear1  ) {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "Y")           +" bis "+ DateToStr(dtTo,          "Y");                // 2014 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014 - 2015.01.15 12:34:56
+         }
+         else if (isFullMonth1 ) {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01 - 2015.01.15 12:34:56
+         }
+         else if (isFullWeek1  ) {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15W - 2015.01.15 12:34:56
+         }
+         else if (isFullDay1   ) {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 - 2015.01.15 12:34:56
+         }
+         else if (isFullHour1  ) {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:00 - 2015.01.15 12:34:56
+         }
+         else if (isFullMinute1) {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34 - 2015.01.15 12:34:56
+         }
+         else {
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
+         }
       }
-
       hstFrom     = dtFrom;
       hstTo       = dtTo;
       value2      = EMPTY_VALUE;
@@ -2632,7 +2696,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
 
    datetime result = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
    if (isWeek)                                                // wenn Woche, dann Zeit auf Wochenbeginn setzen
-      result -= (TimeDayOfWeek(result)+6)%7 * DAYS;
+      result -= (TimeDayOfWeekFix(result)+6)%7 * DAYS;
    return(result);
 }
 
