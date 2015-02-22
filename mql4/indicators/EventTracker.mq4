@@ -570,79 +570,97 @@ bool CheckClosePriceSignal(int i) {
 }
 
 
+#define I_SIGNAL_LEVEL_HIGH      0                                   // Signallevel oben
+#define I_SIGNAL_LEVEL_LOW       1                                   // Signallevel unten
+#define I_SIGNAL_START_TIME      2                                   // Startzeit der Referenz-Session (Serverzeit)
+#define I_SIGNAL_START_BAR       3                                   // Baroffset der Startzeit        (PERIOD_H1)
+#define I_SIGNAL_END_TIME        4                                   // Endzeit der Referenz-Session   (Serverzeit)
+#define I_SIGNAL_END_BAR         5                                   // Baroffset der Endzeit          (PERIOD_H1)
+#define I_SIGNAL_CHANGED_BARS    6                                   // iChangedBars(PERIOD_H1) bei der letzten Prüfung des Signals
+
+
 /**
  * Prüft auf ein Price-Event.
  *
  * @param  int index - Index in den zur Überwachung konfigurierten Signalen
  *
- * @return bool - ob ein neues Signal detektiert wurde
+ * @return bool - Erfolgsstatus; nicht, ob ein neues Signal detektiert wurde
  */
 bool CheckRangeSignal(int index) {
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])
-      return(false);
+      return(true);
 
-   #define I_SIGNAL_LEVEL_HIGH      0                                // Signallevel oben
-   #define I_SIGNAL_LEVEL_LOW       1                                // Signallevel unten
-   #define I_SIGNAL_START_TIME      2                                // Startzeit der Referenz-Session (Serverzeit)
-   #define I_SIGNAL_START_BAR       3                                // Baroffset der Startzeit        (PERIOD_H1)
-   #define I_SIGNAL_END_TIME        4                                // Endzeit der Referenz-Session   (Serverzeit)
-   #define I_SIGNAL_END_BAR         5                                // Baroffset der Endzeit          (PERIOD_H1)
-   #define I_SIGNAL_CHANGED_BARS    6                                // iChangedBars(PERIOD_H1) bei der letzten Prüfung des Signals
+   // ggf. Signaldaten initialisieren
+   if (!price.rtdata[index][I_SIGNAL_START_TIME])
+      if (!CheckRangeSignal.Init(index)) return(false);
 
+   // Signallevel prüfen
    double signalLevelH = price.rtdata[index][I_SIGNAL_LEVEL_HIGH];
    double signalLevelL = price.rtdata[index][I_SIGNAL_LEVEL_LOW ];
+   debug("CheckRangeSignal(0.1)  checking for levelH="+ NumberToStr(signalLevelH, PriceFormat) +"  levelL="+ NumberToStr(signalLevelL, PriceFormat));
+
+   return(!catch("CheckRangeSignal(1)"));
+}
 
 
-   // (1) ggf. Signallevel initialisieren
-   if (!signalLevelH) {
-      int timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
-      int bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
-      int range     = price.config[index][I_PRICE_CONFIG_PARAM1   ];
-      int wait      = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+/**
+ * Initialisiert die Laufzeitdaten zur Verwaltung eines PriceRange-Signals.
+ *
+ * @param  int index - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool CheckRangeSignal.Init(int index) {
+   if (!price.config[index][I_PRICE_CONFIG_ENABLED])
+      return(true);
 
-      // (1.1) Anfangs- und Endzeitpunkt der Bar und entsprechende Bar-Offsets bestimmen (für alle Signale wird PERIOD_H1 benutzt)
-      datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
-      int openBar, closeBar;
+   int timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
+   int range     = price.config[index][I_PRICE_CONFIG_PARAM1   ];
+   int wait      = price.config[index][I_PRICE_CONFIG_PARAM2   ];
 
-      for (int i=0; i<=bar; i++) {
-         if (!iPreviousPeriodTimes(timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))     return(false);
-         //debug("CheckRangeSignal(0.1)  bar="+ i +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
-         openBar  = iBarShiftNext    (NULL, PERIOD_H1, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
-         closeBar = iBarShiftPrevious(NULL, PERIOD_H1, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
-         if (closeBar == -1) {                                       // nicht ausreichende Daten zum Tracking: Signal deaktivieren und alles andere weiterlaufen lassen
-            price.config[index][I_PRICE_CONFIG_ENABLED] = false;
-            return(!warn("CheckRangeSignal(1)  signal "+ index, ERR_HISTORY_INSUFFICIENT));
-         }
-         if (openBar < closeBar)                                     // Datenlücke, weiter zu den nächsten verfügbaren Daten
-            i--;
+
+   // (1) Anfangs- und Endzeitpunkt der Bar und entsprechende Bar-Offsets bestimmen (für alle Signale wird PERIOD_H1 benutzt)
+   datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
+   int openBar, closeBar;
+
+   for (int i=0; i<=bar; i++) {
+      if (!iPreviousPeriodTimes(timeframe, openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv))     return(false);
+      //debug("CheckRangeSignal.Init(0.1)  bar="+ i +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
+      openBar  = iBarShiftNext    (NULL, PERIOD_H1, openTime.srv          ); if (openBar  == EMPTY_VALUE) return(false);
+      closeBar = iBarShiftPrevious(NULL, PERIOD_H1, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
+      if (closeBar == -1) {                                       // nicht ausreichende Daten zum Tracking: Signal deaktivieren und alles andere weiterlaufen lassen
+         price.config[index][I_PRICE_CONFIG_ENABLED] = false;
+         return(!warn("CheckRangeSignal.Init(1)  signal "+ index, ERR_HISTORY_INSUFFICIENT));
       }
-      price.rtdata[index][I_SIGNAL_START_TIME] = openTime.srv;
-      price.rtdata[index][I_SIGNAL_START_BAR ] = openBar;
-      price.rtdata[index][I_SIGNAL_END_TIME  ] = closeTime.srv;
-      price.rtdata[index][I_SIGNAL_END_BAR   ] = closeBar;
-      //debug("CheckRangeSignal(0.2)  bar="+ TimeframeDescription(timeframe) +","+ bar +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
-
-      // (1.2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
-      double H = iHigh(NULL, PERIOD_H1, iHighest(NULL, PERIOD_H1, MODE_HIGH, openBar-closeBar+1, closeBar));
-      double L = iLow (NULL, PERIOD_H1, iLowest (NULL, PERIOD_H1, MODE_LOW , openBar-closeBar+1, closeBar));
-      //debug("CheckRangeSignal(0.3)  bar="+ TimeframeDescription(timeframe) +","+ bar +"  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
-
-      // (1.3) Signallevel berechnen und speichern
-      double dist  = (H-L) * Min(range, 100-range)/100;
-      signalLevelH = NormalizeDouble(ifDouble(range==100, H, H - dist), Digits);
-      signalLevelL = NormalizeDouble(ifDouble(range==100, L, L + dist), Digits);
-
-      price.rtdata[index][I_SIGNAL_LEVEL_HIGH] = signalLevelH;
-      price.rtdata[index][I_SIGNAL_LEVEL_LOW ] = signalLevelL;
-      //debug("CheckRangeSignal(0.4)  bar="+ TimeframeDescription(timeframe) +","+ bar +"  levelH="+ NumberToStr(signalLevelH, PriceFormat) +"  levelL="+ NumberToStr(signalLevelL, PriceFormat));
+      if (openBar < closeBar)                                     // Datenlücke, weiter zu den nächsten verfügbaren Daten
+         i--;
    }
+   //debug("CheckRangeSignal.Init(0.2)  bar="+ TimeframeDescription(timeframe) +","+ bar +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
 
 
-   // (2) Signallevel prüfen
-   debug("CheckRangeSignal(0.5)  checking for levelH="+ NumberToStr(signalLevelH, PriceFormat) +"  levelL="+ NumberToStr(signalLevelL, PriceFormat));
+   // (2) High/Low bestimmen (openBar ist hier immer >= closeBar und Timeseries-Fehler können nicht mehr auftreten)
+   double H = iHigh(NULL, PERIOD_H1, iHighest(NULL, PERIOD_H1, MODE_HIGH, openBar-closeBar+1, closeBar));
+   double L = iLow (NULL, PERIOD_H1, iLowest (NULL, PERIOD_H1, MODE_LOW , openBar-closeBar+1, closeBar));
+   //debug("CheckRangeSignal.Init(0.3)  bar="+ TimeframeDescription(timeframe) +","+ bar +"  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
 
 
-   return(!catch("CheckRangeSignal(2)"));
+   // (3) Signallevel berechnen und speichern
+   double dist  = (H-L) * Min(range, 100-range)/100;
+   double levelH = NormalizeDouble(ifDouble(range==100, H, H - dist), Digits);
+   double levelL = NormalizeDouble(ifDouble(range==100, L, L + dist), Digits);
+   //debug("CheckRangeSignal.Init(0.4)  bar="+ TimeframeDescription(timeframe) +","+ bar +"  levelH="+ NumberToStr(levelH, PriceFormat) +"  levelL="+ NumberToStr(levelL, PriceFormat));
+
+
+   // (4) alle Daten speichern
+   price.rtdata[index][I_SIGNAL_LEVEL_HIGH] = levelH;
+   price.rtdata[index][I_SIGNAL_LEVEL_LOW ] = levelL;
+   price.rtdata[index][I_SIGNAL_START_TIME] = openTime.srv;
+   price.rtdata[index][I_SIGNAL_START_BAR ] = openBar;
+   price.rtdata[index][I_SIGNAL_END_TIME  ] = closeTime.srv;
+   price.rtdata[index][I_SIGNAL_END_BAR   ] = closeBar;
+
+   return(!catch("CheckRangeSignal.Init(2)"));
 }
 
 
