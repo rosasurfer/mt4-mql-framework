@@ -10,7 +10,7 @@
  *
  *
  * Note: Ein ausgelöster Status ERS_HISTORY_UPDATE wird nicht als Fehler interpretiert und nicht weitergeleitet.
- *       Er ist nicht relevant für die momentan vorhanden Daten.
+ *       Er ist nicht relevant für die momentan vorhandenen Daten.
  */
 int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
    if (symbol == "0")                                       // (string) NULL
@@ -26,7 +26,7 @@ int iBarShiftNext(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
       Existieren keine entsprechenden Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw",
       oder ist der Timeframe kein Standard-Timeframe, wird kein Fehler gemeldet.
 
-      Ist das Symbol bekannt, wird u.U. der Status ERS_HISTORY_UPDATE gemeldet.
+      Ist das Symbol bekannt, wird u.U. der Status ERS_HISTORY_UPDATE gemeldet (kein Fehler).
    */
 
    int bar   = iBarShift(symbol, period, time, true);
