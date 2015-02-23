@@ -2434,14 +2434,21 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
 
 
    if (isGrouped) {
-      // TODO:  (1) NULL-{DateTime} funktioniert noch nicht
-      //        (2) Performance verbessern
+      //
+      // TODO:  Performance verbessern
+      //
 
-      // (3) ggf. Gruppierungen anlegen und direkt hier mit Zeilenenden einfügen (nicht jedoch bei der letzten Gruppe)
-      datetime groupFrom, groupTo, nextGroupFrom;
+      // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
+      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrent();
       if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAY - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAY;
+
+      if (!dtTo) {                                                                                       // {DateTime} - NULL
+         if      (groupByMonth) dtTo = DateTime(TimeYearFix(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
+         else if (groupByWeek ) dtTo = now - now%DAY + (7-TimeDayOfWeekFix(now))%7 * DAYS - 1*SECOND;    // aktuelles Wochenende
+         else if (groupByDay  ) dtTo = now - now%DAY + 1*DAY                              - 1*SECOND;    // aktuelles Tagesende
+      }
 
       for (; groupFrom < dtTo; groupFrom=nextGroupFrom) {
          if      (groupByMonth) nextGroupFrom = DateTime(TimeYearFix(groupFrom), TimeMonth(groupFrom)+1);
@@ -2467,7 +2474,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
          custom.position.conf[confSize][4] = EMPTY_VALUE;
          isEmpty = false;
 
-         // Zeile der globalen Konfiguration abschließen (außer bei der letzten Gruppe)
+         // Zeile mit Zeilenende abschließen (außer bei der letzten Gruppe)
          if (nextGroupFrom <= dtTo) {
             ArrayResize    (custom.position.conf, confSize+2);       // initialisiert Element mit {*, NULL, ...}
             ArrayPushString(custom.position.conf.comments, comment);
