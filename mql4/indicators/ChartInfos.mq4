@@ -1558,7 +1558,7 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                               positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col5",     DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2),                                               positions.fontSize, positions.fontName, fontColor);
             if (!positions.ddata[i][I_OPEN_EQUITY])   sProfitPct = "";
-            else                                      sProfitPct = DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT], 1) +"%";
+            else                                      sProfitPct = DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT], 2) +"%";
          ObjectSetText(label.position +".line"+ line +"_col6", sProfitPct,                                                                                              positions.fontSize, positions.fontName, fontColor);
             if (positions.idata[i][I_COMMENT] == -1)  sComment = "";
             else                                      sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
@@ -1596,7 +1596,7 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2) + sOtherProfits,                                   positions.fontSize, positions.fontName, fontColor);
 
             if (!positions.ddata[i][I_OPEN_EQUITY])     sProfitPct = "";
-            else                                        sProfitPct = DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT], 1) +"%";
+            else                                        sProfitPct = DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT], 2) +"%";
          ObjectSetText(label.position +".line"+ line +"_col6", sProfitPct,                                                                                              positions.fontSize, positions.fontName, fontColor);
             if (positions.idata[i][I_COMMENT] == -1)    sComment = "";
             else                                        sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
@@ -2352,7 +2352,7 @@ bool CustomPositions.ReadConfig() {
  * Parst einen History-Konfigurationseintrag.
  *
  * @param  _IN_     string confValue       - Konfigurationseintrag
- * @param  _IN_OUT_ string confComment     - Kommentar des Konfigurationseintrags (wird neu definiert oder ggf. erweitert)
+ * @param  _IN_OUT_ string confComment     - Kommentar des Konfigurationseintrags (wird ggf. erweitert oder neu definiert)
  * @param  _IN_OUT_ bool   isEmpty         - ob die Konfiguration der aktuellen Position noch leer ist
  * @param  _OUT_    bool   isGrouped       - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
  * @param  _OUT_    double hstFrom         - Beginnzeitpunkt der zu berücksichtigenden History
@@ -2428,13 +2428,13 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
-   //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
+   //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGrouped);
    if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
    if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    if (isGrouped) {
-      // TODO:  (1) {DateTime}-NULL  und  NULL-{DateTime} funktionieren noch nicht
+      // TODO:  (1) NULL-{DateTime} funktioniert noch nicht
       //        (2) Performance verbessern
 
       // (3) ggf. Gruppierungen anlegen und direkt hier mit Zeilenenden einfügen (nicht jedoch bei der letzten Gruppe)
@@ -2478,7 +2478,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       // (4) normale Rückgabewerte ohne Gruppierung
       if (isSingleTimespan) {
          if      (isFullYear1  ) comment =               DateToStr(dtFrom, "Y");
-         else if (isFullMonth1 ) comment =               DateToStr(dtFrom, "O Y");
+         else if (isFullMonth1 ) comment =               DateToStr(dtFrom, "Y O");
          else if (isFullWeek1  ) comment = "Woche vom "+ DateToStr(dtFrom, "D.M.Y");
          else if (isFullDay1   ) comment =               DateToStr(dtFrom, "D.M.Y");
          else if (isFullHour1  ) comment =               DateToStr(dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
@@ -2573,8 +2573,8 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       hstTo       = dtTo;
       value2      = EMPTY_VALUE;
       value3      = EMPTY_VALUE;
-      confComment = confComment + ifString(StringLen(confComment), " + ", "") + comment;
    }
+   confComment = confComment + ifString(StringLen(confComment), " + ", "") + comment;
 
    return(true);
 }
