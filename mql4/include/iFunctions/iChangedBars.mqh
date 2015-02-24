@@ -6,7 +6,7 @@
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (NULL = aktuelle Periode)
  * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
- * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Baranzahl oder EMPTY (-1), falls ein Fehler auftrat
  *
  *
  * @throws ERR_SERIES_NOT_AVAILABLE - Der Fehler wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.

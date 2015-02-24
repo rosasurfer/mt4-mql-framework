@@ -314,7 +314,7 @@ void UpdateWeekendResumeTime(int hSeq) {
       case FRIDAY   : monday = stop + 3*DAYS; break;
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
-   sequence.weResumeTime[hSeq] = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
+   sequence.weResumeTime[hSeq] = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAYS);
 }
 
 
@@ -496,7 +496,7 @@ void UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
+   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAYS);
 }
 
 

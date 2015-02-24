@@ -1281,7 +1281,7 @@ void UpdateWeekendResumeTime() {
       case FRIDAY   : monday = stop + 3*DAYS; break;
       case SATURDAY : monday = stop + 2*DAYS; break;
    }
-   weekend.resume.time = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAY);
+   weekend.resume.time = FxtToServerTime((monday/DAYS)*DAYS + weekend.resume.condition%DAYS);
 }
 
 
@@ -1430,9 +1430,9 @@ void UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAY;
+   weekend.stop.time = (friday/DAYS)*DAYS + weekend.stop.condition%DAYS;
    if (weekend.stop.time < now)
-      weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAY;    // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
+      weekend.stop.time = (friday/DAYS)*DAYS + D'1970.01.01 23:55'%DAYS;   // wenn Aufruf nach Weekend-Stop, erfolgt neuer Stop 5 Minuten vor Handelsschluß
    weekend.stop.time = FxtToServerTime(weekend.stop.time);
 }
 

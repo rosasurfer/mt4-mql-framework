@@ -2441,13 +2441,13 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
       datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrent();
       if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
-      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAY - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
-      else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAY;
+      else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
+      else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
 
       if (!dtTo) {                                                                                       // {DateTime} - NULL
-         if      (groupByMonth) dtTo = DateTime(TimeYearFix(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
-         else if (groupByWeek ) dtTo = now - now%DAY + (7-TimeDayOfWeekFix(now))%7 * DAYS - 1*SECOND;    // aktuelles Wochenende
-         else if (groupByDay  ) dtTo = now - now%DAY + 1*DAY                              - 1*SECOND;    // aktuelles Tagesende
+         if      (groupByMonth) dtTo = DateTime(TimeYearFix(now), TimeMonth(now)+1)        - 1*SECOND;   // aktuelles Monatsende
+         else if (groupByWeek ) dtTo = now - now%DAYS + (7-TimeDayOfWeekFix(now))%7 * DAYS - 1*SECOND;   // aktuelles Wochenende
+         else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                              - 1*SECOND;   // aktuelles Tagesende
       }
 
       for (; groupFrom < dtTo; groupFrom=nextGroupFrom) {

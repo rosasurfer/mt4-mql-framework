@@ -257,7 +257,7 @@ bool UpdateWeekendStop() {
       case FRIDAY   : friday = now + 0*DAYS; break;
       case SATURDAY : friday = now + 6*DAYS; break;
    }
-   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAY);
+   weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAYS);
 
    return(!last_error|catch("UpdateWeekendStop()"));
 }
