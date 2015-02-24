@@ -1442,12 +1442,12 @@ cannot have default values.</p>
 It can be any of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="constant">MODE_OPEN</td><td>0</td><td>Open price.</td></tr>
-<tr><td class="constant">MODE_LOW</td><td>1</td><td>Low price.</td></tr>
-<tr><td class="constant">MODE_HIGH</td><td>2</td><td>High price.</td></tr>
-<tr><td class="constant">MODE_CLOSE</td><td>3</td><td>Close price.</td></tr>
-<tr><td class="constant">MODE_VOLUME</td><td>4</td><td>Volume, used in iLowest() and iHighest() functions.</td></tr>
-<tr><td class="constant">MODE_TIME</td><td>5</td><td>Bar open time, used in ArrayCopySeries() function.</td></tr>
+<tr><td class="constant">MODE_OPEN</td><td>0</td><td>Open price</td></tr>
+<tr><td class="constant">MODE_LOW</td><td>1</td><td>Low price</td></tr>
+<tr><td class="constant">MODE_HIGH</td><td>2</td><td>High price</td></tr>
+<tr><td class="constant">MODE_CLOSE</td><td>3</td><td>Close price</td></tr>
+<tr><td class="constant">MODE_VOLUME</td><td>4</td><td>Volume</td></tr>
+<tr><td class="constant">MODE_TIME</td><td>5</td><td>Bar open time</td></tr>
 </table>
       </content>
     </text>
@@ -1469,7 +1469,7 @@ It can be any of the following values:</p>
 <tr><td class="constant">PERIOD_D1</td><td>1440</td><td>daily</td></tr>
 <tr><td class="constant">PERIOD_W1</td><td>10080</td><td>weekly</td></tr>
 <tr><td class="constant">PERIOD_MN1</td><td>43200</td><td>monthly</td></tr>
-<tr><td class="constant">NULL</td><td>0 (zero)</td><td>current timeframe used on the chart</td></tr>
+<tr><td class="constant">NULL</td><td>0 (zero)</td><td>the current chart's timeframe</td></tr>
 </table>
       </content>
     </text>
@@ -7533,7 +7533,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7560,7 +7560,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7588,7 +7588,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be one of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7663,7 +7663,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7705,7 +7705,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7737,7 +7737,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7764,7 +7764,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7799,7 +7799,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7900,7 +7900,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -7937,7 +7937,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8009,7 +8009,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=string
@@ -8051,7 +8051,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8083,7 +8083,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8196,7 +8196,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8238,7 +8238,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8270,7 +8270,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8343,7 +8343,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8390,7 +8390,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8415,7 +8415,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8484,7 +8484,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8514,7 +8514,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8611,7 +8611,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8657,7 +8657,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8709,7 +8709,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8739,7 +8739,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=double
@@ -8774,7 +8774,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8845,7 +8845,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8880,7 +8880,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -8972,7 +8972,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9027,7 +9027,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9074,7 +9074,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe of the time series. Can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values (<span class="constant">NULL</span> means the current chart timeframe).
+        description==<a href="help://constants_timeframes">Timeframe</a> of the data series. 0 means the current chart timeframe.
       </parameter>
     </function>
 
@@ -9113,7 +9113,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
         type=int
         name=timeframe
         def_value=<span class="constant">NULL</span>
-        description=Timeframe of the time series. Can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values (<span class="constant">NULL</span> means the current chart timeframe).
+        description=<a href="help://constants_timeframes">Timeframe</a> of the data series, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=datetime
@@ -9150,7 +9150,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9176,12 +9176,12 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=string
         name=symbol
-        description=Symbol on that data need to calculate indicator. <span class="constant">NULL</span> means current symbol.
+        description=Symbol on that data need to calculate indicator. <span class="constant">NULL</span> means the current symbol.
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9195,40 +9195,38 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iHighest()
       type=int
       <content>
-      Returns the shift of the maximum value over a specific number of periods depending on type.
+      Returns the offset of the maximum value over the specific number of periods.
       </content>
       <example>
-  double val;
-  // calculating the highest value on the 20 consequtive bars in the range
-  // from the 4th to the 23rd index inclusive on the current chart
-  val=High[iHighest(NULL,0,MODE_HIGH,20,4)];
+  // getting the highest High of 20 consecutive bars in the range from the 4th to the 23rd index
+  double val = High[iHighest(NULL, 0, MODE_HIGH, 20, 4)];
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="constant">NULL</span> means the current symbol.
+        description=Symbol of the data series. <span class="constant">NULL</span> means the current chart symbol.
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a> of the data series. 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
         name=type
-        description=Series array identifier. It can be any of the <a href="help://constants_series">Series array identifier enumeration</a> values.
+        description=<a href="help://constants_series">Price type identifier</a> used for series arrays.
       </parameter>
       <parameter>
         type=int
-        name=count
+        name=periods
         def_value=<span class="constant">WHOLE_ARRAY</span>
-        description=Number of periods (in direction from the start bar to the back one) on which the calculation is carried out.
+        description=Number of periods to inspect (counting from start backwards).
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Shift showing the bar, relative to the current bar, that the data should be taken from.
+        description=Bar offset to start from.
       </parameter>
     </function>
 
@@ -9254,7 +9252,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9268,39 +9266,38 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iLowest()
       type=int
       <content>
-      Returns the shift of the least value over a specific number of periods depending on type.
+      Returns the offset of the minimum value over the specific number of periods.
       </content>
       <example>
-// calculating the lowest value on the 10 consequtive bars in the range
-// from the 10th to the 19th index inclusive on the current chart
-double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
+// getting the lowest Low of 10 consecutive bars in the range from the 10th to the 19th index
+double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="constant">NULL</span> means the current symbol.
+        description=Symbol of the data series. <span class="constant">NULL</span> means the current chart symbol.
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a> of the data series, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
         name=type
-        description=Series array identifier. It can be any of <a href="help://constants_series">Series array identifier enumeration</a> values.
+        description=<a href="help://constants_series">Price type identifier</a> used for series arrays.
       </parameter>
       <parameter>
         type=int
-        name=count
+        name=periods
         def_value=<span class="constant">WHOLE_ARRAY</span>
-        description=Number of periods (in direction from the start bar to the back one) on which the calculation is carried out.
+        description=Number of periods to inspect (counting from start backwards).
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Shift showing the bar, relative to the current bar, that the data should be taken from.
+        description=Bar offset to start from.
       </parameter>
     </function>
 
@@ -9326,7 +9323,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9357,7 +9354,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -9388,7 +9385,7 @@ double val=Low[iLowest(NULL,0,MODE_LOW,10,10)];
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe. It can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
       <parameter>
         type=int
@@ -10386,7 +10383,7 @@ if (hWnd != 0)
       <parameter>
         type=int
         name=timeframe
-        description=Timeframe, can be any of <a href="help://constants_timeframes">Timeframe enumeration</a> values. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
       </parameter>
     </function>
 
