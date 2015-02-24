@@ -25,9 +25,9 @@
  *                      This[Day|Week|Month]                         ; Synonym für 0[Days|Weeks|Months]Ago
  *                      Last[Day|Week|Month]                         ; Synonym für 1[Day|Week|Month]Ago
  *
- *      • Signal-ID:    Close      = On | Off                        ; Erreichen des Close-Preises der Bar
- *                      Range      = On | {90}% | Off                ; Erreichen der {x}%-Schwelle der Bar-Range (1 = 100% = neues High/Low)
- *                      Range.Wait = {5} [minute|hour][s]            ; Wartezeit, bevor das gleiche Event erneut signalisiert wird
+ *      • Signal-ID:    Close       = On | Off                       ; Erreichen des Close-Preises der Bar
+ *                      Range       = On | {90}% | Off               ; Erreichen der {x}%-Schwelle der Bar-Range (1 = 100% = neues High/Low)
+ *                      Range.Reset = {5} [minute|hour][s]           ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
  *
  *     Pattern und ihre Konfiguration:
  *      - neues Inside-Range-Pattern auf Tagesbasis
@@ -161,9 +161,9 @@ bool Configure() {
       //               This[Day|Week|Month]                         ; Synonym für 0[Days|Weeks|Months]Ago
       //               Last[Day|Week|Month]                         ; Synonym für 1[Day|Week|Month]Ago
       //
-      // Signal-ID:    Close      = On | Off                        ; Erreichen des Close-Preises der Bar
-      //               Range      = On | {90}% | Off                ; Erreichen der {x}%-Schwelle der Bar-Range (1 = 100% = neues High/Low)
-      //               Range.Wait = {5} [minute|hour][s]            ; Wartezeit, bevor das gleiche Event erneut signalisiert wird
+      // Signal-ID:    Close       = On | Off                       ; Erreichen des Close-Preises der Bar
+      //               Range       = On | {90}% | Off               ; Erreichen der {x}%-Schwelle der Bar-Range (1 = 100% = neues High/Low)
+      //               Range.Reset = {5} [minute|hour][s]           ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
       //
 
       // Yesterday.Range = 1
@@ -174,8 +174,8 @@ bool Configure() {
       price.config[0][I_PRICE_CONFIG_ENABLED  ] = true;                       // (int) bool
       price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
       price.config[0][I_PRICE_CONFIG_BAR      ] = 1;                          // 1DayAgo
-      price.config[0][I_PRICE_CONFIG_PARAM1   ] = 100;                        // RangeLevel = 100%
-      price.config[0][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;                 // Range.Wait = 15 Minuten
+      price.config[0][I_PRICE_CONFIG_PARAM1   ] = 100;                        // RangeLevel  = 100%
+      price.config[0][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;                 // Range.Reset = 15 Minuten
     //price.config[0][I_PRICE_CONFIG_PARAM3   ] = ...                         // für ET_PRICESIGNAL_RANGE unbenutzt
    }
 
@@ -573,18 +573,18 @@ bool CheckClosePriceSignal(int i) {
 #define I_SIGNAL_LEVEL_HIGH      0                                   // Signallevel oben
 #define I_SIGNAL_LEVEL_LOW       1                                   // Signallevel unten
 #define I_SIGNAL_START_TIME      2                                   // Startzeit der Referenz-Session (Serverzeit)
-#define I_SIGNAL_START_BAR       3                                   // Baroffset der Startzeit        (PERIOD_H1)
+#define I_SIGNAL_START_BAR       3                                   // Baroffset der Startzeit        (PERIOD_H1 )
 #define I_SIGNAL_END_TIME        4                                   // Endzeit der Referenz-Session   (Serverzeit)
-#define I_SIGNAL_END_BAR         5                                   // Baroffset der Endzeit          (PERIOD_H1)
-#define I_SIGNAL_CHANGED_BARS    6                                   // iChangedBars(PERIOD_H1) bei der letzten Prüfung des Signals
+#define I_SIGNAL_END_BAR         5                                   // Baroffset der Endzeit          (PERIOD_H1 )
+#define I_SIGNAL_CHANGED_BARS    6                                   // iChangedBars(PERIOD_H1) beim letzten Prüfen des Signals
 
 
 /**
- * Prüft auf ein Price-Event.
+ * Prüft auf ein PriceRange-Event.
  *
  * @param  int index - Index in den zur Überwachung konfigurierten Signalen
  *
- * @return bool - Erfolgsstatus; nicht, ob ein neues Signal detektiert wurde
+ * @return bool - Erfolgsstatus (nicht, ob ein neues Signal getriggert wurde)
  */
 bool CheckRangeSignal(int index) {
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])
@@ -617,7 +617,7 @@ bool CheckRangeSignal.Init(int index) {
    int timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
    int bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
    int range     = price.config[index][I_PRICE_CONFIG_PARAM1   ];
-   int wait      = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+   int reset     = price.config[index][I_PRICE_CONFIG_PARAM2   ];
 
 
    // (1) Anfangs- und Endzeitpunkt der Bar und entsprechende Bar-Offsets bestimmen (für alle Signale wird PERIOD_H1 benutzt)
