@@ -24,12 +24,16 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   int cb1, cb2;
 
-   int changedBars1 = iChangedBars(NULL, PERIOD_M1, MUTE_ERR_SERIES_NOT_AVAILABLE);
-   int changedBars2 = iChangedBars(NULL, PERIOD_M1, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   cb1 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   cb2 = iChangedBars("EURUSD", PERIOD_M30, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   debug("onStart()  changedBars(M15)="+ cb1 +"  changedBars(M30)="+ cb2);
 
-   debug("onStart()  changedBars:  1="+ changedBars1 +"  2="+ changedBars2);
 
+   cb1 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   cb2 = iChangedBars("EURUSD", PERIOD_M30, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   debug("onStart()  changedBars(M15)="+ cb1 +"  changedBars(M30)="+ cb2);
 
 
    return(catch("onStart(1)"));
