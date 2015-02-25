@@ -3294,8 +3294,7 @@ else
       <content>
         If the element with the specified value doesn't exist in the array, the function returns the index of the nearest smallest value of the elements between which the searched value is located.<br/>
         The function cannot be used with string arrays and series arrays (with the exception of the series array of the bar open time).<br/>
-        Note: Binary search processes only sorted arrays.
-        To sort numeric arrays use the <a href="help://array_ArraySort">ArraySort()</a> function.
+        Note: Binary search processes only sorted arrays. To sort numeric arrays use the <a href="help://array_ArraySort">ArraySort()</a> function.
       </content>
       <example>
    datetime daytimes[];
@@ -4176,7 +4175,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
       <parameter>
         type=...
         name=
-        description==Any values separated by commas. It can be up to 64 parameters.
+        description=Any values separated by commas. It can be up to 64 parameters.
       </parameter>
     </function>
 
@@ -9061,7 +9060,12 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       type=int
       <content>
       Returns the number of bars of the specified time series.<br/>
-      For the current chart, the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.
+      For the current chart the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.<br/>
+		<br/>
+      <span style="color:red">Notes:</span><br/>
+   	Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert.
+      Ein Programm, das z.B. innerhalb einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine 
+      konstante Anzahl Bars "sehen".
       </content>
       <example>
   Print(&quot;The number of bars of 'EURUSD,PERIOD_H1' is&quot;, iBars(&quot;EURUSD&quot;, PERIOD_H1));
@@ -9074,7 +9078,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description==<a href="help://constants_timeframes">Timeframe</a> of the data series. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
       </parameter>
     </function>
 
@@ -9113,7 +9117,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
         type=int
         name=timeframe
         def_value=<span class="constant">NULL</span>
-        description=<a href="help://constants_timeframes">Timeframe</a> of the data series, 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
       </parameter>
       <parameter>
         type=datetime
@@ -9209,7 +9213,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a> of the data series. 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
       </parameter>
       <parameter>
         type=int
@@ -9280,7 +9284,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a> of the data series, 0 means the current chart timeframe.
+        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
       </parameter>
       <parameter>
         type=int

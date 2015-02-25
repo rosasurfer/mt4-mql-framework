@@ -9,6 +9,7 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 //#include <iFunctions/iBarShiftNext.mqh>
 //#include <iFunctions/iBarShiftPrevious.mqh>
+#include <iFunctions/iChangedBars.mqh>
 //#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 
@@ -24,10 +25,16 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   int changedBars1 = iChangedBars(NULL, PERIOD_M1, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   int changedBars2 = iChangedBars(NULL, PERIOD_M1, MUTE_ERR_SERIES_NOT_AVAILABLE);
 
-   int result = Test();
-   debug("onStart()   result="+ result);
+   debug("onStart()  changedBars:  1="+ changedBars1 +"  2="+ changedBars2);
+
+
+
    return(catch("onStart(1)"));
+
+   iChangedBars(NULL, NULL);
 }
 
 /*
