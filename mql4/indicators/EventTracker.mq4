@@ -176,7 +176,7 @@ bool Configure() {
       ArrayResize(price.rtdata, size);
       price.config[0][I_PRICE_CONFIG_ID       ] = ET_PRICE_BAR_BREAKOUT;
       price.config[0][I_PRICE_CONFIG_ENABLED  ] = true;                       // (int) bool
-      price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_M1;
+      price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
       price.config[0][I_PRICE_CONFIG_BAR      ] = 1;                          // 1DayAgo
       price.config[0][I_PRICE_CONFIG_PARAM1   ] = false;                      // zusätzliches Signal bei On-Touch
       price.config[0][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;                 // Reset nach 15 Minuten
@@ -583,17 +583,17 @@ bool CheckClosePriceSignal(int i) {
 //#define I_SIGNAL_END_BAR         4                                   // Baroffset der Endzeit          (max. PERIOD_H1)
 //#define I_SIGNAL_LEVEL_HIGH      5                                   // Signallevel oben
 //#define I_SIGNAL_LEVEL_LOW       6                                   // Signallevel unten
-//#define I_SIGNAL_BAR_CLOSETIME   7                                   // CloseTime der aktuellen Session, danach Re-Initialisierung des Signals
+//#define I_SIGNAL_BAR_CLOSETIME   7                                   // CloseTime der aktuellen Session
 
 
-datetime rt.sessionStartTime;
+datetime rt.sessionStartTime;             // Session, aus der ein Breakout signalisiert werden soll
 datetime rt.sessionEndTime;
-double   rt.sessionH;
-double   rt.sessionL;
+double   rt.sessionH;                     // oberer Breakout-Level
+double   rt.sessionL;                     // unterer Breakout-Level
 int      rt.dataTimeframe;
-int      rt.dataStartBar;
+int      rt.dataStartBar;                 // Bar-Offsets der Breakout-Session innerhalb der verwendeten Datenreihe (weicht i.d.R. vom Signal-Timeframe ab)
 int      rt.dataEndBar;
-datetime rt.currentSessionCloseTime;
+datetime rt.lastSessionEndTime;           // Endzeit der jüngsten Session-Periode innerhalb der verwendeten Datenreihe
 
 bool     rt.done;
 
@@ -613,9 +613,11 @@ bool CheckBreakoutSignal(int index) {
    int  signal.bar        = price.config[index][I_PRICE_CONFIG_BAR      ];
    bool signal.onTouch    = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
    int  signal.resetAfter = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+   if (!rt.dataTimeframe)
+      rt.dataTimeframe = Min(signal.timeframe, PERIOD_H1);
 
 
-   // (1) Laufzeitdaten initialisieren und prüfen, ob changedBars(rt.dataTimeframe) eine Aktualisierung der Prüflevel erfordert (Re-Initialisierung)
+   // (1) Preislevel initialisieren und prüfen, ob changedBars(rt.dataTimeframe) eine Aktualisierung der Level erfordert (Re-Initialisierung)
    int oldError    = last_error;
    int changedBars = iChangedBars(NULL, rt.dataTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
    if (changedBars == -1) {                                          // Fehler
@@ -623,24 +625,18 @@ bool CheckBreakoutSignal(int index) {
          return(_true(SetLastError(oldError)));                      // ERR_SERIES_NOT_AVAILABLE unterdrücken und fortfahren, wenn Daten eingetroffen sind.
       return(false);
    }
-   // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(rt.dataTimeframe) den Barbereich der Referenzsession überlappt.
+   // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(rt.dataTimeframe) den Barbereich der Referenzsession einschließt oder
+   // wenn die nächste Periode der Referenzsession beginnt.
    if (changedBars > 1) {
       debug("CheckBreakoutSignal(0.1)  changedBars="+ changedBars);
       rt.done = false;
    }
-   if (changedBars > rt.dataEndBar)                                  // eine gemeinsame Bedingung für Erst- und Re-Initialisierung
+   if (changedBars > rt.dataEndBar) {                                // eine gemeinsame Bedingung für Erst- und Re-Initialisierung
       if (!CheckBreakoutSignal.Init(index)) return(false);
-
-
-
-   /*
-   // Signaldaten nach BarOpen-Event im Signal-Timeframe re-initialisieren
-   if (TimeCurrent() > rt.currentSessionCloseTime)
-      if (!CheckBreakoutSignal.Init(index)) return(false);
-   double price = NormalizeDouble(Bid, Digits);
-   debug("CheckBreakoutSignal(0.2)  checking for H="+ NumberToStr(rt.sessionH, PriceFormat) +"  L="+ NumberToStr(rt.sessionL, PriceFormat));
-   */
-
+   }
+   else if (changedBars > 1) /*&&*/ if (iTime(NULL, rt.dataTimeframe, 0) >= rt.lastSessionEndTime) {
+      if (!CheckBreakoutSignal.Init(index)) return(false);           // neue Periode im Timeframe der Referenzsession (zur Performancesteigerung in mehrere Conditions aufgeteilt)
+   }
 
 
    // (2) Signallevel prüfen
@@ -654,6 +650,7 @@ bool CheckBreakoutSignal(int index) {
       if (GE(price, rt.sessionH)) {
          if (GT(price, rt.sessionH)) {
             debug("CheckBreakoutSignal(0.4)  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            PlaySoundEx("OrderModified.wav");
             rt.sessionH = NULL;
             rt.done     = false;
          }
@@ -664,6 +661,7 @@ bool CheckBreakoutSignal(int index) {
       if (LE(price, rt.sessionL)) {
          if (LT(price, rt.sessionL)) {
             debug("CheckBreakoutSignal(0.6)  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            PlaySoundEx("OrderModified.wav");
             rt.sessionL = NULL;
             rt.done     = false;
          }
@@ -692,7 +690,7 @@ bool CheckBreakoutSignal.Init(int index) {
 
 
    // (1) Anfangs- und Endzeitpunkt der Bar und entsprechende Bar-Offsets bestimmen
-   datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv;
+   datetime openTime.fxt, closeTime.fxt, openTime.srv, closeTime.srv, lastSessionEndTime;
    int openBar, closeBar;
 
    for (int i=0; i<=bar; i++) {
@@ -704,8 +702,12 @@ bool CheckBreakoutSignal.Init(int index) {
          price.config[index][I_PRICE_CONFIG_ENABLED] = false;
          return(!warn("CheckBreakoutSignal.Init(1)  signal "+ index, ERR_HISTORY_INSUFFICIENT));
       }
-      if (openBar < closeBar)                                                          // Datenlücke, weiter zu den nächsten verfügbaren Daten
+      if (openBar < closeBar) {                                                        // Datenlücke, weiter zu den nächsten verfügbaren Daten
          i--;
+      }
+      else if (i == 0) {                                                               // openTime/closeTime enthalten die Daten der ersten Session mit vorhandenen Daten
+         lastSessionEndTime = closeTime.srv;
+      }
    }
    //debug("CheckBreakoutSignal.Init(0.2)  bar="+ bar +"  open="+ DateToStr(openTime.fxt, "w, D.M.Y H:I") +"  close="+ DateToStr(closeTime.fxt, "w, D.M.Y H:I"));
 
@@ -727,14 +729,14 @@ bool CheckBreakoutSignal.Init(int index) {
 
 
    // (4) alle Daten speichern
-   rt.sessionStartTime        = openTime.srv;
-   rt.sessionEndTime          = closeTime.srv;
-   rt.sessionH                = NormalizeDouble(H, Digits);
-   rt.sessionL                = NormalizeDouble(L, Digits);
-   rt.dataTimeframe           = dataTimeframe;
-   rt.dataStartBar            = openBar;
-   rt.dataEndBar              = closeBar;
-   rt.currentSessionCloseTime = TimeCurrent();
+   rt.sessionStartTime   = openTime.srv;
+   rt.sessionEndTime     = closeTime.srv;
+   rt.sessionH           = NormalizeDouble(H, Digits);
+   rt.sessionL           = NormalizeDouble(L, Digits);
+   rt.dataTimeframe      = dataTimeframe;
+   rt.dataStartBar       = openBar;
+   rt.dataEndBar         = closeBar;
+   rt.lastSessionEndTime = lastSessionEndTime - 1*SECOND;
 
    return(!catch("CheckBreakoutSignal.Init(2)"));
 }
