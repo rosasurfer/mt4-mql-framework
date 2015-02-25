@@ -9,6 +9,9 @@
  * @param  _OUT_    datetime &closeTime.srv - Variable zur Aufnahme des Endes der resultierenden Periode in Serverzeit
  *
  * @return bool - Erfolgsstatus
+ *
+ *
+ * NOTE: Diese Funktion greift nicht auf Bars oder Datenserien zu, sondern verwendet nur die aktuelle Systemzeit.
  */
 bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*/, datetime &closeTime.fxt, datetime &openTime.srv, datetime &closeTime.srv) {
    if (!timeframe)

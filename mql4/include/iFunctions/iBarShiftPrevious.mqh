@@ -46,7 +46,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time
       bar   = iBarShift(symbol, period, time, false);
       error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)     // ERS_HISTORY_UPDATE ist kein Fehler
-              return(_EMPTY_VALUE(catch("iBarShiftPrevious(4: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
+         return(_EMPTY_VALUE(catch("iBarShiftPrevious(4: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
    }
    return(bar);
 }
