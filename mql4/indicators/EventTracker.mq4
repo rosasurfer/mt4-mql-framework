@@ -25,10 +25,10 @@
  *                      This[Day|Week|Month]                         ; Synonym für 0[Days|Weeks|Months]Ago
  *                      Last[Day|Week|Month]                         ; Synonym für 1[Day|Week|Month]Ago
  *
- *      • Signal-ID:    Close             = On | Off                 ; Erreichen des Close-Preises der Bar
- *                      BarRange          = {90}%                    ; Erreichen der {x}%-Schwelle der Bar-Range (100% = am bisherigen High/Low)
+ *      • Signal-ID:    BarClose          = On | Off                 ; Erreichen des Close-Preises einer Bar
+ *                      BarRange          = {90}%                    ; Erreichen der {x}%-Schwelle einer Bar-Range (100% = am bisherigen High/Low)
  *                      BarBreakout       = On | Off                 ; neues High/Low
- *                      BarBreakout.Reset = {5} [minute|hour][s]     ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
+ *                      BarBreakout.Reset = {5} [minute|hour][s]     ; Zeit, nachdem die Prüfung eines einmal getriggerten Signals reaktiviert wird
  *
  *     Pattern und ihre Konfiguration:
  *      - neues Inside-Range-Pattern auf Tagesbasis
@@ -274,45 +274,6 @@ int onTick() {
    }
 
    return(ShowStatus(last_error));
-}
-
-
-/**
- * Zeigt den aktuellen Laufzeitstatus optisch an. Ist immer aktiv.
- *
- * @param  int error - anzuzeigender Fehler (default: keiner)
- *
- * @return int - der übergebene Fehler oder der Fehlerstatus der Funktion, falls kein Fehler übergeben wurde
- */
-int ShowStatus(int error=NULL) {
-   if (__STATUS_OFF)
-      error = __STATUS_OFF.reason;
-
-   string msg = __NAME__;
-   if (!error) msg = StringConcatenate(msg,                                      NL, NL);
-   else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, NL);
-
-   int size = ArrayRange(price.config, 0);
-
-   for (int n, i=0; i < size; i++) {
-      n = i + 1;
-      switch (price.config[i][I_PRICE_CONFIG_ID]) {
-         case ET_PRICE_BAR_CLOSE:    msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Price close of "+ PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
-         case ET_PRICE_BAR_RANGE:    msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Price range of "+ PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
-         case ET_PRICE_BAR_BREAKOUT: msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Breakout of "   + PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
-         default:
-            return(catch("ShowStatus(1)  unknow price signal["+ i +"] = "+ price.config[i][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
-      }
-   }
-
-   // etwas Abstand nach oben für Instrumentanzeige
-   Comment(StringConcatenate(NL, msg));
-   if (__WHEREAMI__ == FUNC_INIT)
-      WindowRedraw();
-
-   if (!catch("ShowStatus(3)"))
-      return(error);
-   return(last_error);
 }
 
 
@@ -622,7 +583,7 @@ bool CheckBreakoutSignal(int index) {
    int changedBars = iChangedBars(NULL, rt.dataTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
    if (changedBars == -1) {                                          // Fehler
       if (last_error == ERR_SERIES_NOT_AVAILABLE)
-         return(_true(SetLastError(oldError)));                      // ERR_SERIES_NOT_AVAILABLE unterdrücken und fortfahren, wenn Daten eingetroffen sind.
+         return(_true(SetLastError(oldError)));                      // ERR_SERIES_NOT_AVAILABLE unterdrücken und fortsetzen, nachdem Daten eingetroffen sind.
       return(false);
    }
    // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(rt.dataTimeframe) den Barbereich der Referenzsession einschließt oder
@@ -830,6 +791,45 @@ bool CheckRangeSignal.Init(int index) {
    price.rtdata[index][I_SIGNAL_LEVEL_LOW ] = NormalizeDouble(levelL, Digits);
    */
    return(!catch("CheckRangeSignal.Init(2)"));
+}
+
+
+/**
+ * Zeigt den aktuellen Laufzeitstatus optisch an. Ist immer aktiv.
+ *
+ * @param  int error - anzuzeigender Fehler (default: keiner)
+ *
+ * @return int - der übergebene Fehler oder der Fehlerstatus der Funktion, falls kein Fehler übergeben wurde
+ */
+int ShowStatus(int error=NULL) {
+   if (__STATUS_OFF)
+      error = __STATUS_OFF.reason;
+
+   string msg = __NAME__;
+   if (!error) msg = StringConcatenate(msg,                                      NL, NL);
+   else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, NL);
+
+   int size = ArrayRange(price.config, 0);
+
+   for (int n, i=0; i < size; i++) {
+      n = i + 1;
+      switch (price.config[i][I_PRICE_CONFIG_ID]) {
+         case ET_PRICE_BAR_CLOSE:    msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Price close of "+ PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
+         case ET_PRICE_BAR_RANGE:    msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Price range of "+ PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
+         case ET_PRICE_BAR_BREAKOUT: msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Breakout of "   + PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
+         default:
+            return(catch("ShowStatus(1)  unknow price signal["+ i +"] = "+ price.config[i][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
+      }
+   }
+
+   // etwas Abstand nach oben für Instrumentanzeige
+   Comment(StringConcatenate(NL, msg));
+   if (__WHEREAMI__ == FUNC_INIT)
+      WindowRedraw();
+
+   if (!catch("ShowStatus(3)"))
+      return(error);
+   return(last_error);
 }
 
 
