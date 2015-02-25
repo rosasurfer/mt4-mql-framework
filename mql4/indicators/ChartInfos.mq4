@@ -468,13 +468,27 @@ int ShowOpenOrders() {
 
          // TakeProfit anzeigen
          if (takeProfit != NULL) {
-            sTP = StringConcatenate("TP: ", NumberToStr(takeProfit, SubPipPriceFormat));
+            sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, SubPipPriceFormat));
+            label2 = StringConcatenate(label1, ",  ", sTP);
+            if (ObjectFind(label2) == 0)
+               ObjectDelete(label2);
+            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrent(), takeProfit)) {
+               ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
+               ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+            }
          }
          else sTP = "";
 
          // StopLoss anzeigen
          if (stopLoss != NULL) {
-            sSL = StringConcatenate("SL: ", NumberToStr(stopLoss, SubPipPriceFormat));
+            sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, SubPipPriceFormat));
+            label3 = StringConcatenate(label1, ",  ", sSL);
+            if (ObjectFind(label3) == 0)
+               ObjectDelete(label3);
+            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrent(), stopLoss)) {
+               ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+               ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+            }
          }
          else sSL = "";
 
@@ -496,7 +510,7 @@ int ShowOpenOrders() {
       return(_EMPTY(catch("ShowOpenOrders(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
 
-   return(_EMPTY(catch("ShowOpenOrder(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY(catch("ShowOpenOrders(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
