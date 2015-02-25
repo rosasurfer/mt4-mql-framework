@@ -14,7 +14,11 @@
 int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL) {
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
+
    /*
+   NOTE: Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert.
+         Ein Programm, das z.B. innerhalb einer Schleife iBars() aufruft, wird während desselben Ticks immer dieselbe konstante Anzahl Bars "sehen".
+
    TODO:
    -----
    - statische Variablen müssen je Symbol und Periode zwischengespeichert werden
@@ -22,9 +26,15 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    - statische Variablen bei Accountwechsel zurücksetzen
    */
 
+   static int      prev.tick         = -1;
    static int      prev.bars         = -1;
+   static int      prev.changedBars  = -1;
    static datetime prev.lastBarTime  =  0;
    static datetime prev.firstBarTime =  0;
+
+   if (__WHEREAMI__ != FUNC_START) return(0);                        // in init() oder deinit()
+   if (Tick == prev.tick)          return(prev.changedBars);         // Mehrfachaufruf innerhalb desselben Ticks
+
 
    int bars  = iBars(symbol, period);
    int error = GetLastError();
@@ -50,10 +60,19 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
 
    if      (prev.bars==-1)                                    changedBars = bars;                  // erster Zugriff auf die Zeitreihe
    else if (bars==prev.bars && lastBarTime==prev.lastBarTime) changedBars = 1;                     // Baranzahl gleich und älteste Bar noch dieselbe = normaler Tick (mit/ohne Lücke)
-   else if (firstBarTime != prev.firstBarTime)                changedBars = bars - prev.bars + 1;  // neue Bars zu Beginn hinzugekommen
-   else                                                       changedBars = bars;                  // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
+   else {
+      if (bars == prev.bars) {
+         // Wenn dies passiert (im Tester???) und Bars "hinten hinausgeschoben" wurden, muß die Bar mit prev.firstBarTime
+         // manuell gesucht und der Wert von changedBars daraus abgeleitet werden.
+         warn("iChangedBars(2)  bars==prev.bars="+ bars +" (we probably hit MAX_CHART_BARS)");
+      }
+      if (firstBarTime != prev.firstBarTime)                  changedBars = bars - prev.bars + 1;  // neue Bars zu Beginn hinzugekommen
+      else                                                    changedBars = bars;                  // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
+   }
 
+   prev.tick         = Tick;
    prev.bars         = bars;
+   prev.changedBars  = changedBars;
    prev.lastBarTime  = lastBarTime;
    prev.firstBarTime = firstBarTime;
 

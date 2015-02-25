@@ -176,7 +176,7 @@ bool Configure() {
       ArrayResize(price.rtdata, size);
       price.config[0][I_PRICE_CONFIG_ID       ] = ET_PRICE_BAR_BREAKOUT;
       price.config[0][I_PRICE_CONFIG_ENABLED  ] = true;                       // (int) bool
-      price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
+      price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_M1;
       price.config[0][I_PRICE_CONFIG_BAR      ] = 1;                          // 1DayAgo
       price.config[0][I_PRICE_CONFIG_PARAM1   ] = false;                      // zusätzliches Signal bei On-Touch
       price.config[0][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;                 // Reset nach 15 Minuten
@@ -586,11 +586,13 @@ bool CheckBreakoutSignal(int index) {
          return(_true(SetLastError(oldError)));                      // ERR_SERIES_NOT_AVAILABLE unterdrücken und fortsetzen, nachdem Daten eingetroffen sind.
       return(false);
    }
+   if (!changedBars)                                                 // z.B. bei künstlichem Tick oder Aufruf in init() oder deinit()
+      return(true);
+
    // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(rt.dataTimeframe) den Barbereich der Referenzsession einschließt oder
    // wenn die nächste Periode der Referenzsession beginnt.
    if (changedBars > 1) {
       debug("CheckBreakoutSignal(0.1)  changedBars="+ changedBars);
-      rt.done = false;
    }
    if (changedBars > rt.dataEndBar) {                                // eine gemeinsame Bedingung für Erst- und Re-Initialisierung
       if (!CheckBreakoutSignal.Init(index)) return(false);
@@ -686,7 +688,7 @@ bool CheckBreakoutSignal.Init(int index) {
 
 
    debug("CheckBreakoutSignal.Init(0.3)  "+ PeriodDescription(signalTimeframe) +"["+ bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
-   rt.done = false;
+   rt.done = true;
 
 
    // (4) alle Daten speichern
