@@ -1,18 +1,22 @@
 /**
  * Ermittelt den Bar-Offset eines Zeitpunktes innerhalb einer Datenreihe und gibt bei nicht existierender Bar die letzte vorherige existierende Bar zurück.
  *
- * @param  string   symbol - Symbol der zu untersuchenden Datenreihe  (NULL = aktuelles Symbol)
- * @param  int      period - Periode der zu untersuchenden Datenreihe (NULL = aktuelle Periode)
- * @param  datetime time   - Zeitpunkt (Serverzeit)
+ * @param  string   symbol    - Symbol der zu untersuchenden Datenreihe  (NULL = aktuelles Symbol)
+ * @param  int      period    - Periode der zu untersuchenden Datenreihe (NULL = aktuelle Periode)
+ * @param  datetime time      - Zeitpunkt (Serverzeit)
+ * @param  int      execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
  * @return int - Bar-Index oder -1, wenn keine entsprechende Bar existiert (Zeitpunkt ist zu alt für Datenreihe);
  *               EMPTY_VALUE, falls ein Fehler auftrat
  *
  *
- * Note: Ein ausgelöster Status ERS_HISTORY_UPDATE wird nicht als Fehler interpretiert und nicht weitergeleitet.
+ * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
+ *
+ *
+ * Note: Ein gemeldeter Status ERS_HISTORY_UPDATE ist kein Fehler und wird nicht weitergeleitet.
  *       Er ist nicht relevant für die momentan vorhandenen Daten.
  */
-int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time) {
+int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, int execFlags=NULL) {
    if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
    if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftPrevious(1)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER)));
@@ -23,19 +27,26 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time
       exact = FALSE: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index
                      der vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.
 
-      Existieren keine entsprechenden Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw",
-      oder ist der Timeframe kein Standard-Timeframe, wird kein Fehler gemeldet.
-
-      Ist das Symbol bekannt, wird u.U. der Status ERS_HISTORY_UPDATE gemeldet (kein Fehler).
+      - Existieren keine entsprechenden Daten, gibt iBarShift() -1 zurück.
+      - Ist das Symbol unbekannt (existiert nicht in "symbols.raw") oder ist der Timeframe kein Standard-Timeframe, meldet iBarShift() keinen Fehler.
+      - Ist das Symbol bekannt, wird ggf. der Status ERS_HISTORY_UPDATE gemeldet.
    */
 
    // Datenreihe holen
    datetime times[];
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);//throws ERR_ARRAY_ERROR, wenn solche Daten (noch) nicht existieren
    int error = GetLastError();
-   if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)        // ERS_HISTORY_UPDATE ist kein Fehler              // aus ERR_ARRAY_ERROR => ERR_SERIES_NOT_AVAILABLE machen
-              return(_EMPTY_VALUE(catch("iBarShiftPrevious(2: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, ifInt(error==ERR_ARRAY_ERROR, ERR_SERIES_NOT_AVAILABLE, error))));
-   if (!bars) return(_EMPTY_VALUE(catch("iBarShiftPrevious(3: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, ERR_SERIES_NOT_AVAILABLE)));
+
+   if (!bars || error) {                                             // Da immer beide Bedingungen geprüft werden müssen, braucht das ODER nicht optimiert werden.
+      if (!bars || error!=ERS_HISTORY_UPDATE) {
+         if (!error || error==ERS_HISTORY_UPDATE || error==ERR_ARRAY_ERROR)                                                         // aus ERR_ARRAY_ERROR wird ERR_SERIES_NOT_AVAILABLE
+            error = ERR_SERIES_NOT_AVAILABLE;
+         if (error==ERR_SERIES_NOT_AVAILABLE && execFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
+            return(_EMPTY_VALUE(SetLastError(error)));                                                                              // leise
+         return(_EMPTY_VALUE(catch("iBarShiftPrevious(2: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, error)));   // laut
+      }
+   }
+   // bars ist hier immer größer 0
 
 
    // Bars überprüfen
@@ -45,8 +56,8 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time
    else {
       bar   = iBarShift(symbol, period, time, false);
       error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)     // ERS_HISTORY_UPDATE ist kein Fehler
-         return(_EMPTY_VALUE(catch("iBarShiftPrevious(4: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)
+         return(_EMPTY_VALUE(catch("iBarShiftPrevious(3: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
    }
    return(bar);
 }

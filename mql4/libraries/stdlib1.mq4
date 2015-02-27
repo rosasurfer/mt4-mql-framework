@@ -625,226 +625,6 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
 }
 
 
-/**
- * Gibt alle verfügbaren MarketInfo()-Daten des aktuellen Instruments aus.
- *
- * @param  string location - Aufruf-Bezeichner
- *
- * @return int - Fehlerstatus
- *
- *
- * NOTE: Erläuterungen zu den Werten in stddefine.mqh
- */
-int DebugMarketInfo(string location) {
-   int    error;
-   double value;
-
-   debug(location +"   "+ StringRepeat("-", 27 + StringLen(Symbol())));   //  -----------------------------
-   debug(location +"   Predefined variables for \""+ Symbol() +"\"");     //  Predefined variables "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 27 + StringLen(Symbol())));   //  -----------------------------
-
-   debug(location +"   Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug(location +"   PipDigits   = "+ PipDigits);
-   debug(location +"   Digits  (b) = "+ Digits);
-   debug(location +"   Point   (b) = "+ NumberToStr(Point, PriceFormat));
-   debug(location +"   PipPoints   = "+ PipPoints);
-   debug(location +"   Bid/Ask (b) = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
-   debug(location +"   Bars    (b) = "+ Bars);
-   debug(location +"   PriceFormat = \""+ PriceFormat +"\"");
-
-   debug(location +"   "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
-   debug(location +"   MarketInfo() for \""+ Symbol() +"\"");             //  MarketInfo() for "EURUSD"
-   debug(location +"   "+ StringRepeat("-", 19 + StringLen(Symbol())));   //  -------------------------
-
-   // Erläuterungen zu den Werten in stddefine.mqh
-   value = MarketInfo(Symbol(), MODE_LOW              ); error = GetLastError(); debug(location +"   MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_HIGH             ); error = GetLastError(); debug(location +"   MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
- //value = MarketInfo(Symbol(), 3                     ); error = GetLastError(); debug(location +"   3                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
- //value = MarketInfo(Symbol(), 4                     ); error = GetLastError(); debug(location +"   4                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TIME             ); error = GetLastError(); debug(location +"   MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), "'"+ TimeToStr(value, TIME_FULL) +"'") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
- //value = MarketInfo(Symbol(), 6                     ); error = GetLastError(); debug(location +"   6                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
- //value = MarketInfo(Symbol(), 7                     ); error = GetLastError(); debug(location +"   7                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
- //value = MarketInfo(Symbol(), 8                     ); error = GetLastError(); debug(location +"   8                      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_BID              ); error = GetLastError(); debug(location +"   MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_ASK              ); error = GetLastError(); debug(location +"   MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_POINT            ); error = GetLastError(); debug(location +"   MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_DIGITS           ); error = GetLastError(); debug(location +"   MODE_DIGITS            = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SPREAD           ); error = GetLastError(); debug(location +"   MODE_SPREAD            = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_STOPLEVEL        ); error = GetLastError(); debug(location +"   MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_LOTSIZE          ); error = GetLastError(); debug(location +"   MODE_LOTSIZE           = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TICKVALUE        ); error = GetLastError(); debug(location +"   MODE_TICKVALUE         = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TICKSIZE         ); error = GetLastError(); debug(location +"   MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat))           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SWAPLONG         ); error = GetLastError(); debug(location +"   MODE_SWAPLONG          = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SWAPSHORT        ); error = GetLastError(); debug(location +"   MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_STARTING         ); error = GetLastError(); debug(location +"   MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), "'"+ TimeToStr(value, TIME_FULL) +"'") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_EXPIRATION       ); error = GetLastError(); debug(location +"   MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), "'"+ TimeToStr(value, TIME_FULL) +"'") + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_TRADEALLOWED     ); error = GetLastError(); debug(location +"   MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MINLOT           ); error = GetLastError(); debug(location +"   MODE_MINLOT            = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_LOTSTEP          ); error = GetLastError(); debug(location +"   MODE_LOTSTEP           = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MAXLOT           ); error = GetLastError(); debug(location +"   MODE_MAXLOT            = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_SWAPTYPE         ); error = GetLastError(); debug(location +"   MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_PROFITCALCMODE   ); error = GetLastError(); debug(location +"   MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINCALCMODE   ); error = GetLastError(); debug(location +"   MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGININIT       ); error = GetLastError(); debug(location +"   MODE_MARGININIT        = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINMAINTENANCE); error = GetLastError(); debug(location +"   MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINHEDGED     ); error = GetLastError(); debug(location +"   MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_MARGINREQUIRED   ); error = GetLastError(); debug(location +"   MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-   value = MarketInfo(Symbol(), MODE_FREEZELEVEL      ); error = GetLastError(); debug(location +"   MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+"                              )           + ifString(error, " ["+ ErrorToStr(error) +"]", ""));
-
-   return(catch("DebugMarketInfo()"));
-}
-
-
-/*
-MarketInfo()-Fehler im Tester
-=============================
-
-// EA im Tester
-M15::TestExpert::stdlib::onTick()       ---------------------------------
-M15::TestExpert::stdlib::onTick()       Predefined variables for "EURUSD"
-M15::TestExpert::stdlib::onTick()       ---------------------------------
-M15::TestExpert::stdlib::onTick()       Pip         = 0.0001'0
-M15::TestExpert::stdlib::onTick()       PipDigits   = 4
-M15::TestExpert::stdlib::onTick()       Digits  (b) = 5
-M15::TestExpert::stdlib::onTick()       Point   (b) = 0.0000'1
-M15::TestExpert::stdlib::onTick()       PipPoints   = 10
-M15::TestExpert::stdlib::onTick()       Bid/Ask (b) = 1.2711'2/1.2713'1
-M15::TestExpert::stdlib::onTick()       Bars    (b) = 1001
-M15::TestExpert::stdlib::onTick()       PriceFormat = ".4'"
-M15::TestExpert::stdlib::onTick()       ---------------------------------
-M15::TestExpert::stdlib::onTick()       MarketInfo() for "EURUSD"
-M15::TestExpert::stdlib::onTick()       ---------------------------------
-M15::TestExpert::stdlib::onTick()       MODE_LOW               = 0.0000'0                 // falsch: nicht modelliert
-M15::TestExpert::stdlib::onTick()       MODE_HIGH              = 0.0000'0                 // falsch: nicht modelliert
-M15::TestExpert::stdlib::onTick()       MODE_TIME              = '2012.11.12 00:00:00'
-M15::TestExpert::stdlib::onTick()       MODE_BID               = 1.2711'2
-M15::TestExpert::stdlib::onTick()       MODE_ASK               = 1.2713'1
-M15::TestExpert::stdlib::onTick()       MODE_POINT             = 0.0000'1
-M15::TestExpert::stdlib::onTick()       MODE_DIGITS            = 5
-M15::TestExpert::stdlib::onTick()       MODE_SPREAD            = 19
-M15::TestExpert::stdlib::onTick()       MODE_STOPLEVEL         = 20
-M15::TestExpert::stdlib::onTick()       MODE_LOTSIZE           = 100000
-M15::TestExpert::stdlib::onTick()       MODE_TICKVALUE         = 1
-M15::TestExpert::stdlib::onTick()       MODE_TICKSIZE          = 0.0000'1
-M15::TestExpert::stdlib::onTick()       MODE_SWAPLONG          = -1.3
-M15::TestExpert::stdlib::onTick()       MODE_SWAPSHORT         = 0.5
-M15::TestExpert::stdlib::onTick()       MODE_STARTING          = 0
-M15::TestExpert::stdlib::onTick()       MODE_EXPIRATION        = 0
-M15::TestExpert::stdlib::onTick()       MODE_TRADEALLOWED      = 0                        // falsch modelliert
-M15::TestExpert::stdlib::onTick()       MODE_MINLOT            = 0.01
-M15::TestExpert::stdlib::onTick()       MODE_LOTSTEP           = 0.01
-M15::TestExpert::stdlib::onTick()       MODE_MAXLOT            = 2
-M15::TestExpert::stdlib::onTick()       MODE_SWAPTYPE          = 0
-M15::TestExpert::stdlib::onTick()       MODE_PROFITCALCMODE    = 0
-M15::TestExpert::stdlib::onTick()       MODE_MARGINCALCMODE    = 0
-M15::TestExpert::stdlib::onTick()       MODE_MARGININIT        = 0
-M15::TestExpert::stdlib::onTick()       MODE_MARGINMAINTENANCE = 0
-M15::TestExpert::stdlib::onTick()       MODE_MARGINHEDGED      = 50000
-M15::TestExpert::stdlib::onTick()       MODE_MARGINREQUIRED    = 254.25
-M15::TestExpert::stdlib::onTick()       MODE_FREEZELEVEL       = 0
-
-// Indikator im Tester, via iCustom()
-H1::Moving Average::stdlib::onTick()    ---------------------------------
-H1::Moving Average::stdlib::onTick()    Predefined variables for "EURUSD"
-H1::Moving Average::stdlib::onTick()    ---------------------------------
-H1::Moving Average::stdlib::onTick()    Pip         = 0.0001'0
-H1::Moving Average::stdlib::onTick()    PipDigits   = 4
-H1::Moving Average::stdlib::onTick()    Digits  (b) = 5
-H1::Moving Average::stdlib::onTick()    Point   (b) = 0.0000'1
-H1::Moving Average::stdlib::onTick()    PipPoints   = 10
-H1::Moving Average::stdlib::onTick()    Bid/Ask (b) = 1.2711'2/1.2713'1
-H1::Moving Average::stdlib::onTick()    Bars    (b) = 1001
-H1::Moving Average::stdlib::onTick()    PriceFormat = ".4'"
-H1::Moving Average::stdlib::onTick()    ---------------------------------
-H1::Moving Average::stdlib::onTick()    MarketInfo() for "EURUSD"
-H1::Moving Average::stdlib::onTick()    ---------------------------------
-H1::Moving Average::stdlib::onTick()    MODE_LOW               = 0.0000'0                 // falsch übernommen
-H1::Moving Average::stdlib::onTick()    MODE_HIGH              = 0.0000'0                 // falsch übernommen
-H1::Moving Average::stdlib::onTick()    MODE_TIME              = '2012.11.12 00:00:00'
-H1::Moving Average::stdlib::onTick()    MODE_BID               = 1.2711'2
-H1::Moving Average::stdlib::onTick()    MODE_ASK               = 1.2713'1
-H1::Moving Average::stdlib::onTick()    MODE_POINT             = 0.0000'1
-H1::Moving Average::stdlib::onTick()    MODE_DIGITS            = 5
-H1::Moving Average::stdlib::onTick()    MODE_SPREAD            = 0                        // völlig falsch
-H1::Moving Average::stdlib::onTick()    MODE_STOPLEVEL         = 20
-H1::Moving Average::stdlib::onTick()    MODE_LOTSIZE           = 100000
-H1::Moving Average::stdlib::onTick()    MODE_TICKVALUE         = 1
-H1::Moving Average::stdlib::onTick()    MODE_TICKSIZE          = 0.0000'1
-H1::Moving Average::stdlib::onTick()    MODE_SWAPLONG          = -1.3
-H1::Moving Average::stdlib::onTick()    MODE_SWAPSHORT         = 0.5
-H1::Moving Average::stdlib::onTick()    MODE_STARTING          = 0
-H1::Moving Average::stdlib::onTick()    MODE_EXPIRATION        = 0
-H1::Moving Average::stdlib::onTick()    MODE_TRADEALLOWED      = 1
-H1::Moving Average::stdlib::onTick()    MODE_MINLOT            = 0.01
-H1::Moving Average::stdlib::onTick()    MODE_LOTSTEP           = 0.01
-H1::Moving Average::stdlib::onTick()    MODE_MAXLOT            = 2
-H1::Moving Average::stdlib::onTick()    MODE_SWAPTYPE          = 0
-H1::Moving Average::stdlib::onTick()    MODE_PROFITCALCMODE    = 0
-H1::Moving Average::stdlib::onTick()    MODE_MARGINCALCMODE    = 0
-H1::Moving Average::stdlib::onTick()    MODE_MARGININIT        = 0
-H1::Moving Average::stdlib::onTick()    MODE_MARGINMAINTENANCE = 0
-H1::Moving Average::stdlib::onTick()    MODE_MARGINHEDGED      = 50000
-H1::Moving Average::stdlib::onTick()    MODE_MARGINREQUIRED    = 259.73                   // falsch: online
-H1::Moving Average::stdlib::onTick()    MODE_FREEZELEVEL       = 0
-
-// Indikator im Tester, standalone
-M15::Moving Average::stdlib::onTick()   ---------------------------------
-M15::Moving Average::stdlib::onTick()   Predefined variables for "EURUSD"
-M15::Moving Average::stdlib::onTick()   ---------------------------------
-M15::Moving Average::stdlib::onTick()   Pip         = 0.0001'0
-M15::Moving Average::stdlib::onTick()   PipDigits   = 4
-M15::Moving Average::stdlib::onTick()   Digits  (b) = 5
-M15::Moving Average::stdlib::onTick()   Point   (b) = 0.0000'1
-M15::Moving Average::stdlib::onTick()   PipPoints   = 10
-M15::Moving Average::stdlib::onTick()   Bid/Ask (b) = 1.2983'9/1.2986'7                   // falsch: online
-M15::Moving Average::stdlib::onTick()   Bars    (b) = 1001
-M15::Moving Average::stdlib::onTick()   PriceFormat = ".4'"
-M15::Moving Average::stdlib::onTick()   ---------------------------------
-M15::Moving Average::stdlib::onTick()   MarketInfo() for "EURUSD"
-M15::Moving Average::stdlib::onTick()   ---------------------------------
-M15::Moving Average::stdlib::onTick()   MODE_LOW               = 1.2967'6                 // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_HIGH              = 1.3027'3                 // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_TIME              = '2012.11.30 23:59:52'    // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_BID               = 1.2983'9                 // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_ASK               = 1.2986'7                 // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_POINT             = 0.0000'1
-M15::Moving Average::stdlib::onTick()   MODE_DIGITS            = 5
-M15::Moving Average::stdlib::onTick()   MODE_SPREAD            = 28                       // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_STOPLEVEL         = 20
-M15::Moving Average::stdlib::onTick()   MODE_LOTSIZE           = 100000
-M15::Moving Average::stdlib::onTick()   MODE_TICKVALUE         = 1
-M15::Moving Average::stdlib::onTick()   MODE_TICKSIZE          = 0.0000'1
-M15::Moving Average::stdlib::onTick()   MODE_SWAPLONG          = -1.3
-M15::Moving Average::stdlib::onTick()   MODE_SWAPSHORT         = 0.5
-M15::Moving Average::stdlib::onTick()   MODE_STARTING          = 0
-M15::Moving Average::stdlib::onTick()   MODE_EXPIRATION        = 0
-M15::Moving Average::stdlib::onTick()   MODE_TRADEALLOWED      = 1
-M15::Moving Average::stdlib::onTick()   MODE_MINLOT            = 0.01
-M15::Moving Average::stdlib::onTick()   MODE_LOTSTEP           = 0.01
-M15::Moving Average::stdlib::onTick()   MODE_MAXLOT            = 2
-M15::Moving Average::stdlib::onTick()   MODE_SWAPTYPE          = 0
-M15::Moving Average::stdlib::onTick()   MODE_PROFITCALCMODE    = 0
-M15::Moving Average::stdlib::onTick()   MODE_MARGINCALCMODE    = 0
-M15::Moving Average::stdlib::onTick()   MODE_MARGININIT        = 0
-M15::Moving Average::stdlib::onTick()   MODE_MARGINMAINTENANCE = 0
-M15::Moving Average::stdlib::onTick()   MODE_MARGINHEDGED      = 50000
-M15::Moving Average::stdlib::onTick()   MODE_MARGINREQUIRED    = 259.73                   // falsch: online
-M15::Moving Average::stdlib::onTick()   MODE_FREEZELEVEL       = 0
-*/
-
-
-/**
- * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblöcke können sich also überlappen.
- *
- * @param  int source      - Quelladdrese
- * @param  int destination - Zieladresse
- * @param  int bytes       - Anzahl zu kopierender Bytes
- */
-void CopyMemory(int source, int destination, int bytes) {
-   RtlMoveMemory(destination, source, bytes);
-}
-
-
 int    costum.log.id   = 0;         // static: EA ok, Indikator ?
 string costum.log.file = "";        // static: EA ok, Indikator ?
 
@@ -5077,7 +4857,7 @@ string BoolToStr(bool value) {
 
 
 /**
- * Gibt die Terminal-Zeit in GMT zurück. Im Tester wird die GMT-Zeit der momentan im Tester modellierten Zeit zurückgegeben.
+ * Gibt die lokale Zeit in GMT zurück. Im Tester wird die GMT-Zeit der vom Tester modellierten Zeit zurückgegeben.
  *
  * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -5085,19 +4865,19 @@ datetime TimeGMT() {
    datetime gmt;
 
    if (This.IsTesting()) {
-      // TODO: Vorsicht, Scripte und Indikatoren sehen im Tester u.U.
-      //       nicht die modellierte, sondern die aktuelle reale Zeit.
+      // TODO: Vorsicht, Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit.
+
       gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
-      gmt = mql.GetSystemTime();
+      gmt = GetGmtTime();
    }
    return(gmt);
 }
 
 
 /**
- * Gibt die Terminal-Zeit in FXT zurück. Im Tester wird die FXT-Zeit der momentan im Tester modellierten Zeit zurückgegeben.
+ * Gibt die lokale Zeit in FXT zurück. Im Tester wird die FXT-Zeit der vom Tester modellierten Zeit zurückgegeben.
  *
  * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -5109,15 +4889,22 @@ datetime TimeFXT() {
 
 
 /**
- * Gibt immer die aktuelle lokale Zeit zurück (auch im Tester).  Die MQL-Funktion TimeLocal() gibt im Tester im Gegensatz zu dieser Funktion
- * die modellierte Serverzeit zurück.
+ * Gibt immer die aktuelle lokale Zeit zurück (auch im Tester).
  *
- * @return datetime - lokale Zeit
+ * @return datetime - lokale Zeit oder NULL, falls ein Fehler auftrat
  */
 datetime mql.GetLocalTime() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
-   GetLocalTime(st);
+   /*FILETIME*/  int ft[]; InitializeByteBuffer(ft, FILETIME.size  );
+   datetime time[1];
 
+   GetLocalTime(st);
+   if (!SystemTimeToFileTime(st, ft))        return(!catch("mql.GetLocalTime(1)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
+   if (!RtlTimeToSecondsSince1970(ft, time)) return(!catch("mql.GetLocalTime(2)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
+
+   return(time[0]);
+
+   /*
    int year  = st.Year  (st);
    int month = st.Month (st);
    int day   = st.Day   (st);
@@ -5130,28 +4917,40 @@ datetime mql.GetLocalTime() {
 
    // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
    // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
-   if (TimeSeconds(time) != sec)
-      warn("mql.GetLocalTime()  StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
+   if (TimeSeconds(time) != sec) warn("mql.GetLocalTime()  StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
 
    return(time);
+   */
 }
 
 
 /**
  * Gibt immer die aktuelle GMT-Zeit zurück (auch im Tester).
  *
- * @return datetime - GMT-Zeit
+ * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
  */
-datetime mql.GetSystemTime() {
+datetime GetGmtTime() {
    /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
    /*FILETIME*/  int ft[]; InitializeByteBuffer(ft, FILETIME.size  );
-   datetime gmt[1];
+   datetime time[1];
 
    GetSystemTime(st);
-   if (!SystemTimeToFileTime(st, ft))       return(catch("mql.GetSystemTime(1)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
-   if (!RtlTimeToSecondsSince1970(ft, gmt)) return(catch("mql.GetSystemTime(2)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
+   if (!SystemTimeToFileTime(st, ft))        return(!catch("GetGmtTime(1)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
+   if (!RtlTimeToSecondsSince1970(ft, time)) return(!catch("GetGmtTime(2)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
 
-   return(gmt[0]);
+   return(time[0]);
+}
+
+
+/**
+ * Gibt immer die aktuelle Zeit in FXT zurück (auch im Tester).
+ *
+ * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ */
+datetime GetFxtTime() {
+   datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
+   return(fxt);
 }
 
 
@@ -5337,56 +5136,6 @@ string StringReplace.Recursive(string object, string search, string replace) {
       result     = StringReplace(result, search, replace);
    }
    return(lastResult);
-}
-
-
-/**
- * Erweitert einen String mit einem anderen String linksseitig auf eine gewünschte Mindestlänge.
- *
- * @param  string input      - Ausgangsstring
- * @param  int    pad_length - gewünschte Mindestlänge
- * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
- *
- * @return string
- */
-string StringPadLeft(string input, int pad_length, string pad_string=" ") {
-   while (StringLen(input) < pad_length) {
-      input = StringConcatenate(pad_string, input);
-   }
-   return(input);
-}
-
-
-/**
- * Alias
- */
-string StringLeftPad(string input, int pad_length, string pad_string=" ") {
-   return(StringPadLeft(input, pad_length, pad_string));
-}
-
-
-/**
- * Erweitert einen String mit einem anderen String rechtsseitig auf eine gewünschte Mindestlänge.
- *
- * @param  string input      - Ausgangsstring
- * @param  int    pad_length - gewünschte Mindestlänge
- * @param  string pad_string - zum Erweitern zu verwendender String (default: Leerzeichen)
- *
- * @return string
- */
-string StringPadRight(string input, int pad_length, string pad_string=" ") {
-   while (StringLen(input) < pad_length) {
-      input = StringConcatenate(input, pad_string);
-   }
-   return(input);
-}
-
-
-/**
- * Alias
- */
-string StringRightPad(string input, int pad_length, string pad_string=" ") {
-   return(StringPadRight(input, pad_length, pad_string));
 }
 
 
@@ -5940,7 +5689,7 @@ datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONF
  */
 bool EventListener.BarOpen(int results[], int flags=NULL) {
    if (Indicator.IsTesting()) /*&&*/ if (!IsSuperContext())            // TODO: !!! IsSuperContext() ist unzureichend, das Root-Programm muß ein EA sein
-      return(!catch("EventListener.BarOpen()  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
+      return(!catch("EventListener.BarOpen(1)  function cannot be tested in standalone indicator (Tick.Time value not available)", ERR_ILLEGAL_STATE));
 
    if (ArraySize(results) != 0)
       ArrayResize(results, 0);
@@ -6020,13 +5769,13 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
       if (!accountData[1]) {                          // 1. Lib-Aufruf
          accountData[0] = 0;
          accountData[1] = account;
-         accountData[2] = GmtToServerTime(mql.GetSystemTime());
+         accountData[2] = GmtToServerTime(GetGmtTime());
          //debug("EventListener.AccountChange()  Account "+ account +" nach 1. Lib-Aufruf initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
       }
       else if (accountData[1] != account) {           // Aufruf nach Accountwechsel zur Laufzeit
          accountData[0] = accountData[1];
          accountData[1] = account;
-         accountData[2] = GmtToServerTime(mql.GetSystemTime());
+         accountData[2] = GmtToServerTime(GetGmtTime());
          //debug("EventListener.AccountChange()  Account "+ account +" nach Accountwechsel initialisiert, ServerTime="+ TimeToStr(accountData[2], TIME_FULL));
          eventStatus = true;
       }
@@ -6040,21 +5789,33 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
    int error = GetLastError();
    if (!error)
       return(eventStatus);
-   return(!catch("EventListener.AccountChange()", error));
+   return(!catch("EventListener.AccountChange(1)", error));
 }
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein ChartCommand eingetroffen ist.
+ * Prüft, ob seit dem letzten Aufruf ein NewTick-Event aufgetreten ist.
  *
- * @param  string commands[] - Array zur Aufnahme aller eingetroffenen Commands
+ * @param  int results[] - event-spezifische Detailinfos
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.NewTick(int results[], int flags=NULL) {
+   return(!catch("EventListener.NewTick(1)", ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
+ * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
+ *
+ * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
  * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
  *
  * @return bool - Ergebnis
  */
 bool EventListener.ChartCommand(string commands[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
+   return(!catch("EventListener.ChartCommand(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -6067,8 +5828,7 @@ bool EventListener.ChartCommand(string commands[], int flags=NULL) {
  * @return bool - Ergebnis
  */
 bool EventListener.InternalCommand(string commands[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
+   return(!catch("EventListener.InternalCommand(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -6081,8 +5841,7 @@ bool EventListener.InternalCommand(string commands[], int flags=NULL) {
  * @return bool - Ergebnis
  */
 bool EventListener.ExternalCommand(string commands[], int flags=NULL) {
-   // TODO: implementieren
-   return(false);
+   return(!catch("EventListener.ExternalCommand(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -7141,32 +6900,6 @@ string GetRawLocalConfigString(string section, string key, string defaultValue="
    string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return("");
 
    return(GetRawIniString(localConfigPath, section, key, defaultValue));
-}
-
-
-/**
- * Gibt den Wochentag des angegebenen Zeit zurück.
- *
- * @param  datetime time       - Zeit
- * @param  bool     longFormat - TRUE, um die Langform zurückzugeben (default)
- *                               FALSE, um die Kurzform zurückzugeben
- *
- * @return string - Wochentag
- */
-string GetDayOfWeek(datetime time, bool longFormat=true) {
-   longFormat = longFormat!=0;
-
-   if (time < 0)
-      return(_emptyStr(catch("GetDayOfWeek(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
-
-   static string weekDays[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
-
-   string day = weekDays[TimeDayOfWeekFix(time)];
-
-   if (!longFormat)
-      day = StringSubstr(day, 0, 3);
-
-   return(day);
 }
 
 
@@ -12142,12 +11875,13 @@ void Tester.ResetGlobalArrays() {
 
 
 // abstrakte Funktionen (müssen bei Verwendung im Programm implementiert werden)
-/*abstract*/ bool onBarOpen        (int    data[]) { return(!catch("onBarOpen()",         ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onAccountChange  (int    data[]) { return(!catch("onAccountChange()",   ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onChartCommand   (string data[]) { return(!catch("onChartCommand()",    ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onInternalCommand(string data[]) { return(!catch("onInternalCommand()", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ bool onExternalCommand(string data[]) { return(!catch("onExternalCommand()", ERR_NOT_IMPLEMENTED)); }
-/*abstract*/ void DummyCalls()                     {         catch("DummyCalls()",        ERR_NOT_IMPLEMENTED);  }
+/*abstract*/ bool onNewTick        (int    data[]) { return(!catch("onNewTick(1)",         ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onBarOpen        (int    data[]) { return(!catch("onBarOpen(1)",         ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onAccountChange  (int    data[]) { return(!catch("onAccountChange(1)",   ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onChartCommand   (string data[]) { return(!catch("onChartCommand(1)",    ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onInternalCommand(string data[]) { return(!catch("onInternalCommand(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ bool onExternalCommand(string data[]) { return(!catch("onExternalCommand(1)", ERR_NOT_IMPLEMENTED)); }
+/*abstract*/ void DummyCalls()                     {         catch("DummyCalls(1)",        ERR_NOT_IMPLEMENTED);  }
 
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------

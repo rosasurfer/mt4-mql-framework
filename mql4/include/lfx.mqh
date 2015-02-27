@@ -209,7 +209,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    else if (StringStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _openTime =  StrToTime(sValue);
    if (!_openTime)                                 return(!catch("LFX.GetOrder(9)  invalid open time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (Abs(_openTime) > mql.GetSystemTime())       return(!catch("LFX.GetOrder(10)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_openTime) > GetGmtTime())              return(!catch("LFX.GetOrder(10)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenPrice
    sValue = StringTrim(values[6]);
@@ -224,7 +224,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    else                                _openTriggerTime =    StrToTime(sValue);
    if      (_openTriggerTime < 0)                  return(!catch("LFX.GetOrder(13)  invalid open-trigger time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_openTriggerTime > 0)
-      if (_openTriggerTime > mql.GetSystemTime())  return(!catch("LFX.GetOrder(14)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_openTriggerTime > GetGmtTime())         return(!catch("LFX.GetOrder(14)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // StopLoss
    sValue = StringTrim(values[8]);
@@ -273,14 +273,14 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    else                                _closeTriggerTime =    StrToTime(sValue);
    if      (_closeTriggerTime < 0)                 return(!catch("LFX.GetOrder(24)  invalid close-trigger time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_closeTriggerTime > 0)
-      if (_closeTriggerTime > mql.GetSystemTime()) return(!catch("LFX.GetOrder(25)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_closeTriggerTime > GetGmtTime())        return(!catch("LFX.GetOrder(25)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // CloseTime
    sValue = StringTrim(values[15]);
    if      (StringIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
    else if (StringStartsWith(sValue, "-"))    _closeTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _closeTime =  StrToTime(sValue);
-   if (Abs(_closeTime) > mql.GetSystemTime())      return(!catch("LFX.GetOrder(26)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_closeTime) > GetGmtTime())             return(!catch("LFX.GetOrder(26)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // ClosePrice
    sValue = StringTrim(values[16]);
@@ -308,7 +308,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if (StringIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
    else                                _modificationTime =    StrToTime(sValue);
    if (_modificationTime <= 0)                     return(!catch("LFX.GetOrder(33)  invalid modification time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_modificationTime > mql.GetSystemTime())    return(!catch("LFX.GetOrder(34)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(mql.GetSystemTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_modificationTime > GetGmtTime())           return(!catch("LFX.GetOrder(34)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Version
    sValue = StringTrim(values[20]);
@@ -650,6 +650,7 @@ void DummyCalls() {
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
+   datetime GetGmtTime();
    int      GetIniKeys(string fileName, string section, string names[]);
    string   GetIniString(string fileName, string section, string key, string defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
@@ -659,14 +660,12 @@ void DummyCalls() {
    bool     IsPendingTradeOperation(int value);
    bool     IsTradeOperation(int value);
    string   JoinStrings(string array[], string separator);
-   datetime mql.GetSystemTime();
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
-   string   StringPadLeft(string input, int length, string pad_string);
    string   StringReplace.Recursive(string object, string search, string replace);
    bool     StringStartsWith(string object, string prefix);
    string   StringToLower(string value);

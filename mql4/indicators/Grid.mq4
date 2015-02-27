@@ -144,7 +144,7 @@ int DrawGrid() {
 
       // Label des Separators zusammenstellen (ie. "Fri 23.12.2011")
       label = TimeToStr(time);
-      label = StringConcatenate(GetDayOfWeek(time, false), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
+      label = StringConcatenate(DateToStr(time, "w"), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
 
       if (lastChartTime == chartTime)                                         // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
          ObjectDelete(lastLabel);                                             // Separator für die fehlende Periode wieder löschen
