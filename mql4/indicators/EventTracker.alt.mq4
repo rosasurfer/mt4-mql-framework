@@ -305,12 +305,12 @@ bool EventListener.PositionOpen(int &tickets[], int flags=NULL) {
    // (1) Account initialisieren bzw. Accountwechsel erkennen
    if (!accountNumber[0]) {                                          // erster Aufruf
       accountNumber  [0] = account;
-      accountInitTime[0] = mql.GetSystemTime();
+      accountInitTime[0] = GetGmtTime();
       //debug("EventListener.PositionOpen()  Account "+ account +" nach erstem Aufruf initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");
    }
    else if (accountNumber[0] != account) {                           // Aufruf nach Accountwechsel zur Laufzeit
       accountNumber  [0] = account;
-      accountInitTime[0] = mql.GetSystemTime();
+      accountInitTime[0] = GetGmtTime();
       ArrayResize(knownPendings,  0);                                // gespeicherte Orderdaten löschen
       ArrayResize(knownPositions, 0);
       //debug("EventListener.PositionOpen()  Account "+ account +" nach Accountwechsel initialisiert, GMT-Zeit: '"+ TimeToStr(accountInitTime[0], TIME_FULL) +"'");

@@ -225,45 +225,6 @@ int onTick() {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein ChartCommand für diesen Indikator eingetroffen ist.
- *
- * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands
- * @param  int    flags      - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
-   if (!IsChart)
-      return(false);
-
-   static string label, mutex; if (!StringLen(label)) {
-      label = __NAME__ +".command";
-      mutex = "mutex."+ label;
-   }
-
-   // (1) zuerst nur Lesezugriff (unsynchronisiert möglich), um nicht bei jedem Tick das Lock erwerben zu müssen
-   if (ObjectFind(label) == 0) {
-
-      // (2) erst, wenn ein Command eingetroffen ist, Lock für Schreibzugriff holen
-      if (!AquireLock(mutex, true))
-         return(!SetLastError(stdlib.GetLastError()));
-
-      // (3) Command auslesen und Command-Object löschen
-      ArrayResize(commands, 1);
-      commands[0] = ObjectDescription(label);
-      ObjectDelete(label);
-
-      // (4) Lock wieder freigeben
-      if (!ReleaseLock(mutex))
-         return(!SetLastError(stdlib.GetLastError()));
-
-      return(!catch("EventListener.ChartCommand(1)"));
-   }
-   return(false);
-}
-
-
-/**
  * Handler für ChartCommands.
  *
  * @param  string commands[] - die eingetroffenen Commands

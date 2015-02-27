@@ -323,7 +323,7 @@ are not directly reflected in RGB. They represent a decimal value of the hexadec
 <p>Specific colors reflect the so-called <a href="help://constants_colors">Web colors set</a>.</p>
 
 <p class="doctabhdr">Examples:</p>
-<pre class="docmql4">		
+<pre class="docmql4">      
 // symbol constants
 C<span class="string">'128,128,128'</span>    // gray
 C<span class="string">'0x00,0x00,0xFF'</span> // blue
@@ -757,27 +757,27 @@ else
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">// The else part refers to the second if operator:
 if (x &gt; 1)
-	if (y == 2) z = 5;
-	else     	z = 6;
+   if (y == 2) z = 5;
+   else        z = 6;
 <br/>
 
 // The else part refers to the first if operator:
 if (x &gt; l) {
-	if (y == 2) z = 5;
+   if (y == 2) z = 5;
 }
-else        	z = 6;
+else           z = 6;
 <br/>
 
 // Nested operators
 if (x == <span class="string">'a'</span>) {
-	y = 1;
+   y = 1;
 }
 else if (x == <span class="string">'b'</span>) {
-	y = 2;
-	z = 3;
+   y = 2;
+   z = 3;
 }
 else if (x == <span class="string">'c'</span>) {
-	y = 4;
+   y = 4;
 }
 else Print(&quot;ERROR&quot;);
 </pre>
@@ -1032,7 +1032,7 @@ bool   bLog;
         <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
 datetime tBegin_Data   = D<span class="string">'2004.01.01 00:00'</span>;
-color    cModify_Color = C<span class="string">'0x44,0xB9,0xE6'</span>;			
+color    cModify_Color = C<span class="string">'0x44,0xB9,0xE6'</span>;       
 </pre><br/>
 
         <p><b>Arrays</b></p>
@@ -2421,10 +2421,10 @@ void SendMyMessage(string text)
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
       <example>
-	if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &gt; 75) {
-		OrderSend(&quot;EURUSD&quot;, OP_SELL, Lots, Bid, 3, Ask+StopLoss*Point, Bid-TakeProfit*Point, &quot;My Order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
-		return(0);
-	}
+   if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &gt; 75) {
+      OrderSend(&quot;EURUSD&quot;, OP_SELL, Lots, Bid, 3, Ask+StopLoss*Point, Bid-TakeProfit*Point, &quot;My Order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
+      return(0);
+   }
       </example>
     </variable>
 
@@ -4233,14 +4233,14 @@ the MessageBox <a href="help://constants_messagebox">return code</a> values.<br/
 they are <a href="help://runtime_start">executed</a> within the user interface thread and may not decelerate it.
       </content>
       <example>
-	#include &lt;WinUser32.mqh&gt;
+   #include &lt;WinUser32.mqh&gt;
 
-	if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
-		int ret = MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
-		if (ret == IDNO) 
-			return(false);
-	}
-	// continue
+   if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
+      int ret = MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
+      if (ret == IDNO) 
+         return(false);
+   }
+   // continue
       </example>
       <parameter>
         type=string
@@ -4532,18 +4532,24 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       caption=StrToTime()
       type=datetime
       <content>
-      Converts string in the format &quot;yyyy.mm.dd hh:mi&quot; to datetime type (the amount of seconds that have passed since 1 Jan., 1970).
+      Converts a string in the format &quot;yyyy.mm.dd hh:mm:ss&quot; to a datetime value (amount of seconds since 1st of January 1970).<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Sporadisch (nicht eindeutig reproduzierbar) werden die Sekunden verschluckt, wenn sie nicht zweistellig angegeben sind:<br/>
+      <span class="function">StrToTime</span>(<span class="string">"2014.4.23 14:2:50"</span>) => <span class="string">"2014.04.23 14:02:00"</span><br/>
+      Workaround: Werte in voller Länge formatieren
       </content>
       <example>
   datetime var1;
-  var1=StrToTime(&quot;2003.8.12 17:35&quot;);
-  var1=StrToTime(&quot;17:35&quot;);      // returns the current date with the given time
-  var1=StrToTime(&quot;2003.8.12&quot;);  // returns the date with the midnight time of &quot;00:00&quot;
+  var1 = StrToTime(&quot;2003.8.12 17:35&quot;);
+  var1 = StrToTime(&quot;17:35&quot;);          // returns the current date with the given time
+  var1 = StrToTime(&quot;2003.8.12&quot;);      // returns the date with the midnight time of &quot;00:00&quot;
       </example>
       <parameter>
         type=string
         name=value
-        description=String value of date/time format as &quot;yyyy.mm.dd hh:mi&quot;.
+        description=String representing a date/time value formatted as &quot;yyyy.mm.dd hh:mm:ss&quot;
       </parameter>
     </function>
 
@@ -5244,7 +5250,7 @@ SetLevelValue(1,3.14);
       Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 0 statt 1 zurück.<br/>
       <br/>
       Workaround: <span class="function">TimeDayFix()</span> verwenden<br/>
-		<br/>
+      <br/>
       </content>
       <example>
   int day = TimeDay(D<span class="string">'2003.12.31'</span>);
@@ -5269,9 +5275,9 @@ SetLevelValue(1,3.14);
       Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 0 (Sunday) statt 3 (Thursday) zurück.<br/>
       <br/>
       Workaround: <span class="function">TimeDayOfWeekFix()</span> verwenden<br/>
-		<br/>
+      <br/>
       </content>
-      <example>						
+      <example>                  
   int weekday=TimeDayOfWeek(D<span class="string">'2004.11.2'</span>);
   // day is 2 - Tuesday
       </example>
@@ -5322,10 +5328,10 @@ SetLevelValue(1,3.14);
       type=datetime
       <content>
       Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
-      Note: At testing local time is modelled and is the same as the modelled server time.<br/>
+      At testing local time is modelled and is the same as the modelled server time.<br/>
       <br/>
-      <span style="color:red">Vorsicht:</span> Der Tester setzt die lokale Zeitzone also auf die Server-Zeitzone, Tests laufen damit ggf. in einer anderen als der 
-      tatsächlichen lokalen Zeitzone.
+      <span style="color:red">Note:</span> Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der 
+      tatsächlichen lokalen Zeitzone. Das kann Implikationen haben, wenn der Test mit der Umgebung interagiert.
       </content>
       <example>
 if (TimeLocal()-OrderOpenTime() &lt; 360)
@@ -5396,7 +5402,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       Gibt für D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zurück.<br/>
       <br/>
       Workaround: <span class="function">TimeYearFix()</span> verwenden<br/>
-		<br/>
+      <br/>
       </content>
       <example>
   int y=TimeYear(TimeCurrent());
@@ -6807,7 +6813,7 @@ Notes:<br/>
 - Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="constant">OBJ_VLINE</span>), a price value (any) needs to be passed, too.<br/>
       </content>
 
-<example>															  
+<example>                                               
 // new text object
 if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
    Print(&quot;error: can't create text_object! error=&quot;, GetLastError());
@@ -7059,7 +7065,7 @@ The object coordinates are numbered starting from 0.
      </content>
       example=ObjectMove(&quot;MyTrend&quot;, 1, D<span class="string">'2005.02.25 12:30'</span>, 1.2345);
       <parameter>
-        type=string										 
+        type=string                              
         name=name
         description=Object name.
       </parameter>
@@ -7435,7 +7441,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
          <br/>
          (2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="constant">NULL</span>). StringSubstr(value, start, length=0) 
          gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.<br/>
-         Workaround: <span style="color:blue">StringSubstrFix()</span> benutzen
+         Workaround: <span style="color:blue">StringSubstrFix()</span> verwenden
       </content>
       <example>
   string text = &quot;The quick brown dog jumps over the lazy fox&quot;;
@@ -9061,11 +9067,14 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <content>
       Returns the number of bars of the specified time series.<br/>
       For the current chart the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.<br/>
-		<br/>
-      <span style="color:red">Notes:</span><br/>
-   	Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert.
-      Ein Programm, das z.B. innerhalb einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine 
-      konstante Anzahl Bars "sehen".
+      <br/>
+      Notes:<br/>
+      - Beim ersten Zugriff auf eine leere Datenreihe wird statt <span class="constant">ERR_SERIES_NOT_AVAILABLE</span> gewöhnlich <span class="constant">ERS_HISTORY_UPDATE</span> gesetzt.<br/>
+      - Bei weiteren Zugriffen auf eine leere Datenreihe wird <span class="constant">ERR_SERIES_NOT_AVAILABLE</span> gesetzt.<br/>
+      - Ohne Verbindung zum Server ist nach Recompilation und bei fehlenden Daten u.U. gar kein Fehler gesetzt.<br/>
+      - Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert.
+        Ein Programm, das z.B. innerhalb einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine 
+        konstante Anzahl Bars "sehen".<br/>
       </content>
       <example>
   Print(&quot;The number of bars of 'EURUSD,PERIOD_H1' is&quot;, iBars(&quot;EURUSD&quot;, PERIOD_H1));
@@ -9100,8 +9109,8 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       Existieren keine Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw", oder ist der Timeframe kein Standard-Timeframe,
       wird kein Fehler gemeldet.<br/>
       <br/>
-		Ist das Symbol bekannt, wird u.U. der Status <span class="constant">ERS_HISTORY_UPDATE</span> gemeldet. 
-      </content>		  
+      Ist das Symbol bekannt, wird u.U. der Status <span class="constant">ERS_HISTORY_UPDATE</span> gemeldet. 
+      </content>       
       <example>
   datetime some_time = D<span class="string">'2004.03.21 12:00'</span>;
   int      offset    = iBarShift(&quot;EURUSD&quot;, PERIOD_M1, some_time);
@@ -10030,8 +10039,8 @@ Color of the opening arrow on the chart. If parameter is omitted or has the valu
       caption=OrdersHistoryTotal()
       type=int
       <content>
-			Returns the number of closed orders currently loaded into the terminal. The history size depends on the current settings of the &quot;Account history&quot; tab 
-			of the terminal.
+         Returns the number of closed orders currently loaded into the terminal. The history size depends on the current settings of the &quot;Account history&quot; tab 
+         of the terminal.
       </content>
       <example>
   // retrieving info from trade history
@@ -10366,13 +10375,13 @@ it means that the chart window has not been fully filled out and there is a spac
       - WindowHandle() löst in EA's beim Testen mit VisualMode=Off <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> aus, in gleichzeitig per iCustom() geladenen 
       Indikatoren jedoch nicht.<br/>
       <br/>
-      <span style="color:red">Bug:</span>
+      <span style="color:red">Bugs:</span>
       <br/>
       (1) Bis Build ??? kann die Funktion bei Terminal-Start in init() und in start() 0 zurückgeben, solange der Fenstertitel noch nicht gesetzt ist (das Fenster existiert immer).<br/>
-      Workaround: WindowHandleEx() benutzen<br/>
+      Workaround: WindowHandleEx() verwenden<br/>
       <br/>
       (2) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in deinit() 0 zurück, obwohl das Fenster existiert und der Fenstertitel gesetzt ist.<br/>
-      Workaround: WindowHandleEx() benutzen<br/>
+      Workaround: WindowHandleEx() verwenden<br/>
       </content>
       <example>
 int hWnd = WindowHandle("USDX", PERIOD_H1);

@@ -30,6 +30,7 @@ int init() {
       __WHEREAMI__ = FUNC_INIT;
       prev_error   = last_error;
       SetLastError(NO_ERROR);
+      zTick        = 0;
    }
 
 
@@ -176,7 +177,7 @@ int start() {
       return(last_error);
    }
 
-   Tick++;                                                                 // einfacher Zähler, der konkrete Wert hat keine Bedeutung
+   Tick++; zTick++;                                                        // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;

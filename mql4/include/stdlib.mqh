@@ -219,6 +219,15 @@
 
 
    // Date/Time
+ //datetime TimeCurrent();                         // Built-in: Serverzeit des letzten Ticks, im Tester modelliert
+ //datetime TimeLocal();                           // Built-in: lokale Zeit, im Tester Serverzeit
+   datetime TimeGMT();                             //           GMT-Zeit von TimeLocal(), im Tester also GMT der Serverzeit
+   datetime TimeFXT();                             //           FXT-Zeit von TimeLocal(), im Tester also FXT der Serverzeit
+
+   datetime mql.GetLocalTime();                    //           immer aktuelle lokale Zeit
+   datetime     GetGmtTime();                      //           immer aktuelle GMT-Zeit
+   datetime     GetFxtTime();                      //           immer aktuelle FXT-Zeit
+
    datetime FxtToGmtTime   (datetime fxtTime);
    datetime FxtToServerTime(datetime fxtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
 
@@ -238,6 +247,7 @@
    int      GetServerToGmtTimeOffset(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
 
    int      GetLocalToGmtTimeOffset();
+   bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
 
    datetime GetPrevSessionStartTime.fxt(datetime fxtTime   );
    datetime GetPrevSessionStartTime.gmt(datetime gmtTime   );
@@ -263,23 +273,18 @@
    datetime GetNextSessionEndTime.gmt  (datetime gmtTime   );
    datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime mql.GetLocalTime();
-   datetime mql.GetSystemTime();
-   string   GetDayOfWeek(datetime time, bool longFormat);
-   bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime TimeFXT();
-   datetime TimeGMT();
-
 
    // Event-Listener: Diese allgemeinen Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
-   bool     EventListener.BarOpen        (int    data[], int criteria);
-   bool     EventListener.AccountChange  (int    data[], int criteria);
-   bool     EventListener.ChartCommand   (string data[], int criteria);
-   bool     EventListener.InternalCommand(string data[], int criteria);
-   bool     EventListener.ExternalCommand(string data[], int criteria);
+   bool     EventListener.NewTick        (int    data[], int param);
+   bool     EventListener.BarOpen        (int    data[], int param);
+   bool     EventListener.AccountChange  (int    data[], int param);
+   bool     EventListener.ChartCommand   (string data[], int param);
+   bool     EventListener.InternalCommand(string data[], int param);
+   bool     EventListener.ExternalCommand(string data[], int param);
 
 
    // Event-Handler: Diese Library-Versionen sind leere Stubs, bei Verwendung *müssen* die Handler im Programm implementiert werden.
+   bool     onNewTick        (int    data[]);
    bool     onBarOpen        (int    data[]);
    bool     onAccountChange  (int    data[]);
    bool     onChartCommand   (string data[]);
