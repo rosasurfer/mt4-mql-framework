@@ -91,7 +91,7 @@ string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile  
    if (!lpLogFile)                    return(_emptyStr(catch("ec.setLogFile(3)  no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
    CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/       return(logFile           ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) {
-   ec[12] = lastError;
+   ec[13] = lastError;
    int lpSuperContext = ec.lpSuperContext(ec);
    if (lpSuperContext != 0)
       CopyMemory(ec.Signature(ec)+13*4, lpSuperContext+13*4, 4);     // Fehler immer auch im SuperContext setzen

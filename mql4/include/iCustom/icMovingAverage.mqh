@@ -1,9 +1,5 @@
 /**
- * In Headerdatei implementiert, um direkt inkludiert werden zu können.  Notwendig, wenn die Indikatorausgabe nach Testende
- * bei VisualMode=On gezeichnet werden soll. Der Tester zeichnet den Inhalt der Buffer nur dann, wenn der iCustom()-Aufruf
- * im Hauptmodul des Programms (also im EA selbst) erfolgt, nicht bei Aufruf in einer Library (anderes Modul).
- *
- * Berechnet den angegebenen Wert des "Moving Average"-Indikators und gibt ihn zurück.
+ * Ruft den "Moving Average"-Indikator auf, berechnet den angegebenen Wert und gibt ihn zurück.
  *
  * @param  int    timeframe      - Timeframe, in dem der Indikator geladen wird
  * @param  string maPeriods      - Indikator-Parameter
@@ -14,10 +10,12 @@
  * @param  int    iBar           - Barindex des zurückzugebenden Wertes
  *
  * @return double - Wert oder 0, falls ein Fehler auftrat
+ *
+ *
+ * Note: Der Tester zeichnet den Inhalt der Buffer nach Testende nur dann, wenn der iCustom()-Aufruf im Hauptmodul des Programms
+ *       (also im EA selbst) erfolgt, nicht bei Aufruf in einer Library (anderes Modul).
  */
 double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, string maMethod, string maAppliedPrice, int iBuffer, int iBar) {
-   if (IsLastError())
-      return(0);
 
    bool hotkeysEnabled = false;
    int  maMaxValues    = 10;                                               // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
@@ -39,7 +37,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 
                           "",                                              // ________________
                           lpLocalContext,                                  // __SuperContext__
-                          iBuffer, iBar);                                  // throws ERS_HISTORY_UPDATE, ERR_SERIES_NOT_AVAILABLE
+                          iBuffer, iBar);
 
    int error = GetLastError();
 
@@ -52,7 +50,6 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
    error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
       return(value);
-
    return(_NULL(SetLastError(error)));
 }
 

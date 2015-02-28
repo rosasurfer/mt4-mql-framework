@@ -75,7 +75,7 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
             error = ERR_SERIES_NOT_AVAILABLE;
          if (error==ERR_SERIES_NOT_AVAILABLE && execFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
             return(_EMPTY(SetLastError(error)));                                                         // leise
-         return(_EMPTY(catch("iChangedBars(1: "+ symbol +","+ PeriodDescription(period) +")", error)));  // laut
+         return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));  // laut
       }
    }
    // bars ist hier immer größer 0
