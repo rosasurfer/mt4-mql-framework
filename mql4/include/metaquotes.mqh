@@ -1,4 +1,9 @@
 /**
+ * MetaQuotes-Aliase
+ */
+
+
+/**
  * Die MetaQuotes-Funktion ist fehlerhaft.
  */
 bool CompareDoubles(double double1, double double2) {

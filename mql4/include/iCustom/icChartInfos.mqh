@@ -1,11 +1,11 @@
 /**
  * Ruft den "ChartInfos"-Indikator auf. Der Indikator hat keine Buffer und gibt keinen Wert zurück.
  *
- * @param  int timeframe - Timeframe, in dem der Indikator geladen werden soll
+ * @param  int timeframe - Timeframe, in dem der Indikator geladen werden soll (default: der aktuelle Timeframe)
  *
  * @return bool - Erfolgsstatus
  */
-bool icChartInfos(int timeframe) {
+bool icChartInfos(int timeframe=NULL) {
    // TODO: Aufruf statisch machen
    int lpLocalContext = GetBufferAddress(__ExecutionContext);
 

@@ -4,7 +4,7 @@
 
 #include <functions/IsTesting.mqh>
 #include <history.mqh>
-#include <iCustom/ChartInfos.mqh>
+#include <iCustom/icChartInfos.mqh>
 
 
 // Variablen für Teststatistiken
@@ -238,7 +238,7 @@ int start() {
 
    // (6) im Tester
    if (IsVisualMode())
-      icChartInfos(PERIOD_H1);                                             // nur bei Tester::VisualMode=On ChartInfos per iCustom() anzeigen (ist Online nicht notwendig)
+      icChartInfos(PERIOD_H1);                                             // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
 
 
    // (7) Statusanzeige
