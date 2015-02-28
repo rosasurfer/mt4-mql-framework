@@ -2,7 +2,6 @@
  * Globale Konstanten und Variablen
  */
 #include <stderror.mqh>
-#include <metaquotes.mqh>                                   // MetaQuotes-Aliase
 #include <structs/sizes.mqh>
 
 
