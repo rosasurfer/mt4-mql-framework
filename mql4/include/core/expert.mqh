@@ -237,7 +237,7 @@ int start() {
 
    // (6) im Tester
    if (IsVisualMode())
-      icChartInfos(PERIOD_H1);                                             // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
+      icChartInfos();                                                // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
 
 
    // (7) Statusanzeige

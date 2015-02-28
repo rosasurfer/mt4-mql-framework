@@ -904,43 +904,57 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
          }
       }
 
+      // Wir sind entweder: außerhalb des Testers
+      // oder               innerhalb des Testers bei VisualMode=On
+
       hWnd      = WindowHandle(Symbol(), NULL);
       int error = GetLastError();
       if (IsError(error)) return(!catch("WindowHandleEx(1)", error));
 
       if (!hWnd) {
-         int hWndMain = GetApplicationWindow();               if (!hWndMain) return(NULL);
-         int hWndMdi  = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(2)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
-
-         bool missingWnd = false;
-         string title, sError;
+         // WindowHandle() = 0: Sind wir ein Indikator im SuperContext, übernehmen wir das ChartHandle immer von dort.
+         if (IsSuperContext()) {
+            if (__lpSuperContext < 0x00010000) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_INPUT_PARAMETER));
+            int superCopy[EXECUTION_CONTEXT.intSize];
+            CopyMemory(__lpSuperContext, GetBufferAddress(superCopy), EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
+            static.hWndSelf = ec.hChart(superCopy);                                             // u.U. noch nicht endgültig initialisiert ist.
+            ArrayResize(superCopy, 0);
+            return(static.hWndSelf);
+         }
 
          // Da WindowHandle() 0 zurückgab, muß es ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order
+         int hWndMain = GetApplicationWindow();               if (!hWndMain) return(NULL);
+         int hWndMdi  = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+
+         bool missingMdiChild = false;
+         string title, sError;
+
          int hWndChild = GetWindow(hWndMdi, GW_CHILD);               // das erste Child in Z order
          if (!hWndChild) {
-            missingWnd = true; sError = "WindowHandleEx(3)  no child windows of MDIClient window found";
+            missingMdiChild = true; sError = "WindowHandleEx(4)  MDIClient window has no child windows";
          }
          else {
             int hWndLast = GetWindow(hWndChild, GW_HWNDLAST);        // das letzte Child in Z order
             title = GetWindowText(hWndLast);
             if (StringLen(title) > 0) {
-               missingWnd = true; sError = "WindowHandleEx(4)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"";
+               missingMdiChild = true; sError = "WindowHandleEx(5)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"";
             }
          }
 
          // Ein Indikator im Template "Tester.tpl" wird im Tester bei VisualMode=Off im UI-Thread geladen und seine init()-Funktion ausgeführt,
-         // obwohl für den Test nie ein Chart existieren wird. Nur in dieser Kombination ist ein fehlendes Chartfenster ein gültiger Zustand.
-         if (missingWnd) {
+         // obwohl für den Test nie ein Chart existieren wird. Nur in dieser speziellen Kombination ist ein fehlendes MDI-Childwindow ein gültiger Zustand.
+         if (missingMdiChild) {
             if (IsIndicator()) /*&&*/ if (__WHEREAMI__!=FUNC_START) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
                static.hWndSelf = -1;                                 // Rückgabewert -1
                return(static.hWndSelf);
             }
+            EnumChildWindows(hWndMdi);                               // vorhandene ChildWindows im Debugger ausgeben
             return(!catch(sError +" in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          }
 
          // Dieses letzte Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow mit dem MetaTrader-WindowHandle() ist.
          hWnd = GetWindow(hWndLast, GW_CHILD);
-         if (!hWnd) return(!catch("WindowHandleEx(5)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
+         if (!hWnd) return(!catch("WindowHandleEx(6)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
       }
 
       static.hWndSelf = hWnd;
@@ -958,13 +972,13 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
    hWnd  = WindowHandle(symbol, timeframe);
    error = GetLastError();
    if (!error)                                  return(hWnd);
-   if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(6)", error));
+   if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(7)", error));
 
 
                                                                      // TODO: das Handle des eigenen Charts überspringen, wenn dieser auf die Parameter paßt
    // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(7)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(8)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
    hWnd      = 0;
 
@@ -972,7 +986,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       title = GetWindowText(hWndChild);
       if (title == periodDescription) {                              // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
          hWnd = GetWindow(hWndChild, GW_CHILD);                      // mit dem MetaTrader-WindowHandle() ist.
-         if (!hWnd) return(!catch("WindowHandleEx(8)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
+         if (!hWnd) return(!catch("WindowHandleEx(9)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
          break;
       }
       hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order
@@ -2613,6 +2627,9 @@ bool Indicator.IsTesting() {
    if (!IsIndicator())
       return(false);
 
+   if (IsTesting())                                                        // Indikator läuft in iCustom() im Tester
+      return(true);
+
    int static.result = -1;                                                 // static: in Indikatoren bis zum nächsten init-Cycle ok
    if (static.result > -1)
       return(static.result != 0);
@@ -2678,6 +2695,57 @@ bool This.IsTesting() {
 
 
 /**
+ * Listet alle ChildWindows eines Parent-Windows auf und schickt die Ausgabe an die Debug-Ausgabe.
+ *
+ * @param  int  hWnd      - Handle des Parent-Windows
+ * @param  bool recursive - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool EnumChildWindows(int hWnd, bool recursive=false) {
+   recursive = recursive!=0;
+   if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_PARAMETER));
+   if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd=0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
+
+   string padding, class, title, sId;
+   int    id;
+
+   static int sublevel;
+   if (!sublevel) {
+      class = GetClassName(hWnd);
+      title = GetWindowText(hWnd);
+      id    = GetDlgCtrlID(hWnd);
+      sId   = ifString(id, " ("+ id +")", "");
+      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ sId);
+   }
+   sublevel++;
+   padding = StringRepeat(" ", (sublevel-1)<<1);
+
+   int i, hWndNext=GetWindow(hWnd, GW_CHILD);
+   while (hWndNext != 0) {
+      i++;
+      class = GetClassName(hWndNext);
+      title = GetWindowText(hWndNext);
+      id    = GetDlgCtrlID(hWndNext);
+      sId   = ifString(id, " ("+ id +")", "");
+      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ sId);
+
+      if (recursive) {
+         if (!EnumChildWindows(hWndNext, true)) {
+            sublevel--;
+            return(false);
+         }
+      }
+      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
+   }
+   if (!sublevel) /*&&*/ if (!i) debug("EnumChildWindows(.)  "+ padding +"-> (no child windows)");
+
+   sublevel--;
+   return(!catch("EnumChildWindows(3)"));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -2729,6 +2797,7 @@ void __DummyCalls() {
    DebugMarketInfo(NULL);
    Div(NULL, NULL);
    DummyCalls();
+   EnumChildWindows(NULL);
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);
@@ -2853,10 +2922,10 @@ void __DummyCalls() {
    string StringTrim(string value);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.Type        (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.hChart      (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.SuperContext(/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
    int    ec.TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.Type        (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
    bool   Expander_init  (/*EXECUTION_CONTEXT*/int ec[]);
@@ -2877,11 +2946,13 @@ void __DummyCalls() {
 #import "user32.dll"
    int    GetAncestor(int hWnd, int cmd);
    int    GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
+   int    GetDlgCtrlID(int hWndCtl);
    int    GetDlgItem(int hDlg, int itemId);
    int    GetParent(int hWnd);
    int    GetTopWindow(int hWnd);
    int    GetWindow(int hWnd, int cmd);
    int    GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
+   bool   IsWindow(int hWnd);
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
 
 #import "winmm.dll"
