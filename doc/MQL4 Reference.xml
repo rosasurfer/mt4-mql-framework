@@ -10370,22 +10370,22 @@ it means that the chart window has not been fully filled out and there is a spac
         Returns the handle of the system window containing the given chart.
         If no chart of <i>symbol</i> and <i>timeframe</i> is open, 0 will be returned.<br/>
       <br/>
-      Notes:
-      <br/>
-      - Die Funktion löst in EA's beim Testen mit VisualMode=Off <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> aus, in gleichzeitig per 
-      <span class="function">iCustom</span>() geladenen Indikatoren jedoch nicht.<br/>
-      <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      (1) Bis Build ??? kann die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>() 0 zurückgeben, solange der Fenstertitel 
-          noch nicht gesetzt ist. Bei Terminal-Start existiert das entsprechende Fenster jedoch, ist der Tiel nicht gesetzt, ist es immer das letzte MDI-Childwindow in Z-Order.<br/>
+      (1) Die Funktion löst in EA's beim Testen mit VisualMode=Off <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> aus, in gleichzeitig per 
+          <span class="function">iCustom</span>() geladenen Indikatoren jedoch nicht.<br/>
           Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
           <br/>
-      (2) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in <span class="function">deinit</span>() 0 zurück, obwohl das Fenster noch existiert und der Fenstertitel gesetzt ist.<br/>
+      (2) Bis Build ??? kann die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>() 0 zurückgeben, solange der Fenstertitel 
+          des (immer) existierenden Fensters noch nicht gesetzt ist. Das (einzige) Fenster ohne gesetzten Titel ist immer das letzte MDI-Childwindow in Z-Order.<br/>
           Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
           <br/>
-      (3) In einem Indikator, der von einem EA per <span class="function">iCustom</span>() geladen wird, gibt die Funktion im Tester bei VisualMode=On 0 zurück, wenn der Indikator
-          mit einem anderen Timeframe als dem des EA's geladen wird.<br/>
+      (3) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in <span class="function">deinit</span>() 0 zurück, obwohl das Fenster noch existiert und auch der Fenstertitel gesetzt 
+          ist.<br/>
+          Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
+          <br/>
+      (4) In einem Indikator, der von einem EA per <span class="function">iCustom</span>() geladen wird, gibt die Funktion im Tester bei VisualMode=On 0 zurück, wenn der Indikator
+          in einem anderen Timeframe als der EA geladen wird.<br/>
           Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
       </content>
       <example>
