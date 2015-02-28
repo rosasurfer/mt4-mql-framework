@@ -52,7 +52,6 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,6 +69,8 @@ extern string Alerts.ICQ.UserID    = "contact-id";                   // ICQ-Kont
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iChangedBars.mqh>
@@ -177,7 +178,7 @@ bool Configure() {
       ArrayResize(price.data,   size);
       price.config[0][I_PRICE_CONFIG_ID       ] = ET_PRICE_BAR_BREAKOUT;
       price.config[0][I_PRICE_CONFIG_ENABLED  ] = true;                       // (int) bool
-      price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_M1;
+      price.config[0][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_M5;
       price.config[0][I_PRICE_CONFIG_BAR      ] = 1;                          // 1DayAgo
       price.config[0][I_PRICE_CONFIG_PARAM1   ] = false;                      // zusätzliches Signal bei On-Touch
       price.config[0][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;                 // Reset nach 15 Minuten

@@ -2,8 +2,6 @@
 int __TYPE__         = T_LIBRARY;
 int __lpSuperContext = NULL;
 
-#include <functions/IsTesting.mqh>
-
 
 /**
  * Initialisierung der Library.
@@ -49,7 +47,7 @@ int start() {
  */
 int deinit() {
    //Expander_deinit(__ExecutionContext);
-   return(catch("deinit()"));
+   return(catch("deinit()")); __DummyCalls();
 }
 
 

@@ -4,7 +4,6 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 
 //////////////////////////////////////////////////////////////////////////// Default-Konfiguration ////////////////////////////////////////////////////////////////////////////
 //                                                 (Konfiguration nicht per Input-Parametern, sondern per Konfigurationsdatei)
@@ -34,7 +33,9 @@ bool   Track.BreakPreviousRange    = false;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
-#include <iCustom/MovingAverage.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
+#include <iCustom/icMovingAverage.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
 

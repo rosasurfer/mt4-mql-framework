@@ -9,8 +9,9 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 #include <core/library.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
 #include <structs/mt4/HISTORY_HEADER.mqh>
 #include <structs/pewa/EXECUTION_CONTEXT.mqh>
 

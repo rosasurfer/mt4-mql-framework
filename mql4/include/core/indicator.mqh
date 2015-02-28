@@ -4,8 +4,6 @@
 extern string ___________________________;
 extern int    __lpSuperContext;
 
-#include <functions/IsTesting.mqh>
-
 
 /**
  * Globale init()-Funktion für Indikatoren.
@@ -328,7 +326,7 @@ int deinit() {
       SetLastError(error);
 
    UpdateProgramStatus(catch("deinit(2)"));
-   return(last_error);
+   return(last_error); __DummyCalls();
 }
 
 

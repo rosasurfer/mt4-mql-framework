@@ -1,5 +1,5 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum Instrument und den offenen Positionen eines der folgenden Typen an:
+ * Zeigt im Chart verschiedene Informationen zum Instrument und den Positionen eines der folgenden Typen an:
  *
  * (1) interne Positionen: - Positionen, die im aktuellen Account gehalten werden
  *                         - Order- und P/L-Daten stammen vom Terminal
@@ -14,9 +14,9 @@
  *                         - Orderlimits können überwacht und die externe Quelle vom Erreichen benachrichtigt werden
  *
  *
- * TODO: MetaTrader berechnet den Equity-Wert "falsch" (Spread und Commission gehedgter Positionen werden doppelt berechnet). Geht der Spread
- *       z.B. nachts in die Höhe, kann sich der Fehler je nach Menge der offenen gehedgten Positionen dramatisch auf die P/L-Prozentanzeige auswirken.
- *       Zusätzlich verringert der Fehler in so einem Fall auch erheblich die verfügbare Margin.
+ * TODO: MetaTrader berechnet den Equity-Wert nicht korrekt (Spread und Commission gehedgter Positionen werden doppelt berechnet). Geht der Spread
+ *       z.B. nachts in die Höhe, kann sich der Fehler je nach Anzahl der gehedgten Positionen dramatisch auf die P/L-Anzeige auswirken. Zusätzlich
+ *       verringert es auch die verfügbare Margin.
  */
 #property indicator_chart_window
 
@@ -24,6 +24,7 @@
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
+#include <stdfunctions.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <win32api.mqh>
