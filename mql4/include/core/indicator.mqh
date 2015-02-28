@@ -514,7 +514,7 @@ int DeinitReason() {
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Der EXECUTION_CONTEXT im Hauptmodul *kann* nach jedem init-Cycle an einer anderen Adresse liegen (ec.Signature ist NICHT konstant).
+ * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen (ec.Signature ist nicht konstant).
  */
 bool InitExecutionContext() {
    if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
