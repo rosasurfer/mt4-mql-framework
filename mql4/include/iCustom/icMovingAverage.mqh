@@ -46,7 +46,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
    if (IsError(error)) {
       if (error != ERS_HISTORY_UPDATE)
          return(_NULL(catch("icMovingAverage(1)", error)));
-      warn("icMovingAverage(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");   // TODO: geladene Bars prüfen
+      warn("icMovingAverage(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");    // TODO: geladene Bars prüfen
    }
 
    error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
