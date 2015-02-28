@@ -1,6 +1,7 @@
 /**
  * Globale Funktionen (ersetzen soweit möglich stdlib).
  */
+#include <metaquotes.mqh>                                            // MetaQuotes-Aliase
 
 
 /**
