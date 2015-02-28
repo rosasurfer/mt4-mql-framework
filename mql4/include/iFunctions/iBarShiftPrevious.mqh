@@ -37,13 +37,13 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time
    int bars  = ArrayCopySeries(times, MODE_TIME, symbol, period);//throws ERR_ARRAY_ERROR, wenn solche Daten (noch) nicht existieren
    int error = GetLastError();
 
-   if (!bars || error) {                                             // Da immer beide Bedingungen geprüft werden müssen, braucht das ODER nicht optimiert werden.
-      if (!bars || error!=ERS_HISTORY_UPDATE) {
+   if (bars<=0 || error) {                                           // Da immer beide Bedingungen geprüft werden müssen, braucht das ODER nicht optimiert werden.
+      if (bars<=0 || error!=ERS_HISTORY_UPDATE) {
          if (!error || error==ERS_HISTORY_UPDATE || error==ERR_ARRAY_ERROR)                                                         // aus ERR_ARRAY_ERROR wird ERR_SERIES_NOT_AVAILABLE
             error = ERR_SERIES_NOT_AVAILABLE;
          if (error==ERR_SERIES_NOT_AVAILABLE && execFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
             return(_EMPTY_VALUE(SetLastError(error)));                                                                              // leise
-         return(_EMPTY_VALUE(catch("iBarShiftPrevious(2: "+ symbol +","+ PeriodDescription(period) +") => bars="+ bars, error)));   // laut
+         return(_EMPTY_VALUE(catch("iBarShiftPrevious(2)->ArrayCopySeries("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));   // laut
       }
    }
    // bars ist hier immer größer 0
@@ -57,7 +57,7 @@ int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time
       bar   = iBarShift(symbol, period, time, false);
       error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERS_HISTORY_UPDATE)
-         return(_EMPTY_VALUE(catch("iBarShiftPrevious(3: "+ symbol +","+ PeriodDescription(period) +") => bar="+ bar, error)));
+         return(_EMPTY_VALUE(catch("iBarShiftPrevious(3)->iBarShift("+ symbol +","+ PeriodDescription(period) +") => "+ bar, error)));
    }
    return(bar);
 }
