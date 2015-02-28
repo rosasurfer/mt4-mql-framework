@@ -7,12 +7,13 @@
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 #include <core/expert.mqh>
+#include <stdfunctions.mqh>
 #include <stdlib.mqh>
 
 #include <win32api.mqh>
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
-#include <iCustom/MovingAverage.mqh>
+#include <iCustom/icMovingAverage.mqh>
 #include <structs/pewa/ORDER_EXECUTION.mqh>
 
 

@@ -8,6 +8,7 @@
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
+#include <stdfunctions.mqh>
 #include <stdlib.mqh>
 #include <structs/pewa/EXECUTION_CONTEXT.mqh>
 

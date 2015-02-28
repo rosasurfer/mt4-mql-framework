@@ -12,12 +12,13 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
-#include <stdlib.mqh>
 #include <core/expert.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
 
 #include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
-#include <iCustom/MovingAverage.mqh>
+#include <iCustom/icMovingAverage.mqh>
 
 
 ///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////

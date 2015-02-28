@@ -2,7 +2,6 @@
 #define __TYPE__         T_EXPERT
 #define __lpSuperContext NULL
 
-#include <functions/IsTesting.mqh>
 #include <history.mqh>
 #include <iCustom/icChartInfos.mqh>
 
@@ -315,7 +314,7 @@ int deinit() {
 
 
    UpdateProgramStatus(catch("deinit(2)"));
-   return(last_error);
+   return(last_error); __DummyCalls();
 }
 
 

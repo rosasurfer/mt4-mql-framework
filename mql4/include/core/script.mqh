@@ -2,8 +2,6 @@
 #define __TYPE__         T_SCRIPT
 #define __lpSuperContext NULL
 
-#include <functions/IsTesting.mqh>
-
 
 /**
  * Globale init()-Funktion für Scripte.
@@ -218,7 +216,7 @@ int deinit() {
 
 
    UpdateProgramStatus(catch("deinit(2)"));
-   return(last_error);
+   return(last_error); __DummyCalls();
 }
 
 
