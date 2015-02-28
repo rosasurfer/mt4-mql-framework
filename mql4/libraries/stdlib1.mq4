@@ -11812,57 +11812,6 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
 
 /**
- * Listet alle ChildWindows eines Parent-Windows auf und schickt die Ausgabe an die Debug-Ausgabe.
- *
- * @param  int  hWnd      - Handle des Parent-Windows
- * @param  bool recursive - ob die ChildWindows rekursiv aufgelistet werden sollen (default: nein)
- *
- * @return bool - Erfolgsstatus
- */
-bool EnumChildWindows(int hWnd, bool recursive=false) {
-   recursive = recursive!=0;
-   if (hWnd <= 0)       return(!catch("EnumChildWindows(1)  invalid parameter hWnd="+ hWnd , ERR_INVALID_PARAMETER));
-   if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd=0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR));
-
-   string padding, class, title, sId;
-   int    id;
-
-   static int sublevel;
-   if (!sublevel) {
-      class = GetClassName(hWnd);
-      title = GetWindowText(hWnd);
-      id    = GetDlgCtrlID(hWnd);
-      sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ IntToHexStr(hWnd) +": "+ class +" \""+ title +"\""+ sId);
-   }
-   sublevel++;
-   padding = StringRepeat(" ", (sublevel-1)<<1);
-
-   int i, hWndNext=GetWindow(hWnd, GW_CHILD);
-   while (hWndNext != 0) {
-      i++;
-      class = GetClassName(hWndNext);
-      title = GetWindowText(hWndNext);
-      id    = GetDlgCtrlID(hWndNext);
-      sId   = ifString(id, " ("+ id +")", "");
-      debug("EnumChildWindows(.)  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ class +" \""+ title +"\""+ sId);
-
-      if (recursive) {
-         if (!EnumChildWindows(hWndNext, true)) {
-            sublevel--;
-            return(false);
-         }
-      }
-      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
-   }
-   if (!sublevel) /*&&*/ if (!i) debug("EnumChildWindows(.)  "+ padding +"-> (no child windows)");
-
-   sublevel--;
-   return(!catch("EnumChildWindows(3)"));
-}
-
-
-/**
  * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
