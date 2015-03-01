@@ -129,7 +129,6 @@ double price.data  [][9];                                            // je nach 
 int onInit() {
    if (!Configure())                                                 // Konfiguration einlesen
       return(last_error);
-
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
    return(catch("onInit(1)"));
 }
@@ -172,31 +171,33 @@ bool Configure() {
       //               BarBreakout.OnTouch = 1|0                    ; ob zusätzlich zum Breakout ein Erreichen der Range signalisiert werden soll
       //               BarBreakout.Reset   = {5} [minute|hour][s]   ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
 
+      /*
+      // Today.Breakout = 1
+      size = ArrayRange(price.config, 0);
+      ArrayResize(price.config, size+1);
+      ArrayResize(price.data,   size+1);
+      price.config[size][I_PRICE_CONFIG_ID       ] = ET_PRICE_BAR_BREAKOUT;
+      price.config[size][I_PRICE_CONFIG_ENABLED  ] = true;                    // (int) bool
+      price.config[size][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
+      price.config[size][I_PRICE_CONFIG_BAR      ] = 0;                       // 0DaysAgo
+      price.config[size][I_PRICE_CONFIG_PARAM1   ] = false;                   // kein zusätzliches Signal bei On-Touch
+      price.config[size][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;              // Reset nach 15 Minuten
+      price.config[size][I_PRICE_CONFIG_PARAM3   ] = NULL;                    // unbenutzt
+      */
+
       // Yesterday.Breakout = 1
       size = ArrayRange(price.config, 0);
       ArrayResize(price.config, size+1);
       ArrayResize(price.data,   size+1);
       price.config[size][I_PRICE_CONFIG_ID       ] = ET_PRICE_BAR_BREAKOUT;
       price.config[size][I_PRICE_CONFIG_ENABLED  ] = true;                    // (int) bool
-      price.config[size][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_M5;
+      price.config[size][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
       price.config[size][I_PRICE_CONFIG_BAR      ] = 1;                       // 1DayAgo
       price.config[size][I_PRICE_CONFIG_PARAM1   ] = false;                   // zusätzliches Signal bei On-Touch
-      price.config[size][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;              // Reset nach 15 Minuten
+      price.config[size][I_PRICE_CONFIG_PARAM2   ] = NULL;                    // bei Bar > 0 unbenutzt
       price.config[size][I_PRICE_CONFIG_PARAM3   ] = NULL;                    // unbenutzt
 
       /*
-      // LastWeek.Breakout = 1
-      size = ArrayRange(price.config, 0);
-      ArrayResize(price.config, size+1);
-      ArrayResize(price.data,   size+1);
-      price.config[size][I_PRICE_CONFIG_ID       ] = ET_PRICE_BAR_BREAKOUT;
-      price.config[size][I_PRICE_CONFIG_ENABLED  ] = true;                    // (int) bool
-      price.config[size][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_W1;
-      price.config[size][I_PRICE_CONFIG_BAR      ] = 1;                       // 1WeekAgo
-      price.config[size][I_PRICE_CONFIG_PARAM1   ] = false;                   // zusätzliches Signal bei On-Touch
-      price.config[size][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;              // Reset nach 15 Minuten
-      price.config[size][I_PRICE_CONFIG_PARAM3   ] = NULL;                    // unbenutzt
-
       // Today.Range = 90%
       size = ArrayRange(price.config, 0);
       ArrayResize(price.config, size+1);
@@ -791,7 +792,7 @@ bool CheckBreakoutSignal.Init(int index) {
    int      signal.timeframe  = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
    int      signal.bar        = price.config[index][I_PRICE_CONFIG_BAR      ];
    bool     signal.onTouch    = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
-   int      signal.resetAfter = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+   int      signal.resetAfter = price.config[index][I_PRICE_CONFIG_PARAM2   ]; if (signal.bar > 0) signal.resetAfter = 0;
 
    int      dataTimeframe     = Min(signal.timeframe, PERIOD_H1);                      // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
    datetime lastSessionEndTime;                                                        // Ende der jüngsten Session mit vorhandenen Daten (Bar[0]; danach Re-Initialisierung)
@@ -857,78 +858,76 @@ bool CheckBreakoutSignal(int index) {
    if ( price.config[index][I_PRICE_CONFIG_ID     ] != ET_PRICE_BAR_BREAKOUT) return(!catch("CheckBreakoutSignal(1)  signal "+ index +" is not a breakout signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])                          return(true);
 
-   int      signal.timeframe      = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
-   int      signal.bar            = price.config[index][I_PRICE_CONFIG_BAR      ];
-   bool     signal.onTouch        = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
-   int      signal.resetAfter     = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+   int      signal.timeframe   = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int      signal.bar         = price.config[index][I_PRICE_CONFIG_BAR      ];
+   bool     signal.onTouch     = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
+   int      signal.resetAfter  = price.config[index][I_PRICE_CONFIG_PARAM2   ];
 
-   double   rt.signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];
-   double   rt.signalLevelL       = price.data[index][I_SBB_LEVEL_L    ];
-   int      rt.dataTimeframe      = price.data[index][I_SBB_TIMEFRAME  ];
-   int      rt.dataSessionEndBar  = price.data[index][I_SBB_ENDBAR     ];
-   datetime rt.lastSessionEndTime = price.data[index][I_SBB_SESSION_END];
+   double   signalLevelH       = price.data  [index][I_SBB_LEVEL_H           ];
+   double   signalLevelL       = price.data  [index][I_SBB_LEVEL_L           ];
+   int      dataTimeframe      = price.data  [index][I_SBB_TIMEFRAME         ];
+   int      dataSessionEndBar  = price.data  [index][I_SBB_ENDBAR            ];
+   datetime lastSessionEndTime = price.data  [index][I_SBB_SESSION_END       ];
    //debug("CheckBreakoutSignal(0.1)");
 
 
-   // (1) Prüfen, ob changedBars(rt.dataTimeframe) eine Aktualisierung der Preislevel erfordert (Re-Initialisierung)
+   // (1) Prüfen, ob changedBars(dataTimeframe) eine Aktualisierung der Preislevel erfordert (Re-Initialisierung)
    int oldError    = last_error;
-   int changedBars = iChangedBars(NULL, rt.dataTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
+   int changedBars = iChangedBars(NULL, dataTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
    if (changedBars == -1) {                                                // Fehler
       if (last_error == ERR_SERIES_NOT_AVAILABLE)
-         return(_true(SetLastError(oldError)));                            // ERR_SERIES_NOT_AVAILABLE unterdrücken und später fortsetzen, wenn Daten eingetroffen sind.
+         return(_true(SetLastError(oldError)));                            // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
       return(false);
    }
    if (!changedBars)                                                       // z.B. bei künstlichem Tick oder Aufruf in init() oder deinit()
       return(true);
 
-   // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(rt.dataTimeframe) den Barbereich der Referenzsession einschließt oder
-   // wenn die nächste Periode der Referenzsession begonnen hat.
+   // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(dataTimeframe) den Barbereich der Referenzsession überlappt (Re-Initialisierung)
+   // oder wenn die nächste Periode der Referenzsession begonnen hat (automatischer Signal-Reset bei onBarOpen).
    if (changedBars > 1) {
-      debug("CheckBreakoutSignal(0.2)  changedBars("+ PeriodDescription(rt.dataTimeframe) +")="+ changedBars);
+      debug("CheckBreakoutSignal(0.2)  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
    }
-   if (changedBars > rt.dataSessionEndBar) {
-      if (!CheckBreakoutSignal.Init(index))                                // Re-Initialisierung
-         return(false);
-      rt.signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];
-      rt.signalLevelL       = price.data[index][I_SBB_LEVEL_L    ];
-      rt.dataTimeframe      = price.data[index][I_SBB_TIMEFRAME  ];
-      rt.dataSessionEndBar  = price.data[index][I_SBB_ENDBAR     ];
-      rt.lastSessionEndTime = price.data[index][I_SBB_SESSION_END];
+   bool updated;
+   if (changedBars > dataSessionEndBar) {
+      if (!CheckBreakoutSignal.Init(index)) return(false);                 // Re-Initialisierung
+      updated = true;
    }
-   else if (changedBars > 1) /*&&*/ if (iTime(NULL, rt.dataTimeframe, 0) >= rt.lastSessionEndTime) {
-      if (!CheckBreakoutSignal.Init(index))                                // neue Periode im Timeframe der Referenzsession
-         return(false);
-      rt.signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];
-      rt.signalLevelL       = price.data[index][I_SBB_LEVEL_L    ];
-      rt.dataTimeframe      = price.data[index][I_SBB_TIMEFRAME  ];
-      rt.dataSessionEndBar  = price.data[index][I_SBB_ENDBAR     ];
-      rt.lastSessionEndTime = price.data[index][I_SBB_SESSION_END];
+   else if (changedBars > 1) /*&&*/ if (iTime(NULL, dataTimeframe, 0) >= lastSessionEndTime) {
+      if (!CheckBreakoutSignal.Init(index)) return(false);                 // automatischer Signal-Reset: neue Periode im Timeframe der Referenzsession (onBarOpen)
+      updated = true;                                                      // Der erste Test auf (changedBars > 1) stellt sicher, daß iTime() nicht unnötigerweise bei jedem Tick
+   }                                                                       // aufgerufen wird.
+   if (updated) {
+      signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];
+      signalLevelL       = price.data[index][I_SBB_LEVEL_L    ];
+      dataTimeframe      = price.data[index][I_SBB_TIMEFRAME  ];
+      dataSessionEndBar  = price.data[index][I_SBB_ENDBAR     ];
+      lastSessionEndTime = price.data[index][I_SBB_SESSION_END];
    }
 
 
    // (2) Signallevel prüfen
    double price = NormalizeDouble(Bid, Digits);
 
-   if (rt.signalLevelH != NULL) {
-      if (GE(price, rt.signalLevelH)) {
-         if (GT(price, rt.signalLevelH)) {
+   if (signalLevelH != NULL) {
+      if (GE(price, signalLevelH)) {
+         if (GT(price, signalLevelH)) {
             debug("CheckBreakoutSignal(0.3)  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
-            rt.signalLevelH                  = NULL;
+            signalLevelH                     = NULL;
             price.data[index][I_SBB_LEVEL_H] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(rt.signalLevelH, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
       }
    }
-   if (rt.signalLevelL != NULL) {
-      if (LE(price, rt.signalLevelL)) {
-         if (LT(price, rt.signalLevelL)) {
+   if (signalLevelL != NULL) {
+      if (LE(price, signalLevelL)) {
+         if (LT(price, signalLevelL)) {
             debug("CheckBreakoutSignal(0.5)  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
-            rt.signalLevelL                  = NULL;
+            signalLevelL                     = NULL;
             price.data[index][I_SBB_LEVEL_L] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(rt.signalLevelL, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
       }
    }
 
