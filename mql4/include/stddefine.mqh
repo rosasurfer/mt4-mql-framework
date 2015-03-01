@@ -498,19 +498,12 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Rates array identifier, siehe ArrayCopyRates()
-#define I_RATE_TIME                    0        // bar open time
-#define I_RATE_OPEN                    1        // open price
-#define I_RATE_LOW                     2        // low price
-#define I_RATE_HIGH                    3        // high price
-#define I_RATE_CLOSE                   4        // close price
-#define I_RATE_VOLUME                  5        // volume
-
-#define I_BAR_TIME           I_RATE_TIME
-#define I_BAR_OPEN           I_RATE_OPEN
-#define I_BAR_LOW             I_RATE_LOW
-#define I_BAR_HIGH           I_RATE_HIGH
-#define I_BAR_CLOSE         I_RATE_CLOSE
-#define I_BAR_VOLUME       I_RATE_VOLUME
+#define I_BAR.time                     0        // bar open time
+#define I_BAR.open                     1        // open price
+#define I_BAR.low                      2        // low price
+#define I_BAR.high                     3        // high price
+#define I_BAR.close                    4        // close price
+#define I_BAR.volume                   5        // volume
 
 
 // Event-Flags

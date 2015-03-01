@@ -2939,9 +2939,9 @@ void __DummyCalls() {
    bool   Expander_start (/*EXECUTION_CONTEXT*/int ec[]);
    bool   Expander_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
-   string DwordToHexStr(int dword); string IntToHexStr(int integer);       // Alias
    int    GetBufferAddress(int buffer[]);
    int    GetLastWin32Error();
+   string IntToHexStr(int integer);
    bool   IsBuiltinTimeframe(int timeframe);
 
 #import "kernel32.dll"

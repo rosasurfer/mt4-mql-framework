@@ -26,7 +26,8 @@
  *    int    version;               //   4         lo[28]      // Version (fortlaufender Zähler)
  * } lo;                            // 116 byte = int[29]
  *
- * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
+ *
+ * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 #define I_LFX_ORDER.ticket                0                    // Offsets
 #define I_LFX_ORDER.type                  1

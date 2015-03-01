@@ -26,19 +26,10 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   debug("onStart(0.1)");
-   GetString(ERR_SERIES_NOT_AVAILABLE);
-   debug("onStart(0.2)");
-
-   return(catch("onStart(1)"));
-
-
    int cb1, cb2;
-
    cb1 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
    cb2 = iChangedBars("EURUSD", PERIOD_M30, MUTE_ERR_SERIES_NOT_AVAILABLE);
    debug("onStart()  changedBars(M15)="+ cb1 +"  changedBars(M30)="+ cb2);
-
 
    cb1 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
    cb2 = iChangedBars("EURUSD", PERIOD_M30, MUTE_ERR_SERIES_NOT_AVAILABLE);
