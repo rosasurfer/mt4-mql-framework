@@ -20,24 +20,39 @@
  * } ec;                              = 56 byte = int[14]
  *                                                                                                                                wer bin ich
  *
- * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
- *
- *
  * TODO: __SMS.alerts        integrieren
  *       __SMS.receiver      integrieren
  *       __STATUS_OFF        integrieren
  *       __STATUS_OFF.reason integrieren
+ *
+ *
+ * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
+#define I_EC.signature              0
+#define I_EC.lpName                 1
+#define I_EC.type                   2
+#define I_EC.hChart                 3
+#define I_EC.hChartWindow           4
+#define I_EC.testFlags              5
+#define I_EC.lpSuperContext         6
+#define I_EC.initFlags              7
+#define I_EC.deinitFlags            8
+#define I_EC.uninitializeReason     9
+#define I_EC.whereami              10
+#define I_EC.logging               11
+#define I_EC.lpLogFile             12
+#define I_EC.lastError             13
+
 
 // Getter
-int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 0]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 1]);                       EXECUTION_CONTEXT.toStr(ec); }
-string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[ 1]));                      EXECUTION_CONTEXT.toStr(ec); }
-int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 2]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 3]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 4]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.TestFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 5]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 6]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.signature         ]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpName               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpName            ]);                       EXECUTION_CONTEXT.toStr(ec); }
+string ec.Name                 (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[I_EC.lpName            ]));                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Type                 (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.type              ]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.hChart            ]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.hChartWindow      ]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.TestFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.testFlags         ]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpSuperContext    ]);                       EXECUTION_CONTEXT.toStr(ec); }
 int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
    if (ArrayDimension(sec) != 1)               return(catch("ec.SuperContext(1)  too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
@@ -52,50 +67,51 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
       // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
       if (ec.Signature(sec) != lpSuperContext) return(catch("ec.SuperContext(2)  invalid super EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpSuperContext), ERR_RUNTIME_ERROR));
    }
-   return(catch("ec.SuperContext(3)"));                                                                                                          EXECUTION_CONTEXT.toStr(ec);
+   return(catch("ec.SuperContext(3)"));                                                                                                                                    EXECUTION_CONTEXT.toStr(ec);
 }
-int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 7]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 8]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[ 9]);                       EXECUTION_CONTEXT.toStr(ec); }
-int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[10]);                       EXECUTION_CONTEXT.toStr(ec); }
-bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[11] != 0);                  EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[12]);                       EXECUTION_CONTEXT.toStr(ec); }
-string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[12]));                      EXECUTION_CONTEXT.toStr(ec); }
-int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[13]);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.initFlags         ]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.deinitFlags       ]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.uninitializeReason]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.whereami          ]);                            EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.logging           ] != 0);                       EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpLogFile         ]);                            EXECUTION_CONTEXT.toStr(ec); }
+string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[I_EC.lpLogFile         ]));                           EXECUTION_CONTEXT.toStr(ec); }
+int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lastError         ]);                            EXECUTION_CONTEXT.toStr(ec); }
 
 
 // Setter
-int    ec.setSignature         (/*EXECUTION_CONTEXT*/int &ec[], int    signature         ) { ec[ 0] = signature;          return(signature         ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setLpName            (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) { ec[ 1] = lpName;             return(lpName            ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setSignature         (/*EXECUTION_CONTEXT*/int &ec[], int    signature         ) { ec[I_EC.signature         ] = signature;          return(signature         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLpName            (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) {
+   if (lpName < MIN_VALID_POINTER) return(!catch("ec.setLpName(1)  invalid parameter lpName = 0x"+ IntToHexStr(lpName) +" (not a valid pointer)", ERR_INVALID_POINTER));
+                                                                                             ec[I_EC.lpName            ] = lpName;             return(lpName            ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setName              (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
    if (!StringLen(name))           return(_emptyStr(catch("ec.setName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_PATH) return(_emptyStr(catch("ec.setName(2)  illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpName = ec.lpName(ec);
    if (!lpName)                    return(_emptyStr(catch("ec.setName(3)  no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
-   CopyMemory(GetStringAddress(name), lpName, StringLen(name)+1); /*terminierendes <NUL> wird mitkopiert*/                return(name              ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setType              (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[ 2] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[ 3] = hChart;             return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[ 4] = hChartWindow;       return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[ 5] = testFlags;          return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) { ec[ 6] = lpSuperContext;     return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[ 7] = initFlags;          return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[ 8] = deinitFlags;        return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[ 9] = uninitializeReason; return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami          ) { ec[10] = whereami;           return(whereami          ); EXECUTION_CONTEXT.toStr(ec); }
-bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[11] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) { ec[12] = lpLogFile;          return(lpLogFile         ); EXECUTION_CONTEXT.toStr(ec); }
+   CopyMemory(GetStringAddress(name), lpName, StringLen(name)+1); /*terminierendes <NUL> wird mitkopiert*/                                     return(name              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setType              (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.type              ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;             return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;       return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[I_EC.testFlags         ] = testFlags;          return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) { ec[I_EC.lpSuperContext    ] = lpSuperContext;     return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[I_EC.initFlags         ] = initFlags;          return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[I_EC.deinitFlags       ] = deinitFlags;        return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[I_EC.uninitializeReason] = uninitializeReason; return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami          ) { ec[I_EC.whereami          ] = whereami;           return(whereami          ); EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[I_EC.logging           ] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) {
+   if (lpLogFile < MIN_VALID_POINTER) return(!catch("ec.setLpLogFile(1)  invalid parameter lpLogFile = 0x"+ IntToHexStr(lpLogFile) +" (not a valid pointer)", ERR_INVALID_POINTER));
+                                                                                             ec[I_EC.lpLogFile         ] = lpLogFile;          return(lpLogFile         ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
    if (!StringLen(logFile))           return(_emptyStr(catch("ec.setLogFile(1)  invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_PARAMETER)));
    if (StringLen(logFile) > MAX_PATH) return(_emptyStr(catch("ec.setLogFile(2)  illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpLogFile = ec.lpLogFile(ec);
    if (!lpLogFile)                    return(_emptyStr(catch("ec.setLogFile(3)  no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
-   CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/       return(logFile           ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) {
-   ec[13] = lastError;
-   int lpSuperContext = ec.lpSuperContext(ec);
-   if (lpSuperContext != 0)
-      CopyMemory(ec.Signature(ec)+13*4, lpSuperContext+13*4, 4);     // Fehler immer auch im SuperContext setzen
-   return(lastError);                                                                                                                                 EXECUTION_CONTEXT.toStr(ec);
+   CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/                            return(logFile           ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) { ec[I_EC.lastError         ] = lastError;
+   int lpSuperContext = ec.lpSuperContext(ec);     // Fehler immer auch im SuperContext setzen
+   if (lpSuperContext != 0) CopyMemory(ec.Signature(ec)+I_EC.lastError*4, lpSuperContext+I_EC.lastError*4, 4);                                 return(lastError         ); EXECUTION_CONTEXT.toStr(ec);
 }
 
 
@@ -205,6 +221,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
    string GetString(int address);
+   string IntToHexStr(int integer);
 #import
 
 

@@ -30,8 +30,34 @@
  * } oe;                      // 136 byte = int[34]
  *
  *
- * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
+ * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
+#define I_OE.error                0
+#define I_OE.symbol               1
+#define I_OE.digits               5
+#define I_OE.stopDistance         6
+#define I_OE.freezeDistance       7
+#define I_OE.bid                  8
+#define I_OE.ask                  9
+#define I_OE.ticket              10
+#define I_OE.type                11
+#define I_OE.lots                12
+#define I_OE.openTime            13
+#define I_OE.openPrice           14
+#define I_OE.stopLoss            15
+#define I_OE.takeProfit          16
+#define I_OE.closeTime           17
+#define I_OE.closePrice          18
+#define I_OE.swap                19
+#define I_OE.commission          20
+#define I_OE.profit              21
+#define I_OE.comment             22
+#define I_OE.duration            29
+#define I_OE.requotes            30
+#define I_OE.slippage            31
+#define I_OE.remainingTicket     32
+#define I_OE.remainingLots       33
+
 
 // Getter
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 0]);                                         ORDER_EXECUTION.toStr(oe); }
