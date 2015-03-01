@@ -9208,7 +9208,10 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iHighest()
       type=int
       <content>
-      Returns the offset of the maximum value over the specific number of periods.
+      Returns the offset of the maximum value over the specific number of periods.<br/>
+		<br/>
+		Note:<br/>
+		Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
       </content>
       <example>
   // getting the highest High of 20 consecutive bars in the range from the 4th to the 23rd index
@@ -9279,7 +9282,10 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       caption=iLowest()
       type=int
       <content>
-      Returns the offset of the minimum value over the specific number of periods.
+      Returns the offset of the minimum value over the specific number of periods.<br/>
+		<br/>
+		Note:<br/>
+		Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
       </content>
       <example>
 // getting the lowest Low of 10 consecutive bars in the range from the 10th to the 19th index
