@@ -6,7 +6,7 @@
  */
 int onDeinitParameterChange() {
    // nicht-statische Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
-   last.Sequence.ID             = StringConcatenate(Sequence.ID,             "");   // Pointer-Bug bei String-Inputvariablen (siehe MQL.doc)
+   last.Sequence.ID             = StringConcatenate(Sequence.ID,             "");   // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
    last.Sequence.StatusLocation = StringConcatenate(Sequence.StatusLocation, "");
    last.GridDirection           = StringConcatenate(GridDirection,           "");
    last.GridSize                = GridSize;

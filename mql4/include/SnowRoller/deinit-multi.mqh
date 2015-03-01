@@ -8,7 +8,7 @@ int onDeinitParameterChange() {
    // nicht-statische Input-Parameter für Vergleich mit neuen Werten zwischenspeichern
    last.GridSize        = GridSize;
    last.LotSize         = LotSize;
-   last.StartConditions = StringConcatenate(StartConditions, "");    // Pointer-Bug bei String-Inputvariablen (siehe MQL.doc)
+   last.StartConditions = StringConcatenate(StartConditions, "");    // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
    return(-1);
 }
 

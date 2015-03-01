@@ -2797,7 +2797,7 @@ void StoreConfiguration(bool save=true) {
    if (save) {
       _GridSize                     = GridSize;
       _LotSize                      = LotSize;
-      _StartConditions              = StringConcatenate(StartConditions, "");    // Pointer-Bug bei String-Inputvariablen (siehe MQL.doc)
+      _StartConditions              = StringConcatenate(StartConditions, "");    // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
       _StopConditions               = StringConcatenate(StopConditions,  "");
 
       _start.trend.condition        = start.trend.condition;

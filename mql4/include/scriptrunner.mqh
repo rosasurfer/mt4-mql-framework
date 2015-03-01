@@ -39,7 +39,7 @@ bool RunScript(string scriptName, string parameters="") {
       return(false);
 
    string script[1]; script[0]=StringConcatenate("", scriptName);    // Der Pointer auf 'scriptName' muß zur Zeit der Message-Verarbeitung noch gültig sein,
-                                                                     // was nur mit einem String-Array im Indikator oder Expert gegeben ist.
+                                                                     // was im Indikator oder Expert nur mit einem String-Array sichergestellt werden kann.
    // Script starten
    if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(script[0])))
       return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));

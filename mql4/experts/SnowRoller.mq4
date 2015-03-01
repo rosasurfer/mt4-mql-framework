@@ -3180,7 +3180,7 @@ void StoreConfiguration(bool save=true) {
    static double   _stop.profitPct.value;
 
    if (save) {
-      _Sequence.ID                  = StringConcatenate(Sequence.ID,             "");  // Pointer-Bug bei String-Inputvariablen (siehe MQL.doc)
+      _Sequence.ID                  = StringConcatenate(Sequence.ID,             "");  // String-Inputvariablen sind C-Literale und read-only (siehe MQL.doc)
       _GridDirection                = StringConcatenate(GridDirection,           "");
       _GridSize                     = GridSize;
       _LotSize                      = LotSize;
