@@ -17,7 +17,7 @@
  *     in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für die Preisüberwachung zu aktivieren. Mit den frei kombinierbaren Eventkeys
  *     können beliebige Preis-Events formuliert werden.
  *
- *      • Eventkey:     {Timeframe-ID}.{Signal-ID}
+ *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
  *
  *      • Timeframe-ID: {number}{[Day|Week|Month][s]}Ago             ; Singular und Plural der Timeframe-Bezeichner sind austauschbar
  *                      Today                                        ; Synonym für 0DaysAgo
@@ -25,10 +25,11 @@
  *                      This[Day|Week|Month]                         ; Synonym für 0[Days|Weeks|Months]Ago
  *                      Last[Day|Week|Month]                         ; Synonym für 1[Day|Week|Month]Ago
  *
- *      • Signal-ID:    BarClose          = On | Off                 ; Erreichen des Close-Preises einer Bar
- *                      BarRange          = {90}%                    ; Erreichen der {x}%-Schwelle einer Bar-Range (100% = am bisherigen High/Low)
- *                      BarBreakout       = On | Off                 ; neues High/Low
- *                      BarBreakout.Reset = {5} [minute|hour][s]     ; Zeit, nachdem die Prüfung eines einmal getriggerten Signals reaktiviert wird
+ *      • Signal-ID:    BarClose            = On|Off                 ; Erreichen des Close-Preises der Bar
+ *                      BarRange            = {90}%                  ; Erreichen der {x}%-Schwelle der Bar-Range (100% = bisheriges High/Low)
+ *                      BarBreakout         = On|Off                 ; neues High/Low
+ *                      BarBreakout.OnTouch = 1|0                    ; ob zusätzlich zum Breakout ein Erreichen der Range signalisiert werden soll
+ *                      BarBreakout.Reset   = {5} [minute|hour][s]   ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
  *
  *     Pattern und ihre Konfiguration:
  *      - neues Inside-Range-Pattern auf Tagesbasis
@@ -157,20 +158,6 @@ bool Configure() {
       string file   = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
       int size;
 
-      // Eventkey:     {Timeframe-ID}.{Signal-ID}
-      //
-      // Timeframe-ID: {number}{[Day|Week|Month][s]}Ago             ; Singular und Plural der Timeframe-Bezeichner sind austauschbar
-      //               Today                                        ; Synonym für 0DaysAgo
-      //               Yesterday                                    ; Synonym für 1DayAgo
-      //               This[Day|Week|Month]                         ; Synonym für 0[Days|Weeks|Months]Ago
-      //               Last[Day|Week|Month]                         ; Synonym für 1[Day|Week|Month]Ago
-      //
-      // Signal-ID:    Close               = On|Off                 ; Erreichen des Close-Preises der Bar
-      //               BarRange            = {90}%                  ; Erreichen der {x}%-Schwelle der Bar-Range (100% = am bisherigen High/Low)
-      //               BarBreakout         = On|Off                 ; neues High/Low
-      //               BarBreakout.OnTouch = 1|0                    ; ob zusätzlich zum Breakout ein Erreichen der Range signalisiert werden soll
-      //               BarBreakout.Reset   = {5} [minute|hour][s]   ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
-
       /*
       // Today.Breakout = 1
       size = ArrayRange(price.config, 0);
@@ -198,7 +185,7 @@ bool Configure() {
       price.config[size][I_PRICE_CONFIG_PARAM3   ] = NULL;                    // unbenutzt
 
       /*
-      // Today.Range = 90%
+      // Today.Range = 85%
       size = ArrayRange(price.config, 0);
       ArrayResize(price.config, size+1);
       ArrayResize(price.data,   size+1);
@@ -206,8 +193,8 @@ bool Configure() {
       price.config[size][I_PRICE_CONFIG_ENABLED  ] = true;                    // (int) bool
       price.config[size][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
       price.config[size][I_PRICE_CONFIG_BAR      ] = 0;                       // 0DaysAgo
-      price.config[size][I_PRICE_CONFIG_PARAM1   ] = 90;                      // 90%
-      price.config[size][I_PRICE_CONFIG_PARAM2   ] = 15*MINUTES;              // Reset nach 15 Minuten (nur bei Today)
+      price.config[size][I_PRICE_CONFIG_PARAM1   ] = 85;                      // 85%
+      price.config[size][I_PRICE_CONFIG_PARAM2   ] = NULL;                    // bei BarRange vorerst unbenutzt
       price.config[size][I_PRICE_CONFIG_PARAM3   ] = NULL;                    // unbenutzt
 
       // Yesterday.Range = 90%
@@ -218,7 +205,7 @@ bool Configure() {
       price.config[size][I_PRICE_CONFIG_ENABLED  ] = true;                    // (int) bool
       price.config[size][I_PRICE_CONFIG_TIMEFRAME] = PERIOD_D1;
       price.config[size][I_PRICE_CONFIG_BAR      ] = 1;                       // 1DayAgo
-      price.config[size][I_PRICE_CONFIG_PARAM1   ] = 90;                      // 85%
+      price.config[size][I_PRICE_CONFIG_PARAM1   ] = 90;                      // 90%
       price.config[size][I_PRICE_CONFIG_PARAM2   ] = NULL;                    // unbenutzt
       price.config[size][I_PRICE_CONFIG_PARAM3   ] = NULL;                    // unbenutzt
       */
