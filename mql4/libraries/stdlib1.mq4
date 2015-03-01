@@ -888,7 +888,8 @@ bool Tester.IsStopped() {
  * @return string - Hex-String
  */
 string StringToHexStr(string value) {
-   value = StringConcatenate(value, "");                             // NULL-Pointer abfangen
+   if (StringIsNull(value))
+      return("NULL");
 
    string result = "";
    int len = StringLen(value);
@@ -2250,13 +2251,24 @@ int ArrayDropDouble(double array[], double value) {
 int ArrayDropString(string array[], string value) {
    if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayDropString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
-   int size = ArraySize(array);
-   if (size == 0)
+   int count, size=ArraySize(array);
+   if (!size)
       return(0);
 
-   // TODO: nicht initialisierten String verarbeiten (NULL-Pointer)
+   if (StringIsNull(value)) {                         // NULL-Pointer
+      for (int i=size-1; i>=0; i--) {
+         if (!StringLen(array[i])) /*&&*/ if (StringIsNull(array[i])) {
+            if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
+               ArrayCopy(array, array, i, i+1);
+            size = ArrayResize(array, size-1);        // Array um ein Element kürzen
+            count++;
+         }
+      }
+      return(count);
+   }
 
-   for (int count, i=size-1; i>=0; i--) {
+   // normaler String (kein NULL-Pointer)
+   for (i=size-1; i>=0; i--) {
       if (array[i] == value) {
          if (i < size-1)                           // ArrayCopy(), wenn das zu entfernende Element nicht das letzte ist
             ArrayCopy(array, array, i, i+1);
