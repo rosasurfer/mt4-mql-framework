@@ -205,12 +205,13 @@
    string   GetGlobalConfigString   (string section, string key, string defaultValue);
    string   GetRawGlobalConfigString(string section, string key, string defaultValue);
 
-   int      GetIniSections(string fileName, string names[]);
-   bool     IsIniSection  (string fileName, string section);
+   int      GetIniSections (string fileName, string names[]);
+   bool     IsIniSection   (string fileName, string section);
 
-   int      GetIniKeys  (string fileName, string section, string names[]);
-   bool     IsIniKey    (string fileName, string section, string key    );
-   bool     DeleteIniKey(string fileName, string section, string key    );
+   int      GetIniKeys     (string fileName, string section, string names[]);
+   bool     IsIniKey       (string fileName, string section, string key    );
+   bool     DeleteIniKey   (string fileName, string section, string key    );
+
    bool     GetIniBool     (string fileName, string section, string key, bool   defaultValue);
    int      GetIniInt      (string fileName, string section, string key, int    defaultValue);
    double   GetIniDouble   (string fileName, string section, string key, double defaultValue);
