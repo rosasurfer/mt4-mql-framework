@@ -7360,10 +7360,14 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       caption=StringGetChar()
       type=int
       <content>
-      Returns the character code at the specified position of the string.
+      Returns the character code at the specified position of the string.<br/>
+      <br/>
+      Note:<br/>
+      Weist der Parameter <i>pos</i> auf eine Position, die die Länge des Strings überschreitet, setzt die Funktion den Fehler 
+      <span class="constant">ERR_ARRAY_INDEX_OUT_OF_RANGE</span>.<br/>
       </content>
       <example>
-  int charCode = StringGetChar(&quot;abcdefgh&quot;, 3);
+  int charCode = StringGetChar(<span class="string">&quot;abcdefgh&quot;</span>, 2);
   // character code <span class="string">'c'</span> is 99
       </example>
       <parameter>
@@ -9209,9 +9213,9 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       type=int
       <content>
       Returns the offset of the maximum value over the specific number of periods.<br/>
-		<br/>
-		Note:<br/>
-		Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
+      <br/>
+      Note:<br/>
+      Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
       </content>
       <example>
   // getting the highest High of 20 consecutive bars in the range from the 4th to the 23rd index
@@ -9283,9 +9287,9 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       type=int
       <content>
       Returns the offset of the minimum value over the specific number of periods.<br/>
-		<br/>
-		Note:<br/>
-		Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
+      <br/>
+      Note:<br/>
+      Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zurückliegenden Bar zurückgegeben.<br/>
       </content>
       <example>
 // getting the lowest Low of 10 consecutive bars in the range from the 10th to the 19th index

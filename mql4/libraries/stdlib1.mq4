@@ -6688,21 +6688,14 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
    defaultValue = defaultValue!=0;
 
-   string strDefault = defaultValue;
-
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, fileName);
-
-   buffer[0] = StringToLower(buffer[0]);
+   string sValue = StringToLower(GetIniString(fileName, section, key, defaultValue));
 
    bool result = false;
-   if      (buffer[0] == ""    ) result = defaultValue;
-   else if (buffer[0] == "1"   ) result = true;
-   else if (buffer[0] == "true") result = true;
-   else if (buffer[0] == "yes" ) result = true;
-   else if (buffer[0] == "on"  ) result = true;
+   if      (sValue == ""    ) result = defaultValue;
+   else if (sValue == "1"   ) result = true;
+   else if (sValue == "true") result = true;
+   else if (sValue == "yes" ) result = true;
+   else if (sValue == "on"  ) result = true;
 
    if (!catch("GetIniBool(1)"))
       return(result);
@@ -6769,8 +6762,11 @@ string GetIniString(string fileName, string section, string key, string defaultV
 
    // evt. vorhandenen Kommentar entfernen
    int pos = StringFind(value, ";");
-   if (pos >= 0)
+   if (pos >= 0) {
       value = StringTrimRight(StringSubstrFix(value, 0, pos));
+      if (!StringLen(value))
+         value = defaultValue;
+   }
 
    return(value);
 }
@@ -6798,6 +6794,8 @@ string GetRawIniString(string fileName, string section, string key, string defau
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
+   if (!StringLen(buffer[0]))
+      buffer[0] = defaultValue;
 
    if (!catch("GetRawIniString(1)"))
       return(buffer[0]);
