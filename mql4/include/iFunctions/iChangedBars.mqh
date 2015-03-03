@@ -27,12 +27,11 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    #define I_CB.changedBars      2                                   // Anzahl der ChangedBars   (beim letzten Aufruf)
    #define I_CB.oldestBarTime    3                                   // Zeit der ältesten Bar    (beim letzten Aufruf)
    #define I_CB.newestBarTime    4                                   // Zeit der neuesten Bar    (beim letzten Aufruf)
-   #define I_CB.newestBarVol     5                                   // Volumen der neuesten Bar (beim letzten Aufruf)
 
 
    // (1) Speicherung der statischen Daten je Parameterkombination "Symbol,Periode" ermöglicht den parallelen Aufruf für mehrere Datenreihen
    string keys[];
-   int    last[][6];
+   int    last[][5];
    int    keysSize = ArraySize(keys);
    string key = StringConcatenate(symbol, ",", period);              // "Hash" der aktuellen Parameterkombination
 
@@ -49,7 +48,6 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
       last[i][I_CB.changedBars  ] = -1;
       last[i][I_CB.oldestBarTime] =  0;
       last[i][I_CB.newestBarTime] =  0;
-      last[i][I_CB.newestBarVol ] =  0;
    }
    // Index i zeigt hier immer auf den aktuellen Datensatz
 
@@ -82,17 +80,15 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    }
    // bars ist hier immer größer 0
 
-   datetime oldestBarTime =   iTime(symbol, period, bars-1);
-   datetime newestBarTime =   iTime(symbol, period, 0     );
-   int      vol           = iVolume(symbol, period, 0     );
+   datetime oldestBarTime = iTime(symbol, period, bars-1);
+   datetime newestBarTime = iTime(symbol, period, 0     );
    int      changedBars;
 
    if (last[i][I_CB.bars]==-1) {                        changedBars = bars;                           // erster Zugriff auf die Zeitreihe
    }
    else if (bars==last[i][I_CB.bars] && oldestBarTime==last[i][I_CB.oldestBarTime]) {                 // Baranzahl gleich und älteste Bar noch dieselbe
-      if (vol != last[i][I_CB.newestBarVol])            changedBars = 1;                              // normaler Tick (mit/ohne Lücke)
-      else                                              changedBars = 0;                              // synthetischer Tick oder sonstiger start()-Aufruf
-   }
+                                                        changedBars = 1;                              // normaler Tick (mit/ohne Lücke) oder synthetischer/sonstiger Tick: iVolume() kann
+   }                                                                                                  // nicht zur Unterscheidung zwischen changedBars=0|1 verwendet werden
    else {
       if (bars == last[i][I_CB.bars])                                                                 // Wenn dies passiert (im Tester?) und Bars "hinten hinausgeschoben" wurden, muß die Bar
          warn("iChangedBars(2)  bars==last.bars = "+ bars +" (did we hit MAX_CHART_BARS?)");          // mit last.firstBarTime gesucht und der Wert von changedBars daraus abgeleitet werden.
@@ -106,7 +102,6 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    last[i][I_CB.changedBars  ] = changedBars;
    last[i][I_CB.oldestBarTime] = oldestBarTime;
    last[i][I_CB.newestBarTime] = newestBarTime;
-   last[i][I_CB.newestBarVol ] = vol;
 
    return(changedBars);
 }

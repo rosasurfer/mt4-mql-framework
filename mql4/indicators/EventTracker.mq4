@@ -971,8 +971,8 @@ bool CheckBreakoutSignal(int index) {
    if (changedBars > dataSessionEndBar) {
       // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird nur re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
       if (changedBars > 1 || !newTick) {
-         if (!CheckBreakoutSignal.Init(index)) return(false);
-         reinitialized = true;
+         if (!CheckBreakoutSignal.Init(index)) return(false);              // Damit wird bei synthetischen Ticks re-initialisiert, weil nicht ausgeschlossen werden kann, das ein
+         reinitialized = true;                                             // History-Update nur genau die letzte Bar(dataTimeframe) aktualisiert hat.
       }
    }
    else if (changedBars > 1) /*&&*/ if (iTime(NULL, dataTimeframe, 0) > lastSessionEndTime) {
