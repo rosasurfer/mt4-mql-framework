@@ -9391,9 +9391,15 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       caption=iVolume()
       type=double
       <content>
-      Returns <b>Tick Volume</b> value for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
+      Returns the tick volume for the bar of indicated <i>symbol</i> with <i>timeframe</i> and <i>shift</i>.
       If local history is empty (not loaded), function returns 0.<br/>
-      For the current chart, the information about bars tick volumes is in the predefined array named <a href="help://predefined_variables_Volume">Volume[]</a>.
+      For the current chart, the information about bars tick volumes is in the predefined array named <a href="help://predefined_variables_Volume">Volume[]</a>.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Der zurückgegebene Wert ist nicht exakt, wenn er sich auf eine andere als die aktuelle Periode bezieht. Trifft ein neuer Tick ein, kann die Funktion <i>für einen Moment</i> 
+      noch den alten Wert zurückgeben, obwohl alle anderen Werte die Bar bereits korrekt beschreiben. <span class="function">iVolume</span>() einer anderen als der aktuellen Periode 
+      kann deshalb nicht zur Unterscheidung einzelner Ticks verwendet werden.<br/>
       </content>
       <example>
   Print(&quot;Current bar for USDCHF H1: &quot;,iTime(&quot;USDCHF&quot;,PERIOD_H1,i),&quot;, &quot;,  iOpen(&quot;USDCHF&quot;,PERIOD_H1,i),&quot;, &quot;,
@@ -9412,8 +9418,8 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       </parameter>
       <parameter>
         type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+        name=bar
+        description=Bar index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
       </parameter>
     </function>
   </group>
