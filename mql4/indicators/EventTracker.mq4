@@ -391,7 +391,6 @@ int onTick() {
 
    // (2) Price-Events überwachen
    if (track.price) {
-      //HandleEvent(EVENT_NEW_TICK);
       int iNull[];
       onNewTick(iNull);
    }
