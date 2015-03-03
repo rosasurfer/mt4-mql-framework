@@ -22,16 +22,17 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    // TODO: - statische Variablen in Library speichern, um Timeframewechsel zu überdauern
    //       - statische Variablen bei Accountwechsel zurücksetzen
 
-   #define I_CB_TICK             0                                   // Tick                   (beim letzten Aufruf)
-   #define I_CB_BARS             1                                   // Anzahl aller Bars      (beim letzten Aufruf)
-   #define I_CB_CHANGED_BARS     2                                   // Anzahl der ChangedBars (beim letzten Aufruf)
-   #define I_CB_FIRST_BAR_TIME   3                                   // Zeit der jüngsten Bar  (beim letzten Aufruf)
-   #define I_CB_LAST_BAR_TIME    4                                   // Zeit der ältestens Bar (beim letzten Aufruf)
+   #define I_CB.tick             0                                   // Tick                     (beim letzten Aufruf)
+   #define I_CB.bars             1                                   // Anzahl aller Bars        (beim letzten Aufruf)
+   #define I_CB.changedBars      2                                   // Anzahl der ChangedBars   (beim letzten Aufruf)
+   #define I_CB.oldestBarTime    3                                   // Zeit der ältesten Bar    (beim letzten Aufruf)
+   #define I_CB.newestBarTime    4                                   // Zeit der neuesten Bar    (beim letzten Aufruf)
+   #define I_CB.newestBarVol     5                                   // Volumen der neuesten Bar (beim letzten Aufruf)
 
 
    // (1) Speicherung der statischen Daten je Parameterkombination "Symbol,Periode" ermöglicht den parallelen Aufruf für mehrere Datenreihen
    string keys[];
-   int    prev[][5];
+   int    last[][6];
    int    keysSize = ArraySize(keys);
    string key = StringConcatenate(symbol, ",", period);              // "Hash" der aktuellen Parameterkombination
 
@@ -41,20 +42,21 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    }
    if (i == keysSize) {                                              // Schlüssel nicht gefunden: erster Aufruf für Symbol,Periode
       ArrayResize(keys, keysSize+1);
-      ArrayResize(prev, keysSize+1);
+      ArrayResize(last, keysSize+1);
       keys[i] = key;                                                 // Schlüssel hinzufügen
-      prev[i][I_CB_TICK          ] = -1;
-      prev[i][I_CB_BARS          ] = -1;
-      prev[i][I_CB_CHANGED_BARS  ] = -1;
-      prev[i][I_CB_FIRST_BAR_TIME] =  0;
-      prev[i][I_CB_LAST_BAR_TIME ] =  0;
+      last[i][I_CB.tick         ] = -1;                              // last[] initialisieren
+      last[i][I_CB.bars         ] = -1;
+      last[i][I_CB.changedBars  ] = -1;
+      last[i][I_CB.oldestBarTime] =  0;
+      last[i][I_CB.newestBarTime] =  0;
+      last[i][I_CB.newestBarVol ] =  0;
    }
    // Index i zeigt hier immer auf den aktuellen Datensatz
 
 
    // (2) Mehrfachaufruf für eine Datenreihe innerhalb desselben Ticks
-   if (Tick == prev[i][I_CB_TICK])
-      return(prev[i][I_CB_CHANGED_BARS]);
+   if (Tick == last[i][I_CB.tick])
+      return(last[i][I_CB.changedBars]);
 
 
    /*
@@ -74,31 +76,37 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
          if (!error || error==ERS_HISTORY_UPDATE)
             error = ERR_SERIES_NOT_AVAILABLE;
          if (error==ERR_SERIES_NOT_AVAILABLE && execFlags & MUTE_ERR_SERIES_NOT_AVAILABLE)
-            return(_EMPTY(SetLastError(error)));                                                         // leise
-         return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));  // laut
+            return(_EMPTY(SetLastError(error)));                                                                           // leise
+         return(_EMPTY(catch("iChangedBars(1)->iBars("+ symbol +","+ PeriodDescription(period) +") => "+ bars, error)));   // laut
       }
    }
    // bars ist hier immer größer 0
 
-   datetime firstBarTime = iTime(symbol, period, 0     );
-   datetime lastBarTime  = iTime(symbol, period, bars-1);
+   datetime oldestBarTime =   iTime(symbol, period, bars-1);
+   datetime newestBarTime =   iTime(symbol, period, 0     );
+   int      vol           = iVolume(symbol, period, 0     );
    int      changedBars;
 
-   if      (prev[i][I_CB_BARS]==-1)                                               changedBars = bars;    // erster Zugriff auf die Zeitreihe
-   else if (bars==prev[i][I_CB_BARS] && lastBarTime==prev[i][I_CB_LAST_BAR_TIME]) changedBars = 1;       // Baranzahl gleich und älteste Bar noch dieselbe = normaler Tick (mit/ohne Lücke)
+   if (last[i][I_CB.bars]==-1) {                        changedBars = bars;                           // erster Zugriff auf die Zeitreihe
+   }
+   else if (bars==last[i][I_CB.bars] && oldestBarTime==last[i][I_CB.oldestBarTime]) {                 // Baranzahl gleich und älteste Bar noch dieselbe
+      if (vol != last[i][I_CB.newestBarVol])            changedBars = 1;                              // normaler Tick (mit/ohne Lücke)
+      else                                              changedBars = 0;                              // synthetischer Tick oder sonstiger start()-Aufruf
+   }
    else {
-      if (bars == prev[i][I_CB_BARS])                                                                    // Wenn dies passiert (im Tester?) und Bars "hinten hinausgeschoben" wurden, muß die Bar
-         warn("iChangedBars(2)  bars==prev.bars = "+ bars +" (did we hit MAX_CHART_BARS?)");             // mit prev.firstBarTime gesucht und der Wert von changedBars daraus abgeleitet werden.
+      if (bars == last[i][I_CB.bars])                                                                 // Wenn dies passiert (im Tester?) und Bars "hinten hinausgeschoben" wurden, muß die Bar
+         warn("iChangedBars(2)  bars==last.bars = "+ bars +" (did we hit MAX_CHART_BARS?)");          // mit last.firstBarTime gesucht und der Wert von changedBars daraus abgeleitet werden.
 
-      if (firstBarTime != prev[i][I_CB_FIRST_BAR_TIME]) changedBars = bars - prev[i][I_CB_BARS] + 1;     // neue Bars zu Beginn hinzugekommen
-      else                                           changedBars = bars;                                 // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
+      if (newestBarTime != last[i][I_CB.newestBarTime]) changedBars = bars - last[i][I_CB.bars] + 1;  // neue Bars zu Beginn hinzugekommen
+      else                                              changedBars = bars;                           // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
    }
 
-   prev[i][I_CB_TICK          ] = Tick;
-   prev[i][I_CB_BARS          ] = bars;
-   prev[i][I_CB_CHANGED_BARS  ] = changedBars;
-   prev[i][I_CB_FIRST_BAR_TIME] = firstBarTime;
-   prev[i][I_CB_LAST_BAR_TIME ] = lastBarTime;
+   last[i][I_CB.tick         ] = Tick;
+   last[i][I_CB.bars         ] = bars;
+   last[i][I_CB.changedBars  ] = changedBars;
+   last[i][I_CB.oldestBarTime] = oldestBarTime;
+   last[i][I_CB.newestBarTime] = newestBarTime;
+   last[i][I_CB.newestBarVol ] = vol;
 
    return(changedBars);
 }

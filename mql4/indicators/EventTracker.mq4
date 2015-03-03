@@ -391,7 +391,9 @@ int onTick() {
 
    // (2) Price-Events überwachen
    if (track.price) {
-      HandleEvent(EVENT_NEW_TICK);
+      //HandleEvent(EVENT_NEW_TICK);
+      int iNull[];
+      onNewTick(iNull);
    }
 
    return(ShowStatus(last_error));
@@ -413,18 +415,18 @@ bool EventListener.NewTick(int results[], int flags=NULL) {
 
    int      vol   = Volume[0];
    datetime time  = MarketInfo(Symbol(), MODE_TIME);
-   bool isNewTick, exactly;
+   bool newTick, exactMatch;
 
    if (Bid && Ask && vol && time) {                                  // wenn aktueller Tick gültig ist
       if (lastTime != 0) {                                           // wenn letzter Tick gültig war
-         if      (NE(Bid, lastBid)) isNewTick = true;                // wenn der aktuelle Tick ungleich dem letztem Tick ist
-         else if (NE(Ask, lastAsk)) isNewTick = true;
-         else if (vol  != lastVol ) isNewTick = true;
-         else if (time != lastTime) isNewTick = true;
+         if      (vol  != lastVol ) newTick = true;                  // wenn der aktuelle Tick ungleich dem letztem Tick ist
+         else if (NE(Bid, lastBid)) newTick = true;
+         else if (NE(Ask, lastAsk)) newTick = true;
+         else if (time != lastTime) newTick = true;
 
-         if (!isNewTick) {
+         if (!newTick) {
             //debug("EventListener.NewTick(zTick="+ zTick +")  current tick == last tick");
-            exactly = true;
+            exactMatch = true;
          }
       }
       lastBid  = Bid;                                                // aktuellen Tick speichern, wenn er gültig ist
@@ -433,10 +435,10 @@ bool EventListener.NewTick(int results[], int flags=NULL) {
       lastTime = time;
    }
 
-   //if      (isNewTick) debug("EventListener.NewTick(zTick="+ zTick +")     new tick: Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  vol="+ vol +"  time="+ DateToStr(time, "w, D.M.Y H:I:S"));
-   //else if (!exactly ) debug("EventListener.NewTick(zTick="+ zTick +")  no new tick: Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  vol="+ vol +"  time="+ DateToStr(time, "w, D.M.Y H:I:S"));
+   //if      (newTick    ) debug("EventListener.NewTick(zTick="+ zTick +")     new tick: Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  vol="+ vol +"  time="+ DateToStr(time, "w, D.M.Y H:I:S"));
+   //else if (!exactMatch) debug("EventListener.NewTick(zTick="+ zTick +")  no new tick: Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  vol="+ vol +"  time="+ DateToStr(time, "w, D.M.Y H:I:S"));
 
-   return(isNewTick);
+   return(newTick);
 }
 
 
@@ -448,8 +450,6 @@ bool EventListener.NewTick(int results[], int flags=NULL) {
  * @return bool - Erfolgsstatus
  */
 bool onNewTick(int data[]) {
-   //if (!IsTesting()) debug("onNewTick()");
-
    int  size = ArrayRange(price.config, 0);
    bool success;
 
@@ -817,7 +817,7 @@ bool CheckBarRangeSignal.Init(int index) {
    //if (lowBar  != iLowest (NULL, dataTimeframe, MODE_LOW,  lowBar +1, 0)) L = NULL;    // Low ist bereits gebrochen
 
 
-   debug("CheckBarRangeSignal.Init(0.3)  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(levelH, PriceFormat) +"  L="+ NumberToStr(levelL, PriceFormat));
+   debug("CheckBarRangeSignal.Init(0.3)  sig="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(levelH, PriceFormat) +"  L="+ NumberToStr(levelL, PriceFormat));
 
 
    // (5) Daten speichern
@@ -944,10 +944,15 @@ bool CheckBreakoutSignal(int index) {
    int      dataTimeframe      = price.data  [index][I_SBB_TIMEFRAME         ];
    int      dataSessionEndBar  = price.data  [index][I_SBB_ENDBAR            ];
    datetime lastSessionEndTime = price.data  [index][I_SBB_SESSION_END       ];
-   //debug("CheckBreakoutSignal(0.1)  sig="+ index);
 
 
-   // (1) Prüfen, ob changedBars(dataTimeframe) eine Aktualisierung der Preislevel erfordert (Re-Initialisierung)
+   // (1) aktuellen Tick klassifizieren
+   int iNull[];
+   bool newTick = EventListener.NewTick(iNull);
+   //if (!newTick) debug("CheckBreakoutSignal(0.1)       sig="+ index +"  "+ ifString(newTick, "new", "old") +" tick");
+
+
+   // (2) changedBars(dataTimeframe) für den Daten-Timeframe ermitteln
    int oldError    = last_error;
    int changedBars = iChangedBars(NULL, dataTimeframe, MUTE_ERR_SERIES_NOT_AVAILABLE);
    if (changedBars == -1) {                                                // Fehler
@@ -955,25 +960,28 @@ bool CheckBreakoutSignal(int index) {
          return(_true(SetLastError(oldError)));                            // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
       return(false);
    }
+   //debug("CheckBreakoutSignal(0.2)       sig="+ index +"  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
    if (!changedBars)                                                       // z.B. bei künstlichem Tick oder Aufruf in init() oder deinit()
       return(true);
 
-   // Eine Aktualisierung ist notwendig, wenn der Bereich der changedBars(dataTimeframe) den Barbereich der Referenzsession überlappt (Re-Initialisierung)
-   // oder wenn die nächste Periode der Referenzsession begonnen hat (automatischer Signal-Reset bei onBarOpen).
-   if (changedBars > 1) {
-      debug("CheckBreakoutSignal(0.2)  sig="+ index +"  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
-   }
-   bool updated;
+
+   // (3) Prüflevel re-initialisieren, wenn:
+   //     - der Bereich der changedBars(dataTimeframe) den Barbereich der Referenzsession überlappt (ggf. Ausnahme bei Bar[0], siehe dort) oder wenn
+   //     - die nächste Periode der Referenzsession begonnen hat (automatischer Signal-Reset nach onBarOpen)
+   bool reinitialized;
    if (changedBars > dataSessionEndBar) {
-      if (!CheckBreakoutSignal.Init(index)) return(false);                 // Re-Initialisierung
-      updated = true;
+      // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird nur re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
+      if (changedBars > 1 || dataSessionEndBar > 0 || !newTick) {
+         if (!CheckBreakoutSignal.Init(index)) return(false);
+         reinitialized = true;
+      }
    }
-   else if (changedBars > 1) /*&&*/ if (iTime(NULL, dataTimeframe, 0) >= lastSessionEndTime) {
-      if (!CheckBreakoutSignal.Init(index)) return(false);                 // automatischer Signal-Reset: neue Periode im Timeframe der Referenzsession (onBarOpen)
-      updated = true;                                                      // Der erste Test auf (changedBars > 1) stellt sicher, daß iTime() nicht unnötigerweise bei jedem Tick
+   else if (changedBars > 1) /*&&*/ if (iTime(NULL, dataTimeframe, 0) > lastSessionEndTime) {
+      if (!CheckBreakoutSignal.Init(index)) return(false);                 // automatischer Signal-Reset: neue Periode im Timeframe der Referenzsession
+      reinitialized = true;                                                // Der Test auf (changedBars > 1) ist nicht zwingend nötig, sorgt aber dafür, daß iTime() nicht bei jedem Tick
    }                                                                       // aufgerufen wird.
-   if (updated) {
-      signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];
+   if (reinitialized) {
+      signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];           // neue Werte nach Aktualisierung nochmal einlesen
       signalLevelL       = price.data[index][I_SBB_LEVEL_L    ];
       dataTimeframe      = price.data[index][I_SBB_TIMEFRAME  ];
       dataSessionEndBar  = price.data[index][I_SBB_ENDBAR     ];
@@ -981,29 +989,29 @@ bool CheckBreakoutSignal(int index) {
    }
 
 
-   // (2) Signallevel prüfen
+   // (4) Signallevel prüfen
    double price = NormalizeDouble(Bid, Digits);
 
    if (signalLevelH != NULL) {
       if (GE(price, signalLevelH)) {
          if (GT(price, signalLevelH)) {
-            debug("CheckBreakoutSignal(0.3)  sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            debug("CheckBreakoutSignal(0.3)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
             signalLevelH                     = NULL;
             price.data[index][I_SBB_LEVEL_H] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)  sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
       }
    }
    if (signalLevelL != NULL) {
       if (LE(price, signalLevelL)) {
          if (LT(price, signalLevelL)) {
-            debug("CheckBreakoutSignal(0.5)  sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            debug("CheckBreakoutSignal(0.5)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
             signalLevelL                     = NULL;
             price.data[index][I_SBB_LEVEL_L] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)  sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
       }
    }
 
