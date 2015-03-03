@@ -154,7 +154,7 @@ bool Configure() {
       int account = GetAccountNumber();
       if (!account) return(!SetLastError(stdlib.GetLastError()));
 
-      string keys[], keyValues[], key, sValue, sValue1, sValue2, sValue3, sDigits, iniValue;
+      string keys[], keyValues[], key, sValue, sValue1, sValue2, sValue3, sDigits, sParam, iniValue;
       bool   signal.enabled;
       int    iValue, iValue1, iValue2, iValue3, valuesSize, sLen, signal.id, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3, configSize;
       double dValue, dValue1, dValue2, dValue3;
@@ -245,46 +245,43 @@ bool Configure() {
             else if (sValue == "BARBREAKOUT") signal.id = ET_PRICE_BAR_BREAKOUT;
             else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          }
+         //debug("Configure(0.1)  "+ StringsToStr(keyValues, NULL));
 
-         // zusätzliche Parameter: nur bei ET_PRICE_BAR_BREAKOUT
-         if (valuesSize >= 3) {
-            continue;                                                                              // zur Zeit noch nicht unterstützt
-            sValue = StringTrim(keyValues[2]);
-            if (signal.id == ET_PRICE_BAR_BREAKOUT) {
-               if      (sValue == "ONTOUCH") signal.param1 = NULL;
-               else if (sValue == "RESET"  ) signal.param2 = NULL;
-               else return(!catch("Configure(8)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            }
+         // zusätzliche Parameter
+         if (valuesSize == 3) {
+            sParam = StringTrim(keyValues[2]);
+            sValue = GetIniString(file, section, keys[i], "");
+            if (!Configure.Set(signal.id, signal.timeframe, signal.bar, sParam, sValue))
+               return(!catch("Configure(8)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            //debug("Configure(0.2)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +"."+ sParam +" = "+ sValue);
+            continue;
          }
-         debug("Configure(0.1)  "+ StringsToStr(keyValues, NULL));
+
+         // nicht unterstützte Parameter
+         if (valuesSize > 3) return(!catch("Configure(9)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
 
          // (2.3) ini-Value parsen
          iniValue = GetIniString(file, section, keys[i], "");
-         debug("Configure(0.2)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +" = "+ iniValue);
+         //debug("Configure(0.3)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +" = "+ iniValue);
 
          if (signal.id == ET_PRICE_BAR_CLOSE) {
             signal.enabled = GetIniBool(file, section, keys[i], false);
             signal.param1  = NULL;
-            signal.param2  = NULL;
-            signal.param3  = NULL;
          }
          else if (signal.id == ET_PRICE_BAR_RANGE) {
             sValue1 = iniValue;
             if (StringEndsWith(sValue1, "%"))
                sValue1 = StringTrim(StringLeft(sValue1, -1));
-            if (!StringIsDigit(sValue1))       return(!catch("Configure(9)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StringIsDigit(sValue1))       return(!catch("Configure(10)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             iValue1 = StrToInteger(sValue1);
-            if (iValue1 < 0 || iValue1 >= 100) return(!catch("Configure(10)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (iValue1 < 0 || iValue1 >= 100) return(!catch("Configure(11)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             signal.enabled = (iValue1 != 0);
             signal.param1  = iValue1;
-            signal.param2  = NULL;
-            signal.param3  = NULL;
          }
          else if (signal.id == ET_PRICE_BAR_BREAKOUT) {
             signal.enabled = GetIniBool(file, section, keys[i], false);
             signal.param1  = NULL;
-            signal.param2  = NULL;
-            signal.param3  = NULL;
          }
 
          // (2.4) Signal zur Konfiguration hinzufügen
@@ -296,8 +293,6 @@ bool Configure() {
          price.config[configSize][I_PRICE_CONFIG_TIMEFRAME] = signal.timeframe;
          price.config[configSize][I_PRICE_CONFIG_BAR      ] = signal.bar;
          price.config[configSize][I_PRICE_CONFIG_PARAM1   ] = signal.param1;
-         price.config[configSize][I_PRICE_CONFIG_PARAM2   ] = signal.param2;
-         price.config[configSize][I_PRICE_CONFIG_PARAM3   ] = signal.param3;
       }
 
       // (2.5) Signale initialisieren
@@ -311,7 +306,7 @@ bool Configure() {
                case ET_PRICE_BAR_RANGE   : success = CheckBarRangeSignal.Init(i); break;
                case ET_PRICE_BAR_BREAKOUT: success = CheckBreakoutSignal.Init(i); break;
                default:
-                  catch("Configure(11)  unknown price signal["+ i +"] = "+ price.config[i][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR);
+                  catch("Configure(12)  unknown price signal["+ i +"] = "+ price.config[i][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR);
             }
          }
          if (!success) return(false);
@@ -331,8 +326,8 @@ bool Configure() {
          alerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
          alerts.sms          = StringIsPhoneNumber(alerts.sms.receiver);
          if (!alerts.sms) {
-            if (sValue == "system") return(!catch("Configure(12)  "+ ifString(alerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ alerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            else                    return(!catch("Configure(13)  Invalid input parameter Alerts.SMS.Receiver = \""+ Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
+            if (sValue == "system") return(!catch("Configure(13)  "+ ifString(alerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ alerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else                    return(!catch("Configure(14)  Invalid input parameter Alerts.SMS.Receiver = \""+ Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
          }
       }
       else alerts.sms = false;
@@ -345,12 +340,12 @@ bool Configure() {
       if (__SMS.alerts) {
          __SMS.receiver = GetGlobalConfigString("SMS", "Receiver", "");
          __SMS.alerts   = StringIsPhoneNumber(__SMS.receiver);
-         if (!__SMS.alerts)         return(!catch("Configure(14)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!__SMS.alerts)         return(!catch("Configure(15)  invalid config value [SMS]->Receiver = \""+ __SMS.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
    }
 
 
-   int error = catch("Configure(15)");
+   int error = catch("Configure(16)");
    if (!error) {
       ShowStatus();
       if (false) {
@@ -365,6 +360,68 @@ bool Configure() {
       }
    }
    return(!error);
+}
+
+
+/**
+ * Setzt einen Signal-Parameter.
+ *
+ * @param  int    signalId        - ID des Signals
+ * @param  int    signalTimeframe - Timeframe des Signals
+ * @param  int    signalBar       - Offset-Bar des Signals
+ * @param  string name            - Name des zu setzenden Parameters
+ * @param  string value           - Wert des zu setzenden Parameters
+ *
+ * @return bool - Erfogsstatus
+ */
+bool Configure.Set(int signalId, int signalTimeframe, int signalBar, string name, string value) {
+   int len  = StringLen(value); if (!len) return(false);
+   int size = ArrayRange(price.config, 0);
+
+   for (int i=0; i < size; i++) {
+      if (price.config[i][I_PRICE_CONFIG_ID] == signalId)
+         if (price.config[i][I_PRICE_CONFIG_TIMEFRAME] == signalTimeframe)
+            if (price.config[i][I_PRICE_CONFIG_BAR] == signalBar)
+               break;
+   }
+   if (i == size) return(false);
+   // i enthält hier immer den Index des zu modifizierenden Signals
+
+
+   if (signalId == ET_PRICE_BAR_BREAKOUT) {
+      if (name == "ONTOUCH") {
+         price.config[i][I_PRICE_CONFIG_PARAM1] = StrToBool(value);
+         return(true);
+      }
+
+      if (name == "RESET") {
+         if (signalBar == 0) {                                                            // 15 [minute|hour|day][s]: bis jetzt nur in Bar[0] implementiert
+            if (!StringIsDigit(StringLeft(value, 1)))
+               return(false);
+
+            string sDigits = StringLeft(value, 1);                                        // Zahl vorn parsen
+            for (int char, j=1; j < len; j++) {
+               char = StringGetChar(value, j);
+               if ('0'<=char && char<='9') sDigits = StringLeft(value, j+1);
+               else                        break;
+            }
+            int iValue = StrToInteger(sDigits);
+            value      = StringToUpper(StringTrim(StringRight(value, -j)));               // Zahl vorn abschneiden
+            if (StringEndsWith(value, "S")) value = StringTrim(StringLeft (value, -1));   // ggf. "s" hinten abschneiden
+
+            if      (value == "MINUTE") iValue *= MINUTES;
+            else if (value == "HOUR"  ) iValue *= HOURS;
+            else if (value == "DAY"   ) iValue *= DAYS;
+            else if (value == "WEEK"  ) iValue *= WEEKS;
+            else return(false);
+
+            price.config[i][I_PRICE_CONFIG_PARAM2] = iValue;
+         }
+         return(true);
+      }
+   }
+
+   return(false);
 }
 
 
@@ -766,12 +823,12 @@ bool CheckBarRangeSignal.Init(int index) {
    if ( price.config[index][I_PRICE_CONFIG_ID     ] != ET_PRICE_BAR_RANGE) return(!catch("CheckBarRangeSignal.Init(1)  signal "+ index +" is not a bar range signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])                       return(true);
 
-   int      signal.timeframe  = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
-   int      signal.bar        = price.config[index][I_PRICE_CONFIG_BAR      ];
-   int      signal.barRange   = price.config[index][I_PRICE_CONFIG_PARAM1   ];
-   int      signal.resetAfter = price.config[index][I_PRICE_CONFIG_PARAM2   ]; if (signal.bar != 0) signal.resetAfter = NULL;
+   int      signal.timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int      signal.bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
+   int      signal.barRange  = price.config[index][I_PRICE_CONFIG_PARAM1   ];
+   int      signal.reset     = price.config[index][I_PRICE_CONFIG_PARAM2   ]; if (signal.bar != 0) signal.reset = NULL;
 
-   int      dataTimeframe     = Min(signal.timeframe, PERIOD_H1);                      // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
+   int      dataTimeframe    = Min(signal.timeframe, PERIOD_H1);                       // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
    datetime lastSessionEndTime;                                                        // Ende der jüngsten Session mit vorhandenen Daten (Bar[0]; danach Re-Initialisierung)
 
 
@@ -864,12 +921,12 @@ bool CheckBreakoutSignal.Init(int index) {
    if ( price.config[index][I_PRICE_CONFIG_ID     ] != ET_PRICE_BAR_BREAKOUT) return(!catch("CheckBreakoutSignal.Init(1)  signal "+ index +" is not a breakout signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])                          return(true);
 
-   int      signal.timeframe  = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
-   int      signal.bar        = price.config[index][I_PRICE_CONFIG_BAR      ];
-   bool     signal.onTouch    = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
-   int      signal.resetAfter = price.config[index][I_PRICE_CONFIG_PARAM2   ]; if (signal.bar > 0) signal.resetAfter = 0;
+   int      signal.timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int      signal.bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
+   bool     signal.onTouch   = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
+   int      signal.reset     = price.config[index][I_PRICE_CONFIG_PARAM2   ]; if (signal.bar > 0) signal.reset = NULL;
 
-   int      dataTimeframe     = Min(signal.timeframe, PERIOD_H1);                      // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
+   int      dataTimeframe    = Min(signal.timeframe, PERIOD_H1);                       // der zur Prüfung verwendete Timeframe (maximal PERIOD_H1)
    datetime lastSessionEndTime;                                                        // Ende der jüngsten Session mit vorhandenen Daten (Bar[0]; danach Re-Initialisierung)
 
 
@@ -908,7 +965,7 @@ bool CheckBreakoutSignal.Init(int index) {
    if (lowBar  != iLowest (NULL, dataTimeframe, MODE_LOW,  lowBar +1, 0)) L = NULL;    // Low ist bereits gebrochen
 
 
-   debug("CheckBreakoutSignal.Init(0.3)  sig="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
+   //debug("CheckBreakoutSignal.Init(0.3)  sig="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
 
 
    // (4) Daten speichern
@@ -936,7 +993,8 @@ bool CheckBreakoutSignal(int index) {
    int      signal.timeframe   = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
    int      signal.bar         = price.config[index][I_PRICE_CONFIG_BAR      ];
    bool     signal.onTouch     = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
-   int      signal.resetAfter  = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+   int      signal.reset       = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+   //debug("CheckBreakoutSignal(0.1)       sig="+ index +"  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +"  onTouch="+ signal.onTouch +"  reset="+ signal.reset);
 
    double   signalLevelH       = price.data  [index][I_SBB_LEVEL_H           ];
    double   signalLevelL       = price.data  [index][I_SBB_LEVEL_L           ];
@@ -958,7 +1016,7 @@ bool CheckBreakoutSignal(int index) {
          return(_true(SetLastError(oldError)));                            // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
       return(false);
    }
-   //debug("CheckBreakoutSignal(0.1)       sig="+ index +"  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
+   //debug("CheckBreakoutSignal(0.2)       sig="+ index +"  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
    if (!changedBars)                                                       // z.B. bei Aufruf in init() oder deinit()
       return(true);
 
@@ -994,23 +1052,23 @@ bool CheckBreakoutSignal(int index) {
    if (signalLevelH != NULL) {
       if (GE(price, signalLevelH)) {
          if (GT(price, signalLevelH)) {
-            debug("CheckBreakoutSignal(0.2)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            debug("CheckBreakoutSignal(0.3)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
             signalLevelH                     = NULL;
             price.data[index][I_SBB_LEVEL_H] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.3)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
       }
    }
    if (signalLevelL != NULL) {
       if (LE(price, signalLevelL)) {
          if (LT(price, signalLevelL)) {
-            debug("CheckBreakoutSignal(0.4)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            debug("CheckBreakoutSignal(0.5)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
             signalLevelL                     = NULL;
             price.data[index][I_SBB_LEVEL_L] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.5)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
       }
    }
 
