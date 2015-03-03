@@ -971,7 +971,7 @@ bool CheckBreakoutSignal(int index) {
    bool reinitialized;
    if (changedBars > dataSessionEndBar) {
       // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird nur re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
-      if (changedBars > 1 || dataSessionEndBar > 0 || !newTick) {
+      if (changedBars > 1 || !newTick) {
          if (!CheckBreakoutSignal.Init(index)) return(false);
          reinitialized = true;
       }
@@ -980,8 +980,9 @@ bool CheckBreakoutSignal(int index) {
       if (!CheckBreakoutSignal.Init(index)) return(false);                 // automatischer Signal-Reset: neue Periode im Timeframe der Referenzsession
       reinitialized = true;                                                // Der Test auf (changedBars > 1) ist nicht zwingend nötig, sorgt aber dafür, daß iTime() nicht bei jedem Tick
    }                                                                       // aufgerufen wird.
+
    if (reinitialized) {
-      signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];           // neue Werte nach Aktualisierung nochmal einlesen
+      signalLevelH       = price.data[index][I_SBB_LEVEL_H    ];           // Werte ggf. neueinlesen
       signalLevelL       = price.data[index][I_SBB_LEVEL_L    ];
       dataTimeframe      = price.data[index][I_SBB_TIMEFRAME  ];
       dataSessionEndBar  = price.data[index][I_SBB_ENDBAR     ];
