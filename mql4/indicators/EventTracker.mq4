@@ -948,7 +948,6 @@ bool CheckBreakoutSignal(int index) {
    // (1) aktuellen Tick klassifizieren
    int iNull[];
    bool newTick = EventListener.NewTick(iNull);
-   //if (!newTick) debug("CheckBreakoutSignal(0.1)       sig="+ index +"  "+ ifString(newTick, "new", "old") +" tick");
 
 
    // (2) changedBars(dataTimeframe) für den Daten-Timeframe ermitteln
@@ -959,8 +958,8 @@ bool CheckBreakoutSignal(int index) {
          return(_true(SetLastError(oldError)));                            // ERR_SERIES_NOT_AVAILABLE unterdrücken: Prüfung setzt fort, wenn Daten eingetroffen sind
       return(false);
    }
-   //debug("CheckBreakoutSignal(0.2)       sig="+ index +"  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
-   if (!changedBars)                                                       // z.B. bei künstlichem Tick oder Aufruf in init() oder deinit()
+   //debug("CheckBreakoutSignal(0.1)       sig="+ index +"  changedBars("+ PeriodDescription(dataTimeframe) +")="+ changedBars);
+   if (!changedBars)                                                       // z.B. bei Aufruf in init() oder deinit()
       return(true);
 
 
@@ -969,10 +968,10 @@ bool CheckBreakoutSignal(int index) {
    //     - die nächste Periode der Referenzsession begonnen hat (automatischer Signal-Reset nach onBarOpen)
    bool reinitialized;
    if (changedBars > dataSessionEndBar) {
-      // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird nur re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
+      // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
       if (changedBars > 1 || !newTick) {
-         if (!CheckBreakoutSignal.Init(index)) return(false);              // Damit wird bei synthetischen Ticks re-initialisiert, weil nicht ausgeschlossen werden kann, das ein
-         reinitialized = true;                                             // History-Update nur genau die letzte Bar(dataTimeframe) aktualisiert hat.
+         if (!CheckBreakoutSignal.Init(index)) return(false);              // Bei synthetischen Ticks wird also re-initialisiert, weil changedBars=0 in anderen als dem aktuellem
+         reinitialized = true;                                             // Timeframe nicht zuverlässig detektiert werden kann.
       }
    }
    else if (changedBars > 1) /*&&*/ if (iTime(NULL, dataTimeframe, 0) > lastSessionEndTime) {
@@ -995,23 +994,23 @@ bool CheckBreakoutSignal(int index) {
    if (signalLevelH != NULL) {
       if (GE(price, signalLevelH)) {
          if (GT(price, signalLevelH)) {
-            debug("CheckBreakoutSignal(0.3)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            debug("CheckBreakoutSignal(0.2)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
             signalLevelH                     = NULL;
             price.data[index][I_SBB_LEVEL_H] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.3)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
       }
    }
    if (signalLevelL != NULL) {
       if (LE(price, signalLevelL)) {
          if (LT(price, signalLevelL)) {
-            debug("CheckBreakoutSignal(0.5)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
+            debug("CheckBreakoutSignal(0.4)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("OrderModified.wav");
             signalLevelL                     = NULL;
             price.data[index][I_SBB_LEVEL_L] = NULL;
          }
-         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
+         //else if (signal.onTouch) debug("CheckBreakoutSignal(0.5)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
       }
    }
 
