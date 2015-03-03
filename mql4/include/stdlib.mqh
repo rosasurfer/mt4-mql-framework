@@ -467,6 +467,7 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
+   bool     StrToBool(string value);
    int      StrToMaMethod(string method, int execFlags); int StrToMovingAverageMethod(string method, int execFlags); // Alias
    int      StrToPeriod(string value);  int StrToTimeframe(string value);              // Alias
    int      PeriodFlag(int period);

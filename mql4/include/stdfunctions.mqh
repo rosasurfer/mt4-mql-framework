@@ -2753,6 +2753,27 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
 
 
 /**
+ * Konvertiert einen String in einen Boolean. Strings, die mit einer Zahl ungleich 0 beginnen sowie die Werte "TRUE", "YES" und "ON" werden als TRUE,
+ * alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden.
+ *
+ * @param  string value - der zu konvertierende String
+ *
+ * @return bool
+ */
+bool StrToBool(string value) {
+   value = StringTrim(StringToLower(value));
+
+   bool result;
+   if      (value == "1"   ) result = true;
+   else if (value == "true") result = true;
+   else if (value == "yes" ) result = true;
+   else if (value == "on"  ) result = true;
+
+   return(result);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -2853,6 +2874,7 @@ void __DummyCalls() {
    StringReplace(NULL, NULL, NULL);
    StringRightPad(NULL, NULL);
    StringSubstrFix(NULL, NULL);
+   StrToBool(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
    TimeDayFix(NULL);
