@@ -11,10 +11,6 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-double seriesBid;
-int    seriesVol;
-
-
 /**
  * Main-Funktion
  *
@@ -26,7 +22,6 @@ int onTick() {
    bool newTick_full     = EventListener.NewTick(iNull);
    bool newTick_no_time  = EventListener.NewTick_no_time();
    bool newTick_vol_only = EventListener.NewTick_vol_only();
-   bool newTick_series   = EventListener.NewTick_series();
 
    static double   lastBid, lastAsk;
    static int      lastVol;
@@ -37,10 +32,8 @@ int onTick() {
 
    if (Bid && Ask && vol && time) {
       if (lastTime != 0) {
-         if (newTick_full    != newTick_no_time ) debug("onTick(0.1)  newTick_full("+ newTick_full +") != newTick_no_time("+ newTick_no_time +")");
-         if (newTick_full    != newTick_vol_only) debug("onTick(0.2)  newTick_full("+ newTick_full +") != newTick_vol_only("+ newTick_vol_only +")");
-
-         if (newTick_full    != newTick_series  ) debug("onTick(0.3)  newTick_full("+ newTick_full +":"+ NumberToStr(Bid, PriceFormat) +") != newTick_series("+ newTick_series +":"+ NumberToStr(seriesBid, PriceFormat) +")");
+         if (newTick_full != newTick_no_time ) debug("onTick(0.1)  newTick_full("+ newTick_full +") != newTick_no_time("+ newTick_no_time +")");
+         if (newTick_full != newTick_vol_only) debug("onTick(0.2)  newTick_full("+ newTick_full +") != newTick_vol_only("+ newTick_vol_only +")");
       }
       lastBid  = Bid;
       lastAsk  = Ask;
@@ -128,61 +121,3 @@ bool EventListener.NewTick_vol_only() {
    }
    return(newTick);
 }
-
-
-/**
- * Prüft anhand einer anderen Datenreihe des aktuellen Symbols, ob der aktuelle Tick ein neuer Tick ist.
- *
- * @return bool - Ergebnis
- */
-bool EventListener.NewTick_series() {
-   static int lastVol;
-
-   int vol   = iVolume(Symbol(), PERIOD_H1, 0);
-   seriesBid =  iClose(Symbol(), PERIOD_H1, 0);
-   int error = GetLastError();
-   if (IsError(error))
-      debug("EventListener.NewTick_series()  vol="+ vol, error);
-
-   bool newTick;
-   if (vol != 0) {
-      newTick = (lastVol && vol!=lastVol);
-      lastVol = vol;
-   }
-   return(newTick);
-}
-
-
-/**
- * Main-Funktion
- *
- * @return int - Fehlerstatus
- *
-int onTick() {
-   //debug("onTick(1)");
-
-   string separator      = "";
-   int    lpLocalContext = GetBufferAddress(__ExecutionContext);
-
-   iCustom(NULL, Period(), "TestIndicator2",       //
-           separator,                              // ________________
-           lpLocalContext,                         // __SuperContext__
-           0,                                      // iBuffer
-           0);                                     // iBar
-
-   int error = GetLastError();
-   if (IsError(error))
-      return(error);
-
-   error = ec.LastError(__ExecutionContext);
-   if (IsError(error))
-      return(error);
-
-   return(last_error);
-}
-
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int ec.LastError(int ec[]);
-#import
-*/
