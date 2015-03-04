@@ -83,9 +83,9 @@ bool   track.price;
 
 // Alert-Konfiguration
 bool   alerts.sound;
-string sound.orderFailed    = "speech/OrderExecutionFailed.wav";
-string sound.positionOpened = "speech/OrderFilled.wav";
-string sound.positionClosed = "speech/PositionClosed.wav";
+string alerts.sound.orderFailed    = "speech/OrderExecutionFailed.wav";
+string alerts.sound.positionOpened = "speech/OrderFilled.wav";
+string alerts.sound.positionClosed = "speech/PositionClosed.wav";
 
 bool   alerts.mail;
 string alerts.mail.receiver = "";
@@ -120,6 +120,7 @@ int orders.knownOrders.type  [];
 
 int    price.config[][7];
 double price.data  [][9];                                            // je nach Signal unterschiedliche Laufzeitdaten zur Signalverwaltung
+string price.descr [];                                               // Signalbeschreibung für Statusanzeige
 
 
 /**
@@ -156,7 +157,7 @@ bool Configure() {
 
       string keys[], keyValues[], key, sValue, sValue1, sValue2, sValue3, sDigits, sParam, iniValue;
       bool   signal.enabled;
-      int    iValue, iValue1, iValue2, iValue3, valuesSize, sLen, signal.id, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3, configSize;
+      int    iValue, iValue1, iValue2, iValue3, valuesSize, sLen, signal.id, signal.bar, signal.timeframe, signal.param1, signal.param2, signal.param3;
       double dValue, dValue1, dValue2, dValue3;
 
       string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
@@ -307,21 +308,22 @@ bool Configure() {
          }
 
          // (2.4) Signal zur Konfiguration hinzufügen
-         configSize = ArrayRange(price.config, 0);
-         ArrayResize(price.config, configSize+1);
-         ArrayResize(price.data,   configSize+1);
-         price.config[configSize][I_PRICE_CONFIG_ID       ] = signal.id;
-         price.config[configSize][I_PRICE_CONFIG_ENABLED  ] = signal.enabled;          // (int) bool
-         price.config[configSize][I_PRICE_CONFIG_TIMEFRAME] = signal.timeframe;
-         price.config[configSize][I_PRICE_CONFIG_BAR      ] = signal.bar;
-         price.config[configSize][I_PRICE_CONFIG_PARAM1   ] = signal.param1;
+         int size = ArrayRange(price.config, 0);
+         ArrayResize(price.config, size+1);
+         ArrayResize(price.data,   size+1);
+         ArrayResize(price.descr,  size+1);
+         price.config[size][I_PRICE_CONFIG_ID       ] = signal.id;
+         price.config[size][I_PRICE_CONFIG_ENABLED  ] = signal.enabled;       // (int) bool
+         price.config[size][I_PRICE_CONFIG_TIMEFRAME] = signal.timeframe;
+         price.config[size][I_PRICE_CONFIG_BAR      ] = signal.bar;
+         price.config[size][I_PRICE_CONFIG_PARAM1   ] = signal.param1;
       }
 
       // (2.5) Signale initialisieren
       bool success;
-      configSize = ArrayRange(price.config, 0);
+      size = ArrayRange(price.config, 0);
 
-      for (i=0; i < configSize; i++) {
+      for (i=0; i < size; i++) {
          if (price.config[i][I_PRICE_CONFIG_ENABLED] != 0) {
             switch (price.config[i][I_PRICE_CONFIG_ID]) {
                case ET_PRICE_BAR_CLOSE   : success = CheckBarCloseSignal.Init(i); break;
@@ -710,7 +712,7 @@ bool onOrderFail(int tickets[]) {
 
    // ggf. Sound abspielen
    if (alerts.sound)
-      PlaySoundEx(sound.orderFailed);
+      PlaySoundEx(alerts.sound.orderFailed);
    return(!catch("onOrderFail(3)"));
 }
 
@@ -750,7 +752,7 @@ bool onPositionOpen(int tickets[]) {
 
    // ggf. Sound abspielen
    if (alerts.sound)
-      PlaySoundEx(sound.positionOpened);
+      PlaySoundEx(alerts.sound.positionOpened);
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -791,7 +793,7 @@ bool onPositionClose(int tickets[]) {
 
    // ggf. Sound abspielen
    if (alerts.sound)
-      PlaySoundEx(sound.positionClosed);
+      PlaySoundEx(alerts.sound.positionClosed);
    return(!catch("onPositionClose(3)"));
 }
 
@@ -807,6 +809,7 @@ bool CheckBarCloseSignal.Init(int index) {
    if ( price.config[index][I_PRICE_CONFIG_ID     ] != ET_PRICE_BAR_CLOSE) return(!catch("CheckBarCloseSignal.Init(1)  signal "+ index +" is not a bar close signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])                       return(true);
 
+   price.descr[index] = BarCloseSignalToStr(index);
    return(!catch("CheckBarCloseSignal.Init(2)"));
 }
 
@@ -823,6 +826,26 @@ bool CheckBarCloseSignal(int index) {
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])                       return(true);
 
    return(!catch("CheckBarCloseSignal(2)"));
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung eines BarClose-Signals zurück.
+ *
+ * @param  int index - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return string
+ */
+string BarCloseSignalToStr(int index) {
+   if (price.config[index][I_PRICE_CONFIG_ID] != ET_PRICE_BAR_CLOSE) return(_emptyStr(catch("BarCloseSignalToStr(1)  signal "+ index +" is not a bar close signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR)));
+
+   bool signal.enabled   = price.config[index][I_PRICE_CONFIG_ENABLED  ] != 0;
+   int  signal.timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int  signal.bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
+   int  signal.reset     = price.config[index][I_PRICE_CONFIG_PARAM1   ];
+
+   string description = "Signal  "+ (index+1) +"  at close of "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"] "+ ifString(signal.enabled, "enabled", "disabled");
+   return(description);
 }
 
 
@@ -905,6 +928,7 @@ bool CheckBarRangeSignal.Init(int index) {
    price.data[index][I_SBR_ENDBAR     ] = closeBar;
    price.data[index][I_SBR_SESSION_END] = lastSessionEndTime;
 
+   price.descr[index] = BarRangeSignalToStr(index);
    return(!catch("CheckBarRangeSignal.Init(3)"));
 }
 
@@ -921,6 +945,27 @@ bool CheckBarRangeSignal(int index) {
    if (!price.config[index][I_PRICE_CONFIG_ENABLED])                       return(true);
 
    return(!catch("CheckBarRangeSignal(2)"));
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung eines BarRange-Signals zurück.
+ *
+ * @param  int index - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return string
+ */
+string BarRangeSignalToStr(int index) {
+   if (price.config[index][I_PRICE_CONFIG_ID] != ET_PRICE_BAR_RANGE) return(_emptyStr(catch("BarRangeSignalToStr(1)  signal "+ index +" is not a bar range signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR)));
+
+   bool signal.enabled   = price.config[index][I_PRICE_CONFIG_ENABLED  ] != 0;
+   int  signal.timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int  signal.bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
+   int  signal.barRange  = price.config[index][I_PRICE_CONFIG_PARAM1   ];
+   int  signal.reset     = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+
+   string description = "Signal  "+ (index+1) +"  at "+ signal.barRange +"% of "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"] "+ ifString(signal.enabled, "enabled", "disabled");
+   return(description);
 }
 
 
@@ -997,6 +1042,7 @@ bool CheckBreakoutSignal.Init(int index) {
    price.data[index][I_SBB_ENDBAR     ] = closeBar;
    price.data[index][I_SBB_SESSION_END] = lastSessionEndTime;
 
+   price.descr[index] = BarBreakoutSignalToStr(index);
    return(!catch("CheckBreakoutSignal.Init(3)"));
 }
 
@@ -1076,8 +1122,9 @@ bool CheckBreakoutSignal(int index) {
          if (GT(price, signalLevelH)) {
             debug("CheckBreakoutSignal(0.3)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("_Up_Windows Alert.wav");
-            signalLevelH                     = NULL;
-            price.data[index][I_SBB_LEVEL_H] = NULL;
+            signalLevelH                      = NULL;
+            price.data [index][I_SBB_LEVEL_H] = NULL;
+            price.descr[index] = BarBreakoutSignalToStr(index);
          }
          //else if (signal.onTouch) debug("CheckBreakoutSignal(0.4)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
       }
@@ -1087,14 +1134,42 @@ bool CheckBreakoutSignal(int index) {
          if (LT(price, signalLevelL)) {
             debug("CheckBreakoutSignal(0.5)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
             PlaySoundEx("_Down_Dingdong.wav");
-            signalLevelL                     = NULL;
-            price.data[index][I_SBB_LEVEL_L] = NULL;
+            signalLevelL                      = NULL;
+            price.data [index][I_SBB_LEVEL_L] = NULL;
+            price.descr[index] = BarBreakoutSignalToStr(index);
          }
          //else if (signal.onTouch) debug("CheckBreakoutSignal(0.6)       sig="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
       }
    }
 
    return(!catch("CheckBreakoutSignal(2)"));
+}
+
+
+/**
+ * Gibt die lesbare Beschreibung eines BarBreakout-Signals zurück.
+ *
+ * @param  int index - Index in den zur Überwachung konfigurierten Signalen
+ *
+ * @return string
+ */
+string BarBreakoutSignalToStr(int index) {
+   if (price.config[index][I_PRICE_CONFIG_ID] != ET_PRICE_BAR_BREAKOUT) return(_emptyStr(catch("BarBreakoutSignalToStr(1)  signal "+ index +" is not a breakout signal = "+ price.config[index][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR)));
+
+   bool     signal.enabled     = price.config[index][I_PRICE_CONFIG_ENABLED  ] != 0;         //ifString(signal.enabled, "enabled", "disabled")
+   int      signal.timeframe   = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
+   int      signal.bar         = price.config[index][I_PRICE_CONFIG_BAR      ];
+   bool     signal.onTouch     = price.config[index][I_PRICE_CONFIG_PARAM1   ] != 0;
+   int      signal.reset       = price.config[index][I_PRICE_CONFIG_PARAM2   ];
+
+   double   signalLevelH       = price.data  [index][I_SBB_LEVEL_H           ];
+   double   signalLevelL       = price.data  [index][I_SBB_LEVEL_L           ];
+   int      dataTimeframe      = price.data  [index][I_SBB_TIMEFRAME         ];
+   int      dataSessionEndBar  = price.data  [index][I_SBB_ENDBAR            ];
+   datetime lastSessionEndTime = price.data  [index][I_SBB_SESSION_END       ];
+
+   string description = "Signal  "+ (index+1) +"  at breakout of "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]    High: "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "triggered") +"    Low: "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "triggered");
+   return(description);
 }
 
 
@@ -1112,26 +1187,14 @@ int ShowStatus(int error=NULL) {
    string msg = __NAME__;
    if (!error) msg = StringConcatenate(msg,                                      NL, NL);
    else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, NL);
-
-   int size = ArrayRange(price.config, 0);
-
-   for (int n, i=0; i < size; i++) {
-      n = i + 1;
-      switch (price.config[i][I_PRICE_CONFIG_ID]) {
-         case ET_PRICE_BAR_CLOSE:    msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Price close of "+ PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
-         case ET_PRICE_BAR_RANGE:    msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Price range of "+ PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
-         case ET_PRICE_BAR_BREAKOUT: msg = StringConcatenate(msg, "Signal ", n, " ", ifString(price.config[i][I_PRICE_CONFIG_ENABLED], "enabled", "disabled"), ":   Breakout of "   + PeriodDescription(price.config[i][I_PRICE_CONFIG_TIMEFRAME]) +"["+ price.config[i][I_PRICE_CONFIG_BAR] +"]", NL); break;
-         default:
-            return(catch("ShowStatus(1)  unknow price signal["+ i +"] = "+ price.config[i][I_PRICE_CONFIG_ID], ERR_RUNTIME_ERROR));
-      }
-   }
+               msg = StringConcatenate(msg, JoinStrings(price.descr, NL));
 
    // etwas Abstand nach oben für Instrumentanzeige
    Comment(StringConcatenate(NL, msg));
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
 
-   if (!catch("ShowStatus(3)"))
+   if (!catch("ShowStatus(1)"))
       return(error);
    return(last_error);
 }
