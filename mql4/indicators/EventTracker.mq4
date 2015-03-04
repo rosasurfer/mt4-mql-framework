@@ -965,7 +965,7 @@ bool CheckBreakoutSignal.Init(int index) {
    if (lowBar  != iLowest (NULL, dataTimeframe, MODE_LOW,  lowBar +1, 0)) L = NULL;    // Low ist bereits gebrochen
 
 
-   //debug("CheckBreakoutSignal.Init(0.3)  sig="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
+   debug("CheckBreakoutSignal.Init(0.3)  sig="+ index +"  "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]  H="+ NumberToStr(H, PriceFormat) +"  L="+ NumberToStr(L, PriceFormat));
 
 
    // (4) Daten speichern
