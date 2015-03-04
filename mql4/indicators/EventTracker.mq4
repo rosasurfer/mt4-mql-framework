@@ -19,11 +19,11 @@
  *
  *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
  *
- *      • Timeframe-ID: {number}{[Day|Week|Month][s]}Ago             ; Singular und Plural der Timeframe-Bezeichner sind austauschbar
- *                      Today                                        ; Synonym für 0DaysAgo
- *                      Yesterday                                    ; Synonym für 1DayAgo
- *                      This[Day|Week|Month]                         ; Synonym für 0[Days|Weeks|Months]Ago
- *                      Last[Day|Week|Month]                         ; Synonym für 1[Day|Week|Month]Ago
+ *      • Timeframe-ID: {number}[-]{Timeframe}[-]Ago                 ; [Timeframe|Day|Week|Month] Singular und Plural der Timeframe-Bezeichner sind austauschbar
+ *                      This[-]{Timeframe}                           ; Synonym für 0-{Timeframe}-Ago
+ *                      Last[-]{Timeframe}                           ; Synonym für 1-{Timeframe}-Ago
+ *                      Today                                        ; Synonym für 0-Days-Ago
+ *                      Yesterday                                    ; Synonym für 1-Day-Ago
  *
  *      • Signal-ID:    BarClose            = On|Off                 ; Erreichen des Close-Preises der Bar
  *                      BarRange            = {90}%                  ; Erreichen der {x}%-Schwelle der Bar-Range (100% = bisheriges High/Low)
@@ -183,22 +183,44 @@ bool Configure() {
             }
             else if (StringStartsWith(sValue, "THIS")) {
                signal.bar = 0;
-               sValue     = StringRight(sValue, -4);
+               sValue     = StringTrim(StringRight(sValue, -4));
+               if (StringStartsWith(sValue, "-"))
+                  sValue = StringTrim(StringRight(sValue, -1));                                    // ggf. "-" vorn abschneiden
                if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
                else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
                else if (sValue == "DAY"   ) signal.timeframe = PERIOD_D1;
                else if (sValue == "WEEK"  ) signal.timeframe = PERIOD_W1;
                else if (sValue == "MONTH" ) signal.timeframe = PERIOD_MN1;
+               else if (sValue == "M1"    ) signal.timeframe = PERIOD_M1;
+               else if (sValue == "M5"    ) signal.timeframe = PERIOD_M5;
+               else if (sValue == "M15"   ) signal.timeframe = PERIOD_M15;
+               else if (sValue == "M30"   ) signal.timeframe = PERIOD_M30;
+               else if (sValue == "H1"    ) signal.timeframe = PERIOD_H1;
+               else if (sValue == "H4"    ) signal.timeframe = PERIOD_H4;
+               else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
+               else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
+               else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
                else return(!catch("Configure(2)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             }
             else if (StringStartsWith(sValue, "LAST")) {
                signal.bar = 1;
-               sValue     = StringRight(sValue, -4);
+               sValue     = StringTrim(StringRight(sValue, -4));
+               if (StringStartsWith(sValue, "-"))
+                  sValue = StringTrim(StringRight(sValue, -1));                                    // ggf. "-" vorn abschneiden
                if      (sValue == "MINUTE") signal.timeframe = PERIOD_M1;
                else if (sValue == "HOUR"  ) signal.timeframe = PERIOD_H1;
                else if (sValue == "DAY"   ) signal.timeframe = PERIOD_D1;
                else if (sValue == "WEEK"  ) signal.timeframe = PERIOD_W1;
                else if (sValue == "MONTH" ) signal.timeframe = PERIOD_MN1;
+               else if (sValue == "M1"    ) signal.timeframe = PERIOD_M1;
+               else if (sValue == "M5"    ) signal.timeframe = PERIOD_M5;
+               else if (sValue == "M15"   ) signal.timeframe = PERIOD_M15;
+               else if (sValue == "M30"   ) signal.timeframe = PERIOD_M30;
+               else if (sValue == "H1"    ) signal.timeframe = PERIOD_H1;
+               else if (sValue == "H4"    ) signal.timeframe = PERIOD_H4;
+               else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
+               else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
+               else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
                else return(!catch("Configure(3)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             }
             else if (StringIsDigit(StringLeft(sValue, 1))) {
@@ -1053,7 +1075,7 @@ bool CheckBreakoutSignal(int index) {
       if (GE(price, signalLevelH)) {
          if (GT(price, signalLevelH)) {
             debug("CheckBreakoutSignal(0.3)       sig="+ index +"  new High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
-            PlaySoundEx("OrderModified.wav");
+            PlaySoundEx("_Up_Windows Alert.wav");
             signalLevelH                     = NULL;
             price.data[index][I_SBB_LEVEL_H] = NULL;
          }
@@ -1064,7 +1086,7 @@ bool CheckBreakoutSignal(int index) {
       if (LE(price, signalLevelL)) {
          if (LT(price, signalLevelL)) {
             debug("CheckBreakoutSignal(0.5)       sig="+ index +"  new Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"] = "+ NumberToStr(price, PriceFormat));
-            PlaySoundEx("OrderModified.wav");
+            PlaySoundEx("_Down_Dingdong.wav");
             signalLevelL                     = NULL;
             price.data[index][I_SBB_LEVEL_L] = NULL;
          }
