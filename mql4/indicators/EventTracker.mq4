@@ -1168,7 +1168,19 @@ string BarBreakoutSignalToStr(int index) {
    int      dataSessionEndBar  = price.data  [index][I_SBB_ENDBAR            ];
    datetime lastSessionEndTime = price.data  [index][I_SBB_SESSION_END       ];
 
-   string description = "Signal  "+ (index+1) +"  at breakout of "+ PeriodDescription(signal.timeframe) +"["+ signal.bar +"]    High: "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "triggered") +"    Low: "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "triggered");
+   string sBarDescription = PeriodDescription(signal.timeframe) +"["+ signal.bar +"]";
+   if      (sBarDescription == "M1[0]" ) sBarDescription = "This Minute";
+   else if (sBarDescription == "M1[1]" ) sBarDescription = "Last Minute";
+   else if (sBarDescription == "H1[0]" ) sBarDescription = "This Hour";
+   else if (sBarDescription == "H1[1]" ) sBarDescription = "Last Hour";
+   else if (sBarDescription == "D1[0]" ) sBarDescription = "Today";
+   else if (sBarDescription == "D1[1]" ) sBarDescription = "Yesterday";
+   else if (sBarDescription == "W1[0]" ) sBarDescription = "This Week";
+   else if (sBarDescription == "W1[1]" ) sBarDescription = "Last Week";
+   else if (sBarDescription == "MN1[0]") sBarDescription = "This Month";
+   else if (sBarDescription == "MN1[1]") sBarDescription = "Last Month";
+
+   string description = "Signal  "+ (index+1) +"  at break of "+ sBarDescription +"    High: "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "triggered") +"    Low: "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "triggered");
    return(description);
 }
 
@@ -1178,25 +1190,21 @@ string BarBreakoutSignalToStr(int index) {
  *
  * @param  int error - anzuzeigender Fehler (default: keiner)
  *
- * @return int - der übergebene Fehler oder der Fehlerstatus der Funktion, falls kein Fehler übergeben wurde
+ * @return int - der übergebene Fehler
  */
 int ShowStatus(int error=NULL) {
    if (__STATUS_OFF)
       error = __STATUS_OFF.reason;
 
    string msg = __NAME__;
-   if (!error) msg = StringConcatenate(msg,                                      NL, NL);
-   else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, NL);
+   if (!error) msg = StringConcatenate(msg,                                      NL, "-------------------------", NL);
+   else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, "-------------------------", NL);
                msg = StringConcatenate(msg, JoinStrings(price.descr, NL));
 
-   // etwas Abstand nach oben für Instrumentanzeige
-   Comment(StringConcatenate(NL, msg));
+   Comment(NL + msg);
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
-
-   if (!catch("ShowStatus(1)"))
-      return(error);
-   return(last_error);
+   return(error);
 }
 
 

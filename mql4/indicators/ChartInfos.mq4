@@ -1463,7 +1463,7 @@ bool UpdatePositions() {
 
    // (2) Einzelpositionsanzeige unten links
    // Spalten:          Direction:, LotSize, BE:, BePrice, Profit:, ProfitAmount, ProfitPercent, Comment
-   int col.xShifts[] = {20,         59,      135, 160,     231,     263,          366,           411}, cols=ArraySize(col.xShifts), yDist=3;
+   int col.xShifts[] = {20,         59,      135, 160,     226,     258,          345,           406}, cols=ArraySize(col.xShifts), yDist=3;
    int iePositions   = ArrayRange(positions.idata, 0);
    int positions     = iePositions + lfxOrders.openPositions;        // nur einer der beiden Werte kann ungleich 0 sein
 
@@ -2190,7 +2190,7 @@ bool CustomPositions.ReadConfig() {
                }
 
                else if (StringStartsWith(values[n], "E")) {           // Equity
-                  strSize = StringTrim(StringRight(values[n], -2));
+                  strSize = StringTrim(StringRight(values[n], ifInt(!StringStartsWith(values[n], "EQ"), -1, -2)));
                   if (!StringIsNumeric(strSize))                      return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = NULL;
                   confTypeValue = TYPE_EQUITY;
