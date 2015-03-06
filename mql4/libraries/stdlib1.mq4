@@ -8088,24 +8088,30 @@ bool SendSMS(string receiver, string message) {
 
 
    // (1) Zugangsdaten für SMS-Gateway holen
+   // Service-Provider
+   string section  = "SMS";
+   string key      = "Provider";
+   string provider = GetGlobalConfigString(section, key, "");
+   if (!StringLen(provider)) return(!catch("SendSMS(2)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
    // Username
-   string section = "Clickatell";
-   string key     = "username";
+   section = "SMS."+ provider;
+   key     = "username";
    string username = GetGlobalConfigString(section, key, "");
-   if (!StringLen(username)) return(!catch("SendSMS(2)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(username)) return(!catch("SendSMS(3)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Password
    key = "password";
    string password = GetGlobalConfigString(section, key, "");
-   if (!StringLen(password)) return(!catch("SendSMS(3)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(password)) return(!catch("SendSMS(4)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // API-ID
    key = "api_id";
    int api_id = GetGlobalConfigInt(section, key, 0);
    if (api_id <= 0) {
       string value = GetGlobalConfigString(section, key, "");
-      if (!StringLen(value)) return(!catch("SendSMS(4)  missing setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
-                             return(!catch("SendSMS(5)  invalid setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+      if (!StringLen(value)) return(!catch("SendSMS(5)  missing setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
+                             return(!catch("SendSMS(6)  invalid setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
    }
 
 
@@ -8123,7 +8129,7 @@ bool SendSMS(string receiver, string message) {
    // (3) Shellaufruf
    int result = WinExec(cmdLine, SW_HIDE);
    if (result < 32)
-      return(!catch("SendSMS(6)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+      return(!catch("SendSMS(7)->kernel32::WinExec(cmd=\""+ cmd +"\")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    /**
     * TODO: Fehlerauswertung nach dem Versand:
@@ -8138,9 +8144,9 @@ bool SendSMS(string receiver, string message) {
     * Giving up.
     */
 
-   if (__LOG) log("SendSMS(7)  SMS sent to "+ receiver +": \""+ message +"\"");
+   if (__LOG) log("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
 
-   return(!catch("SendSMS(8)"));
+   return(!catch("SendSMS(9)"));
 }
 
 
