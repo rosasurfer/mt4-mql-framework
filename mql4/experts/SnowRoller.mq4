@@ -67,18 +67,8 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
-#include <core/expert.mqh>
-#include <stdfunctions.mqh>
-#include <stdlib.mqh>
 
-#include <win32api.mqh>
-#include <SnowRoller/define.mqh>
-#include <SnowRoller/functions.mqh>
-#include <iCustom/icMovingAverage.mqh>
-#include <structs/pewa/ORDER_EXECUTION.mqh>
-
-
-///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////// Konfiguration //////////////////////////////////////////////////////////////////////////////////////
 
 extern /*sticky*/ string Sequence.ID             = "";
 extern            string GridDirection           = "Long | Short";
@@ -92,7 +82,17 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
        /*sticky*/ int    startStopDisplayMode    = SDM_PRICE;        // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
        /*sticky*/ int    orderDisplayMode        = ODM_NONE;         // Terminal-Restart, Profilwechsel und Recompilation.
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/expert.mqh>
+#include <stdfunctions.mqh>
+#include <stdlib.mqh>
+
+#include <win32api.mqh>
+#include <SnowRoller/define.mqh>
+#include <SnowRoller/functions.mqh>
+#include <iCustom/icMovingAverage.mqh>
+#include <structs/pewa/ORDER_EXECUTION.mqh>
 
 
 string   last.Sequence.ID             = "";                          // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE

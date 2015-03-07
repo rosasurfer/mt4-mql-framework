@@ -2,6 +2,9 @@
 #define __TYPE__         T_SCRIPT
 #define __lpSuperContext NULL
 
+extern string ___________________________;
+extern string LogLevel = "inherit";
+
 
 /**
  * Globale init()-Funktion für Scripte.

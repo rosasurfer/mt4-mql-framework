@@ -4,22 +4,21 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+
+#property show_inputs
+////////////////////////////////////////////////////////////////////////////////////// Konfiguration //////////////////////////////////////////////////////////////////////////////////////
+
+extern string Close.Symbols      = "";                               // Symbole:                      kommagetrennt
+extern string Close.Direction    = "";                               // (B)uy|(L)ong|(S)ell|(S)hort
+extern string Close.Tickets      = "";                               // Tickets:                      kommagetrennt
+extern string Close.MagicNumbers = "";                               // MagicNumbers:                 kommagetrennt
+extern string Close.Comments     = "";                               // Kommentare:                   kommagetrennt, Prüfung per OrderComment().StringIStartsWith(value)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-
-#property show_inputs
-
-
-//////////////////////////////////////////////////////////////// Externe Parameter ////////////////////////////////////////////////////////////////
-
-extern string Close.Symbols      = "";    // Symbole:                      kommagetrennt
-extern string Close.Direction    = "";    // (B)uy|(L)ong|(S)ell|(S)hort
-extern string Close.Tickets      = "";    // Tickets:                      kommagetrennt
-extern string Close.MagicNumbers = "";    // MagicNumbers:                 kommagetrennt
-extern string Close.Comments     = "";    // Kommentare:                   kommagetrennt, Prüfung per OrderComment().StringIStartsWith(value)
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 string orderSymbols [];

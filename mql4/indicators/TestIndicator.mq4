@@ -12,26 +12,6 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   debug("onInit()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
-   return(last_error);
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   debug("onDeinit()  WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
-   return(last_error);
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus

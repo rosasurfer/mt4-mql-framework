@@ -7,6 +7,16 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+
+#property show_inputs
+////////////////////////////////////////////////////////////////////////////////////// Konfiguration //////////////////////////////////////////////////////////////////////////////////////
+
+extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
+extern string Direction    = "long | short";                         // (B)uy | (S)ell | (L)ong | (S)hort
+extern double Units        = 1.0;                                    // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
@@ -17,17 +27,6 @@ int __DEINIT_FLAGS__[];
 #include <LFX/functions.mqh>
 #include <LFX/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
-
-#property show_inputs
-
-
-//////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
-
-extern string LFX.Currency = "";                                     // AUD | CAD | CHF | EUR | GBP | JPY | NZD | USD
-extern string Direction    = "long | short";                         // (B)uy | (S)ell | (L)ong | (S)hort
-extern double Units        = 1.0;                                    // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 int    direction;

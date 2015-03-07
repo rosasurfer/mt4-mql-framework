@@ -961,9 +961,9 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             // Das erste passende Chartfenster in absoluter Reihenfolge ist das gesuchte Fenster.
 
             hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-            hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+            hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(6)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
             hWndChild = GetWindow(hWndMdi, GW_CHILD);                   // das erste Child in Z order
-            if (!hWndChild) return(!catch("WindowHandleEx(4)  MDIClient window has no child windows in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
             if (symbol == "0") symbol = Symbol();                       // (string) NULL
             if (!timeframe) timeframe = Period();
@@ -974,7 +974,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
                title = GetWindowText(hWndChild);
                if (title == chartDescription) {                         // alle Childwindows durchlaufen und das erste passende in absoluter Reihenfolge finden
                   id = Min(id, GetDlgCtrlID(hWndChild));
-                  if (!id) return(!catch("WindowHandleEx(9)  MDIClient child window 0x"+ IntToHexStr(hWndChild) +" has no control id", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+                  if (!id) return(!catch("WindowHandleEx(8)  MDIClient child window 0x"+ IntToHexStr(hWndChild) +" has no control id", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
                }
                hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);           // das nächste Child in Z order
             }
@@ -984,13 +984,13 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // (1.3) Experts
          else {
-            return(!catch("WindowHandleEx(3)->WindowHandle() => 0 in context Expert::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          }
 
          // (1.4) Das so gefundene Chartfenster hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte MetaTrader-Handle() ist.
          hChart = GetWindow(hChartWindow, GW_CHILD);
          if (!hChart)
-            return(!catch("WindowHandleEx(6)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hChartWindow) +" found", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+            return(!catch("WindowHandleEx(11)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hChartWindow) +" found", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
       }
       static.hWndSelf = hChart;
       return(static.hWndSelf);
@@ -1006,19 +1006,19 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
    hChart = WindowHandle(symbol, timeframe);
    error  = GetLastError();
    if (!error)                                  return(hChart);
-   if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(7)", error));
+   if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(12)", error));
 
                                                                      // TODO: das Handle des eigenen Charts überspringen, wenn dieser auf die Parameter paßt
    // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
-   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(8)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+   hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(13)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
 
    while (hWndChild != NULL) {
       title = GetWindowText(hWndChild);
       if (title == chartDescription) {                               // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
          hChart = GetWindow(hWndChild, GW_CHILD);                    // mit dem MetaTrader-WindowHandle() ist.
-         if (!hChart) return(!catch("WindowHandleEx(9)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
+         if (!hChart) return(!catch("WindowHandleEx(14)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
          break;
       }
       hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order

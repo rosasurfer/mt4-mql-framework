@@ -12,6 +12,15 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////////////////////////////// Konfiguration //////////////////////////////////////////////////////////////////////////////////////
+
+extern            int    GridSize        = 20;
+extern            double LotSize         = 0.1;
+extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
@@ -20,14 +29,6 @@ int __DEINIT_FLAGS__[];
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
 
-
-///////////////////////////////////////////////////////////////////// Konfiguration /////////////////////////////////////////////////////////////////////
-
-extern            int    GridSize        = 20;
-extern            double LotSize         = 0.1;
-extern /*sticky*/ string StartConditions = "@trend(ALMA:3.5xD1)";
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int      last.GridSize;                                              // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
 double   last.LotSize;                                               // mit den Default-Werten überschrieben. Um dies zu verhindern und um neue mit vorherigen Werten
