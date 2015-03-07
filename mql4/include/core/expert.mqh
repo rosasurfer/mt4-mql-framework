@@ -2,6 +2,9 @@
 #define __TYPE__         T_EXPERT
 #define __lpSuperContext NULL
 
+extern string ___________________________;
+extern string LogLevel = "inherit";
+
 #include <history.mqh>
 #include <iCustom/icChartInfos.mqh>
 
