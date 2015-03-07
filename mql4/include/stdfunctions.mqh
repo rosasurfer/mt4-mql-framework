@@ -886,110 +886,144 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       if (static.hWndSelf != 0)
          return(static.hWndSelf);
 
-      int hWnd = ec.hChart(__ExecutionContext);                      // Zuerst wird ein im ExcecutionContext gespeichertes eigenes ChartHandle abgefragt.
-      if (hWnd > 0) {                                                // (vor allem für Libraries)
-         static.hWndSelf = hWnd;
+      int hChart = ec.hChart(__ExecutionContext);                    // Zuerst wird ein schon im ExcecutionContext gespeichertes eigenes ChartHandle abgefragt.
+      if (hChart > 0) {                                              // (vor allem für Libraries)
+         static.hWndSelf = hChart;
          return(static.hWndSelf);
       }
 
-      if (IsTesting()) {
-         if (IsLibrary()) bool visualMode = IsVisualModeFix();       // Vorsicht: InitExecutionContext() benutzt WindowHandleEx(), IsVisualModeFix() seinerseits ist auf einen
-         else                  visualMode = IsVisualMode();          //           initialisierten ExecutionContext angewiesen
-
-         if (!visualMode) {                                          // Expert/Indikator im Tester bei VisualMode=Off: kein Chart
-            static.hWndSelf = -1;                                    // Rückgabewert -1
+      if (IsTesting()) {                                             // Im Tester bei VisualMode=Off gibt es keinen Chart: Rückgabewert -1
+         if (IsLibrary()) bool visualMode = IsVisualModeFix();
+         else                  visualMode = IsVisualMode();
+         if (!visualMode) {
+            static.hWndSelf = -1;
             return(static.hWndSelf);
          }
       }
+      // Hier sind wir sind entweder: außerhalb des Testers
+      // oder                         im Tester bei VisualMode=On
 
-      // Wir sind entweder: außerhalb des Testers
-      // oder               innerhalb des Testers bei VisualMode=On
 
-      hWnd      = WindowHandle(Symbol(), NULL);
+      hChart    = WindowHandle(Symbol(), NULL);
       int error = GetLastError();
       if (IsError(error)) return(!catch("WindowHandleEx(1)", error));
 
-      if (!hWnd) {
-         // WindowHandle() = 0: Sind wir ein Indikator im SuperContext, übernehmen wir das ChartHandle immer von dort.
-         if (IsSuperContext()) {
-            if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
-            int superCopy[EXECUTION_CONTEXT.intSize];
-            CopyMemory(__lpSuperContext, GetBufferAddress(superCopy), EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
-            static.hWndSelf = ec.hChart(superCopy);                                             // u.U. noch nicht endgültig initialisiert ist.
-            ArrayResize(superCopy, 0);
-            return(static.hWndSelf);
-         }
-
-         // Da WindowHandle() 0 zurückgab, muß es ein Child des MDIClient-Windows mit leerer Titelzeile geben, und zwar das letzte in Z order
-         int hWndMain = GetApplicationWindow();               if (!hWndMain) return(NULL);
-         int hWndMdi  = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
-
-         bool missingMdiChild = false;
-         string title, sError;
-
-         int hWndChild = GetWindow(hWndMdi, GW_CHILD);               // das erste Child in Z order
-         if (!hWndChild) {
-            missingMdiChild = true; sError = "WindowHandleEx(4)  MDIClient window has no child windows";
-         }
-         else {
-            int hWndLast = GetWindow(hWndChild, GW_HWNDLAST);        // das letzte Child in Z order
-            title = GetWindowText(hWndLast);
-            if (StringLen(title) > 0) {
-               missingMdiChild = true; sError = "WindowHandleEx(5)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"";
-            }
-         }
-
-         // Ein Indikator im Template "Tester.tpl" wird im Tester bei VisualMode=Off im UI-Thread geladen und seine init()-Funktion ausgeführt,
-         // obwohl für den Test nie ein Chart existieren wird. Nur in dieser speziellen Kombination ist ein fehlendes MDI-Childwindow ein gültiger Zustand.
-         if (missingMdiChild) {
-            if (IsIndicator()) /*&&*/ if (__WHEREAMI__!=FUNC_START) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
-               static.hWndSelf = -1;                                 // Rückgabewert -1
+      if (!hChart) {
+         // (1.1) Indikatoren
+         if (IsIndicator()) {
+            // Ein Indikator im SuperContext übernimmt das ChartHandle von dort.
+            if (IsSuperContext()) {
+               if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
+               int superContext[EXECUTION_CONTEXT.intSize];
+               CopyMemory(__lpSuperContext, GetBufferAddress(superContext), EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
+               static.hWndSelf = ec.hChart(superContext);                                             // u.U. noch nicht endgültig initialisiert ist.
+               ArrayResize(superContext, 0);
                return(static.hWndSelf);
             }
-            EnumChildWindows(hWndMdi, true);                         // vorhandene ChildWindows im Debugger ausgeben
-            return(!catch(sError +" in context "+ ModuleTypeDescription(__TYPE__) +"::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+
+            // Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
+            // Existiert ein Chartfenster ohne gesetzten Titel und ist dies das letzte in Z-Order, ist dieses Fenster das gesuchte Fenster.
+            // Existiert kein solches Fenster und läuft der Indikator im UI-Thread und in init(), wurde er über das Template "Tester.tpl" in einem Test mit
+            // VisualMode=Off geladen und es gibt kein Chartfenster.
+
+            int hWndMain = GetApplicationWindow();               if (!hWndMain) return(NULL);
+            int hWndMdi  = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+
+            bool noEmptyChild = false;
+            string title, sError;
+
+            int hWndChild = GetWindow(hWndMdi, GW_CHILD);               // das erste Child in Z order
+            if (!hWndChild) {
+               noEmptyChild = true; sError = "WindowHandleEx(4)  MDIClient window has no child windows";
+            }
+            else {
+               int hWndLast = GetWindow(hWndChild, GW_HWNDLAST);        // das letzte Child in Z order
+               title = GetWindowText(hWndLast);
+               if (StringLen(title) > 0) {
+                  noEmptyChild = true; sError = "WindowHandleEx(5)  last child window of MDIClient window doesn't have an empty title \""+ title +"\"";
+               }
+            }
+
+            if (noEmptyChild) {
+               if (__WHEREAMI__==FUNC_INIT) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
+                  static.hWndSelf = -1;                                 // Rückgabewert -1
+                  return(static.hWndSelf);
+               }                                                        // vorhandene ChildWindows im Debugger ausgeben
+               return(!catch(sError +" in context Indicator::"+ __whereamiDescription(__WHEREAMI__), _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+            }
+            int hChartWindow = hWndLast;
          }
 
-         // Dieses letzte Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow mit dem MetaTrader-WindowHandle() ist.
-         hWnd = GetWindow(hWndLast, GW_CHILD);
-         if (!hWnd) return(!catch("WindowHandleEx(6)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hWndLast) +" found", ERR_RUNTIME_ERROR));
-      }
+         // (1.2) Scripte
+         else if (IsScript()) {
+            // Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
+            // Scripte werden in diesem Fall über die Startkonfiguration ausgeführt und laufen im ersten entsprechenden Chart in absoluter Reihenfolge, nicht in Z-Order.
+            // Das erste passende Chartfenster in absoluter Reihenfolge ist das gesuchte Fenster.
 
-      static.hWndSelf = hWnd;
-      return(hWnd);
+            hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
+            hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(3)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
+            hWndChild = GetWindow(hWndMdi, GW_CHILD);                   // das erste Child in Z order
+            if (!hWndChild) return(!catch("WindowHandleEx(4)  MDIClient window has no child windows in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+
+            if (symbol == "0") symbol = Symbol();                       // (string) NULL
+            if (!timeframe) timeframe = Period();
+            string chartDescription = symbol +","+ PeriodDescription(timeframe);
+            int id = INT_MAX;
+
+            while (hWndChild != NULL) {
+               title = GetWindowText(hWndChild);
+               if (title == chartDescription) {                         // alle Childwindows durchlaufen und das erste passende in absoluter Reihenfolge finden
+                  id = Min(id, GetDlgCtrlID(hWndChild));
+                  if (!id) return(!catch("WindowHandleEx(9)  MDIClient child window 0x"+ IntToHexStr(hWndChild) +" has no control id", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+               }
+               hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);           // das nächste Child in Z order
+            }
+            if (id == INT_MAX) return(!catch("WindowHandleEx(9)  no matching MDIClient child window for \""+ chartDescription +"\" found", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+            hChartWindow = GetDlgItem(hWndMdi, id);
+         }
+
+         // (1.3) Experts
+         else {
+            return(!catch("WindowHandleEx(3)->WindowHandle() => 0 in context Expert::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+         }
+
+         // (1.4) Das so gefundene Chartfenster hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte MetaTrader-Handle() ist.
+         hChart = GetWindow(hChartWindow, GW_CHILD);
+         if (!hChart)
+            return(!catch("WindowHandleEx(6)  no MetaTrader chart window inside of last MDIClient child window 0x"+ IntToHexStr(hChartWindow) +" found", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+      }
+      static.hWndSelf = hChart;
+      return(static.hWndSelf);
    }
 
 
    if (symbol == "0") symbol = Symbol();                             // (string) NULL
    if (!timeframe) timeframe = Period();
-   string periodDescription  = PeriodDescription(timeframe);
-
+   chartDescription = symbol +","+ PeriodDescription(timeframe);
 
 
    // (2) eingebaute Suche nach fremdem Chart                        // TODO: WindowHandle() wird das Handle des eigenen Charts nicht überspringen, wenn dieser auf die Parameter paßt
-   hWnd  = WindowHandle(symbol, timeframe);
-   error = GetLastError();
-   if (!error)                                  return(hWnd);
+   hChart = WindowHandle(symbol, timeframe);
+   error  = GetLastError();
+   if (!error)                                  return(hChart);
    if (error != ERR_FUNC_NOT_ALLOWED_IN_TESTER) return(!catch("WindowHandleEx(7)", error));
-
 
                                                                      // TODO: das Handle des eigenen Charts überspringen, wenn dieser auf die Parameter paßt
    // (3) selbstdefinierte Suche nach fremdem Chart (dem ersten passenden in Z order)
    hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
    hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(8)  MDIClient window not found (hWndMain=0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
-   hWnd      = 0;
 
    while (hWndChild != NULL) {
       title = GetWindowText(hWndChild);
-      if (title == periodDescription) {                              // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
-         hWnd = GetWindow(hWndChild, GW_CHILD);                      // mit dem MetaTrader-WindowHandle() ist.
-         if (!hWnd) return(!catch("WindowHandleEx(9)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
+      if (title == chartDescription) {                               // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
+         hChart = GetWindow(hWndChild, GW_CHILD);                    // mit dem MetaTrader-WindowHandle() ist.
+         if (!hChart) return(!catch("WindowHandleEx(9)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
          break;
       }
       hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order
    }
-   return(hWnd);
+   return(hChart);
 }
 
 
