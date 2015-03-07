@@ -1,15 +1,15 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail, SMS, HTML-Request oder ICQ.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch, per E-Mail, SMS, HTML-Request oder per ICQ.
  *
  *
  * (1) Order-Events
- *     Die Orderüberwachung wird im Indikator aktiviert/deaktiviert. Ein so aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das
+ *     Die Orderüberwachung wird im Indikator aktiviert/deaktiviert. Ein aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das
  *     des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
  *
  *     Events:
- *      - Orderausführung fehlgeschlagen
  *      - Position geöffnet
  *      - Position geschlossen
+ *      - Orderausführung fehlgeschlagen
  *
  *
  * (2) Preis-Events
@@ -19,16 +19,16 @@
  *
  *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
  *
- *      • Timeframe-ID: {number}[-]{Timeframe}[-]Ago                 ; [Timeframe|Day|Week|Month] Singular und Plural der Timeframe-Bezeichner sind austauschbar
- *                      This[-]{Timeframe}                           ; Synonym für 0-{Timeframe}-Ago
- *                      Last[-]{Timeframe}                           ; Synonym für 1-{Timeframe}-Ago
+ *      • Timeframe-ID: {This|Last|number}[-]{Timeframe}[-]Ago       ; [Timeframe|Day|Week|Month] Singular und Plural der Timeframe-Bezeichner sind austauschbar
+ *                      This                                         ; Synonym für 0-{Timeframe}-Ago
+ *                      Last                                         ; Synonym für 1-{Timeframe}-Ago
  *                      Today                                        ; Synonym für 0-Days-Ago
  *                      Yesterday                                    ; Synonym für 1-Day-Ago
  *
  *      • Signal-ID:    BarClose            = On|Off                 ; Erreichen des Close-Preises der Bar
- *                      BarRange            = {90}%                  ; Erreichen der {x}%-Schwelle der Bar-Range (100% = bisheriges High/Low)
+ *                      BarRange            = {90}%                  ; Erreichen der {x}%-Schwelle der Bar-Range (100% = High/Low der Bar)
  *                      BarBreakout         = On|Off                 ; neues High/Low
- *                      BarBreakout.OnTouch = 1|0                    ; ob zusätzlich zum Breakout ein Erreichen der Range signalisiert werden soll
+ *                      BarBreakout.OnTouch = 1|0                    ; ob zusätzlich zum Breakout ein Erreichen der Level signalisiert werden soll
  *                      BarBreakout.Reset   = {5} [minute|hour][s]   ; Zeit, nachdem die Prüfung eines getriggerten Signals reaktiviert wird
  *
  *     Pattern und ihre Konfiguration:
@@ -56,16 +56,16 @@ int __DEINIT_FLAGS__[];
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
 
-extern bool   Track.Order.Events   = false;
-extern bool   Track.Price.Events   = true;
+extern bool   Track.Order.Events  = false;
+extern bool   Track.Price.Events  = true;
 
 extern string __________________________;
 
-extern bool   Alerts.Sound         = true;                           // alle Order-Alerts bis auf Sounds sind per Default inaktiv
-extern string Alerts.Mail.Receiver = "email@address.tld";            // E-Mailadresse    ("system" => global konfigurierte Adresse)
-extern string Alerts.SMS.Receiver  = "phone-number";                 // Telefonnummer    ("system" => global konfigurierte Nummer )
-extern string Alerts.HTTP.Url      = "url";                          // vollständige URL ("system" => global konfigurierte URL    )
-extern string Alerts.ICQ.UserID    = "contact-id";                   // ICQ-Kontakt      ("system" => global konfigurierte User-ID)
+extern bool   Alert.Sound         = true;                            // alle Order-Alerts bis auf Sounds sind per Default inaktiv
+extern string Alert.Mail.Receiver = "email@address.tld";             // E-Mailadresse    ("system" => global konfigurierte Adresse)
+extern string Alert.SMS.Receiver  = "phone-number";                  // Telefonnummer    ("system" => global konfigurierte Nummer )
+extern string Alert.HTTP.Url      = "url";                           // URL              ("system" => global konfigurierte URL    )
+extern string Alert.ICQ.UserID    = "contact";                       // ICQ-Kontakt      ("system" => global konfigurierte User-ID)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
@@ -82,24 +82,24 @@ bool   track.price;
 
 
 // Alert-Konfiguration
-bool   alerts.sound;
-string alerts.sound.orderFailed      = "speech/OrderExecutionFailed.wav";
-string alerts.sound.positionOpened   = "speech/OrderFilled.wav";
-string alerts.sound.positionClosed   = "speech/PositionClosed.wav";
-string alerts.sound.priceSignal_up   = "Signal-Up.wav";
-string alerts.sound.priceSignal_down = "Signal-Down.wav";
+bool   alert.sound;
+string alert.sound.orderFailed      = "speech/OrderExecutionFailed.wav";
+string alert.sound.positionOpened   = "speech/OrderFilled.wav";
+string alert.sound.positionClosed   = "speech/PositionClosed.wav";
+string alert.sound.priceSignal_up   = "Signal-Up.wav";
+string alert.sound.priceSignal_down = "Signal-Down.wav";
 
-bool   alerts.mail;
-string alerts.mail.receiver = "";
+bool   alert.mail;
+string alert.mail.receiver = "";
 
-bool   alerts.sms;
-string alerts.sms.receiver = "";
+bool   alert.sms;
+string alert.sms.receiver = "";
 
-bool   alerts.http;
-string alerts.http.url = "";
+bool   alert.http;
+string alert.http.url = "";
 
-bool   alerts.icq;
-string alerts.icq.userId = "";
+bool   alert.icq;
+string alert.icq.userId = "";
 
 
 // Order-Events
@@ -345,39 +345,39 @@ bool Configure() {
 
    // (3) Alert-Methoden einlesen und validieren
    if (track.orders || track.price) {
-      // (3.1) Order.Alerts.Sound
-      alerts.sound = Alerts.Sound;
+      // (3.1) Alert.Sound
+      alert.sound = Alert.Sound;
 
-      // (3.2) Alerts.Mail.Receiver
+      // (3.2) Alert.Mail.Receiver
 
-      // (3.3) Alerts.SMS.Receiver
-      sValue = StringToLower(StringTrim(Alerts.SMS.Receiver));
+      // (3.3) Alert.SMS.Receiver
+      sValue = StringToLower(StringTrim(Alert.SMS.Receiver));
       if (sValue!="" && sValue!="phone-number") {
-         alerts.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
-         alerts.sms          = StringIsPhoneNumber(alerts.sms.receiver);
-         if (!alerts.sms) {
-            if (sValue == "system") return(!catch("Configure(13)  "+ ifString(alerts.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ alerts.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            else                    return(!catch("Configure(14)  Invalid input parameter Alerts.SMS.Receiver = \""+ Alerts.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
+         alert.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
+         alert.sms          = StringIsPhoneNumber(alert.sms.receiver);
+         if (!alert.sms) {
+            if (sValue == "system") return(!catch("Configure(13)  "+ ifString(alert.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ alert.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else                    return(!catch("Configure(14)  Invalid input parameter Alert.SMS.Receiver = \""+ Alert.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
          }
       }
-      else alerts.sms = false;
+      else alert.sms = false;
 
-      // (3.4) Alerts.HTTP.Url
+      // (3.4) Alert.HTTP.Url
 
-      // (3.5) Alerts.ICQ.UserID
+      // (3.5) Alert.ICQ.UserID
    }
 
 
    int error = catch("Configure(16)");
    ShowStatus(error);
    if (false) {
-      debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                          "; ",
-                                               "track.price=",  BoolToStr(track.price),                                           "; ",
-                                               "alerts.sound=", BoolToStr(alerts.sound),                                          "; ",
-                                               "alerts.mail=" , ifString(alerts.mail, "\""+ alerts.mail.receiver +"\"", "false"), "; ",
-                                               "alerts.sms="  , ifString(alerts.sms,  "\""+ alerts.sms.receiver  +"\"", "false"), "; ",
-                                               "alerts.http=" , ifString(alerts.http, "\""+ alerts.http.url      +"\"", "false"), "; ",
-                                               "alerts.icq="  , ifString(alerts.icq,  "\""+ alerts.icq.userId    +"\"", "false"), "; "
+      debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                        "; ",
+                                               "track.price=",  BoolToStr(track.price),                                         "; ",
+                                               "alert.sound=",  BoolToStr(alert.sound),                                         "; ",
+                                               "alert.mail=" ,  ifString(alert.mail, "\""+ alert.mail.receiver +"\"", "false"), "; ",
+                                               "alert.sms="  ,  ifString(alert.sms,  "\""+ alert.sms.receiver  +"\"", "false"), "; ",
+                                               "alert.http=" ,  ifString(alert.http, "\""+ alert.http.url      +"\"", "false"), "; ",
+                                               "alert.icq="  ,  ifString(alert.icq,  "\""+ alert.icq.userId    +"\"", "false"), "; "
       ));
    }
    return(!error);
@@ -732,8 +732,8 @@ bool onOrderFail(int tickets[]) {
    }
 
    // Sound abspielen (für alle Orders gemeinsam)
-   if (alerts.sound)
-      PlaySoundEx(alerts.sound.orderFailed);
+   if (alert.sound)
+      PlaySoundEx(alert.sound.orderFailed);
    return(!catch("onOrderFail(3)"));
 }
 
@@ -772,8 +772,8 @@ bool onPositionOpen(int tickets[]) {
    }
 
    // Sound abspielen (für alle Positionen gemeinsam)
-   if (alerts.sound)
-      PlaySoundEx(alerts.sound.positionOpened);
+   if (alert.sound)
+      PlaySoundEx(alert.sound.positionOpened);
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -813,8 +813,8 @@ bool onPositionClose(int tickets[]) {
    }
 
    // Sound abspielen (für alle Positionen gemeinsam)
-   if (alerts.sound)
-      PlaySoundEx(alerts.sound.positionClosed);
+   if (alert.sound)
+      PlaySoundEx(alert.sound.positionClosed);
    return(!catch("onPositionClose(3)"));
 }
 
@@ -873,27 +873,27 @@ bool onBarCloseSignal(int index, int direction) {
 
 
    // (1) Sound abspielen
-   if (alerts.sound) {
-      if (direction == SD_UP) PlaySoundEx(alerts.sound.priceSignal_up  );
-      else                    PlaySoundEx(alerts.sound.priceSignal_down);
+   if (alert.sound) {
+      if (direction == SD_UP) PlaySoundEx(alert.sound.priceSignal_up  );
+      else                    PlaySoundEx(alert.sound.priceSignal_down);
    }
 
    // (2) Mailversand
-   if (alerts.mail) {
+   if (alert.mail) {
    }
 
    // (3) SMS-Verand
-   if (alerts.sms) {
-      if (!SendSMS(alerts.sms.receiver, message))
+   if (alert.sms) {
+      if (!SendSMS(alert.sms.receiver, message))
          return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
-   if (alerts.http) {
+   if (alert.http) {
    }
 
    // (5) ICQ-Message
-   if (alerts.icq) {
+   if (alert.icq) {
    }
 
    return(!catch("onBarCloseSignal(3)"));
@@ -1042,27 +1042,27 @@ bool onBarRangeSignal(int index, int direction) {
 
 
    // (1) Sound abspielen
-   if (alerts.sound) {
-      if (direction == SD_UP) PlaySoundEx(alerts.sound.priceSignal_up  );
-      else                    PlaySoundEx(alerts.sound.priceSignal_down);
+   if (alert.sound) {
+      if (direction == SD_UP) PlaySoundEx(alert.sound.priceSignal_up  );
+      else                    PlaySoundEx(alert.sound.priceSignal_down);
    }
 
    // (2) Mailversand
-   if (alerts.mail) {
+   if (alert.mail) {
    }
 
    // (3) SMS-Verand
-   if (alerts.sms) {
-      if (!SendSMS(alerts.sms.receiver, message))
+   if (alert.sms) {
+      if (!SendSMS(alert.sms.receiver, message))
          return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
-   if (alerts.http) {
+   if (alert.http) {
    }
 
    // (5) ICQ-Message
-   if (alerts.icq) {
+   if (alert.icq) {
    }
 
    return(!catch("onBarRangeSignal(3)"));
@@ -1315,27 +1315,27 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
 
 
    // (1) Sound abspielen
-   if (alerts.sound) {
-      if (direction == SD_UP) PlaySoundEx(alerts.sound.priceSignal_up  );
-      else                    PlaySoundEx(alerts.sound.priceSignal_down);
+   if (alert.sound) {
+      if (direction == SD_UP) PlaySoundEx(alert.sound.priceSignal_up  );
+      else                    PlaySoundEx(alert.sound.priceSignal_down);
    }
 
    // (2) Mailversand
-   if (alerts.mail) {
+   if (alert.mail) {
    }
 
    // (3) SMS-Verand
-   if (alerts.sms) {
-      if (!SendSMS(alerts.sms.receiver, message))
+   if (alert.sms) {
+      if (!SendSMS(alert.sms.receiver, message))
          return(!SetLastError(stdlib.GetLastError()));
    }
 
    // (4) HTTP-Request
-   if (alerts.http) {
+   if (alert.http) {
    }
 
    // (5) ICQ-Message
-   if (alerts.icq) {
+   if (alert.icq) {
    }
 
    return(!catch("onBarBreakoutSignal(3)"));
@@ -1393,7 +1393,7 @@ int ShowStatus(int error=NULL) {
       error = __STATUS_OFF.reason;
 
    static string alerts; if (!StringLen(alerts))
-      alerts = "    Sound="+ alerts.sound + ifString(alerts.mail, "    Mail="+ alerts.mail.receiver, "") + ifString(alerts.sms, "    SMS="+ alerts.sms.receiver, "") + ifString(alerts.http, "    HTTP=1", "") + ifString(alerts.icq, "    ICQ=1", "");
+      alerts = "    Sound="+ ifString(alert.sound, "On", "Off") + ifString(alert.mail, "    Mail="+ alert.mail.receiver, "") + ifString(alert.sms, "    SMS="+ alert.sms.receiver, "") + ifString(alert.http, "    HTTP=On", "") + ifString(alert.icq, "    ICQ=On", "");
 
    string msg = __NAME__;
    if (!error) msg = StringConcatenate(msg, "  ", alerts,                        NL, "-------------------------", NL);
@@ -1420,13 +1420,13 @@ int ShowStatus(int error=NULL) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Track.Order.Events="    , BoolToStr(Track.Order.Events),  "; ",
-                            "Track.Price.Events="    , BoolToStr(Track.Price.Events),  "; ",
-                            "Alerts.Sound="          , BoolToStr(Alerts.Sound),        "; ",
-                            "Alerts.Mail.Receiver=\"", Alerts.Mail.Receiver,         "\"; ",
-                            "Alerts.SMS.Receiver=\"" , Alerts.SMS.Receiver,          "\"; ",
-                            "Alerts.HTTP.Url=\""     , Alerts.HTTP.Url,              "\"; ",
-                            "Alerts.ICQ.UserID=\""   , Alerts.ICQ.UserID,            "\"; "
+                            "Track.Order.Events="   , BoolToStr(Track.Order.Events),  "; ",
+                            "Track.Price.Events="   , BoolToStr(Track.Price.Events),  "; ",
+                            "Alert.Sound="          , BoolToStr(Alert.Sound),         "; ",
+                            "Alert.Mail.Receiver=\"", Alert.Mail.Receiver,          "\"; ",
+                            "Alert.SMS.Receiver=\"" , Alert.SMS.Receiver,           "\"; ",
+                            "Alert.HTTP.Url=\""     , Alert.HTTP.Url,               "\"; ",
+                            "Alert.ICQ.UserID=\""   , Alert.ICQ.UserID,             "\"; "
                             )
    );
 }

@@ -7,25 +7,25 @@
  */
 bool icEventTracker.neu(int timeframe=NULL) {
 
-   bool   trackOrderEvents   = false;
-   bool   trackPriceEvents   = true;
-   bool   alertsSound        = true;
-   string alertsMailReceiver = "";
-   string alertsSMSReceiver  = "";
-   string alertsHTTPUrl      = "";
-   string alertsICQUserID    = "";
-   int    lpLocalContext     = GetBufferAddress(__ExecutionContext);       // TODO: Aufruf statisch machen
+   bool   trackOrderEvents  = false;
+   bool   trackPriceEvents  = true;
+   bool   alertSound        = true;
+   string alertMailReceiver = "";
+   string alertSMSReceiver  = "";
+   string alertHTTPUrl      = "";
+   string alertICQUserID    = "";
+   int    lpLocalContext    = GetBufferAddress(__ExecutionContext);        // TODO: Aufruf statisch machen
 
 
    iCustom(NULL, timeframe, "EventTracker.neu",
            trackOrderEvents,                                               // Track.Order.Events
            trackPriceEvents,                                               // Track.Price.Events
            "",                                                             // ____________________
-           alertsSound,                                                    // Alerts.Sound
-           alertsMailReceiver,                                             // Alerts.Mail.Receiver
-           alertsSMSReceiver,                                              // Alerts.SMS.Receiver
-           alertsHTTPUrl,                                                  // Alerts.HTTP.Url
-           alertsICQUserID,                                                // Alerts.ICQ.UserID
+           alertSound,                                                     // Alert.Sound
+           alertMailReceiver,                                              // Alert.Mail.Receiver
+           alertSMSReceiver,                                               // Alert.SMS.Receiver
+           alertHTTPUrl,                                                   // Alert.HTTP.Url
+           alertICQUserID,                                                 // Alert.ICQ.UserID
            "",                                                             // ____________________
            lpLocalContext,                                                 // __SuperContext__
            0,                                                              // iBuffer

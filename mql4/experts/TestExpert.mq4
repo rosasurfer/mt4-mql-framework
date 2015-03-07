@@ -7,7 +7,6 @@ int __DEINIT_FLAGS__[];
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <iCustom/icEventTracker.neu.mqh>
 
 
 //////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////
@@ -19,14 +18,31 @@ extern int    iParameter = 12345;
 
 
 /**
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   debug("onInit()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onTick() {
+   debug("onTick()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+}
 
-   if (IsVisualMode())
-      icEventTracker.neu();
 
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   debug("onDeinit()  WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
    return(last_error);
 }

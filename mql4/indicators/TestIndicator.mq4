@@ -12,11 +12,34 @@ int __DEINIT_FLAGS__[];
 
 
 /**
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   debug("onInit()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   debug("onDeinit()  WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onTick() {
+   debug("onTick()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+
    int  iNull[];
 
    bool newTick_full     = EventListener.NewTick(iNull);

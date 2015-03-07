@@ -4266,7 +4266,6 @@ string InputsToStr() {
    bool     StringEndsWith(string object, string postfix);
    bool     StringICompare(string a, string b);
    bool     StringIEndsWith(string object, string postfix);
-   string   StringToUpper(string value);
    string   UninitializeReasonToStr(int reason);
 
 #import "stdlib2.ex4"

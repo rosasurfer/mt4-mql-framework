@@ -20,11 +20,33 @@ int __DEINIT_FLAGS__[];
 
 
 /**
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   debug("onInit()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   debug("onDeinit()  WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onStart() {
+   debug("onStart()   WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   return(last_error);
 
    int cb1, cb2;
    cb1 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
