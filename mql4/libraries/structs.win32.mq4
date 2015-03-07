@@ -4,7 +4,6 @@
  * NOTE: MetaTrader 4 unterstützt maximal 512 deklarierte Arrays je Modul.
  */
 #property library
-#property stacksize 32768
 
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];

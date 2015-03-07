@@ -24,7 +24,6 @@
  *       2) Libraries use predefined variables of the module that called the library.
  */
 #property library
-#property stacksize 32768
 
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
