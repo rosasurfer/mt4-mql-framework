@@ -2,7 +2,6 @@
  * TODO: Doppelte Implementierung von LFX.CurrencyId() entfernen (hier und in "include/LFX/functions.mqh").
  */
 #property library
-#property stacksize 32768
 
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];

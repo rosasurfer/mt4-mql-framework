@@ -1,9 +1,8 @@
 /**
  * SnowRoller-Strategy: ein unabhängiger SnowRoller je Richtung
  */
-#property stacksize 32768
-
 #include <stddefine.mqh>
+#include <SnowRoller/define.mqh>
 int   __INIT_FLAGS__[] = {INIT_TIMEZONE, INIT_PIPVALUE, INIT_CUSTOMLOG};
 int __DEINIT_FLAGS__[];
 
@@ -24,7 +23,6 @@ extern     string StopConditions       = "@profit(500)";
 #include <stdlib.mqh>
 
 #include <win32api.mqh>
-#include <SnowRoller/define.mqh>
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
 #include <structs/pewa/ORDER_EXECUTION.mqh>

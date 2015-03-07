@@ -7,8 +7,6 @@
  *  - Sequenz-IDs auf Eindeutigkeit prüfen
  *  - im Tester fortlaufende Sequenz-IDs generieren
  */
-#property stacksize 32768
-
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];

@@ -4,6 +4,8 @@
 #include <stderror.mqh>
 #include <structs/sizes.mqh>
 
+#property stacksize 32768
+
 
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
 //int    __lpSuperContext;                                  // der Zeiger auf einen ggf. existierenden SuperContext wird je Modultyp definiert
