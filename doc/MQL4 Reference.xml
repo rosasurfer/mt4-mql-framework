@@ -10418,7 +10418,7 @@ it means that the chart window has not been fully filled out and there is a spac
       <span style="color:red">Bugs:</span>
       <br/>
       (1) Indikatoren und Scripte: Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>()
-          <span class="number">0</span> zurück, solange der Fenstertitel des Chartfensters noch nicht gesetzt ist.<br/>
+          <span class="number">0</span> zurück, solange das Terminal nicht endgültig initialisiert ist.<br/>
           <br/>
       (2) Alle: Ab Build 418 gibt die Funktion bei Terminal-Shutdown <span class="number">0</span> zurück. In Indikatoren tritt dies erst in <span class="function">deinit</span>()
           ein, in Scripten und Experts <i>kann</i> es bereits in <span class="function">start</span>() eintreten.<br/>
