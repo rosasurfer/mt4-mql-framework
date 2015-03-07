@@ -34,18 +34,19 @@
   .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
   .constant     { font-weight:normal; color:#980000; }
-  .function     { font-weight:normal; color:#8A2BE2; }  <!-- wie .docfunc -->
+  .function     { font-weight:normal; color:#42639C; }  <!-- wie a -->
   .number       { font-weight:normal; color:#7070FF; }
   .string       { font-weight:normal; color:#008080; }
   </styles>
+
 
   <group>
     tag=index
     caption=MQL4 Reference
 
     <content>
-      <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts. 
-      You can start learning the language using Sergey Kovalyov's book <i>Programming in Algorithmic Language MQL4</i> published by 
+      <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts.
+      You can start learning the language using Sergey Kovalyov's book <i>Programming in Algorithmic Language MQL4</i> published by
       <a target="_blank" href="http://www.metaquotes.net/?source=metaeditor_help">MetaQuotes Software Corp.</a> You can download the book in .chm format at
       <a href="http://www.mql4.com/files/mql4bookenglish.chm?source=metaeditor_help">http://www.mql4.com/files/mql4bookenglish.chm</a> (size 2.0 Mb).</p>
 
@@ -54,26 +55,27 @@
       <p>Programs written in MQL4 have different features and purposes:</p>
       <ul><li><p>
           An <strong>Expert Advisor</strong> (short: an expert) is a mechanical trading system linked to a specific chart.
-          An expert is executed for every incoming tick of a given instrument. The expert will not be executed for a new tick if it is still processing 
+          An expert is executed for every incoming tick of a given instrument. The expert will not be executed for a new tick if it is still processing
           the previous one (i.e. the expert has not yet completed its processing).
-          The expert can both signal trade possibilities and trade automatically, ie. sending orders to the trade server. 
+          The expert can both signal trade possibilities and trade automatically, ie. sending orders to the trade server.
           The terminal supports testing of trading strategies on historical data. An expert can display trade entries and exits in the chart.<br/>
           Experts are stored in the directory <em>{terminal_directory}\experts</em>.</p></li>
         <li><p>
-          A <strong>Custom Indicator</strong> is a technical indicator written in addition to those already built-in into the client terminal. Like built-in indicators 
+          A <strong>Custom Indicator</strong> is a technical indicator written in addition to those already built-in into the client terminal. Like built-in indicators
           custom indicators cannot trade and are intended for analytical functionality.<br/>
           Custom Indicators are stored in the directory <em>{terminal_directory}\experts\indicators</em>.</p></li>
         <li><p>
-          A <strong>Script</strong> is a program for the single non-repetitive execution of user defined actions. Unlike Expert Advisors, scripts are not run 
+          A <strong>Script</strong> is a program for the single non-repetitive execution of user defined actions. Unlike Expert Advisors, scripts are not run
           tickwise but on explicite request.<br/>
           Scripts are stored in the directory <em>{terminal_directory}\experts\scripts</em>.</p></li>
         <li><p>
-          A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself. The use of include files is to be 
+          A <strong>Library</strong> is a set of repeatedly used custom functions. Libraries cannot be executed by themself. The use of include files is to be
           preferred over the use of libraries because of the additional processing burden of library function calls.<br/>
           Libraries are stored in the directory <em>{terminal_directory}\experts\libraries</em>.<br/>
           </p></li>
       </ul>
     </content>
+
 
   <group>
     tag=basics
@@ -82,6 +84,7 @@
     <content>
       <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts.</p>
     </content>
+
 
   <group>
     tag=basics_syntax
@@ -323,7 +326,7 @@ are not directly reflected in RGB. They represent a decimal value of the hexadec
 <p>Specific colors reflect the so-called <a href="help://constants_colors">Web colors set</a>.</p>
 
 <p class="doctabhdr">Examples:</p>
-<pre class="docmql4">      
+<pre class="docmql4">
 // symbol constants
 C<span class="string">'128,128,128'</span>    // gray
 C<span class="string">'0x00,0x00,0xFF'</span> // blue
@@ -537,7 +540,7 @@ At addressing to the i-th element of array, the expression value is the value of
         the reference to the first element will look like array[0], that to the the last element will array[49].</p>
 
         <p>At access beyond the array, the executing subsystem will generate the error of <a href="help://constants_errors">ERR_ARRAY_INDEX_OUT_OF_RANGE</a>
-        that can be got through the <a href="help://check_GetLastError">GetLastError()</a> function.</p>
+        that can be got through the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.</p>
 
 <p><b>Call for function with x1,x2,...,xn arguments.</b><br/>
 Each argument can represent a constant, a variable, or an expression of the corresponding type. The arguments passed are separated by commas and must
@@ -577,7 +580,7 @@ Precedence determines grouping of operations and operands.</p>
 </pre>
 <pre class="docmql4">
 &amp;      Bitwise AND operator              From left to right
-|      Bitwise OR operator 
+|      Bitwise OR operator
 ^      Bitwise exclusive OR operator
 &lt;&lt;     Bitwise left shift
 &gt;&gt;     Bitwise right shift
@@ -621,7 +624,6 @@ Precedence determines grouping of operations and operands.</p>
       </content>
     </text>
   </group>
-
 
 
   <group>
@@ -1032,7 +1034,7 @@ bool   bLog;
         <p class="doctabhdr">Example:</p>
 <pre class="docmql4">
 datetime tBegin_Data   = D<span class="string">'2004.01.01 00:00'</span>;
-color    cModify_Color = C<span class="string">'0x44,0xB9,0xE6'</span>;       
+color    cModify_Color = C<span class="string">'0x44,0xB9,0xE6'</span>;
 </pre><br/>
 
         <p><b>Arrays</b></p>
@@ -1049,7 +1051,7 @@ double m[7][50];    // Two-dimensional array of seven arrays,
         The last element of a two-dimensional array from the example will appear as m[6][49].</p>
 
         <p>If there is an attempt to access out of the array range, the executing subsystem will generate error named
-        <a href="help://constants_errors">ERR_ARRAY_INDEX_OUT_OF_RANGE</a> that can be got using the <a href="help://check_GetLastError">GetLastError()</a> function.</p>
+        <a href="help://constants_errors">ERR_ARRAY_INDEX_OUT_OF_RANGE</a> that can be got using the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.</p>
       </content>
 
     <text>
@@ -1360,7 +1362,7 @@ void ShowCopyright()
 
         <p>If the file name is enclosed in brackets the file will be searched in the standard directory <em>{terminal_directory}\experts\include</em>.</p>
 
-        <p>If the file name is enclosed in quotation marks, it is searched in the current directory (where the main file of the source code is located). 
+        <p>If the file name is enclosed in quotation marks, it is searched in the current directory (where the main file of the source code is located).
         The standard directory is not searched.</p>
 
         <p class="doctabhdr">Examples:</p>
@@ -1379,7 +1381,7 @@ void ShowCopyright()
       <content>
         <p>Functions can be imported from compiled MQL4 modules (*.ex4 files) or from operating system modules (*.dll
       files). The module name is specified in the <em>#import</em> directive.<br/>
-      For each function to import a function declaration is needed. Declarations follow the <em>#import &quot;module name&quot;</em> directive. 
+      For each function to import a function declaration is needed. Declarations follow the <em>#import &quot;module name&quot;</em> directive.
       The next <em>#import</em> directive or an empty directive (without a module name) finishes the declaration block.</p>
         <pre class="docmql4"><i>#import "file_name"
     func1 define;
@@ -1387,9 +1389,9 @@ void ShowCopyright()
     ...
     funcN define;
 #import</i></pre><br/>
-<p>Imported functions must have unique names. Functions having the same name from different modules cannot be imported simultaneously. Imported function 
+<p>Imported functions must have unique names. Functions having the same name from different modules cannot be imported simultaneously. Imported function
 names may not overlap with names of built-in functions.</p>
-<p>Since the functions are imported from another module the compiler cannot check the correctness of passed parameters. Parameters of imported functions 
+<p>Since the functions are imported from another module the compiler cannot check the correctness of passed parameters. Parameters of imported functions
 cannot have default values.</p>
         <p class="doctabhdr">Examples:</p>
         <pre class="docmql4">#import "user32.dll"
@@ -1421,6 +1423,7 @@ cannot have default values.</p>
     </text>
   </group>
   </group>
+
 
   <group>
     tag=constants
@@ -1563,7 +1566,7 @@ It can be one of the following values:</p>
       caption=Drawing styles
       keywords=;DRAW_NONE;DRAW_LINE;DRAW_SECTION;DRAW_HISTOGRAM;DRAW_ARROW;STYLE_SOLID;STYLE_DASH;STYLE_DOT;STYLE_DASHDOT;STYLE_DASHDOTDOT;
       <content>
-<p>Drawing shape style enumeration for <a href="help://customind_SetIndexStyle">SetIndexStyle()</a> function.</p>
+<p>Drawing shape style enumeration for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle()</a> function.</p>
 <p>It can be any of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
@@ -2177,7 +2180,7 @@ Objects can have 1-3 coordinates related to type.
       caption=Uninitialize reason codes
       keywords=;REASON_REMOVE;REASON_RECOMPILE;REASON_CHARTCHANGE;REASON_CHARTCLOSE;REASON_PARAMETERS;REASON_ACCOUNT;
       <content>
-<p>Uninitialize reason codes returned by <a href="help://check_UninitializeReason">UninitializeReason()</a> function. It can be any one of the following values:</p>
+<p>Uninitialize reason codes returned by <a href="help://runtimestatus_UninitializeReason">UninitializeReason()</a> function. It can be any one of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
 <tr><td class="constant">&nbsp;</td><td>0</td><td>Script finished its execution independently.</td></tr>
@@ -2239,7 +2242,7 @@ It can be one of the following values:</p>
 ;ERR_OBJECT_ERROR,ERR_TRADE_ERROR,
       </keywords>
       <content>
-<p>The <a href="help://check_GetLastError">GetLastError()</a> function return codes.
+<p>The <a href="help://runtimestatus_GetLastError">GetLastError()</a> function return codes.
 Error code constants defined at <b>stderror.mqh</b> file.
 To print text messages use <i>ErrorDescription()</i> function defined at <b>stdlib.mqh</b> file.</p>
 <pre class="docmql4">
@@ -2685,7 +2688,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         Every program attached to a chart completes its work with the deinit() function. The deinit() function runs at the client
         terminal shutdown, at chart closing,  immediately before the symbol and/or chart period is changed, at successful recompiling
         of the program, at changing of inputs, or at changing of the account. One can see the reason of deinitialization using the
-        <a href="help://check_UninitializeReason">UninitializeReason()</a> function during execution of the deinit() function. The deinit()
+        <a href="help://runtimestatus_UninitializeReason">UninitializeReason()</a> function during execution of the deinit() function. The deinit()
         function must be executed within 2.5 seconds. If the function has not completed its execution within this time period, it will
         be completed forcedly. Scripts are an exception to this rule, as they normally finish their working independently, without any
         commands from outside. If a script works very long (due to endless loop, foe example), it can be finished by an outside command
@@ -2703,7 +2706,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         Detaching of the program from the chart, change of symbol and/or chart period, change of the account, closing of the chart, as
         well as shutdown of the client terminal will interrupt execution of the program. If the start() function was being executed at
         the moment when the stop working command was given, the time remaining for its work is limited by 2.5 seconds. The program can
-        get to know that it is tried to shut it down with the built-in function of <a href="help://check_IsStopped">IsStopped()</a> and finish
+        get to know that it is tried to shut it down with the built-in function of <a href="help://runtimestatus_IsStopped">IsStopped()</a> and finish
         its work correctly.<br/><br/>
 
         Execution of scripts does not depend on incoming quotes. At change of symbol and/or chart period, the script will finish its work
@@ -2724,7 +2727,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         MQL4 and DLL libraries are executed in the thread of the calling module.<br/><br/>
 
         It is not recommended to use a fully qualified filename name for the module to load like <em>Drive:\Directory\FileName.Ext</em>.
-      MQL4 libraries are loaded from the <em>{terminal_dir}\experts\libraries</em> folder. If the library is not found there an attempt will 
+      MQL4 libraries are loaded from the <em>{terminal_dir}\experts\libraries</em> folder. If the library is not found there an attempt will
       be made to load the library from the <em>{terminal_dir}\experts</em> folder.<br/><br/>
 
         System libraries (DLLs) are loaded by the rules of the operation system. If the library has already been loaded
@@ -2737,24 +2740,24 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         5. The root directory of the drive where the operation system was installed.<br/>
         6. The directories listed in the PATH environment system variable.<br/><br/>
 
-        Unlike system libraries MQL4 libraries are loaded separately for every calling module, independently on whether the called library has 
-        already been loaded by another MQL4 module. For example, the caller.ex4 module calls functions from lib1.ex4 and lib2.ex4 libraries. 
-        The lib1.ex4 library by itself calls functions from the lib2.ex4 library, too. In this case one copy of the lib1.ex4 library and two 
+        Unlike system libraries MQL4 libraries are loaded separately for every calling module, independently on whether the called library has
+        already been loaded by another MQL4 module. For example, the caller.ex4 module calls functions from lib1.ex4 and lib2.ex4 libraries.
+        The lib1.ex4 library by itself calls functions from the lib2.ex4 library, too. In this case one copy of the lib1.ex4 library and two
         copies of the lib2.ex4 library will be loaded, regardless that all calls come from the same caller.ex4 module.<br/><br/>
 
-        DLL functions imported into an MQL4 program must provide linkage conventions accepted for Windows API functions. To provide such a 
+        DLL functions imported into an MQL4 program must provide linkage conventions accepted for Windows API functions. To provide such a
         convention, the keyword __stdcall (Microsoft compilers) is used in C/C++ source codes. It is characterized by the following:<br/>
-        - the caller (the terminal) must "see" the called function prototype in order to be able to put parameters onto the 
+        - the caller (the terminal) must "see" the called function prototype in order to be able to put parameters onto the
           stack;<br/>
-        - the caller puts parameters onto the stack in reversed order, i.e. from right to left; it is this order in which the imported function 
+        - the caller puts parameters onto the stack in reversed order, i.e. from right to left; it is this order in which the imported function
           reads parameters passed to it;<br/>
         - parameters are passed by value, except for those explicitely passed by reference (in MQL4 those are strings and arrays);<br/>
         - after reading of the passed parameters the called function rewinds the stack by itself<br/><br/>
 
         An import declaration cannot specify parameters with default values as all parameters must be passed explicitely to the imported function.<br/><br/>
 
-       If calling of an imported function fails (MQL4 settings do not allow DLL imports or the corresponding library could not be loaded), the program stops 
-       with the journal message "expert stopped" and the program's start() function will not be executed again until the program is re-initialized. A loaded 
+       If calling of an imported function fails (MQL4 settings do not allow DLL imports or the corresponding library could not be loaded), the program stops
+       with the journal message "expert stopped" and the program's start() function will not be executed again until the program is re-initialized. A loaded
        program can be re-initialized by recompiling it or by opening its input properties dialog and pressing the OK button.
         </p>
       </content>
@@ -2791,7 +2794,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <content>
         <p>
          The client terminal stores the last error occurred during MQL program execution in the <i>last_error</i> variable (separately for each MQL program).
-         The variable is reset to <span class="constant">NULL</span> before the execution of the init function. To read the <i>last_error</i> variable use the <a href="help://check_GetLastError">GetLastError</a> 
+         The variable is reset to <span class="constant">NULL</span> before the execution of the init function. To read the <i>last_error</i> variable use the <a href="help://runtimestatus_GetLastError">GetLastError</a>
          function. With each call of that function the <i>last_error</i> variable is reset to <span class="constant">NULL</span>.
         </p>
         <p>
@@ -2811,7 +2814,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         </table>
         <p>
          If the program stopped working due to a critical error, the code of this error can be read at the next execution of the start or the deinit function using
-         <a href="help://check_GetLastError">GetLastError()</a>.
+         <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
         </p>
         <p><br/>
          There are a number of critical errors referred to <a href="help://runtime_imports">imported functions call</a> that cause an immediate stop of
@@ -2858,7 +2861,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://trading_OrderCloseBy">OrderCloseBy</a></td><td><span class="constant">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constant">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_INVALID_TICKET</span> (4108), <span class="constant">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constant">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
         <tr><td><a href="help://trading_OrderDelete">OrderDelete</a></td><td><span class="constant">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_INVALID_TICKET</span> (4108), <span class="constant">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constant">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
         <tr><td><a href="help://trading_OrderModify">OrderModify</a></td><td><span class="constant">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constant">ERR_INTEGER_PARAMETER_EXPECTED</span> (4063), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_INVALID_PRICE_PARAM</span> (4107), <span class="constant">ERR_INVALID_TICKET</span> (4108), <span class="constant">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constant">ERR_TRADE_NOT_ALLOWED</span> (4109), <a href="help://trading_errors">code returned by trade server</a></td></tr>
-        <tr><td><a href="help://check_GetLastError">GetLastError</a></td><td><span class="constant">ERR_NO_ERROR</span> (0)</td></tr>
+        <tr><td><a href="help://runtimestatus_GetLastError">GetLastError</a></td><td><span class="constant">ERR_NO_ERROR</span> (0)</td></tr>
         </table>
         <p><br/>
          Most other functions change the <i>last_error</i> variable only if an error occurs:</p>
@@ -2908,9 +2911,9 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://indicators_iCustom">iCustom</a></td><td><span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
         <tr><td><a href="help://indicators">technical indicators</a>, <a href="help://series">series access functions</a></td><td><span class="constant">ERS_HISTORY_UPDATE</span> (4066)</td></tr>
         <tr><td><a href="help://indicators">technical indicators OnArray</a></td><td><span class="constant">ERR_ARRAY_AS_PARAMETER_EXPECTED</span> (4065), <span class="constant">ERR_ARRAY_ERROR</span> (4053)</td></tr>
-        <tr><td><a href="help://customind_IndicatorBuffers">IndicatorBuffers</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_IndicatorDigits">IndicatorDigits</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_IndicatorShortName">IndicatorShortName</a></td><td><span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_IndicatorBuffers">IndicatorBuffers</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_IndicatorDigits">IndicatorDigits</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_IndicatorShortName">IndicatorShortName</a></td><td><span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
         <tr><td><a href="help://common_MarketInfo">MarketInfo</a></td><td><span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> (4059), <span class="constant">ERR_UNKNOWN_SYMBOL</span> (4106), <span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
         <tr><td><a href="help://math_MathArccos">MathArccos</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
         <tr><td><a href="help://math_MathArcsin">MathArcsin</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
@@ -2952,14 +2955,14 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
         <tr><td><a href="help://common_SendFTP">SendFTP</a></td><td><span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> (4059), <span class="constant">ERR_CUSTOM_INDICATOR_ERROR</span> (4055), <span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
         <tr><td><a href="help://common_SendMail">SendMail</a></td><td><span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> (4059), <span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_FUNCTION_NOT_CONFIRMED</span> (4060), <span class="constant">ERR_SEND_MAIL_ERROR</span> (4061)</td></tr>
         <tr><td><a href="help://common_SendNotification">SendNotification</a></td><td><span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> (4059), <span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_NOTIFICATION_SEND_ERROR</span> (4250), <span class="constant">ERR_NOTIFICATION_WRONG_PARAMETER</span> (4251), <span class="constant">ERR_NOTIFICATION_WRONG_SETTINGS</span> (4252), <span class="constant">ERR_NOTIFICATION_TOO_FREQUENT</span> (4253)</td></tr>
-        <tr><td><a href="help://customind_SetIndexArrow">SetIndexArrow</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexBuffer">SetIndexBuffer</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_SERIES_NOT_AVAILABLE</span> (4054), <span class="constant">ERR_INCOMPATIBLE_ARRAYS</span> (4056)</td></tr>
-        <tr><td><a href="help://customind_SetIndexDrawBegin">SetIndexDrawBegin</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexEmptyValue">SetIndexEmptyValue</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexLabel">SetIndexLabel</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
-        <tr><td><a href="help://customind_SetIndexShift">SetIndexShift</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_SetIndexStyle">SetIndexStyle</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
-        <tr><td><a href="help://customind_SetLevelValue">SetLevelValue</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexArrow">SetIndexArrow</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexBuffer">SetIndexBuffer</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_SERIES_NOT_AVAILABLE</span> (4054), <span class="constant">ERR_INCOMPATIBLE_ARRAYS</span> (4056)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexDrawBegin">SetIndexDrawBegin</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexEmptyValue">SetIndexEmptyValue</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexLabel">SetIndexLabel</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051), <span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexShift">SetIndexShift</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
+        <tr><td><a href="help://indicatormanagement_SetLevelValue">SetLevelValue</a></td><td><span class="constant">ERR_INVALID_FUNCTION_PARAMVALUE</span> (4051)</td></tr>
         <tr><td><a href="help://common_Sleep">Sleep</a></td><td><span class="constant">ERR_CUSTOM_INDICATOR_ERROR</span> (4055)</td></tr>
         <tr><td><a href="help://strings_StringFind">StringFind</a></td><td><span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062)</td></tr>
         <tr><td><a href="help://strings_StringGetChar">StringGetChar</a></td><td><span class="constant">ERR_STRING_PARAMETER_EXPECTED</span> (4062), <span class="constant">ERR_NOT_INITIALIZED_STRING</span> (4008), <span class="constant">ERR_ARRAY_INDEX_OUT_OF_RANGE</span> (4002)</td></tr>
@@ -2997,18 +3000,18 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
          <a href="help://common_GetTickCount">GetTickCount</a>,
          <a href="help://windows_HideTestIndicators">HideTestIndicators</a>,
          <a href="help://dateandtime_Hour">Hour</a>,
-         <a href="help://customind_IndicatorCounted">IndicatorCounted</a>,
-         <a href="help://check_IsConnected">IsConnected</a>,
-         <a href="help://check_IsDemo">IsDemo</a>,
-         <a href="help://check_IsDllsAllowed">IsDllsAllowed</a>,
-         <a href="help://check_IsExpertEnabled">IsExpertEnabled</a>,
-         <a href="help://check_IsLibrariesAllowed">IsLibrariesAllowed</a>,
-         <a href="help://check_IsOptimization">IsOptimization</a>,
-         <a href="help://check_IsStopped">IsStopped</a>,
-         <a href="help://check_IsTesting">IsTesting</a>,
-         <a href="help://check_IsTradeAllowed">IsTradeAllowed</a>,
-         <a href="help://check_IsTradeContextBusy">IsTradeContextBusy</a>,
-         <a href="help://check_IsVisualMode">IsVisualMode</a>,
+         <a href="help://indicatormanagement_IndicatorCounted">IndicatorCounted</a>,
+         <a href="help://runtimestatus_IsConnected">IsConnected</a>,
+         <a href="help://runtimestatus_IsDemo">IsDemo</a>,
+         <a href="help://runtimestatus_IsDllsAllowed">IsDllsAllowed</a>,
+         <a href="help://runtimestatus_IsExpertEnabled">IsExpertEnabled</a>,
+         <a href="help://runtimestatus_IsLibrariesAllowed">IsLibrariesAllowed</a>,
+         <a href="help://runtimestatus_IsOptimization">IsOptimization</a>,
+         <a href="help://runtimestatus_IsStopped">IsStopped</a>,
+         <a href="help://runtimestatus_IsTesting">IsTesting</a>,
+         <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed</a>,
+         <a href="help://runtimestatus_IsTradeContextBusy">IsTradeContextBusy</a>,
+         <a href="help://runtimestatus_IsVisualMode">IsVisualMode</a>,
          <a href="help://math_MathAbs">MathAbs</a>,
          <a href="help://math_MathArctan">MathArctan</a>,
          <a href="help://math_MathCeil">MathCeil</a>,
@@ -3035,7 +3038,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
          <a href="help://common_Print">Print</a>,
          <a href="help://windows_RefreshRates">RefreshRates</a>,
          <a href="help://dateandtime_Seconds">Seconds</a>,
-         <a href="help://customind_SetLevelStyle">SetLevelStyle</a>,
+         <a href="help://indicatormanagement_SetLevelStyle">SetLevelStyle</a>,
          <a href="help://strings_StringConcatenate">StringConcatenate</a>,
          <a href="help://convert_StrToTime">StrToTime</a>,
          <a href="help://convert_StrToDouble">StrToDouble</a>,
@@ -3054,7 +3057,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
          <a href="help://dateandtime_TimeSeconds">TimeSeconds</a>,
          <a href="help://convert_TimeToStr">TimeToStr</a>,
          <a href="help://dateandtime_TimeYear">TimeYear</a>,
-         <a href="help://check_UninitializeReason">UninitializeReason</a>,
+         <a href="help://runtimestatus_UninitializeReason">UninitializeReason</a>,
          <a href="help://windows_WindowBarsPerChart">WindowBarsPerChart</a>,
          <a href="help://windows_WindowFirstVisibleBar">WindowFirstVisibleBar</a>,
          <a href="help://windows_WindowPriceOnDropped">WindowPriceOnDropped</a>,
@@ -3070,9 +3073,294 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </text>
   </group>
 
+
+  <group>
+    tag=runtimestatus
+    caption=Runtime status
+    <content>
+    A group of functions that allow determining of the current status of the client terminal, including the environment status of the MQL4 program.
+    </content>
+
+    <function>
+      tag=runtimestatus_GetLastError
+      caption=GetLastError()
+      type=int
+      <content>
+        The function returns the <a href="help://constants_errors">last occurred error</a>, then the value of special
+      <a href="help://runtime_errors">last_error</a> variable where the last error code is stored will be zeroized.
+      So, the next call for GetLastError() will return 0.
+      </content>
+      <example>
+  int err;
+  int handle=FileOpen(&quot;somefile.dat&quot;, FILE_READ|FILE_BIN);
+  if(handle&lt;1)
+    {
+     err=GetLastError();
+     Print(&quot;error(&quot;,err,&quot;): &quot;,ErrorDescription(err));
+     return(0);
+    }
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsConnected
+      caption=IsConnected()
+      type=bool
+      <content>
+      The function returns the status of the main connection between client terminal and server that performs data pumping. It returns <span class="constant">true</span> if connection to the server was
+     successfully established, otherwise, it returns <span class="constant">false</span>.
+      </content>
+      <example>
+  if(!IsConnected())
+    {
+     Print(&quot;No connection!&quot;);
+     return(0);
+    }
+  // Expert body that needs the connection opened
+  // ...
+      </example>
+   </function>
+    <function>
+      tag=runtimestatus_IsDemo
+      caption=IsDemo()
+      type=bool
+      <content>
+      Returns <span class="constant">true</span> if the expert runs on a demo account, otherwise returns <span class="constant">false</span>.
+      </content>
+      <example>
+  if(IsDemo()) Print(&quot;I work at a demo account&quot;);
+  else Print(&quot;I work at a real account&quot;);
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsDllsAllowed
+      caption=IsDllsAllowed()
+      type=bool
+      <content>
+Returns <span class="constant">true</span> if the function DLL call is allowed for the expert, otherwise returns <span class="constant">false</span>.<br/>
+<b>See also</b> <a href="help://runtimestatus_IsLibrariesAllowed">IsLibrariesAllowed()</a>, <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a>.
+      </content>
+      <example>
+  #import &quot;user32.dll&quot;
+     int     MessageBoxA(int hWnd, string szText, string szCaption,int nType);
+  ...
+  ...
+  if(IsDllsAllowed()==false)
+    {
+     Print(&quot;DLL call is not allowed. Experts cannot run.&quot;);
+     return(0);
+    }
+  // expert body that calls external DLL functions
+  MessageBoxA(0,&quot;an message&quot;,&quot;Message&quot;,MB_OK);
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsExpertEnabled
+      caption=IsExpertEnabled()
+      type=bool
+      <content>
+        Returns <span class="constant">true</span> if expert advisors are enabled for running, otherwise returns <span class="constant">false</span>.
+      </content>
+      <example>
+  while(!IsStopped())
+    {
+     ...
+     if(!IsExpertEnabled()) break;
+    }
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsLibrariesAllowed
+      caption=IsLibrariesAllowed()
+      type=bool
+      <content>
+        Returns <span class="constant">true</span> if the expert can call library function, otherwise returns <span class="constant">false</span>.
+        <b>See also</b> <a href="help://runtimestatus_IsDllsAllowed">IsDllsAllowed()</a>, <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a>.
+      </content>
+      <example>
+  #import &quot;somelibrary.ex4&quot;
+     int somefunc();
+  ...
+  ...
+  if(IsLibrariesAllowed()==false)
+    {
+     Print(&quot;Library call is not allowed.&quot;);
+     return(0);
+    }
+  // expert body that calls external DLL functions
+  somefunc();
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsOptimization
+      caption=IsOptimization()
+      type=bool
+      <content>
+      Returns <span class="constant">true</span> if expert runs in the strategy tester optimization mode, otherwise returns <span class="constant">false</span>.
+      </content>
+      <example>
+  if(IsOptimization()) return(0);
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsStopped
+      caption=IsStopped()
+      type=bool
+      <content>
+        Returns <span class="constant">true</span> if the program (an expert or a script) has been commanded to stop its operation, otherwise returns <span class="constant">false</span>.
+      The program can continue operation for 2.5 seconds more before the client terminal stops its <a href="help://runtime_start">performing</a> forcedly.
+      </content>
+      <example>
+while (expr!=false) {
+   if (IsStopped())
+      return(0);
+   // a long run-time cycle
+   // ...
+}
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsTesting
+      caption=IsTesting()
+      type=bool
+      <content>
+      Returns <span class="constant">true</span> if expert runs in the testing mode, otherwise returns <span class="constant">false</span>.
+      </content>
+      <example>
+  if(IsTesting()) Print(&quot;I am testing now&quot;);
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsTradeAllowed
+      caption=IsTradeAllowed()
+      type=bool
+      <content>
+        Returns <span class="constant">true</span> if the expert is allowed to trade and a thread for trading is not occupied, otherwise returns <span class="constant">false</span>.<br/>
+        <b>See also</b> <a href="help://runtimestatus_IsDllsAllowed">IsDllsAllowed()</a>, <a href="help://runtimestatus_IsLibrariesAllowed">IsLibrariesAllowed()</a>, <a href="help://runtimestatus_IsTradeContextBusy">IsTradeContextBusy()</a>.
+      </content>
+      <example>
+  if(IsTradeAllowed()) Print(&quot;Trade allowed&quot;);
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsTradeContextBusy
+      caption=IsTradeContextBusy()
+      type=bool
+      <content>
+Returns <span class="constant">true</span> if a thread for trading is occupied by another expert advisor, otherwise returns <span class="constant">false</span>.<br/>
+<b>See also</b> <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a>.
+      </content>
+      <example>
+  if(IsTradeContextBusy()) Print(&quot;Trade context is busy. Please wait&quot;);
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_IsVisualMode
+      caption=IsVisualMode()
+      type=bool
+      <content>
+      Returns <span class="constant">true</span> if the expert is tested with checked &quot;Visual Mode&quot; button, otherwise returns <span class="constant">false</span>.<br/>
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zurückgesetzt wird.
+      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zurück (getested mit Build 225-670).<br/>
+      <br/>
+      Workaround: Den VisualMode-Status aus dem Hauptmodul über den Execution-Context in die Library übermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
+      </content>
+      <example>
+  if (IsVisualModeFix()) Comment("Visual mode certainly turned on");
+      </example>
+    </function>
+
+    <function>
+      tag=runtimestatus_UninitializeReason
+      caption=UninitializeReason()
+      type=int
+      <content>
+        Returns the code of the uninitialization reason for the experts, custom indicators, and scripts.
+        The returned values can be ones of <a href="help://constants_uninit">Uninitialize reason codes</a>.
+        This function can also be called in function init() to analyze the reasons for deinitialization of the previour launch.
+      </content>
+      <example>
+  // this is example
+  int deinit()
+    {
+     switch(UninitializeReason())
+       {
+        case REASON_CHARTCLOSE:
+        case REASON_REMOVE:      CleanUp(); break; // cleaning up and deallocation of all resources.
+        case REASON_RECOMPILE:
+        case REASON_CHARTCHANGE:
+        case REASON_PARAMETERS:
+        case REASON_ACCOUNT:     StoreData(); break;  // prepare to restart
+       }
+     //...
+    }
+      </example>
+    </function>
+  </group>
+
+
+  <group>
+    tag=empty
+    caption=
+    <content>
+    </content>
+  </group>
+
+
+  <group>
+    tag=terminal
+    caption=Terminal functions
+    <content>
+    Functions returning information about client terminal.
+    </content>
+
+    <function>
+      tag=terminal_TerminalCompany
+      caption=TerminalCompany()
+      type=string
+      <content>
+      Returns the name of company owning the client terminal.
+      </content>
+      example=Print(&quot;Company name is &quot;,TerminalCompany());
+    </function>
+
+    <function>
+      tag=terminal_TerminalName
+      caption=TerminalName()
+      type=string
+      <content>
+      Returns client terminal name.
+      </content>
+      example=Print(&quot;Terminal name is &quot;,TerminalName());
+    </function>
+
+    <function>
+      tag=terminal_TerminalPath
+      caption=TerminalPath()
+      type=string
+      <content>
+      Returns the directory, from which the client terminal was launched.
+      </content>
+      example=Print(&quot;Working directory is &quot;,TerminalPath());
+    </function>
+  </group>
+
+
   <group>
     tag=account
-    caption=Account information
+    caption=Account functions
     <content>
     A group of functions to access to the active account information.
     </content>
@@ -3280,6 +3568,14 @@ else
 
 
   <group>
+    tag=empty
+    caption=
+    <content>
+    </content>
+  </group>
+
+
+  <group>
     tag=array
     caption=Array functions
     <content>
@@ -3483,8 +3779,8 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
       <content>
         Copies a pointer to a series array to a regular array variable and returns the number of the contained elements or -1 in case of an error.<br/><br/>
 
-        No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected. 
-        Excluded from this rule are custom indicators arrays that are <a href="help://customind_SetIndexBuffer">assigned as indexed ones</a>. In those cases the data is indeed 
+        No additional memory is allocated and no data is copied. Instead the array variable is replaced by a pointer to the underlying raw data array and access is redirected.
+        Excluded from this rule are custom indicators arrays that are <a href="help://indicatormanagement_SetIndexBuffer">assigned as indexed ones</a>. In those cases the data is indeed
         copied. If data from a different time series is accessed the status code <span class="constant">ERS_HISTORY_UPDATE</span> may be set. If the specified data doesn't (yet)
         exist the <a href="help://constants_errors">error code</a> <span class="constant">ERR_ARRAY_ERROR</span> is set and the function returns -1.
         <br/>
@@ -3591,7 +3887,7 @@ dim_size=ArrayDimension(num_array);
       <content>
         Sets all elements of a numeric array to the same value. Returns the number of initialized elements.<br/>
       Note: It is not recommended to initialize index buffers in the custom indicator <i>init()</i> function
-        as such functions are initialized automatically with an <a href="help://customind_SetIndexEmptyValue">&quot;empty value&quot;</a>
+        as such functions are initialized automatically with an <a href="help://indicatormanagement_SetIndexEmptyValue">&quot;empty value&quot;</a>
       at allocation and re-allocation of buffers.
       </content>
       <example>
@@ -3849,279 +4145,6 @@ Array sorting direction. It can be any of the following values:<br/>
     </function>
   </group>
 
-  <group>
-    tag=check
-    caption=Checkup
-    <content>
-    A group of functions that allow determining of the current status of the client terminal, including the environment status of the MQL4 program.
-    </content>
-
-    <function>
-      tag=check_GetLastError
-      caption=GetLastError()
-      type=int
-      <content>
-        The function returns the <a href="help://constants_errors">last occurred error</a>, then the value of special
-      <a href="help://runtime_errors">last_error</a> variable where the last error code is stored will be zeroized.
-      So, the next call for GetLastError() will return 0.
-      </content>
-      <example>
-  int err;
-  int handle=FileOpen(&quot;somefile.dat&quot;, FILE_READ|FILE_BIN);
-  if(handle&lt;1)
-    {
-     err=GetLastError();
-     Print(&quot;error(&quot;,err,&quot;): &quot;,ErrorDescription(err));
-     return(0);
-    }
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsConnected
-      caption=IsConnected()
-      type=bool
-      <content>
-      The function returns the status of the main connection between client terminal and server that performs data pumping. It returns <span class="constant">true</span> if connection to the server was
-     successfully established, otherwise, it returns <span class="constant">false</span>.
-      </content>
-      <example>
-  if(!IsConnected())
-    {
-     Print(&quot;No connection!&quot;);
-     return(0);
-    }
-  // Expert body that needs the connection opened
-  // ...
-      </example>
-   </function>
-    <function>
-      tag=check_IsDemo
-      caption=IsDemo()
-      type=bool
-      <content>
-      Returns <span class="constant">true</span> if the expert runs on a demo account, otherwise returns <span class="constant">false</span>.
-      </content>
-      <example>
-  if(IsDemo()) Print(&quot;I work at a demo account&quot;);
-  else Print(&quot;I work at a real account&quot;);
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsDllsAllowed
-      caption=IsDllsAllowed()
-      type=bool
-      <content>
-Returns <span class="constant">true</span> if the function DLL call is allowed for the expert, otherwise returns <span class="constant">false</span>.<br/>
-<b>See also</b> <a href="help://check_IsLibrariesAllowed">IsLibrariesAllowed()</a>, <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a>.
-      </content>
-      <example>
-  #import &quot;user32.dll&quot;
-     int     MessageBoxA(int hWnd, string szText, string szCaption,int nType);
-  ...
-  ...
-  if(IsDllsAllowed()==false)
-    {
-     Print(&quot;DLL call is not allowed. Experts cannot run.&quot;);
-     return(0);
-    }
-  // expert body that calls external DLL functions
-  MessageBoxA(0,&quot;an message&quot;,&quot;Message&quot;,MB_OK);
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsExpertEnabled
-      caption=IsExpertEnabled()
-      type=bool
-      <content>
-        Returns <span class="constant">true</span> if expert advisors are enabled for running, otherwise returns <span class="constant">false</span>.
-      </content>
-      <example>
-  while(!IsStopped())
-    {
-     ...
-     if(!IsExpertEnabled()) break;
-    }
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsLibrariesAllowed
-      caption=IsLibrariesAllowed()
-      type=bool
-      <content>
-        Returns <span class="constant">true</span> if the expert can call library function, otherwise returns <span class="constant">false</span>.
-        <b>See also</b> <a href="help://check_IsDllsAllowed">IsDllsAllowed()</a>, <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a>.
-      </content>
-      <example>
-  #import &quot;somelibrary.ex4&quot;
-     int somefunc();
-  ...
-  ...
-  if(IsLibrariesAllowed()==false)
-    {
-     Print(&quot;Library call is not allowed.&quot;);
-     return(0);
-    }
-  // expert body that calls external DLL functions
-  somefunc();
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsOptimization
-      caption=IsOptimization()
-      type=bool
-      <content>
-      Returns <span class="constant">true</span> if expert runs in the strategy tester optimization mode, otherwise returns <span class="constant">false</span>.
-      </content>
-      <example>
-  if(IsOptimization()) return(0);
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsStopped
-      caption=IsStopped()
-      type=bool
-      <content>
-        Returns <span class="constant">true</span> if the program (an expert or a script) has been commanded to stop its operation, otherwise returns <span class="constant">false</span>.
-      The program can continue operation for 2.5 seconds more before the client terminal stops its <a href="help://runtime_start">performing</a> forcedly.
-      </content>
-      <example>
-  while(expr!=false)
-    {
-     if(IsStopped()==true) return(0);
-     // a long run-time cycle
-     // ...
-    }
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsTesting
-      caption=IsTesting()
-      type=bool
-      <content>
-      Returns <span class="constant">true</span> if expert runs in the testing mode, otherwise returns <span class="constant">false</span>.
-      </content>
-      <example>
-  if(IsTesting()) Print(&quot;I am testing now&quot;);
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsTradeAllowed
-      caption=IsTradeAllowed()
-      type=bool
-      <content>
-        Returns <span class="constant">true</span> if the expert is allowed to trade and a thread for trading is not occupied, otherwise returns <span class="constant">false</span>.<br/>
-        <b>See also</b> <a href="help://check_IsDllsAllowed">IsDllsAllowed()</a>, <a href="help://check_IsLibrariesAllowed">IsLibrariesAllowed()</a>, <a href="help://check_IsTradeContextBusy">IsTradeContextBusy()</a>.
-      </content>
-      <example>
-  if(IsTradeAllowed()) Print(&quot;Trade allowed&quot;);
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsTradeContextBusy
-      caption=IsTradeContextBusy()
-      type=bool
-      <content>
-Returns <span class="constant">true</span> if a thread for trading is occupied by another expert advisor, otherwise returns <span class="constant">false</span>.<br/>
-<b>See also</b> <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a>.
-      </content>
-      <example>
-  if(IsTradeContextBusy()) Print(&quot;Trade context is busy. Please wait&quot;);
-      </example>
-    </function>
-
-    <function>
-      tag=check_IsVisualMode
-      caption=IsVisualMode()
-      type=bool
-      <content>
-      Returns <span class="constant">true</span> if the expert is tested with checked &quot;Visual Mode&quot; button, otherwise returns <span class="constant">false</span>.<br/>
-      <br/>
-      <span style="color:red">Bug:</span>
-      <br/>
-      In Libraries darf die Funktion nicht verwendet werden, da der VisualMode-Status zwischen aufeinanderfolgenden Tests nicht zurückgesetzt wird. 
-      Die Funktion gibt bis zum Neuinitialisieren der Library den Status des ersten Test zurück (getested mit Build 225-670).<br/>
-      <br/>
-      Workaround: Den VisualMode-Status aus dem Hauptmodul über den Execution-Context in die Library übermitteln und dort <span class="function">IsVisualModeFix()</span> verwenden.
-      </content>
-      <example>
-  if (IsVisualModeFix()) Comment("Visual mode certainly turned on");
-      </example>
-    </function>
-
-    <function>
-      tag=check_UninitializeReason
-      caption=UninitializeReason()
-      type=int
-      <content>
-        Returns the code of the uninitialization reason for the experts, custom indicators, and scripts.
-        The returned values can be ones of <a href="help://constants_uninit">Uninitialize reason codes</a>.
-        This function can also be called in function init() to analyze the reasons for deinitialization of the previour launch.
-      </content>
-      <example>
-  // this is example
-  int deinit()
-    {
-     switch(UninitializeReason())
-       {
-        case REASON_CHARTCLOSE:
-        case REASON_REMOVE:      CleanUp(); break; // cleaning up and deallocation of all resources.
-        case REASON_RECOMPILE:
-        case REASON_CHARTCHANGE:
-        case REASON_PARAMETERS:
-        case REASON_ACCOUNT:     StoreData(); break;  // prepare to restart
-       }
-     //...
-    }
-      </example>
-    </function>
-  </group>
-
-  <group>
-    tag=terminal
-    caption=Client terminal
-    <content>
-    Functions returning information about client terminal.
-    </content>
-
-    <function>
-      tag=terminal_TerminalCompany
-      caption=TerminalCompany()
-      type=string
-      <content>
-      Returns the name of company owning the client terminal.
-      </content>
-      example=Print(&quot;Company name is &quot;,TerminalCompany());
-    </function>
-
-    <function>
-      tag=terminal_TerminalName
-      caption=TerminalName()
-      type=string
-      <content>
-      Returns client terminal name.
-      </content>
-      example=Print(&quot;Terminal name is &quot;,TerminalName());
-    </function>
-
-    <function>
-      tag=terminal_TerminalPath
-      caption=TerminalPath()
-      type=string
-      <content>
-      Returns the directory, from which the client terminal was launched.
-      </content>
-      example=Print(&quot;Working directory is &quot;,TerminalPath());
-    </function>
-</group>
 
   <group>
     tag=common
@@ -4237,7 +4260,7 @@ they are <a href="help://runtime_start">executed</a> within the user interface t
 
    if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
       int ret = MessageBox(&quot; ObjectCreate() function returned the &quot;+GetLastError()+&quot; error\nContinue?&quot;, &quot;Question&quot;, MB_YESNO|MB_ICONQUESTION);
-      if (ret == IDNO) 
+      if (ret == IDNO)
          return(false);
    }
    // continue
@@ -4351,7 +4374,7 @@ It will not be sent if there is no FTP address and/or access password specified 
       <content>
 Sends a message to the e-mail address configured in the Tools->Options->E-Mail tab.<br/>
 The sending can be disabled in settings, or it can be omitted to specify the e-mail address.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   double lastclose=Close[0];
@@ -4377,7 +4400,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 Sends push notifications to mobile terminals whose MetaQuotes IDs are specified on the "Notifications" tab in options window.<br/>
 Sending of notifications can be disabled in the settings. The ID can also be omitted.<br/>
-In case of error, the function returns <span class="constant">false</span>. To get information about the error, call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/><br/>
+In case of error, the function returns <span class="constant">false</span>. To get information about the error, call the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/><br/>
 Note: The SendNotification() function has strict limitations on its usage: no more than 2 calls per second and no more than 10 calls per minute. Frequency of calls is controlled dynamically, and the function can be blocked in case of violation.
       </content>
       <example>
@@ -4400,7 +4423,7 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       The Sleep() function suspends execution of the current expert within the specified interval.<br/>
       The Sleep() function cannot be called from custom indicators since they <a href="help://runtime_start">calculate</a> in the interface
       thread and may not decelerate it.<br/>
-      The checking of the expert <a href="help://check_IsStopped">stop flag status</a> every 0.1 second has been built into the function.
+      The checking of the expert <a href="help://runtimestatus_IsStopped">stop flag status</a> every 0.1 second has been built into the function.
       </content>
       <example>
 //---- wait for 10 seconds
@@ -4585,15 +4608,15 @@ Optional data output mode can be one or combination of:<br/>
 
 
   <group>
-    tag=customind
-    caption=Custom indicators
+    tag=indicatormanagement
+    caption=Indicator management
     <content>
     A group of functions used at producing of custom indicators.<br/><br/>
     These functions cannot be used in experts and scripts.
     </content>
 
     <function>
-      tag=customind_IndicatorBuffers
+      tag=indicatormanagement_IndicatorBuffers
       caption=IndicatorBuffers()
       type=void
       <content>
@@ -4643,7 +4666,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_IndicatorCounted
+      tag=indicatormanagement_IndicatorCounted
       caption=IndicatorCounted()
       type=int
       <content>
@@ -4680,7 +4703,7 @@ function returns the count of bars minus one.
     </function>
 
     <function>
-      tag=customind_IndicatorDigits
+      tag=indicatormanagement_IndicatorDigits
       caption=IndicatorDigits()
       type=void
       <content>
@@ -4714,7 +4737,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_IndicatorShortName
+      tag=indicatormanagement_IndicatorShortName
       caption=IndicatorShortName()
       type=void
       <content>
@@ -4747,7 +4770,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_SetIndexArrow
+      tag=indicatormanagement_SetIndexArrow
       caption=SetIndexArrow()
       type=void
       <content>
@@ -4785,14 +4808,14 @@ int init()
     </function>
 
     <function>
-      tag=customind_SetIndexBuffer
+      tag=indicatormanagement_SetIndexBuffer
       caption=SetIndexBuffer()
       type=bool
       <content>
 Binds the array variable declared at a global level to the custom indicator pre-defined buffer.
-The amount of buffers needed to calculate the indicator is set with the <a href="help://customind_IndicatorBuffers">IndicatorBuffers()</a> function and cannot
+The amount of buffers needed to calculate the indicator is set with the <a href="help://indicatormanagement_IndicatorBuffers">IndicatorBuffers()</a> function and cannot
 exceed 8. If it succeeds, <span class="constant">true</span> will be returned, otherwise, it will be <span class="constant">false</span>.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
      </content>
       <example>
   double ExtBufferSilver[];
@@ -4815,7 +4838,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
     </function>
 
     <function>
-      tag=customind_SetIndexDrawBegin
+      tag=indicatormanagement_SetIndexDrawBegin
       caption=SetIndexDrawBegin()
       type=void
       <content>
@@ -4855,7 +4878,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_SetIndexEmptyValue
+      tag=indicatormanagement_SetIndexEmptyValue
       caption=SetIndexEmptyValue()
       type=void
       <content>
@@ -4897,7 +4920,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_SetIndexLabel
+      tag=indicatormanagement_SetIndexLabel
       caption=SetIndexLabel()
       type=void
       <content>
@@ -4967,7 +4990,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_SetIndexShift
+      tag=indicatormanagement_SetIndexShift
       caption=SetIndexShift()
       type=void
       <content>
@@ -5017,7 +5040,7 @@ int init()
     </function>
 
     <function>
-      tag=customind_SetIndexStyle
+      tag=indicatormanagement_SetIndexStyle
       caption=SetIndexStyle()
       type=void
       <content>
@@ -5065,7 +5088,7 @@ Shape style. Can be one of <a href="help://constants_drawstyles">Drawing shape s
     </function>
 
     <function>
-      tag=customind_SetLevelStyle
+      tag=indicatormanagement_SetLevelStyle
       caption=SetLevelStyle()
       type=void
       <content>
@@ -5098,7 +5121,7 @@ Drawing style. Can be one of the <a href="help://constants_drawstyles">Drawing s
     </function>
 
     <function>
-      tag=customind_SetLevelValue
+      tag=indicatormanagement_SetLevelValue
       caption=SetLevelValue()
       type=void
       <content>
@@ -5277,7 +5300,7 @@ SetLevelValue(1,3.14);
       Workaround: <span class="function">TimeDayOfWeekFix()</span> verwenden<br/>
       <br/>
       </content>
-      <example>                  
+      <example>
   int weekday=TimeDayOfWeek(D<span class="string">'2004.11.2'</span>);
   // day is 2 - Tuesday
       </example>
@@ -5330,7 +5353,7 @@ SetLevelValue(1,3.14);
       Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
       At testing local time is modelled and is the same as the modelled server time.<br/>
       <br/>
-      <span style="color:red">Note:</span> Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der 
+      <span style="color:red">Note:</span> Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der
       tatsächlichen lokalen Zeitzone. Das kann Implikationen haben, wenn der Test mit der Umgebung interagiert.
       </content>
       <example>
@@ -5473,7 +5496,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=void
       <content>
         Removes specified file name.
-        To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
+        To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
         Files can only be deleted if they are in the <em>terminal_dir\experts\files</em> directory
         (<em>terminal_directory\tester\files</em>, in case of testing) or its subdirectories.
         </content>
@@ -5533,8 +5556,8 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=bool
       <content>
         Returns logical <span class="constant">true</span> if file pointer is at the end of the file, otherwise returns <span class="constant">false</span>.
-        To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.
-        If the file end is reached during reading, the <a href="help://check_GetLastError">GetLastError()</a> function will return
+        To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
+        If the file end is reached during reading, the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function will return
         <a href="help://constants_errors">error</a> <span class="constant">ERR_END_OF_FILE</span> (4099).
       </content>
       <example>
@@ -5557,7 +5580,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=bool
       <content>
         For CSV file returns logical <span class="constant">true</span> if file pointer is at the end of the line, otherwise returns <span class="constant">false</span>.
-        To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.
+        To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
       </content>
       <example>
   if(FileIsLineEnding(h1))
@@ -5580,7 +5603,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       keywords=;FILE_BIN;FILE_CSV;FILE_READ;FILE_WRITE;
       <content>
 Opens file for input and/or output. Returns a file handle for the opened file or -1 (if the function fails).
-To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
 Notes: Files can only be opened in the <em>terminal_directory\experts\files</em> folder (<em>terminal_directory\tester\files</em>
 if for expert testing) or in its subfolders.<br/>
  <span class="constant">FILE_BIN</span> and <span class="constant">FILE_CSV</span> modes cannot be used simultaneously.<br/>
@@ -5623,7 +5646,7 @@ No more than 32 files can be opened within an executable module simultaneously. 
       type=int
       <content>
 Opens file in the current history directory (<em>terminal_directory\history\server_name</em>) or in its subfolders. Returns the file handle
-for the opened file. If the function fails, the returned value is -1. To get the detailed error information, call the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+for the opened file. If the function fails, the returned value is -1. To get the detailed error information, call the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
 Notes: Client terminal can connect to servers of different brokerage companies. History data (HST files) for each brokerage company are stored in the corresponding
 subfolder of the <em>terminal_directory\history</em> folder.<br/>
 The function can be useful to form own history data for a non-standard symbol and/or period. The file formed in the history folder can be opened offline,
@@ -5665,7 +5688,7 @@ not data pumping is needed to chart it.
       <content>
 Reads the specified amount of elements from the binary file into array. Before reading, make sure that the array is large enough.
 Returns the amount of actually read elements.<br/>
-To get the detailed error information, call the <a href="help://check_GetLastError">GetLastError()</a> function.
+To get the detailed error information, call the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
       </content>
       <example>
   int handle;
@@ -5707,7 +5730,7 @@ To get the detailed error information, call the <a href="help://check_GetLastErr
       <content>
 Reads the double-precision number with floating point from the current binary file position.
 The number format size can be 8 bytes (double) or 4 bytes (float).<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5740,7 +5763,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
         The function reads the integer from the current binary file position.
         The integer format size can be 1, 2 or 4 bytes.
         If the format size is not specified, the system tries to read the 4-bytes value.
-        To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+        To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       keywords=;CHAR_VALUE;SHORT_VALUE;LONG_VALUE;
       <example>
@@ -5772,7 +5795,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=double
       <content>
 Read the number from the current file position before the delimiter. Only for CSV files.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5799,7 +5822,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
 The function reads the string from the current file position. Applies to both CSV and binary files.
 For text files, the string will be read before the delimiter.
 For binary file, the given count of characters will be read to the string.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5833,7 +5856,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
 The function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the
 current file position. The next reading or writing are made at a new position.<br/>
 If file pointer has been moved successfully, the function returns <span class="constant">true</span>, otherwise, it returns <span class="constant">false</span>.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle=FileOpen(&quot;filename.csv&quot;, FILE_CSV|FILE_READ|FILE_WRITE, ';');
@@ -5874,7 +5897,7 @@ Initial position. Value can be one of the following constants:<br/>
       type=int
       <content>
 The function returns file size in bytes.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5900,7 +5923,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=int
       <content>
         Returns the current position of the file pointer.
-        To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+        To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5925,7 +5948,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
 The function is intended for writing of data into a CSV file, delimiter being inserted automatically. After writing into the file, the line
 end character &quot;\r\n&quot; will be added. Numbers will be converted into a text at output (see the <a href="help://common_Print">Print()</a> function).<br/>
 Returns the count of written characters or a negative number if an error occurs.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -5963,7 +5986,7 @@ The function writes the array to a binary file. Arrays of int, bool, datetime an
 Arrays of double type will be written elementwise, as 8-bytes floating point numbers.
 Arrays of string type will be written by strings, the line end character &quot;\r\n&quot; to be added at each string automatically.<br/>
 Returns the number of written elements or a negative value if an error occurs.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6010,7 +6033,7 @@ The function writes a double value with floating point to a binary file.
 If the format is specified as <span class="constant">FLOAT_VALUE</span>, the value will be written as a 4-bytes floating point number (of the float type),
 otherwise, it will be written in the 8-bytes floating point format (of the double type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6057,7 +6080,7 @@ The function writes the integer value to a binary file.
  if the size is <span class="constant">CHAR_VALUE</span>, the value will be written as a 1-byte integer (the char type), and
  if the size is <span class="constant">LONG_VALUE</span>, the value will be written as a 4-byte integer (the long int type).<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6100,7 +6123,7 @@ Optional format flag. It can be any of the following values:<br/>
       <content>
 The function writes the string to a binary file from the current file position.<br/>
 Returns the actually written bytes count or a negative value if an error occurs.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   int handle;
@@ -6151,7 +6174,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=bool
       <content>
 Returns <span class="constant">true</span> if the global variable exists, otherwise, returns <span class="constant">false</span>.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   // check variable before use
@@ -6172,7 +6195,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 Deletes the global variable.
 If the function succeeds, the returned value will be <span class="constant">true</span>, otherwise, it will be <span class="constant">false</span>.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   // deleting of the global variable named &quot;gvar_1&quot;
@@ -6191,7 +6214,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=double
       <content>
 Returns the value of an existing global variable or 0 if an error occurs.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   double v1=GlobalVariableGet(&quot;g1&quot;);
@@ -6212,7 +6235,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=string
       <content>
 The function returns the name of a global variable by its index in the list of global variables.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
      </content>
       <example>
   int    var_total=GlobalVariablesTotal();
@@ -6237,7 +6260,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 Sets a new value of the global variable. If it does not exist, the system creates a new gloabl variable.
 If the function succeeds, the returned value will be the last access time. Otherwise, the returned value will be 0.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   //---- try to set new value
@@ -6265,7 +6288,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
 Sets the new value of the existing global variable if the current value equals to the third parameter <i>check_value</i>. If there
 is no global variable, the function will generate <a href="help://constants_errors">error</a> <span class="constant">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)
 and return <span class="constant">false</span>. When successfully executed, the function returns <span class="constant">true</span>, otherwise, it returns <span class="constant">false</span>. To get detailed error information,
-call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
+call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 If the current value of the global variable differs from the <i>check_value</i>, the function will return <span class="constant">false</span>.<br/>
 The function provides atomic access to the global variable, this is why it can be used for providing of a semaphore at interaction of
 several experts working simultaneously within one client terminal.
@@ -6341,6 +6364,7 @@ several experts working simultaneously within one client terminal.
       example=Print(GlobalVariablesTotal(),&quot; global variables detected&quot;);
     </function>
   </group>
+
 
   <group>
     tag=math
@@ -6802,10 +6826,10 @@ a loss of significance in the result occurs and the function returns <span class
       caption=ObjectCreate()
       type=bool
       <content>
-Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending 
-on the object type. Specified coordinates for objects of type <span class="constant">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set 
+Creates an object with the specified name, type and initial coordinates in the specified window. The number of coordinates pairs to specify varies between 1 and 3 depending
+on the object type. Specified coordinates for objects of type <span class="constant">OBJ_LABEL</span> are ignored, use instead <a href="help://objects_ObjectSet">ObjectSet()</a> to set
 <a href="help://constants_objects_properties">OBJPROP_XDISTANCE</a> and <a href="help://constants_objects_properties">OBJPROP_YDISTANCE</a> properties.<br/>
-If the function succeeds it returns <span class="constant">true</span>, otherwise it returns <span class="constant">false</span>. To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
+If the function succeeds it returns <span class="constant">true</span>, otherwise it returns <span class="constant">false</span>. To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 <br/>
 
 Notes:<br/>
@@ -6813,7 +6837,7 @@ Notes:<br/>
 - Coordinates can be specified only in pairs of a time and a price value. If an object needs only a time value (for example <span class="constant">OBJ_VLINE</span>), a price value (any) needs to be passed, too.<br/>
       </content>
 
-<example>                                               
+<example>
 // new text object
 if (!ObjectCreate(&quot;text_object&quot;, OBJ_TEXT, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
    Print(&quot;error: can't create text_object! error=&quot;, GetLastError());
@@ -6885,7 +6909,7 @@ ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
       <content>
 Deletes object having the specified name.
 If the function succeeds, the returned value will be <span class="constant">true</span>. Otherwise, it will be <span class="constant">false</span>.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       example=ObjectDelete(&quot;text_object&quot;);
       <parameter>
@@ -6901,7 +6925,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=string
       <content>
 Return object description. For objects of <span class="constant">OBJ_TEXT</span> and <span class="constant">OBJ_LABEL</span> types, the text drawn by these objects will be returned.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSetText">ObjectSetText()</a> function.
      </content>
       <example>
@@ -6935,7 +6959,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=int
       <content>
 Searches for an object having the specified name and returns the index of the windows that contains the object or -1 if no such object is found.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 The chart main window always exists and has the index 0. Chart sub-windows (if any) are numbered starting from 1.
       </content>
       example=if(ObjectFind(&quot;line_object2&quot;)!=win_idx) return(0);
@@ -6952,7 +6976,7 @@ The chart main window always exists and has the index 0. Chart sub-windows (if a
       type=double
       <content>
 The function returns the value of the specified object property.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSet">ObjectSet()</a> function.
       </content>
       example=color oldColor=ObjectGet(&quot;hline12&quot;, OBJPROP_COLOR);
@@ -6975,7 +6999,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 The function returns the level description of a Fibonacci object.
 The amount of Fibonacci levels depends on the <a href="help://constants_objects">object type</a>. The maximum amount of Fibonacci levels is 32.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSetFiboDescription">ObjectSetFiboDescription()</a> function.
       </content>
       <example>
@@ -7009,7 +7033,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 The function calculates and returns bar index (shift related to the current bar) for the given price.
 The bar index is calculated by the first and second coordinates using a linear equation. Applied to trendlines and similar objects.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGetValueByShift">ObjectGetValueByShift()</a> function.
       </content>
       <example>
@@ -7034,7 +7058,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 The function calculates and returns the price value for the specified bar (shift related to the current bar).
 The price value is calculated by the first and second coordinates using a linear equation.  Applied to trendlines and similar objects.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGetShiftByValue">ObjectGetShiftByValue()</a> function.
       </content>
       <example>
@@ -7060,12 +7084,12 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
 The function moves an object coordinate in the chart. Objects can have from one to three coordinates depending on their
 <a href="help://constants_objects">types</a>.
 If the function succeeds, the returned value will be <span class="constant">true</span>. Otherwise, it will be <span class="constant">false</span>.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 The object coordinates are numbered starting from 0.
      </content>
       example=ObjectMove(&quot;MyTrend&quot;, 1, D<span class="string">'2005.02.25 12:30'</span>, 1.2345);
       <parameter>
-        type=string                              
+        type=string
         name=name
         description=Object name.
       </parameter>
@@ -7092,7 +7116,7 @@ The object coordinates are numbered starting from 0.
       type=string
       <content>
 The function returns the object name by its index in the objects list.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
      </content>
       <example>
   int    obj_total=ObjectsTotal();
@@ -7116,7 +7140,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=int
       <content>
 Removes all objects of the specified type and in the specified sub-window of the chart. The function returns the count of removed objects.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 Notes: The chart sub-windows (if there are sub-windows with indicators in the chart) are numbered starting from 1. The chart main window always exists and has the 0 index.
 If the window index is missing or it has the value of -1, the objects will be removed from the entire chart.<br/>
 If the <i>type</i> value equals to -1 or this parameter is missing, all objects will be removed from the specified sub-window.
@@ -7152,7 +7176,7 @@ Optional parameter. An object type to be deleted.
       type=bool
       <content>
 Changes the value of the specified object property. If the function succeeds, the returned value will be <span class="constant">true</span>. Otherwise, it will be <span class="constant">false</span>.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGet">ObjectGet()</a> function.
       </content>
       <example>
@@ -7187,7 +7211,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       <content>
 The function assigns a new description to a level of a Fibonacci object. The amount of Fibonacci levels depends on the <a href="help://constants_objects">object type</a>.
 The maximum amount of Fibonacci levels is 32.<br/>
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       example=ObjectSetFiboDescription(&quot;MyFiboObject&quot;,2,&quot;Second line&quot;);
       <parameter>
@@ -7213,7 +7237,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       type=bool
       <content>
 Changes the object description. For objects of <span class="constant">OBJ_TEXT</span> and <span class="constant">OBJ_LABEL</span> the description is shown as text in the chart.
-Returns <span class="constant">true</span> on success, otherwise <span class="constant">false</span>. Call <a href="help://check_GetLastError">GetLastError()</a> to get detailed error information.<br/>
+Returns <span class="constant">true</span> on success, otherwise <span class="constant">false</span>. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
 The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of <span class="constant">OBJ_TEXT</span> and <span class="constant">OBJ_LABEL</span> only.
 For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.
 <br/><b>See also</b> <a href="help://objects_ObjectDescription">ObjectDescription()</a>.
@@ -7282,7 +7306,7 @@ Optional parameter. An object type to be counted.
       type=int
       <content>
 The function returns the <a href="help://constants_objects">object type</a> value.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       example=if(ObjectType(&quot;line_object2&quot;)!=OBJ_HLINE) return(0);
       <parameter>
@@ -7292,6 +7316,7 @@ To get detailed error information, call <a href="help://check_GetLastError">GetL
       </parameter>
     </function>
   </group>
+
 
   <group>
     tag=strings
@@ -7363,7 +7388,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
       Returns the character code at the specified position of the string.<br/>
       <br/>
       Note:<br/>
-      Weist der Parameter <i>pos</i> auf eine Position, die die Länge des Strings überschreitet, setzt die Funktion den Fehler 
+      Weist der Parameter <i>pos</i> auf eine Position, die die Länge des Strings überschreitet, setzt die Funktion den Fehler
       <span class="constant">ERR_ARRAY_INDEX_OUT_OF_RANGE</span>.<br/>
       </content>
       <example>
@@ -7443,7 +7468,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
          <br/>
          (1) Wird als erster Parameter ein Wert anderen Typs übergeben, wird dieser Wert nicht korrekt, sondern in einen Leerstring gecastet.<br/>
          <br/>
-         (2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="constant">NULL</span>). StringSubstr(value, start, length=0) 
+         (2) Die Funktion unterscheidet nicht zwischen einem nicht angegebenem und einem ausdrücklich angegebenem dritten Parameter 0 (<span class="constant">NULL</span>). StringSubstr(value, start, length=0)
          gibt dadurch statt des gewünschten Leerstrings den kompletten String zurück.<br/>
          Workaround: <span style="color:blue">StringSubstrFix()</span> verwenden
       </content>
@@ -8033,7 +8058,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <parameter>
         type=int
         name=mode
-        description=Line index. Can be from 0 to 7 and must correspond with the index used by one of <a href="help://customind_SetIndexBuffer">SetIndexBuffer</a> functions.
+        description=Line index. Can be from 0 to 7 and must correspond with the index used by one of <a href="help://indicatormanagement_SetIndexBuffer">SetIndexBuffer</a> functions.
       </parameter>
       <parameter>
         type=int
@@ -9051,6 +9076,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
     </function>
   </group>
 
+
   <group>
     tag=series
     caption=Time series access
@@ -9077,7 +9103,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       - Bei weiteren Zugriffen auf eine leere Datenreihe wird <span class="constant">ERR_SERIES_NOT_AVAILABLE</span> gesetzt.<br/>
       - Ohne Verbindung zum Server ist nach Recompilation und bei fehlenden Daten u.U. gar kein Fehler gesetzt.<br/>
       - Die Anzahl der gemeldeten Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die Datenreihe selbst sich ändert.
-        Ein Programm, das z.B. innerhalb einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine 
+        Ein Programm, das z.B. innerhalb einer Schleife <span style="white-space:nowrap"><span class="function">iBars</span>()</span> aufruft, wird während eines Ticks immer eine
         konstante Anzahl Bars "sehen".<br/>
       </content>
       <example>
@@ -9107,14 +9133,14 @@ Data source, identifier of a line of the indicator. It can be any of the followi
       <br/>
       exact = <span class="constant">true</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
       <br/>
-      exact = <span class="constant">false</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der 
+      exact = <span class="constant">false</span>: Gibt den Index der Bar zurück, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der
       vorhergehenden, älteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zurückgegeben.<br/>
       <br/>
       Existieren keine Kursdaten, wird -1 zurückgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw", oder ist der Timeframe kein Standard-Timeframe,
       wird kein Fehler gemeldet.<br/>
       <br/>
-      Ist das Symbol bekannt, wird u.U. der Status <span class="constant">ERS_HISTORY_UPDATE</span> gemeldet. 
-      </content>       
+      Ist das Symbol bekannt, wird u.U. der Status <span class="constant">ERS_HISTORY_UPDATE</span> gemeldet.
+      </content>
       <example>
   datetime some_time = D<span class="string">'2004.03.21 12:00'</span>;
   int      offset    = iBarShift(&quot;EURUSD&quot;, PERIOD_M1, some_time);
@@ -9397,8 +9423,8 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Der zurückgegebene Wert ist nicht exakt, wenn er sich auf eine andere als die aktuelle Periode bezieht. Trifft ein neuer Tick ein, kann die Funktion <i>für einen Moment</i> 
-      noch den alten Wert zurückgeben, obwohl alle anderen Werte die Bar bereits korrekt beschreiben. <span class="function">iVolume</span>() einer anderen als der aktuellen Periode 
+      Der zurückgegebene Wert ist nicht exakt, wenn er sich auf eine andere als die aktuelle Periode bezieht. Trifft ein neuer Tick ein, kann die Funktion <i>für einen Moment</i>
+      noch den alten Wert zurückgeben, obwohl alle anderen Werte die Bar bereits korrekt beschreiben. <span class="function">iVolume</span>() einer anderen als der aktuellen Periode
       kann deshalb nicht zur Unterscheidung einzelner Ticks verwendet werden.<br/>
       </content>
       <example>
@@ -9437,7 +9463,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
     To trade from experts and scripts, only one thread was provided that was launched in the program trade context (context of
     automated trading from experts and scripts). This is why, if this context is occupied with an expert trade operation,
     another expert or script cannot call trade functions at that moment due to <a href="help://constants_errors">error</a> 146 (<span class="constant">ERR_TRADE_CONTEXT_BUSY</span>).
-    To check whether it is possible to trade or not, one has to use the <a href="help://check_IsTradeAllowed">IsTradeAllowed()</a> function.
+    To check whether it is possible to trade or not, one has to use the <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a> function.
     To make a clear sharing of access to the trading context, one can use a semaphore on the basis of a global variable
     the value of which must be changed using the <a href="help://globals_GlobalVariableSetOnCondition">GlobalVariableSetOnCondition()</a> function.
     </content>
@@ -9457,7 +9483,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
         <p>Any trade operation (functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
         <a href="help://trading_OrderCloseBy">OrderCloseBy</a>, <a href="help://trading_OrderDelete">OrderDelete</a> or <a href="help://trading_OrderModify">OrderModify</a>)
         can fail, for a number of reasons, and return either negative <a href="help://trading_OrderSend">ticket number</a> or <span class="constant">false</span>.
-        One can find out about the reason for fail by calling of the <a href="help://check_GetLastError">GetLastError()</a> function.
+        One can find out about the reason for fail by calling of the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
         Every error must be processed in a special way. The most common recommendations are given below.</p>
 
         <p>Error codes returned from trade server.</p>
@@ -9473,7 +9499,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
         <tr><td><span class="constant">ERR_SERVER_BUSY</span></td><td>4</td><td>Trade server is busy. The attempt can be repeated after a rather long period of time (over several minutes).</td></tr>
         <tr><td><span class="constant">ERR_OLD_VERSION</span></td><td>5</td><td>Old version of the client terminal. The latest version of the client terminal must be installed.</td></tr>
         <tr><td><span class="constant">ERR_NO_CONNECTION</span></td><td>6</td><td>No connection to the trade server. It is necessary to make sure that connection has not been broken (for example, using
-                                                 the <a href="help://check_IsConnected">IsConnected</a> function) and repeat the attempt  after a certain period of time (over 5 seconds).</td></tr>
+                                                 the <a href="help://runtimestatus_IsConnected">IsConnected</a> function) and repeat the attempt  after a certain period of time (over 5 seconds).</td></tr>
         <tr><td><span class="constant">ERR_TOO_FREQUENT_REQUESTS</span></td><td>8</td><td>Requests are too frequent. The frequency of requesting must be reduced, the program logic must be changed.</td></tr>
         <tr><td><span class="constant">ERR_ACCOUNT_DISABLED</span></td><td>64</td><td>The account was disabled. All attempts to trade must be stopped.</td></tr>
         <tr><td><span class="constant">ERR_INVALID_ACCOUNT</span></td><td>65</td><td>The account number is invalid. All attempts to trade must be stopped.</td></tr>
@@ -9508,7 +9534,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
         <tr><td><span class="constant">ERR_TRADE_MODIFY_DENIED</span></td><td>145</td><td>Modifying has been denied since the order is too close to market and locked for possible soon execution.
                                                  The <a href="help://predefined_variables">data</a> can be refreshed after more than 15 seconds using the <a href="help://windows_RefreshRates">RefreshRates</a> function, and
                                                  a retry can be made.</td></tr>
-        <tr><td><span class="constant">ERR_TRADE_CONTEXT_BUSY</span></td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://check_IsTradeContextBusy">IsTradeContextBusy</a> function has returned <span class="constant">false</span>.</td></tr>
+        <tr><td><span class="constant">ERR_TRADE_CONTEXT_BUSY</span></td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://runtimestatus_IsTradeContextBusy">IsTradeContextBusy</a> function has returned <span class="constant">false</span>.</td></tr>
         <tr><td><span class="constant">ERR_TRADE_EXPIRATION_DENIED</span></td><td>147</td><td>The use of pending order expiration date has been denied by the broker. The operation can only be repeated if the expiration parameter has been zeroized.</td></tr>
         <tr><td><span class="constant">ERR_TRADE_TOO_MANY_ORDERS</span></td><td>148</td><td>The amount of open and pending orders has reached the limit set by the broker. New open positions and pending orders can be placed only after the existing positions or orders have been closed or deleted.</td></tr>
         <tr><td><span class="constant">ERR_TRADE_HEDGE_PROHIBITED</span></td><td>149</td><td>An attempt to open a position opposite to the existing one when hedging is disabled. First the existing opposite position should be closed, all attempts of such trade operations must be stopped, or the program logic must be changed.</td></tr>
@@ -9525,7 +9551,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
 Closes opened order.
 If the function succeeds, the return value is <span class="constant">true</span>.
 If the function fails, the return value is <span class="constant">false</span>.
-To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   if(iRSI(NULL,0,14,PRICE_CLOSE,0)&gt;75)
@@ -9573,7 +9599,7 @@ Color of the closing arrow on the chart.
 Closes an opened order by another opposite opened order.
 If the function succeeds, the return value is <span class="constant">true</span>.
 If the function fails, the return value is <span class="constant">false</span>.
-To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   if(iRSI(NULL,0,14,PRICE_CLOSE,0)&gt;75)
@@ -9685,7 +9711,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
 Deletes previously opened pending order.
 If the function succeeds, the return value is <span class="constant">true</span>.
 If the function fails, the return value is <span class="constant">false</span>.
-To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.
+To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
   if(Ask&gt;var1)
@@ -9766,7 +9792,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
 Modification of characteristics for the previously opened position or pending orders.
 If the function succeeds, the returned value will be <span class="constant">true</span>.
 If the function fails, the returned value will be <span class="constant">false</span>.
-To get the detailed error information, call <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+To get the detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
 Notes: Open price and expiration time can be changed only for pending orders.<br/>
 If unchanged values are passed as the function parameters, the <a href="help://constants_errors">error</a> 1 (<span class="constant">ERR_NO_RESULT</span>) will be generated.<br/>
 Pending order expiration time can be disabled in some trade servers. In this case, when a non-zero value is specified
@@ -9900,7 +9926,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       <content>
 The function selects an order for further processing. It returns <span class="constant">true</span> if the function succeeds.
 It returns <span class="constant">false</span> if the function fails.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 The <i>pool</i> parameter is ignored if the order is selected by the ticket number. The ticket number is a unique order identifier.
 To find out from what list the order has been selected, its <a href="help://trading_OrderCloseTime">close time</a> must be analyzed. If the order close time
 equals to 0, the order is open or pending and taken from the terminal open positions list. One can distinguish an open position from a pending order
@@ -9950,7 +9976,7 @@ Optional order pool index. Used when the selected parameter is <span class="cons
       <content>
 The main function used to open a position or place a pending order.<br/>
 Returns number of the ticket assigned to the order by the trade server or -1 if it fails.
-To get detailed error information, call <a href="help://check_GetLastError">GetLastError()</a>.<br/>
+To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 Notes:<br/>
 At opening of a market order (<span class="constant">OP_SELL</span> or <span class="constant">OP_BUY</span>), only the latest prices of <a href="help://predefined_variables_Bid">Bid</a> (for selling) or
 <a href="help://predefined_variables_Ask">Ask</a> (for buying) can be used as open price. If operation is performed with a security differing from
@@ -10055,7 +10081,7 @@ Color of the opening arrow on the chart. If parameter is omitted or has the valu
       caption=OrdersHistoryTotal()
       type=int
       <content>
-         Returns the number of closed orders currently loaded into the terminal. The history size depends on the current settings of the &quot;Account history&quot; tab 
+         Returns the number of closed orders currently loaded into the terminal. The history size depends on the current settings of the &quot;Account history&quot; tab
          of the terminal.
       </content>
       <example>
@@ -10099,7 +10125,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       </content>
       <example>
    int hFile = FileOpen("OrdersReport.csv", FILE_WRITE|FILE_CSV, "\t");
-   if (hFile &lt; 0) 
+   if (hFile &lt; 0)
       return(0);
 
    // write header
@@ -10108,7 +10134,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
    // write open orders
    int total = OrdersTotal();
    for (int pos=0; pos &lt; total; pos++) {
-      if (!OrderSelect(pos, SELECT_BY_POS)) 
+      if (!OrderSelect(pos, SELECT_BY_POS))
          continue;
       FileWrite(hFile, OrderTicket(), OrderOpenPrice(), OrderOpenTime(), OrderSymbol(), OrderLots());
    }
@@ -10384,25 +10410,27 @@ it means that the chart window has not been fully filled out and there is a spac
       type=int
       <content>
         Returns the handle of the system window containing the given chart.
-        If no chart of <i>symbol</i> and <i>timeframe</i> is open, 0 will be returned.<br/>
+        If no chart of <i>symbol</i> and <i>timeframe</i> is open, <span class="number">0</span> is returned.<br/>
+      <br/>
+      Note: Das Fenster des eigenen Charts existiert immer, auch wenn <span class="function">WindowHandle</span>() <span class="number">0</span> zurück gibt (siehe Bugs).
+      Einzige Ausnahme ist ein Test bei VisualMode=Off.<br/>
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      (1) Die Funktion löst in EA's beim Testen mit VisualMode=Off <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> aus, in gleichzeitig per 
+      (1) Indikatoren und Scripte: Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>()
+          <span class="number">0</span> zurück, solange der Fenstertitel des Chartfensters noch nicht gesetzt ist.<br/>
+          <br/>
+      (2) Alle: Ab Build 418 gibt die Funktion bei Terminal-Shutdown <span class="number">0</span> zurück. In Indikatoren tritt dies erst in <span class="function">deinit</span>()
+          ein, in Scripten und Experts <i>kann</i> es bereits in <span class="function">start</span>() eintreten.<br/>
+          <br/>
+      (3) Indikatoren: In einem von einem EA per <span class="function">iCustom</span>() geladenen Indikator wird im Tester bei VisualMode=On <span class="number">0</span>
+          zurückgegeben, wenn der Indikator einen anderen als den aktuellen Timeframe benutzt.<br/>
+          <br/>
+      (4) Experts: In EA's wird beim Testen bei VisualMode=Off <span class="constant">ERR_FUNC_NOT_ALLOWED_IN_TESTER</span> ausgelöst, in gleichzeitig per
           <span class="function">iCustom</span>() geladenen Indikatoren jedoch nicht.<br/>
-          Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
           <br/>
-      (2) Bis Build ??? kann die Funktion bei Terminal-Start in <span class="function">init</span>() und in <span class="function">start</span>() 0 zurückgeben, solange der Fenstertitel 
-          des (immer) existierenden Fensters noch nicht gesetzt ist. Das (einzige) Fenster ohne gesetzten Titel ist immer das letzte MDI-Childwindow in Z-Order.<br/>
-          Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
-          <br/>
-      (3) Ab Build 418 gibt die Funktion bei Terminal-Shutdown in <span class="function">deinit</span>() 0 zurück, obwohl das Fenster noch existiert und auch der Fenstertitel gesetzt 
-          ist.<br/>
-          Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
-          <br/>
-      (4) In einem Indikator, der von einem EA per <span class="function">iCustom</span>() geladen wird, gibt die Funktion im Tester bei VisualMode=On 0 zurück, wenn der Indikator
-          in einem anderen Timeframe als der EA geladen wird.<br/>
-          Workaround: <span class="function">WindowHandleEx</span>() verwenden<br/>
+      Workaround für alle Bugs: <span class="function">WindowHandleEx</span>() verwenden<br/>
+      <br/>
       </content>
       <example>
 int hWnd = WindowHandle("USDX", PERIOD_H1);
@@ -10576,7 +10604,7 @@ Note: For custom indicators, this value is undefined.
       caption=WindowScreenShot()
       type=bool
       <content>
-Saves current chart screen shot as a GIF file. Returns <span class="constant">false</span> if it fails. To get the error code, one has to use the <a href="help://check_GetLastError">GetLastError()</a> function.<br/>
+Saves current chart screen shot as a GIF file. Returns <span class="constant">false</span> if it fails. To get the error code, one has to use the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
 The screen shot is saved in the <em>terminal_dir\experts\files</em> (<em>terminal_dir\tester\files</em> in case of testing) directory or its subdirectories.
       </content>
       <example>
@@ -10693,6 +10721,7 @@ The value will be <span class="constant">true</span> only if the expert or scrip
     </function>
   </group>
 
+
   <group>
     tag=deprecated
     caption=Deprecated functions
@@ -10720,6 +10749,15 @@ The value will be <span class="constant">true</span> only if the expert or scrip
       </table><br/>
     </content>
   </group>
+
+
+  <group>
+    tag=empty
+    caption=
+    <content>
+    </content>
+  </group>
+
 
   <group>
     tag=expander
