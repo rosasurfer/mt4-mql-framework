@@ -668,8 +668,6 @@ void DummyCalls() {
    bool     StringIsNumeric(string value);
    string   StringReplace.Recursive(string object, string search, string replace);
    bool     StringStartsWith(string object, string prefix);
-   string   StringToLower(string value);
-   string   StringTrim(string value);
    int      StrToOperationType(string value);
    datetime TimeGMT();
 

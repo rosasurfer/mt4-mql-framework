@@ -796,7 +796,8 @@ double  N_INF;                                              // -1.#INF: negative
 
 // MT4 control ids (Controls, Fenster)
 #define IDC_TOOLBAR                         59419     // Toolbar
-#define IDC_TOOLBAR_SEARCHBOX               38213     // Suche
+#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160     // MQL4/MQL5-Button (Builds <= 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213     // Suchbox          (Builds  > 509)
 #define IDC_STATUSBAR                       59393     // Statusbar
 #define IDC_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
 #define IDC_DOCKABLES_CONTAINER             59422     // window containing all child windows docked to the main application window

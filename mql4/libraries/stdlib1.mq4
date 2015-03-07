@@ -5579,14 +5579,6 @@ string ByteToHexStr(int byte) {
 
 
 /**
- * Alias
- */
-string CharToHexStr(int char) {
-   return(ByteToHexStr(char));
-}
-
-
-/**
  * Gibt die hexadezimale Repräsentation eines Words zurück.
  *
  * @param  int word - Word (2 Byte)
@@ -8359,120 +8351,6 @@ int StringFindR(string object, string search) {
 
 
 /**
- * Konvertiert die Großbuchstaben eines String zu Kleinbuchstaben (code-page: ANSI westlich).
- *
- * @param  string value
- *
- * @return string
- */
-string StringToLower(string value) {
-   string result = value;
-   int char, len=StringLen(value);
-
-   for (int i=0; i < len; i++) {
-      char = StringGetChar(value, i);
-      //logische Version
-      //if      ( 65 <= char && char <=  90) result = StringSetChar(result, i, char+32);  // A-Z->a-z
-      //else if (192 <= char && char <= 214) result = StringSetChar(result, i, char+32);  // À-Ö->à-ö
-      //else if (216 <= char && char <= 222) result = StringSetChar(result, i, char+32);  // Ø-Þ->ø-þ
-      //else if (char == 138)                result = StringSetChar(result, i, 154);      // Š->š
-      //else if (char == 140)                result = StringSetChar(result, i, 156);      // Œ->œ
-      //else if (char == 142)                result = StringSetChar(result, i, 158);      // Ž->ž
-      //else if (char == 159)                result = StringSetChar(result, i, 255);      // Ÿ->ÿ
-
-      // für MQL optimierte Version
-      if (char > 64) {
-         if (char < 91) {
-            result = StringSetChar(result, i, char+32);                 // A-Z->a-z
-         }
-         else if (char > 191) {
-            if (char < 223) {
-               if (char != 215)
-                  result = StringSetChar(result, i, char+32);           // À-Ö->à-ö, Ø-Þ->ø-þ
-            }
-         }
-         else if (char == 138) result = StringSetChar(result, i, 154);  // Š->š
-         else if (char == 140) result = StringSetChar(result, i, 156);  // Œ->œ
-         else if (char == 142) result = StringSetChar(result, i, 158);  // Ž->ž
-         else if (char == 159) result = StringSetChar(result, i, 255);  // Ÿ->ÿ
-      }
-   }
-   return(result);
-}
-
-
-/**
- * Konvertiert einen String in Großschreibweise.
- *
- * @param  string value
- *
- * @return string
- */
-string StringToUpper(string value) {
-   string result = value;
-   int char, len=StringLen(value);
-
-   for (int i=0; i < len; i++) {
-      char = StringGetChar(value, i);
-      //logische Version
-      //if      (96 < char && char < 123)             result = StringSetChar(result, i, char-32);
-      //else if (char==154 || char==156 || char==158) result = StringSetChar(result, i, char-16);
-      //else if (char==255)                           result = StringSetChar(result, i,     159);  // ÿ -> Ÿ
-      //else if (char > 223)                          result = StringSetChar(result, i, char-32);
-
-      // für MQL optimierte Version
-      if      (char == 255)                 result = StringSetChar(result, i,     159);   // ÿ -> Ÿ
-      else if (char  > 223)                 result = StringSetChar(result, i, char-32);
-      else if (char == 158)                 result = StringSetChar(result, i, char-16);
-      else if (char == 156)                 result = StringSetChar(result, i, char-16);
-      else if (char == 154)                 result = StringSetChar(result, i, char-16);
-      else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
-   }
-   return(result);
-}
-
-
-/**
- * Trimmt einen String beidseitig.
- *
- * @param  string value
- *
- * @return string
- */
-string StringTrim(string value) {
-   return(StringTrimLeft(StringTrimRight(value)));
-}
-
-
-/**
- * URL-kodiert einen String.  Leerzeichen werden als "+"-Zeichen kodiert.
- *
- * @param  string value
- *
- * @return string - URL-kodierter String
- */
-string UrlEncode(string value) {
-   string strChar, result="";
-   int    char, len=StringLen(value);
-
-   for (int i=0; i < len; i++) {
-      strChar = StringSubstr(value, i, 1);
-      char    = StringGetChar(strChar, 0);
-
-      if      (47 < char && char <  58) result = StringConcatenate(result, strChar);                  // 0-9
-      else if (64 < char && char <  91) result = StringConcatenate(result, strChar);                  // A-Z
-      else if (96 < char && char < 123) result = StringConcatenate(result, strChar);                  // a-z
-      else if (char == ' ')             result = StringConcatenate(result, "+");
-      else                              result = StringConcatenate(result, "%", CharToHexStr(char));
-   }
-
-   if (!catch("UrlEncode()"))
-      return(result);
-   return("");
-}
-
-
-/**
  * Prüft, ob die angegebene Datei existiert und eine normale Datei ist (kein Verzeichnis).
  *
  * @return string filename - vollständiger Dateiname
@@ -8523,40 +8401,6 @@ bool IsDirectory(string filename) {
       ArrayResize(wfd, 0);
    }
    return(result);
-}
-
-
-/**
- * Prüft, ob die angegebene Datei im MQL-Files-Verzeichnis existiert und eine normale Datei ist (kein Verzeichnis).
- *
- * @return string filename - zu ".\{mql-dir}\files\" relativer Dateiname
- *
- * @return bool
- */
-bool IsMqlFile(string filename) {
-
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_root}\tester\" zugreifen.
-
-   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                        mqlDir = "\\tester";
-   return(IsFile(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  filename)));
-}
-
-
-/**
- * Prüft, ob das angegebene Verzeichnis im MQL-Files-Verzeichnis existiert.
- *
- * @return string dirname - zu ".\{mql-dir}\files\" relativer Verzeichnisname
- *
- * @return bool
- */
-bool IsMqlDirectory(string dirname) {
-
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_root}\tester\" zugreifen.
-
-   if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   else                                        mqlDir = "\\tester";
-   return(IsDirectory(StringConcatenate(TerminalPath(), mqlDir, "\\files\\",  dirname)));
 }
 
 

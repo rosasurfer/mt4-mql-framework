@@ -64,10 +64,10 @@ string strBollingerBands;
 int onInit() {
    // (1) Parametervalidierung
    // (1.1) Sound.Alerts
-   Sound.Alerts = GetConfigBool("EventTracker", "Sound.Alerts", Sound.Alerts);
+   Sound.Alerts = GetConfigBool("EventTracker", "Alert.Sound", Sound.Alerts);
 
    // (1.2) SMS.Alerts
-   SMS.Alerts   = GetConfigBool("EventTracker", "SMS.Alerts", SMS.Alerts);
+   SMS.Alerts   = GetConfigBool("EventTracker", "Alert.SMS", SMS.Alerts);
    if (SMS.Alerts) {
       // SMS.Receiver
       SMS.Receiver = GetConfigString("SMS", "Receiver", SMS.Receiver);
