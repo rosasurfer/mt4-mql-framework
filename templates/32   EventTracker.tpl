@@ -59,7 +59,7 @@ flags=339
 window_num=0
 <inputs>
 Track.Orders=off
-Track.Signals=Account
+Track.Signals=on
 Alert.Sound=1
 </inputs>
 </expert>
