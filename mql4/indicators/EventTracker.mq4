@@ -62,10 +62,10 @@ extern string Track.Signals       = "on | off | account*";                      
 extern string __________________________;
 
 extern string Alert.Sound         = "on | off | account*";                             // Sound
-extern string Alert.Mail.Receiver = "system | account* | auto | off | address";        // E-Mailadresse
-extern string Alert.SMS.Receiver  = "system | account* | auto | off | phone-number";   // Telefonnummer
-extern string Alert.HTTP.Url      = "system | account* | auto | off | url";            // URL
-extern string Alert.ICQ.UserID    = "system | account* | auto | off | user-id";        // ICQ-Kontakt
+extern string Alert.Mail.Receiver = "system | account | auto* | off | address";        // E-Mailadresse
+extern string Alert.SMS.Receiver  = "system | account | auto* | off | phone-number";   // Telefonnummer
+extern string Alert.HTTP.Url      = "system | account | auto* | off | url";            // URL
+extern string Alert.ICQ.UserID    = "system | account | auto* | off | user-id";        // ICQ-Kontakt
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -154,7 +154,7 @@ bool Configure() {
    double dValue, dValue1, dValue2, dValue3;
 
 
-   // (1) Konfiguration des Ordertrackings einlesen und auswerten: "On | Off | Account*"
+   // (1) Konfiguration des Ordertrackings einlesen und auswerten: "on | off | account*"
    track.orders = false;
    sValue = StringToLower(StringTrim(Track.Orders));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
@@ -177,7 +177,7 @@ bool Configure() {
    else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
 
 
-   // (2) Konfiguration des Signaltrackings einlesen und auswerten: "On | Off | Account*"
+   // (2) Konfiguration des Signaltrackings einlesen und auswerten: "on | off | account*"
    track.signals = false;
    sValue = StringToLower(StringTrim(Track.Signals));
    if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
@@ -409,7 +409,7 @@ bool Configure() {
 
       // (3.2) Alert.Mail.Receiver
 
-      // (3.3) Alert.SMS.Receiver: "system | account* | auto | off | phone-number"
+      // (3.3) Alert.SMS.Receiver: "system | account | auto* | off | phone-number"
       alert.sms = false;
       sValue = StringToLower(StringTrim(Alert.SMS.Receiver));
       if (sValue == "system") {
@@ -418,7 +418,7 @@ bool Configure() {
          alert.sms          = true;
          alert.sms.receiver = sValue;
       }
-      else if (sValue=="account" || sValue=="system | account* | auto | off | phone-number") {
+      else if (sValue == "account") {
          if (!StringLen(configFile)) {
             if (!account) account = GetAccountNumber();
             if (!account) return(!SetLastError(stdlib.GetLastError()));
@@ -441,13 +441,15 @@ bool Configure() {
          }
          else return(!catch("Configure(18)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
-      else if (sValue == "auto") {
+      else if (sValue=="auto" || sValue=="system | account | auto* | off | phone-number") {
          sValue  = GetIniString(configFile, "EventTracker", "Alert.SMS", "");    // "on | off | phone-number"
          if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true" || sValue=="") {
             sValue = GetConfigString("SMS", "Receiver", "");
-            if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(19)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            alert.sms          = true;
-            alert.sms.receiver = sValue;
+            if (sValue != "") {
+               if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(19)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               alert.sms          = true;
+               alert.sms.receiver = sValue;
+            }
          }
          else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
             alert.sms = false;
@@ -1490,7 +1492,7 @@ int ShowStatus(int error=NULL) {
 
    string sSettings, sError;
 
-   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(alert.sound, "On", "Off") + ifString(alert.mail, "    Mail="+ alert.mail.receiver, "") + ifString(alert.sms, "    SMS="+ alert.sms.receiver, "") + ifString(alert.http, "    HTTP=On", "") + ifString(alert.icq, "    ICQ=On", "");
+   if (track.orders || track.signals) sSettings = "    Sound="+ ifString(alert.sound, "On", "Off") + ifString(alert.mail, "    Mail="+ alert.mail.receiver, "") + ifString(alert.sms, "    SMS="+ alert.sms.receiver, "") + ifString(alert.http, "    HTTP="+ alert.http.url, "") + ifString(alert.icq, "    ICQ="+ alert.icq.userId, "");
    else                               sSettings = ":  Off";
 
    if (!error)                        sError    = "";
