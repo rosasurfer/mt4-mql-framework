@@ -56,8 +56,8 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////////// Konfiguration //////////////////////////////////////////////////////////////////////////////////////
 
-extern bool   Track.Order.Events  = false;
-extern bool   Track.Price.Events  = true;
+extern bool   Track.Orders        = true;
+extern bool   Track.Signals       = true;
 
 extern string __________________________;
 
@@ -79,7 +79,7 @@ extern string Alert.ICQ.UserID    = "contact";                       // ICQ-Kont
 
 
 bool   track.orders;
-bool   track.price;
+bool   track.signals;
 
 
 // Alert-Konfiguration
@@ -149,14 +149,14 @@ int onInit() {
  */
 bool Configure() {
    // (1) Konfiguration des OrderTrackers einlesen und auswerten
-   track.orders = Track.Order.Events;
+   track.orders = Track.Orders;
    if (track.orders) {
    }
 
 
-   // (2) Konfiguration des PriceTrackers einlesen und auswerten
-   track.price = Track.Price.Events;
-   if (track.price) {
+   // (2) Konfiguration des SignalTrackers einlesen und auswerten
+   track.signals = Track.Signals;
+   if (track.signals) {
       // (2.1) Konfiguration lesen
       int account = GetAccountNumber();
       if (!account) return(!SetLastError(stdlib.GetLastError()));
@@ -345,7 +345,7 @@ bool Configure() {
 
 
    // (3) Alert-Methoden einlesen und validieren
-   if (track.orders || track.price) {
+   if (track.orders || track.signals) {
       // (3.1) Alert.Sound
       alert.sound = Alert.Sound;
 
@@ -372,13 +372,13 @@ bool Configure() {
    int error = catch("Configure(16)");
    ShowStatus(error);
    if (false) {
-      debug("Configure()  "+ StringConcatenate("track.orders=", BoolToStr(track.orders),                                        "; ",
-                                               "track.price=",  BoolToStr(track.price),                                         "; ",
-                                               "alert.sound=",  BoolToStr(alert.sound),                                         "; ",
-                                               "alert.mail=" ,  ifString(alert.mail, "\""+ alert.mail.receiver +"\"", "false"), "; ",
-                                               "alert.sms="  ,  ifString(alert.sms,  "\""+ alert.sms.receiver  +"\"", "false"), "; ",
-                                               "alert.http=" ,  ifString(alert.http, "\""+ alert.http.url      +"\"", "false"), "; ",
-                                               "alert.icq="  ,  ifString(alert.icq,  "\""+ alert.icq.userId    +"\"", "false"), "; "
+      debug("Configure()  "+ StringConcatenate("track.orders=",  BoolToStr(track.orders),                                        "; ",
+                                               "track.signals=", BoolToStr(track.signals),                                       "; ",
+                                               "alert.sound=",   BoolToStr(alert.sound),                                         "; ",
+                                               "alert.mail=" ,   ifString(alert.mail, "\""+ alert.mail.receiver +"\"", "false"), "; ",
+                                               "alert.sms="  ,   ifString(alert.sms,  "\""+ alert.sms.receiver  +"\"", "false"), "; ",
+                                               "alert.http=" ,   ifString(alert.http, "\""+ alert.http.url      +"\"", "false"), "; ",
+                                               "alert.icq="  ,   ifString(alert.icq,  "\""+ alert.icq.userId    +"\"", "false"), "; "
       ));
    }
    return(!error);
@@ -477,7 +477,7 @@ bool Configure.Set(int signalId, int signalTimeframe, int signalBar, string name
  * @return int - Fehlerstatus
  */
 int onTick() {
-   // (1) Order-Events überwachen
+   // (1) Orders überwachen
    if (track.orders) {
       int failedOrders   []; ArrayResize(failedOrders,    0);
       int openedPositions[]; ArrayResize(openedPositions, 0);
@@ -492,8 +492,8 @@ int onTick() {
    }
 
 
-   // (2) Price-Events überwachen
-   if (track.price) {
+   // (2) Signale überwachen
+   if (track.signals) {
       int iNull[];
       onNewTick(iNull);
    }
@@ -866,7 +866,7 @@ bool CheckBarCloseSignal(int index) {
  * @return bool - Erfolgsstatus
  */
 bool onBarCloseSignal(int index, int direction) {
-   if (!track.price)                           return(true);
+   if (!track.signals)                         return(true);
    if (direction!=SD_UP && direction!=SD_DOWN) return(!catch("onBarCloseSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
 
    string message = "";
@@ -1035,7 +1035,7 @@ bool CheckBarRangeSignal(int index) {
  * @return bool - Erfolgsstatus
  */
 bool onBarRangeSignal(int index, int direction) {
-   if (!track.price)                           return(true);
+   if (!track.signals)                         return(true);
    if (direction!=SD_UP && direction!=SD_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
 
    string message = "";
@@ -1293,7 +1293,7 @@ bool CheckBarBreakoutSignal(int index) {
  */
 bool onBarBreakoutSignal(int index, int direction, double level, double price, datetime time.srv) {
    if (direction!=SD_UP && direction!=SD_DOWN) return(!catch("onBarBreakoutSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
-   if (!track.price)                           return(true);
+   if (!track.signals)                         return(true);
 
    int signal.timeframe = price.config[index][I_PRICE_CONFIG_TIMEFRAME];
    int signal.bar       = price.config[index][I_PRICE_CONFIG_BAR      ];
@@ -1400,11 +1400,22 @@ int ShowStatus(int error=NULL) {
    if (!error) msg = StringConcatenate(msg, "  ", alerts,                        NL, "-------------------------", NL);
    else        msg = StringConcatenate(msg, "  [", ErrorDescription(error), "]", NL, "-------------------------", NL);
 
-   msg = StringConcatenate(msg,
-                           JoinStrings(price.descr, NL)          , NL,
-                                                                   NL,
-                                                                   NL,
-                          "Last signals:", NL, "----------------", NL);
+
+   if (track.orders || track.signals) {
+      if (track.orders) {
+         msg = StringConcatenate(msg,
+                                "Orders"                               , NL);
+      }
+      if (track.signals) {
+         msg = StringConcatenate(msg,
+                                 JoinStrings(price.descr, NL)          , NL);
+      }
+      msg    = StringConcatenate(msg,
+                                                                         NL,
+                                                                         NL,
+                                "Last signals:", NL, "----------------", NL);
+   }
+
 
    Comment(NL + msg);
    if (__WHEREAMI__ == FUNC_INIT)
@@ -1421,13 +1432,13 @@ int ShowStatus(int error=NULL) {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "Track.Order.Events="   , BoolToStr(Track.Order.Events),  "; ",
-                            "Track.Price.Events="   , BoolToStr(Track.Price.Events),  "; ",
-                            "Alert.Sound="          , BoolToStr(Alert.Sound),         "; ",
-                            "Alert.Mail.Receiver=\"", Alert.Mail.Receiver,          "\"; ",
-                            "Alert.SMS.Receiver=\"" , Alert.SMS.Receiver,           "\"; ",
-                            "Alert.HTTP.Url=\""     , Alert.HTTP.Url,               "\"; ",
-                            "Alert.ICQ.UserID=\""   , Alert.ICQ.UserID,             "\"; "
+                            "Track.Orders="         , BoolToStr(Track.Orders),  "; ",
+                            "Track.Signals="        , BoolToStr(Track.Signals), "; ",
+                            "Alert.Sound="          , BoolToStr(Alert.Sound),   "; ",
+                            "Alert.Mail.Receiver=\"", Alert.Mail.Receiver,    "\"; ",
+                            "Alert.SMS.Receiver=\"" , Alert.SMS.Receiver,     "\"; ",
+                            "Alert.HTTP.Url=\""     , Alert.HTTP.Url,         "\"; ",
+                            "Alert.ICQ.UserID=\""   , Alert.ICQ.UserID,       "\"; "
                             )
    );
 }
