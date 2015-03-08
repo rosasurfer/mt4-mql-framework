@@ -2,7 +2,6 @@
    int    Explode(string input, string separator, string results[], int limit);
    int    InitializeStringBuffer(string buffer[], int length);
    string ModuleTypeDescription(int type);
-   int    MT4InternalMsg();
 
 #import "Expander.dll"
    int    GetStringAddress(string value);

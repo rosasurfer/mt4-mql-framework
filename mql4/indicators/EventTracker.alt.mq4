@@ -11,7 +11,7 @@ bool   Sound.Alerts                = true;
 bool   SMS.Alerts                  = false;
 string SMS.Receiver                = "";
 
-bool   Track.Positions             = false;
+bool   Track.Orders                = false;
 string Positions.SoundOnOpen       = "speech/OrderFilled.wav";
 string Positions.SoundOnClose      = "speech/PositionClosed.wav";
 
@@ -76,8 +76,8 @@ int onInit() {
    __SMS.alerts   = SMS.Alerts;
    __SMS.receiver = SMS.Receiver;
 
-   // (1.3) Track.Positions
-   Track.Positions = GetConfigBool("EventTracker", "Track.Positions", Track.Positions);
+   // (1.3) Track.Orders
+   Track.Orders = GetConfigBool("EventTracker", "Track.Orders", Track.Orders);
 
    // (1.4) Track.MovingAverage
    Track.MovingAverage = GetConfigBool("EventTracker."+ StdSymbol(), "MovingAverage", Track.MovingAverage);
@@ -189,8 +189,8 @@ int onTick() {
    */
 
 
-   // (1) Track.Positions
-   if (Track.Positions) {                                            // nur Pending-Orders des aktuellen Instruments tracken (manuelle jedoch nicht)
+   // (1) Track.Orders
+   if (Track.Orders) {                                               // nur Pending-Orders des aktuellen Instruments tracken (manuelle jedoch nicht)
       HandleEvent.alt(EVENT_POSITION_CLOSE, OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
       HandleEvent.alt(EVENT_POSITION_OPEN,  OFLAG_CURRENTSYMBOL|OFLAG_PENDINGORDER);
    }
@@ -500,7 +500,7 @@ bool EventListener.PositionClose(int tickets[], int flags=NULL) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionOpen(int tickets[]) {
-   if (!Track.Positions)
+   if (!Track.Orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -537,7 +537,7 @@ bool onPositionOpen(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionClose(int tickets[]) {
-   if (!Track.Positions)
+   if (!Track.Orders)
       return(true);
 
    int positions = ArraySize(tickets);
@@ -899,8 +899,8 @@ string InputsToStr() {
                     ifString(SMS.Alerts,
           StringConcatenate("SMS.Receiver=\"",              SMS.Receiver                                , "\"; "), ""),
 
-                            "Track.Positions=",             BoolToStr(Track.Positions)                  , "; ",
-                    ifString(Track.Positions,
+                            "Track.Orders=",                BoolToStr(Track.Orders)                     , "; ",
+                    ifString(Track.Orders,
           StringConcatenate("Positions.SoundOnOpen=\"",     Positions.SoundOnOpen                       , "\"; ",
                             "Positions.SoundOnClose=\"",    Positions.SoundOnClose                      , "\"; "), ""),
 

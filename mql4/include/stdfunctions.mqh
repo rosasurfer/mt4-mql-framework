@@ -2784,7 +2784,7 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
 
 
 /**
- * Konvertiert einen String in einen Boolean. Strings, die mit einer Zahl ungleich 0 beginnen sowie die Werte "TRUE", "YES" und "ON" werden als TRUE,
+ * Konvertiert einen String in einen Boolean. Strings, die mit einer Ziffer größer als 0 beginnen sowie "TRUE", "YES" und "ON" werden als TRUE,
  * alle anderen als FALSE interpretiert. Groß-/Kleinschreibung wird nicht unterschieden.
  *
  * @param  string value - der zu konvertierende String
@@ -2795,11 +2795,18 @@ bool StrToBool(string value) {
    value = StringTrim(StringToLower(value));
 
    bool result;
-   if      (value == "1"   ) result = true;
-   else if (value == "true") result = true;
-   else if (value == "yes" ) result = true;
-   else if (value == "on"  ) result = true;
 
+   if (StringLen(value) > 0) {
+      if      (value == "1"   ) result = true;
+      else if (value == "on"  ) result = true;
+      else if (value == "true") result = true;
+      else if (value == "yes" ) result = true;
+      else {
+         string char = StringLeft(value, 1);
+         if (StringIsDigit(char)) /*&&*/ if (char!="0")
+            result = true;
+      }
+   }
    return(result);
 }
 
@@ -2961,6 +2968,223 @@ string CharToHexStr(int char) {
 
 
 /**
+ * Gibt die hexadezimale Repräsentation eines Strings zurück.
+ *
+ * @param  string value - Ausgangswert
+ *
+ * @return string - Hex-String
+ */
+string StringToHexStr(string value) {
+   if (StringIsNull(value))
+      return("NULL");
+
+   string result = "";
+   int len = StringLen(value);
+
+   for (int i=0; i < len; i++) {
+      result = StringConcatenate(result, CharToHexStr(StringGetChar(value, i)));
+   }
+
+   return(result);
+}
+
+
+#define WM_COMMAND   0x0111
+
+
+/**
+ * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
+ *
+ * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
+ */
+int Chart.Expert.Properties() {
+   if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
+
+   if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
+      return(catch("Chart.Expert.Properties(3)->user32::PostMessageA() failed", ERR_WIN32_ERROR));
+
+   return(NO_ERROR);
+}
+
+
+/**
+ * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return int - Fehlerstatus
+ */
+int Tester.Pause() {
+   if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   if (Tester.IsPaused())              return(NO_ERROR);             // skipping
+
+   if (!IsScript())
+      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
+
+   int hWnd = GetApplicationWindow();
+   if (!hWnd)
+      return(last_error);
+
+   int result = SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
+
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ob der Tester momentan pausiert. Der Aufruf ist nur im Tester selbst möglich.
+ *
+ * @return bool
+ */
+bool Tester.IsPaused() {
+   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   bool testerStopped;
+   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
+
+   if (IsScript()) {
+      // VisualMode=On
+      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
+   }
+   else {
+      if (!IsVisualModeFix())                                                                      // EA/Indikator aus iCustom()
+         return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
+      testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
+   }
+
+   if (testerStopped)
+      return(false);
+
+   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME)) == ">>");
+}
+
+
+/**
+ * Ob der Tester momentan gestoppt ist. Der Aufruf ist nur im Tester möglich.
+ *
+ * @return bool
+ */
+bool Tester.IsStopped() {
+   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
+
+   if (IsScript()) {
+      int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
+      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");            // muß im Script reichen
+   }
+   return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
+
+
+/**
+ * Erzeugt einen neuen String der gewünschten Länge.
+ *
+ * @param  int length - Länge
+ *
+ * @return string
+ */
+string CreateString(int length) {
+   if (length < 0) return(_emptyStr(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+
+   if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
+                                                                     // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
+   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");
+   int    strLen = StringLen(newStr);
+
+   while (strLen < length) {
+      newStr = StringConcatenate(newStr, MAX_STRING_LITERAL);
+      strLen = StringLen(newStr);
+   }
+
+   if (strLen != length)
+      newStr = StringSubstr(newStr, 0, length);
+   return(newStr);
+}
+
+
+/**
+ * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
+ * Wird üblicherweise aus der init()-Funktion aufgerufen.
+ *
+ * @param  bool enable - gewünschter Status: On/Off
+ *
+ * @return int - Fehlerstatus
+ */
+int Toolbar.Experts(bool enable) {
+   enable = enable!=0;
+
+   if (This.IsTesting()) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
+
+   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
+   // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
+
+   int hWnd = GetApplicationWindow();
+   if (!hWnd)
+      return(last_error);
+
+   if (enable) {
+      if (!IsExpertEnabled())
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+   }
+   else /*disable*/ {
+      if (IsExpertEnabled())
+         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
+ *
+ * @return int - Fehlerstatus
+ */
+int MarketWatch.Symbols() {
+   int hWnd = GetApplicationWindow();
+   if (!hWnd)
+      return(last_error);
+
+   PostMessageA(hWnd, WM_COMMAND, ID_MARKETWATCH_SYMBOLS, 0);
+   return(NO_ERROR);
+}
+
+
+/**
+ * MetaTrader4_Internal_Message. Pseudo-Konstante, wird beim ersten Zugriff initialisiert.
+ *
+ * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
+ */
+int MT4InternalMsg() {
+   static int static.messageId;                                      // ohne Initializer, @see MQL.doc
+
+   if (!static.messageId) {
+      static.messageId = RegisterWindowMessageA("MetaTrader4_Internal_Message");
+
+      if (!static.messageId) {
+         static.messageId = -1;                                      // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
+         catch("MT4InternalMsg(1)->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
+      }
+   }
+
+   if (static.messageId == -1)
+      return(0);
+   return(static.messageId);
+}
+
+
+/**
+ * Alias
+ */
+int WM_MT4() {
+   return(MT4InternalMsg());
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3005,9 +3229,11 @@ void __DummyCalls() {
    ArrayUnshiftString(sNulls, NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
+   Chart.Expert.Properties();
    CharToHexStr(NULL);
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
+   CreateString(NULL);
    DateTime(NULL);
    debug(NULL);
    DebugMarketInfo(NULL);
@@ -3041,8 +3267,10 @@ void __DummyCalls() {
    LE(NULL, NULL);
    log(NULL);
    LT(NULL, NULL);
+   MarketWatch.Symbols();
    MathDiv(NULL, NULL);
    Max(NULL, NULL);
+   MT4InternalMsg();
    Min(NULL, NULL);
    NE(NULL, NULL);
    OrderPop(NULL);
@@ -3064,22 +3292,28 @@ void __DummyCalls() {
    StringReplace(NULL, NULL, NULL);
    StringRightPad(NULL, NULL);
    StringSubstrFix(NULL, NULL);
+   StringToHexStr(NULL);
    StringToLower(NULL);
    StringToUpper(NULL);
    StringTrim(NULL);
    StrToBool(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
+   Tester.IsStopped();
+   Tester.Pause();
+   Tester.IsPaused();
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
    TimeframeDescription(NULL);
    TimeframeToStr(NULL);
    TimeYearFix(NULL);
+   Toolbar.Experts(NULL);
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);
    warnSMS(NULL);
    WindowHandleEx(NULL);
+   WM_MT4();
 }
 
 
@@ -3087,7 +3321,7 @@ void __DummyCalls() {
 
 
 /*
-#import "this-library-doesnt-exist.ex4"                              // zum Testen von stdfunctions.mqh ohne core-Dateien
+#import "this-library-does-not-exist.ex4"                            // zum Testen von stdfunctions.mqh ohne core-Dateien
    bool   IsExpert();
    bool   IsScript();
    bool   IsIndicator();
@@ -3120,7 +3354,6 @@ void __DummyCalls() {
    int    ArrayPushInt(int array[], int value);
    int    ArrayPushString(string array[], string value);
    string ByteToHexStr(int byte);
-   int    Chart.Expert.Properties();
    void   CopyMemory(int source, int destination, int bytes);
    string DoubleToStrEx(double value, int digits);
    void   DummyCalls();                                                    // Library-Stub: *kann* lokal überschrieben werden
@@ -3129,6 +3362,7 @@ void __DummyCalls() {
    int    GetCustomLogID();
    bool   GetLocalConfigBool(string section, string key, bool defaultValue);
    int    GetTerminalBuild();
+   int    GetTesterWindow();
    string GetWindowText(int hWnd);
    int    InitializeStringBuffer(string buffer[], int length);
    bool   IsDirectory(string filename);
@@ -3140,6 +3374,7 @@ void __DummyCalls() {
    string StdSymbol();
    bool   StringContains(string object, string substring);
    bool   StringEndsWith(string object, string postfix);
+   bool   StringIsDigit(string value);
    string StringLeft(string value, int n);
    string StringRepeat(string input, int times);
    string StringRight(string value, int n);
@@ -3178,6 +3413,9 @@ void __DummyCalls() {
    int    GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool   IsWindow(int hWnd);
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+   bool   PostMessageA(int hWnd, int msg, int wParam, int lParam);
+   int    RegisterWindowMessageA(string lpString);
+   int    SendMessageA(int hWnd, int msg, int wParam, int lParam);
 
 #import "winmm.dll"
    bool   PlaySoundA(string lpSound, int hMod, int fSound);

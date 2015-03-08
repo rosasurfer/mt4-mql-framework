@@ -792,116 +792,6 @@ bool ReleaseLocks(bool warn=false) {
 
 
 /**
- * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
- *
- * @return int - Fehlerstatus
- *
- *
- * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
- */
-int Chart.Expert.Properties() {
-   if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
-
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(last_error);
-
-   if (!PostMessageA(hWnd, WM_COMMAND, ID_CHART_EXPERT_PROPERTIES, 0))
-      return(catch("Chart.Expert.Properties(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
-
-   return(NO_ERROR);
-}
-
-
-/**
- * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
- *
- * @return int - Fehlerstatus
- */
-int Tester.Pause() {
-   if (!This.IsTesting()) return(catch("Tester.Pause()  Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   if (Tester.IsPaused())              return(NO_ERROR);             // skipping
-
-   if (!IsScript())
-      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
-
-   int hWnd = GetApplicationWindow();
-   if (!hWnd)
-      return(last_error);
-
-   int result = SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
-
-   return(NO_ERROR);
-}
-
-
-/**
- * Ob der Tester momentan pausiert. Der Aufruf ist nur im Tester selbst möglich.
- *
- * @return bool
- */
-bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   bool testerStopped;
-   int  hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
-
-   if (IsScript()) {
-      // VisualMode=On
-      testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
-   }
-   else {
-      if (!IsVisualModeFix())                                                                      // EA/Indikator aus iCustom()
-         return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
-   }
-
-   if (testerStopped)
-      return(false);
-
-   return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME)) == ">>");
-}
-
-
-/**
- * Ob der Tester momentan gestoppt ist. Der Aufruf ist nur im Tester möglich.
- *
- * @return bool
- */
-bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
-
-   if (IsScript()) {
-      int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
-      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");            // muß im Script reichen
-   }
-   return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
-
-
-/**
- * Gibt die hexadezimale Repräsentation eines Strings zurück.
- *
- * @param  string value - Ausgangswert
- *
- * @return string - Hex-String
- */
-string StringToHexStr(string value) {
-   if (StringIsNull(value))
-      return("NULL");
-
-   string result = "";
-   int len = StringLen(value);
-
-   for (int i=0; i < len; i++) {
-      result = StringConcatenate(result, CharToHexStr(StringGetChar(value, i)));
-   }
-
-   return(result);
-}
-
-
-/**
  * Gibt den Offset der angegebenen GMT-Zeit zu FXT (Forex Time) zurück.
  *
  * @param  datetime gmtTime - GMT-Zeit
@@ -1306,32 +1196,6 @@ int InitializeStringBuffer(string &buffer[], int length) {
 
 
 /**
- * Erzeugt einen neuen String der gewünschten Länge.
- *
- * @param  int length - Länge
- *
- * @return string
- */
-string CreateString(int length) {
-   if (length < 0) return(_emptyStr(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
-
-   if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
-                                                                     // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
-   string newStr = StringConcatenate(MAX_STRING_LITERAL, "");
-   int    strLen = StringLen(newStr);
-
-   while (strLen < length) {
-      newStr = StringConcatenate(newStr, MAX_STRING_LITERAL);
-      strLen = StringLen(newStr);
-   }
-
-   if (strLen != length)
-      newStr = StringSubstr(newStr, 0, length);
-   return(newStr);
-}
-
-
-/**
  * Gibt den vollständigen Dateinamen der lokalen Konfigurationsdatei zurück.
  * Existiert die Datei nicht, wird sie angelegt.
  *
@@ -1600,53 +1464,6 @@ int SortTicketsChronological(int &tickets[]) {
    }
 
    return(catch("SortTicketsChronological(3)", NULL, O_POP));
-}
-
-
-/**
- * Aktiviert bzw. deaktiviert den Aufruf der start()-Funktion von Expert Advisern bei Eintreffen von Ticks.
- * Wird üblicherweise aus der init()-Funktion aufgerufen.
- *
- * @param  bool enable - gewünschter Status: On/Off
- *
- * @return int - Fehlerstatus
- */
-int Toolbar.Experts(bool enable) {
-   enable = enable!=0;
-
-   if (This.IsTesting()) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
-
-   // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
-   // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
-
-   int hWnd = GetApplicationWindow();
-   if (!hWnd)
-      return(last_error);
-
-   if (enable) {
-      if (!IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
-   }
-   else /*disable*/ {
-      if (IsExpertEnabled())
-         SendMessageA(hWnd, WM_COMMAND, ID_EXPERTS_ONOFF, 0);
-   }
-   return(NO_ERROR);
-}
-
-
-/**
- * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
- *
- * @return int - Fehlerstatus
- */
-int MarketWatch.Symbols() {
-   int hWnd = GetApplicationWindow();
-   if (!hWnd)
-      return(last_error);
-
-   PostMessageA(hWnd, WM_COMMAND, ID_MARKETWATCH_SYMBOLS, 0);
-   return(NO_ERROR);
 }
 
 
@@ -3846,37 +3663,6 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    if (!catch("GetWindowsShortcutTarget(15)"))
       return(target);
    return("");
-}
-
-
-/**
- * MetaTrader4_Internal_Message. Pseudo-Konstante, wird beim ersten Zugriff initialisiert.
- *
- * @return int - Windows Message ID oder 0, falls ein Fehler auftrat
- */
-int MT4InternalMsg() {
-   static int static.messageId;                                      // ohne Initializer, @see MQL.doc
-
-   if (!static.messageId) {
-      static.messageId = RegisterWindowMessageA("MetaTrader4_Internal_Message");
-
-      if (!static.messageId) {
-         static.messageId = -1;                                      // RegisterWindowMessage() wird auch bei Fehler nur einmal aufgerufen
-         catch("MT4InternalMsg(1)->user32::RegisterWindowMessageA()", ERR_WIN32_ERROR);
-      }
-   }
-
-   if (static.messageId == -1)
-      return(0);
-   return(static.messageId);
-}
-
-
-/**
- * Alias
- */
-int WM_MT4() {
-   return(MT4InternalMsg());
 }
 
 
