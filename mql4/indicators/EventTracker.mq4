@@ -923,6 +923,7 @@ bool onPositionClose(int tickets[]) {
    // Sound abspielen (für alle Positionen gemeinsam)
    if (alert.sound)
       PlaySoundEx(alert.sound.positionClosed);
+
    return(!ShowStatus(catch("onPositionClose(3)")));
 }
 
