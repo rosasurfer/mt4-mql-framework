@@ -630,13 +630,10 @@ int Tester.Stop() {
 
    int    Chart.SendTick(bool sound);
    void   CopyMemory(int source, int destination, int bytes);
-   string CreateString(int length);
    int    GetApplicationWindow();
    bool   IntInArray(int haystack[], int needle);
    int    PeriodFlag(int period);
    int    SumInts(int array[]);
-   bool   Tester.IsStopped();
-   int    Toolbar.Experts(bool enable);
 
 #import "Expander.dll"
    int    GetBufferAddress(int buffer[]);

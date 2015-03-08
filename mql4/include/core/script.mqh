@@ -459,7 +459,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    afterDeinit();
 
    void   CopyMemory(int source, int destination, int bytes);
-   string CreateString(int length);
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
    int    SumInts(int array[]);
