@@ -2792,7 +2792,7 @@ bool EnumChildWindows(int hWnd, bool recursive=false) {
  * @return bool
  */
 bool StrToBool(string value) {
-   value = StringTrim(StringToLower(value));
+   value = StringToLower(StringTrim(value));
 
    bool result;
 

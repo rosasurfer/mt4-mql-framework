@@ -60,8 +60,6 @@ window_num=0
 <inputs>
 Track.Orders=off
 Track.Signals=on
-Alert.Sound=0
-Alert.SMS.Receiver=system
 </inputs>
 </expert>
 period_flags=0

@@ -56,16 +56,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////////// Konfiguration //////////////////////////////////////////////////////////////////////////////////////
 
-extern string Track.Orders        = "On | Off* | Account";
-extern string Track.Signals       = "On | Off* | Account";
+extern string Track.Orders        = "on | off | account*";                             //
+extern string Track.Signals       = "on | off | account*";                             //
 
 extern string __________________________;
 
-extern bool   Alert.Sound         = true;                            // alle Alerts bis auf Sound sind per Default inaktiv
-extern string Alert.Mail.Receiver = "email@address.tld";             // E-Mailadresse    ("system" => global konfigurierte Adresse)
-extern string Alert.SMS.Receiver  = "phone-number";                  // Telefonnummer    ("system" => global konfigurierte Nummer )
-extern string Alert.HTTP.Url      = "url";                           // URL              ("system" => global konfigurierte URL    )
-extern string Alert.ICQ.UserID    = "contact";                       // ICQ-Kontakt      ("system" => global konfigurierte User-ID)
+extern string Alert.Sound         = "on | off | account*";                             // Sound
+extern string Alert.Mail.Receiver = "system | account* | auto | off | address";        // E-Mailadresse
+extern string Alert.SMS.Receiver  = "system | account* | auto | off | phone-number";   // Telefonnummer
+extern string Alert.HTTP.Url      = "system | account* | auto | off | url";            // URL
+extern string Alert.ICQ.UserID    = "system | account* | auto | off | user-id";        // ICQ-Kontakt
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -154,16 +154,16 @@ bool Configure() {
    double dValue, dValue1, dValue2, dValue3;
 
 
-   // (1) Konfiguration des Ordertrackings einlesen und auswerten: "On | Off* | Account"
+   // (1) Konfiguration des Ordertrackings einlesen und auswerten: "On | Off | Account*"
    track.orders = false;
-   sValue = StringTrim(StringToUpper(Track.Orders));
-   if (sValue=="ON" || sValue=="1" || sValue=="YES" || sValue=="TRUE") {
+   sValue = StringToLower(StringTrim(Track.Orders));
+   if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.orders = true;
    }
-   else if (sValue=="OFF" || sValue=="0" || sValue=="NO" || sValue=="FALSE" || sValue=="ON | OFF* | ACCOUNT") {
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
       track.orders = false;
    }
-   else if (sValue == "ACCOUNT") {
+   else if (sValue=="account" || sValue=="on | off | account*") {
       if (!StringLen(configFile)) {
          if (!account) account = GetAccountNumber();
          if (!account) return(!SetLastError(stdlib.GetLastError()));
@@ -174,19 +174,19 @@ bool Configure() {
       key     = "Track.Orders";
       track.orders = GetIniBool(configFile, section, key, false);
    }
-   else return(!catch("Configure(1)  Invalid parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
 
 
-   // (2) Konfiguration des Signaltrackings einlesen und auswerten: "On | Off* | Account"
+   // (2) Konfiguration des Signaltrackings einlesen und auswerten: "On | Off | Account*"
    track.signals = false;
-   sValue = StringTrim(StringToUpper(Track.Signals));
-   if (sValue=="ON" || sValue=="1" || sValue=="YES" || sValue=="TRUE") {
+   sValue = StringToLower(StringTrim(Track.Signals));
+   if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
       track.signals = true;
    }
-   else if (sValue=="OFF" || sValue=="0" || sValue=="NO" || sValue=="FALSE" || sValue=="ON | OFF* | ACCOUNT") {
+   else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
       track.orders = false;
    }
-   else if (sValue == "ACCOUNT") {
+   else if (sValue=="account" || sValue=="on | off | account*") {
       if (!StringLen(configFile)) {
          if (!account) account = GetAccountNumber();
          if (!account) return(!SetLastError(stdlib.GetLastError()));
@@ -197,7 +197,7 @@ bool Configure() {
       key     = "Track.Signals";
       track.signals = GetIniBool(configFile, section, key, false);
    }
-   else return(!catch("Configure(2)  Invalid parameter Track.Signals = \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("Configure(2)  Invalid input parameter Track.Signals = \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    if (track.signals) {
       // (2.1) die einzelnen Signalkonfigurationen einlesen
@@ -217,7 +217,7 @@ bool Configure() {
          // Timeframe-ID und Baroffset
          if (valuesSize >= 1) {
             sValue = StringTrim(keyValues[0]);
-            sLen   = StringLen(sValue); if (!sLen) return(!catch("Configure(1)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            sLen   = StringLen(sValue); if (!sLen) return(!catch("Configure(3)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
             if (sValue == "TODAY") {
                signal.bar       = 0;
@@ -246,7 +246,7 @@ bool Configure() {
                else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
                else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
                else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
-               else return(!catch("Configure(2)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else return(!catch("Configure(4)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             }
             else if (StringStartsWith(sValue, "LAST")) {
                signal.bar = 1;
@@ -267,7 +267,7 @@ bool Configure() {
                else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
                else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
                else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
-               else return(!catch("Configure(3)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else return(!catch("Configure(5)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             }
             else if (StringIsDigit(StringLeft(sValue, 1))) {
                sDigits = StringLeft(sValue, 1);                                                    // Zahl vorn parsen
@@ -279,7 +279,7 @@ bool Configure() {
                sValue     = StringTrim(StringRight(sValue, -j));                                   // Zahl vorn abschneiden
                signal.bar = StrToInteger(sDigits);
 
-               if (!StringEndsWith(sValue, "AGO")) return(!catch("Configure(4)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (!StringEndsWith(sValue, "AGO")) return(!catch("Configure(6)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                                                   sValue = StringTrim(StringLeft (sValue, -3));    // "Ago" hinten abschneiden
                if (StringStartsWith(sValue, "-")) sValue = StringTrim(StringRight(sValue, -1));    // ggf. "-" vorn abschneiden
                if (StringEndsWith  (sValue, "-")) sValue = StringTrim(StringLeft (sValue, -1));    // ggf. "-" hinten abschneiden
@@ -300,9 +300,9 @@ bool Configure() {
                else if (sValue == "D1"    ) signal.timeframe = PERIOD_D1;
                else if (sValue == "W1"    ) signal.timeframe = PERIOD_W1;
                else if (sValue == "MN1"   ) signal.timeframe = PERIOD_MN1;
-               else return(!catch("Configure(5)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             }
-            else return(!catch("Configure(6)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else return(!catch("Configure(8)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          }
 
          // Signal-ID
@@ -311,7 +311,7 @@ bool Configure() {
             if      (sValue == "BARCLOSE"   ) signal.id = ET_SIGNAL_BAR_CLOSE;
             else if (sValue == "BARRANGE"   ) signal.id = ET_SIGNAL_BAR_RANGE;
             else if (sValue == "BARBREAKOUT") signal.id = ET_SIGNAL_BAR_BREAKOUT;
-            else return(!catch("Configure(7)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            else return(!catch("Configure(9)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          }
          //debug("Configure(0.1)  "+ StringsToStr(keyValues, NULL));
 
@@ -320,13 +320,13 @@ bool Configure() {
             sParam = StringTrim(keyValues[2]);
             sValue = GetIniString(configFile, section, keys[i], "");
             if (!Configure.Set(signal.id, signal.timeframe, signal.bar, sParam, sValue))
-               return(!catch("Configure(8)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               return(!catch("Configure(10)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             //debug("Configure(0.2)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +"."+ sParam +" = "+ sValue);
             continue;
          }
 
          // nicht unterstützte Parameter
-         if (valuesSize > 3) return(!catch("Configure(9)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (valuesSize > 3) return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
 
          // (2.3) ini-Value parsen
@@ -341,9 +341,9 @@ bool Configure() {
             sValue1 = iniValue;
             if (StringEndsWith(sValue1, "%"))
                sValue1 = StringTrim(StringLeft(sValue1, -1));
-            if (!StringIsDigit(sValue1))       return(!catch("Configure(10)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (!StringIsDigit(sValue1))       return(!catch("Configure(12)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             iValue1 = StrToInteger(sValue1);
-            if (iValue1 < 0 || iValue1 >= 100) return(!catch("Configure(11)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            if (iValue1 < 0 || iValue1 >= 100) return(!catch("Configure(13)  invalid bar range signal ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (not between 0 and 99) in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             signal.enabled = (iValue1 != 0);
             signal.param1  = iValue1;
          }
@@ -375,7 +375,7 @@ bool Configure() {
                case ET_SIGNAL_BAR_RANGE   : success = CheckBarRangeSignal.Init   (i); break;
                case ET_SIGNAL_BAR_BREAKOUT: success = CheckBarBreakoutSignal.Init(i); break;
                default:
-                  catch("Configure(12)  unknown price signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR);
+                  catch("Configure(14)  unknown price signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR);
             }
          }
          if (!success) return(false);
@@ -385,29 +385,94 @@ bool Configure() {
 
    // (3) Alert-Methoden einlesen und validieren
    if (track.orders || track.signals) {
-      // (3.1) Alert.Sound
-      alert.sound = Alert.Sound;
+      // (3.1) Alert.Sound: "on | off | account*"
+      alert.sound = false;
+      sValue = StringToLower(StringTrim(Alert.Sound));
+      if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
+         alert.sound = true;
+      }
+      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+         alert.sound = false;
+      }
+      else if (sValue=="account" || sValue=="on | off | account*") {
+         if (!StringLen(configFile)) {
+            if (!account) account = GetAccountNumber();
+            if (!account) return(!SetLastError(stdlib.GetLastError()));
+            mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+            configFile = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+         }
+         section = "EventTracker";
+         key     = "Alert.Sound";
+         alert.sound = GetIniBool(configFile, section, key, false);
+      }
+      else return(!catch("Configure(15)  Invalid input parameter Alert.Sound = \""+ Alert.Sound +"\"", ERR_INVALID_INPUT_PARAMETER));
 
       // (3.2) Alert.Mail.Receiver
 
-      // (3.3) Alert.SMS.Receiver
+      // (3.3) Alert.SMS.Receiver: "system | account* | auto | off | phone-number"
+      alert.sms = false;
       sValue = StringToLower(StringTrim(Alert.SMS.Receiver));
-      if (sValue!="" && sValue!="phone-number") {
-         alert.sms.receiver = ifString(sValue=="system", GetConfigString("SMS", "Receiver", ""), sValue);
-         alert.sms          = StringIsPhoneNumber(alert.sms.receiver);
-         if (!alert.sms) {
-            if (sValue == "system") return(!catch("Configure(13)  "+ ifString(alert.sms.receiver=="", "Missing", "Invalid") +" global/local config value [SMS]->Receiver = \""+ alert.sms.receiver +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-            else                    return(!catch("Configure(14)  Invalid input parameter Alert.SMS.Receiver = \""+ Alert.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
-         }
+      if (sValue == "system") {
+         sValue = GetConfigString("SMS", "Receiver", "");
+         if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(16)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         alert.sms          = true;
+         alert.sms.receiver = sValue;
       }
-      else alert.sms = false;
+      else if (sValue=="account" || sValue=="system | account* | auto | off | phone-number") {
+         if (!StringLen(configFile)) {
+            if (!account) account = GetAccountNumber();
+            if (!account) return(!SetLastError(stdlib.GetLastError()));
+            mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+            configFile = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+         }
+         sValue  = GetIniString(configFile, "EventTracker", "Alert.SMS", "");    // "on | off | phone-number"
+         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
+            sValue = GetConfigString("SMS", "Receiver", "");
+            if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(17)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            alert.sms          = true;
+            alert.sms.receiver = sValue;
+         }
+         else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+            alert.sms = false;
+         }
+         else if (StringIsPhoneNumber(sValue)) {
+            alert.sms          = true;
+            alert.sms.receiver = sValue;
+         }
+         else return(!catch("Configure(18)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      }
+      else if (sValue == "auto") {
+         sValue  = GetIniString(configFile, "EventTracker", "Alert.SMS", "");    // "on | off | phone-number"
+         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true" || sValue=="") {
+            sValue = GetConfigString("SMS", "Receiver", "");
+            if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(19)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            alert.sms          = true;
+            alert.sms.receiver = sValue;
+         }
+         else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
+            alert.sms = false;
+         }
+         else if (StringIsPhoneNumber(sValue)) {
+            alert.sms          = true;
+            alert.sms.receiver = sValue;
+         }
+         else return(!catch("Configure(20)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+      }
+      else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="phone-number" || sValue=="") {
+         alert.sms = false;
+      }
+      else if (StringIsPhoneNumber(sValue)) {
+         alert.sms          = true;
+         alert.sms.receiver = sValue;
+      }
+      else return(!catch("Configure(21)  Invalid input parameter Alert.SMS.Receiver = \""+ Alert.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
 
       // (3.4) Alert.HTTP.Url
 
       // (3.5) Alert.ICQ.UserID
    }
 
-   return(!ShowStatus(catch("Configure(15)")));
+   return(!ShowStatus(catch("Configure(22)")));
 }
 
 
