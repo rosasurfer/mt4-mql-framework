@@ -58,7 +58,7 @@ name=EventTracker.neu
 flags=339
 window_num=0
 <inputs>
-Track.Orders=1
+Track.Orders=Account
 Track.Signals=1
 Alert.Sound=1
 </inputs>
