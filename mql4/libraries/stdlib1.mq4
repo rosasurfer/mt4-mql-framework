@@ -5584,19 +5584,6 @@ bool EventListener.AccountChange(int results[], int flags=NULL) {
 
 
 /**
- * Prüft, ob seit dem letzten Aufruf ein NewTick-Event aufgetreten ist.
- *
- * @param  int results[] - event-spezifische Detailinfos
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.NewTick(int results[], int flags=NULL) {
-   return(!catch("EventListener.NewTick(1)", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
  * Prüft, ob seit dem letzten Aufruf ein ChartCommand-Event aufgetreten ist.
  *
  * @param  string commands[] - Array zur Aufnahme der eingetroffenen Commands

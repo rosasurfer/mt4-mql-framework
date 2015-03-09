@@ -17,12 +17,9 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onTick() {
-   debug("onTick()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
-   return(last_error);
-
    int  iNull[];
 
-   bool newTick_full     = EventListener.NewTick(iNull);
+   bool newTick_full     = EventListener.NewTick_alt(iNull);
    bool newTick_no_time  = EventListener.NewTick_no_time();
    bool newTick_vol_only = EventListener.NewTick_vol_only();
 
@@ -56,7 +53,7 @@ int onTick() {
  *
  * @return bool - Ergebnis
  */
-bool EventListener.NewTick(int results[], int flags=NULL) {
+bool EventListener.NewTick_alt(int results[], int flags=NULL) {
    static double   lastBid, lastAsk;
    static int      lastVol;
    static datetime lastTime;
