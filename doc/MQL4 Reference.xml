@@ -2389,12 +2389,10 @@ void SendMyMessage(string text)
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
       <example>
-  if(iRSI(NULL,0,14,PRICE_CLOSE,0)&lt;25)
-    {
-     OrderSend(Symbol(), OP_BUY, Lots, Ask, 3, Bid-StopLoss*Point, Ask+TakeProfit*Point,
-               &quot;My order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
-     return;
-    }
+ if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &lt; 25) {
+    OrderSend(Symbol(), OP_BUY, Lots, Ask, 3, Bid-StopLoss*Point, Ask+TakeProfit*Point, &quot;My order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
+    return;
+ }
       </example>
     </variable>
     <variable>
@@ -2406,11 +2404,10 @@ void SendMyMessage(string text)
       <b>See also</b> <a href="help://series_iBars">iBars()</a>.
       </content>
       <example>
-  int counter=1;
-  for(int i=1; i&lt;=Bars; i++)
-    {
-     Print(Close[i-1]);
-    }
+ int counter=1;
+ for (int i=1; i&lt;=Bars; i++) {
+    Print(Close[i-1]);
+ }
       </example>
     </variable>
 
@@ -2424,10 +2421,10 @@ void SendMyMessage(string text)
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
       <example>
-   if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &gt; 75) {
-      OrderSend(&quot;EURUSD&quot;, OP_SELL, Lots, Bid, 3, Ask+StopLoss*Point, Bid-TakeProfit*Point, &quot;My Order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
-      return(0);
-   }
+ if (iRSI(NULL, 0, 14, PRICE_CLOSE, 0) &gt; 75) {
+    OrderSend(&quot;EURUSD&quot;, OP_SELL, Lots, Bid, 3, Ask+StopLoss*Point, Bid-TakeProfit*Point, &quot;My Order #2&quot;, 3, D<span class="string">'2005.10.10 12:30'</span>, Red);
+    return(0);
+ }
       </example>
     </variable>
 
@@ -2443,16 +2440,16 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iClose">iClose()</a>.
       </content>
       <example>
-  int handle = FileOpen(&quot;file.csv&quot;, FILE_CSV|FILE_WRITE, &quot;;&quot;);
-  if(handle&gt;0)
-    {
-     // table column headers recording
-     FileWrite(handle, &quot;Time;Open;High;Low;Close;Volume&quot;);
-     // data recording
-     for(int i=0; i&lt;Bars; i++)
+ int handle = FileOpen(&quot;file.csv&quot;, FILE_CSV|FILE_WRITE, &quot;;&quot;);
+ if(handle &gt; 0) {
+    // table column headers recording
+    FileWrite(handle, &quot;Time;Open;High;Low;Close;Volume&quot;);
+    // data recording
+    for (int i=0; i&lt;Bars; i++) {
        FileWrite(handle, Time[i], Open[i], High[i], Low[i], Close[i], Volume[i]);
-     FileClose(handle);
     }
+    FileClose(handle);
+ }
       </example>
     </variable>
 
@@ -2479,23 +2476,22 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iHigh">iHigh()</a>.
       </content>
       <example>
-//---- maximums counting
-   i=Bars-KPeriod;
-   if(counted_bars&gt;KPeriod) i=Bars-counted_bars-1;
-   while(i&gt;=0)
-     {
-      double max=-1000000;
-      k = i + KPeriod-1;
-      while(k&gt;=i)
-        {
-         price=High[k];
-         if(max&lt;price) max=price;
-         k--;
-        }
-      HighesBuffer[i]=max;
-      i--;
-     }
-//----
+ // counting maximums
+ int i = Bars-KPeriod;
+ if (counted_bars &gt; KPeriod)
+    i = Bars-counted_bars-1;
+ while (i &gt;= 0) {
+    double max = -1000000;
+    k = i + KPeriod-1;
+    while (k &gt;= i) {
+       price = High[k];
+       if (max &lt; price)
+          max=price;
+       k--;
+    }
+    HighesBuffer[i] = max;
+    i--;
+ }
       </example>
     </variable>
 
@@ -2511,23 +2507,22 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iLow">iLow()</a>.
       </content>
       <example>
-//---- minima counting
-   i=Bars-KPeriod;
-   if(counted_bars&gt;KPeriod) i=Bars-counted_bars-1;
-   while(i&gt;=0)
-     {
-      double min=1000000;
-      k = i + KPeriod-1;
-      while(k&gt;=i)
-        {
-         price=Low[k];
-         if(min&gt;price) min=price;
-         k--;
-        }
-      LowesBuffer[i]=min;
-      i--;
-     }
-//----
+ // counting minimums
+ int i = Bars-KPeriod;
+ if (counted_bars &gt; KPeriod)
+    i = Bars-counted_bars-1;
+ while (i &gt;= 0) {
+    double min = 1000000;
+    k = i + KPeriod-1;
+    while (k &gt;= i) {
+       price = Low[k];
+       if (min &gt; price)
+          min = price;
+       k--;
+    }
+    LowesBuffer[i] = min;
+    i--;
+ }
       </example>
     </variable>
 
@@ -2543,28 +2538,27 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iOpen">iOpen()</a>.
       </content>
       <example>
-   i = Bars - counted_bars - 1;
-   while(i&gt;=0)
-     {
-      double high  = High[i];
-      double low   = Low[i];
-      double open  = Open[i];
-      double close = Close[i];
-      AccumulationBuffer[i] = (close-low) - (high-close);
-      if(AccumulationBuffer[i] != 0)
-        {
-         double diff = high - low;
-         if(0==diff)
-            AccumulationBuffer[i] = 0;
-         else
-           {
-            AccumulationBuffer[i] /= diff;
-            AccumulationBuffer[i] *= Volume[i];
-           }
-        }
-      if(i&lt;Bars-1) AccumulationBuffer[i] += AccumulationBuffer[i+1];
-      i--;
-     }
+ i = Bars - counted_bars - 1;
+ while (i &gt;= 0) {
+    double high  = High[i];
+    double low   = Low[i];
+    double open  = Open[i];
+    double close = Close[i];
+    AccumulationBuffer[i] = (close-low) - (high-close);
+    if (AccumulationBuffer[i] != 0) {
+       double diff = high - low;
+       if (0==diff) {
+          AccumulationBuffer[i] = 0;
+       }
+       else {
+          AccumulationBuffer[i] /= diff;
+          AccumulationBuffer[i] *= Volume[i];
+       }
+    }
+    if (i &lt; Bars-1)
+       AccumulationBuffer[i] += AccumulationBuffer[i+1];
+    i--;
+ }
       </example>
     </variable>
 
@@ -2576,7 +2570,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       The current symbol point value in the quote currency.<br/>
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
       </content>
-      example=OrderSend(Symbol(),OP_BUY,Lots,Ask,3,0,Ask+TakeProfit*Point);
+      example=OrderSend(Symbol(), OP_BUY, Lots,  Ask, 3, 0, Ask + TakeProfit*Point);
     </variable>
 
     <variable>
@@ -2592,32 +2586,30 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iTime">iTime()</a>.
       </content>
       <example>
-   for(i=Bars-2; i&gt;=0; i--)
-     {
-      if(High[i+1] &gt; LastHigh) LastHigh = High[i+1];
-      if(Low[i+1] &lt; LastLow)   LastLow  = Low[i+1];
-      //----
-      if(TimeDay(Time[i]) != TimeDay(Time[i+1]))
-        {
-         P = (LastHigh + LastLow + Close[i+1])/3;
-         R1 = P*2 - LastLow;
-         S1 = P*2 - LastHigh;
-         R2 = P + LastHigh - LastLow;
-         S2 = P - (LastHigh - LastLow);
-         R3 = P*2 + LastHigh - LastLow*2;
-         S3 = P*2 - (LastHigh*2 - LastLow);
-         LastLow  = Open[i];
-         LastHigh = Open[i];
-        }
-      //----
-      PBuffer[i]  = P;
-      S1Buffer[i] = S1;
-      R1Buffer[i] = R1;
-      S2Buffer[i] = S2;
-      R2Buffer[i] = R2;
-      S3Buffer[i] = S3;
-      R3Buffer[i] = R3;
-     }
+ for (i=Bars-2; i&gt;=0; i--) {
+    if (High[i+1] &gt; LastHigh) LastHigh = High[i+1];
+    if (Low[i+1] &lt; LastLow)   LastLow  = Low[i+1];
+    //----
+    if (TimeDay(Time[i]) != TimeDay(Time[i+1])) {
+       P  = (LastHigh + LastLow + Close[i+1])/3;
+       R1 = P*2 - LastLow;
+       S1 = P*2 - LastHigh;
+       R2 = P + LastHigh - LastLow;
+       S2 = P - (LastHigh - LastLow);
+       R3 = P*2 + LastHigh - LastLow*2;
+       S3 = P*2 - (LastHigh*2 - LastLow);
+       LastLow  = Open[i];
+       LastHigh = Open[i];
+    }
+    //----
+    PBuffer [i] = P;
+    S1Buffer[i] = S1;
+    R1Buffer[i] = R1;
+    S2Buffer[i] = S2;
+    R2Buffer[i] = R2;
+    S3Buffer[i] = S3;
+    R3Buffer[i] = R3;
+ }
       </example>
     </variable>
     <variable>
@@ -2632,21 +2624,20 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 <b>See also</b> <a href="help://series_iVolume">iVolume()</a>.
       </content>
       <example>
-      if(i==0 &amp;&amp; time0&lt;i_time+periodseconds)
-        {
-         d_volume += Volume[0];
-         if(Low[0]&lt;d_low)   d_low = Low[0];
-         if(High[0]&gt;d_high) d_high = High[0];
-         d_close = Close[0];
-        }
-      last_fpos = FileTell(ExtHandle);
-      last_volume = Volume[i];
-      FileWriteInteger(ExtHandle, i_time, LONG_VALUE);
-      FileWriteDouble(ExtHandle, d_open, DOUBLE_VALUE);
-      FileWriteDouble(ExtHandle, d_low, DOUBLE_VALUE);
-      FileWriteDouble(ExtHandle, d_high, DOUBLE_VALUE);
-      FileWriteDouble(ExtHandle, d_close, DOUBLE_VALUE);
-      FileWriteDouble(ExtHandle, d_volume, DOUBLE_VALUE);
+ if (i==0 &amp;&amp; time0&lt;i_time+periodseconds) {
+    d_volume += Volume[0];
+    if (Low[0] &lt; d_low)   d_low = Low[0];
+    if (High[0] &gt; d_high) d_high = High[0];
+    d_close = Close[0];
+ }
+ last_fpos   = FileTell(ExtHandle);
+ last_volume = Volume[i];
+ FileWriteInteger(ExtHandle, i_time, LONG_VALUE);
+ FileWriteDouble (ExtHandle, d_open, DOUBLE_VALUE);
+ FileWriteDouble (ExtHandle, d_low, DOUBLE_VALUE);
+ FileWriteDouble (ExtHandle, d_high, DOUBLE_VALUE);
+ FileWriteDouble (ExtHandle, d_close, DOUBLE_VALUE);
+ FileWriteDouble (ExtHandle, d_volume, DOUBLE_VALUE);
       </example>
     </variable>
   </group>
@@ -3333,7 +3324,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       <content>
       Returns the name of company owning the client terminal.
       </content>
-      example=Print(&quot;Company name is &quot;,TerminalCompany());
+      example=Print(&quot;Company name is &quot;, TerminalCompany());
     </function>
 
     <function>
@@ -3343,7 +3334,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       <content>
       Returns client terminal name.
       </content>
-      example=Print(&quot;Terminal name is &quot;,TerminalName());
+      example=Print(&quot;Terminal name is &quot;, TerminalName());
     </function>
 
     <function>
@@ -3353,7 +3344,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       <content>
       Returns the directory, from which the client terminal was launched.
       </content>
-      example=Print(&quot;Working directory is &quot;,TerminalPath());
+      example=Print(&quot;Working directory is &quot;, TerminalPath());
     </function>
   </group>
 
@@ -3372,7 +3363,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       <content>
       Returns balance value of the current account (the amount of money on the account).
       </content>
-      example=Print(&quot;Account balance = &quot;,AccountBalance());
+      example=Print(&quot;Account balance = &quot;, AccountBalance());
     </function>
 
     <function>
@@ -3415,7 +3406,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       <content>
       Returns equity value of the current account. Equity calculation depends on trading server settings.
       </content>
-      example=Print(&quot;Account equity = &quot;,AccountEquity());
+      example=Print(&quot;Account equity = &quot;, AccountEquity());
     </function>
 
     <function>
@@ -3426,7 +3417,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       <content>
       Returns free margin value of the current account.
       </content>
-      example=Print(&quot;Account free margin = &quot;,AccountFreeMargin());
+      example=Print(&quot;Account free margin = &quot;, AccountFreeMargin());
     </function>
 
     <function>
@@ -3438,7 +3429,7 @@ Returns <span class="constant">true</span> if a thread for trading is occupied b
       Returns free margin that remains after the specified position has been opened at the current price on the current account. If the free margin
       is insufficient, an <a href="help://constants_errors">error</a> 134 (<span class="constant">ERR_NOT_ENOUGH_MONEY</span>) will be generated.
       </content>
-      example=if(AccountFreeMarginCheck(Symbol(),OP_BUY,Lots)&lt;=0 || GetLastError()==134) return;
+      example=if (AccountFreeMarginCheck(Symbol(), OP_BUY, Lots)&lt;=0 || GetLastError()==134) return;
       <parameter>
         type=string
         name=symbol
@@ -3484,7 +3475,7 @@ if(AccountFreeMarginMode()==0)
       <content>
       Returns leverage of the current account.
       </content>
-      example=Print(&quot;Account #&quot;,AccountNumber(), &quot; leverage is &quot;, AccountLeverage());
+      example=Print(&quot;Account #&quot;, AccountNumber(), &quot; leverage is &quot;, AccountLeverage());
     </function>
 
     <function>
@@ -6345,7 +6336,7 @@ several experts working simultaneously within one client terminal.
       Otherwise, only those variables will be deleted, the names of which begin with the specified prefix.
       The function returns the count of deleted variables.
       </content>
-      example=Print(GlobalVariablesDeleteAll(&quot;test_&quot;),&quot; test globals deleted&quot;);
+      example=Print(GlobalVariablesDeleteAll(&quot;test_&quot;), &quot;test globals deleted&quot;);
       <parameter>
         type=string
         name=prefix_name
@@ -6361,7 +6352,7 @@ several experts working simultaneously within one client terminal.
       <content>
       The function returns the total count of global variables.
       </content>
-      example=Print(GlobalVariablesTotal(),&quot; global variables detected&quot;);
+      example=Print(GlobalVariablesTotal(), &quot;global variables detected&quot;);
     </function>
   </group>
 
@@ -7213,7 +7204,7 @@ The function assigns a new description to a level of a Fibonacci object. The amo
 The maximum amount of Fibonacci levels is 32.<br/>
 To get detailed error information, call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
-      example=ObjectSetFiboDescription(&quot;MyFiboObject&quot;,2,&quot;Second line&quot;);
+      example=ObjectSetFiboDescription(&quot;MyFiboObject&quot;, 2, &quot;Second line&quot;);
       <parameter>
         type=string
         name=name
@@ -7239,10 +7230,13 @@ To get detailed error information, call <a href="help://runtimestatus_GetLastErr
 Changes the object description. For objects of <span class="constant">OBJ_TEXT</span> and <span class="constant">OBJ_LABEL</span> the description is shown as text in the chart.
 Returns <span class="constant">true</span> on success, otherwise <span class="constant">false</span>. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
 The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of <span class="constant">OBJ_TEXT</span> and <span class="constant">OBJ_LABEL</span> only.
-For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.
-<br/><b>See also</b> <a href="help://objects_ObjectDescription">ObjectDescription()</a>.
+For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.<br/>
+<br/>
+<b>See also</b> <a href="help://objects_ObjectDescription">ObjectDescription()</a>
       </content>
-      example=ObjectSetText(&quot;text_object&quot;, &quot;Hello world!&quot;, 10, &quot;Times New Roman&quot;, Green);
+      <example>
+ ObjectSetText(<span class="string">&quot;text_object&quot;</span>, <span class="string">&quot;Hello world!&quot;</span>, <span class="number">10</span>, <span class="string">&quot;Times New Roman&quot;</span>, <span class="constant">Green</span>);
+      </example>
       <parameter>
         type=string
         name=name
@@ -7251,7 +7245,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=string
         name=text
-        description=text describing the object (max. 63 chars)
+        description=text describing the object (max. 63 characters, may contain line breaks)
       </parameter>
       <parameter>
         type=int
