@@ -3185,6 +3185,35 @@ int WM_MT4() {
 
 
 /**
+ * Prüft, ob der aktuelle Tick ein neuer Tick ist.
+ *
+ * @param  int results[] - event-spezifische Detailinfos (zur Zeit keine)
+ * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
+ *
+ * @return bool - Ergebnis
+ */
+bool EventListener.NewTick(int results[], int flags=NULL) {
+   int vol = Volume[0];
+   if (!vol)                                                         // Tick ungültig (z.B. Symbol noch nicht subscribed)
+      return(false);
+
+   static bool lastResult;
+   static int  lastTick, lastVol;
+
+   // Mehrfachaufrufe während desselben Ticks erkennen
+   if (Tick == lastTick)
+      return(lastResult);
+
+   // Es reicht immer, den Tick nur anhand des Volumens des aktuellen Timeframes zu bestimmen.
+   bool result = (lastVol && vol!=lastVol);                          // wenn der letzte Tick gültig war und sich das aktuelle Volumen geändert hat
+                                                                     // (Optimierung unnötig, da im Normalfall immer beide Bedingungen zutreffen)
+   lastVol    = vol;
+   lastResult = result;
+   return(result);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3338,7 +3367,6 @@ void __DummyCalls() {
 #import "stdlib1.ex4"
    bool   EventListener.AccountChange  (int    data[], int param);
    bool   EventListener.BarOpen        (int    data[], int param);
-   bool   EventListener.NewTick        (int    data[], int param);
    bool   EventListener.ChartCommand   (string data[], int param);
    bool   EventListener.ExternalCommand(string data[], int param);
    bool   EventListener.InternalCommand(string data[], int param);

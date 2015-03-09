@@ -275,8 +275,8 @@
    datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
-   // Event-Listener: Diese allgemeinen Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
-   bool     EventListener.NewTick        (int    data[], int param);
+   // Event-Listener: Diese Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
+   bool     EventListener.NewTick        (int    data[], int param);    // fest in stdfunctions.mqh implementiert
    bool     EventListener.BarOpen        (int    data[], int param);
    bool     EventListener.AccountChange  (int    data[], int param);
    bool     EventListener.ChartCommand   (string data[], int param);

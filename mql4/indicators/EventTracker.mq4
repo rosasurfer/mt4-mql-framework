@@ -608,48 +608,6 @@ int onTick() {
 
 
 /**
- * Prüft, ob der aktuelle Tick ein neuer Tick ist.
- *
- * @param  int results[] - event-spezifische Detailinfos (zur Zeit keine)
- * @param  int flags     - zusätzliche eventspezifische Flags (default: keine)
- *
- * @return bool - Ergebnis
- */
-bool EventListener.NewTick(int results[], int flags=NULL) {
-   static double   lastBid, lastAsk;
-   static int      lastVol;
-   static datetime lastTime;
-
-   int      vol   = Volume[0];
-   datetime time  = MarketInfo(Symbol(), MODE_TIME);
-   bool newTick, exactMatch;
-
-   if (Bid && Ask && vol && time) {                                  // wenn aktueller Tick gültig ist
-      if (lastTime != 0) {                                           // wenn letzter Tick gültig war
-         if      (vol  != lastVol ) newTick = true;                  // wenn der aktuelle Tick ungleich dem letztem Tick ist
-         else if (NE(Bid, lastBid)) newTick = true;
-         else if (NE(Ask, lastAsk)) newTick = true;
-         else if (time != lastTime) newTick = true;
-
-         if (!newTick) {
-            //debug("EventListener.NewTick(zTick="+ zTick +")  current tick == last tick");
-            exactMatch = true;
-         }
-      }
-      lastBid  = Bid;                                                // aktuellen Tick speichern, wenn er gültig ist
-      lastAsk  = Ask;
-      lastVol  = vol;
-      lastTime = time;
-   }
-
-   //if      (newTick    ) debug("EventListener.NewTick(zTick="+ zTick +")     new tick: Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  vol="+ vol +"  time="+ DateToStr(time, "w, D.M.Y H:I:S"));
-   //else if (!exactMatch) debug("EventListener.NewTick(zTick="+ zTick +")  no new tick: Bid="+ NumberToStr(Bid, PriceFormat) +"  Ask="+ NumberToStr(Ask, PriceFormat) +"  vol="+ vol +"  time="+ DateToStr(time, "w, D.M.Y H:I:S"));
-
-   return(newTick);
-}
-
-
-/**
  * Wird bei Eintreffen eines neuen Ticks ausgeführt, nicht bei sonstigen Aufrufen der start()-Funktion.
  *
  * @param  int data[] - event-spezifische Daten (zur Zeit keine)
@@ -1201,11 +1159,12 @@ string BarRangeSignalToStr(int index) {
 
 
 // I_Signal-Bar-Breakout
-#define I_SBB_LEVEL_H         0           // oberer Breakout-Level
-#define I_SBB_LEVEL_L         1           // unterer Breakout-Level
-#define I_SBB_TIMEFRAME       2           // Timeframe der zur Prüfung verwendeten Datenreihe
-#define I_SBB_ENDBAR          3           // Bar-Offset der Referenzsession innerhalb der zur Prüfung verwendeten Datenreihe
-#define I_SBB_SESSION_END     4           // Ende der jüngsten Session-Periode innerhalb der zur Prüfung verwendeten Datenreihe
+#define I_SBB_LEVEL_H            0        // oberer Breakout-Level
+#define I_SBB_LEVEL_L            1        // unterer Breakout-Level
+#define I_SBB_TIMEFRAME          2        // Timeframe der zur Prüfung verwendeten Datenreihe
+#define I_SBB_ENDBAR             3        // Bar-Offset der Referenzsession innerhalb der zur Prüfung verwendeten Datenreihe
+#define I_SBB_SESSION_END        4        // Ende der jüngsten Session-Periode innerhalb der zur Prüfung verwendeten Datenreihe
+#define I_SBB_LAST_CHANGED_BARS  5        // changedBars der zur Prüfung verwendeten Datenreihe bei der letzten Prüfung
 
 
 /**
@@ -1266,13 +1225,14 @@ bool CheckBarBreakoutSignal.Init(int index, bool barOpen=false) {
 
 
    // (4) Daten speichern
-   signal.data[index][I_SBB_LEVEL_H    ] = NormalizeDouble(H, Digits);
-   signal.data[index][I_SBB_LEVEL_L    ] = NormalizeDouble(L, Digits);
-   signal.data[index][I_SBB_TIMEFRAME  ] = dataTimeframe;
-   signal.data[index][I_SBB_ENDBAR     ] = closeBar;
-   signal.data[index][I_SBB_SESSION_END] = lastSessionEndTime;
+   signal.data [index][I_SBB_LEVEL_H          ] = NormalizeDouble(H, Digits);
+   signal.data [index][I_SBB_LEVEL_L          ] = NormalizeDouble(L, Digits);
+   signal.data [index][I_SBB_TIMEFRAME        ] = dataTimeframe;
+   signal.data [index][I_SBB_ENDBAR           ] = closeBar;
+   signal.data [index][I_SBB_SESSION_END      ] = lastSessionEndTime;
+   signal.data [index][I_SBB_LAST_CHANGED_BARS] = 0;
+   signal.descr[index]                          = BarBreakoutSignalToStr(index);
 
-   signal.descr[index] = BarBreakoutSignalToStr(index);
    return(!ShowStatus(catch("CheckBarBreakoutSignal.Init(3)")));
 }
 
@@ -1293,16 +1253,24 @@ bool CheckBarBreakoutSignal(int index) {
    bool     signal.onTouch     = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ] != 0;
    int      signal.reset       = signal.config[index][I_SIGNAL_CONFIG_PARAM2   ];
 
-   double   signalLevelH       = signal.data  [index][I_SBB_LEVEL_H           ];
-   double   signalLevelL       = signal.data  [index][I_SBB_LEVEL_L           ];
-   int      dataTimeframe      = signal.data  [index][I_SBB_TIMEFRAME         ];
-   int      dataSessionEndBar  = signal.data  [index][I_SBB_ENDBAR            ];
-   datetime lastSessionEndTime = signal.data  [index][I_SBB_SESSION_END       ];
+   double   signalLevelH       = signal.data  [index][I_SBB_LEVEL_H            ];
+   double   signalLevelL       = signal.data  [index][I_SBB_LEVEL_L            ];
+   int      dataTimeframe      = signal.data  [index][I_SBB_TIMEFRAME          ];
+   int      dataSessionEndBar  = signal.data  [index][I_SBB_ENDBAR             ];
+   datetime lastSessionEndTime = signal.data  [index][I_SBB_SESSION_END        ];
+   int      lastChangedBars    = signal.data  [index][I_SBB_LAST_CHANGED_BARS  ];
 
 
    // (1) aktuellen Tick klassifizieren
-   int iNull[];
-   bool newTick = EventListener.NewTick(iNull);
+   static int  lastTick;
+   static bool wasNewTickBefore, tick.isNew;
+
+   if (Tick != lastTick) {
+      lastTick = Tick;
+      if (tick.isNew) wasNewTickBefore = true;
+      int iNull[];
+      tick.isNew = EventListener.NewTick(iNull);
+   }
 
 
    // (2) changedBars(dataTimeframe) für den Daten-Timeframe ermitteln
@@ -1324,7 +1292,7 @@ bool CheckBarBreakoutSignal(int index) {
    bool reinitialized;
    if (changedBars > dataSessionEndBar) {
       // Ausnahme: Ist Bar[0] Bestandteil der Referenzsession und nur diese Bar ist verändert, wird re-initialisiert, wenn der aktuelle Tick KEIN neuer Tick ist.
-      if (changedBars > 1 || !newTick) {
+      if (changedBars > 1 || !tick.isNew) {
          //debug("CheckBarBreakoutSignal(0.2)       sidx="+ index +"  changedBars="+ changedBars +"  newTick="+ newTick);
          if (!CheckBarBreakoutSignal.Init(index)) return(false);           // Bei synthetischen Ticks wird also re-initialisiert, weil changedBars=0 in anderen als dem aktuellem
          reinitialized = true;                                             // Timeframe nicht zuverlässig detektiert werden kann.
@@ -1337,53 +1305,52 @@ bool CheckBarBreakoutSignal(int index) {
    }                                                                       // aufgerufen wird.
 
    if (reinitialized) {
-      signalLevelH       = signal.data[index][I_SBB_LEVEL_H    ];          // Werte ggf. neueinlesen
-      signalLevelL       = signal.data[index][I_SBB_LEVEL_L    ];
-      dataTimeframe      = signal.data[index][I_SBB_TIMEFRAME  ];
-      dataSessionEndBar  = signal.data[index][I_SBB_ENDBAR     ];
-      lastSessionEndTime = signal.data[index][I_SBB_SESSION_END];
+      signalLevelH       = signal.data[index][I_SBB_LEVEL_H          ];    // Werte ggf. neueinlesen
+      signalLevelL       = signal.data[index][I_SBB_LEVEL_L          ];
+      dataTimeframe      = signal.data[index][I_SBB_TIMEFRAME        ];
+      dataSessionEndBar  = signal.data[index][I_SBB_ENDBAR           ];
+      lastSessionEndTime = signal.data[index][I_SBB_SESSION_END      ];
+      lastChangedBars    = signal.data[index][I_SBB_LAST_CHANGED_BARS];
    }
 
 
-   // (4) Signallevel prüfen, wenn die Bars des Datentimeframes komplett sind und der zweite echte Tick eintrifft
-   static int  last.changedBars = INT_MAX;
-   static bool last.newTick;
+   // (4) Signallevel prüfen, wenn die Bars des Datentimeframes komplett scheinen und der zweite echte Tick eintrifft
+   if (lastChangedBars<=2 && changedBars<=2 && wasNewTickBefore && tick.isNew) {    // Optimierung unnötig, da im Normalfall immer alle Bedingungen zutreffen
+      //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  checking tick "+ Tick);
 
-   if (last.changedBars <= 2) /*&&*/ if (last.newTick) {
-      if (changedBars <= 2) /*&&*/ if (newTick) {
-         //debug("CheckBarBreakoutSignal(0.4)       sidx="+ index +"  checking tick...");
+      double price = NormalizeDouble(Bid, Digits);
 
-         double price = NormalizeDouble(Bid, Digits);
-
-         if (signalLevelH != NULL) {
-            if (GE(price, signalLevelH)) {
-               if (GT(price, signalLevelH)) {
-                  //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-                  onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrent());
-                  signalLevelH                      = NULL;
-                  signal.data [index][I_SBB_LEVEL_H] = NULL;
-                  signal.descr[index] = BarBreakoutSignalToStr(index);
-               }
-               //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.6)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
+      if (signalLevelH != NULL) {
+         if (GE(price, signalLevelH)) {
+            if (GT(price, signalLevelH)) {
+               //debug("CheckBarBreakoutSignal(0.6)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
+               onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrent());
+               signalLevelH                      = NULL;
+               signal.data [index][I_SBB_LEVEL_H] = NULL;
+               signal.descr[index] = BarBreakoutSignalToStr(index);
             }
+            //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
          }
-         if (signalLevelL != NULL) {
-            if (LE(price, signalLevelL)) {
-               if (LT(price, signalLevelL)) {
-                  //debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-                  onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrent());
-                  signalLevelL                      = NULL;
-                  signal.data [index][I_SBB_LEVEL_L] = NULL;
-                  signal.descr[index] = BarBreakoutSignalToStr(index);
-               }
-               //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.8)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
+      }
+      if (signalLevelL != NULL) {
+         if (LE(price, signalLevelL)) {
+            if (LT(price, signalLevelL)) {
+               //debug("CheckBarBreakoutSignal(0.8)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
+               onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrent());
+               signalLevelL                      = NULL;
+               signal.data [index][I_SBB_LEVEL_L] = NULL;
+               signal.descr[index] = BarBreakoutSignalToStr(index);
             }
+            //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.9)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
          }
       }
    }
+   else {
+      debug("CheckBarBreakoutSignal(0.4)       sidx="+ index +"  not checking tick "+ Tick +", lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars +"  wasNewTickBefore="+ wasNewTickBefore +"  tick.isNew="+ tick.isNew);
+   }
 
-   last.changedBars = changedBars;
-   last.newTick     = newTick;
+   signal.data[index][I_SBB_LAST_CHANGED_BARS] = changedBars;
+
    return(!catch("CheckBarBreakoutSignal(2)"));
 }
 
