@@ -1316,37 +1316,37 @@ bool CheckBarBreakoutSignal(int index) {
 
    // (4) Signallevel prüfen, wenn die Bars des Datentimeframes komplett scheinen und der zweite echte Tick eintrifft
    if (lastChangedBars<=2 && changedBars<=2 && wasNewTickBefore && tick.isNew) {    // Optimierung unnötig, da im Normalfall immer alle Bedingungen zutreffen
-      //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  checking tick "+ Tick);
+      //debug("CheckBarBreakoutSignal(0.4)       sidx="+ index +"  checking tick "+ Tick);
 
       double price = NormalizeDouble(Bid, Digits);
 
       if (signalLevelH != NULL) {
          if (GE(price, signalLevelH)) {
             if (GT(price, signalLevelH)) {
-               //debug("CheckBarBreakoutSignal(0.6)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
+               //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
                onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrent());
                signalLevelH                      = NULL;
                signal.data [index][I_SBB_LEVEL_H] = NULL;
                signal.descr[index] = BarBreakoutSignalToStr(index);
             }
-            //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
+            //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.6)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
          }
       }
       if (signalLevelL != NULL) {
          if (LE(price, signalLevelL)) {
             if (LT(price, signalLevelL)) {
-               //debug("CheckBarBreakoutSignal(0.8)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
+               //debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
                onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrent());
                signalLevelL                      = NULL;
                signal.data [index][I_SBB_LEVEL_L] = NULL;
                signal.descr[index] = BarBreakoutSignalToStr(index);
             }
-            //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.9)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
+            //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.8)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
          }
       }
    }
    else {
-      debug("CheckBarBreakoutSignal(0.4)       sidx="+ index +"  not checking tick "+ Tick +", lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars +"  wasNewTickBefore="+ wasNewTickBefore +"  tick.isNew="+ tick.isNew);
+      //debug("CheckBarBreakoutSignal(0.9)       sidx="+ index +"  not checking tick "+ Tick +", lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars +"  wasNewTickBefore="+ wasNewTickBefore +"  tick.isNew="+ tick.isNew);
    }
 
    signal.data[index][I_SBB_LAST_CHANGED_BARS] = changedBars;
