@@ -1479,7 +1479,7 @@ int ShowStatus(int error=NULL) {
    string msg = StringConcatenate(__NAME__, sSettings, sError,           NL);
 
    if (track.orders || track.signals) {
-      msg    = StringConcatenate(msg, "-------------------------",       NL);
+      msg    = StringConcatenate(msg, "-------------------",             NL);
 
       if (track.orders) {
          msg = StringConcatenate(msg,
