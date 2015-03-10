@@ -1386,7 +1386,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    else if (signal.timeframe==PERIOD_MN1 && signal.bar==1) barDescription = "LastMonth";
    else                                                    barDescription = PeriodDescription(signal.timeframe) +"["+ signal.bar+"]";
 
-   string message = StdSymbol() +" broke "+ barDescription +"'s "+ ifString(direction==SD_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(ServerToFxtTime(time.srv), TIME_MINUTES|TIME_SECONDS) +")";
+   string message = StdSymbol() +" broke "+ barDescription +"'s "+ ifString(direction==SD_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
    if (__LOG) log("onBarBreakoutSignal(2)  "+ message);
 
 
