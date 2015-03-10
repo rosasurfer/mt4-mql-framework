@@ -138,8 +138,9 @@ string signal.descr [];                                              // Signalbe
 int onInit() {
    if (!Configure())                                                 // Konfiguration einlesen
       return(last_error);
+
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
-   return(catch("onInit(1)"));
+   return(ShowStatus(catch("onInit(1)")));
 }
 
 
@@ -597,41 +598,26 @@ int onTick() {
 
    // (2) Signale überwachen
    if (track.signals) {
-      int iNull[];
-      onNewTick(iNull);
+      int  size = ArrayRange(signal.config, 0);
+      bool success;
+
+      for (int i=0; i < size; i++) {
+         if (signal.config[i][I_SIGNAL_CONFIG_ENABLED] != 0) {
+            switch (signal.config[i][I_SIGNAL_CONFIG_ID]) {
+               case ET_SIGNAL_BAR_CLOSE:    success = CheckBarCloseSignal   (i); break;
+               case ET_SIGNAL_BAR_RANGE:    success = CheckBarRangeSignal   (i); break;
+               case ET_SIGNAL_BAR_BREAKOUT: success = CheckBarBreakoutSignal(i); break;
+               default:
+                  catch("onTick(1)  unknown signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR);
+            }
+         }
+         if (!success) break;
+      }
    }
 
    if (IsError(last_error))
       ShowStatus(last_error);
    return(last_error);
-}
-
-
-/**
- * Wird bei Eintreffen eines neuen Ticks ausgeführt, nicht bei sonstigen Aufrufen der start()-Funktion.
- *
- * @param  int data[] - event-spezifische Daten (zur Zeit keine)
- *
- * @return bool - Erfolgsstatus
- */
-bool onNewTick(int data[]) {
-   int  size = ArrayRange(signal.config, 0);
-   bool success;
-
-   for (int i=0; i < size; i++) {
-      if (signal.config[i][I_SIGNAL_CONFIG_ENABLED] != 0) {
-         switch (signal.config[i][I_SIGNAL_CONFIG_ID]) {
-            case ET_SIGNAL_BAR_CLOSE:    success = CheckBarCloseSignal   (i); break;
-            case ET_SIGNAL_BAR_RANGE:    success = CheckBarRangeSignal   (i); break;
-            case ET_SIGNAL_BAR_BREAKOUT: success = CheckBarBreakoutSignal(i); break;
-            default:
-               catch("onNewTick(1)  unknow price signal["+ i +"] = "+ signal.config[i][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR);
-         }
-      }
-      if (!success)
-         return(false);
-   }
-   return(true);
 }
 
 
@@ -799,7 +785,7 @@ bool onOrderFail(int tickets[]) {
    if (alert.sound)
       PlaySoundEx(alert.sound.orderFailed);
 
-   return(!ShowStatus(catch("onOrderFail(3)")));
+   return(!catch("onOrderFail(3)"));
 }
 
 
@@ -840,7 +826,7 @@ bool onPositionOpen(int tickets[]) {
    if (alert.sound)
       PlaySoundEx(alert.sound.positionOpened);
 
-   return(!ShowStatus(catch("onPositionOpen(3)")));
+   return(!catch("onPositionOpen(3)"));
 }
 
 
@@ -882,7 +868,7 @@ bool onPositionClose(int tickets[]) {
    if (alert.sound)
       PlaySoundEx(alert.sound.positionClosed);
 
-   return(!ShowStatus(catch("onPositionClose(3)")));
+   return(!catch("onPositionClose(3)"));
 }
 
 
@@ -963,7 +949,7 @@ bool onBarCloseSignal(int index, int direction) {
    if (alert.icq) {
    }
 
-   return(!ShowStatus(catch("onBarCloseSignal(3)")));
+   return(!catch("onBarCloseSignal(3)"));
 }
 
 
@@ -1132,7 +1118,7 @@ bool onBarRangeSignal(int index, int direction) {
    if (alert.icq) {
    }
 
-   return(!ShowStatus(catch("onBarRangeSignal(3)")));
+   return(!catch("onBarRangeSignal(3)"));
 }
 
 
@@ -1325,9 +1311,10 @@ bool CheckBarBreakoutSignal(int index) {
             if (GT(price, signalLevelH)) {
                //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
                onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrent());
-               signalLevelH                      = NULL;
+               signalLevelH                       = NULL;
                signal.data [index][I_SBB_LEVEL_H] = NULL;
-               signal.descr[index] = BarBreakoutSignalToStr(index);
+               signal.descr[index]                = BarBreakoutSignalToStr(index);
+               ShowStatus();
             }
             //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.6)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
          }
@@ -1337,9 +1324,10 @@ bool CheckBarBreakoutSignal(int index) {
             if (LT(price, signalLevelL)) {
                //debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
                onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrent());
-               signalLevelL                      = NULL;
+               signalLevelL                       = NULL;
                signal.data [index][I_SBB_LEVEL_L] = NULL;
-               signal.descr[index] = BarBreakoutSignalToStr(index);
+               signal.descr[index]                = BarBreakoutSignalToStr(index);
+               ShowStatus();
             }
             //else if (signal.onTouch) debug("CheckBarBreakoutSignal(0.8)       sidx="+ index +"  touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
          }
@@ -1350,7 +1338,6 @@ bool CheckBarBreakoutSignal(int index) {
    }
 
    signal.data[index][I_SBB_LAST_CHANGED_BARS] = changedBars;
-
    return(!catch("CheckBarBreakoutSignal(2)"));
 }
 
@@ -1373,20 +1360,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    int signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
-   string barDescription;
-   if      (signal.timeframe==PERIOD_M1  && signal.bar==0) barDescription = "ThisMinute";
-   else if (signal.timeframe==PERIOD_M1  && signal.bar==1) barDescription = "LastMinute";
-   else if (signal.timeframe==PERIOD_H1  && signal.bar==0) barDescription = "ThisHour";
-   else if (signal.timeframe==PERIOD_H1  && signal.bar==1) barDescription = "LastHour";
-   else if (signal.timeframe==PERIOD_D1  && signal.bar==0) barDescription = "Today";
-   else if (signal.timeframe==PERIOD_D1  && signal.bar==1) barDescription = "Yesterday";
-   else if (signal.timeframe==PERIOD_W1  && signal.bar==0) barDescription = "ThisWeek";
-   else if (signal.timeframe==PERIOD_W1  && signal.bar==1) barDescription = "LastWeek";
-   else if (signal.timeframe==PERIOD_MN1 && signal.bar==0) barDescription = "ThisMonth";
-   else if (signal.timeframe==PERIOD_MN1 && signal.bar==1) barDescription = "LastMonth";
-   else                                                    barDescription = PeriodDescription(signal.timeframe) +"["+ signal.bar+"]";
-
-   string message = StdSymbol() +" broke "+ barDescription +"'s "+ ifString(direction==SD_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
    if (__LOG) log("onBarBreakoutSignal(2)  "+ message);
 
 
@@ -1414,7 +1388,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    if (alert.icq) {
    }
 
-   return(!ShowStatus(catch("onBarBreakoutSignal(3)")));
+   return(!catch("onBarBreakoutSignal(3)"));
 }
 
 
@@ -1428,7 +1402,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
 string BarBreakoutSignalToStr(int index) {
    if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_BREAKOUT) return(_emptyStr(catch("BarBreakoutSignalToStr(1)  signal "+ index +" is not a breakout signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
 
-   bool     signal.enabled     = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;       //ifString(signal.enabled, "enabled", "disabled")
+   bool     signal.enabled     = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
    int      signal.timeframe   = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int      signal.bar         = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
    bool     signal.onTouch     = signal.config[index][I_SIGNAL_CONFIG_PARAM1   ] != 0;
@@ -1440,19 +1414,33 @@ string BarBreakoutSignalToStr(int index) {
    int      dataSessionEndBar  = signal.data  [index][I_SBB_ENDBAR            ];
    datetime lastSessionEndTime = signal.data  [index][I_SBB_SESSION_END       ];
 
-   string sBarDescription = PeriodDescription(signal.timeframe) +"["+ signal.bar +"]";
-   if      (sBarDescription == "M1[0]" ) sBarDescription = "This Minute";
-   else if (sBarDescription == "M1[1]" ) sBarDescription = "Last Minute";
-   else if (sBarDescription == "H1[0]" ) sBarDescription = "This Hour";
-   else if (sBarDescription == "H1[1]" ) sBarDescription = "Last Hour";
-   else if (sBarDescription == "D1[0]" ) sBarDescription = "Today";
-   else if (sBarDescription == "D1[1]" ) sBarDescription = "Yesterday";
-   else if (sBarDescription == "W1[0]" ) sBarDescription = "This Week";
-   else if (sBarDescription == "W1[1]" ) sBarDescription = "Last Week";
-   else if (sBarDescription == "MN1[0]") sBarDescription = "This Month";
-   else if (sBarDescription == "MN1[1]") sBarDescription = "Last Month";
+   string description = "Signal  "+ (index+1) +"  at break of "+ BarDescription(signal.timeframe, signal.bar) +"'s    High: "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "triggered") +"    Low: "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "triggered") +"    onTouch: "+ ifString(signal.onTouch, "On", "Off");
+   return(description);
+}
 
-   string description = "Signal  "+ (index+1) +"  at break of "+ sBarDescription +"    High: "+ ifString(signalLevelH, NumberToStr(signalLevelH, PriceFormat), "triggered") +"    Low: "+ ifString(signalLevelL, NumberToStr(signalLevelL, PriceFormat), "triggered") +"    onTouch: "+ ifString(signal.onTouch, "On", "Off");
+
+/**
+ * Gibt die lesbare Beschreibung einer Bar eines Timeframes zurück.
+ *
+ * @param  int timeframe - Timeframe
+ * @param  int bar       - Bar-Offset
+ *
+ * @return string
+ */
+string BarDescription(int timeframe, int bar) {
+   string description = PeriodDescription(timeframe) +"["+ bar +"]";
+
+   if      (description == "M1[0]" ) description = "This Minute";
+   else if (description == "M1[1]" ) description = "Last Minute";
+   else if (description == "H1[0]" ) description = "This Hour";
+   else if (description == "H1[1]" ) description = "Last Hour";
+   else if (description == "D1[0]" ) description = "Today";
+   else if (description == "D1[1]" ) description = "Yesterday";
+   else if (description == "W1[0]" ) description = "This Week";
+   else if (description == "W1[1]" ) description = "Last Week";
+   else if (description == "MN1[0]") description = "This Month";
+   else if (description == "MN1[1]") description = "Last Month";
+
    return(description);
 }
 
