@@ -1,5 +1,5 @@
 /**
- *
+ * Leeres Script, das auf den Hotkey Strg-P verlinkt ist und den unbeabsichtigten Aufruf des "Drucken"-Dialog abfängt.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
