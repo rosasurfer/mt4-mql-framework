@@ -1360,7 +1360,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    int signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
-   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
    if (__LOG) log("onBarBreakoutSignal(2)  "+ message);
 
 
