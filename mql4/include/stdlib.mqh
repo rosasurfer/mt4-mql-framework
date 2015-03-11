@@ -436,7 +436,7 @@
    bool     IsEmpty      (double   value);
    bool     IsEmptyString(string   value);
    bool     IsEmptyValue (double   value);
-   bool     IsNaT        (datetime value);         // Not-A-Time
+   bool     IsNaT        (datetime value);                                       // Not-A-Time
 
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
@@ -451,16 +451,16 @@
    int      GetCurrencyId(string currency);
    bool     IsCurrency(string value);
 
-   string   StdSymbol();                                                               // Alias für GetStandardSymbol(Symbol())
-   string   GetStandardSymbol(string symbol);                                          // Alias für GetStandardSymbolOrAlt(symbol, symbol)
+   string   StdSymbol();                                                         // Alias für GetStandardSymbol(Symbol())
+   string   GetStandardSymbol(string symbol);                                    // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);
    string   GetStandardSymbolStrict(string symbol);
 
-   string   GetSymbolName(string symbol);                                              // Alias für GetSymbolNameOrAlt(symbol, symbol)
+   string   GetSymbolName(string symbol);                                        // Alias für GetSymbolNameOrAlt(symbol, symbol)
    string   GetSymbolNameOrAlt(string symbol, string altName);
    string   GetSymbolNameStrict(string symbol);
 
-   string   GetLongSymbolName(string symbol);                                          // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
+   string   GetLongSymbolName(string symbol);                                    // Alias für GetLongSymbolNameOrAlt(symbol, symbol)
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetLongSymbolNameStrict(string symbol);
 
@@ -469,7 +469,7 @@
 
    bool     StrToBool(string value);
    int      StrToMaMethod(string method, int execFlags); int StrToMovingAverageMethod(string method, int execFlags); // Alias
-   int      StrToPeriod(string value);  int StrToTimeframe(string value);              // Alias
+   int      StrToPeriod(string value);  int StrToTimeframe(string value);        // Alias
    int      PeriodFlag(int period);
    int      StrToOperationType(string value);
    int      StrToPriceType(string value);
@@ -477,7 +477,7 @@
    string   CreateLegendLabel(string name);
    int      RepositionLegend();
    bool     ObjectDeleteSilent(string label, string location);
-   int      ObjectRegister(string label);  int RegisterObject(string label);           // Alias
+   int      ObjectRegister(string label);  int RegisterObject(string label);     // Alias
    int      DeleteRegisteredObjects(string prefix);
 
    int      iAccountBalance(int account, double buffer[], int bar);
@@ -495,7 +495,7 @@
    string   IntegerToBinaryStr(int integer);
 
    string   IntegerToHexStr(int decimal);
-   string   ByteToHexStr(int byte);   string CharToHexStr(int char);                                                          // Alias
+   string   ByteToHexStr(int byte);   string CharToHexStr(int char);             // Alias
    string   WordToHexStr(int word);
    string   StringToHexStr(string value);
 
