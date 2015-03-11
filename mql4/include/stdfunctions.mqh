@@ -1742,12 +1742,12 @@ bool IsEmptyString(string value) {
 
 
 /**
- * Pseudo-Funktion, die nichts weiter tut, als die Konstante NaT (NotATime: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
+ * Pseudo-Funktion, die nichts weiter tut, als die Konstante NaT (Not-A-Time: 0x80000000 = -2147483648 = INT_MIN = D'1901-12-13 20:45:52') zurückzugeben.
  * Kann zur Verbesserung der Übersichtlichkeit und Lesbarkeit verwendet werden.
  *
  * @param  beliebige Parameter (werden ignoriert)
  *
- * @return datetime - NaT (NotATime)
+ * @return datetime - NaT (Not-A-Time)
  */
 datetime _NaT(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return(NaT);
