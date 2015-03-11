@@ -106,7 +106,7 @@ string alert.icq.userId = "";
 // Order-Events
 int    orders.knownOrders.ticket[];                                  // vom letzten Aufruf bekannte offene Orders
 int    orders.knownOrders.type  [];
-string orders.accountAlias;
+string orders.accountAlias;                                          // Verwendung in ausgehenden Messages
 
 
 // Price-Events (Signale)
@@ -636,24 +636,23 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
    ------------
    - ist Ausführung einer Pending-Order
    - Pending-Order muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders auf Statusänderung prüfen:  über bekannte Orders iterieren
-     (2) alle unbekannten Pending-Orders in Überwachung aufnehmen: über OpenOrders iterieren
+     (1) alle bekannten Pending-Orders auf Statusänderung prüfen:              über bekannte Orders iterieren
+     (2) alle unbekannten Pending-Orders registrieren:                         über alle Tickets(MODE_TRADES) iterieren
 
    PositionClose
    -------------
    - ist Schließung einer Position
    - Position muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:            über bekannte Orders iterieren
-     (2) alle unbekannten Positionen mit und ohne Close-Limit in Überwachung aufnehmen: über OpenOrders iterieren
+     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:   über bekannte Orders iterieren
+     (2) alle unbekannten Positionen mit und ohne Exit-Limit registrieren:     über alle Tickets(MODE_TRADES) iterieren
          (limitlose Positionen können durch Stopout geschlossen worden sein)
 
    beides zusammen
    ---------------
-     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:                 über bekannte Orders iterieren
-     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:      über bekannte Orders iterieren
-
-     (2)   alle unbekannten Pending-Orders und Positionen in Überwachung aufnehmen: über OpenOrders iterieren
-           - nach (1.1) und (1.2), um sofortige Prüfung neuer zu überwachender Orders zu vermeiden
+     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:            über bekannte Orders iterieren
+     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen: über bekannte Orders iterieren
+     (2)   alle unbekannten Pending-Orders und Positionen registrieren:        über alle Tickets(MODE_TRADES) iterieren
+           - nach (1), um neue Orders nicht sofort zu prüfen (unsinnig)
    */
 
    int type, knownSize=ArraySize(orders.knownOrders.ticket);
@@ -683,7 +682,8 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             // jetzt offene oder bereits geschlossene Position
             ArrayPushInt(openedPositions, orders.knownOrders.ticket[i]);         // Pending-Order wurde ausgeführt
             orders.knownOrders.type[i] = type;
-            i++; continue;                                                       // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
+            i++;
+            continue;                                                            // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
          }
       }
       else {
@@ -720,13 +720,13 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
    }
 
 
-   // (2) über alle OpenOrders iterieren und neue Pending-Orders und Positionen in Überwachung aufnehmen
+   // (2) über Tickets(MODE_TRADES) iterieren und alle unbekannten Tickets registrieren (immer Pending-Order oder offene Position)
    while (true) {
       int ordersTotal = OrdersTotal();
 
       for (i=0; i < ordersTotal; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                      // FALSE: während des Auslesens wurde von dritter Seite eine offene Order geschlossen oder gelöscht
-            ordersTotal = -1;                                                    // Abbruch, via while-Schleife alle Orders nochmal verarbeiten, bis for fehlerfrei durchläuft
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                      // FALSE: während des Auslesens wurde von dritter Seite eine Order geschlossen oder gelöscht
+            ordersTotal = -1;                                                    // Abbruch und via while-Schleife alles nochmal verarbeiten, bis for() fehlerfrei durchläuft
             break;
          }
          for (int n=0; n < knownSize; n++) {
