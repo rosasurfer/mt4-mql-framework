@@ -1482,7 +1482,7 @@ int ShowStatus(int error=NULL) {
                                 "Last signals:", NL, "----------------", NL);
    }
 
-   Comment(NL + msg);
+   Comment(NL, NL, NL, msg);
    if (__WHEREAMI__ == FUNC_INIT)
       WindowRedraw();
    return(error);
