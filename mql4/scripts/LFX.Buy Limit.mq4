@@ -124,13 +124,14 @@ int onStart() {
 
    // (2) neue Order erzeugen und speichern
    double deviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
+   datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
       lo.setTicket         (lo, CreateMagicNumber()          );      // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setDeviation      (lo, deviation                    );      // LFX-Deviation immer vor allen Preisen
       lo.setType           (lo, OP_BUYLIMIT                  );
       lo.setUnits          (lo, Units                        );
-      lo.setOpenTime       (lo, TimeGMT()                    );
+      lo.setOpenTime       (lo, now.gmt                      );
       lo.setOpenPriceLfx   (lo, LimitPrice                   );
       lo.setStopLossLfx    (lo, StopLossPrice                );
       lo.setStopLossValue  (lo, EMPTY_VALUE                  );

@@ -115,7 +115,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
          else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
-                        message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
+                        message = StringConcatenate(TimeToStr(TimeCurrentFix(), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
          ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
@@ -189,7 +189,7 @@ int warn(string message, int error=NO_ERROR) {
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schließenden Klammer umbrechen
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
-                     message = StringConcatenate(TimeToStr(TimeCurrent(), TIME_FULL), NL, message);
+                     message = StringConcatenate(TimeToStr(TimeCurrentFix(), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
       ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
@@ -236,7 +236,7 @@ int warnSMS(string message, int error=NO_ERROR) {
          message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);
 
          // SMS verschicken
-         SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message);
+         SendSMS(__SMS.receiver, TimeToStr(TimeLocalFix(), TIME_MINUTES) +" "+ message);
       }
    }
    return(_error);
@@ -304,7 +304,7 @@ private*/bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocal(), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", StringReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalFix(), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", StringReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
@@ -3214,6 +3214,78 @@ bool EventListener.NewTick(int results[], int flags=NULL) {
 
 
 /**
+ * Gibt die lokale Zeit in GMT zurück. Im Tester wird die GMT-Zeit der vom Tester modellierten Zeit zurückgegeben.
+ *
+ * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
+ */
+datetime TimeGMT() {
+   datetime gmt;
+
+   if (This.IsTesting()) {
+      // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
+      datetime now.local = TimeLocalFix(); if (!now.local) return(NULL);
+      gmt = ServerToGmtTime(now.local);                              // TimeLocal() entspricht im Tester der Serverzeit
+   }
+   else {
+      gmt = GetGmtTime();
+   }
+   return(gmt);
+}
+
+
+/**
+ * Gibt die lokale Zeit in FXT zurück. Im Tester wird die FXT-Zeit der vom Tester modellierten Zeit zurückgegeben.
+ *
+ * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ */
+datetime TimeFXT() {
+   datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
+   return(fxt);
+}
+
+
+/**
+ * Gibt die lokale Zeit des Terminals zurück. Im Tester entspricht die lokale Zeit immer der Serverzeit.
+ *
+ * @return datetime - Zeitpunkt oder NULL mit Fehlermeldung, wenn TimeLocal() einen fehlerhaften Wert zurückgab
+ */
+datetime TimeLocalFix() {
+   datetime now.local = TimeLocal();
+      if (!now.local) return(!catch("TimeLocalFix()->TimeLocal() => 0", ERR_RUNTIME_ERROR));
+   return(now.local);
+}
+
+
+/**
+ * Gibt die letzte bekannte Serverzeit zurück. Im Tester wird die Serverzeit modelliert.
+ *
+ * @return datetime - Zeitpunkt oder NULL mit Fehlermeldung, wenn TimeCurrent() einen fehlerhaften Wert zurückgab
+ */
+datetime TimeCurrentFix() {
+   datetime now.server = TimeCurrent();
+      if (!now.server) return(!catch("TimeCurrentFix()->TimeCurrent() => 0", ERR_RUNTIME_ERROR));
+   return(now.server);
+}
+
+
+/**
+ * Konvertiert einen Boolean in den String "true" oder "false".
+ *
+ * @param  bool value
+ *
+ * @return string
+ */
+string BoolToStr(bool value) {
+   value = value!=0;
+
+   if (value)
+      return("true");
+   return("false");
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3256,6 +3328,7 @@ void __DummyCalls() {
    _void();
    Abs(NULL);
    ArrayUnshiftString(sNulls, NULL);
+   BoolToStr(NULL);
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    Chart.Expert.Properties();
@@ -3328,13 +3401,17 @@ void __DummyCalls() {
    StrToBool(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
+   Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
-   Tester.IsPaused();
+   TimeCurrentFix();
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
    TimeframeDescription(NULL);
    TimeframeToStr(NULL);
+   TimeFXT();
+   TimeGMT();
+   TimeLocalFix();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
    UrlEncode(NULL);
@@ -3350,101 +3427,104 @@ void __DummyCalls() {
 
 
 /*
-#import "this-library-does-not-exist.ex4"                            // zum Testen von stdfunctions.mqh ohne core-Dateien
-   bool   IsExpert();
-   bool   IsScript();
-   bool   IsIndicator();
-   bool   IsLibrary();
-   bool   Expert.IsTesting();
-   bool   Script.IsTesting();
-   bool   Indicator.IsTesting();
-   bool   This.IsTesting();
-   int    InitReason();
-   int    DeinitReason();
-   bool   IsSuperContext();
-   int    SetLastError(int error, int param);
+#import "this-library-does-not-exist.ex4"                                     // zum Testen von stdfunctions.mqh ohne core-Dateien
+   bool     IsExpert();
+   bool     IsScript();
+   bool     IsIndicator();
+   bool     IsLibrary();
+   bool     Expert.IsTesting();
+   bool     Script.IsTesting();
+   bool     Indicator.IsTesting();
+   bool     This.IsTesting();
+   int      InitReason();
+   int      DeinitReason();
+   bool     IsSuperContext();
+   int      SetLastError(int error, int param);
 */
 #import "stdlib1.ex4"
-   bool   EventListener.AccountChange  (int    data[], int param);
-   bool   EventListener.BarOpen        (int    data[], int param);
-   bool   EventListener.ChartCommand   (string data[], int param);
-   bool   EventListener.ExternalCommand(string data[], int param);
-   bool   EventListener.InternalCommand(string data[], int param);
+   bool     EventListener.AccountChange  (int    data[], int param);
+   bool     EventListener.BarOpen        (int    data[], int param);
+   bool     EventListener.ChartCommand   (string data[], int param);
+   bool     EventListener.ExternalCommand(string data[], int param);
+   bool     EventListener.InternalCommand(string data[], int param);
 
-   bool   onAccountChange  (int    data[]);
-   bool   onBarOpen        (int    data[]);
-   bool   onNewTick        (int    data[]);
-   bool   onChartCommand   (string data[]);
-   bool   onExternalCommand(string data[]);
-   bool   onInternalCommand(string data[]);
+   bool     onAccountChange  (int    data[]);
+   bool     onBarOpen        (int    data[]);
+   bool     onNewTick        (int    data[]);
+   bool     onChartCommand   (string data[]);
+   bool     onExternalCommand(string data[]);
+   bool     onInternalCommand(string data[]);
 
-   int    ArrayPopInt(int array[]);
-   int    ArrayPushInt(int array[], int value);
-   int    ArrayPushString(string array[], string value);
-   string ByteToHexStr(int byte);
-   void   CopyMemory(int source, int destination, int bytes);
-   string DoubleToStrEx(double value, int digits);
-   void   DummyCalls();                                                    // Library-Stub: *kann* lokal überschrieben werden
-   int    GetApplicationWindow();
-   bool   GetConfigBool(string section, string key, bool defaultValue);
-   int    GetCustomLogID();
-   bool   GetLocalConfigBool(string section, string key, bool defaultValue);
-   int    GetTerminalBuild();
-   int    GetTesterWindow();
-   string GetWindowText(int hWnd);
-   int    InitializeStringBuffer(string buffer[], int length);
-   bool   IsDirectory(string filename);
-   bool   IsFile(string filename);
-   string ModuleTypeDescription(int type);
-   string NumberToStr(double number, string format);
-   bool   ReverseStringArray(string array[]);
-   bool   SendSMS(string receiver, string message);
-   string StdSymbol();
-   bool   StringContains(string object, string substring);
-   bool   StringEndsWith(string object, string postfix);
-   bool   StringIsDigit(string value);
-   string StringLeft(string value, int n);
-   string StringRepeat(string input, int times);
-   string StringRight(string value, int n);
-   bool   StringStartsWith(string object, string prefix);
+   int      ArrayPopInt(int array[]);
+   int      ArrayPushInt(int array[], int value);
+   int      ArrayPushString(string array[], string value);
+   string   ByteToHexStr(int byte);
+   void     CopyMemory(int source, int destination, int bytes);
+   string   DoubleToStrEx(double value, int digits);
+   void     DummyCalls();                                                     // Library-Stub: *kann* lokal überschrieben werden
+   int      GetApplicationWindow();
+   bool     GetConfigBool(string section, string key, bool defaultValue);
+   int      GetCustomLogID();
+   datetime GetGmtTime();
+   bool     GetLocalConfigBool(string section, string key, bool defaultValue);
+   int      GetTerminalBuild();
+   int      GetTesterWindow();
+   string   GetWindowText(int hWnd);
+   datetime GmtToFxtTime(datetime gmtTime);
+   int      InitializeStringBuffer(string buffer[], int length);
+   bool     IsDirectory(string filename);
+   bool     IsFile(string filename);
+   string   ModuleTypeDescription(int type);
+   string   NumberToStr(double number, string format);
+   bool     ReverseStringArray(string array[]);
+   bool     SendSMS(string receiver, string message);
+   datetime ServerToGmtTime(datetime serverTime);
+   string   StdSymbol();
+   bool     StringContains(string object, string substring);
+   bool     StringEndsWith(string object, string postfix);
+   bool     StringIsDigit(string value);
+   string   StringLeft(string value, int n);
+   string   StringRepeat(string input, int times);
+   string   StringRight(string value, int n);
+   bool     StringStartsWith(string object, string prefix);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.hChart      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.SuperContext(/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
-   int    ec.TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.Type        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec.hChart      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec.SuperContext(/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
+   int      ec.TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec.Type        (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
-   bool   Expander_init  (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   Expander_start (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   Expander_deinit(/*EXECUTION_CONTEXT*/int ec[]);
+   bool     Expander_init  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     Expander_start (/*EXECUTION_CONTEXT*/int ec[]);
+   bool     Expander_deinit(/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    GetBufferAddress(int buffer[]);
-   int    GetLastWin32Error();
-   string IntToHexStr(int integer);
-   bool   IsBuiltinTimeframe(int timeframe);
+   int      GetBufferAddress(int buffer[]);
+   int      GetLastWin32Error();
+   string   IntToHexStr(int integer);
+   bool     IsBuiltinTimeframe(int timeframe);
 
 #import "kernel32.dll"
-   int    GetCurrentProcessId();
-   int    GetCurrentThreadId();
-   void   OutputDebugStringA(string lpMessage);                            // funktioniert nur für Admins
-   void   RtlMoveMemory(int destAddress, int srcAddress, int bytes);
+   int      GetCurrentProcessId();
+   int      GetCurrentThreadId();
+   void     OutputDebugStringA(string lpMessage);                             // funktioniert nur für Admins
+   void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
 
 #import "user32.dll"
-   int    GetAncestor(int hWnd, int cmd);
-   int    GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
-   int    GetDlgCtrlID(int hWndCtl);
-   int    GetDlgItem(int hDlg, int itemId);
-   int    GetParent(int hWnd);
-   int    GetTopWindow(int hWnd);
-   int    GetWindow(int hWnd, int cmd);
-   int    GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
-   bool   IsWindow(int hWnd);
-   int    MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
-   bool   PostMessageA(int hWnd, int msg, int wParam, int lParam);
-   int    RegisterWindowMessageA(string lpString);
-   int    SendMessageA(int hWnd, int msg, int wParam, int lParam);
+   int      GetAncestor(int hWnd, int cmd);
+   int      GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
+   int      GetDlgCtrlID(int hWndCtl);
+   int      GetDlgItem(int hDlg, int itemId);
+   int      GetParent(int hWnd);
+   int      GetTopWindow(int hWnd);
+   int      GetWindow(int hWnd, int cmd);
+   int      GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
+   bool     IsWindow(int hWnd);
+   int      MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
+   bool     PostMessageA(int hWnd, int msg, int wParam, int lParam);
+   int      RegisterWindowMessageA(string lpString);
+   int      SendMessageA(int hWnd, int msg, int wParam, int lParam);
 
 #import "winmm.dll"
-   bool   PlaySoundA(string lpSound, int hMod, int fSound);
+   bool     PlaySoundA(string lpSound, int hMod, int fSound);
 #import

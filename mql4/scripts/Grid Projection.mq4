@@ -108,8 +108,8 @@ int onStart() {
 
 
    // (6) Gridanzeige
-   datetime from = TimeCurrent() + 1*DAY;
-   datetime to   = TimeCurrent() + 4*DAYS;
+   datetime from = TimeCurrentFix() + 1*DAY;
+   datetime to   = TimeCurrentFix() + 4*DAYS;
 
    string label = StringConcatenate(__NAME__, ".EntryLevel");
    if (ObjectFind(label) == 0)

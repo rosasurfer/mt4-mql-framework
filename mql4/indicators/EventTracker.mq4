@@ -771,7 +771,7 @@ bool onOrderFail(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Order einzeln)
       if (alert.sms) {
@@ -812,7 +812,7 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
@@ -854,7 +854,7 @@ bool onPositionClose(int tickets[]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
@@ -1310,7 +1310,7 @@ bool CheckBarBreakoutSignal(int index) {
          if (GE(price, signalLevelH)) {
             if (GT(price, signalLevelH)) {
                //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-               onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrent());
+               onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrentFix());
                signalLevelH                       = NULL;
                signal.data [index][I_SBB_LEVEL_H] = NULL;
                signal.descr[index]                = BarBreakoutSignalToStr(index);
@@ -1323,7 +1323,7 @@ bool CheckBarBreakoutSignal(int index) {
          if (LE(price, signalLevelL)) {
             if (LT(price, signalLevelL)) {
                //debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-               onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrent());
+               onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrentFix());
                signalLevelL                       = NULL;
                signal.data [index][I_SBB_LEVEL_L] = NULL;
                signal.descr[index]                = BarBreakoutSignalToStr(index);
@@ -1360,7 +1360,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    int signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
-   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +")";
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +")";
    if (__LOG) log("onBarBreakoutSignal(2)  "+ message);
 
 

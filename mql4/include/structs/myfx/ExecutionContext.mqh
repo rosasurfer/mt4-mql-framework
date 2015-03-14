@@ -208,7 +208,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 
 
 #import "stdlib1.ex4"
-   string BoolToStr(bool value);
    void   CopyMemory(int source, int destination, int bytes);
    string DeinitFlagsToStr(int flags);
    string ErrorToStr(int error);

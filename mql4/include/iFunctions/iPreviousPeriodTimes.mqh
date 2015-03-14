@@ -23,8 +23,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (1) PERIOD_M1
    if (timeframe == PERIOD_M1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chste Minute initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 1*MINUTE;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 1*MINUTE;
+      }
 
       // openTime.fxt auf den Beginn der vorherigen Minute setzen
       openTime.fxt -= (openTime.fxt%MINUTES + 1*MINUTE);
@@ -42,8 +44,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (2) PERIOD_M5
    else if (timeframe == PERIOD_M5) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chsten 5 Minuten initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 5*MINUTES;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 5*MINUTES;
+      }
 
       // openTime.fxt auf den Beginn der vorherigen 5 Minuten setzen
       openTime.fxt -= (openTime.fxt%(5*MINUTES) + 5*MINUTES);
@@ -61,8 +65,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (3) PERIOD_M15
    else if (timeframe == PERIOD_M15) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chsten Viertelstunde initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 15*MINUTES;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 15*MINUTES;
+      }
 
       // openTime.fxt auf den Beginn der vorherigen Viertelstunde setzen
       openTime.fxt -= (openTime.fxt%(15*MINUTES) + 15*MINUTES);
@@ -80,8 +86,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (4) PERIOD_M30
    else if (timeframe == PERIOD_M30) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chsten halben Stunde initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 30*MINUTES;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 30*MINUTES;
+      }
 
       // openTime.fxt auf den Beginn der vorherigen halben Stunde setzen
       openTime.fxt -= (openTime.fxt%(30*MINUTES) + 30*MINUTES);
@@ -99,8 +107,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (5) PERIOD_H1
    else if (timeframe == PERIOD_H1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chsten Stunde initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 1*HOUR;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 1*HOUR;
+      }
 
       // openTime.fxt auf den Beginn der vorherigen Stunde setzen
       openTime.fxt -= (openTime.fxt%HOURS + 1*HOUR);
@@ -118,8 +128,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (6) PERIOD_H4
    else if (timeframe == PERIOD_H4) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chsten H4-Periode initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 4*HOURS;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 4*HOURS;
+      }
 
       // openTime.fxt auf den Beginn der vorherigen H4-Periode setzen
       openTime.fxt -= (openTime.fxt%(4*HOURS) + 4*HOURS);
@@ -136,9 +148,25 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
 
    // (7) PERIOD_D1
    else if (timeframe == PERIOD_D1) {
+      /*
+      debug("iPreviousPeriodTimes(0.1)  This.IsTesting="+ This.IsTesting() +"  TimeLocal="+ TimeToStr(TimeLocal()) +"  TimeCurrent="+ TimeToStr(TimeCurrent()));
+      debug("iPreviousPeriodTimes(0.2)  gmt="+ TimeGMT());
+
+      if (This.IsTesting()) {
+         // TODO: Vorsicht, Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit.
+
+         gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
+      }
+      else {
+         gmt = GetGmtTime();
+      }
+      */
+
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des n‰chsten Tages initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 1*DAY;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 1*DAY;
+      }
 
       // openTime.fxt auf 00:00 Uhr des vorherigen Tages setzen
       openTime.fxt -= (openTime.fxt%DAYS + 1*DAY);
@@ -156,8 +184,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    // (8) PERIOD_W1
    else if (timeframe == PERIOD_W1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt der n‰chsten Woche initialisieren
-      if (!openTime.fxt)
-         openTime.fxt = TimeFXT() + 7*DAYS;
+      if (!openTime.fxt) {
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
+         openTime.fxt = now.fxt + 7*DAYS;
+      }
 
       // openTime.fxt auf Montag, 00:00 Uhr der vorherigen Woche setzen
       openTime.fxt -= openTime.fxt % DAYS;                                                               // 00:00 des aktuellen Tages
@@ -173,7 +203,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    else if (timeframe == PERIOD_MN1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des n‰chsten Monats initialisieren
       if (!openTime.fxt) {
-         now.fxt      = TimeFXT();
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
          openTime.fxt = now.fxt + 1*MONTH;
 
          monthNow      = TimeMonth(now.fxt     );                                                        // MONTH ist nicht fix: Sicherstellen, daﬂ openTime.fxt
@@ -210,7 +240,7 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
    else if (timeframe == PERIOD_Q1) {
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des n‰chsten Quartals initialisieren
       if (!openTime.fxt) {
-         now.fxt      = TimeFXT();
+         now.fxt      = TimeFXT(); if (!now.fxt) return(false);
          openTime.fxt = now.fxt + 1*QUARTER;
 
          monthNow      = TimeMonth(now.fxt     );                                                        // QUARTER ist nicht fix: Sicherstellen, daﬂ openTime.fxt

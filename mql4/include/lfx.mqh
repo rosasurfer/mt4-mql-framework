@@ -515,7 +515,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string sProfit              =                ifString(!lo.Profit             (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit           = StringPadLeft (sProfit          ,  7, " ");
    string sDeviation           =                ifString(!lo.Deviation          (lo), "0", DoubleToStr(lo.Deviation(lo), lo.Digits(lo)));                                           sDeviation        = StringPadLeft (sDeviation       ,  9, " ");
 
-     datetime modificationTime = TimeGMT();
+     datetime modificationTime = TimeGMT(); if (!modificationTime) return(false);
      int      version          = lo.Version(lo) + 1;
 
    string sModificationTime    = TimeToStr(modificationTime, TIME_FULL);
@@ -669,7 +669,6 @@ void DummyCalls() {
    string   StringReplace.Recursive(string object, string search, string replace);
    bool     StringStartsWith(string object, string prefix);
    int      StrToOperationType(string value);
-   datetime TimeGMT();
 
 #import "Expander.dll"
    int      GetIntsAddress(int array[]);

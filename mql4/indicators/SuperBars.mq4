@@ -48,7 +48,7 @@ string label.description = "Description";                // Label für Chartanzei
 int onInit() {
    // (1) Parametervalidierung
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
    if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // u.U. 0xFF000000 (entspricht Schwarz)
    if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
    if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
@@ -317,6 +317,7 @@ bool UpdateSuperBars() {
          if (openTime.srv  < openTime.fxt ) /*&&*/ if (TimeDayOfWeekFix(openTime.srv )!=SUNDAY  ) openTime.srv  = openTime.fxt;  // Sonntagsbar: Server-Timezone westlich von FXT
          if (closeTime.srv > closeTime.fxt) /*&&*/ if (TimeDayOfWeekFix(closeTime.srv)!=SATURDAY) closeTime.srv = closeTime.fxt; // Samstagsbar: Server-Timezone östlich von FXT
       }
+
       openBar  = iBarShiftNext    (NULL, NULL, openTime.srv);           if (openBar  == EMPTY_VALUE) return(false);
       closeBar = iBarShiftPrevious(NULL, NULL, closeTime.srv-1*SECOND); if (closeBar == EMPTY_VALUE) return(false);
       if (closeBar == -1)                                                  // closeTime ist zu alt für den Chart => Abbruch
@@ -472,7 +473,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
       // (2.5) ETH-Rahmen zeichnen
 
       // (2.6) ETH-Close-Marker zeichnen, wenn die Extended-Hours beendet sind
-      if (TimeCurrent() > eth.closeTime.srv) {
+      if (TimeCurrentFix() > eth.closeTime.srv) {
          int eth.centerBar = (eth.openBar+eth.closeBar)/2;
 
          if (eth.centerBar > eth.closeBar) {

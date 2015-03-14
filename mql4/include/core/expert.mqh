@@ -146,7 +146,7 @@ int init() {
 
    // (9) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (IsTesting()) {
-      Test.fromDate    = TimeCurrent();                                       // für Teststatistiken
+      Test.fromDate    = TimeCurrentFix();                                    // für Teststatistiken
       Test.startMillis = GetTickCount();
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
@@ -267,7 +267,7 @@ int deinit() {
 
 
    if (IsTesting()) {
-      Test.toDate     = TimeCurrent();
+      Test.toDate     = TimeCurrentFix();
       Test.stopMillis = GetTickCount();
    }
 
