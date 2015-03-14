@@ -5244,8 +5244,15 @@ SetLevelValue(1,3.14);
       caption=TimeCurrent()
       type=datetime
       <content>
-      Returns the last known server time (time of the last tick) as seconds since 00:00 January 1, 1970.<br/><br/>
-      Note: At testing server time is modelled.
+      Returns the last known server time (time of the last tick) as seconds since 00:00 January 1, 1970.<br/>
+      At testing server time is modelled.<br/>
+
+      <br/>
+      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester je nach Terminalversion in <span class="function">init</span>() und/oder in
+      <span class="function">start</span>() <span class="constant">NULL</span> zurück, wenn sie bei VisualMode=On von einem Standalone-Indikator verwendet wird.<br/>
+      <br/>
+      Workaround: Noch nicht implementiert. Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch
+      <span class="function">MarketInfo</span>()-Fehler in Standalone-Indikatoren unter Test).<br/>
       </content>
       <example>
   if(TimeCurrent()-OrderOpenTime()&lt;360) return(0);
@@ -5343,9 +5350,20 @@ SetLevelValue(1,3.14);
       <content>
       Returns local computer time as seconds since 00:00 January 1, 1970.<br/>
       At testing local time is modelled and is the same as the modelled server time.<br/>
+
       <br/>
-      <span style="color:red">Note:</span> Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der
-      tatsächlichen lokalen Zeitzone. Das kann Implikationen haben, wenn der Test mit der Umgebung interagiert.
+      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zurück, wenn sie bei VisualMode=On von einem Standalone-Indikator verwendet
+      wird. Je nach Terminalversion kann entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch übernommener Wert
+      (<span class="constant">NULL</span>) zurückgegeben werden.<br/>
+      Workaround: noch nicht implementiert (siehe Notes)<br/>
+
+      <br/>
+      <span style="color:red">Notes:</span> <br/>
+      (1) Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
+      in Standalone-Indikatoren unter Test).<br/>
+      <br/>
+      (2) Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tatsächlichen lokalen Zeitzone.
+      Dies <i>kann</i> Implikationen haben, wenn der Test mit der Umgebung interagiert.<br/>
       </content>
       <example>
 if (TimeLocal()-OrderOpenTime() &lt; 360)
