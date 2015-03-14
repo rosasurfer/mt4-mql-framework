@@ -263,7 +263,7 @@ bool IsWeekendResumeSignal(int hSeq) {
    if (!sequence.weResumeTime[hSeq])
       UpdateWeekendResumeTime(hSeq);
 
-   int now=TimeCurrent(), dayNow=now/DAYS, dayResume=sequence.weResumeTime[hSeq]/DAYS;
+   int now=TimeCurrentFix(), dayNow=now/DAYS, dayResume=sequence.weResumeTime[hSeq]/DAYS;
 
 
    // (1) Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
@@ -359,7 +359,7 @@ bool IsWeekendStopSignal() {
    if (IsLastError())      return(false);
    if (!weekend.stop.time) return(false);
 
-   datetime now = TimeCurrent();
+   datetime now = TimeCurrentFix();
 
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird: MQL hat kein day(datetime)
@@ -391,7 +391,7 @@ bool StartSequence(int hSeq) {
 
    // (1) Startvariablen setzen
    sequence.startEquity[hSeq] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
-   datetime startTime   = TimeCurrent();
+   datetime startTime   = TimeCurrentFix();
    double   startPrice  = ifDouble(hSeq==D_SHORT, Bid, Ask);
    double   startProfit = 0;
    AddStartEvent(hSeq, startTime, startPrice, startProfit);
@@ -484,7 +484,7 @@ void RedrawStartStop(int hSeq) {
  * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
  */
 void UpdateWeekendStop() {
-   datetime friday, now=ServerToFxtTime(TimeCurrent());
+   datetime friday, now=ServerToFxtTime(TimeCurrentFix());
 
    switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -953,7 +953,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    // (3.1) keine offenen Positionen
    else if (sequence.status[hSeq] != STATUS_STOPPED) {
       sequence.stop.event[n] = CreateEventId();
-      sequence.stop.time [n] = TimeCurrent();
+      sequence.stop.time [n] = TimeCurrentFix();
       sequence.stop.price[n] = ifDouble(sequence.direction[hSeq]==D_LONG, Bid, Ask);
    }
 
@@ -1069,7 +1069,7 @@ bool ResumeSequence(int hSeq) {
 
    // (2) Gridbasis neu setzen, wenn in (1) keine offenen Positionen gefunden wurden.
    if (EQ(foundGridbase, 0)) {
-      startTime  = TimeCurrent();
+      startTime  = TimeCurrentFix();
       startPrice = ifDouble(sequence.direction[hSeq]==D_SHORT, Bid, Ask);
       stopPrice  = sequence.stop.price[sequence.ss.events[hSeq][I_TO]];
       GridBase.Change(hSeq, startTime, gridbase[hSeq] + startPrice - stopPrice);
@@ -1224,7 +1224,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
       if (ticket == -1) {
          ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
          clientSL = true;
-         oe.setOpenTime(oe, TimeCurrent());
+         oe.setOpenTime(oe, TimeCurrentFix());
          if (__LOG) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
       }
 
@@ -1415,7 +1415,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             // (1.2) Pseudo-SL-Tickets prüfen (werden sofort hier "geschlossen")
             if (orders.ticket[i] == -2) {
                orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-               orders.closeTime [i] = TimeCurrent();
+               orders.closeTime [i] = TimeCurrentFix();
                orders.closePrice[i] = orders.openPrice[i];
                orders.closedBySL[i] = true;
                ChartMarker.PositionClosed(i);
@@ -1559,7 +1559,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
          else                                    gridbase[hSeq] = MathMax(gridbase[hSeq], NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase[hSeq], tmp.gridbase)) {
-            GridBase.Change(hSeq, TimeCurrent(), gridbase[hSeq]);
+            GridBase.Change(hSeq, TimeCurrentFix(), gridbase[hSeq]);
             lpChange = true;
          }
       }
@@ -2095,7 +2095,7 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
    }
 
    orders.gridBase    [i] = gridbase[hSeq];
-   orders.pendingTime [i] = TimeCurrent();
+   orders.pendingTime [i] = TimeCurrentFix();
    orders.pendingPrice[i] = stopPrice;
    orders.stopLoss    [i] = stopLoss;
 
@@ -2184,7 +2184,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
    //double gridbase     = ...                                          // unverändert
 
    int      pendingType  = type;
-   datetime pendingTime  = oe.OpenTime(oe);  if (ticket < 0) pendingTime = TimeCurrent();
+   datetime pendingTime  = oe.OpenTime(oe);  if (ticket < 0) pendingTime = TimeCurrentFix();
    //double pendingPrice = ...                                          // unverändert
 
    /*int*/  type         = OP_UNDEFINED;
@@ -3000,7 +3000,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
 
 /**
- * Speichert Instanzdaten im Chart, sodaß die Instanz nach einem Recompile oder Terminal-Restart daraus wiederhergestellt werden kann.
+ * Speichert Instanzdaten im Chart, sodaß die Instanz nach Recompilation oder Terminal-Restart daraus wiederhergestellt werden kann.
  *
  * @return int - Fehlerstatus
  */

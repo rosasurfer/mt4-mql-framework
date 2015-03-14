@@ -22,7 +22,9 @@ extern int    iParameter = 12345;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   debug("onInit()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   //debug("onInit()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+
+   debug("onInit()  TimeLocal="+ TimeToStr(TimeLocal()) +"  TimeCurrent="+ TimeToStr(TimeCurrent()));
    return(last_error);
 }
 
@@ -33,7 +35,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   debug("onTick()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   //debug("onTick()    WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   //debug("onTick()  TimeLocal="+ TimeToStr(TimeLocal()) +"  TimeCurrent="+ TimeToStr(TimeCurrent()));
    return(last_error);
 }
 
@@ -43,6 +46,6 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   debug("onDeinit()  WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
+   //debug("onDeinit()  WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
    return(last_error);
 }

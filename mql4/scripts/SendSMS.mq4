@@ -23,7 +23,7 @@ int onStart() {
    if (!StringLen(receiver)) return(!catch("onStart(1)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Message
-   string message = TimeToStr(TimeLocal(), TIME_MINUTES) +" Test message";
+   string message = TimeToStr(TimeLocalFix(), TIME_MINUTES) +" Test message";
 
    // Versand
    if (!SendSMS(receiver, message))

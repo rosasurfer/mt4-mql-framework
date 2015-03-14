@@ -1,6 +1,6 @@
 /**
- * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farb-/Styleänderungen nach Recompile), die erfordern, daß die Styles
- * normalerweise in init(), nach Recompile jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
+ * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farb-/Styleänderungen nach Recompilation), die erfordern, daß die Styles
+ * normalerweise in init(), nach Recompilation jedoch in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void @Bands.SetIndicatorStyles(color mainColor, color bandsColor) {
    if (mainColor == CLR_NONE) SetIndexStyle(Bands.MODE_MAIN, DRAW_NONE, EMPTY, EMPTY, mainColor);

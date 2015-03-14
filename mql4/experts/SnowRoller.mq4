@@ -352,7 +352,7 @@ bool StartSequence() {
 
 
    // (1) Startvariablen setzen
-   datetime startTime  = TimeCurrent();
+   datetime startTime  = TimeCurrentFix();
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
 
    ArrayPushInt   (sequence.start.event,  CreateEventId());
@@ -511,7 +511,7 @@ bool StopSequence() {
    // (4.1) keine offenen Positionen
    else if (status != STATUS_STOPPED) {
       sequence.stop.event[n] = CreateEventId();
-      sequence.stop.time [n] = TimeCurrent();
+      sequence.stop.time [n] = TimeCurrentFix();
       sequence.stop.price[n] = ifDouble(sequence.direction==D_LONG, Bid, Ask);
    }
 
@@ -627,7 +627,7 @@ bool ResumeSequence() {
 
    // (2) Gridbasis neu setzen, wenn in (1) keine offenen Positionen gefunden wurden.
    if (EQ(gridBase, 0)) {
-      startTime     = TimeCurrent();
+      startTime     = TimeCurrentFix();
       startPrice    = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
       lastStopPrice = sequence.stop.price[ArraySize(sequence.stop.price)-1];
       GridBase.Change(startTime, grid.base + startPrice - lastStopPrice);
@@ -729,7 +729,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
          // (1.2) Pseudo-SL-Tickets prüfen (werden sofort hier "geschlossen")
          if (orders.ticket[i] == -2) {
             orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-            orders.closeTime [i] = TimeCurrent();
+            orders.closeTime [i] = TimeCurrentFix();
             orders.closePrice[i] = orders.openPrice[i];
             orders.closedBySL[i] = true;
             ChartMarker.PositionClosed(i);
@@ -869,7 +869,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
          else                              grid.base = MathMax(grid.base, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(grid.base, tmp.grid.base)) {
-            GridBase.Change(TimeCurrent(), grid.base);
+            GridBase.Change(TimeCurrentFix(), grid.base);
             lpChange = true;
          }
       }
@@ -1184,7 +1184,7 @@ bool IsStartSignal() {
 
       // -- start.time: zum angegebenen Zeitpunkt oder danach erfüllt ---------------------------------------------------
       if (start.time.condition) {
-         if (TimeCurrent() < start.time.value)
+         if (TimeCurrentFix() < start.time.value)
             return(false);
          if (__LOG) log(StringConcatenate("IsStartSignal(3)  start condition \"", start.time.condition.txt, "\" met"));
       }
@@ -1229,7 +1229,7 @@ bool IsWeekendResumeSignal() {
    if (weekend.resume.time == 0) return(false);
 
 
-   int now=TimeCurrent(), dayNow=now/DAYS, dayResume=weekend.resume.time/DAYS;
+   int now=TimeCurrentFix(), dayNow=now/DAYS, dayResume=weekend.resume.time/DAYS;
 
 
    // (1) Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
@@ -1356,7 +1356,7 @@ bool IsStopSignal() {
 
       // -- stop.time: zum angegebenen Zeitpunkt oder danach erfüllt ----------------------------------------------------
       if (stop.time.condition) {
-         if (stop.time.value <= TimeCurrent()) {
+         if (stop.time.value <= TimeCurrentFix()) {
             if (__LOG) log(StringConcatenate("IsStopSignal(4)  stop condition \"", stop.time.condition.txt, "\" met"));
             return(true);
          }
@@ -1399,7 +1399,7 @@ bool IsWeekendStopSignal() {
    if (weekend.stop.active)    return( true);
    if (weekend.stop.time == 0) return(false);
 
-   datetime now = TimeCurrent();
+   datetime now = TimeCurrentFix();
 
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird
@@ -1418,7 +1418,7 @@ bool IsWeekendStopSignal() {
 void UpdateWeekendStop() {
    weekend.stop.active = false;
 
-   datetime friday, now=ServerToFxtTime(TimeCurrent());
+   datetime friday, now=ServerToFxtTime(TimeCurrentFix());
 
    switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -1752,7 +1752,7 @@ bool Grid.AddOrder(int type, int level) {
    //double grid.base    = ...                                          // unverändert
 
    int      pendingType  = type;
-   datetime pendingTime  = oe.OpenTime(oe);  if (ticket < 0) pendingTime = TimeCurrent();
+   datetime pendingTime  = oe.OpenTime(oe);  if (ticket < 0) pendingTime = TimeCurrentFix();
    //double pendingPrice = ...                                          // unverändert
 
    /*int*/  type         = OP_UNDEFINED;
@@ -1880,7 +1880,7 @@ bool Grid.AddPosition(int type, int level) {
       if (ticket == -1) {
          ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
          clientSL = true;
-         oe.setOpenTime(oe, TimeCurrent());
+         oe.setOpenTime(oe, TimeCurrentFix());
          if (__LOG) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
       }
 
@@ -2036,7 +2036,7 @@ bool Grid.TrailPendingOrder(int i) {
    }
 
    orders.gridBase    [i] = grid.base;
-   orders.pendingTime [i] = TimeCurrent();
+   orders.pendingTime [i] = TimeCurrentFix();
    orders.pendingPrice[i] = stopPrice;
    orders.stopLoss    [i] = stopLoss;
 
@@ -2457,7 +2457,7 @@ void SS.PLStats() {
 
 
 /**
- * Speichert temporäre Werte des Sequenzstatus im Chart, sodaß der volle Status nach einem Recompile oder Terminal-Restart daraus wiederhergestellt werden kann.
+ * Speichert temporäre Werte des Sequenzstatus im Chart, sodaß der volle Status nach Recompilation oder Terminal-Restart daraus wiederhergestellt werden kann.
  * Die temporären Werte umfassen die Parameter, die zur Ermittlung des vollen Dateinamens der Statusdatei erforderlich sind und jene User-Eingaben, die nicht
  * in der Statusdatei gespeichert sind (aktuelle Display-Modes, Farben und Strichstärken), das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
  *
@@ -3065,7 +3065,7 @@ bool ValidateConfiguration(bool interactive) {
 
 
    // (7) StartStop.Color
-   if (StartStop.Color == 0xFF000000)                                   // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+   if (StartStop.Color == 0xFF000000)                                   // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
       StartStop.Color = CLR_NONE;                                       // u.U. 0xFF000000 (entspricht Schwarz)
    if (StartStop.Color < CLR_NONE || StartStop.Color > C'255,255,255')  // kann nur nicht-interaktiv falsch reinkommen
                                                        return(_false(ValidateConfig.HandleError("ValidateConfiguration(76)", "Invalid StartStop.Color = 0x"+ IntToHexStr(StartStop.Color), interactive)));

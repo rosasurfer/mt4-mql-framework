@@ -154,7 +154,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
  * @return int - Fehlerstatus
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
-   // Nach einem Recompile der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
+   // Nach Recompilation der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
@@ -201,7 +201,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   // Nach einem Recompile der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
+   // Nach Recompilation der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
    if (__TYPE__ == T_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
@@ -4639,54 +4639,6 @@ string GetLongSymbolNameStrict(string symbol) {
 
 
 /**
- * Konvertiert einen Boolean in den String "true" oder "false".
- *
- * @param  bool value
- *
- * @return string
- */
-string BoolToStr(bool value) {
-   value = value!=0;
-
-   if (value)
-      return("true");
-   return("false");
-}
-
-
-/**
- * Gibt die lokale Zeit in GMT zurück. Im Tester wird die GMT-Zeit der vom Tester modellierten Zeit zurückgegeben.
- *
- * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
- */
-datetime TimeGMT() {
-   datetime gmt;
-
-   if (This.IsTesting()) {
-      // TODO: Vorsicht, Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit.
-
-      gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
-   }
-   else {
-      gmt = GetGmtTime();
-   }
-   return(gmt);
-}
-
-
-/**
- * Gibt die lokale Zeit in FXT zurück. Im Tester wird die FXT-Zeit der vom Tester modellierten Zeit zurückgegeben.
- *
- * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
- */
-datetime TimeFXT() {
-   datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
-   return(fxt);
-}
-
-
-/**
  * Gibt immer die aktuelle lokale Zeit zurück (auch im Tester).
  *
  * @return datetime - lokale Zeit oder NULL, falls ein Fehler auftrat
@@ -7883,7 +7835,7 @@ bool SendSMS(string receiver, string message) {
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string mqlDir       = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string filesDir     = TerminalPath() + mqlDir +"\\files";
-   string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocal(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"\\sms_"+ DateToStr(TimeLocalFix(), "Y-M-D H.I.S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"\\sms.log";
    string cmd          = TerminalPath() +"\\"+ mqlDir +"\\libraries\\wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -8891,7 +8843,7 @@ string DateTimeToStr(datetime time, string format) {
  * @return string - String-Token oder Leerstring, falls der übergebene Wert kein gültiger Farbcode ist.
  */
 string ColorToStr(color value)   {
-   if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompile oder Deserialisierung
+   if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
       value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
    if (value < CLR_NONE || value > C'255,255,255')
       return(_emptyStr(catch("ColorToStr()  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
@@ -9098,7 +9050,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
       comment = "";
    else if (StringLen(comment) > 27)                           return(_EMPTY(oe.setError(oe, catch("OrderSendEx(11)  illegal parameter comment = \""+ comment +"\" (max. 27 chars)", ERR_INVALID_PARAMETER))));
    // expires
-   if (expires != 0) /*&&*/ if (expires <= TimeCurrent())      return(_EMPTY(oe.setError(oe, catch("OrderSendEx(12)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER))));
+   if (expires != 0) /*&&*/ if (expires <= TimeCurrentFix())   return(_EMPTY(oe.setError(oe, catch("OrderSendEx(12)  illegal parameter expires = "+ ifString(expires<0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER))));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_EMPTY(oe.setError(oe, catch("OrderSendEx(13)  illegal parameter markerColor = 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER))));
    // -- Ende Parametervalidierung --
@@ -9562,7 +9514,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       // TODO: StopDistance(takeProfit) prüfen
    }
    // expires
-   if (expires!=0) /*&&*/ if (expires <= TimeCurrent())        return(_false(oe.setError(oe, catch("OrderModifyEx(9)  illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, O_POP))));
+   if (expires!=0) /*&&*/ if (expires <= TimeCurrentFix())     return(_false(oe.setError(oe, catch("OrderModifyEx(9)  illegal parameter expires = "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, O_POP))));
    if (expires != OrderExpiration())
       if (!IsPendingTradeOperation(OrderType()))               return(_false(oe.setError(oe, catch("OrderModifyEx(10)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_PARAMETER, O_POP))));
    // markerColor
@@ -9620,7 +9572,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          WaitForTicket(ticket, false);                                                 // FALSE wartet und selektiert
          // TODO: WaitForChanges() implementieren
 
-         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrent(), origOpenPrice, origStopLoss, origTakeProfit))
+         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentFix(), origOpenPrice, origStopLoss, origTakeProfit))
             return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(17)")));
 
          oe.setOpenTime  (oe, OrderOpenTime()  );

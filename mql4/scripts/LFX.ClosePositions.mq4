@@ -161,7 +161,8 @@ int onStart() {
       /*LFX_ORDER*/int lo[];
       int result = LFX.GetOrder(magics[i], lo);
       if (result < 1) { if (!result) return(last_error); return(catch("onStart(5)  LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
-         lo.setCloseTime (lo, TimeGMT() );
+         datetime now.gmt = TimeGMT(); if (!now.gmt) return(last_error);
+         lo.setCloseTime (lo, now.gmt   );
          lo.setClosePrice(lo, closePrice);
          lo.setProfit    (lo, profit    );
             string comment = lo.Comment(lo);

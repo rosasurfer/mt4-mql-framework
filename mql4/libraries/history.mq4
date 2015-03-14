@@ -70,7 +70,7 @@ int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. Diese deinit()-Funktion wird deswegen u.U. nicht mehr ausgeführt.
  */
 int history.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   // Library nach Recompile neu initialisieren
+   // Library nach Recompilation neu initialisieren
    if (__TYPE__ == T_LIBRARY)
       if (UninitializeReason() == REASON_RECOMPILE)
          if (IsError(history.init(ec)))
@@ -778,7 +778,7 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
          return(_NULL(catch("HistoryFile.Open(6)  corrupted history file \""+ fileName +"\" (size = "+ fileSize +")", ERR_RUNTIME_ERROR)));
       }
       // neuen HISTORY_HEADER schreiben
-      datetime now = TimeCurrent();                                  // TODO: ServerTime() implementieren (TimeCurrent() ist Zeit des letzten Ticks)
+      datetime now = TimeCurrentFix();                               // TODO: ServerTime() implementieren (TimeCurrent() ist Zeit des letzten Ticks)
       hh.setVersion      (hh, 400        );
       hh.setDescription  (hh, description);
       hh.setSymbol       (hh, symbol     );

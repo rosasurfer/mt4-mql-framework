@@ -297,7 +297,7 @@ int onTick() {
 
 
 /**
- * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farbänderungen nach Recompile, Parameteränderung etc.), die erfordern,
+ * Indikator-Styles setzen. Workaround um diverse Terminalbugs (Farbänderungen nach Recompilation, Parameteränderung etc.), die erfordern,
  * daß die Styles manchmal in init() und manchmal in start() gesetzt werden müssen, um korrekt angezeigt zu werden.
  */
 void SetIndicatorStyles() {

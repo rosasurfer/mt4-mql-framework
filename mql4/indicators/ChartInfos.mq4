@@ -361,7 +361,7 @@ int ShowOpenOrders() {
             // Order anzeigen
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrent(), openPrice)) {
+            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrentFix(), openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
             }
@@ -376,7 +376,7 @@ int ShowOpenOrders() {
                label2 = StringConcatenate(label1, ",  ", sTP);
                if (ObjectFind(label2) == 0)
                   ObjectDelete(label2);
-               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrent(), takeProfit)) {
+               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentFix(), takeProfit)) {
                   ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                   ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
                }
@@ -389,7 +389,7 @@ int ShowOpenOrders() {
                label3 = StringConcatenate(label1, ",  ", sSL);
                if (ObjectFind(label3) == 0)
                   ObjectDelete(label3);
-               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrent(), stopLoss)) {
+               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentFix(), stopLoss)) {
                   ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                   ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
                }
@@ -434,7 +434,7 @@ int ShowOpenOrders() {
             label2 = StringConcatenate(label1, ",  ", sTP);
             if (ObjectFind(label2) == 0)
                ObjectDelete(label2);
-            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrent(), takeProfit)) {
+            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentFix(), takeProfit)) {
                ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
             }
@@ -447,7 +447,7 @@ int ShowOpenOrders() {
             label3 = StringConcatenate(label1, ",  ", sSL);
             if (ObjectFind(label3) == 0)
                ObjectDelete(label3);
-            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrent(), stopLoss)) {
+            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentFix(), stopLoss)) {
                ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
             }
@@ -1023,7 +1023,8 @@ bool TrackSignal(string signalId) {
  * @return bool - Erfolgsstatus
  */
 bool CheckLfxLimits() {
-   datetime triggerTime;
+   datetime triggerTime, now.gmt=TimeGMT(); if (!now.gmt) return(false);
+
    int /*LFX_ORDER*/stored[], orders=ArrayRange(lfxOrders, 0);
 
    for (int i=0; i < orders; i++) {
@@ -1041,15 +1042,15 @@ bool CheckLfxLimits() {
          if (result == LIMIT_TAKEPROFIT) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.TakeProfitLfx(lfxOrders, i), " at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfitLfx(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
 
          // Auslösen speichern und TradeCommand verschicken
-         if (result==LIMIT_ENTRY)       los.setOpenTriggerTime    (lfxOrders, i, TimeGMT());
-         else {                         los.setCloseTriggerTime   (lfxOrders, i, TimeGMT());
-            if (result==LIMIT_STOPLOSS) los.setStopLossTriggered  (lfxOrders, i, true     );
-            else                        los.setTakeProfitTriggered(lfxOrders, i, true     );
+         if (result==LIMIT_ENTRY)       los.setOpenTriggerTime    (lfxOrders, i, now.gmt);
+         else {                         los.setCloseTriggerTime   (lfxOrders, i, now.gmt);
+            if (result==LIMIT_STOPLOSS) los.setStopLossTriggered  (lfxOrders, i, true   );
+            else                        los.setTakeProfitTriggered(lfxOrders, i, true   );
          }
          if (!LFX.SaveOrder(lfxOrders, i))                                                                              return(false);
          if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) + ifString(result==LIMIT_ENTRY, ":open", ":close"))) return(false);
       }
-      else if (triggerTime + 30*SECONDS >= TimeGMT()) {
+      else if (triggerTime + 30*SECONDS >= now.gmt) {
          // (3) ein Limit war bereits vorher getriggert, auf Ausführungsbestätigung warten
       }
       else {
@@ -1061,13 +1062,13 @@ bool CheckLfxLimits() {
          if (result == LIMIT_ENTRY) {
             if (!lo.IsOpenError(stored)) {
                warnSMS("CheckLfxLimits(5)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat));
-               los.setOpenTime(lfxOrders, i, -TimeGMT());
+               los.setOpenTime(lfxOrders, i, -now.gmt);
             }
          }
          else if (!lo.IsCloseError(stored)) {
             if (result == LIMIT_STOPLOSS) warnSMS("CheckLfxLimits(6)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLossLfx  (lfxOrders, i), " at "+ NumberToStr(los.StopLossLfx  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLossLfx  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), ""));
             else                          warnSMS("CheckLfxLimits(7)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfitLfx(lfxOrders, i), " at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfitLfx(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), ""));
-            los.setCloseTime(lfxOrders, i, -TimeGMT());
+            los.setCloseTime(lfxOrders, i, -now.gmt);
          }
 
          // Order speichern und beim nächsten Tick offene Orders neu einlesen
@@ -1743,7 +1744,7 @@ bool UpdateTime() {
 
    static datetime lastTime;
 
-   datetime now = TimeCurrent();
+   datetime now = TimeCurrentFix();
    if (now == lastTime)
       return(true);
 
@@ -2415,7 +2416,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
       //
 
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
-      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrent();
+      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentFix();
       if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
@@ -4235,9 +4236,7 @@ string InputsToStr() {
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble(double array[], double value);
-   string   BoolToStr(bool value);
    string   DateToStr(datetime time, string mask);
-   string   DateToStr_de(datetime time, string mask);
    bool     DeleteIniKey(string file, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFile(string filename);

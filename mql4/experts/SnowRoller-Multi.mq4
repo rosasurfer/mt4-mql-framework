@@ -97,7 +97,7 @@ int onTick() {
    int signal;
 
    if (IsStartSignal(signal)) {
-      //debug("IsStartSignal(0.1)  "+ TimeToStr(TimeCurrent()) +"   signal "+ ifString(signal>0, "up", "down"));
+      //debug("IsStartSignal(0.1)  "+ TimeToStr(TimeCurrentFix()) +"   signal "+ ifString(signal>0, "up", "down"));
       Strategy.CreateSequence(ifInt(signal>0, D_LONG, D_SHORT));
    }
    return(last_error);
@@ -169,7 +169,7 @@ bool StartSequence(int hSeq) {
 
 
    // (1) Startvariablen setzen
-   datetime startTime  = TimeCurrent();
+   datetime startTime  = TimeCurrentFix();
    double   startPrice = ifDouble(sequence.direction[hSeq]==D_SHORT, Bid, Ask);
 
    ArrayPushInt   (sequence.start.event,  CreateEventId());
@@ -246,7 +246,7 @@ void RedrawStartStop(int hSeq) {
 bool UpdateWeekendStop() {
    if (IsLastError()) return(false);
 
-   datetime friday, now=ServerToFxtTime(TimeCurrent());
+   datetime friday, now=ServerToFxtTime(TimeCurrentFix());
 
    switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -666,7 +666,7 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
 
 
 /**
- * Speichert die Konfiguartionsdaten des EA's im Chart, sodaﬂ der Status nach einem Recompile oder Terminal-Restart daraus wiederhergestellt werden kann.
+ * Speichert die Konfiguartionsdaten des EA's im Chart, sodaﬂ der Status nach einem Recompilation oder Terminal-Restart daraus wiederhergestellt werden kann.
  * Diese Werte umfassen die Input-Parameter, das Flag __STATUS_INVALID_INPUT und den Fehler ERR_CANCELLED_BY_USER.
  *
  * @return int - Fehlerstatus

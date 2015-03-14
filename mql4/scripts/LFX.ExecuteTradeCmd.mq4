@@ -322,9 +322,11 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (6) LFX-Order aktualisieren
+   datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
+
    lo.setType      (lo, direction);
    lo.setUnits     (lo, realUnits);
-   lo.setOpenTime  (lo, TimeGMT());
+   lo.setOpenTime  (lo, now.gmt  );
    lo.setOpenPrice (lo, openPrice);
    lo.setOpenEquity(lo, equity   );
 
@@ -349,8 +351,10 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
    isOpenError = isOpenError!=0;
 
    // (1) ggf. Open-Error setzen
-   if (isOpenError) /*&&*/ if (!lo.IsOpenError(lo))
-      lo.setOpenTime(lo, -TimeGMT());
+   if (isOpenError) /*&&*/ if (!lo.IsOpenError(lo)) {
+      datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
+      lo.setOpenTime(lo, -now.gmt);
+   }
 
 
    // (2) Order speichern
@@ -416,7 +420,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
       else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalFix(), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
    }
    return(true);
@@ -474,8 +478,9 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
 
 
    // (4) LFX-Order aktualisieren
+   datetime now.gmt  = TimeGMT(); if (!now.gmt) return(false);
    string oldComment = lo.Comment(lo);
-   lo.setCloseTime (lo, TimeGMT() );
+   lo.setCloseTime (lo, now.gmt   );
    lo.setClosePrice(lo, closePrice);
    lo.setProfit    (lo, profit    );
    lo.setComment   (lo, ""        );
@@ -506,8 +511,10 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
    isCloseError = isCloseError!=0;
 
    // (1) ggf. CloseError setzen
-   if (isCloseError) /*&&*/ if (!lo.IsCloseError(lo))
-      lo.setCloseTime(lo, -TimeGMT());
+   if (isCloseError) /*&&*/ if (!lo.IsCloseError(lo)) {
+      datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
+      lo.setCloseTime(lo, -now.gmt);
+   }
 
 
    // (2) Order speichern
@@ -573,7 +580,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
       else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
 
-      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocal(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalFix(), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
    }
    return(true);
