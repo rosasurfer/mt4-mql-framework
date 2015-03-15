@@ -48,6 +48,8 @@ int onStart() {
    debug("onStart()   WindowHandle="+ WindowHandle(Symbol(), NULL), GetLastError());
    return(last_error);
 
+
+
    int cb1, cb2;
    cb1 = iChangedBars(NULL, PERIOD_M15, MUTE_ERR_SERIES_NOT_AVAILABLE);
    cb2 = iChangedBars("EURUSD", PERIOD_M30, MUTE_ERR_SERIES_NOT_AVAILABLE);

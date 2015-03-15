@@ -1,5 +1,5 @@
 
-#define __TYPE__ T_INDICATOR
+#define __TYPE__ MT_INDICATOR
 
 extern string ___________________________;
 extern int    __lpSuperContext;
@@ -21,14 +21,14 @@ int init() {
       return(last_error);
 
    if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
-      __WHEREAMI__ = FUNC_INIT;
+      __WHEREAMI__ = RF_INIT;
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
    }
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec.lpSelf(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -166,41 +166,41 @@ int init() {
 int start() {
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-      Comment(NL + NL + NL + msg);                                         // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+      Comment(NL + NL + NL + msg);                                                  // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
       return(last_error);
    }
 
-   Tick++; zTick++;                                                        // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                        // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
+   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
    ValidBars     = IndicatorCounted();
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {         // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         UpdateProgramStatus(catch("start(1)", error));                    // nicht sicher detektiert werden kann
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {                  // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+         UpdateProgramStatus(catch("start(1)", error));                             // nicht sicher detektiert werden kann
          if (__STATUS_OFF) return(last_error);
       }
    }
 
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
-   if (__WHEREAMI__ == FUNC_INIT) {
-      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+   if (__WHEREAMI__ == RF_INIT) {
+      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);                  // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
-      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
+      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
-         error = init();                                                   // init() erneut aufrufen
+         error = init();                                                            // init() erneut aufrufen
          if (__STATUS_OFF) return(last_error);
 
-         if (error == ERS_TERMINAL_NOT_YET_READY) {                        // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
+            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_INIT);             // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(error);
          }
       }
-      last_error = NO_ERROR;                                               // init() war erfolgreich
+      last_error = NO_ERROR;                                                        // init() war erfolgreich
       ValidBars  = 0;
    }
    else {
@@ -211,7 +211,7 @@ int start() {
       if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
       else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;    // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
+      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
       if      (__STATUS_HISTORY_INSUFFICIENT           ) ValidBars = 0;
    }
 
@@ -223,7 +223,7 @@ int start() {
    /*
    // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
    if (ArraySize(buffer) == 0)
-      return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                    // kann bei Terminal-Start auftreten
+      return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // kann bei Terminal-Start auftreten
    */
 
    __STATUS_HISTORY_UPDATE       = false;
@@ -271,8 +271,8 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ =                               FUNC_DEINIT;
-   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
+   __WHEREAMI__ =                               RF_DEINIT;
+   ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
@@ -513,10 +513,10 @@ int DeinitReason() {
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen (ec.Signature ist nicht konstant).
+ * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen (ec.lpSelf ist nicht konstant).
  */
 bool InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.lpSelf(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  lpSelf of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -546,7 +546,7 @@ bool InitExecutionContext() {
 
 
    // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
-   if (!ec.Signature(__ExecutionContext)) {
+   if (!ec.lpSelf(__ExecutionContext)) {
 
       // (3.1) Existiert ein SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
@@ -563,9 +563,9 @@ bool InitExecutionContext() {
       }
 
       // (3.2) Context-Variablen setzen
-    //ec.setSignature          ...wird in (3.4) gesetzt
-      ec.setName              (__ExecutionContext, __NAME__                 );
-      ec.setType              (__ExecutionContext, __TYPE__                 );
+    //ec.setLpSelf            ...wird in (3.4) gesetzt
+      ec.setProgramType       (__ExecutionContext, __TYPE__                 );
+      ec.setProgramName       (__ExecutionContext, __NAME__                 );
       ec.setHChart            (__ExecutionContext, hChart                   );
       ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
       ec.setTestFlags         (__ExecutionContext, testFlags                );
@@ -584,8 +584,8 @@ bool InitExecutionContext() {
       __LOG   = ec.Logging(__ExecutionContext);
    }
 
-   // (3.4) Signature und variable Context-Werte aktualisieren
-   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext));
+   // (3.4) lpSelf und variable Context-Werte aktualisieren
+   ec.setLpSelf            (__ExecutionContext, GetBufferAddress(__ExecutionContext));
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                );
    ec.setWhereami          (__ExecutionContext, __WHEREAMI__                        );
 
@@ -740,7 +740,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    string InputsToStr();
 
    int    Chart.SendTick(bool sound);
-   void   CopyMemory(int source, int destination, int bytes);
    int    GetUIThreadId();
    string InitReasonToStr(int reason);
    int    SumInts(int array[]);
@@ -753,7 +752,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.lpSelf               (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
@@ -762,9 +761,9 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   string ec.setName              (/*EXECUTION_CONTEXT*/int ec[], string name              );
-   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int    signature         );
-   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int    type              );
+   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
+   int    ec.setLpSelf            (/*EXECUTION_CONTEXT*/int ec[], int    lpSelf            );
+   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );

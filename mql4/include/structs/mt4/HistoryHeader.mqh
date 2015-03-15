@@ -146,7 +146,6 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
 #import "stdlib1.ex4"
    string BufferCharsToStr(int buffer[], int from, int length);
-   void   CopyMemory(int source, int destination, int bytes);
    string JoinStrings(string array[], string separator);
 
 #import "Expander.dll"

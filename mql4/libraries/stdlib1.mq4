@@ -62,11 +62,11 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    // (2) globale Variablen (re-)initialisieren
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
 
-   __TYPE__      |=                   ec.Type    (ec);
-   __NAME__       = StringConcatenate(ec.Name    (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami(ec);
-   IsChart        =                  (ec.hChart  (ec)!=0);
-   __LOG          =                   ec.Logging (ec);
+   __TYPE__      |=                   ec.ProgramType(ec);
+   __NAME__       = StringConcatenate(ec.ProgramName(ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.Whereami   (ec);
+   IsChart        =                  (ec.hChart     (ec)!=0);
+   __LOG          =                   ec.Logging    (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -155,7 +155,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
    // Nach Recompilation der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
-   if (__TYPE__ == T_LIBRARY) {
+   if (__TYPE__ == MT_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
          if (IsError(stdlib.init(ec, iNull)))
@@ -163,7 +163,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
       }
    }
 
-   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
+   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);
 
 
    if (Tick != tick) {
@@ -202,7 +202,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    // Nach Recompilation der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
-   if (__TYPE__ == T_LIBRARY) {
+   if (__TYPE__ == MT_LIBRARY) {
       if (UninitializeReason() == REASON_RECOMPILE) {
          int iNull[];
          if (IsError(stdlib.init(ec, iNull)))
@@ -210,8 +210,8 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
       }
    }
 
-   __WHEREAMI__ =                               FUNC_DEINIT;
-   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT              );
+   __WHEREAMI__ =                               RF_DEINIT;
+   ec.setWhereami          (__ExecutionContext, RF_DEINIT                );
    ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));
 
 
@@ -591,11 +591,11 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
  * @return int - Fehlerstatus
  */
 int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
-   __TYPE__ |= T_INDICATOR;                                                                        // Type der Library initialisieren (Aufruf immer aus Indikator)
+   __TYPE__ |= MT_INDICATOR;                                                                       // Type der Library initialisieren (Aufruf immer aus Indikator)
 
 
    // (1) Context ggf. initialisieren
-   if (!ec.Signature(__ExecutionContext)) {
+   if (!ec.lpSelf(__ExecutionContext)) {
       ArrayInitialize(__ExecutionContext, 0);
 
       // (1.1) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
@@ -607,8 +607,8 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
                        CopyMemory(GetBufferAddress(lpNames)+8, lpNames[1], 1);
 
       // (1.2) Zeiger auf die Namen im Context speichern
-      ec.setLpName   (__ExecutionContext, lpNames[0]);
-      ec.setLpLogFile(__ExecutionContext, lpNames[1]);
+      ec.setLpProgramName(__ExecutionContext, lpNames[0]);
+      ec.setLpLogFile    (__ExecutionContext, lpNames[1]);
    }
 
 
@@ -6873,27 +6873,6 @@ bool IsPendingTradeOperation(int value) {
 
 
 /**
- * Gibt die lesbare Konstante eines Module-Types zurück.
- *
- * @param  int type - Module-Type
- *
- * @return string
- */
-string ModuleTypeToStr(int type) {
-   string result = "";
-
-   if (type & T_EXPERT    && 1) result = StringConcatenate(result, "|T_EXPERT"   );
-   if (type & T_SCRIPT    && 1) result = StringConcatenate(result, "|T_SCRIPT"   );
-   if (type & T_INDICATOR && 1) result = StringConcatenate(result, "|T_INDICATOR");
-   if (type & T_LIBRARY   && 1) result = StringConcatenate(result, "|T_LIBRARY"  );
-
-   if (StringLen(result) > 0)
-      result = StringSubstr(result, 1);
-   return(result);
-}
-
-
-/**
  * Gibt die Beschreibung eines Module-Types zurück.
  *
  * @param  int type - Module-Type
@@ -6903,10 +6882,10 @@ string ModuleTypeToStr(int type) {
 string ModuleTypeDescription(int type) {
    string result = "";
 
-   if (type & T_EXPERT    && 1) result = StringConcatenate(result, ".Expert"   );
-   if (type & T_SCRIPT    && 1) result = StringConcatenate(result, ".Script"   );
-   if (type & T_INDICATOR && 1) result = StringConcatenate(result, ".Indicator");
-   if (type & T_LIBRARY   && 1) result = StringConcatenate(result, ".Library"  );
+   if (type & MT_EXPERT    && 1) result = StringConcatenate(result, ".Expert"   );
+   if (type & MT_SCRIPT    && 1) result = StringConcatenate(result, ".Script"   );
+   if (type & MT_INDICATOR && 1) result = StringConcatenate(result, ".Indicator");
+   if (type & MT_LIBRARY   && 1) result = StringConcatenate(result, ".Library"  );
 
    if (StringLen(result) > 0)
       result = StringSubstr(result, 1);
@@ -11396,7 +11375,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
 
 /**
- * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
+ * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);
@@ -11435,9 +11414,9 @@ void Tester.ResetGlobalArrays() {
    string GetString(int address);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.Signature               (/*EXECUTION_CONTEXT*/int ec[]                        );
-   string ec.Name                    (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.Type                    (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.lpSelf                  (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.ProgramType             (/*EXECUTION_CONTEXT*/int ec[]                        );
+   string ec.ProgramName             (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.InitFlags               (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]                        );
@@ -11445,7 +11424,7 @@ void Tester.ResetGlobalArrays() {
    bool   ec.Logging                 (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.LastError               (/*EXECUTION_CONTEXT*/int ec[]                        );
 
-   int    ec.setLpName               (/*EXECUTION_CONTEXT*/int ec[], int lpName            );
+   int    ec.setLpProgramName        (/*EXECUTION_CONTEXT*/int ec[], int lpName            );
    int    ec.setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
    int    ec.setWhereami             (/*EXECUTION_CONTEXT*/int ec[], int whereami          );
    int    ec.setLpLogFile            (/*EXECUTION_CONTEXT*/int ec[], int lpLogFile         );

@@ -534,6 +534,8 @@
    string   PeriodToStr(int period, int execFlags);   string TimeframeToStr(int timeframe, int execFlags);              // Alias
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
+   string   RootFunctionDescription(int id);
+   string   RootFunctionToStr(int id);
    string   ShellExecuteErrorDescription(int error);
    string   SwapCalculationModeToStr(int mode);
    string   TestFlagsToStr(int flags);
@@ -542,8 +544,6 @@
    string   InitReasonDescription(int reason);
    string   InitReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
-   string   __whereamiDescription(int id);
-   string   __whereamiToStr(int id);
 
 
    // Win32-Funktionen (an MQL angepaﬂt)

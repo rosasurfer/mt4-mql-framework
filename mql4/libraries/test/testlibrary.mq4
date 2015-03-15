@@ -33,13 +33,13 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
 
    // (2) globale Variablen (re-)initialisieren
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
-   int hChart    = ec.hChart   (ec);
+   int hChart    = ec.hChart(ec);
 
-   __TYPE__      |=                   ec.Type    (ec);
-   __NAME__       = StringConcatenate(ec.Name    (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami(ec);
+   __TYPE__      |=                   ec.ProgramType(ec);
+   __NAME__       = StringConcatenate(ec.ProgramName(ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.Whereami   (ec);
    IsChart        = (hChart != 0);
-   __LOG          =                   ec.Logging (ec);
+   __LOG          =                   ec.Logging    (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -53,7 +53,7 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
 
 
 /**
- * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
+ * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);

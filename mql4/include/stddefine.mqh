@@ -2,6 +2,7 @@
  * Globale Konstanten und Variablen
  */
 #include <stderror.mqh>
+#include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
 #include <structs/sizes.mqh>
 
 #property stacksize 32768
@@ -11,7 +12,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller Executi
 //int    __lpSuperContext;                                  // der Zeiger auf einen ggf. existierenden SuperContext wird je Modultyp definiert
 
 string   __NAME__;                                          // Name des aktuellen Programms
-int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: FUNC_INIT | FUNC_START | FUNC_DEINIT
+int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
 bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     __LOG;                                             // ob das Logging aktiviert ist
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
@@ -178,6 +179,19 @@ double  N_INF;                                              // -1.#INF: negative
 #define DEC                  DECEMBER
 
 
+// MQL Moduletyp-Flags
+#define MT_INDICATOR    MODULETYPE_INDICATOR
+#define MT_EXPERT       MODULETYPE_EXPERT
+#define MT_SCRIPT       MODULETYPE_SCRIPT
+#define MT_LIBRARY      MODULETYPE_LIBRARY
+
+
+// MQL Root-Funktion-ID's
+#define RF_INIT         ROOTFUNCTION_INIT
+#define RF_START        ROOTFUNCTION_START
+#define RF_DEINIT       ROOTFUNCTION_DEINIT
+
+
 // Account-Types
 #define ACCOUNT_TYPE_DEMO           1
 #define ACCOUNT_TYPE_REAL           2
@@ -207,19 +221,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_TRANSITION_TIME           0
 #define I_TRANSITION_OFFSET         1
 #define I_TRANSITION_DST            2
-
-
-// MQL Moduletyp-Flags
-#define T_INDICATOR                 1
-#define T_EXPERT                    2
-#define T_SCRIPT                    4
-#define T_LIBRARY                   8
-
-
-// MQL Root-Funktion-ID's (siehe __WHEREAMI__)
-#define FUNC_INIT                   1
-#define FUNC_START                  2
-#define FUNC_DEINIT                 3
 
 
 // init()-Flags
