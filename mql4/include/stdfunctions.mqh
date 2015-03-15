@@ -945,11 +945,11 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             }
 
             if (noEmptyChild) {
-               if (__WHEREAMI__==FUNC_INIT) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
+               if (__WHEREAMI__==RF_INIT) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
                   static.hWndSelf = -1;                                 // Rückgabewert -1
                   return(static.hWndSelf);
                }                                                        // vorhandene ChildWindows im Debugger ausgeben
-               return(!catch(sError +" in context Indicator::"+ __whereamiDescription(__WHEREAMI__), _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+               return(!catch(sError +" in context Indicator::"+ RootFunctionDescription(__WHEREAMI__), _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
             }
             int hChartWindow = hWndLast;
          }
@@ -963,7 +963,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
             hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(6)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
             hWndChild = GetWindow(hWndMdi, GW_CHILD);                   // das erste Child in Z order
-            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
             if (symbol == "0") symbol = Symbol();                       // (string) NULL
             if (!timeframe) timeframe = Period();
@@ -984,7 +984,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // (1.3) Experts
          else {
-            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
          }
 
          // (1.4) Das so gefundene Chartfenster hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte MetaTrader-Handle() ist.
@@ -2108,36 +2108,42 @@ int GetUIThreadId() {
 
 
 /**
- * Gibt die lesbare Konstante einer Root-Function ID zurück.
+ * Gibt die lesbare Konstante einer RootFunction-ID zurück.
  *
  * @param  int id
  *
- * @return string - lesbare Konstante oder Leerstring, wenn die übergebene ID ungültig ist
+ * @return string
  */
-string __whereamiToStr(int id) {
+string RootFunctionToStr(int id) {
    switch (id) {
-      case FUNC_INIT  : return("FUNC_INIT"  );
-      case FUNC_START : return("FUNC_START" );
-      case FUNC_DEINIT: return("FUNC_DEINIT");
+      case RF_INIT  : return("RF_INIT"  );
+      case RF_START : return("RF_START" );
+      case RF_DEINIT: return("RF_DEINIT");
    }
-   return(_emptyStr(catch("__whereamiToStr()  unknown MQL root function id = "+ id, ERR_INVALID_PARAMETER)));
+
+   string msg = "unknown MQL root function id "+ id;
+   debug("RootFunctionToStr()  "+ msg, ERR_INVALID_PARAMETER);
+   return("("+ msg +")");
 }
 
 
 /**
- * Gibt die lesbare Beschreibung einer Root-Function ID zurück.
+ * Gibt die lesbare Beschreibung einer RootFunction-ID zurück.
  *
  * @param  int id
  *
- * @return string - lesbare Beschreibung oder Leerstring, wenn die übergebene ID ungültig ist
+ * @return string
  */
-string __whereamiDescription(int id) {
+string RootFunctionDescription(int id) {
    switch (id) {
-      case FUNC_INIT  : return("init()"  );
-      case FUNC_START : return("start()" );
-      case FUNC_DEINIT: return("deinit()");
+      case RF_INIT  : return("init()"  );
+      case RF_START : return("start()" );
+      case RF_DEINIT: return("deinit()");
    }
-   return(_emptyStr(catch("__whereamiDescription()  unknown MQL root function id = "+ id, ERR_INVALID_PARAMETER)));
+
+   string msg = "unknown MQL root function id "+ id;
+   debug("RootFunctionDescription()  "+ msg, ERR_INVALID_PARAMETER);
+   return("("+ msg +")");
 }
 
 
@@ -2617,7 +2623,7 @@ string StringRightPad(string input, int pad_length, string pad_string=" ") {
  * @return bool
  */
 bool Expert.IsTesting() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("Expert.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("Expert.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    if (!IsExpert())
       return(false);
@@ -2632,7 +2638,7 @@ bool Expert.IsTesting() {
  * @return bool
  */
 bool Script.IsTesting() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("Script.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("Script.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    if (!IsScript())
       return(false);
@@ -2646,7 +2652,7 @@ bool Script.IsTesting() {
 
    string title = GetWindowText(GetParent(hWnd));
    if (!StringLen(title))
-      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ __whereamiDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ RootFunctionDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(title, "(visual)");                // (int) bool
 
@@ -2660,7 +2666,7 @@ bool Script.IsTesting() {
  * @return bool
  */
 bool Indicator.IsTesting() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("Indicator.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("Indicator.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    if (!IsIndicator())
       return(false);
@@ -2722,7 +2728,7 @@ bool Indicator.IsTesting() {
  * @return bool
  */
 bool This.IsTesting() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("This.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("This.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    if (   IsExpert()) return(   Expert.IsTesting());
    if (   IsScript()) return(   Script.IsTesting());
@@ -3021,10 +3027,10 @@ int Chart.Expert.Properties() {
 int Tester.Pause() {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (Tester.IsPaused())              return(NO_ERROR);             // skipping
+   if (Tester.IsPaused())            return(NO_ERROR);               // skipping
 
    if (!IsScript())
-      if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);             // SendMessage() darf in deinit() nicht mehr benutzt werden
+      if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);               // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetApplicationWindow();
    if (!hWnd)
@@ -3052,9 +3058,9 @@ bool Tester.IsPaused() {
       testerStopped = GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start";    // muß im Script reichen
    }
    else {
-      if (!IsVisualModeFix())                                                                      // EA/Indikator aus iCustom()
-         return(false);                                                                            // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
-      testerStopped = (IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                 // der EA stoppt(e) also auch
+      if (!IsVisualModeFix())                                        // EA/Indikator aus iCustom()
+         return(false);                                              // Indicator::deinit() wird zeitgleich zu EA::deinit() ausgeführt,
+      testerStopped = (IsStopped() || __WHEREAMI__ ==RF_DEINIT);     // der EA stoppt(e) also auch
    }
 
    if (testerStopped)
@@ -3074,10 +3080,10 @@ bool Tester.IsStopped() {
 
    if (IsScript()) {
       int hWndSettings = GetDlgItem(GetTesterWindow(), IDC_TESTER_SETTINGS);
-      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");            // muß im Script reichen
+      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");   // muß im Script reichen
    }
-   return(IsStopped() || __WHEREAMI__ ==FUNC_DEINIT);                                              // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
-}                                                                                                  // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
+   return(IsStopped() || __WHEREAMI__==RF_DEINIT);                   // IsStopped() war im Tester noch nie gesetzt; Indicator::deinit() wird
+}                                                                    // zeitgleich zu EA::deinit() ausgeführt, der EA stoppt(e) also auch.
 
 
 /**
@@ -3286,6 +3292,27 @@ string BoolToStr(bool value) {
 
 
 /**
+ * Gibt die lesbare Konstante eines Module-Types zurück.
+ *
+ * @param  int type - Module-Type
+ *
+ * @return string
+ */
+string ModuleTypeToStr(int type) {
+   string result = "";
+
+   if (type & MT_EXPERT    && 1) result = StringConcatenate(result, "|MT_EXPERT"   );
+   if (type & MT_SCRIPT    && 1) result = StringConcatenate(result, "|MT_SCRIPT"   );
+   if (type & MT_INDICATOR && 1) result = StringConcatenate(result, "|MT_INDICATOR");
+   if (type & MT_LIBRARY   && 1) result = StringConcatenate(result, "|MT_LIBRARY"  );
+
+   if (!StringLen(result)) result = "(unknown module type "+ type +")";
+   else                    result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3310,8 +3337,6 @@ void __DummyCalls() {
    UpdateProgramStatus();
 
    __log.custom(NULL);
-   __whereamiDescription(NULL);
-   __whereamiToStr(NULL);
    _bool(NULL);
    _double(NULL);
    _EMPTY();
@@ -3374,12 +3399,15 @@ void __DummyCalls() {
    Max(NULL, NULL);
    MT4InternalMsg();
    Min(NULL, NULL);
+   ModuleTypeToStr(NULL);
    NE(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodToStr(NULL);
    PipValue();
    ResetLastError();
+   RootFunctionDescription(NULL);
+   RootFunctionToStr(NULL);
    Round(NULL);
    RoundCeil(NULL);
    RoundEx(NULL);
@@ -3459,7 +3487,6 @@ void __DummyCalls() {
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
    string   ByteToHexStr(int byte);
-   void     CopyMemory(int source, int destination, int bytes);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                     // Library-Stub: *kann* lokal überschrieben werden
    int      GetApplicationWindow();
@@ -3492,13 +3519,9 @@ void __DummyCalls() {
    int      ec.hChart      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec.SuperContext(/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
    int      ec.TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec.Type        (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec.ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
-   bool     Expander_init  (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     Expander_start (/*EXECUTION_CONTEXT*/int ec[]);
-   bool     Expander_deinit(/*EXECUTION_CONTEXT*/int ec[]);
-
    int      GetBufferAddress(int buffer[]);
    int      GetLastWin32Error();
    string   IntToHexStr(int integer);

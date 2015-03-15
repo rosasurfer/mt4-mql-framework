@@ -1,5 +1,5 @@
 
-#define __TYPE__         T_SCRIPT
+#define __TYPE__         MT_SCRIPT
 #define __lpSuperContext NULL
 
 extern string ___________________________;
@@ -16,14 +16,14 @@ int init() {
       return(last_error);
 
    if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
-      __WHEREAMI__ = FUNC_INIT;
+      __WHEREAMI__ = RF_INIT;
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
    }
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec.lpSelf(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -134,7 +134,7 @@ int start() {
 
 
    // (1) init() war immer erfolgreich
-   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);
+   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
@@ -167,8 +167,8 @@ int start() {
  * @return int - Fehlerstatus
  */
 int deinit() {
-   __WHEREAMI__ =                               FUNC_DEINIT;
-   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
+   __WHEREAMI__ =                               RF_DEINIT;
+   ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
    //Expander_deinit(__ExecutionContext);
@@ -289,7 +289,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  ec.Signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.lpSelf(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  ec.lpSelf of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -327,9 +327,9 @@ bool InitExecutionContext() {
    // (3) EXECUTION_CONTEXT initialisieren
    ArrayInitialize(__ExecutionContext, 0);
 
-   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
-   ec.setLpName            (__ExecutionContext, lpNames[0]                                                              );
-   ec.setType              (__ExecutionContext, __TYPE__                                                                );
+   ec.setLpSelf            (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
+   ec.setProgramType       (__ExecutionContext, __TYPE__                                                                );
+   ec.setLpProgramName     (__ExecutionContext, lpNames[0]                                                              );
    ec.setHChart            (__ExecutionContext, hChart                                                                  );
    ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                            );
    ec.setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_TESTING | TF_VISUAL, 0)                    );
@@ -458,7 +458,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    onDeinitClose();
    int    afterDeinit();
 
-   void   CopyMemory(int source, int destination, int bytes);
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
    int    SumInts(int array[]);
@@ -472,7 +471,7 @@ int UpdateProgramStatus(int value=NULL) {
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.lpSelf               (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int  hChart            );
@@ -481,9 +480,9 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
    int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
-   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
-   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
+   int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
+   int    ec.setLpSelf            (/*EXECUTION_CONTEXT*/int ec[], int  lpSelf            );
+   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int  programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );

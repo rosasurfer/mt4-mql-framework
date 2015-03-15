@@ -302,7 +302,7 @@ string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
 
 
 /**
- * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurücksetzen zu können (EA-Bugfix).
+ * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);

@@ -45,12 +45,12 @@
 #define TICK.intSize                     10
 
 
-// pewa: selbst definierte Structs
+// MT4-Expander structs
 #define BAR.size                         48
 #define BAR.doubleSize                    6
 
-#define EXECUTION_CONTEXT.size           56
-#define EXECUTION_CONTEXT.intSize        14
+#define EXECUTION_CONTEXT.size           88
+#define EXECUTION_CONTEXT.intSize        22
 
 #define LFX_ORDER.size                  116
 #define LFX_ORDER.intSize                29

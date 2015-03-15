@@ -1,5 +1,5 @@
 
-int __TYPE__         = T_LIBRARY;
+int __TYPE__         = MT_LIBRARY;
 int __lpSuperContext = NULL;
 
 
@@ -77,9 +77,9 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("IsExpert()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsExpert()  library not initialized", ERR_RUNTIME_ERROR));
 
-   return(__TYPE__ & T_EXPERT != 0);
+   return(__TYPE__ & MT_EXPERT != 0);
 }
 
 
@@ -89,9 +89,9 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("IsScript()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsScript()  library not initialized", ERR_RUNTIME_ERROR));
 
-   return(__TYPE__ & T_SCRIPT != 0);
+   return(__TYPE__ & MT_SCRIPT != 0);
 }
 
 
@@ -101,9 +101,9 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("IsIndicator()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsIndicator()  library not initialized", ERR_RUNTIME_ERROR));
 
-   return(__TYPE__ & T_INDICATOR != 0);
+   return(__TYPE__ & MT_INDICATOR != 0);
 }
 
 
@@ -123,7 +123,7 @@ bool IsLibrary() {
  * @return bool
  */
 bool IsSuperContext() {
-   if (__TYPE__ == T_LIBRARY) return(!catch("IsSuperContext()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsSuperContext()  library not initialized", ERR_RUNTIME_ERROR));
 
    return(__lpSuperContext != 0);
 }

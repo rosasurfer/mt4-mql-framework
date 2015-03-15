@@ -1,5 +1,5 @@
 
-#define __TYPE__         T_EXPERT
+#define __TYPE__         MT_EXPERT
 #define __lpSuperContext NULL
 
 extern string ___________________________;
@@ -29,7 +29,7 @@ int init() {
       return(last_error);
 
    if (__WHEREAMI__ == NULL) {                                       // Aufruf durch Terminal
-      __WHEREAMI__ = FUNC_INIT;
+      __WHEREAMI__ = RF_INIT;
       prev_error   = last_error;
       SetLastError(NO_ERROR);
       zTick        = 0;
@@ -37,7 +37,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.Signature(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
+   if (!ec.lpSelf(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -174,12 +174,12 @@ int start() {
    if (__STATUS_OFF) {
       string msg = WindowExpertName() +": switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
       ShowStatus(last_error);
-      if (IsTesting())                                                     // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
-         Tester.Stop();                                                    // oder das Ende von start() evt. nicht mehr ausgeführt wird.
+      if (IsTesting())                                                              // Im Fehlerfall Tester anhalten. Hier, da der Fehler schon in init() auftreten kann
+         Tester.Stop();                                                             // oder das Ende von start() evt. nicht mehr ausgeführt wird.
       return(last_error);
    }
 
-   Tick++; zTick++;                                                        // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;
@@ -187,25 +187,25 @@ int start() {
 
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
-   if (__WHEREAMI__ == FUNC_INIT) {
-      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_START);       // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+   if (__WHEREAMI__ == RF_INIT) {
+      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);                  // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
-      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                      // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
+      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
-         int error = init();                                               // init() erneut aufrufen
+         int error = init();                                                        // init() erneut aufrufen
          if (__STATUS_OFF) return(ShowStatus(last_error));
 
-         if (error == ERS_TERMINAL_NOT_YET_READY) {                        // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, FUNC_INIT);  // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
+            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_INIT);             // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
-      last_error = NO_ERROR;                                               // init() war erfolgreich, ein vorhandener Status wird überschrieben
+      last_error = NO_ERROR;                                                        // init() war erfolgreich, ein vorhandener Status wird überschrieben
    }
    else {
-      prev_error = last_error;                                             // weiterer Tick: last_error sichern und zurücksetzen
+      prev_error = last_error;                                                      // weiterer Tick: last_error sichern und zurücksetzen
       SetLastError(NO_ERROR);
    }
 
@@ -240,7 +240,7 @@ int start() {
 
    // (6) im Tester
    if (IsVisualMode())
-      icChartInfos();                                                // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
+      icChartInfos();               // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
 
 
    // (7) Statusanzeige
@@ -261,8 +261,8 @@ int start() {
  *                   Alternativ bei EA's, die dies unterstützen, Testende vors reguläre Testende der Historydatei setzen.
  */
 int deinit() {
-   __WHEREAMI__ =                               FUNC_DEINIT;
-   ec.setWhereami          (__ExecutionContext, FUNC_DEINIT         );
+   __WHEREAMI__ =                               RF_DEINIT;
+   ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
 
@@ -387,7 +387,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.Signature(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  signature of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.lpSelf(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  lpSelf of EXECUTION_CONTEXT not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -427,9 +427,9 @@ bool InitExecutionContext() {
    // (3) EXECUTION_CONTEXT initialisieren
    ArrayInitialize(__ExecutionContext, 0);
 
-   ec.setSignature         (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                                                                 );
-   ec.setLpName            (__ExecutionContext, lpNames[0]                                                                                                           );
-   ec.setType              (__ExecutionContext, __TYPE__                                                                                                             );
+   ec.setLpSelf            (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                                                                 );
+   ec.setProgramType       (__ExecutionContext, __TYPE__                                                                                                             );
+   ec.setLpProgramName     (__ExecutionContext, lpNames[0]                                                                                                           );
    ec.setHChart            (__ExecutionContext, hChart                                                                                                               );
    ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                         );
    ec.setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TESTING, 0) | ifInt(IsVisualMode(), TF_VISUAL, 0) | ifInt(IsOptimization(), TF_OPTIMIZATION, 0));
@@ -578,8 +578,8 @@ bool EventListener.BarOpen(int results[], int flags=NULL) {
 int Tester.Stop() {
    if (!IsTesting()) return(catch("Tester.Stop(1)  Tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (Tester.IsStopped())          return(NO_ERROR);                // skipping
-   if (__WHEREAMI__ == FUNC_DEINIT) return(NO_ERROR);                // SendMessage() darf in deinit() nicht mehr benutzt werden
+   if (Tester.IsStopped())        return(NO_ERROR);                  // skipping
+   if (__WHEREAMI__ == RF_DEINIT) return(NO_ERROR);                  // SendMessage() darf in deinit() nicht mehr benutzt werden
 
    int hWnd = GetApplicationWindow();
    if (!hWnd) return(last_error);
@@ -629,7 +629,6 @@ int Tester.Stop() {
    int    ShowStatus(int error);
 
    int    Chart.SendTick(bool sound);
-   void   CopyMemory(int source, int destination, int bytes);
    int    GetApplicationWindow();
    bool   IntInArray(int haystack[], int needle);
    int    PeriodFlag(int period);
@@ -641,7 +640,7 @@ int Tester.Stop() {
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.Signature            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.lpSelf               (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int  hChart            );
@@ -650,9 +649,9 @@ int Tester.Stop() {
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
    int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
-   int    ec.setLpName            (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int    ec.setSignature         (/*EXECUTION_CONTEXT*/int ec[], int  signature         );
-   int    ec.setType              (/*EXECUTION_CONTEXT*/int ec[], int  type              );
+   int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
+   int    ec.setLpSelf            (/*EXECUTION_CONTEXT*/int ec[], int  lpSelf            );
+   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int  programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
    int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
