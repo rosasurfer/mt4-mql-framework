@@ -23,10 +23,10 @@ window_bottom=1032
 window_type=3
 background_color=16316664
 foreground_color=0
-barup_color=25600
-bardown_color=176
-bullcandle_color=25600
-bearcandle_color=176
+barup_color=3329330
+bardown_color=255
+bullcandle_color=3329330
+bearcandle_color=255
 chartline_color=8421504
 volumes_color=25600
 grid_color=14474460
@@ -8788,9 +8788,9 @@ Max.Values=5000
 </expert>
 weight_0=0
 weight_1=0
-weight_2=3
-weight_3=3
-weight_4=3
+weight_2=2
+weight_3=2
+weight_4=2
 period_flags=15
 show_data=1
 </indicator>
