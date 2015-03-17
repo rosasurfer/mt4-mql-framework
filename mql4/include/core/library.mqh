@@ -13,7 +13,7 @@ int init() {
    if (IsTesting()) {                                             // Zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
       Tester.ResetGlobalArrays();                                 // Könnte ein Feature für die Optimization sein, um Daten testübergreifend verwalten zu können.
    }
-   //Expander_init(__ExecutionContext);
+   //expander_onInit(__ExecutionContext);
    return(catch("init()"));
 }
 
@@ -28,7 +28,7 @@ int init() {
  *       wenn die init()-Funktion aufgerufen werden soll.
  */
 int start() {
-   //Expander_start(__ExecutionContext);
+   //expander_onStart(__ExecutionContext);
    return(catch("start()", ERR_WRONG_JUMP));
 }
 
@@ -46,7 +46,7 @@ int start() {
  *          undefiniert.
  */
 int deinit() {
-   //Expander_deinit(__ExecutionContext);
+   //expander_onDeinit(__ExecutionContext);
    return(catch("deinit()")); __DummyCalls();
 }
 

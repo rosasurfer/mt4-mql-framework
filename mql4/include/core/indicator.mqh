@@ -32,7 +32,7 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   //Expander_init(__ExecutionContext);
+   //expander_onInit(__ExecutionContext);
 
 
    // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
@@ -234,7 +234,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   //Expander_start(__ExecutionContext);
+   //expander_onStart(__ExecutionContext);
 
 
    // (5) stdLib benachrichtigen
@@ -277,7 +277,7 @@ int deinit() {
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
 
-   //Expander_deinit(__ExecutionContext);
+   //expander_onDeinit(__ExecutionContext);
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
