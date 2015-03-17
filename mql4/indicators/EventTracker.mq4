@@ -436,7 +436,7 @@ bool Configure() {
             mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
             configFile = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
          }
-         sValue  = GetIniString(configFile, "EventTracker", "Alert.SMS", "");    // "on | off | phone-number"
+         sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS", "")); // "on | off | phone-number"
          if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
             sValue = GetConfigString("SMS", "Receiver", "");
             if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(18)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -453,14 +453,18 @@ bool Configure() {
          else return(!catch("Configure(19)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else if (sValue=="auto" || sValue=="system | account | auto* | off | phone-number") {
-         sValue  = GetIniString(configFile, "EventTracker", "Alert.SMS", "");    // "on | off | phone-number"
-         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true" || sValue=="") {
+         if (!StringLen(configFile)) {
+            if (!account) account = GetAccountNumber();
+            if (!account) return(!SetLastError(stdlib.GetLastError()));
+            mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+            configFile = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
+         }
+         sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS", "")); // "on | off | phone-number"
+         if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
             sValue = GetConfigString("SMS", "Receiver", "");
-            if (sValue != "") {
-               if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(20)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-               alert.sms          = true;
-               alert.sms.receiver = sValue;
-            }
+            if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(20)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            alert.sms          = true;
+            alert.sms.receiver = sValue;
          }
          else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false") {
             alert.sms = false;
@@ -469,7 +473,24 @@ bool Configure() {
             alert.sms          = true;
             alert.sms.receiver = sValue;
          }
-         else return(!catch("Configure(21)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         else if (sValue=="") {
+            sValue = StringToLower(GetConfigString("EventTracker", "Alert.SMS", "")); // "on | off | phone-number"
+            if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
+               sValue = GetConfigString("SMS", "Receiver", "");
+               if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(21)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               alert.sms          = true;
+               alert.sms.receiver = sValue;
+            }
+            else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="") {
+               alert.sms = false;
+            }
+            else if (StringIsPhoneNumber(sValue)) {
+               alert.sms          = true;
+               alert.sms.receiver = sValue;
+            }
+            else return(!catch("Configure(22)  Invalid global/local config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         }
+         else return(!catch("Configure(23)  Invalid account config value [EventTracker]->Alert.SMS = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       }
       else if (sValue=="off" || sValue=="0" || sValue=="no" || sValue=="false" || sValue=="phone-number" || sValue=="") {
          alert.sms = false;
@@ -478,14 +499,14 @@ bool Configure() {
          alert.sms          = true;
          alert.sms.receiver = sValue;
       }
-      else return(!catch("Configure(22)  Invalid input parameter Alert.SMS.Receiver = \""+ Alert.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
+      else return(!catch("Configure(24)  Invalid input parameter Alert.SMS.Receiver = \""+ Alert.SMS.Receiver +"\"", ERR_INVALID_INPUT_PARAMETER));
 
       // (3.4) Alert.HTTP.Url
 
       // (3.5) Alert.ICQ.UserID
    }
 
-   return(!ShowStatus(catch("Configure(23)")));
+   return(!ShowStatus(catch("Configure(25)")));
 }
 
 
