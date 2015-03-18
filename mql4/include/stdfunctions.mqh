@@ -3313,6 +3313,31 @@ string ModuleTypeToStr(int type) {
 
 
 /**
+ * Gibt die lesbare Konstante eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
+ *
+ * @param  int reason - Code
+ *
+ * @return string
+ */
+string UninitializeReasonToStr(int reason) {
+   switch (reason) {
+      case REASON_UNDEFINED  : return("REASON_UNDEFINED"  );
+      case REASON_REMOVE     : return("REASON_REMOVE"     );
+      case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
+      case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
+      case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
+      case REASON_PARAMETERS : return("REASON_PARAMETERS" );
+      case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
+      // builds > 509
+      case REASON_TEMPLATE   : return("REASON_TEMPLATE"   );
+      case REASON_INITFAILED : return("REASON_INITFAILED" );
+      case REASON_CLOSE      : return("REASON_CLOSE"      );
+   }
+   return(_emptyStr(catch("UninitializeReasonToStr(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3442,6 +3467,7 @@ void __DummyCalls() {
    TimeLocalFix();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
+   UninitializeReasonToStr(NULL);
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);
@@ -3522,6 +3548,10 @@ void __DummyCalls() {
    int      ec.ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
+   bool     Expander_onInit  (int context[]);
+   bool     Expander_onStart (int context[]);
+   bool     Expander_onDeinit(int context[]);
+
    int      GetBufferAddress(int buffer[]);
    int      GetLastWin32Error();
    string   IntToHexStr(int integer);

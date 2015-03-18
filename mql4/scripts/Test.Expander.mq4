@@ -13,9 +13,9 @@ int __DEINIT_FLAGS__[];
 //#import "Expander.Debug.dll"
 #import "Expander.Release.dll"
 
-   bool expander_onInit  (int context[]);
-   bool expander_onStart (int context[]);
-   bool expander_onDeinit(int context[]);
+   bool Expander_onInit  (int context[]);
+   bool Expander_onStart (int context[]);
+   bool Expander_onDeinit(int context[]);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.Whereami(/*EXECUTION_CONTEXT*/int ec[]);
@@ -27,17 +27,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   expander_onInit(__ExecutionContext);
-   return(last_error);
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   expander_onDeinit(__ExecutionContext);
+   Expander_onInit(__ExecutionContext);
    return(last_error);
 }
 
@@ -48,6 +38,16 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   expander_onStart(__ExecutionContext);
+   Expander_onStart(__ExecutionContext);
    return(catch("onStart(1)"));
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   Expander_onDeinit(__ExecutionContext);
+   return(last_error);
 }

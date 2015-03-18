@@ -26,7 +26,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   Test();
+   //Test();
    return(last_error);
 
 

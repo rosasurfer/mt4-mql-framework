@@ -41,16 +41,10 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
+   Expander_onInit(__ExecutionContext);
 
 
-   // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
-   if (!WindowHandleEx(NULL)) {
-      UpdateProgramStatus();
-      if (__STATUS_OFF) return(last_error);
-   }
-
-
-   // (3) stdlib initialisieren
+   // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);//throws ERS_TERMINAL_NOT_YET_READY
    if (IsError(error)) {
@@ -59,7 +53,7 @@ int init() {
    }
 
 
-   // (4) in Experts immer auch die HistoryLib initialisieren
+   // (3) in Experts immer auch die HistoryLib initialisieren
    error = history.init(__ExecutionContext);
    if (IsError(error)) {
       UpdateProgramStatus(SetLastError(error));
@@ -67,7 +61,7 @@ int init() {
    }
 
                                                                               // #define INIT_TIMEZONE               in stdlib.init()
-   // (5) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
    int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -92,7 +86,7 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
-   // (6) ggf. EA's aktivieren
+   // (5) ggf. EA's aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);
@@ -103,13 +97,13 @@ int init() {
    }
 
 
-   // (7) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
+   // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (8) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (7) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -144,7 +138,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (9) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (IsTesting()) {
       Test.fromDate    = TimeCurrentFix();                                    // für Teststatistiken
       Test.startMillis = GetTickCount();
@@ -223,6 +217,9 @@ int start() {
       return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
+   Expander_onStart(__ExecutionContext);
+
+
    // (4) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       UpdateProgramStatus(ShowStatus(SetLastError(stdlib.GetLastError())));
@@ -264,6 +261,8 @@ int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
    ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+
+   Expander_onDeinit(__ExecutionContext);
 
 
    if (IsTesting()) {

@@ -2815,7 +2815,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int sortKeys[][3], n, hst.ticket;                           // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
-         string exDividend = "Ex Dividend "+ Symbol();
+         string exDividend1="Ex Dividend ", exDividend2=" "+ Symbol();
 
          for (i=0; i < orders; i++) {
             if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
@@ -2823,10 +2823,11 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
                break;
             }
             if (OrderType() == OP_BALANCE) {
-               if (!StringICompare(OrderComment(), exDividend)) continue;
+               if (!StringIStartsWith(OrderComment(), exDividend1)) continue;    // "Ex Dividend US2000" oder
+               if (!StringIEndsWith  (OrderComment(), exDividend2)) continue;    // "Ex Dividend 17/03/15 US2000"
             }
-            else if (OrderSymbol() != Symbol())                 continue;
-            else if (OrderType() > OP_SELL)                     continue;
+            else if (OrderSymbol() != Symbol())                     continue;
+            else if (OrderType() > OP_SELL)                         continue;
 
             sortKeys[n][0] = OrderCloseTime();
             sortKeys[n][1] = OrderOpenTime();
@@ -4265,7 +4266,6 @@ string InputsToStr() {
    bool     StringEndsWith(string object, string postfix);
    bool     StringICompare(string a, string b);
    bool     StringIEndsWith(string object, string postfix);
-   string   UninitializeReasonToStr(int reason);
 
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
