@@ -8781,6 +8781,27 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
+MA.Periods=24
+MA.Timeframe=H1
+Max.Values=2000
+</inputs>
+</expert>
+weight_0=0
+weight_1=0
+weight_2=3
+weight_3=3
+weight_4=3
+period_flags=30
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ALMA
+flags=339
+window_num=0
+<inputs>
 MA.Periods=4
 MA.Timeframe=H1
 Max.Values=5000
