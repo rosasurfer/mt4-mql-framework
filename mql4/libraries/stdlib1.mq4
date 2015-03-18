@@ -7456,31 +7456,6 @@ string UninitializeReasonDescription(int reason) {
 
 
 /**
- * Gibt die lesbare Konstante eines UninitializeReason-Codes zurück (siehe UninitializeReason()).
- *
- * @param  int reason - Code
- *
- * @return string
- */
-string UninitializeReasonToStr(int reason) {
-   switch (reason) {
-      case REASON_UNDEFINED  : return("REASON_UNDEFINED"  );
-      case REASON_REMOVE     : return("REASON_REMOVE"     );
-      case REASON_RECOMPILE  : return("REASON_RECOMPILE"  );
-      case REASON_CHARTCHANGE: return("REASON_CHARTCHANGE");
-      case REASON_CHARTCLOSE : return("REASON_CHARTCLOSE" );
-      case REASON_PARAMETERS : return("REASON_PARAMETERS" );
-      case REASON_ACCOUNT    : return("REASON_ACCOUNT"    );
-      // builds > 509
-      case REASON_TEMPLATE   : return("REASON_TEMPLATE"   );
-      case REASON_INITFAILED : return("REASON_INITFAILED" );
-      case REASON_CLOSE      : return("REASON_CLOSE"      );
-   }
-   return(_emptyStr(catch("UninitializeReasonToStr()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
  * Gibt die Beschreibung eines InitReason-Codes zurück (siehe InitReason()).
  *
  * @param  int reason - Code

@@ -32,17 +32,10 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   //expander_onInit(__ExecutionContext);
+   Expander_onInit(__ExecutionContext);
 
 
-   // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
-   if (!WindowHandleEx(NULL)) {
-      UpdateProgramStatus();
-      if (__STATUS_OFF) return(last_error);
-   }
-
-
-   // (3) stdlib initialisieren
+   // (2) stdlib initialisieren
    int tickData[3];
    int error = stdlib.init(__ExecutionContext, tickData);
    if (IsError(error)) {
@@ -56,12 +49,12 @@ int init() {
    Tick.prevTime = tickData[2];
 
 
-   // (4) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
+   // (3) bei Aufruf durch iCustom() Indikatorkonfiguration loggen
    if (__LOG) /*&&*/ if (IsSuperContext())
       log(InputsToStr());
 
 
-   // (5) user-spezifische Init-Tasks ausführen
+   // (4) user-spezifische Init-Tasks ausführen
    int initFlags = ec.InitFlags(__ExecutionContext);
 
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -87,7 +80,7 @@ int init() {
 
 
    /*
-   (6) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
+   (5) User-spezifische init()-Routinen aufrufen. Diese *können*, müssen aber nicht implementiert sein.
 
    Die vom Terminal bereitgestellten UninitializeReasons und ihre Bedeutung ändern sich in den einzelnen Terminalversionen
    und können nicht zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien verwendet werden.
@@ -137,7 +130,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                                                          //
 
 
-   // (7) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
+   // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INIT_REASON_PARAMETERS) {
       error = Chart.SendTick(false);                                    // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
       if (IsError(error)) {
@@ -234,7 +227,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   //expander_onStart(__ExecutionContext);
+   Expander_onStart(__ExecutionContext);
 
 
    // (5) stdLib benachrichtigen
@@ -276,8 +269,7 @@ int deinit() {
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
-
-   //expander_onDeinit(__ExecutionContext);
+   Expander_onDeinit(__ExecutionContext);
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -739,9 +731,11 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]);
    string InputsToStr();
 
+   bool   AquireLock(string mutexName, bool wait);
    int    Chart.SendTick(bool sound);
    int    GetUIThreadId();
    string InitReasonToStr(int reason);
+   bool   ReleaseLock(string mutexName);
    int    SumInts(int array[]);
 
 #import "Expander.dll"

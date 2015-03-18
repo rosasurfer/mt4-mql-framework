@@ -203,7 +203,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    string ErrorToStr(int error);
    string InitFlagsToStr(int flags);
    string TestFlagsToStr(int flags);
-   string UninitializeReasonToStr(int reason);
 
 #import "Expander.dll"
    int    GetBufferAddress(int buffer[]);

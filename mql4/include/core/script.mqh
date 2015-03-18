@@ -27,17 +27,10 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   //expander_onInit(__ExecutionContext);
+   Expander_onInit(__ExecutionContext);
 
 
-   // (2) eigenes WindowHandle ermitteln, damit es in deinit() auf jeden Fall verfügbar ist
-   if (!WindowHandleEx(NULL)) {
-      UpdateProgramStatus();
-      if (__STATUS_OFF) return(last_error);
-   }
-
-
-   // (3) stdlib initialisieren
+   // (2) stdlib initialisieren
    int iNull[];
    int error = stdlib.init(__ExecutionContext, iNull);
    if (IsError(error)) {
@@ -46,7 +39,7 @@ int init() {
    }
 
                                                                               // #define INIT_TIMEZONE               in stdlib.init()
-   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
    int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
@@ -67,7 +60,7 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
-   // (5) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (4) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -142,7 +135,7 @@ int start() {
       return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
 
 
-   //expander_onStart(__ExecutionContext);
+   Expander_onStart(__ExecutionContext);
                                                                                              //       andere brauchen die aktuelle Zeitreihe nicht.
 
    // (3) stdLib benachrichtigen
@@ -171,7 +164,7 @@ int deinit() {
    ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
-   //expander_onDeinit(__ExecutionContext);
+   Expander_onDeinit(__ExecutionContext);
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
