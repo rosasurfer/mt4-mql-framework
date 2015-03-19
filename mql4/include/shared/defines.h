@@ -2,6 +2,16 @@
  * In MQL und C++ gemeinsam verwendete Konstanten.
  */
 
+// Log level
+#define L_OFF                 INT_MIN           // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= Event) log(...);
+#define L_FATAL                 10000           // oder einfacher:               if (__LOG_DEBUG)          debug(...);
+#define L_ERROR                 20000
+#define L_WARN                  30000
+#define L_INFO                  40000
+#define L_DEBUG                 50000
+#define L_ALL                 INT_MAX
+
+
 // Special constants
 #define MIN_VALID_POINTER  0x00010000           // kleinster möglicher Wert für einen gültigen Pointer (x86)
 #define MAX_SYMBOL_LENGTH          11
