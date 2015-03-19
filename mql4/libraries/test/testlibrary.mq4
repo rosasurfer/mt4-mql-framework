@@ -97,15 +97,15 @@ int onStart() {
    string result;
 
 
-   mql_DwordToHexStr(0);
-   DwordToHexStr(0);
-   dll_DwordToHexStr(0);
+   mql_IntToHexStr(0);
+   IntToHexStr(0);
+   dll_IntToHexStr(0);
 
 
    // MQL
    int startTime = GetTickCount();
    for (int i=0; i < n; i++) {
-      result = mql_DwordToHexStr(i);
+      result = mql_IntToHexStr(i);
    }
    int endTime = GetTickCount();
    debug("onStart(0.1)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
@@ -114,7 +114,7 @@ int onStart() {
    // MQL-Library
    startTime = GetTickCount();
    for (i=0; i < n; i++) {
-      result = DwordToHexStr(i);
+      result = IntToHexStr(i);
    }
    endTime = GetTickCount();
    debug("onStart(0.2)  lib loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
@@ -123,7 +123,7 @@ int onStart() {
    // DLL
    startTime = GetTickCount();
    for (i=0; i < n; i++) {
-      result = dll_DwordToHexStr(i);
+      result = dll_IntToHexStr(i);
    }
    endTime = GetTickCount();
    debug("onStart(0.3)  dll loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
