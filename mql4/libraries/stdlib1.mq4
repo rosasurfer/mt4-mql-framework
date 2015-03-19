@@ -595,7 +595,7 @@ int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
 
 
    // (1) Context ggf. initialisieren
-   if (!ec.lpSelf(__ExecutionContext)) {
+   if (!ec.id(__ExecutionContext)) {
       ArrayInitialize(__ExecutionContext, 0);
 
       // (1.1) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
@@ -11389,7 +11389,7 @@ void Tester.ResetGlobalArrays() {
    string GetString(int address);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.lpSelf                  (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.id                      (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.ProgramType             (/*EXECUTION_CONTEXT*/int ec[]                        );
    string ec.ProgramName             (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );

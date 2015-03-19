@@ -1,7 +1,7 @@
 /**
  * MQL structure EXECUTION_CONTEXT
  *
- * @see  Definition in Expander::Expander.h
+ * @see  Definition in Expander.dll::Expander.h
  *
  *
  * TODO: __SMS.alerts        integrieren
@@ -11,11 +11,11 @@
  *
  * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
-#define I_EC.lpSelf                 0
-#define I_EC.programType            1
-#define I_EC.lpProgramName          2
+#define I_EC.id                     0        // TODO: in MQL read-only (kein Setter)
+#define I_EC.hThreadId              1        // in MQL read-only
 
-#define I_EC.hThreadId              3        // noch nicht implementiert
+#define I_EC.programType            2
+#define I_EC.lpProgramName          3        // TODO: im Struct speichern
 #define I_EC.launchType             4
 #define I_EC.lpSuperContext         5
 #define I_EC.initFlags              6
@@ -32,19 +32,20 @@
 #define I_EC.lastError             17
 #define I_EC.dllErrors             18        // noch nicht implementiert
 #define I_EC.dllErrorsSize         19        // noch nicht implementiert
-#define I_EC.logging               20
-#define I_EC.lpLogFile             21
+#define I_EC.logging               20        // auf LOG_LEVEL umstellen
+#define I_EC.lpLogFile             21        // TODO: im Struct speichern
 
 
 // Getter
-int    ec.lpSelf               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpSelf            ]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.id                   (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.id                ]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.hThreadId            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.hThreadId         ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.programType       ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.lpProgramName        (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpProgramName     ]);                            EXECUTION_CONTEXT.toStr(ec); }
 string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[I_EC.lpProgramName     ]));                           EXECUTION_CONTEXT.toStr(ec); }
 int    ec.LaunchType           (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.launchType        ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpSuperContext    ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
-   if (ArrayDimension(sec) != 1)            return(catch("ec.SuperContext(1)  too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(sec) != 1)        return(catch("ec.SuperContext(1)  too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
       ArrayResize(sec, EXECUTION_CONTEXT.intSize);
 
@@ -55,7 +56,7 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
    else {
       CopyMemory(lpSuperContext, GetBufferAddress(sec), EXECUTION_CONTEXT.size);
       // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-      if (ec.lpSelf(sec) != lpSuperContext) return(catch("ec.SuperContext(2)  invalid super EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpSuperContext), ERR_RUNTIME_ERROR));
+      if (ec.id(sec) != lpSuperContext) return(catch("ec.SuperContext(2)  invalid super EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpSuperContext), ERR_RUNTIME_ERROR));
    }
    return(catch("ec.SuperContext(3)"));                                                                                                                                    EXECUTION_CONTEXT.toStr(ec);
 }
@@ -73,7 +74,8 @@ string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                   
 
 
 // Setter
-int    ec.setLpSelf            (/*EXECUTION_CONTEXT*/int &ec[], int    lpSelf            ) { ec[I_EC.lpSelf            ] = lpSelf;             return(lpSelf            ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setId                (/*EXECUTION_CONTEXT*/int &ec[], int    id                ) { ec[I_EC.id                ] = id;                 return(id                ); EXECUTION_CONTEXT.toStr(ec); }
+//     ec.hThreadId: read-only
 int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) {
    if (lpName < MIN_VALID_POINTER) return(!catch("ec.setLpProgramName(1)  invalid parameter lpName = 0x"+ IntToHexStr(lpName) +" (not a valid pointer)", ERR_INVALID_POINTER));
@@ -95,7 +97,7 @@ int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart   
 int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[I_EC.testFlags         ] = testFlags;          return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) { ec[I_EC.lastError         ] = lastError;
    int lpSuperContext = ec.lpSuperContext(ec);     // Fehler immer auch im SuperContext setzen
-   if (lpSuperContext != 0) CopyMemory(ec.lpSelf(ec)+I_EC.lastError*4, lpSuperContext+I_EC.lastError*4, 4);                                    return(lastError         ); EXECUTION_CONTEXT.toStr(ec);
+   if (lpSuperContext != 0) CopyMemory(GetBufferAddress(ec)+I_EC.lastError*4, lpSuperContext+I_EC.lastError*4, 4);                             return(lastError         ); EXECUTION_CONTEXT.toStr(ec);
 }
 bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[I_EC.logging           ] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile         ) {
@@ -124,14 +126,15 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    if (ArrayDimension(ec) > 1)                     return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
 
-   string result = StringConcatenate("{self="              ,               ifString(!ec.lpSelf            (ec), "0", "0x"+ IntToHexStr(ec.lpSelf(ec))),
+   string result = StringConcatenate("{id="                ,                         ec.id                (ec),
+                                    ", hThreadId="         ,                         ec.hThreadId         (ec),
                                     ", programType="       ,                         ec.ProgramType       (ec),
                                     ", programName="       ,             StringToStr(ec.ProgramName       (ec)),
                                     ", launchType="        ,                         ec.LaunchType        (ec),
                                     ", superContext="      ,               ifString(!ec.lpSuperContext    (ec), "0", "0x"+ IntToHexStr(ec.lpSuperContext(ec))),
                                     ", initFlags="         ,          InitFlagsToStr(ec.InitFlags         (ec)),
                                     ", deinitFlags="       ,        DeinitFlagsToStr(ec.DeinitFlags       (ec)),
-                                    ", whereami="+                 RootFunctionToStr(ec.Whereami          (ec)),
+                                    ", whereami="          ,       RootFunctionToStr(ec.Whereami          (ec)),
                                     ", uninitializeReason=", UninitializeReasonToStr(ec.UninitializeReason(ec)),
                                     ", hChartWindow="      ,               ifString(!ec.hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec.hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec.hChart            (ec), "0", "0x"+ IntToHexStr(ec.hChart        (ec))),
@@ -147,7 +150,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   ec.lpSelf            (ec    ); ec.setLpSelf            (ec, NULL);
+   ec.id                (ec    ); ec.setId                (ec, NULL);
+   ec.hThreadId         (ec    );
    ec.ProgramType       (ec    ); ec.setProgramType       (ec, NULL);
    ec.lpProgramName     (ec    ); ec.setLpProgramName     (ec, NULL);
    ec.ProgramName       (ec    ); ec.setProgramName       (ec, NULL);
@@ -180,17 +184,12 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    outputDebug = outputDebug!=0;
 
-   // TODO: prüfen, ob lpContext ein gültiger Zeiger ist
-   if (lpContext <= 0)                return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = "+ lpContext, ERR_INVALID_PARAMETER)));
+   if (lpContext <= 0) return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
+   int tmp[EXECUTION_CONTEXT.intSize];
+   CopyMemory(lpContext, GetBufferAddress(tmp), EXECUTION_CONTEXT.size);
 
-   int ec[EXECUTION_CONTEXT.intSize];
-   CopyMemory(lpContext, GetBufferAddress(ec), EXECUTION_CONTEXT.size);
-
-   // primitive Validierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-   if (ec.lpSelf(ec) != lpContext) return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(2)  invalid EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpContext), ERR_RUNTIME_ERROR)));
-
-   string result = EXECUTION_CONTEXT.toStr(ec, outputDebug);
-   ArrayResize(ec, 0);
+   string result = EXECUTION_CONTEXT.toStr(tmp, outputDebug);
+   ArrayResize(tmp, 0);
    return(result);
 }
 
@@ -216,7 +215,8 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 
 
 //#import "struct.EXECUTION_CONTEXT.ex4"
-//   int    ec.lpSelf               (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.id                   (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.hThreadId            (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.lpProgramName        (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                );
@@ -235,7 +235,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 //   int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                );
 
-//   int    ec.setLpSelf            (/*EXECUTION_CONTEXT*/int ec[], int    lpSelf            );
+//   int    ec.setId                (/*EXECUTION_CONTEXT*/int ec[], int    id                );
 //   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type              );
 //   int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int ec[], int    lpName            );
 //   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
