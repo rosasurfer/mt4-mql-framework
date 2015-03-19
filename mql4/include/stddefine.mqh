@@ -1,15 +1,14 @@
 /**
- * Globale Konstanten und Variablen
+ * Globale Variablen und Konstanten
  */
-#include <stderror.mqh>
-#include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
+#property stacksize  32768                                  // intern eine normale Konstante
 #include <structs/sizes.mqh>
 
-#property stacksize 32768
 
-
+// Globale Variablen
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
-//int    __lpSuperContext;                                  // der Zeiger auf einen ggf. existierenden SuperContext wird je Modultyp definiert
+//int    __lpSuperContext;                                  // der Zeiger auf einen SuperContext wird je Modultyp deklariert (teils als Konstante, teils als Variable)
+//int    __lpTestContext;
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
@@ -43,10 +42,11 @@ int      prev_error;                                        // der letzte Fehler
 int      last_error;                                        // der letzte Fehler des aktuellen MQL-Rootfunktionsaufrufs des Programms (init, start oder deinit)
 
 
+
 // Special constants
 #define NULL                        0
-#define INT_MIN            0x80000000                       // kleinster negativer Integer-Value: -2147483648                              (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define INT_MAX            0x7FFFFFFF                       // größter positiver Integer-Value:    2147483647 (signed)                     (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define INT_MIN            0x80000000                       // kleinster negativer (signed) Integer-Value: -2147483648                     (datetime) INT_MIN = '1901-12-13 20:45:52'
+#define INT_MAX            0x7FFFFFFF                       // größter positiver (signed) Integer-Value:    2147483647                     (datetime) INT_MAX = '2038-01-19 03:14:07'
 #define MIN_VALID_POINTER  0x00010000                       // kleinster möglicher Wert für einen gültigen Pointer (x86)
 #define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
 #define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                  max(datetime) = '2037-12-31 23:59:59'
@@ -60,20 +60,14 @@ int      last_error;                                        // der letzte Fehler
 #define TAB                         "\t"                    // tab
 
 
+#include <stderror.mqh>
+#include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
+
+
 // Special double values, werden in init() definiert, da nicht constant deklarierbar (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
 double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
 double  P_INF;                                              //  1.#INF: positive infinity
 double  N_INF;                                              // -1.#INF: negative infinity
-
-
-// Log level
-#define L_OFF                 INT_MIN                       // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= Event)
-#define L_FATAL                 10000
-#define L_ERROR                 20000
-#define L_WARN                  30000
-#define L_INFO                  40000
-#define L_DEBUG                 50000
-#define L_ALL                 INT_MAX
 
 
 // Magic characters zur Markierung/Visualisierung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()

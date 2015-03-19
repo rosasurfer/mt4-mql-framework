@@ -7,5 +7,5 @@
 #include <shared/errors.h>
 
 
-#define NO_ERROR  ERR_NO_ERROR      // auﬂerhalb von stderror.h, da sonst in C++ Warnung: "warning C4005: 'NO_ERROR' : macro redefinition"
-                                    //                                                    ">...\winerror.h(116): see previous definition of 'NO_ERROR'"
+#define NO_ERROR  ERR_NO_ERROR      // auﬂerhalb von stderror.h, da in C++ bereits identisch definiert
+

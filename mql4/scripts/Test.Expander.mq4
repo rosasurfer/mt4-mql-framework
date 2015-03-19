@@ -7,18 +7,14 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-//#include <win32api.mqh>
 
 
-//#import "Expander.Debug.dll"
 #import "Expander.Release.dll"
 
-   bool Expander_onInit  (int context[]);
-   bool Expander_onStart (int context[]);
-   bool Expander_onDeinit(int context[]);
+   bool Test_onInit  (int context[], int logLevel);
+   bool Test_onStart (int context[], int logLevel);
+   bool Test_onDeinit(int context[], int logLevel);
 
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.Whereami(/*EXECUTION_CONTEXT*/int ec[]);
 #import
 
 
@@ -27,7 +23,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   Expander_onInit(__ExecutionContext);
+   Test_onInit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
 
@@ -38,8 +34,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   Expander_onStart(__ExecutionContext);
-   return(catch("onStart(1)"));
+   Test_onStart(__ExecutionContext, L_DEBUG);
+   return(last_error);
 }
 
 
@@ -48,6 +44,6 @@ int onStart() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   Expander_onDeinit(__ExecutionContext);
+   Test_onDeinit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
