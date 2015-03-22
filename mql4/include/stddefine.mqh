@@ -2,13 +2,15 @@
  * Globale Variablen und Konstanten
  */
 #property stacksize  32768                                  // intern eine normale Konstante
+#include <stderror.mqh>
+#include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
 #include <structs/sizes.mqh>
 
 
 // Globale Variablen
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
-//int    __lpSuperContext;                                  // der Zeiger auf einen SuperContext wird je Modultyp deklariert (teils als Konstante, teils als Variable)
-//int    __lpTestContext;
+//int    __lpSuperContext;                                  // global, aber nur in Indikatoren ungleich NULL: Zeiger auf einen SuperContext (wird je Modultyp deklariert)
+int      __lpTestContext;                                   // im Tester Zeiger auf den ExecutionContext des Experts
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
@@ -32,14 +34,14 @@ int      PipDigits, SubPipDigits;                           // Digits eines Pips
 int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick, zTick;                                       // Tick:  überlebt Timeframewechsel
-datetime Tick.Time;                                         // zTick: wird bei Timeframewechsel auf 0 (zero) zurückgesetzt
+int      Tick, zTick;                                       // Tick: überlebt Timeframewechsel, zTick: wird bei Timeframewechsel auf 0 (zero) zurückgesetzt
+datetime Tick.Time;
 datetime Tick.prevTime;
 int      ValidBars;
 int      ChangedBars;
 
-int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs des Programms
-int      last_error;                                        // der letzte Fehler des aktuellen MQL-Rootfunktionsaufrufs des Programms (init, start oder deinit)
+int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
+int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
 
 
 
@@ -60,11 +62,7 @@ int      last_error;                                        // der letzte Fehler
 #define TAB                         "\t"                    // tab
 
 
-#include <stderror.mqh>
-#include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
-
-
-// Special double values, werden in init() definiert, da nicht constant deklarierbar (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
+// Special values, werden in init() definiert, da nicht constant deklarierbar (@see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx)
 double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPU's immer negativ)
 double  P_INF;                                              //  1.#INF: positive infinity
 double  N_INF;                                              // -1.#INF: negative infinity

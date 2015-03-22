@@ -12,7 +12,23 @@ int __DEINIT_FLAGS__[];
 #include <structs/pewa/EXECUTION_CONTEXT.mqh>
 
 
-#include <test/teststatic.mqh>
+#import "Expander.Release.dll"
+   bool SyncExecutionContext(int context[]);
+#import
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int test_context() {
+
+   int context[EXECUTION_CONTEXT.intSize];
+   if (!SyncExecutionContext(context)) return(catch("test_context(1)->SyncExecutionContext() failed", ERR_RUNTIME_ERROR));
+   EXECUTION_CONTEXT.toStr(context, true);
+
+   return(catch("test_context(2)"));
+}
 
 
 /**
@@ -35,11 +51,11 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
    int hChart    = ec.hChart(ec);
 
-   __TYPE__      |=                   ec.ProgramType(ec);
-   __NAME__       = StringConcatenate(ec.ProgramName(ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami   (ec);
+   __TYPE__      |=                   ec.ProgramType (ec);
+   __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.RootFunction(ec);
    IsChart        = (hChart != 0);
-   __LOG          =                   ec.Logging    (ec);
+   __LOG          =                   ec.Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;

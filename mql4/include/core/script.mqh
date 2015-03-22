@@ -127,7 +127,7 @@ int start() {
 
 
    // (1) init() war immer erfolgreich
-   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);
+   __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
@@ -161,7 +161,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
+   ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
    Expander_onDeinit(__ExecutionContext);
@@ -282,7 +282,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  EXECUTION_CONTEXT.id is not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.id(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -323,13 +323,13 @@ bool InitExecutionContext() {
    ec.setId                (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                    );
    ec.setProgramType       (__ExecutionContext, __TYPE__                                                                );
    ec.setLpProgramName     (__ExecutionContext, lpNames[0]                                                              );
-   ec.setHChart            (__ExecutionContext, hChart                                                                  );
    ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                            );
+   ec.setHChart            (__ExecutionContext, hChart                                                                  );
    ec.setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_TESTING | TF_VISUAL, 0)                    );
    ec.setInitFlags         (__ExecutionContext, initFlags                                                               );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                             );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                    );
-   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                            );
+   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                                            );
    ec.setLogging           (__ExecutionContext, __LOG                                                                   );
    ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                              );
 
@@ -478,7 +478,5 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int  programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
-   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
-
-   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug       );
+   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int  rootFunction      );
 #import
