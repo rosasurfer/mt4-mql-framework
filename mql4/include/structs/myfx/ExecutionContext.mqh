@@ -11,8 +11,8 @@
  *
  * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
-#define I_EC.id                     0        // TODO: in MQL read-only (kein Setter)
-#define I_EC.hThreadId              1        // in MQL read-only
+#define I_EC.id                     0        // TODO: ohne MQL-Setter
+#define I_EC.hThreadId              1        // DONE: ohne MQL-Setter
 
 #define I_EC.programType            2
 #define I_EC.lpProgramName          3        // TODO: im Struct speichern
@@ -20,7 +20,7 @@
 #define I_EC.lpSuperContext         5
 #define I_EC.initFlags              6
 #define I_EC.deinitFlags            7
-#define I_EC.whereami               8
+#define I_EC.rootFunction           8
 #define I_EC.uninitializeReason     9
 
 #define I_EC.symbol                10        // noch nicht implementiert
@@ -62,7 +62,7 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
 }
 int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.initFlags         ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.deinitFlags       ]);                            EXECUTION_CONTEXT.toStr(ec); }
-int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.whereami          ]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.RootFunction         (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.rootFunction      ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.uninitializeReason]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.hChartWindow      ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.hChart            ]);                            EXECUTION_CONTEXT.toStr(ec); }
@@ -90,7 +90,7 @@ int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type     
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) { ec[I_EC.lpSuperContext    ] = lpSuperContext;     return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[I_EC.initFlags         ] = initFlags;          return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[I_EC.deinitFlags       ] = deinitFlags;        return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int &ec[], int    whereami          ) { ec[I_EC.whereami          ] = whereami;           return(whereami          ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int &ec[], int    rootFunction      ) { ec[I_EC.rootFunction      ] = rootFunction;       return(rootFunction      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[I_EC.uninitializeReason] = uninitializeReason; return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;       return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;             return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
@@ -128,13 +128,13 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
    string result = StringConcatenate("{id="                ,                         ec.id                (ec),
                                     ", hThreadId="         ,                         ec.hThreadId         (ec),
-                                    ", programType="       ,                         ec.ProgramType       (ec),
+                                    ", programType="       ,         ModuleTypeToStr(ec.ProgramType       (ec)),
                                     ", programName="       ,             StringToStr(ec.ProgramName       (ec)),
                                     ", launchType="        ,                         ec.LaunchType        (ec),
                                     ", superContext="      ,               ifString(!ec.lpSuperContext    (ec), "0", "0x"+ IntToHexStr(ec.lpSuperContext(ec))),
                                     ", initFlags="         ,          InitFlagsToStr(ec.InitFlags         (ec)),
                                     ", deinitFlags="       ,        DeinitFlagsToStr(ec.DeinitFlags       (ec)),
-                                    ", whereami="          ,       RootFunctionToStr(ec.Whereami          (ec)),
+                                    ", rootFunction="      ,       RootFunctionToStr(ec.RootFunction      (ec)),
                                     ", uninitializeReason=", UninitializeReasonToStr(ec.UninitializeReason(ec)),
                                     ", hChartWindow="      ,               ifString(!ec.hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec.hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec.hChart            (ec), "0", "0x"+ IntToHexStr(ec.hChart        (ec))),
@@ -160,7 +160,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    ec.SuperContext      (ec, ec);
    ec.InitFlags         (ec    ); ec.setInitFlags         (ec, NULL);
    ec.DeinitFlags       (ec    ); ec.setDeinitFlags       (ec, NULL);
-   ec.Whereami          (ec    ); ec.setWhereami          (ec, NULL);
+   ec.RootFunction      (ec    ); ec.setRootFunction      (ec, NULL);
    ec.UninitializeReason(ec    ); ec.setUninitializeReason(ec, NULL);
    ec.hChartWindow      (ec    ); ec.setHChartWindow      (ec, NULL);
    ec.hChart            (ec    ); ec.setHChart            (ec, NULL);
@@ -225,7 +225,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 //   int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
 //   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                );
-//   int    ec.Whereami             (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.RootFunction         (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]                                );
@@ -243,7 +243,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 //   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
 //   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
 //   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
-//   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
+//   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
 //   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 //   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
 //   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );

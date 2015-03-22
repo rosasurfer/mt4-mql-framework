@@ -182,7 +182,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);                  // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+      __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -192,7 +192,7 @@ int start() {
          if (__STATUS_OFF) return(ShowStatus(last_error));
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_INIT);             // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -259,7 +259,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
+   ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
    Expander_onDeinit(__ExecutionContext);
@@ -386,7 +386,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  EXECUTION_CONTEXT.id is not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.id(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -429,14 +429,14 @@ bool InitExecutionContext() {
    ec.setId                (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                                                                 );
    ec.setProgramType       (__ExecutionContext, __TYPE__                                                                                                             );
    ec.setLpProgramName     (__ExecutionContext, lpNames[0]                                                                                                           );
-   ec.setHChart            (__ExecutionContext, hChart                                                                                                               );
    ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                         );
+   ec.setHChart            (__ExecutionContext, hChart                                                                                                               );
    ec.setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TESTING, 0) | ifInt(IsVisualMode(), TF_VISUAL, 0) | ifInt(IsOptimization(), TF_OPTIMIZATION, 0));
  //ec.setLpSuperContext    ...bereits initialisiert
    ec.setInitFlags         (__ExecutionContext, initFlags                                                                                                            );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                          );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                 );
-   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                                                                                                         );
+   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                                                                                         );
    ec.setLogging           (__ExecutionContext, __LOG                                                                                                                );
    ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                                                                           );
  //ec.setLastError         ...bereits initialisiert
@@ -653,9 +653,7 @@ int Tester.Stop() {
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int  programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
-   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int  whereami          );
-
-   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
+   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int  rootFunction      );
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);

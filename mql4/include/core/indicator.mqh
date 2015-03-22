@@ -179,7 +179,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);                  // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+      __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -189,7 +189,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_INIT);             // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(error);
          }
       }
@@ -265,7 +265,7 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setWhereami          (__ExecutionContext, RF_DEINIT           );
+   ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
@@ -508,7 +508,7 @@ int DeinitReason() {
  * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen.
  */
 bool InitExecutionContext() {
-   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  EXECUTION_CONTEXT.id is not NULL = "+ EXECUTION_CONTEXT.toStr(__ExecutionContext, false), ERR_ILLEGAL_STATE));
+   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.id(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -558,14 +558,14 @@ bool InitExecutionContext() {
     //ec.setId                 ...wird in (3.4) gesetzt
       ec.setProgramType       (__ExecutionContext, __TYPE__                 );
       ec.setProgramName       (__ExecutionContext, __NAME__                 );
-      ec.setHChart            (__ExecutionContext, hChart                   );
       ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
+      ec.setHChart            (__ExecutionContext, hChart                   );
       ec.setTestFlags         (__ExecutionContext, testFlags                );
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
     //ec.setUninitializeReason ...wird in (3.4) gesetzt
-    //ec.setWhereami           ...wird in (3.4) gesetzt
+    //ec.setRootFunction       ...wird in (3.4) gesetzt
       ec.setLogging           (__ExecutionContext, __LOG                    );
     //ec.setLpLogFile         ...bereits gesetzt
     //ec.setLastError         ...bereits NULL
@@ -579,7 +579,7 @@ bool InitExecutionContext() {
    // (3.4) id und variable Context-Werte aktualisieren
    ec.setId                (__ExecutionContext, GetBufferAddress(__ExecutionContext));
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                );
-   ec.setWhereami          (__ExecutionContext, __WHEREAMI__                        );
+   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                        );
 
 
    // (4) restliche globale Variablen initialisieren
@@ -760,9 +760,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec.setWhereami          (/*EXECUTION_CONTEXT*/int ec[], int    whereami          );
-
-   string EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
+   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();

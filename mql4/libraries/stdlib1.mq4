@@ -62,11 +62,11 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    // (2) globale Variablen (re-)initialisieren
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
 
-   __TYPE__      |=                   ec.ProgramType(ec);
-   __NAME__       = StringConcatenate(ec.ProgramName(ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami   (ec);
-   IsChart        =                  (ec.hChart     (ec)!=0);
-   __LOG          =                   ec.Logging    (ec);
+   __TYPE__      |=                   ec.ProgramType (ec);
+   __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.RootFunction(ec);
+   IsChart        =                  (ec.hChart      (ec)!=0);
+   __LOG          =                   ec.Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -163,7 +163,7 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
       }
    }
 
-   __WHEREAMI__ = ec.setWhereami(__ExecutionContext, RF_START);
+   __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);
 
 
    if (Tick != tick) {
@@ -211,7 +211,7 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    }
 
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setWhereami          (__ExecutionContext, RF_DEINIT                );
+   ec.setRootFunction      (__ExecutionContext, RF_DEINIT                );
    ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));
 
 
@@ -11401,13 +11401,13 @@ void Tester.ResetGlobalArrays() {
    int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.InitFlags               (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.Whereami                (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.RootFunction            (/*EXECUTION_CONTEXT*/int ec[]                        );
    bool   ec.Logging                 (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.LastError               (/*EXECUTION_CONTEXT*/int ec[]                        );
 
    int    ec.setLpProgramName        (/*EXECUTION_CONTEXT*/int ec[], int lpName            );
    int    ec.setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
-   int    ec.setWhereami             (/*EXECUTION_CONTEXT*/int ec[], int whereami          );
+   int    ec.setRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
    int    ec.setLpLogFile            (/*EXECUTION_CONTEXT*/int ec[], int lpLogFile         );
 
 #import "structs.win32.ex4"

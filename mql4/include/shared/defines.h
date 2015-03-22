@@ -3,13 +3,14 @@
  */
 
 // Log level
-#define L_OFF                 INT_MIN           // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= Event) log(...);
-#define L_FATAL                 10000           // oder einfacher:               if (__LOG_DEBUG)          debug(...);
-#define L_ERROR                 20000
-#define L_WARN                  30000
-#define L_INFO                  40000
-#define L_DEBUG                 50000
-#define L_ALL                 INT_MAX
+#define L_OFF              0x80000000           // INT_MIN: ausdrücklich, da in C++ bereits intern definiert
+#define L_FATAL                 10000           //
+#define L_ERROR                 20000           // Tests umgekehrt zu log4j mit: if (__LOG_LEVEL >= msg_level) log(...);
+#define L_WARN                  30000           // oder einfacher:               if (__LOG_DEBUG)              debug(...);
+#define L_INFO                  40000           //
+#define L_NOTICE                50000           //
+#define L_DEBUG                 60000           //
+#define L_ALL              0x7FFFFFFF           // INT_MAX: ausdrücklich, da in C++ bereits intern definiert
 
 
 // Special constants

@@ -35,11 +35,11 @@ int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
    int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
    int hChart    = ec.hChart   (ec);
 
-   __TYPE__      |=                   ec.ProgramType(ec);
-   __NAME__       = StringConcatenate(ec.ProgramName(ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.Whereami   (ec);
+   __TYPE__      |=                   ec.ProgramType (ec);
+   __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec.RootFunction(ec);
    IsChart        = (hChart != 0);
-   __LOG          =                   ec.Logging    (ec);
+   __LOG          =                   ec.Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -77,7 +77,7 @@ int history.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
             return(last_error);
 
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setWhereami          (__ExecutionContext, RF_DEINIT                );
+   ec.setRootFunction      (__ExecutionContext, RF_DEINIT                );
    ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));
    return(NO_ERROR);
 }

@@ -2,21 +2,24 @@
  * TestIndicator
  */
 #property indicator_chart_window
-
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-//#include <stdlib.mqh>
+#include <stdlib.mqh>
+#include <structs/pewa/EXECUTION_CONTEXT.mqh>
 
 
 #import "Expander.Release.dll"
-   /*
-   bool Expander_onInit  (int context[]);
-   bool Expander_onStart (int context[]);
-   bool Expander_onDeinit(int context[]);
-   */
+   bool Test_onInit  (int context[], int logLevel);
+   bool Test_onStart (int context[], int logLevel);
+   bool Test_onDeinit(int context[], int logLevel);
+
+   bool SyncExecutionContext(int context[]);
+
+#import "test/testlibrary.ex4"
+   int test_context();
 #import
 
 
@@ -25,17 +28,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   Expander_onInit(__ExecutionContext);
-   return(last_error);
-}
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int onDeinit() {
-   Expander_onDeinit(__ExecutionContext);
+   //Test_onInit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
 
@@ -46,6 +39,22 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   Expander_onStart(__ExecutionContext);
+   Test_onStart(__ExecutionContext, L_DEBUG);
+
+   int context[EXECUTION_CONTEXT.intSize];
+   //if (!SyncExecutionContext(context)) return(catch("onTick(1)->SyncExecutionContext() failed", ERR_RUNTIME_ERROR));
+   //EXECUTION_CONTEXT.toStr(context, true);
+
+   return(last_error);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   //Test_onDeinit(__ExecutionContext, L_DEBUG);
+   //int error = test_context(); if (IsError(error)) return(catch("onStart(2)->test_context() failed", error));
    return(last_error);
 }
