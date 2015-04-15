@@ -8792,5 +8792,26 @@ Color.Bands=14772545
 period_flags=30
 show_data=1
 </indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ALMA
+flags=339
+window_num=0
+<inputs>
+MA.Periods=75
+MA.Timeframe=H1
+</inputs>
+</expert>
+weight_0=0
+weight_1=0
+weight_2=2
+weight_3=2
+weight_4=2
+period_flags=30
+show_data=1
+</indicator>
+
 </window>
 </chart>
