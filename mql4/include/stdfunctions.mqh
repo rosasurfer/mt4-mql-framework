@@ -3548,14 +3548,11 @@ void __DummyCalls() {
    int      ec.ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "expander.dll"
-   bool     Expander_onInit  (int context[]);
-   bool     Expander_onStart (int context[]);
-   bool     Expander_onDeinit(int context[]);
-
    int      GetBufferAddress(int buffer[]);
    int      GetLastWin32Error();
    string   IntToHexStr(int integer);
    bool     IsBuiltinTimeframe(int timeframe);
+   bool     SetExecutionContext(int context[]);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

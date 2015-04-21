@@ -27,7 +27,7 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   Expander_onInit(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // (2) stdlib initialisieren
@@ -135,7 +135,7 @@ int start() {
       return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
 
 
-   Expander_onStart(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
                                                                                              //       andere brauchen die aktuelle Zeitreihe nicht.
 
    // (3) stdLib benachrichtigen
@@ -164,7 +164,7 @@ int deinit() {
    ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
-   Expander_onDeinit(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.

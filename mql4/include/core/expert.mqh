@@ -41,7 +41,7 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   Expander_onInit(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // (2) stdlib initialisieren
@@ -217,7 +217,7 @@ int start() {
       return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
-   Expander_onStart(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // (4) stdLib benachrichtigen
@@ -262,7 +262,7 @@ int deinit() {
    ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
-   Expander_onDeinit(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    if (IsTesting()) {
