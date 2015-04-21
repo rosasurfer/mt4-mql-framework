@@ -32,7 +32,7 @@ int init() {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   Expander_onInit(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // (2) stdlib initialisieren
@@ -227,7 +227,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   Expander_onStart(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // (5) stdLib benachrichtigen
@@ -269,7 +269,7 @@ int deinit() {
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
-   Expander_onDeinit(__ExecutionContext);
+   SetExecutionContext(__ExecutionContext);
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
