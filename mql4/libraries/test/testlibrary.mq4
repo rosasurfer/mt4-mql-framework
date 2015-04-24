@@ -13,7 +13,7 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   bool SyncExecutionContext(int context[]);
+   bool SetExecutionContext(int context[]);
 #import
 
 
@@ -24,7 +24,7 @@ int __DEINIT_FLAGS__[];
 int test_context() {
 
    int context[EXECUTION_CONTEXT.intSize];
-   if (!SyncExecutionContext(context)) return(catch("test_context(1)->SyncExecutionContext() failed", ERR_RUNTIME_ERROR));
+   if (!SetExecutionContext(context)) return(catch("test_context(1)->SetExecutionContext() failed", ERR_RUNTIME_ERROR));
    EXECUTION_CONTEXT.toStr(context, true);
 
    return(catch("test_context(2)"));
