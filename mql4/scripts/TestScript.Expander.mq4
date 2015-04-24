@@ -23,6 +23,11 @@ int __DEINIT_FLAGS__[];
 #import
 
 
+#import "struct.EXECUTION_CONTEXT.ex4"
+   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
+#import
+
+
 /**
  *
  * @return int - Fehlerstatus

@@ -28,7 +28,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.id(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec.ProgramId(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -508,7 +508,7 @@ int DeinitReason() {
  * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen.
  */
 bool InitExecutionContext() {
-   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.id(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec.ProgramId(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.ProgramId(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -538,7 +538,7 @@ bool InitExecutionContext() {
 
 
    // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
-   if (!ec.id(__ExecutionContext)) {
+   if (!ec.ProgramId(__ExecutionContext)) {
 
       // (3.1) Existiert ein SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
@@ -555,7 +555,6 @@ bool InitExecutionContext() {
       }
 
       // (3.2) Context-Variablen setzen
-    //ec.setId                 ...wird in (3.4) gesetzt
       ec.setProgramType       (__ExecutionContext, __TYPE__                 );
       ec.setProgramName       (__ExecutionContext, __NAME__                 );
       ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
@@ -576,10 +575,9 @@ bool InitExecutionContext() {
       __LOG   = ec.Logging(__ExecutionContext);
    }
 
-   // (3.4) id und variable Context-Werte aktualisieren
-   ec.setId                (__ExecutionContext, GetBufferAddress(__ExecutionContext));
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                );
-   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                        );
+   // (3.4) variable Context-Werte aktualisieren
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__        );
 
 
    // (4) restliche globale Variablen initialisieren
@@ -746,7 +744,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.id                   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
@@ -756,7 +754,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
-   int    ec.setId                (/*EXECUTION_CONTEXT*/int ec[], int    id                );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );

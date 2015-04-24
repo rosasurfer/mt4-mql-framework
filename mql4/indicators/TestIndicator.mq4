@@ -16,7 +16,7 @@ int __DEINIT_FLAGS__[];
    bool Test_onStart (int context[], int logLevel);
    bool Test_onDeinit(int context[], int logLevel);
 
-   bool SyncExecutionContext(int context[]);
+   bool SetExecutionContext(int context[]);
 
 #import "test/testlibrary.ex4"
    int test_context();
@@ -28,7 +28,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   //Test_onInit(__ExecutionContext, L_DEBUG);
+   Test_onInit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
 
@@ -41,8 +41,8 @@ int onInit() {
 int onTick() {
    Test_onStart(__ExecutionContext, L_DEBUG);
 
-   int context[EXECUTION_CONTEXT.intSize];
-   //if (!SyncExecutionContext(context)) return(catch("onTick(1)->SyncExecutionContext() failed", ERR_RUNTIME_ERROR));
+   //int context[EXECUTION_CONTEXT.intSize];
+   //if (!SetExecutionContext(context)) return(catch("onTick(1)->SetExecutionContext() failed", ERR_RUNTIME_ERROR));
    //EXECUTION_CONTEXT.toStr(context, true);
 
    return(last_error);
@@ -54,7 +54,7 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   //Test_onDeinit(__ExecutionContext, L_DEBUG);
+   Test_onDeinit(__ExecutionContext, L_DEBUG);
    //int error = test_context(); if (IsError(error)) return(catch("onStart(2)->test_context() failed", error));
    return(last_error);
 }

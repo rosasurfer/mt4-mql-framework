@@ -11,9 +11,8 @@
  *
  * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
-#define I_EC.id                     0        // TODO: ohne MQL-Setter
-#define I_EC.hThreadId              1        // DONE: ohne MQL-Setter
-
+#define I_EC.hThreadId              0        // ohne MQL-Setter
+#define I_EC.programId              1        // ohne MQL-Setter
 #define I_EC.programType            2
 #define I_EC.lpProgramName          3        // TODO: im Struct speichern
 #define I_EC.launchType             4
@@ -23,22 +22,22 @@
 #define I_EC.rootFunction           8
 #define I_EC.uninitializeReason     9
 
-#define I_EC.symbol                10        // noch nicht implementiert
-#define I_EC.timeframe             13        // noch nicht implementiert
+#define I_EC.symbol                10        // TODO: noch nicht implementiert
+#define I_EC.timeframe             13        // TODO: noch nicht implementiert
 #define I_EC.hChartWindow          14
 #define I_EC.hChart                15
 #define I_EC.testFlags             16
 
 #define I_EC.lastError             17
-#define I_EC.dllErrors             18        // noch nicht implementiert
-#define I_EC.dllErrorsSize         19        // noch nicht implementiert
-#define I_EC.logging               20        // auf LOG_LEVEL umstellen
+#define I_EC.dllErrors             18        // TODO: noch nicht implementiert
+#define I_EC.dllErrorsSize         19        // TODO: noch nicht implementiert
+#define I_EC.logging               20        // TODO: auf LOG_LEVEL umstellen
 #define I_EC.lpLogFile             21        // TODO: im Struct speichern
 
 
 // Getter
-int    ec.id                   (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.id                ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.hThreadId            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.hThreadId         ]);                            EXECUTION_CONTEXT.toStr(ec); }
+int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.programId         ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.programType       ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.lpProgramName        (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.lpProgramName     ]);                            EXECUTION_CONTEXT.toStr(ec); }
 string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(ec[I_EC.lpProgramName     ]));                           EXECUTION_CONTEXT.toStr(ec); }
@@ -48,17 +47,10 @@ int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTE
    if (ArrayDimension(sec) != 1)        return(catch("ec.SuperContext(1)  too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
       ArrayResize(sec, EXECUTION_CONTEXT.intSize);
-
    int lpSuperContext = ec.lpSuperContext(ec);
-   if (!lpSuperContext) {
-      ArrayInitialize(sec, 0);
-   }
-   else {
-      CopyMemory(lpSuperContext, GetBufferAddress(sec), EXECUTION_CONTEXT.size);
-      // primitive Zeigervalidierung, es gilt: PTR==*PTR (der Wert des Zeigers ist an der Adresse selbst gespeichert)
-      if (ec.id(sec) != lpSuperContext) return(catch("ec.SuperContext(2)  invalid super EXECUTION_CONTEXT found at address 0x"+ IntToHexStr(lpSuperContext), ERR_RUNTIME_ERROR));
-   }
-   return(catch("ec.SuperContext(3)"));                                                                                                                                    EXECUTION_CONTEXT.toStr(ec);
+   if (!lpSuperContext) ArrayInitialize(sec, 0);
+   else                 CopyMemory(lpSuperContext, GetBufferAddress(sec), EXECUTION_CONTEXT.size);
+   return(catch("ec.SuperContext(2)"));                                                                                                                                    EXECUTION_CONTEXT.toStr(ec);
 }
 int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.initFlags         ]);                            EXECUTION_CONTEXT.toStr(ec); }
 int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {           return(ec[I_EC.deinitFlags       ]);                            EXECUTION_CONTEXT.toStr(ec); }
@@ -74,8 +66,8 @@ string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                   
 
 
 // Setter
-int    ec.setId                (/*EXECUTION_CONTEXT*/int &ec[], int    id                ) { ec[I_EC.id                ] = id;                 return(id                ); EXECUTION_CONTEXT.toStr(ec); }
-//     ec.hThreadId: read-only
+//     ec.setHThreadId(): ohne MQL-Setter
+//     ec.setProgramId(): ohne MQL-Setter
 int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int &ec[], int    lpName            ) {
    if (lpName < MIN_VALID_POINTER) return(!catch("ec.setLpProgramName(1)  invalid parameter lpName = 0x"+ IntToHexStr(lpName) +" (not a valid pointer)", ERR_INVALID_POINTER));
@@ -126,8 +118,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
    if (ArrayDimension(ec) > 1)                     return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
    if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
 
-   string result = StringConcatenate("{id="                ,                         ec.id                (ec),
-                                    ", hThreadId="         ,                         ec.hThreadId         (ec),
+   string result = StringConcatenate("{hThreadId="         ,                         ec.hThreadId         (ec),
+                                    ", programId="         ,                         ec.ProgramId         (ec),
                                     ", programType="       ,         ModuleTypeToStr(ec.ProgramType       (ec)),
                                     ", programName="       ,             StringToStr(ec.ProgramName       (ec)),
                                     ", launchType="        ,                         ec.LaunchType        (ec),
@@ -150,8 +142,8 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   ec.id                (ec    ); ec.setId                (ec, NULL);
    ec.hThreadId         (ec    );
+   ec.ProgramId         (ec    );
    ec.ProgramType       (ec    ); ec.setProgramType       (ec, NULL);
    ec.lpProgramName     (ec    ); ec.setLpProgramName     (ec, NULL);
    ec.ProgramName       (ec    ); ec.setProgramName       (ec, NULL);
@@ -215,8 +207,8 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 
 
 //#import "struct.EXECUTION_CONTEXT.ex4"
-//   int    ec.id                   (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.hThreadId            (/*EXECUTION_CONTEXT*/int ec[]                                );
+//   int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   int    ec.lpProgramName        (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                );
@@ -235,7 +227,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 //   int    ec.lpLogFile            (/*EXECUTION_CONTEXT*/int ec[]                                );
 //   string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                );
 
-//   int    ec.setId                (/*EXECUTION_CONTEXT*/int ec[], int    id                );
 //   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type              );
 //   int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int ec[], int    lpName            );
 //   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );

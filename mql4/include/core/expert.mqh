@@ -37,7 +37,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.id(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
+   if (!ec.ProgramId(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -386,7 +386,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.id(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.id(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec.ProgramId(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.ProgramId(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -426,7 +426,6 @@ bool InitExecutionContext() {
    // (3) EXECUTION_CONTEXT initialisieren
    ArrayInitialize(__ExecutionContext, 0);
 
-   ec.setId                (__ExecutionContext, GetBufferAddress(__ExecutionContext)                                                                                 );
    ec.setProgramType       (__ExecutionContext, __TYPE__                                                                                                             );
    ec.setLpProgramName     (__ExecutionContext, lpNames[0]                                                                                                           );
    ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                         );
@@ -639,7 +638,7 @@ int Tester.Stop() {
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.id                   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int  hChart            );
@@ -649,7 +648,6 @@ int Tester.Stop() {
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
    int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
    int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int    ec.setId                (/*EXECUTION_CONTEXT*/int ec[], int  id                );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int  programType       );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
