@@ -25,6 +25,12 @@
 #define MODULETYPE_LIBRARY          8
 
 
+// Programm-Typen
+#define PROGRAMTYPE_INDICATOR       MODULETYPE_INDICATOR
+#define PROGRAMTYPE_EXPERT          MODULETYPE_EXPERT
+#define PROGRAMTYPE_SCRIPT          MODULETYPE_SCRIPT
+
+
 // MQL Root-Funktion-ID's
 #define ROOTFUNCTION_INIT           1
 #define ROOTFUNCTION_START          2
