@@ -945,7 +945,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             }
 
             if (noEmptyChild) {
-               if (__WHEREAMI__==RF_INIT) /*&&*/ if (GetCurrentThreadId()==GetUIThreadId()) {
+               if (__WHEREAMI__==RF_INIT) /*&&*/ if (IsUIThread()) {
                   static.hWndSelf = -1;                                 // Rückgabewert -1
                   return(static.hWndSelf);
                }                                                        // vorhandene ChildWindows im Debugger ausgeben
@@ -1024,52 +1024,6 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order
    }
    return(hChart);
-}
-
-
-/**
- * Gibt das Handle des Terminal-Hauptfensters zurück.
- *
- * @return int - Handle oder 0, falls ein Fehler auftrat
- */
-int GetApplicationWindow() {
-   static int hWnd;                                                  // ohne Initializer, @see MQL.doc
-   if (hWnd != 0)
-      return(hWnd);
-
-   // ClassName des Terminal-Hauptfensters (alle Builds)
-   string terminalClassName = "MetaQuotes::MetaTrader::4.00";
-
-
-   // (1) mit WindowHandle(), schlägt jedoch in etlichen Situationen fehl: init(), deinit(), in start() bei Terminalstart, im Tester bei VisualMode=Off
-   if (IsChart) {
-      hWnd = WindowHandle(Symbol(), NULL);               // !!!!!! Hier nicht WindowHandleEx() verwenden, da das zu einer rekursiven Schleife führt !!!!!!
-      if (hWnd != 0) {                                   // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-         hWnd = GetAncestor(hWnd, GA_ROOT);
-         if (GetClassName(hWnd) == terminalClassName)
-            return(hWnd);
-         warn("GetApplicationWindow(1)  unknown terminal top-level window found (class \""+ GetClassName(hWnd) +"\"), hWndChild originated from WindowHandle()", ERR_RUNTIME_ERROR);
-         hWnd = 0;
-      }
-   }
-
-
-   // (2) ohne WindowHandle() alle Top-Level-Windows durchlaufen
-   int processId[1], hWndNext=GetTopWindow(NULL), myProcessId=GetCurrentProcessId();
-
-   while (hWndNext != 0) {
-      GetWindowThreadProcessId(hWndNext, processId);
-      if (processId[0]==myProcessId) /*&&*/ if (GetClassName(hWndNext)==terminalClassName)
-         break;
-      hWndNext = GetWindow(hWndNext, GW_HWNDNEXT);
-   }
-   if (!hWndNext) {
-      catch("GetApplicationWindow(2)  cannot find application main window", ERR_RUNTIME_ERROR);
-      hWnd = 0;
-   }
-   hWnd = hWndNext;
-
-   return(hWnd);
 }
 
 
@@ -2084,26 +2038,6 @@ int ArrayUnshiftString(string array[], string value) {
    int size = ArrayPushString(array, value);
    ReverseStringArray(array);
    return(size);
-}
-
-
-/**
- * Gibt die ID des Userinterface-Threads zurück.
- *
- * @return int - Thread-ID (nicht das Pseudo-Handle) oder 0, falls ein Fehler auftrat
- */
-int GetUIThreadId() {
-   static int threadId;                                              // ohne Initializer, @see MQL.doc
-   if (threadId != 0)
-      return(threadId);
-
-   int iNull[], hWnd=GetApplicationWindow();
-   if (!hWnd)
-      return(0);
-
-   threadId = GetWindowThreadProcessId(hWnd, iNull);
-
-   return(threadId);
 }
 
 
@@ -3395,7 +3329,6 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);
-   GetUIThreadId();
    GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
@@ -3515,7 +3448,6 @@ void __DummyCalls() {
    string   ByteToHexStr(int byte);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                     // Library-Stub: *kann* lokal überschrieben werden
-   int      GetApplicationWindow();
    bool     GetConfigBool(string section, string key, bool defaultValue);
    int      GetCustomLogID();
    datetime GetGmtTime();
@@ -3547,11 +3479,13 @@ void __DummyCalls() {
    int      ec.TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec.ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
 
-#import "expander.dll"
+#import "Expander.dll"
+   int      GetApplicationWindow();
    int      GetBufferAddress(int buffer[]);
    int      GetLastWin32Error();
    string   IntToHexStr(int integer);
    bool     IsBuiltinTimeframe(int timeframe);
+   bool     IsUIThread();
    bool     SetExecutionContext(int context[]);
    void     SetLogLevel(int level);
 

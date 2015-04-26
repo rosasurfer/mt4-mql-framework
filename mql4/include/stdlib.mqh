@@ -40,9 +40,7 @@
 #import "stdlib2.ex4"
    int      GetTerminalRuntime();
 #import "stdlib1.ex4"
-   int      GetApplicationWindow();
    int      GetTesterWindow();
-   int      GetUIThreadId();
    string   GetServerDirectory();
    string   GetComputerName();
 
