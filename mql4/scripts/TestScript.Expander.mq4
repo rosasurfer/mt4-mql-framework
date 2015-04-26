@@ -23,17 +23,13 @@ int __DEINIT_FLAGS__[];
 #import
 
 
-#import "struct.EXECUTION_CONTEXT.ex4"
-   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
-#import
-
-
 /**
  *
  * @return int - Fehlerstatus
  */
 int onInit() {
-   Test_onInit(__ExecutionContext, L_DEBUG);
+   //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+   //Test_onInit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
 
@@ -44,15 +40,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   Test_onStart(__ExecutionContext, L_DEBUG);
-
+   //Test_onStart(__ExecutionContext, L_DEBUG);
    //Test();
-   return(last_error);
-
-   int context[EXECUTION_CONTEXT.intSize];
-   //if (!GetExecutionContext(context)) return(catch("onStart(1)->GetExecutionContext() failed", ERR_RUNTIME_ERROR));
-   //EXECUTION_CONTEXT.toStr(context, true);
-
    return(last_error);
 }
 
@@ -62,7 +51,7 @@ int onStart() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   Test_onDeinit(__ExecutionContext, L_DEBUG);
+   //Test_onDeinit(__ExecutionContext, L_DEBUG);
    //int error = test_context(); if (IsError(error)) return(catch("onStart(2)->test_context() failed", error));
    return(last_error);
 }

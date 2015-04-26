@@ -164,7 +164,6 @@ int UpdateProgramStatus(int value=NULL) {
 
 #import "stdlib1.ex4"
    int    GetTesterWindow();
-   int    GetUIThreadId();
    string GetWindowText(int hWnd);
    bool   StringEndsWith(string object, string postfix);
 

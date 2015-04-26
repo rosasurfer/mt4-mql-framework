@@ -627,12 +627,12 @@ int Tester.Stop() {
    int    ShowStatus(int error);
 
    int    Chart.SendTick(bool sound);
-   int    GetApplicationWindow();
    bool   IntInArray(int haystack[], int needle);
    int    PeriodFlag(int period);
    int    SumInts(int array[]);
 
 #import "Expander.dll"
+   int    GetApplicationWindow();
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
 

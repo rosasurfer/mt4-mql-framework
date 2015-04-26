@@ -12,6 +12,8 @@ extern string LogLevel = "inherit";
  * @return int - Fehlerstatus
  */
 int init() {
+   //SetLogLevel(L_DEBUG);
+
    if (__STATUS_OFF)
       return(last_error);
 
@@ -66,7 +68,6 @@ int init() {
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    // (falls implementiert) -1 zurückgeben.
    error = onInit();                                                          // Preprocessing-Hook
-                                                                              //
    if (!error) {                                                              //
       switch (UninitializeReason()) {                                         //
          case REASON_PARAMETERS : error = onInitParameterChange(); break;     //

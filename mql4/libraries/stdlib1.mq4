@@ -76,13 +76,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (3) Variablen, die später u.U. nicht mehr ermittelbar sind, sofort bei Initialisierung ermitteln (werden gecacht).
-   if (!WindowHandleEx(NULL))   return(last_error);                  // MQL-Programme können noch laufen, wenn das Hauptfenster bereits nicht mehr existiert (z.B. im Tester
-   if (!GetApplicationWindow()) return(last_error);                  // bei Shutdown). Da die Funktion GetUIThreadId() auf ein gültiges Hauptfenster-Handle angewiesen ist,
-   if (!GetUIThreadId())        return(last_error);                  // werden Handle und ThreadId bereits hier in init() ermittelt und intern gecacht.
-
-
-   // (4) user-spezifische Init-Tasks ausführen
+   // (3) user-spezifische Init-Tasks ausführen
    if (initFlags & INIT_TIMEZONE && 1) {                             // Zeitzonen-Konfiguration überprüfen
       if (GetServerTimezone() == "")
          return(last_error);
@@ -111,7 +105,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    }
 
 
-   // (5) nur für EA's durchzuführende globale Initialisierungen
+   // (4) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
       if (IntInArray(reasons, ec.UninitializeReason(ec)))
@@ -128,7 +122,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    }
 
 
-   // (6) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
+   // (5) gespeicherte Tickdaten zurückliefern (werden nur von Indikatoren ausgewertet)
    if (ArraySize(tickData) < 3)
       ArrayResize(tickData, 3);
    tickData[0] = Tick;
@@ -3083,14 +3077,12 @@ int SumInts(int values[]) {
 double SumDoubles(double values[]) {
    if (ArrayDimension(values) > 1) return(_NULL(catch("SumDoubles()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
-   double sum;
-
    int size = ArraySize(values);
+   double sum;
 
    for (int i=0; i < size; i++) {
       sum += values[i];
    }
-
    return(sum);
 }
 

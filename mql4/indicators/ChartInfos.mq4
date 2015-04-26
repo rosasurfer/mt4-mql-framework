@@ -1485,6 +1485,7 @@ bool UpdatePositions() {
          else GetLastError();
       }
    }
+
    // (2.2) nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
