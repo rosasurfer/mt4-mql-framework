@@ -3553,6 +3553,7 @@ void __DummyCalls() {
    string   IntToHexStr(int integer);
    bool     IsBuiltinTimeframe(int timeframe);
    bool     SetExecutionContext(int context[]);
+   void     SetLogLevel(int level);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
