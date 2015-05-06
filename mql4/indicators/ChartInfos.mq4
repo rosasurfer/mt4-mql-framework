@@ -45,10 +45,13 @@ int appliedPrice = PRICE_MEDIAN;                                     // Preis: B
 // Moneymanagement
 #define DEFAULT_VOLATILITY     2.5                                   // Default-Volatilität einer Unit in Prozent Equity je Woche (Erfahrungswert)
 
-bool   mm.done;
-double mm.unleveragedLots;                                           // Lotsize bei Hebel 1:1
-double mm.ATRwAbs;                                                   // ATR: absoluter Wert
-double mm.ATRwPct;                                                   // ATR: prozentualer Wert
+bool   mm.done;                                                      // Flag
+double mm.currentEquity;                                             //
+double mm.availableEquity;                                           // zum Traden verfügbare Equity
+double mm.lotValue;                                                  // Value eines Lots in Account-Currency
+double mm.unleveragedLots;                                           // Lotsize für Hebel von 1:1
+double mm.ATRwAbs;                                                   // wöchentliche ATR: absoluter Wert
+double mm.ATRwPct;                                                   // wöchentliche ATR: prozentualer Wert
 
 double mm.vola = DEFAULT_VOLATILITY;
 double mm.volaLeverage;                                              // Hebel für wöchentliche Volatilität einer Unit von {mm.vola} Prozent
@@ -153,17 +156,17 @@ int    lfxOrders.openPositions;                                      // Anzahl d
 
 
 // Textlabel für die einzelnen Anzeigen
-string label.instrument      = "Instrument";
-string label.ohlc            = "OHLC";
-string label.price           = "Price";
-string label.spread          = "Spread";
-string label.aum             = "AuM";
-string label.position        = "Position";
-string label.unitSize        = "UnitSize";
-string label.externalAccount = "ExternalAccount";
-string label.lfxTradeAccount = "LfxTradeAccount";
-string label.stopoutLevel    = "StopoutLevel";
-string label.time            = "Time";
+string label.instrument      = "{__NAME__}.Instrument";
+string label.ohlc            = "{__NAME__}.OHLC";
+string label.price           = "{__NAME__}.Price";
+string label.spread          = "{__NAME__}.Spread";
+string label.aum             = "{__NAME__}.AuM";
+string label.position        = "{__NAME__}.Position";
+string label.unitSize        = "{__NAME__}.UnitSize";
+string label.externalAccount = "{__NAME__}.ExternalAccount";
+string label.lfxTradeAccount = "{__NAME__}.LfxTradeAccount";
+string label.stopoutLevel    = "{__NAME__}.StopoutLevel";
+string label.time            = "{__NAME__}.Time";
 
 
 // Font-Settings der CustomPositions-Anzeige
@@ -1172,22 +1175,21 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
  */
 bool CreateLabels() {
    // Label definieren
-   label.instrument      = __NAME__ +"."+ label.instrument;
-   label.ohlc            = __NAME__ +"."+ label.ohlc;
-   label.price           = __NAME__ +"."+ label.price;
-   label.spread          = __NAME__ +"."+ label.spread;
-   label.aum             = __NAME__ +"."+ label.aum;
-   label.position        = __NAME__ +"."+ label.position;
-   label.unitSize        = __NAME__ +"."+ label.unitSize;
-   label.externalAccount = __NAME__ +"."+ label.externalAccount;
-   label.lfxTradeAccount = __NAME__ +"."+ label.lfxTradeAccount;
-   label.time            = __NAME__ +"."+ label.time;
-   label.stopoutLevel    = __NAME__ +"."+ label.stopoutLevel;
+   label.instrument      = StringReplace(label.instrument     , "{__NAME__}", __NAME__);
+   label.ohlc            = StringReplace(label.ohlc           , "{__NAME__}", __NAME__);
+   label.price           = StringReplace(label.price          , "{__NAME__}", __NAME__);
+   label.spread          = StringReplace(label.spread         , "{__NAME__}", __NAME__);
+   label.aum             = StringReplace(label.aum            , "{__NAME__}", __NAME__);
+   label.position        = StringReplace(label.position       , "{__NAME__}", __NAME__);
+   label.unitSize        = StringReplace(label.unitSize       , "{__NAME__}", __NAME__);
+   label.externalAccount = StringReplace(label.externalAccount, "{__NAME__}", __NAME__);
+   label.lfxTradeAccount = StringReplace(label.lfxTradeAccount, "{__NAME__}", __NAME__);
+   label.time            = StringReplace(label.time           , "{__NAME__}", __NAME__);
+   label.stopoutLevel    = StringReplace(label.stopoutLevel   , "{__NAME__}", __NAME__);
 
+
+   // nur Instrument-Label: Anzeige wird sofort (und nur) hier gesetzt
    int build = GetTerminalBuild();
-
-
-   // Instrument-Label: Anzeige wird sofort und nur hier gesetzt
    if (build <= 509) {                                                                    // Builds größer 509 haben oben links eine {Symbol,Period}-Anzeige, die das
       if (ObjectFind(label.instrument) == 0)                                              // Label überlagert und sich nicht ohne weiteres ausblenden läßt.
          ObjectDelete(label.instrument);
@@ -1328,7 +1330,7 @@ bool CreateLabels() {
 
 
 /**
- * Aktualisiert die Kursanzeige.
+ * Aktualisiert die Kursanzeige oben rechts.
  *
  * @return bool - Erfolgsstatus
  */
@@ -1413,10 +1415,9 @@ bool UpdateUnitSize() {
          else if (lotsize <=  750.  ) lotsize =       MathRound(MathRound(lotsize/ 20    ) *  20       );   //    300-750: Vielfaches von  20
          else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
          else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
-
-         // !!! max. 63 Zeichen           V - Volatilität/Woche                      L - Leverage                           Unitsize
-         strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "%     L"+ DoubleToStr(leverage, 1) +"  =  ", NumberToStr(lotsize, ", .+"), " lot");
       }
+      // !!! max. 63 Zeichen           V - Volatilität/Woche                      L - Leverage                           Unitsize
+      strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "%     L", DoubleToStr(leverage, 1), "  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
 
    // Anzeige aktualisieren
@@ -1440,22 +1441,23 @@ bool UpdatePositions() {
 
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string strCurrentVola, strCurrentLeverage, strPosition;
-   if      (!isPosition   ) strPosition = " ";
-   else if (!totalPosition) strPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   string strCurrentVola, strCurrentLeverage, strCurrentPosition;
+   if      (!isPosition   ) strCurrentPosition = " ";
+   else if (!totalPosition) strCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
-      if (mm.unleveragedLots != 0) {
-         double currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
-         strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
+      double currentLeverage;
+      if (!mm.availableEquity) currentLeverage = MathAbs(totalPosition)/(mm.currentEquity/mm.lotValue);  // statt der verfügbaren wird die aktuelle Equity verwendet (unrealisierte Gewinne !!!)
+      else                     currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
+      strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
-         // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
-         if (mm.ATRwPct != 0)
-            strCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%      ");
-      }
-      strPosition = StringConcatenate("Position:   " , strCurrentVola, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
+      if (mm.ATRwPct != 0)
+         strCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%      ");
+
+      strCurrentPosition = StringConcatenate("Position:   " , strCurrentVola, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
-   ObjectSetText(label.position, strPosition, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.position, strCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
@@ -1974,6 +1976,9 @@ bool UpdateMoneyManagement() {
    if (mode.remote) return(_false(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
  //if (mode.remote) return(!catch("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED));
 
+   mm.currentEquity   = 0;                                                                   //
+   mm.availableEquity = 0;                                                                   //
+   mm.lotValue        = 0;                                                                   //
    mm.unleveragedLots = 0;                                                                   // Lotsize bei Hebel 1:1
    mm.ATRwAbs         = 0;                                                                   // wöchentliche ATR, absolut
    mm.ATRwPct         = 0;                                                                   // wöchentliche ATR, prozentual
@@ -1991,16 +1996,26 @@ bool UpdateMoneyManagement() {
          if (error == ERR_UNKNOWN_SYMBOL) return(false);
          return(!catch("UpdateMoneyManagement(2)", error));
       }
-   double equity = GetExternalAssets();
-   if (mode.intern)
-      equity += MathMin(AccountBalance(), AccountEquity()-AccountCredit());
-   //debug("UpdateMoneyManagement()  equity="+ DoubleToStr(equity, 2));
 
-   if (!Close[0] || !tickSize || !tickValue || !marginRequired || equity <= 0)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   double externalAssets = GetExternalAssets();
+   if (mode.intern) {
+      mm.currentEquity   = AccountEquity()-AccountCredit();
+      mm.availableEquity = MathMin(AccountBalance(), mm.currentEquity) + externalAssets;
+      mm.currentEquity  += externalAssets;
+   }
+   else {
+      mm.currentEquity   = externalAssets;
+      mm.availableEquity = externalAssets;
+   }
+   if (mm.availableEquity < 0)
+      mm.availableEquity = 0;
+
+
+   if (!Close[0] || !tickSize || !tickValue || !marginRequired)                              // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
-   double lotValue    = Close[0]/tickSize * tickValue;                                       // Value eines Lots in Account-Currency
-   mm.unleveragedLots = equity/lotValue;                                                     // ungehebelte Lotsize (Leverage 1:1)
+   mm.lotValue        = Close[0]/tickSize * tickValue;                                       // Value eines Lots in Account-Currency
+   mm.unleveragedLots = mm.availableEquity/mm.lotValue;                                      // ungehebelte Lotsize (Leverage 1:1)
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
