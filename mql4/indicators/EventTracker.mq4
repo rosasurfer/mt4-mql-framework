@@ -1,5 +1,5 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch oder per SMS.
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch und/oder per SMS.
  *
  * @TODO: per E-Mail, HTML-Request, ICQ
  *
