@@ -2087,7 +2087,7 @@ int SearchMagicNumber(int array[], int number) {
  *   0.3S1.2345                                          - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)    {             0.3, TYPE_SHORT   , 1.2345          , ...}
  *      L                                                - ohne Lotsize: alle verbleibenden Long-Positionen                   {           EMPTY, TYPE_LONG    , NULL            , ...}
  *      S                                                - ohne Lotsize: alle verbleibenden Short-Positionen                  {           EMPTY, TYPE_SHORT   , NULL            , ...}
- *   H{DateTime}            [Group By [Month|Week|Day]]  - Trade-History eines typischen Zeitraums (3)(5)                     {2014.01.01 00:00, TYPE_HISTORY , 2014.12.31 23:59, ...}
+ *   H{DateTime}            [Group By [Month|Week|Day]]  - Trade-History eines Zeitraums (3)(5)                               {2014.01.01 00:00, TYPE_HISTORY , 2014.12.31 23:59, ...}
  *   H{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)   {2014.02.01 08:00, TYPE_HISTORY , 2014.02.10 18:00, ...}
  *   12.34                                               - dem P/L einer Position zuzuschlagender Betrag                      {            NULL, TYPE_REALIZED, 12.34           , ...}
  *   E123.00                                             - für Equityberechnungen zu verwendender Wert                        {            NULL, TYPE_EQUITY  , 123.00          , ...}
