@@ -26,9 +26,8 @@
  * Sind im aktuellen Chart für mehr als einen Indikator Hotkeys zur schnellen Änderung der Indikatorperiode aktiviert, empfängt nur der erste
  * für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren im "Indicators List" Window).
  *
- * Im Buffer MovingAverage.MODE_MA stehen die Werte des Moving Average und im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge
- * der jeweiligen Bar zur Verfügung:
- *  • Trendrichtung: positive Werte (+1...+n) für Aufwärtstrends bzw. negative Werte (-1...-n) für Abwärtstrends
+ * Im Buffer MovingAverage.MODE_MA stehen die Werte des MA's, im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge der einzelnen Bars:
+ *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n) und negative Werte für Abwärtstrends (-1...-n) 
  *  • Trendlänge:    der Absolutwert des Trends einer Bar weniger 1 (Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal)
  */
 #include <stddefine.mqh>

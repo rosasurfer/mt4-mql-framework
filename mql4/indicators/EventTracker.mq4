@@ -1,27 +1,25 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch und/oder per SMS.
- *
- * @TODO: per E-Mail, HTML-Request, ICQ
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch und/oder per SMS.  
+ * Die Art der Benachrichtigung (optisch, akustisch, SMS) kann je Event konfiguriert werden.
  *
  *
  * (1) Order-Events
- *     Die Orderüberwachung wird im Indikator aktiviert/deaktiviert. Ein aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das
+ *     Die Orderüberwachung wird im Indikator aktiviert bzw. deaktiviert. Ein aktivierter EventTracker überwacht alle Symbole eines Accounts, nicht nur das Symbol
  *     des aktuellen Charts. Es liegt in der Verantwortung des Benutzers, nur einen aller laufenden EventTracker für die Orderüberwachung zu aktivieren.
  *
  *     Events:
- *      - Position geöffnet
- *      - Position geschlossen
- *      - Orderausführung fehlgeschlagen
+ *      - eine Position wurde geöffnet
+ *      - eine Position wurde geschlossen
+ *      - die Ausführung einer Order schlug fehl
  *
  *
  * (2) Preis-Events (Signale)
- *     Die Signalüberwachung wird im Indikator aktiviert/deaktiviert und die einzelnen Signale in der Account-Konfiguration je Instrument konfiguriert. Es liegt
- *     in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für die Signalüberwachung zu aktivieren. Die folgenden Signale können konfiguriert
- *     werden:
+ *     Die Signalüberwachung wird im Indikator aktiviert bzw. deaktiviert, die einzelnen Signale werden je Instrument in der Account-Konfiguration konfiguriert. 
+ *     Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Signale zu aktivieren. Folgende Signale können konfiguriert werden:
  *
  *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
  *
- *      • Timeframe-ID: {This|Last|number}[-]{Timeframe}[-]Ago       ; [Timeframe|Day|Week|Month] Singular und Plural der Timeframe-Bezeichner sind austauschbar
+ *      • Timeframe-ID: {This|Last|number}[-]{Timeframe}[-]Ago       ; [{Timeframe}|Day|Week|Month]: Singular und Plural der Timeframe-Bezeichner sind austauschbar
  *                      This                                         ; Synonym für 0-{Timeframe}-Ago
  *                      Last                                         ; Synonym für 1-{Timeframe}-Ago
  *                      Today                                        ; Synonym für 0-Days-Ago
@@ -40,11 +38,9 @@
  *      - Auflösung eines Inside-Range-Pattern auf Wochenbasis
  *
  *
- * Die Art der Benachrichtigung (akustisch, E-Mail, SMS, HTML-Request, ICQ) kann je Event einzeln konfiguriert werden.
- *
- *
  * TODO:
  * -----
+ *  - Benachrichtigung per E-Mail, HTML-Request, ICQ
  *  - PositionOpen-/Close-Events während Timeframe- oder Symbolwechsel werden nicht erkannt
  *  - bei Accountwechsel auftretende Fehler werden nicht abgefangen
  *  - Konfiguration während eines init-Cycles im Chart speichern, damit Recompilation überlebt werden kann
