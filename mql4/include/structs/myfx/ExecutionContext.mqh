@@ -73,10 +73,10 @@ int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int &ec[], int    lpName   
    if (lpName < MIN_VALID_POINTER) return(!catch("ec.setLpProgramName(1)  invalid parameter lpName = 0x"+ IntToHexStr(lpName) +" (not a valid pointer)", ERR_INVALID_POINTER));
                                                                                              ec[I_EC.lpProgramName     ] = lpName;             return(lpName            ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
-   if (!StringLen(name))           return(_emptyStr(catch("ec.setProgramName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
-   if (StringLen(name) > MAX_PATH) return(_emptyStr(catch("ec.setProgramName(2)  illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
+   if (!StringLen(name))           return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
+   if (StringLen(name) > MAX_PATH) return(_EMPTY_STR(catch("ec.setProgramName(2)  illegal parameter name = \""+ name +"\" (max "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpName = ec.lpProgramName(ec);
-   if (!lpName)                    return(_emptyStr(catch("ec.setProgramName(3)  no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
+   if (!lpName)                    return(_EMPTY_STR(catch("ec.setProgramName(3)  no memory allocated for string name (lpName = NULL)", ERR_RUNTIME_ERROR)));
    CopyMemory(GetStringAddress(name), lpName, StringLen(name)+1); /*terminierendes <NUL> wird mitkopiert*/                                     return(name              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) { ec[I_EC.lpSuperContext    ] = lpSuperContext;     return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
@@ -96,10 +96,10 @@ int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int &ec[], int    lpLogFile
    if (lpLogFile < MIN_VALID_POINTER) return(!catch("ec.setLpLogFile(1)  invalid parameter lpLogFile = 0x"+ IntToHexStr(lpLogFile) +" (not a valid pointer)", ERR_INVALID_POINTER));
                                                                                              ec[I_EC.lpLogFile         ] = lpLogFile;          return(lpLogFile         ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
-   if (!StringLen(logFile))           return(_emptyStr(catch("ec.setLogFile(1)  invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_PARAMETER)));
-   if (StringLen(logFile) > MAX_PATH) return(_emptyStr(catch("ec.setLogFile(2)  illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
+   if (!StringLen(logFile))           return(_EMPTY_STR(catch("ec.setLogFile(1)  invalid parameter logFile = "+ StringToStr(logFile), ERR_INVALID_PARAMETER)));
+   if (StringLen(logFile) > MAX_PATH) return(_EMPTY_STR(catch("ec.setLogFile(2)  illegal parameter logFile = \""+ logFile +"\" (max. "+ MAX_PATH +" chars)", ERR_TOO_LONG_STRING)));
    int lpLogFile = ec.lpLogFile(ec);
-   if (!lpLogFile)                    return(_emptyStr(catch("ec.setLogFile(3)  no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
+   if (!lpLogFile)                    return(_EMPTY_STR(catch("ec.setLogFile(3)  no memory allocated for string logfile (lpLogFile = NULL)", ERR_RUNTIME_ERROR)));
    CopyMemory(GetStringAddress(logFile), lpLogFile, StringLen(logFile)+1); /*terminierendes <NUL> wird mitkopiert*/                            return(logFile           ); EXECUTION_CONTEXT.toStr(ec);
 }
 
@@ -115,8 +115,8 @@ string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile  
 string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=false) {
    outputDebug = outputDebug!=0;
 
-   if (ArrayDimension(ec) > 1)                     return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
-   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_emptyStr(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(ec) > 1)                     return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(1)  too many dimensions of parameter ec: "+ ArrayDimension(ec), ERR_INVALID_PARAMETER)));
+   if (ArraySize(ec) != EXECUTION_CONTEXT.intSize) return(_EMPTY_STR(catch("EXECUTION_CONTEXT.toStr(2)  invalid size of parameter ec: "+ ArraySize(ec), ERR_INVALID_PARAMETER)));
 
    string result = StringConcatenate("{hThreadId="         ,                         ec.hThreadId         (ec),
                                     ", programId="         ,                         ec.ProgramId         (ec),
@@ -176,7 +176,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    outputDebug = outputDebug!=0;
 
-   if (lpContext <= 0) return(_emptyStr(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
+   if (lpContext <= 0) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
    int tmp[EXECUTION_CONTEXT.intSize];
    CopyMemory(lpContext, GetBufferAddress(tmp), EXECUTION_CONTEXT.size);
 

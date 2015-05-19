@@ -941,12 +941,12 @@ private*/ int __h.ResizeArrays(int size) {
  * @return string - Dateiname oder Leerstring, falls ein Fehler auftrat
  */
 string hf.Name(int hFile) {
-   if (hFile <= 0)                      return(_emptyStr(catch("hf.Name(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile <= 0)                      return(_EMPTY_STR(catch("hf.Name(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_emptyStr(catch("hf.Name(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY_STR(catch("hf.Name(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_emptyStr(catch("hf.Name(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_emptyStr(catch("hf.Name(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY_STR(catch("hf.Name(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY_STR(catch("hf.Name(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1135,12 +1135,12 @@ int hf.Version(int hFile) {
  * @return string - Symbol oder Leerstring, falls ein Fehler auftrat
  */
 string hf.Symbol(int hFile) {
-   if (hFile <= 0)                      return(_emptyStr(catch("hf.Symbol(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile <= 0)                      return(_EMPTY_STR(catch("hf.Symbol(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_emptyStr(catch("hf.Symbol(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY_STR(catch("hf.Symbol(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_emptyStr(catch("hf.Symbol(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_emptyStr(catch("hf.Symbol(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY_STR(catch("hf.Symbol(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY_STR(catch("hf.Symbol(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }
@@ -1156,12 +1156,12 @@ string hf.Symbol(int hFile) {
  * @return string - Beschreibung oder Leerstring, falls ein Fehler auftrat
  */
 string hf.Description(int hFile) {
-   if (hFile <= 0)                      return(_emptyStr(catch("hf.Description(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile <= 0)                      return(_EMPTY_STR(catch("hf.Description(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.valid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_emptyStr(catch("hf.Description(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY_STR(catch("hf.Description(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_emptyStr(catch("hf.Description(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_emptyStr(catch("hf.Description(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY_STR(catch("hf.Description(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY_STR(catch("hf.Description(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.valid = hFile;
    }

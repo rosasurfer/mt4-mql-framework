@@ -984,7 +984,7 @@ bool onBarCloseSignal(int index, int direction) {
  * @return string
  */
 string BarCloseSignalToStr(int index) {
-   if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_CLOSE) return(_emptyStr(catch("BarCloseSignalToStr(1)  signal "+ index +" is not a bar close signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
+   if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_CLOSE) return(_EMPTY_STR(catch("BarCloseSignalToStr(1)  signal "+ index +" is not a bar close signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
 
    bool signal.enabled   = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
    int  signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
@@ -1153,7 +1153,7 @@ bool onBarRangeSignal(int index, int direction) {
  * @return string
  */
 string BarRangeSignalToStr(int index) {
-   if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_RANGE) return(_emptyStr(catch("BarRangeSignalToStr(1)  signal "+ index +" is not a bar range signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
+   if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_RANGE) return(_EMPTY_STR(catch("BarRangeSignalToStr(1)  signal "+ index +" is not a bar range signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
 
    bool signal.enabled   = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
    int  signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
@@ -1423,7 +1423,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
  * @return string
  */
 string BarBreakoutSignalToStr(int index) {
-   if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_BREAKOUT) return(_emptyStr(catch("BarBreakoutSignalToStr(1)  signal "+ index +" is not a breakout signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
+   if (signal.config[index][I_SIGNAL_CONFIG_ID] != ET_SIGNAL_BAR_BREAKOUT) return(_EMPTY_STR(catch("BarBreakoutSignalToStr(1)  signal "+ index +" is not a breakout signal = "+ signal.config[index][I_SIGNAL_CONFIG_ID], ERR_RUNTIME_ERROR)));
 
    bool     signal.enabled     = signal.config[index][I_SIGNAL_CONFIG_ENABLED  ] != 0;
    int      signal.timeframe   = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];

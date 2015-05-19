@@ -1023,15 +1023,15 @@ string GetTerminalVersion() {
    int    iNull[], bufferSize=MAX_PATH;
    string fileName[]; InitializeStringBuffer(fileName, bufferSize);
    if (!GetModuleFileNameA(NULL, fileName[0], bufferSize))
-      return(_emptyStr(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()", ERR_WIN32_ERROR)));
+      return(_EMPTY_STR(catch("GetTerminalVersion(1)->kernel32::GetModuleFileNameA()", ERR_WIN32_ERROR)));
 
    int infoSize = GetFileVersionInfoSizeA(fileName[0], iNull);
    if (!infoSize)
-      return(_emptyStr(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()", ERR_WIN32_ERROR)));
+      return(_EMPTY_STR(catch("GetTerminalVersion(2)->version::GetFileVersionInfoSizeA()", ERR_WIN32_ERROR)));
 
    int infoBuffer[]; InitializeByteBuffer(infoBuffer, infoSize);
    if (!GetFileVersionInfoA(fileName[0], 0, infoSize, infoBuffer))
-      return(_emptyStr(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()", ERR_WIN32_ERROR)));
+      return(_EMPTY_STR(catch("GetTerminalVersion(3)->version::GetFileVersionInfoA()", ERR_WIN32_ERROR)));
 
    string infoString = BufferToStr(infoBuffer);                      // Strings im Buffer sind Unicode-Strings
    //     infoString = Ð•4………V…S…_…V…E…R…S…I…O…N…_…I…N…F…O……………½•ïþ……•………•…á……………•…á………?…………………•………•………………………………………0•……•…S…t…r…i…n…g…F…i…l…e…I…n…f…o………••……•…0…0…0…0…0…4…b…0………L…•…•…C…o…m…m…e…n…t…s………h…t…t…p…:…/…/…w…w…w….…m…e…t…a…q…u…o…t…e…s….…n…e…t………T…•…•…C…o…m…p…a…n…y…N…a…m…e……………M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….………>…•…•…F…i…l…e…D…e…s…c…r…i…p…t…i…o…n……………M…e…t…a…T…r…a…d…e…r……………6…•…•…F…i…l…e…V…e…r…s…i…o…n……………4….…0….…0….…2…2…5…………………6…•…•…I…n…t…e…r…n…a…l…N…a…m…e………M…e…t…a…T…r…a…d…e…r……………†…1…•…L…e…g…a…l…C…o…p…y…r…i…g…h…t………C…o…p…y…r…i…g…h…t… …©… …2…0…0…1…-…2…0…0…9…,… …M…e…t…a…Q…u…o…t…e…s… …S…o…f…t…w…a…r…e… …C…o…r…p….……………@…•…•…L…e…g…a…l…T…r…a…d…e…m…a…r…k…s……………M…e…t…a…T…r…a…d…e…r…®………(………•…O…r…i…g…i…n…a…l…F…i…l…e…n…a…m…e……… ………•…P…r…i…v…a…t…e…B…u…i…l…d………6…•…•…P…r…o…d…u…c…t…N…a…m…e……………M…e…t…a…T…r…a…d…e…r……………:…•…•…P…r…o…d…u…c…t…V…e…r…s…i…o…n………4….…0….…0….…2…2…5………………… ………•…S…p…e…c…i…a…l…B…u…i…l…d………D………•…V…a…r…F…i…l…e…I…n…f…o……………$…•………T…r…a…n…s…l…a…t…i…o…n…………………°•FE2X…………………………………………
@@ -1049,7 +1049,7 @@ string GetTerminalVersion() {
       pos = StringFind(infoString, key.FileVersion);                 // ...dann nach FileVersion
       if (pos == -1) {
          //debug("GetTerminalVersion(5)->GetFileVersionInfoA()  FileVersion not found");
-         return(_emptyStr(catch("GetTerminalVersion(6)  terminal version info not found", ERR_RUNTIME_ERROR)));
+         return(_EMPTY_STR(catch("GetTerminalVersion(6)  terminal version info not found", ERR_RUNTIME_ERROR)));
       }
       pos += StringLen(key.FileVersion);
    }
@@ -1060,7 +1060,7 @@ string GetTerminalVersion() {
          break;
    }
    if (pos == infoSize)                                              // no non-NULL byte found after version key
-      return(_emptyStr(catch("GetTerminalVersion(7)  terminal version info value not found", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetTerminalVersion(7)  terminal version info value not found", ERR_RUNTIME_ERROR)));
 
    // Unicode-String auslesen und konvertieren
    string version = BufferWCharsToStr(infoBuffer, pos/4, (infoSize-pos)/4);
@@ -1220,7 +1220,7 @@ string GetLocalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR)
-            return(_emptyStr(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
+            return(_EMPTY_STR(catch("GetLocalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
          _lclose(hFile);
       }
    }
@@ -1264,7 +1264,7 @@ string GetGlobalConfigPath() {
       if (createIniFile) {
          int hFile = _lcreat(iniFile, AT_NORMAL);
          if (hFile == HFILE_ERROR)
-            return(_emptyStr(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
+            return(_EMPTY_STR(catch("GetGlobalConfigPath(1)->kernel32::_lcreat(filename=\""+ iniFile +"\")", ERR_WIN32_ERROR)));
          _lclose(hFile);
       }
    }
@@ -1401,7 +1401,7 @@ string GetCurrency(int id) {
       case CID_USD: return(C_USD);
       case CID_ZAR: return(C_ZAR);
    }
-   return(_emptyStr(catch("GetCurrency()  unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
+   return(_EMPTY_STR(catch("GetCurrency()  unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -1803,11 +1803,11 @@ double ArrayPopDouble(double array[]) {
  * @return string - das entfernte Element oder ein Leerstring, falls ein Fehler auftrat
  */
 string ArrayPopString(string array[]) {
-   if (ArrayDimension(array) > 1) return(_emptyStr(catch("ArrayPopString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY_STR(catch("ArrayPopString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_emptyStr(catch("ArrayPopString(2)  cannot pop element from empty array = {}", ERR_ARRAY_ERROR)));
+      return(_EMPTY_STR(catch("ArrayPopString(2)  cannot pop element from empty array = {}", ERR_ARRAY_ERROR)));
 
    string popped = array[size-1];
    ArrayResize(array, size-1);
@@ -1951,11 +1951,11 @@ double ArrayShiftDouble(double array[]) {
  * @return string - das entfernte Element oder ein Leerstring, falls ein Fehler auftrat
  */
 string ArrayShiftString(string array[]) {
-   if (ArrayDimension(array) > 1) return(_emptyStr(catch("ArrayShiftString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY_STR(catch("ArrayShiftString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(array);
    if (size == 0)
-      return(_emptyStr(catch("ArrayShiftString(2)  cannot shift element from an empty array = {}", ERR_ARRAY_ERROR)));
+      return(_EMPTY_STR(catch("ArrayShiftString(2)  cannot shift element from an empty array = {}", ERR_ARRAY_ERROR)));
 
    string shifted = array[0];
 
@@ -2901,7 +2901,7 @@ int MergeStringArrays(string array1[], string array2[], string merged[]) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinBools(bool values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_emptyStr(catch("JoinBools()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinBools()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -2931,7 +2931,7 @@ string JoinBools(bool values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinInts(int values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_emptyStr(catch("JoinInts()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinInts()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -2958,7 +2958,7 @@ string JoinInts(int values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinDoubles(double values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_emptyStr(catch("JoinDoubles()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoubles()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string strings[];
 
@@ -2990,8 +2990,8 @@ string JoinDoubles(double values[], string separator) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinDoublesEx(double values[], string separator, int digits) {
-   if (ArrayDimension(values) > 1) return(_emptyStr(catch("JoinDoubles(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-   if (digits < 0 || digits > 16)  return(_emptyStr(catch("JoinDoubles(2)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoubles(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (digits < 0 || digits > 16)  return(_EMPTY_STR(catch("JoinDoubles(2)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
 
    string strings[];
 
@@ -3023,7 +3023,7 @@ string JoinDoublesEx(double values[], string separator, int digits) {
  */
 string JoinStrings(string values[], string separator) {
    if (ArrayDimension(values) > 1)
-      return(_emptyStr(catch("JoinStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("JoinStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    string value, result="";
    int    error, size=ArraySize(values);
@@ -3037,7 +3037,7 @@ string JoinStrings(string values[], string separator) {
          continue;
       }
       if (error != ERR_NOT_INITIALIZED_ARRAYSTRING)
-         return(_emptyStr(catch("JoinStrings(2)", error)));
+         return(_EMPTY_STR(catch("JoinStrings(2)", error)));
 
       result = StringConcatenate(result, "NULL", separator);         // NULL
    }
@@ -3130,7 +3130,7 @@ string BufferToStr(int buffer[]) {
  *
 private*/string __BuffersToStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_emptyStr(catch("__BuffersToStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
    if (dimensions == 1)
       return(BufferToStr(buffer));
@@ -3197,7 +3197,7 @@ string BufferToHexStr(int buffer[]) {
  *
 private*/string __BuffersToHexStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_emptyStr(catch("__BuffersToHexStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToHexStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
    if (dimensions == 1)
       return(BufferToHexStr(buffer));
@@ -3260,8 +3260,8 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 
    // TODO: prüfen, ob Expander::GetString() schneller ist
 
-   if (from < 0)                return(_emptyStr(catch("BufferCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
-   if (length < 0)              return(_emptyStr(catch("BufferCharsToStr(2)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (from < 0)                return(_EMPTY_STR(catch("BufferCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
+   if (length < 0)              return(_EMPTY_STR(catch("BufferCharsToStr(2)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
    if (length == 0)
       return("");
 
@@ -3271,8 +3271,8 @@ string BufferCharsToStr(int buffer[], int from, int length) {
 
    int fromChar=from, toChar=fromChar+length, bufferChars=ArraySize(buffer)<<2;
 
-   if (fromChar >= bufferChars) return(_emptyStr(catch("BufferCharsToStr(3)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
-   if (toChar >= bufferChars)   return(_emptyStr(catch("BufferCharsToStr(4)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (fromChar >= bufferChars) return(_EMPTY_STR(catch("BufferCharsToStr(3)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
+   if (toChar >= bufferChars)   return(_EMPTY_STR(catch("BufferCharsToStr(4)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
 
 
    string result = "";
@@ -3309,9 +3309,9 @@ string BufferCharsToStr(int buffer[], int from, int length) {
  *
 private*/string __BuffersCharsToStr(int buffer[][], int from, int length) {
    int dimensions = ArrayDimension(buffer);
-   if (dimensions > 2) return(_emptyStr(catch("__BuffersCharsToStr(1)  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
-   if (from < 0)       return(_emptyStr(catch("__BuffersCharsToStr(2)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
-   if (length < 0)     return(_emptyStr(catch("__BuffersCharsToStr(3)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersCharsToStr(1)  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   if (from < 0)       return(_EMPTY_STR(catch("__BuffersCharsToStr(2)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
+   if (length < 0)     return(_EMPTY_STR(catch("__BuffersCharsToStr(3)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
    if (length == 0)
       return("");
 
@@ -3491,14 +3491,14 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
 
    if (StringLen(lnkFilename) < 4 || StringRight(lnkFilename, 4)!=".lnk")
-      return(_emptyStr(catch("GetWindowsShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(1)  invalid parameter lnkFilename = \""+ lnkFilename +"\"", ERR_INVALID_PARAMETER)));
 
    // --------------------------------------------------------------------------
    // Get the .lnk-file content:
    // --------------------------------------------------------------------------
    int hFile = _lopen(string lnkFilename, OF_READ);
    if (hFile == HFILE_ERROR)
-      return(_emptyStr(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")", ERR_WIN32_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(2)->kernel32::_lopen(\""+ lnkFilename +"\")", ERR_WIN32_ERROR)));
 
    int iNull[], fileSize=GetFileSize(hFile, iNull);
    if (fileSize == INVALID_FILE_SIZE) {
@@ -3516,7 +3516,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    }
    _lclose(hFile);
 
-   if (bytes < 24) return(_emptyStr(catch("GetWindowsShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+   if (bytes < 24) return(_EMPTY_STR(catch("GetWindowsShortcutTarget(5)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int integers  = ArraySize(buffer);
    int charsSize = bytes;
@@ -3535,7 +3535,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // following GUID (hex): 01 14 02 00 00 00 00 00 C0 00 00 00 00 00 00 46.
    // --------------------------------------------------------------------------
    if (chars[0] != 'L')                            // test the magic value
-      return(_emptyStr(catch("GetWindowsShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(6)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    if (chars[ 4] != 0x01 ||                        // test the GUID
        chars[ 5] != 0x14 ||
@@ -3553,7 +3553,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
        chars[17] != 0x00 ||
        chars[18] != 0x00 ||
        chars[19] != 0x46) {
-      return(_emptyStr(catch("GetWindowsShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(7)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
    }
 
    // --------------------------------------------------------------------------
@@ -3590,7 +3590,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    if (hasShellItemIdList) {
       i = 76;
       if (charsSize < i+2)
-         return(_emptyStr(catch("GetWindowsShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+         return(_EMPTY_STR(catch("GetWindowsShortcutTarget(9)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
       A  = chars[76];               // little endian format
       A |= chars[77] << 8;
    }
@@ -3603,7 +3603,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + 4 + A;
    if (charsSize < i+4)
-      return(_emptyStr(catch("GetWindowsShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(10)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int B  = chars[i];       i++;    // little endian format
        B |= chars[i] <<  8; i++;
@@ -3618,7 +3618,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B;
    if (charsSize < i+4)
-      return(_emptyStr(catch("GetWindowsShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(11)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    int C  = chars[i];       i++;    // little endian format
        C |= chars[i] <<  8; i++;
@@ -3630,7 +3630,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    // --------------------------------------------------------------------------
    i = 78 + A + B + C;
    if (charsSize < i+1)
-      return(_emptyStr(catch("GetWindowsShortcutTarget(12)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(12)  unknown .lnk file format in \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    string target = "";
    for (; i < charsSize; i++) {
@@ -3639,7 +3639,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
       target = StringConcatenate(target, CharToStr(chars[i]));
    }
    if (!StringLen(target))
-      return(_emptyStr(catch("GetWindowsShortcutTarget(13)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetWindowsShortcutTarget(13)  invalid target in .lnk file \""+ lnkFilename +"\"", ERR_RUNTIME_ERROR)));
 
    // --------------------------------------------------------------------------
    // Convert the target path into the long filename format:
@@ -3745,7 +3745,7 @@ string GetServerDirectory() {
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_emptyStr(catch("GetServerDirectory(1)->FileOpenHistory(\""+ fileName +"\")")));
+         return(_EMPTY_STR(catch("GetServerDirectory(1)->FileOpenHistory(\""+ fileName +"\")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
@@ -3764,7 +3764,7 @@ string GetServerDirectory() {
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_emptyStr(catch("GetServerDirectory(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_EMPTY_STR(catch("GetServerDirectory(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
@@ -3772,7 +3772,7 @@ string GetServerDirectory() {
          next = FindNextFileA(hFindDir, wfd);
       }
       if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_emptyStr(catch("GetServerDirectory(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+         return(_EMPTY_STR(catch("GetServerDirectory(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
 
       FindClose(hFindDir);
       ArrayResize(wfd, 0);
@@ -3781,10 +3781,10 @@ string GetServerDirectory() {
 
    int error = GetLastError();
    if (IsError(error))
-      return(_emptyStr(catch("GetServerDirectory(6)", error)));
+      return(_EMPTY_STR(catch("GetServerDirectory(6)", error)));
 
    if (!StringLen(directory))
-      return(_emptyStr(catch("GetServerDirectory(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetServerDirectory(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    static.result[0] = directory;
    return(static.result[0]);
@@ -4067,7 +4067,7 @@ string StdSymbol() {
  */
 string GetStandardSymbol(string symbol) {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetStandardSymbol()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetStandardSymbol()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
    return(GetStandardSymbolOrAlt(symbol, symbol));
 }
 
@@ -4087,7 +4087,7 @@ string GetStandardSymbol(string symbol) {
  */
 string GetStandardSymbolOrAlt(string symbol, string altValue="") {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetStandardSymbolOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetStandardSymbolOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    string value = GetStandardSymbolStrict(symbol);
 
@@ -4111,7 +4111,7 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
  */
 string GetStandardSymbolStrict(string symbol) {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetStandardSymbolStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetStandardSymbolStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    symbol = StringToUpper(symbol);
 
@@ -4332,7 +4332,7 @@ string GetStandardSymbolStrict(string symbol) {
  */
 string GetSymbolName(string symbol) {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetSymbolName()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetSymbolName()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
    return(GetSymbolNameOrAlt(symbol, symbol));
 }
 
@@ -4350,7 +4350,7 @@ string GetSymbolName(string symbol) {
  */
 string GetSymbolNameOrAlt(string symbol, string altValue="") {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetSymbolNameOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetSymbolNameOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    string value = GetSymbolNameStrict(symbol);
 
@@ -4371,7 +4371,7 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
  */
 string GetSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetSymbolNameStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetSymbolNameStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    symbol = GetStandardSymbolStrict(symbol);
    if (!StringLen(symbol))
@@ -4553,7 +4553,7 @@ string GetSymbolNameStrict(string symbol) {
  */
 string GetLongSymbolName(string symbol) {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetLongSymbolName()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetLongSymbolName()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
    return(GetLongSymbolNameOrAlt(symbol, symbol));
 }
 
@@ -4569,7 +4569,7 @@ string GetLongSymbolName(string symbol) {
  */
 string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetLongSymbolNameOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetLongSymbolNameOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    string value = GetLongSymbolNameStrict(symbol);
 
@@ -4590,7 +4590,7 @@ string GetLongSymbolNameOrAlt(string symbol, string altValue="") {
  */
 string GetLongSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
-      return(_emptyStr(catch("GetLongSymbolNameStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("GetLongSymbolNameStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    symbol = GetStandardSymbolStrict(symbol);
 
@@ -4904,7 +4904,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
 
    int lenPadStr = StringLen(pad_string);
    if (lenPadStr < 1)
-      return(_emptyStr(catch("StringPad(1)  illegal parameter pad_string = \""+ pad_string +"\"", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("StringPad(1)  illegal parameter pad_string = \""+ pad_string +"\"", ERR_INVALID_PARAMETER)));
 
    if (pad_type == STR_PAD_LEFT ) return(StringPadLeft (input, pad_length, pad_string));
    if (pad_type == STR_PAD_RIGHT) return(StringPadRight(input, pad_length, pad_string));
@@ -4923,7 +4923,7 @@ string StringPad(string input, int pad_length, string pad_string=" ", int pad_ty
       return(paddingLeft + input + paddingRight);
    }
 
-   return(_emptyStr(catch("StringPad(2)  illegal parameter pad_type = "+ pad_type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StringPad(2)  illegal parameter pad_type = "+ pad_type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5921,7 +5921,7 @@ string GetComputerName() {
    string buffer[]; InitializeStringBuffer(buffer, bufferSize[0]);
 
    if (!GetComputerNameA(buffer[0], bufferSize))
-      return(_emptyStr(catch("GetComputerName()->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));
+      return(_EMPTY_STR(catch("GetComputerName()->kernel32::GetComputerNameA()", ERR_WIN32_ERROR)));
 
    static.result[0] = buffer[0];
 
@@ -6668,7 +6668,7 @@ string EventToStr(int event) {
       case EVENT_BAR_OPEN      : return("EVENT_BAR_OPEN"      );
       case EVENT_ACCOUNT_CHANGE: return("EVENT_ACCOUNT_CHANGE");
    }
-   return(_emptyStr(catch("EventToStr()  unknown event: "+ event, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("EventToStr()  unknown event: "+ event, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6713,7 +6713,7 @@ string SwapCalculationModeToStr(int mode) {
       case SCM_INTEREST       : return("SCM_INTEREST"       );
       case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
-   return(_emptyStr(catch("SwapCalculationModeToStr()  invalid paramter mode = "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid paramter mode = "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6731,7 +6731,7 @@ string MaMethodToStr(int method) {
       case MODE_LWMA: return("MODE_LWMA");
       case MODE_ALMA: return("MODE_ALMA");
    }
-   return(_emptyStr(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("MaMethodToStr()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6757,7 +6757,7 @@ string MaMethodDescription(int method) {
       case MODE_LWMA: return("LWMA");
       case MODE_ALMA: return("ALMA");
    }
-   return(_emptyStr(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("MaMethodDescription()  invalid paramter method = "+ method, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6790,7 +6790,7 @@ string MessageBoxCmdToStr(int cmd) {
       case IDTRYAGAIN: return("IDTRYAGAIN");
       case IDCONTINUE: return("IDCONTINUE");
    }
-   return(_emptyStr(catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
+   return(_EMPTY_STR(catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -6955,7 +6955,7 @@ string OperationTypeToStr(int type) {
       case OP_CREDIT   : return("OP_CREDIT"   );
       case OP_UNDEFINED: return("OP_UNDEFINED");
    }
-   return(_emptyStr(catch("OperationTypeToStr()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("OperationTypeToStr()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6986,7 +6986,7 @@ string OperationTypeDescription(int type) {
       case OP_CREDIT   : return("Credit"    );
       case OP_UNDEFINED: return("undefined" );
    }
-   return(_emptyStr(catch("OperationTypeDescription()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("OperationTypeDescription()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -7067,7 +7067,7 @@ string PriceTypeToStr(int type) {
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
-   return(_emptyStr(catch("PriceTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeToStr()  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -7090,7 +7090,7 @@ string PriceTypeDescription(int type) {
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }
-   return(_emptyStr(catch("PriceTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("PriceTypeDescription()  invalid parameter type = "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -7359,7 +7359,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
       if (!StringLen(timezone))
-         return(_emptyStr(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
 
@@ -7449,7 +7449,7 @@ string UninitializeReasonDescription(int reason) {
       case REASON_INITFAILED : return("OnInit() failed"                    );
       case REASON_CLOSE      : return("terminal closed"                    );
    }
-   return(_emptyStr(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -7471,7 +7471,7 @@ string InitReasonDescription(int reason) {
       case INIT_REASON_SYMBOLCHANGE     : return("chart symbol changed"      );
       case INIT_REASON_RECOMPILE        : return("program recompiled"        );
    }
-   return(_emptyStr(catch("InitReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("InitReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -7493,7 +7493,7 @@ string InitReasonToStr(int reason) {
       case INIT_REASON_SYMBOLCHANGE     : return("INIT_REASON_SYMBOLCHANGE"     );
       case INIT_REASON_RECOMPILE        : return("INIT_REASON_RECOMPILE"        );
    }
-   return(_emptyStr(catch("InitReasonToStr()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("InitReasonToStr()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -7508,8 +7508,8 @@ string InitReasonToStr(int reason) {
  * NOTE: Ruft intern SendMessage() auf, deshalb nicht im Tester bei VisualMode=On in Expert::deinit() benutzen, da sonst UI-Thread-Deadlock.
  */
 string GetWindowText(int hWnd) {
-   if (hWnd <= 0)       return(_emptyStr(catch("GetWindowText(1)  invalid parameter hWnd = "+ hWnd, ERR_INVALID_PARAMETER)));
-   if (!IsWindow(hWnd)) return(_emptyStr(catch("GetWindowText(2)  not an existing window hWnd = 0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR)));
+   if (hWnd <= 0)       return(_EMPTY_STR(catch("GetWindowText(1)  invalid parameter hWnd = "+ hWnd, ERR_INVALID_PARAMETER)));
+   if (!IsWindow(hWnd)) return(_EMPTY_STR(catch("GetWindowText(2)  not an existing window hWnd = 0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR)));
 
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
@@ -8414,7 +8414,7 @@ string DoubleToStrEx(double value, int digits) {
       return(sValue);                                                // "-1.#INF0000" => Infinite
 
    if (digits < 0 || digits > 16)
-      return(_emptyStr(catch("DoubleToStrEx()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("DoubleToStrEx()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
 
    /*
    double decimals[17] = { 1.0,                                      // Der Compiler interpretiert über mehrere Zeilen verteilte Array-Initializer
@@ -8479,7 +8479,7 @@ string DoubleToStrEx(double value, int digits) {
  */
 string StringRepeat(string input, int times) {
    if (times < 0)
-      return(_emptyStr(catch("StringRepeat()  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("StringRepeat()  invalid parameter times = "+ times, ERR_INVALID_PARAMETER)));
 
    if (times ==  0)       return("");
    if (!StringLen(input)) return("");
@@ -8700,7 +8700,7 @@ string NumberToStr(double number, string mask) {
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
 string DateToStr(datetime time, string mask) {
-   if (time < 0) return(_emptyStr(catch("DateToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
+   if (time < 0) return(_EMPTY_STR(catch("DateToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
 
    if (!StringLen(mask))
       return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
@@ -8798,7 +8798,7 @@ string ColorToStr(color value)   {
    if (value == 0xFF000000)                                          // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
       value = CLR_NONE;                                              // u.U. 0xFF000000 (entspricht Schwarz)
    if (value < CLR_NONE || value > C'255,255,255')
-      return(_emptyStr(catch("ColorToStr()  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("ColorToStr()  invalid parameter value = "+ value +" (not a color)", ERR_INVALID_PARAMETER)));
 
    if (value == CLR_NONE) return("None"             );
    if (value == 0xFFF8F0) return("AliceBlue"        );

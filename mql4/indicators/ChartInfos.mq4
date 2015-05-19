@@ -43,7 +43,7 @@ int appliedPrice = PRICE_MEDIAN;                                     // Preis: B
 
 
 // Moneymanagement
-#define DEFAULT_VOLATILITY     2.5                                   // Default-Volatilität einer Unit in Prozent Equity je Woche (Erfahrungswert)
+#define DEFAULT_VOLATILITY    10.0                                   // Default-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
 
 bool   mm.done;                                                      // Flag
 double mm.currentEquity;                                             //

@@ -1047,7 +1047,7 @@ string GetClassName(int hWnd) {
    }
 
    if (!chars)
-      return(_emptyStr(catch("GetClassName()->user32::GetClassNameA()", ERR_WIN32_ERROR)));
+      return(_EMPTY_STR(catch("GetClassName()->user32::GetClassNameA()", ERR_WIN32_ERROR)));
 
    return(buffer[0]);
 }
@@ -1678,7 +1678,7 @@ bool IsEmptyValue(double value) {
  *
  * @return string - Leerstring
  */
-string _emptyStr(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
+string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
    return("");
 }
 
@@ -2106,8 +2106,8 @@ string PeriodToStr(int period=NULL, int execFlags=NULL) {
       case PERIOD_Q1 : return("PERIOD_Q1" );     // 1 quarter
    }
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_emptyStr(catch("PeriodToStr(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
-   else                                         return(_emptyStr(SetLastError(ERR_INVALID_PARAMETER)));
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY_STR(catch("PeriodToStr(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+   else                                         return(_EMPTY_STR(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
 
@@ -2170,7 +2170,7 @@ string StringToStr(string value) {
    if (!error)                              return(StringConcatenate("\"", value, "\""));
    if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
 
-   return(_emptyStr(catch("StringToStr(1)", error)));
+   return(_EMPTY_STR(catch("StringToStr(1)", error)));
 }
 
 
@@ -3028,7 +3028,7 @@ bool Tester.IsStopped() {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0) return(_emptyStr(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length < 0) return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
 
    if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
                                                                      // Daher wird auch beim Initialisieren der string-Variable StringConcatenate() verwendet (siehe MQL.doc).
@@ -3267,7 +3267,7 @@ string UninitializeReasonToStr(int reason) {
       case REASON_INITFAILED : return("REASON_INITFAILED" );
       case REASON_CLOSE      : return("REASON_CLOSE"      );
    }
-   return(_emptyStr(catch("UninitializeReasonToStr(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("UninitializeReasonToStr(1)  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -3297,17 +3297,17 @@ void __DummyCalls() {
 
    __log.custom(NULL);
    _bool(NULL);
-   _double(NULL);
-   _EMPTY();
-   _EMPTY_VALUE();
-   _emptyStr();
-   _false();
    _int(NULL);
+   _double(NULL);
+   _string(NULL);
+   _EMPTY();
+   _EMPTY_STR();
+   _EMPTY_VALUE();
+   _false();
    _last_error();
    _NaT();
    _NO_ERROR();
    _NULL();
-   _string(NULL);
    _true();
    _void();
    Abs(NULL);

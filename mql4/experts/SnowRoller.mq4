@@ -5232,7 +5232,7 @@ string OrderDisplayModeToStr(int mode) {
       case ODM_PYRAMID: return("ODM_PYRAMID");
       case ODM_ALL    : return("ODM_ALL"    );
    }
-   return(_emptyStr(catch("OrderDisplayModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("OrderDisplayModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5252,7 +5252,7 @@ string BreakevenEventToStr(int type) {
       case EV_POSITION_STOPOUT: return("EV_POSITION_STOPOUT");
       case EV_POSITION_CLOSE  : return("EV_POSITION_CLOSE"  );
    }
-   return(_emptyStr(catch("BreakevenEventToStr()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("BreakevenEventToStr()  illegal parameter type = "+ type, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5268,7 +5268,7 @@ string GridDirectionToStr(int direction) {
       case D_LONG : return("D_LONG" );
       case D_SHORT: return("D_SHORT");
    }
-   return(_emptyStr(catch("GridDirectionToStr()  illegal parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("GridDirectionToStr()  illegal parameter direction = "+ direction, ERR_INVALID_PARAMETER)));
 }
 
 
