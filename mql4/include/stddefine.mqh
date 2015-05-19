@@ -1,5 +1,5 @@
 /**
- * Globale Variablen und Konstanten
+ * Globale Konstanten und Variablen
  */
 #property stacksize  32768                                  // intern eine normale Konstante
 #include <stderror.mqh>
@@ -70,8 +70,8 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Magic characters zur Markierung/Visualisierung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Ersatzzeichen für NUL-Bytes
-#define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 - Ersatzzeichen für Control-Characters
+#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Ersatzzeichen für NUL-Bytes in Strings
+#define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 - Ersatzzeichen für Control-Characters in Strings
 
 
 // Mathematische Konstanten
@@ -84,9 +84,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define HOUR                     3600  //  60 Minuten
 #define DAY                     86400  //  24 Stunden
 #define WEEK                   604800  //   7 Tage
-#define MONTH                 2678400  //  31 Tage                      // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
-#define QUARTER               8035200  //   3 Monate (3 x 31 Tage)      // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
-#define YEAR                 31622400  // 366 Tage                      // Periode garantiert ist.
+#define MONTH                 2678400  //  31 Tage                   // Die Werte sind auf das jeweilige Maximum ausgelegt, sodaß
+#define QUARTER               8035200  //   3 Monate (3 x 31 Tage)   // bei Datumsarithmetik immer ein Wechsel in die jeweils nächste
+#define YEAR                 31622400  // 366 Tage                   // Periode garantiert ist.
 
 #define SECONDS                SECOND
 #define MINUTES                MINUTE
