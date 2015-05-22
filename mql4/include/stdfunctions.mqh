@@ -1293,7 +1293,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  */
-double PipValue(double lots=1, bool hideErrors=false) {
+double PipValue(double lots=1.0, bool hideErrors=false) {
    hideErrors = hideErrors!=0;
 
    if (!TickSize) {
