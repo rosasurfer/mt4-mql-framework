@@ -2080,6 +2080,7 @@ int SearchMagicNumber(int array[], int number) {
  * im Format {value, type, value1, ...}.  Ein NULL-Type-Element {*, NULL, *, ...} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer eingelesenen
  * Konfiguration ist die Größe der ersten Dimension des Arrays niemals 0. Positionskommentare werden in custom.position.conf.comments[] gespeichert.
  *
+ *
  *  Notation:                                                                                                                   Arraydarstellung:
  *  ---------                                                                                                                   -----------------
  *   0.1#123456                                             - O.1 Lot eines Tickets (1)                                         {             0.1, 123456            , NULL            , ...}
@@ -2095,6 +2096,7 @@ int SearchMagicNumber(int array[], int number) {
  *
  *   Kommentare (Text nach dem ersten Semikolon ";")        - werden als Beschreibung angezeigt
  *   Kommentare in Kommentaren (nach weiterem ";")          - werden ignoriert
+ *
  *
  *  Beispiel:
  *  ---------
