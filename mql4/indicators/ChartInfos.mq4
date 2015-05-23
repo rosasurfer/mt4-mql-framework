@@ -1,5 +1,5 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum Instrument und den Positionen eines der folgenden Typen an:
+ * Zeigt im Chart verschiedene Informationen zum Instrument und den Positionen einer der folgenden Typen an:
  *
  * (1) interne Positionen: - Positionen, die im aktuellen Account gehalten werden
  *                         - Order- und P/L-Daten stammen vom Terminal
@@ -16,12 +16,12 @@
  *
  * TODO: MetaTrader berechnet den Equity-Wert nicht korrekt (Spread und Commission gehedgter Positionen werden doppelt berechnet). Geht der Spread
  *       z.B. nachts in die Höhe, kann sich der Fehler je nach Anzahl der gehedgten Positionen dramatisch auf die P/L-Anzeige auswirken. Zusätzlich
- *       verringert es auch die verfügbare Margin.
+ *       verringert es die verfügbare Margin und kann sogar bis zum Margin Call führen.
  */
 #property indicator_chart_window
 
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[] = {INIT_TIMEZONE};
+int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
@@ -39,68 +39,69 @@ int __DEINIT_FLAGS__[];
 
 
 // Kursanzeige
-int appliedPrice = PRICE_MEDIAN;                                     // Preis: Bid | Ask | Median (default)
+int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | Median (default)
 
 
 // Moneymanagement
-#define DEFAULT_VOLATILITY    10.0                                   // Default-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
+#define DEFAULT_VOLATILITY    10.0                       // Default-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
 
-bool   mm.done;                                                      // Flag
-double mm.currentEquity;                                             //
-double mm.availableEquity;                                           // zum Traden verfügbare Equity
-double mm.lotValue;                                                  // Value eines Lots in Account-Currency
-double mm.unleveragedLots;                                           // Lotsize für Hebel von 1:1
-double mm.ATRwAbs;                                                   // wöchentliche ATR: absoluter Wert
-double mm.ATRwPct;                                                   // wöchentliche ATR: prozentualer Wert
+bool   mm.done;                                          // Flag
+double mm.currentEquity;                                 //
+double mm.availableEquity;                               // zum Traden verfügbare Equity
+double mm.lotValue;                                      // Value eines Lots in Account-Currency
+double mm.unleveragedLots;                               // Lotsize für Hebel von 1:1
+double mm.ATRwAbs;                                       // wöchentliche ATR: absoluter Wert
+double mm.ATRwPct;                                       // wöchentliche ATR: prozentualer Wert
 
 double mm.vola = DEFAULT_VOLATILITY;
-double mm.volaLeverage;                                              // Hebel für wöchentliche Volatilität einer Unit von {mm.vola} Prozent
-double mm.volaLots;                                                  // resultierende Lotsize
+double mm.volaLeverage;                                  // Hebel für wöchentliche Volatilität einer Unit von {mm.vola} Prozent
+double mm.volaLots;                                      // resultierende Lotsize
 
-bool   mm.isCustomLeverage;                                          // ob die Lotsize nach benutzerdefiniertem Hebel oder nach Volatility berechnet wird
-double mm.customLeverage;                                            // benutzerdefinierter Hebel einer Unit
-double mm.customLots;                                                // resultierende Lotsize
+bool   mm.isCustomLeverage;                              // ob die Lotsize nach benutzerdefiniertem Hebel oder nach Volatility berechnet wird
+double mm.customLeverage;                                // benutzerdefinierter Hebel einer Unit
+double mm.customLots;                                    // resultierende Lotsize
 
-double aum.value;                                                    // zusätzliche extern verwaltete und bei Equity-Berechnungen zu berücksichtigende Assets
+double aum.value;                                        // zusätzliche extern verwaltete und bei Equity-Berechnungen zu berücksichtigende Assets
 string aum.currency = "";
 
 
 // Status
-bool   positionsAnalyzed;                                            // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
-bool   mode.intern;                                                  //   eingelesen, Orderänderungen werden automatisch erkannt.
-bool   mode.extern;                                                  // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
-bool   mode.remote;                                                  //   oder nach Eintreffen einer entsprechenden Nachricht zurückgesetzt und aus der Quelle neu eingelesen,
-                                                                     //   Orderänderungen werden nicht automatisch erkannt.
+bool   positionsAnalyzed;                                // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
+bool   mode.intern;                                      //   eingelesen, Orderänderungen werden automatisch erkannt.
+bool   mode.extern;                                      // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
+bool   mode.remote;                                      //   oder nach Eintreffen einer entsprechenden Nachricht zurückgesetzt und aus der Quelle neu eingelesen,
+                                                         //   Orderänderungen werden nicht automatisch erkannt.
 
 // individuelle Positionskonfiguration
-double custom.position.conf      [][5];                              // Format siehe CustomPositions.ReadConfig()
+double custom.position.conf      [][5];                  // Format siehe CustomPositions.ReadConfig()
 string custom.position.conf.comments[];
 
 
 // interne + externe Positionsdaten
-bool   isPosition;                                                   // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
+bool   isPosition;                                       // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
 double totalPosition;
 double longPosition;
 double shortPosition;
-int    positions.idata[][3];                                         // Positionsdetails: [] = {PositionType, DirectionType, idxComment}
-double positions.ddata[][8];                                         //                   [] = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, FloatingProfit, RealizedProfit, HistoricalProfit, OpenEquity, Drawdown}
+int    positions.idata[][3];                             // Positionsdetails: [] = {PositionType, DirectionType, idxComment}
+double positions.ddata[][8];                             //                   [] = {DirectionalLotSize, HedgedLotSize, BreakevenPrice|Pips, FloatingProfit, RealizedProfit, HistoricalProfit, OpenEquity, Drawdown}
 
-#define TYPE_DEFAULT         0                                       // PositionTypes:    normale offene Position                        (intern oder extern)
-#define TYPE_CUSTOM          1                                       //                   individuell konfigurierte reale Anzeige     (mit oder ohne History)
-#define TYPE_VIRTUAL         2                                       //                   individuell konfigurierte virtuelle Anzeige (mit oder ohne History)
+#define TYPE_DEFAULT         0                           // PositionTypes:    normale offene Position                        (intern oder extern)
+#define TYPE_CUSTOM          1                           //                   individuell konfigurierte reale Anzeige     (mit oder ohne History)
+#define TYPE_VIRTUAL         2                           //                   individuell konfigurierte virtuelle Anzeige (mit oder ohne History)
 
-#define TYPE_LONG            1                                       // DirectionTypes
+#define TYPE_LONG            1                           // DirectionTypes
 #define TYPE_SHORT           2
 #define TYPE_HEDGE           3
 #define TYPE_HISTORY         4
-#define TYPE_REALIZED        5
-#define TYPE_EQUITY          6
+#define TYPE_HISTORY_TOTAL   5
+#define TYPE_REALIZED        6
+#define TYPE_EQUITY          7
 
-#define I_POSITION_TYPE      0                                       // Arrayindizes von positions.idata[]
+#define I_POSITION_TYPE      0                           // Arrayindizes von positions.idata[]
 #define I_DIRECTION_TYPE     1
 #define I_COMMENT            2
 
-#define I_DIRECT_LOTSIZE     0                                       // Arrayindizes von positions.ddata[]
+#define I_DIRECT_LOTSIZE     0                           // Arrayindizes von positions.ddata[]
 #define I_HEDGED_LOTSIZE     1
 #define I_BREAKEVEN          2
 #define I_FLOATING_PROFIT    3
@@ -2075,25 +2076,25 @@ int SearchMagicNumber(int array[], int number) {
  * @return bool - Erfolgsstatus
  *
  *
- * Füllt das Array custom.position.conf[][] mit den Konfigurationsdaten des aktuellen Instruments aus der Accountkonfiguration. Das Array enthält danach Elemente
+ * Füllt das Array custom.position.conf[][] mit den Konfigurationsdaten des aktuellen Instruments in der Accountkonfiguration. Das Array enthält danach Elemente
  * im Format {value, type, value1, ...}.  Ein NULL-Type-Element {*, NULL, *, ...} markiert ein Zeilenende bzw. eine leere Konfiguration. Nach einer eingelesenen
  * Konfiguration ist die Größe der ersten Dimension des Arrays niemals 0. Positionskommentare werden in custom.position.conf.comments[] gespeichert.
  *
- *  Notation:                                                                                                                 Arraydarstellung:
- *  ---------                                                                                                                 -----------------
- *   0.1#123456                                          - O.1 Lot eines Tickets (1)                                          {             0.1, 123456       , NULL            , ...}
- *      #123456                                          - komplettes Ticket oder verbleibender Rest eines Tickets            {           EMPTY, 123456       , NULL            , ...}
- *   0.2L                                                - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)       {             0.2, TYPE_LONG    , NULL            , ...}
- *   0.3S1.2345                                          - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)    {             0.3, TYPE_SHORT   , 1.2345          , ...}
- *      L                                                - ohne Lotsize: alle verbleibenden Long-Positionen                   {           EMPTY, TYPE_LONG    , NULL            , ...}
- *      S                                                - ohne Lotsize: alle verbleibenden Short-Positionen                  {           EMPTY, TYPE_SHORT   , NULL            , ...}
- *   H{DateTime}            [Group By [Month|Week|Day]]  - Trade-History eines Zeitraums (3)(5)                               {2014.01.01 00:00, TYPE_HISTORY , 2014.12.31 23:59, ...}
- *   H{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)   {2014.02.01 08:00, TYPE_HISTORY , 2014.02.10 18:00, ...}
- *   12.34                                               - dem P/L einer Position zuzuschlagender Betrag                      {            NULL, TYPE_REALIZED, 12.34           , ...}
- *   E123.00                                             - für Equityberechnungen zu verwendender Wert                        {            NULL, TYPE_EQUITY  , 123.00          , ...}
+ *  Notation:                                                                                                                   Arraydarstellung:
+ *  ---------                                                                                                                   -----------------
+ *   0.1#123456                                             - O.1 Lot eines Tickets (1)                                         {             0.1, 123456            , NULL            , ...}
+ *      #123456                                             - komplettes Ticket oder verbleibender Rest eines Tickets           {           EMPTY, 123456            , NULL            , ...}
+ *   0.2L                                                   - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)      {             0.2, TYPE_LONG         , NULL            , ...}
+ *   0.3S1.2345                                             - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)   {             0.3, TYPE_SHORT        , 1.2345          , ...}
+ *      L                                                   - ohne Lotsize: alle verbleibenden Long-Positionen                  {           EMPTY, TYPE_LONG         , NULL            , ...}
+ *      S                                                   - ohne Lotsize: alle verbleibenden Short-Positionen                 {           EMPTY, TYPE_SHORT        , NULL            , ...}
+ *   H{DateTime}               [Group By [Month|Week|Day]]  - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
+ *   H[T]{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
+ *   12.34                                                  - dem P/L einer Position zuzuschlagender Betrag                     {            NULL, TYPE_REALIZED     , 12.34           , ...}
+ *   E123.00                                                - für Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
  *
- *   Kommentare (Text nach dem ersten Semikolon ";")     - werden als Beschreibung angezeigt
- *   Kommentare in Kommentaren (nach weiterem ";")       - werden ignoriert
+ *   Kommentare (Text nach dem ersten Semikolon ";")        - werden als Beschreibung angezeigt
+ *   Kommentare in Kommentaren (nach weiterem ";")          - werden ignoriert
  *
  *  Beispiel:
  *  ---------
@@ -2131,7 +2132,7 @@ bool CustomPositions.ReadConfig() {
    string   keys[], values[], iniValue, comment, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   confSizeValue, confTypeValue, confValue1, confValue2, confValue3, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int      valuesSize, confSize, pos, ticket, positionStartOffset;
-   bool     isPositionEmpty, isPositionVirtual, isPositionGrouped;
+   bool     isPositionEmpty, isPositionVirtual, isPositionGrouped, isTotalHistory;
    if (!minLotSize) return(false);                                    // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
@@ -2169,13 +2170,13 @@ bool CustomPositions.ReadConfig() {
                if (!StringLen(values[n]))                             // Leervalue
                   continue;
 
-               if (StringStartsWith(values[n], "H")) {                // History
-                  if (!CustomPositions.ParseHstEntry(values[n], comment, isPositionEmpty, isPositionGrouped, confSizeValue, confValue1, confValue2, confValue3)) return(false);
+               if (StringStartsWith(values[n], "H")) {                // History | HistoryTotal
+                  if (!CustomPositions.ParseHstEntry(values[n], comment, isPositionEmpty, isPositionGrouped, isTotalHistory, confSizeValue, confValue1, confValue2, confValue3)) return(false);
                   if (isPositionGrouped) {
-                     isPositionEmpty = false;
-                     continue;                                        // gruppiert:       die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
-                  }
-                  confTypeValue = TYPE_HISTORY;                       // nicht gruppiert: die übrigen Variablen wurden bereits in CustomPositions.ParseHstEntry() gesetzt
+                     isPositionEmpty = false;                         // gruppiert:       die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
+                     continue;
+                  }                                                   // nicht gruppiert: die übrigen Variablen wurden bereits in CustomPositions.ParseHstEntry() gesetzt
+                  confTypeValue = ifInt(!isTotalHistory, TYPE_HISTORY, TYPE_HISTORY_TOTAL);
                }
 
                else if (StringStartsWith(values[n], "#")) {           // Ticket bzw. verbleibender Rest eines Tickets
@@ -2344,14 +2345,15 @@ bool CustomPositions.ReadConfig() {
 /**
  * Parst einen History-Konfigurationseintrag.
  *
- * @param  _IN_     string confValue       - Konfigurationseintrag
- * @param  _IN_OUT_ string confComment     - Kommentar des Konfigurationseintrags (wird ggf. erweitert oder neu definiert)
- * @param  _IN_OUT_ bool   isEmpty         - ob die Konfiguration der aktuellen Position noch leer ist
- * @param  _OUT_    bool   isGrouped       - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
- * @param  _OUT_    double hstFrom         - Beginnzeitpunkt der zu berücksichtigenden History
- * @param  _OUT_    double hstTo           - Endzeitpunkt der zu berücksichtigenden History
- * @param  _OUT_    double value2          - Cache-Variable für den ermittelten P/L des angegebenen Zeitraums
- * @param  _OUT_    double value3          - Cache-Variable für die Anzahl der Tickets in der History beim letzten Zugriff
+ * @param  _IN_     string confValue   - Konfigurationseintrag
+ * @param  _IN_OUT_ string confComment - Kommentar des Konfigurationseintrags (wird ggf. erweitert oder neu definiert)
+ * @param  _IN_OUT_ bool   isEmpty     - ob die Konfiguration der aktuellen Position noch leer ist
+ * @param  _OUT_    bool   isGrouped   - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
+ * @param  _OUT_    bool   isTotal     - ob die History alle verfügbaren Symbole (TRUE) oder nur ein einzelnes Symbol (FALSE) umfaßt.
+ * @param  _OUT_    double hstFrom     - Beginnzeitpunkt der zu berücksichtigenden History
+ * @param  _OUT_    double hstTo       - Endzeitpunkt der zu berücksichtigenden History
+ * @param  _OUT_    double value2      - Cache-Variable für den ermittelten P/L des angegebenen Zeitraums
+ * @param  _OUT_    double value3      - Cache-Variable für die Anzahl der Tickets in der History beim letzten Zugriff
  *
  * @return bool - Erfolgsstatus
  *
@@ -2363,11 +2365,14 @@ bool CustomPositions.ReadConfig() {
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
  */
-bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &isEmpty, bool &isGrouped, double &hstFrom, double &hstTo, double &value2, double &value3) {
+bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &isEmpty, bool &isGrouped, bool &isTotal, double &hstFrom, double &hstTo, double &value2, double &value3) {
    string confValue.orig = StringTrim(confValue);
           confValue      = StringToUpper(confValue.orig);
    if (!StringStartsWith(confValue, "H")) return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
    confValue = StringTrim(StringSubstr(confValue, 1));
+
+   isTotal = StringStartsWith(confValue, "T");
+   if (isTotal) confValue = StringTrim(StringSubstr(confValue, 1));
 
    isGrouped = false;
    bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
@@ -2456,12 +2461,13 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
          if      (groupByMonth) comment =               DateToStr(groupFrom, "Y O");
          else if (groupByWeek ) comment = "Woche vom "+ DateToStr(groupFrom, "D.M.Y");
          else if (groupByDay  ) comment =               DateToStr(groupFrom, "D.M.Y");
+         if (isTotal)           comment = comment +" (gesamt)";
 
          // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(custom.position.conf, 0);
          ArrayResize(custom.position.conf, confSize+1);
          custom.position.conf[confSize][0] = groupFrom;
-         custom.position.conf[confSize][1] = TYPE_HISTORY;
+         custom.position.conf[confSize][1] = ifInt(!isTotal, TYPE_HISTORY, TYPE_HISTORY_TOTAL);
          custom.position.conf[confSize][2] = groupTo;
          custom.position.conf[confSize][3] = EMPTY_VALUE;
          custom.position.conf[confSize][4] = EMPTY_VALUE;
@@ -2569,12 +2575,13 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, bool &
             else                    comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
          }
       }
+      if (isTotal) comment = comment +" (gesamt)";
       hstFrom     = dtFrom;
       hstTo       = dtTo;
       value2      = EMPTY_VALUE;
       value3      = EMPTY_VALUE;
    }
-   confComment = confComment + ifString(StringLen(confComment), " + ", "") + comment;
+   confComment = StringTrimLeft(comment + ifString(StringStartsWith(confComment, ","), "", " ") + confComment);
 
    return(true);
 }
@@ -2712,7 +2719,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
  * Extrahiert aus den übergebenen Positionen eine Teilposition.
  *
  * @param  _IN_     double lotsize    - zu extrahierende Lotsize
- * @param  _IN_     int    type       - zu extrahierender Typ: virtualLong/virtualShort/Ticket/History/Betrag/Equity
+ * @param  _IN_     int    type       - zu extrahierender Typ: virtualLong | virtualShort | Ticket | History | HistoryTotal | Betrag | Equity
  * @param  _IN_OUT_ double value1     - Wert 1: Preis/Betrag/Equity (Änderungen bleiben erhalten)
  * @param  _IN_OUT_ double value2     - sonstiger Wert 2            (Änderungen bleiben erhalten)
  * @param  _IN_OUT_ double value3     - sonstiger Wert 3            (Änderungen bleiben erhalten)
@@ -2725,7 +2732,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
  */
 bool ExtractPosition(double lotsize, int type, double &value1, double &value2, double &value3,
                      double &longPosition,       double &shortPosition,       double &totalPosition,                                                                            int &tickets[],       int &types[],       double &lots[],       double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
-                     bool            &isVirtual,
+                     bool   &isVirtual,
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, double &customRealized, double &customHistory, double &customEquity, int &customTickets[], int &customTypes[], double &customLots[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
    int sizeTickets = ArraySize(tickets);
 
@@ -2819,7 +2826,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
       }
    }
 
-   else if (type == TYPE_HISTORY) {
+   else if (type==TYPE_HISTORY || type==TYPE_HISTORY_TOTAL) {
       datetime hstFrom    = lotsize;
       datetime hstTo      = value1;
       double   lastProfit = value2;
@@ -2831,7 +2838,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int sortKeys[][3], n, hst.ticket;                           // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
-         string exDividend1="Ex Dividend ", exDividend2=" "+ Symbol();
+         string exDividendKey="Ex Dividend ", exDividendSymbol=" "+ Symbol();
 
          for (i=0; i < orders; i++) {
             if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
@@ -2839,11 +2846,13 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
                break;
             }
             if (OrderType() == OP_BALANCE) {
-               if (!StringIStartsWith(OrderComment(), exDividend1)) continue;    // "Ex Dividend US2000" oder
-               if (!StringIEndsWith  (OrderComment(), exDividend2)) continue;    // "Ex Dividend 17/03/15 US2000"
+               if (!StringIStartsWith(OrderComment(), exDividendKey))     continue;    // "Ex Dividend US2000"          oder
+               if (type == TYPE_HISTORY)                                               // "Ex Dividend 17/03/15 US2000"
+                  if (!StringIEndsWith(OrderComment(), exDividendSymbol)) continue;
             }
-            else if (OrderSymbol() != Symbol())                     continue;
-            else if (OrderType() > OP_SELL)                         continue;
+            else if (OrderType() > OP_SELL)                               continue;
+
+            if (type==TYPE_HISTORY) /*&&*/ if (OrderSymbol()!=Symbol())   continue;    // ggf. Positionen mehrerer Symbole
 
             sortKeys[n][0] = OrderCloseTime();
             sortKeys[n][1] = OrderOpenTime();
@@ -2883,7 +2892,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
             ArrayPushString(hst.comments   , OrderComment()   );
          }
 
-         // (3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
+         // (3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
          for (i=0; i < orders; i++) {
             if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {          // lotSize = 0: Hedge-Position
 
@@ -2905,14 +2914,14 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
 
                // Orderdaten korrigieren
                if (i == first) {
-                  hst.lotSizes   [first] = hst.lotSizes   [second];  // alle Transaktionsdaten in der ersten Order speichern
+                  hst.lotSizes   [first] = hst.lotSizes   [second];              // alle Transaktionsdaten in der ersten Order speichern
                   hst.commissions[first] = hst.commissions[second];
                   hst.swaps      [first] = hst.swaps      [second];
                   hst.profits    [first] = hst.profits    [second];
                }
                hst.closeTimes [first] = hst.openTimes [second];
                hst.closePrices[first] = hst.openPrices[second];
-               hst.tickets   [second] = NULL;                        // hedgendes Ticket als verworfen markieren
+               hst.tickets   [second] = NULL;                                    // hedgendes Ticket als verworfen markieren
             }
          }
 
