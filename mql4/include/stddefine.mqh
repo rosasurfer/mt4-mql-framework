@@ -52,7 +52,7 @@ int      last_error;                                        // der letzte Fehler
 #define MIN_VALID_POINTER  0x00010000                       // kleinster möglicher Wert für einen gültigen Pointer (x86)
 #define NaT                   INT_MIN                       // Not-a-Time = ungültiger DateTime-Value, für die eingebauten MQL-Funktionen gilt: min(datetime) = '1970-01-01 00:00:00'
 #define EMPTY_VALUE           INT_MAX                       // MetaQuotes: empty custom indicator value (Integer, kein Double)                  max(datetime) = '2037-12-31 23:59:59'
-#define EMPTY_STR                  ""                       // 
+#define EMPTY_STR                  ""                       //
 #define EMPTY                      -1                       // MetaQuotes
 #define CLR_NONE                   -1                       // MetaQuotes: no color = 0xFFFFFFFF, im Gegensatz zu weiß = 0x00FFFFFF
 #define WHOLE_ARRAY                 0                       // MetaQuotes
