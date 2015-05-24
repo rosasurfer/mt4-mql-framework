@@ -2179,7 +2179,6 @@ bool CustomPositions.ReadConfig() {
                   if (!CustomPositions.ParseHstEntry(values[n], confComment, hstComments, isPositionEmpty, isPositionGrouped, isTotalHistory, confSizeValue, confValue1, confValue2, confValue3)) return(false);
                   if (isPositionGrouped) {
                      isPositionEmpty = false;                         // gruppiert:       die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
-                     debug("CustomPositions.ReadConfig(0.1)  confComment="+ StringToStr(confComment) +"  hstComments="+ StringToStr(hstComments));
                      continue;
                   }                                                   // nicht gruppiert: die übrigen Variablen wurden bereits in CustomPositions.ParseHstEntry() gesetzt
                   confTypeValue = ifInt(!isTotalHistory, TYPE_HISTORY, TYPE_HISTORY_TOTAL);
