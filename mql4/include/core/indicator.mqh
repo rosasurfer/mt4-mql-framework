@@ -111,7 +111,7 @@ int init() {
                                                                                                                   //
       switch (initReason) {                                                                                       //
          case INIT_REASON_USER             : error = onInit.User();             break;                            //
-         case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;                            // falsche Werte für Point und Digits in neuem Chartfenster
+         case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;                            // TODO: falsche Werte für Point und Digits in neuem Chartfenster
          case INIT_REASON_PROGRAM          : error = onInit.Program();          break;                            //
          case INIT_REASON_PROGRAM_CLEARTEST: error = onInit.ProgramClearTest(); break;                            //
          case INIT_REASON_PARAMETERS       : error = onInit.Parameters();       break;                            //

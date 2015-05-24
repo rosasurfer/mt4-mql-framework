@@ -43,7 +43,7 @@ int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | M
 
 
 // Moneymanagement
-#define DEFAULT_VOLATILITY    10.0                       // Default-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
+#define DEFAULT_VOLATILITY      10                       // Default-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
 
 bool   mm.done;                                          // Flag
 double mm.currentEquity;                                 //
@@ -58,6 +58,7 @@ double mm.volaLeverage;                                  // Hebel für wöchentlic
 double mm.volaLots;                                      // resultierende Lotsize
 
 bool   mm.isCustomLeverage;                              // ob die Lotsize nach benutzerdefiniertem Hebel oder nach Volatility berechnet wird
+double mm.customVola;                                    // benutzerdefinierte Volatilität einer Unit je Woche
 double mm.customLeverage;                                // benutzerdefinierter Hebel einer Unit
 double mm.customLots;                                    // resultierende Lotsize
 
@@ -1395,8 +1396,8 @@ bool UpdateUnitSize() {
 
    // Anzeige wird nur mit internem Account benötigt
    if (mode.intern) {
-      if (mm.isCustomLeverage) { double leverage=mm.customLeverage, lotsize=mm.customLots; }
-      else                     {        leverage=mm.volaLeverage;   lotsize=mm.volaLots;   }
+      if (mm.isCustomLeverage) { double vola = mm.customVola, leverage=mm.customLeverage, lotsize=mm.customLots; }
+      else                     {        vola = mm.vola; leverage=mm.volaLeverage;   lotsize=mm.volaLots;   }
 
       // Lotsize runden
       if (lotsize > 0) {                                                                                    // Abstufung max. 6.7% je Schritt
@@ -1417,8 +1418,8 @@ bool UpdateUnitSize() {
          else if (lotsize <= 1200.  ) lotsize =       MathRound(MathRound(lotsize/ 50    ) *  50       );   //   750-1200: Vielfaches von  50
          else                         lotsize =       MathRound(MathRound(lotsize/100    ) * 100       );   //   1200-...: Vielfaches von 100
       }
-      // !!! max. 63 Zeichen           V - Volatilität/Woche                      L - Leverage                           Unitsize
-      strUnitSize = StringConcatenate("V", DoubleToStr(mm.ATRwPct*100, 1), "%     L", DoubleToStr(leverage, 1), "  =  ", NumberToStr(lotsize, ", .+"), " lot");
+      // !!! max. 63 Zeichen           V - Volatilität/Woche            L - Leverage                           Unitsize
+      strUnitSize = StringConcatenate("V", DoubleToStr(vola, 1), "%     L", DoubleToStr(leverage, 1), "  =  ", NumberToStr(lotsize, ", .+"), " lot");
    }
 
    // Anzeige aktualisieren
@@ -1983,8 +1984,9 @@ bool UpdateMoneyManagement() {
    mm.unleveragedLots = 0;                                                                   // Lotsize bei Hebel 1:1
    mm.ATRwAbs         = 0;                                                                   // wöchentliche ATR, absolut
    mm.ATRwPct         = 0;                                                                   // wöchentliche ATR, prozentual
-   mm.volaLots        = 0;                                                                   // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdRisk} Prozent
-   mm.volaLeverage    = 0;                                                                   // resultierender Hebel bei wöchentlicher Volatilität
+   mm.volaLeverage    = 0;                                                                   // Hebel bei wöchentlicher Volatilität einer Unit von {mm.vola} Prozent
+   mm.volaLots        = 0;                                                                   // Lotsize für wöchentliche Volatilität einer Unit von {mm.vola} Prozent
+   mm.customVola      = 0;                                                                   // Volatilität/Woche bei benutzerdefiniertem Hebel
    mm.customLots      = 0;                                                                   // Lotsize bei benutzerdefiniertem Hebel
 
 
@@ -2037,6 +2039,7 @@ bool UpdateMoneyManagement() {
    if (mm.isCustomLeverage) {
       // (3) customLots
       mm.customLots = mm.unleveragedLots * mm.customLeverage;                                // mit benutzerdefiniertem Hebel gehebelte Lotsize
+      mm.customVola = mm.customLeverage * (mm.ATRwPct*100);                                  // resultierende wöchentliche Volatilität
    }
    else {
       // (4) volaLots
