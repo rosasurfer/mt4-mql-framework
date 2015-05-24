@@ -277,10 +277,10 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",          MA.Periods                 , "\"; ",
-                            "MA.Timeframe=\"",        MA.Timeframe               , "\"; ",
-                            "MA.Method=\"",           MA.Method                  , "\"; ",
-                            "MA.AppliedPrice=\"",     MA.AppliedPrice            , "\"; ",
+                            "MA.Periods=\"",          MA.Periods               , "\"; ",
+                            "MA.Timeframe=\"",        MA.Timeframe             , "\"; ",
+                            "MA.Method=\"",           MA.Method                , "\"; ",
+                            "MA.AppliedPrice=\"",     MA.AppliedPrice          , "\"; ",
 
                             "Color.UpTrend=",         ColorToStr(Color.UpTrend)  , "; ",
                             "Color.DownTrend=",       ColorToStr(Color.DownTrend), "; ",

@@ -8,8 +8,8 @@
  *  • EMA  - Exponential Moving Average:     Gewichtung der Bars nach Exponentialfunktion
  *  • ALMA - Arnaud Legoux Moving Average:   Gewichtung der Bars nach konfigurierbarer Gaußscher Verteilungsfunktion
  *
- * Nicht mehr unterstützte MA-Typen:
- *  • SMMA - Smoothed Moving Average:        EMA anderer Periode (Relikt aus den 70'ern, läßt sich teilweise schneller als EMA berechnen)
+ * Nicht unterstützte MA-Typen:
+ *  • SMMA - Smoothed Moving Average:        ist ein EMA anderer Periode (Relikt aus den 70'ern, läßt sich teilweise schneller als EMA berechnen)
  *  • TMA  - Triangular Moving Average:      doppelter SMA(SMA(n)), also smooth, aber verdoppeltes Lag (Response-Zeit)
  *
  * Der Timeframe des Indikators kann zur Verbesserung der Lesbarkeit mit einem Alias konfiguriert werden, z.B.:
@@ -27,7 +27,7 @@
  * für Hotkeys konfigurierte Indikator die entsprechenden Commands (in der Reihenfolge der Indikatoren im "Indicators List" Window).
  *
  * Im Buffer MovingAverage.MODE_MA stehen die Werte des MA's, im Buffer MovingAverage.MODE_TREND Trendrichtung und Trendlänge der einzelnen Bars:
- *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n) und negative Werte für Abwärtstrends (-1...-n) 
+ *  • Trendrichtung: positive Werte für Aufwärtstrends (+1...+n) und negative Werte für Abwärtstrends (-1...-n)
  *  • Trendlänge:    der Absolutwert des Trends einer Bar weniger 1 (Distanz dieser Bar vom letzten davor aufgetretenen Trendreversal)
  */
 #include <stddefine.mqh>
@@ -40,7 +40,7 @@ extern string MA.Periods                 = "200";                    // für eini
 extern string MA.Timeframe               = "current";                // Timeframe: [M1|M5|M15,...[=> M1|M5|M15,...]]    ("current"|"" = aktueller Timeframe)
 extern string MA.Method                  = "SMA* | LWMA | EMA | ALMA";
 extern string MA.AppliedPrice            = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotkeys zur schnellen Änderung der Periode aktiviert sind
+extern bool   MA.Periods.Hotkeys.Enabled = false;                    // ob Hotkeys zur Änderung der Periode aktiviert sind
 
 extern color  Color.UpTrend              = DodgerBlue;               // Farbverwaltung hier, damit Code Zugriff hat
 extern color  Color.DownTrend            = Orange;
@@ -390,17 +390,17 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=\"",               MA.Periods                           , "\"; ",
-                            "MA.Periods.Hotkeys.Enabled=", BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",
-                            "MA.Timeframe=\"",             MA.Timeframe                         , "\"; ",
-                            "MA.Method=\"",                MA.Method                            , "\"; ",
-                            "MA.AppliedPrice=\"",          MA.AppliedPrice                      , "\"; ",
+                            "MA.Periods=",                 StringToStr(MA.Periods)                , "; ",
+                            "MA.Periods.Hotkeys.Enabled=", BoolToStr  (MA.Periods.Hotkeys.Enabled), "; ",
+                            "MA.Timeframe=",               StringToStr(MA.Timeframe)              , "; ",
+                            "MA.Method=",                  StringToStr(MA.Method)                 , "; ",
+                            "MA.AppliedPrice=",            StringToStr(MA.AppliedPrice)           , "; ",
 
-                            "Color.UpTrend=",              ColorToStr(Color.UpTrend)            , "; ",
-                            "Color.DownTrend=",            ColorToStr(Color.DownTrend)          , "; ",
+                            "Color.UpTrend=",              ColorToStr (Color.UpTrend)             , "; ",
+                            "Color.DownTrend=",            ColorToStr (Color.DownTrend)           , "; ",
 
-                            "Max.Values=",                 Max.Values                           , "; ",
-                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars                , "; ",
-                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips                  , "; ")
+                            "Max.Values=",                             Max.Values                 , "; ",
+                            "Shift.Horizontal.Bars=",                  Shift.Horizontal.Bars      , "; ",
+                            "Shift.Vertical.Pips=",                    Shift.Vertical.Pips        , "; ")
    );
 }
