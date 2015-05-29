@@ -2095,7 +2095,7 @@ int SearchMagicNumber(int array[], int number) {
  *   H{DateTime}               [Group By [Month|Week|Day]]  - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
  *   H[T]{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
  *   12.34                                                  - dem P/L einer Position zuzuschlagender Betrag                     {            NULL, TYPE_REALIZED     , 12.34           , ...}
- *   E123.00                                                - f¸r Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
+ *   EQ123.00                                               - f¸r Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
  *
  *   Kommentare (Text nach dem ersten Semikolon ";")        - werden als Beschreibung angezeigt
  *   Kommentare in Kommentaren (nach weiterem ";")          - werden ignoriert
@@ -2215,7 +2215,7 @@ bool CustomPositions.ReadConfig() {
                   confValue3    = NULL;
                }
 
-               else if (StringStartsWith(values[n], "E")) {           // Equity
+               else if (StringStartsWith(values[n], "E")) {           // Equity: E | EQ
                   strSize = StringTrim(StringRight(values[n], ifInt(!StringStartsWith(values[n], "EQ"), -1, -2)));
                   if (!StringIsNumeric(strSize))                      return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = NULL;
@@ -2307,7 +2307,7 @@ bool CustomPositions.ReadConfig() {
                else                                                   return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Eine gruppierte Trade-History kann nicht mit anderen Eintr‰gen kombiniert werden
-               if (isPositionGrouped)                                 return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+               if (isPositionGrouped && confTypeValue!=TYPE_EQUITY)   return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Die Konfiguration virtueller Positionen muﬂ mit einer virtuellen Position beginnen, damit die virtuellen Lots sp‰ter nicht von den realen Lots abgezogen werden, siehe (2).
                if (confSizeValue!=EMPTY && (confTypeValue==TYPE_LONG || confTypeValue==TYPE_SHORT)) {
