@@ -452,7 +452,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    afterDeinit();
 
    string GetWindowText(int hWnd);
-   bool   StringEndsWith(string object, string postfix);
    int    SumInts(int array[]);
 
 #import "Expander.dll"

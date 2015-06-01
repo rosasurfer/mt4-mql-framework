@@ -2086,19 +2086,19 @@ int SearchMagicNumber(int array[], int number) {
  *
  *  Notation:                                                                                                                   Arraydarstellung:
  *  ---------                                                                                                                   -----------------
- *   0.1#123456                                             - O.1 Lot eines Tickets (1)                                         {             0.1, 123456            , NULL            , ...}
- *      #123456                                             - komplettes Ticket oder verbleibender Rest eines Tickets           {           EMPTY, 123456            , NULL            , ...}
- *   0.2L                                                   - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)      {             0.2, TYPE_LONG         , NULL            , ...}
- *   0.3S1.2345                                             - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)   {             0.3, TYPE_SHORT        , 1.2345          , ...}
- *      L                                                   - ohne Lotsize: alle verbleibenden Long-Positionen                  {           EMPTY, TYPE_LONG         , NULL            , ...}
- *      S                                                   - ohne Lotsize: alle verbleibenden Short-Positionen                 {           EMPTY, TYPE_SHORT        , NULL            , ...}
- *   H{DateTime}               [Group By [Month|Week|Day]]  - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
- *   H[T]{DateTime}-{DateTime} [Group By [Month|Week|Day]]  - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
- *   12.34                                                  - dem P/L einer Position zuzuschlagender Betrag                     {            NULL, TYPE_REALIZED     , 12.34           , ...}
- *   EQ123.00                                               - für Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
+ *   0.1#123456                                       - O.1 Lot eines Tickets (1)                                         {             0.1, 123456            , NULL            , ...}
+ *      #123456                                       - komplettes Ticket oder verbleibender Rest eines Tickets           {           EMPTY, 123456            , NULL            , ...}
+ *   0.2L                                             - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)      {             0.2, TYPE_LONG         , NULL            , ...}
+ *   0.3S1.2345                                       - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)   {             0.3, TYPE_SHORT        , 1.2345          , ...}
+ *      L                                             - ohne Lotsize: alle verbleibenden Long-Positionen                  {           EMPTY, TYPE_LONG         , NULL            , ...}
+ *      S                                             - ohne Lotsize: alle verbleibenden Short-Positionen                 {           EMPTY, TYPE_SHORT        , NULL            , ...}
+ *   H{DateTime}               [Monthly|Weekly|Daily] - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
+ *   H[T]{DateTime}-{DateTime} [Monthly|Weekly|Daily] - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
+ *   12.34                                            - dem P/L einer Position zuzuschlagender Betrag                     {            NULL, TYPE_REALIZED     , 12.34           , ...}
+ *   EQ123.00                                         - für Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
  *
- *   Kommentare (Text nach dem ersten Semikolon ";")        - werden als Beschreibung angezeigt
- *   Kommentare in Kommentaren (nach weiterem ";")          - werden ignoriert
+ *   Kommentare (Text nach dem ersten Semikolon ";")  - werden als Beschreibung angezeigt
+ *   Kommentare in Kommentaren (nach weiterem ";")    - werden ignoriert
  *
  *
  *  Beispiel:
@@ -2178,7 +2178,7 @@ bool CustomPositions.ReadConfig() {
                if (!StringLen(values[n]))                             // Leervalue
                   continue;
 
-               if (StringStartsWith(values[n], "H")) {                // History | HistoryTotal
+               if (StringStartsWith(values[n], "H")) {                // H=History | HT=HistoryTotal
                   if (!CustomPositions.ParseHstEntry(values[n], confComment, hstComments, isPositionEmpty, isPositionGrouped, isTotalHistory, confSizeValue, confValue1, confValue2, confValue3)) return(false);
                   if (isPositionGrouped) {
                      isPositionEmpty = false;                         // gruppiert:       die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
@@ -2215,7 +2215,7 @@ bool CustomPositions.ReadConfig() {
                   confValue3    = NULL;
                }
 
-               else if (StringStartsWith(values[n], "E")) {           // Equity: E | EQ
+               else if (StringStartsWith(values[n], "E")) {           // E = EQ = Equity
                   strSize = StringTrim(StringRight(values[n], ifInt(!StringStartsWith(values[n], "EQ"), -1, -2)));
                   if (!StringIsNumeric(strSize))                      return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = NULL;
@@ -2369,8 +2369,8 @@ bool CustomPositions.ReadConfig() {
  *
  * Format:
  * -------
- *  H{DateTime}            [[Group] By] (Month|Week|Day)[ly]   • Trade-History eines typischen Zeitraums
- *  H{DateTime}-{DateTime} [[Group] By] (Month|Week|Day)[ly]   • Trade-History von und bis zu einem konkreten Zeitpunkt
+ *  H{DateTime}             [Monthly|Weekly|Daily]    • Trade-History eines Symbols eines typischen Zeitraums
+ *  HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]    • Trade-History aller Symbole von und bis zu einem konkreten Zeitpunkt
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
  */
@@ -2378,10 +2378,10 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
    string confValue.orig = StringTrim(confValue);
           confValue      = StringToUpper(confValue.orig);
    if (!StringStartsWith(confValue, "H")) return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
-   confValue = StringTrim(StringSubstr(confValue, 1));
+   confValue = StringTrim(StringRight(confValue, -1));
 
    isTotal = StringStartsWith(confValue, "T");
-   if (isTotal) confValue = StringTrim(StringSubstr(confValue, 1));
+   if (isTotal) confValue = StringTrim(StringRight(confValue, -1));
 
    isGrouped = false;
    bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
@@ -2389,19 +2389,44 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
    string   sGroupClause, sValue1, sValue2, hstComment;
 
 
-   // (1) auf Group-By-Modifier prüfen und Gruppierung parsen
+   // (1) auf Group-By-Modifier prüfen und Modifier parsen
    int pos = StringFind(confValue, "GROUP ");
-   if (pos >= 0) {
-      sGroupClause = StringTrim(StringSubstr   (confValue, pos+6 ));
-      confValue    = StringTrim(StringSubstrFix(confValue, 0, pos));
-      if (!StringStartsWith(sGroupClause, "BY ")) return(!catch("CustomPositions.ParseHstEntry(2)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
-      if (!isEmpty)                               return(!catch("CustomPositions.ParseHstEntry(3)  cannot combine grouped trade history "+ StringToStr(confValue.orig) +" with other configuration entries", ERR_INVALID_CONFIG_PARAMVALUE));
-      isGrouped    = true;
-      sGroupClause = StringTrim(StringSubstr(sGroupClause, 3));
-      if      (sGroupClause == "DAY"  ) groupByDay   = true;
+   if (pos > -1) {
+      sGroupClause = StringTrim(StringRight(confValue, -pos-6));
+      if (StringStartsWith(sGroupClause, "BY "))
+         sGroupClause = StringTrim(StringRight(sGroupClause, -3));
+   }
+   else {
+      pos = StringFind(confValue, "BY ");
+      if (pos > -1) sGroupClause = StringTrim(StringRight(confValue, -pos-3));
+   }
+   if (pos == -1) {
+      pos = StringFind(confValue, "DAI");
+      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
+   }
+   if (pos == -1) {
+      pos = StringFind(confValue, "DAY");
+      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
+   }
+   if (pos == -1) {
+      pos = StringFind(confValue, "WEEK");
+      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
+   }
+   if (pos == -1) {
+      pos = StringFind(confValue, "MONTH");
+      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
+   }
+   if (pos > -1) {
+      if (StringEndsWith(sGroupClause, "LY"))
+         sGroupClause = StringLeft(sGroupClause, -2);
+      if      (sGroupClause == "DAI"  ) groupByDay   = true;
+      else if (sGroupClause == "DAY"  ) groupByDay   = true;
       else if (sGroupClause == "WEEK" ) groupByWeek  = true;
       else if (sGroupClause == "MONTH") groupByMonth = true;
-      else return(!catch("CustomPositions.ParseHstEntry(3)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
+      else          return(!catch("CustomPositions.ParseHstEntry(2)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
+      isGrouped = true;
+      if (!isEmpty) return(!catch("CustomPositions.ParseHstEntry(3)  cannot combine grouped trade history "+ StringToStr(confValue.orig) +" with other configuration entries", ERR_INVALID_CONFIG_PARAMVALUE));
+      confValue = StringTrim(StringLeft(confValue, pos));
    }
 
 
@@ -2436,8 +2461,8 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
       else                    dtTo = dtFrom;
    }
    //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGrouped);
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(8)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(9)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(5)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(6)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    if (isGrouped) {
@@ -4291,16 +4316,13 @@ string InputsToStr() {
    bool     IsCurrency(string value);
    bool     IsFile(string filename);
    bool     IsGlobalConfigKey(string section, string key);
-   double   MathModFix(double a, double b);
    int      ObjectRegister(string label);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    string   ShortAccountCompany();
-   bool     StringEndsWith(string object, string postfix);
    bool     StringICompare(string a, string b);
-   bool     StringIEndsWith(string object, string postfix);
 
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);

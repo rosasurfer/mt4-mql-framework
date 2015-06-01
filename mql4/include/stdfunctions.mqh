@@ -1969,7 +1969,7 @@ int Ceil(double value) {
  *
  * @param  double a      - Divident
  * @param  double b      - Divisor
- * @param  double onZero - Ergebnis für den Fall, das der Divisor 0 ist (default: 0)
+ * @param  double onZero - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
  *
  * @return double
  */
@@ -1981,11 +1981,27 @@ double MathDiv(double a, double b, double onZero=0) {
 
 
 /**
+ * Gibt den Divisionsrest zweier Doubles zurück (fehlerbereinigter Ersatz für MathMod()).
+ *
+ * @param  double a
+ * @param  double b
+ *
+ * @return double - Divisionsrest
+ */
+double MathModFix(double a, double b) {
+   double remainder = MathMod(a, b);
+   if      (EQ(remainder, 0)) remainder = 0;                         // 0 normalisieren
+   else if (EQ(remainder, b)) remainder = 0;
+   return(remainder);
+}
+
+
+/**
  * Integer-Version von MathDiv(). Dividiert zwei Integers und fängt dabei eine Division durch 0 ab.
  *
  * @param  int a      - Divident
  * @param  int b      - Divisor
- * @param  int onZero - Ergebnis für den Fall, das der Divisor 0 ist (default: 0)
+ * @param  int onZero - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
  *
  * @return int
  */
@@ -2013,6 +2029,133 @@ bool StringIsNull(string value) {
       catch("StringIsNull()", error);
 
    return(false);
+}
+
+
+/**
+ * Gibt einen linken Teilstring eines Strings zurück.
+ *
+ * Ist N positiv, gibt StringLeft() die N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StringLeft("ABCDEFG",  2)  =>  "AB"
+ *
+ * Ist N negativ, gibt StringLeft() alle außer den N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StringLeft("ABCDEFG", -2)  =>  "ABCDE"
+ *
+ * @param  string value
+ * @param  int    n
+ *
+ * @return string
+ */
+string StringLeft(string value, int n) {
+   if (n > 0) return(StringSubstr   (value, 0, n                 ));
+   if (n < 0) return(StringSubstrFix(value, 0, StringLen(value)+n));
+   return("");
+}
+
+
+/**
+ * Gibt einen rechten Teilstring eines Strings zurück.
+ *
+ * Ist N positiv, gibt StringRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
+ *    z.B.  StringRight("ABCDEFG",  2)  =>  "FG"
+ *
+ * Ist N negativ, gibt StringRight() alle außer den N am meisten links stehenden Zeichen des Strings zurück.
+ *    z.B.  StringRight("ABCDEFG", -2)  =>  "CDEFG"
+ *
+ * @param  string value
+ * @param  int    n
+ *
+ * @return string
+ */
+string StringRight(string value, int n) {
+   if (n > 0) return(StringSubstr(value, StringLen(value)-n));
+   if (n < 0) return(StringSubstr(value, -n                ));
+   return("");
+}
+
+
+/**
+ * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird beachtet.
+ *
+ * @param  string object - zu prüfender String
+ * @param  string prefix - Substring
+ *
+ * @return bool
+ */
+bool StringStartsWith(string object, string prefix) {
+   if (!StringLen(prefix))
+      return(!catch("StringStartsWith(1)  empty prefix \"\"", ERR_INVALID_PARAMETER));
+   return(StringFind(object, prefix) == 0);
+}
+
+
+/**
+ * Ob ein String mit dem angegebenen Teilstring beginnt. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string object - zu prüfender String
+ * @param  string prefix - Substring
+ *
+ * @return bool
+ */
+bool StringIStartsWith(string object, string prefix) {
+   if (!StringLen(prefix))
+      return(!catch("StringIStartsWith()  empty prefix \"\"", ERR_INVALID_PARAMETER));
+   return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
+}
+
+
+/**
+ * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird beachtet.
+ *
+ * @param  string object  - zu prüfender String
+ * @param  string postfix - Substring
+ *
+ * @return bool
+ */
+bool StringEndsWith(string object, string postfix) {
+   int lenObject  = StringLen(object);
+   int lenPostfix = StringLen(postfix);
+
+   if (lenPostfix == 0)
+      return(!catch("StringEndsWith()  empty postfix \"\"", ERR_INVALID_PARAMETER));
+
+   if (lenObject < lenPostfix)
+      return(false);
+
+   if (lenObject == lenPostfix)
+      return(object == postfix);
+
+   int start = lenObject-lenPostfix;
+   return(StringFind(object, postfix, start) == start);
+}
+
+
+/**
+ * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string object  - zu prüfender String
+ * @param  string postfix - Substring
+ *
+ * @return bool
+ */
+bool StringIEndsWith(string object, string postfix) {
+   int lenObject  = StringLen(object);
+   int lenPostfix = StringLen(postfix);
+
+   if (lenPostfix == 0)
+      return(!catch("StringIEndsWith()  empty postfix \"\"", ERR_INVALID_PARAMETER));
+
+   if (lenObject < lenPostfix)
+      return(false);
+
+   object  = StringToUpper(object);
+   postfix = StringToUpper(postfix);
+
+   if (lenObject == lenPostfix)
+      return(object == postfix);
+
+   int start = lenObject-lenPostfix;
+   return(StringFind(object, postfix, start) == start);
 }
 
 
@@ -3354,6 +3497,7 @@ void __DummyCalls() {
    LT(NULL, NULL);
    MarketWatch.Symbols();
    MathDiv(NULL, NULL);
+   MathModFix(NULL, NULL);
    Max(NULL, NULL);
    MT4InternalMsg();
    Min(NULL, NULL);
@@ -3373,12 +3517,18 @@ void __DummyCalls() {
    SelectTicket(NULL, NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
+   StringEndsWith(NULL, NULL);
+   StringIEndsWith(NULL, NULL);
    StringIsNull(NULL);
+   StringIStartsWith(NULL, NULL);
+   StringLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);
    StringPadLeft(NULL, NULL);
    StringPadRight(NULL, NULL);
    StringReplace(NULL, NULL, NULL);
+   StringRight(NULL, NULL);
    StringRightPad(NULL, NULL);
+   StringStartsWith(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StringToHexStr(NULL);
    StringToLower(NULL);
@@ -3466,12 +3616,8 @@ void __DummyCalls() {
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
    bool     StringContains(string object, string substring);
-   bool     StringEndsWith(string object, string postfix);
    bool     StringIsDigit(string value);
-   string   StringLeft(string value, int n);
    string   StringRepeat(string input, int times);
-   string   StringRight(string value, int n);
-   bool     StringStartsWith(string object, string prefix);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int      ec.hChart      (/*EXECUTION_CONTEXT*/int ec[]);

@@ -165,7 +165,6 @@ int UpdateProgramStatus(int value=NULL) {
 #import "stdlib1.ex4"
    int    GetTesterWindow();
    string GetWindowText(int hWnd);
-   bool   StringEndsWith(string object, string postfix);
 
 #import "stdlib2.ex4"
    int    GetTerminalRuntime();
