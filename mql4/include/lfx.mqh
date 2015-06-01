@@ -667,7 +667,6 @@ void DummyCalls() {
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
    string   StringReplace.Recursive(string object, string search, string replace);
-   bool     StringStartsWith(string object, string prefix);
    int      StrToOperationType(string value);
 
 #import "Expander.dll"
