@@ -2092,8 +2092,8 @@ int SearchMagicNumber(int array[], int number) {
  *   0.3S1.2345                                       - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)   {             0.3, TYPE_SHORT        , 1.2345          , ...}
  *      L                                             - ohne Lotsize: alle verbleibenden Long-Positionen                  {           EMPTY, TYPE_LONG         , NULL            , ...}
  *      S                                             - ohne Lotsize: alle verbleibenden Short-Positionen                 {           EMPTY, TYPE_SHORT        , NULL            , ...}
- *   H{DateTime}               [Monthly|Weekly|Daily] - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
- *   H[T]{DateTime}-{DateTime} [Monthly|Weekly|Daily] - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
+ *   H{DateTime}             [Monthly|Weekly|Daily]   - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
+ *   HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]   - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
  *   12.34                                            - dem P/L einer Position zuzuschlagender Betrag                     {            NULL, TYPE_REALIZED     , 12.34           , ...}
  *   EQ123.00                                         - für Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
  *
@@ -2152,14 +2152,16 @@ bool CustomPositions.ReadConfig() {
       if (StringIStartsWith(keys[i], symbol) || StringIStartsWith(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {                // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
             iniValue = GetRawIniString(file, section, keys[i], "");
+            iniValue = StringReplace(iniValue, TAB, " ");
+
 
             // Kommentar auswerten
             confComment = "";
             hstComments = "";
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
-               confComment = StringSubstr(iniValue, pos+1);
-               iniValue    = StringTrim(StringSubstrFix(iniValue, 0, pos));
+               confComment = StringRight(iniValue, -pos-1);
+               iniValue    = StringTrim(StringLeft(iniValue, pos));
                pos = StringFind(confComment, ";");
                if (pos == -1) confComment = StringTrim(confComment);
                else           confComment = StringTrim(StringLeft(confComment, pos));
@@ -2266,7 +2268,7 @@ bool CustomPositions.ReadConfig() {
                   if (confSizeValue < 0)                              return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)          return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_LONG;
-                  strPrice = StringTrim(StringSubstr(values[n], pos+1));
+                  strPrice = StringTrim(StringRight(values[n], -pos-1));
                   if (!StringIsNumeric(strPrice))                     return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue1 = StrToDouble(strPrice);
                   if (confValue1 <= 0)                                return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2282,7 +2284,7 @@ bool CustomPositions.ReadConfig() {
                   if (confSizeValue < 0)                              return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)          return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = TYPE_SHORT;
-                  strPrice = StringTrim(StringSubstr(values[n], pos+1));
+                  strPrice = StringTrim(StringRight(values[n], -pos-1));
                   if (!StringIsNumeric(strPrice))                     return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue1 = StrToDouble(strPrice);
                   if (confValue1 <= 0)                                return(!catch("CustomPositions.ReadConfig(22)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -2297,7 +2299,7 @@ bool CustomPositions.ReadConfig() {
                   confSizeValue = StrToDouble(strSize);
                   if (confSizeValue && LT(confSizeValue, minLotSize)) return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, lotStep) != 0)        return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  strTicket = StringTrim(StringSubstr(values[n], pos+1));
+                  strTicket = StringTrim(StringRight(values[n], -pos-1));
                   if (!StringIsDigit(strTicket))                      return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confTypeValue = StrToInteger(strTicket);
                   confValue1    = NULL;
@@ -2383,55 +2385,30 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
    isTotal = StringStartsWith(confValue, "T");
    if (isTotal) confValue = StringTrim(StringRight(confValue, -1));
 
-   isGrouped = false;
    bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
-   string   sGroupClause, sValue1, sValue2, hstComment;
+   string   sValue1, sValue2, hstComment;
 
 
-   // (1) auf Group-By-Modifier prüfen und Modifier parsen
-   int pos = StringFind(confValue, "GROUP ");
-   if (pos > -1) {
-      sGroupClause = StringTrim(StringRight(confValue, -pos-6));
-      if (StringStartsWith(sGroupClause, "BY "))
-         sGroupClause = StringTrim(StringRight(sGroupClause, -3));
+   // (1) auf Group-Modifier prüfen
+   if (StringEndsWith(confValue, " DAILY")) {
+      groupByDay = true;
+      confValue  = StringTrim(StringLeft(confValue, -6));
    }
-   else {
-      pos = StringFind(confValue, "BY ");
-      if (pos > -1) sGroupClause = StringTrim(StringRight(confValue, -pos-3));
+   else if (StringEndsWith(confValue, " WEEKLY")) {
+      groupByWeek = true;
+      confValue   = StringTrim(StringLeft(confValue, -7));
    }
-   if (pos == -1) {
-      pos = StringFind(confValue, "DAI");
-      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
+   else if (StringEndsWith(confValue, " MONTHLY")) {
+      groupByMonth = true;
+      confValue    = StringTrim(StringLeft(confValue, -8));
    }
-   if (pos == -1) {
-      pos = StringFind(confValue, "DAY");
-      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
-   }
-   if (pos == -1) {
-      pos = StringFind(confValue, "WEEK");
-      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
-   }
-   if (pos == -1) {
-      pos = StringFind(confValue, "MONTH");
-      if (pos > -1) sGroupClause = StringRight(confValue, -pos);
-   }
-   if (pos > -1) {
-      if (StringEndsWith(sGroupClause, "LY"))
-         sGroupClause = StringLeft(sGroupClause, -2);
-      if      (sGroupClause == "DAI"  ) groupByDay   = true;
-      else if (sGroupClause == "DAY"  ) groupByDay   = true;
-      else if (sGroupClause == "WEEK" ) groupByWeek  = true;
-      else if (sGroupClause == "MONTH") groupByMonth = true;
-      else          return(!catch("CustomPositions.ParseHstEntry(2)  invalid history configuration in "+ StringToStr(confValue.orig) +" (group clause)", ERR_INVALID_CONFIG_PARAMVALUE));
-      isGrouped = true;
-      if (!isEmpty) return(!catch("CustomPositions.ParseHstEntry(3)  cannot combine grouped trade history "+ StringToStr(confValue.orig) +" with other configuration entries", ERR_INVALID_CONFIG_PARAMVALUE));
-      confValue = StringTrim(StringLeft(confValue, pos));
-   }
+   isGrouped = groupByDay || groupByWeek || groupByMonth;
+   if (isGrouped && !isEmpty) return(!catch("CustomPositions.ParseHstEntry(2)  cannot combine grouped trade history "+ StringToStr(confValue.orig) +" with other configuration entries", ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    // (2) Beginn- und Endzeitpunkt parsen
-   pos = StringFind(confValue, "-");
+   int pos = StringFind(confValue, "-");
    if (pos >= 0) {                                                   // von-bis parsen
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
@@ -2451,7 +2428,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
       dtFrom = ParseDateTime(confValue, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                         if (!dtFrom)       return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+                                                                                                                         if (!dtFrom)       return(!catch("CustomPositions.ParseHstEntry(3)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
       if      (isFullYear1  ) dtTo = DateTime(TimeYearFix(dtFrom)+1)                    - 1*SECOND;   // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
@@ -2461,8 +2438,8 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
       else                    dtTo = dtFrom;
    }
    //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGrouped);
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(5)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(6)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(5)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    if (isGrouped) {
