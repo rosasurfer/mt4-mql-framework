@@ -2143,7 +2143,7 @@ bool CustomPositions.ReadConfig() {
       ArrayResize(custom.position.conf.comments, 0);
    }
 
-   string   keys[], values[], iniValue, comment="", confComment="", openComment="", hstComment="", strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string   keys[], values[], iniValue, comment, confComment, openComment, hstComment, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   confSizeValue, confTypeValue, confValue1, confValue2, confValue3, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int      valuesSize, confSize, pos, ticket, positionStartOffset;
    datetime from, to;
@@ -2164,9 +2164,10 @@ bool CustomPositions.ReadConfig() {
             iniValue = GetRawIniString(file, section, keys[i], "");
             iniValue = StringReplace(iniValue, TAB, " ");
 
-
             // Kommentar auswerten
+            comment     = "";
             confComment = "";
+            openComment = "";
             hstComment  = "";
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
@@ -2179,8 +2180,7 @@ bool CustomPositions.ReadConfig() {
                   confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
             }
 
-
-            // Konfigurationsdaten auswerten
+            // Konfiguration auswerten
             isPositionEmpty   = true;                                 // ob diese Zeile bereits Konfigurationsdaten enthält
             isPositionVirtual = false;                                // ob diese Zeile eine virtuelle Position enthält
             isPositionGrouped = false;                                // ob diese Zeile eine gruppierte History enthält
@@ -2864,8 +2864,8 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
       else if (StringLen(sDD) > 2) {                          // Tag + Zeit:  "2014.01.15 12:34:56"
          int pos = StringFind(sDD, " ");
          if (pos == -1)                                       return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ StringToStr(value), ERR_INVALID_CONFIG_PARAMVALUE)));
-         sTime = StringTrim(StringSubstr   (sDD, pos+1));
-         sDD   = StringTrim(StringSubstrFix(sDD, 0, pos));
+         sTime = StringTrim(StringRight(sDD, -pos-1));
+         sDD   = StringTrim(StringLeft (sDD,  pos  ));
       }
       else {                                                  // nur Tag
          isDay = true;
@@ -3039,29 +3039,29 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
       to   = value1;
 
       // alle Positionen eines Zeitraumes
-      if (shortPosition || longPosition) {
+      if (longPosition || shortPosition) {
          for (i=0; i < sizeTickets; i++) {
-            if (!tickets[i])
-               continue;
-            if (from <= openTimes[i] && openTimes[i] <= to) {
-               // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
-               ArrayPushInt   (customTickets,     tickets    [i]);
-               ArrayPushInt   (customTypes,       types      [i]);
-               ArrayPushDouble(customLots,        lots       [i]);
-               ArrayPushDouble(customOpenPrices,  openPrices [i]);
-               ArrayPushDouble(customCommissions, commissions[i]);
-               ArrayPushDouble(customSwaps,       swaps      [i]);
-               ArrayPushDouble(customProfits,     profits    [i]);
-               if (!isVirtual) {
-                  if (types[i] == OP_BUY) longPosition     = NormalizeDouble(longPosition  - lots[i]      , 2);
-                  else                    shortPosition    = NormalizeDouble(shortPosition - lots[i]      , 2);
-                                          totalPosition    = NormalizeDouble(longPosition  - shortPosition, 2);
-                                          tickets[i]       = NULL;
-               }
-               if (types[i] == OP_BUY) customLongPosition  = NormalizeDouble(customLongPosition  + lots[i]            , 3);
-               else                    customShortPosition = NormalizeDouble(customShortPosition + lots[i]            , 3);
-                                       customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
+            if (!tickets[i])                 continue;
+            if (from && openTimes[i] < from) continue;
+            if (to   && openTimes[i] > to  ) continue;
+
+            // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
+            ArrayPushInt   (customTickets,     tickets    [i]);
+            ArrayPushInt   (customTypes,       types      [i]);
+            ArrayPushDouble(customLots,        lots       [i]);
+            ArrayPushDouble(customOpenPrices,  openPrices [i]);
+            ArrayPushDouble(customCommissions, commissions[i]);
+            ArrayPushDouble(customSwaps,       swaps      [i]);
+            ArrayPushDouble(customProfits,     profits    [i]);
+            if (!isVirtual) {
+               if (types[i] == OP_BUY) longPosition     = NormalizeDouble(longPosition  - lots[i]      , 2);
+               else                    shortPosition    = NormalizeDouble(shortPosition - lots[i]      , 2);
+                                       totalPosition    = NormalizeDouble(longPosition  - shortPosition, 2);
+                                       tickets[i]       = NULL;
             }
+            if (types[i] == OP_BUY) customLongPosition  = NormalizeDouble(customLongPosition  + lots[i]            , 3);
+            else                    customShortPosition = NormalizeDouble(customShortPosition + lots[i]            , 3);
+                                    customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
          }
       }
    }
@@ -3168,9 +3168,9 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
          // (4) Trades auswerten
          lastProfit=0; n=0;
          for (i=0; i < orders; i++) {
-            if (!hst.tickets[i])                                       continue; // verworfene Hedges überspringen
-            if (from!=NULL) /*&&*/ if (hst.closeTimes[i] < from) continue;
-            if (to  !=NULL) /*&&*/ if (hst.closeTimes[i] > to  ) continue;
+            if (!hst.tickets[i])                  continue;                      // verworfene Hedges überspringen
+            if (from && hst.closeTimes[i] < from) continue;
+            if (to   && hst.closeTimes[i] > to  ) continue;
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
          }

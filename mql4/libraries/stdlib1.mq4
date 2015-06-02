@@ -8552,13 +8552,12 @@ string NumberToStr(double number, string mask) {
  *      e.g. DateToStr(StrToTime("2010.07.30"), "(!D=DT N)")  =>  "(D=30th July)"
  *
  * @param  datetime time
- * @param  string   mask
+ * @param  string   mask - default: TIME_FULL
  *
  * @return string - formatierter datetime-Wert oder Leerstring, falls ein Fehler auftrat
  */
 string DateToStr(datetime time, string mask) {
    if (time < 0) return(_EMPTY_STR(catch("DateToStr(1)  invalid parameter time = "+ time +" (not a time)", ERR_INVALID_PARAMETER)));
-
    if (!StringLen(mask))
       return(TimeToStr(time, TIME_FULL));                            // mit leerer Maske wird das MQL-Standardformat verwendet
 
