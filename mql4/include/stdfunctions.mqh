@@ -2307,7 +2307,7 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string StringToStr(string value) {
-   string tmp = value;                                               // ggf. NPE provozieren
+   string tmp = value;                                               // ERR_NOT_INITIALIZED_STRING provozieren
 
    int error = GetLastError();
    if (!error)                              return(StringConcatenate("\"", value, "\""));
