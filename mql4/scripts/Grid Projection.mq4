@@ -11,7 +11,7 @@
  *    vernünftiges Einstiegskriterium. Statt dessen scheint die Weekly-Range aussichtsreicher, denn die Distance zwischen TakeProfit
  *    und StopLoss entspricht exakt der erwarteten wöchentlichen Trading-Range (ETR).
  *
- *  - Potentielle Setups sind der Bruch der Vorwochenrange, der ETR oder von wöchentlichen Insidebars. Dies können Extreme oder
+ *  - Potentielle Setups sind der Bruch der Vorwochenrange, der ETR oder von wöchentlichen Inside-Bars. Dies können Extreme oder
  *    die Entstehung neuer Trends sein. Als Extreme sollten sie zuverlässig sein, wenn ein neuer Trend ausgeschlossen werden kann.
  *
  *
