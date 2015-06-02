@@ -90,13 +90,16 @@ double positions.ddata[][8];                             //                   []
 #define TYPE_CUSTOM          1                           //                   individuell konfigurierte reale Anzeige     (mit oder ohne History)
 #define TYPE_VIRTUAL         2                           //                   individuell konfigurierte virtuelle Anzeige (mit oder ohne History)
 
-#define TYPE_LONG            1                           // DirectionTypes
-#define TYPE_SHORT           2
-#define TYPE_HEDGE           3
-#define TYPE_HISTORY         4
-#define TYPE_HISTORY_TOTAL   5
-#define TYPE_REALIZED        6
-#define TYPE_EQUITY          7
+#define TYPE_OPEN_LONG       1                           // DirectionTypes
+#define TYPE_OPEN_SHORT      2
+#define TYPE_OPEN_HEDGE      3
+#define TYPE_OPEN_ANY        4
+#define TYPE_OPEN_ANY_TOTAL  5
+#define TYPE_HISTORY         6
+#define TYPE_HISTORY_TOTAL   7
+#define TYPE_REALIZED        8
+#define TYPE_EQUITY          9                           // DirectionTypes werden als Indizes benutzt
+string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "OPEN_ANY", "OPEN_ANY_TOTAL", "History:", "HISTORY_TOTAL", "Realized:", "EQUITY"};
 
 #define I_POSITION_TYPE      0                           // Arrayindizes von positions.idata[]
 #define I_DIRECTION_TYPE     1
@@ -1501,8 +1504,8 @@ bool UpdatePositions() {
    }
 
    // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {LotSize}   BE|Dist: {BePrice}   Profit: {ProfitAmount}   {ProfitPercent}   {Comment}"
-   string sLotSize, sOtherProfits, sProfitPct, sComment, sTypes[]={"", "Long:", "Short:", "Hedge:", "History:", "Realized:", ""};   // DirectionTypes (1, 2, 3, 4, 5) werden als
-   color  fontColor;                                                                                                                // Indizes benutzt
+   string sLotSize, sOtherProfits, sProfitPct, sComment;
+   color  fontColor;
    int    line;
    double otherProfits;
 
@@ -1517,7 +1520,7 @@ bool UpdatePositions() {
 
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HISTORY) {
          // History
-         ObjectSetText(label.position +".line"+ line +"_col0", sTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                            positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],                                                  positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col1", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col2", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col3", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
@@ -1533,7 +1536,7 @@ bool UpdatePositions() {
       }
       else if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_REALIZED) {
          // Realized Profit
-         ObjectSetText(label.position +".line"+ line +"_col0", sTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                            positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],                                                  positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col1", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col2", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col3", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
@@ -1547,10 +1550,10 @@ bool UpdatePositions() {
          ObjectSetText(label.position +".line"+ line +"_col7", sComment +" ",                                                                                           positions.fontSize, positions.fontName, fontColor);
       }
       else {
-         if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HEDGE) {
+         if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_OPEN_HEDGE) {
             // Hedged
-            ObjectSetText(label.position +".line"+ line +"_col0",      sTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                    positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                      positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(label.position +".line"+ line +"_col1",      NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                 positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                              positions.fontSize, positions.fontName, fontColor);
                if (!positions.ddata[i][I_BREAKEVEN])
             ObjectSetText(label.position +".line"+ line +"_col3", "...",                                                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1559,9 +1562,9 @@ bool UpdatePositions() {
          }
          else {
             // Not Hedged
-            ObjectSetText(label.position +".line"+ line +"_col0",         sTypes[positions.idata[i][I_DIRECTION_TYPE]],                                                 positions.fontSize, positions.fontName, fontColor);
-               if (!positions.ddata[i][I_HEDGED_LOTSIZE]) sLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+");
-               else                                       sLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+");
+            ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, fontColor);
+               if (!positions.ddata[i][I_HEDGED_LOTSIZE]) sLotSize =   NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+");
+               else                                       sLotSize =   NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+");
             ObjectSetText(label.position +".line"+ line +"_col1", sLotSize +" lot",                                                                                     positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                positions.fontSize, positions.fontName, fontColor);
                if (!positions.ddata[i][I_BREAKEVEN])
@@ -1592,7 +1595,7 @@ bool UpdatePositions() {
          line++;
          if (positions.idata[i][I_POSITION_TYPE] == TYPE_VIRTUAL) fontColor = positions.fontColor.virtual;
          else                                                     fontColor = positions.fontColor.remote;
-         ObjectSetText(label.position +".line"+ line +"_col0",      sTypes[los.Type        (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[los.Type   (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                          positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
@@ -1779,13 +1782,14 @@ bool AnalyzePositions() {
    if (mode.remote      ) positionsAnalyzed = true;
    if (positionsAnalyzed) return(true);
 
-   int    tickets    [], openPositions;                                 // Positionsdetails
-   int    types      [];
-   double lots       [];
-   double openPrices [];
-   double commissions[];
-   double swaps      [];
-   double profits    [];
+   int      tickets    [], openPositions;                               // Positionsdetails
+   int      types      [];
+   double   lots       [];
+   datetime openTimes  [];
+   double   openPrices [];
+   double   commissions[];
+   double   swaps      [];
+   double   profits    [];
 
 
    // (1) Gesamtposition ermitteln
@@ -1833,6 +1837,7 @@ bool AnalyzePositions() {
       ArrayResize(tickets    , openPositions);                          // interne Positionsdetails werden bei jedem Tick zurückgesetzt
       ArrayResize(types      , openPositions);
       ArrayResize(lots       , openPositions);
+      ArrayResize(openTimes  , openPositions);
       ArrayResize(openPrices , openPositions);
       ArrayResize(commissions, openPositions);
       ArrayResize(swaps      , openPositions);
@@ -1844,6 +1849,7 @@ bool AnalyzePositions() {
          tickets    [i] = OrderTicket();
          types      [i] = OrderType();
          lots       [i] = NormalizeDouble(OrderLots(), 2);
+         openTimes  [i] = OrderOpenTime();
          openPrices [i] = OrderOpenPrice();
          commissions[i] = OrderCommission();
          swaps      [i] = OrderSwap();
@@ -1872,6 +1878,7 @@ bool AnalyzePositions() {
          ArrayCopy(tickets    , external.open.ticket    );              // ExtractPosition() modifiziert die übergebenen Arrays, also Kopie der Originaldaten erstellen
          ArrayCopy(types      , external.open.type      );
          ArrayCopy(lots       , external.open.lots      );
+         ArrayCopy(openTimes  , external.open.openTime  );
          ArrayCopy(openPrices , external.open.openPrice );
          ArrayCopy(commissions, external.open.commission);
          ArrayCopy(swaps      , external.open.swap      );
@@ -1950,9 +1957,9 @@ bool AnalyzePositions() {
          continue;
       }
       if (!ExtractPosition(size, type, value1, value2, value3,
-                           _longPosition,      _shortPosition,      _totalPosition,                                                         tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
+                           _longPosition,      _shortPosition,      _totalPosition,                                                         tickets,       types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
                            isVirtual,
-                           customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
+                           customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits))
          return(false);
       custom.position.conf[i][2] = value1;
       custom.position.conf[i][3] = value2;
@@ -2084,20 +2091,22 @@ int SearchMagicNumber(int array[], int number) {
  * Konfiguration ist die Größe der ersten Dimension des Arrays niemals 0. Positionskommentare werden in custom.position.conf.comments[] gespeichert.
  *
  *
- *  Notation:                                                                                                                   Arraydarstellung:
- *  ---------                                                                                                                   -----------------
- *   0.1#123456                                       - O.1 Lot eines Tickets (1)                                         {             0.1, 123456            , NULL            , ...}
- *      #123456                                       - komplettes Ticket oder verbleibender Rest eines Tickets           {           EMPTY, 123456            , NULL            , ...}
- *   0.2L                                             - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)      {             0.2, TYPE_LONG         , NULL            , ...}
- *   0.3S1.2345                                       - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)   {             0.3, TYPE_SHORT        , 1.2345          , ...}
- *      L                                             - ohne Lotsize: alle verbleibenden Long-Positionen                  {           EMPTY, TYPE_LONG         , NULL            , ...}
- *      S                                             - ohne Lotsize: alle verbleibenden Short-Positionen                 {           EMPTY, TYPE_SHORT        , NULL            , ...}
- *   H{DateTime}             [Monthly|Weekly|Daily]   - Trade-History eines Zeitraums (3)(5)                              {2014.01.01 00:00, TYPE_HISTORY      , 2014.12.31 23:59, ...}
- *   HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]   - Trade-History von und bis zu einem konkreten Zeitpunkt (3)(4)(5)  {2014.02.01 08:00, TYPE_HISTORY_TOTAL, 2014.02.10 18:00, ...}
- *   12.34                                            - dem P/L einer Position zuzuschlagender Betrag                     {            NULL, TYPE_REALIZED     , 12.34           , ...}
- *   EQ123.00                                         - für Equityberechnungen zu verwendender Wert                       {            NULL, TYPE_EQUITY       , 123.00          , ...}
+ *  Notation:                                         Beschreibung:                                                             Arraydarstellung:
+ *  ---------                                         -------------                                                             -----------------
+ *   0.1#123456                                       - O.1 Lot eines Tickets (1)                                               {             0.1, 123456             , NULL            , ...}
+ *      #123456                                       - komplettes Ticket oder verbleibender Rest eines Tickets                 {           EMPTY, 123456             , NULL            , ...}
+ *   0.2L                                             - mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)            {             0.2, TYPE_OPEN_LONG     , NULL            , ...}
+ *   0.3S1.2345                                       - mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)         {             0.3, TYPE_OPEN_SHORT    , 1.2345          , ...}
+ *      L                                             - ohne Lotsize: alle verbleibenden Long-Positionen                        {           EMPTY, TYPE_OPEN_LONG     , NULL            , ...}
+ *      S                                             - ohne Lotsize: alle verbleibenden Short-Positionen                       {           EMPTY, TYPE_OPEN_SHORT    , NULL            , ...}
+ *   O{DateTime}                                      - offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)    {2014.01.01 00:00, TYPE_OPEN_ANY      , 2014.12.31 23:59, ...}
+ *   OT{DateTime}-{DateTime}                          - offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4)   {2014.02.01 08:00, TYPE_OPEN_ANY_TOTAL, 2014.02.10 18:00, ...}
+ *   H{DateTime}             [Monthly|Weekly|Daily]   - Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)     {2014.01.01 00:00, TYPE_HISTORY       , 2014.12.31 23:59, ...}
+ *   HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]   - Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)    {2014.02.01 08:00, TYPE_HISTORY_TOTAL , 2014.02.10 18:00, ...}
+ *   12.34                                            - dem P/L einer Position zuzuschlagender Betrag                           {            NULL, TYPE_REALIZED      , 12.34           , ...}
+ *   EQ123.00                                         - für Equityberechnungen zu verwendender Wert                             {            NULL, TYPE_EQUITY        , 123.00          , ...}
  *
- *   Kommentare (Text nach dem ersten Semikolon ";")  - werden als Beschreibung angezeigt
+ *   Kommentar (Text nach dem ersten Semikolon ";")   - wird als Beschreibung angezeigt
  *   Kommentare in Kommentaren (nach weiterem ";")    - werden ignoriert
  *
  *
@@ -2113,10 +2122,10 @@ int SearchMagicNumber(int array[], int number) {
  *
  *  Resultierendes Array:
  *  ---------------------
- *  custom.position.conf = {{EMPTY, 111111,     NULL, ...}, {  0.1, 222222,     NULL, ...},                                     {*, NULL, *, ...},
- *                          {  0.2, TYPE_LONG,  NULL, ...}, {EMPTY, 222222,     NULL, ...},                                     {*, NULL, *, ...},
- *                          {EMPTY, TYPE_LONG,  NULL, ...}, {EMPTY, TYPE_SHORT, NULL, ...}, {NULL, TYPE_REALIZED, -34.45, ...}, {*, NULL, *, ...},
- *                          {  0.3, TYPE_SHORT, NULL, ...},                                                                     {*, NULL, *, ...}
+ *  custom.position.conf = {{EMPTY, 111111,          NULL, ...}, {  0.1, 222222,          NULL, ...},                                     {*, NULL, *, ...},
+ *                          {  0.2, TYPE_OPEN_LONG,  NULL, ...}, {EMPTY, 222222,          NULL, ...},                                     {*, NULL, *, ...},
+ *                          {EMPTY, TYPE_OPEN_LONG,  NULL, ...}, {EMPTY, TYPE_OPEN_SHORT, NULL, ...}, {NULL, TYPE_REALIZED, -34.45, ...}, {*, NULL, *, ...},
+ *                          {  0.3, TYPE_OPEN_SHORT, NULL, ...},                                                                          {*, NULL, *, ...}
  *                         }
  *
  *  (1) Bei einer Lotsize von 0 wird die entsprechende Teilposition der individuellen Position ignoriert.
@@ -2134,10 +2143,11 @@ bool CustomPositions.ReadConfig() {
       ArrayResize(custom.position.conf.comments, 0);
    }
 
-   string   keys[], values[], iniValue, confComment, hstComments, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string   keys[], values[], iniValue, comment="", confComment="", openComment="", hstComment="", strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   confSizeValue, confTypeValue, confValue1, confValue2, confValue3, lotSize, minLotSize=MarketInfo(Symbol(), MODE_MINLOT), lotStep=MarketInfo(Symbol(), MODE_LOTSTEP);
    int      valuesSize, confSize, pos, ticket, positionStartOffset;
-   bool     isPositionEmpty, isPositionVirtual, isPositionGrouped, isTotalHistory;
+   datetime from, to;
+   bool     isPositionEmpty, isPositionVirtual, isPositionGrouped, isTotal;
    if (!minLotSize) return(false);                                    // falls MarketInfo()-Daten noch nicht verfügbar sind
    if (!lotStep   ) return(false);
 
@@ -2157,7 +2167,7 @@ bool CustomPositions.ReadConfig() {
 
             // Kommentar auswerten
             confComment = "";
-            hstComments = "";
+            hstComment  = "";
             pos = StringFind(iniValue, ";");
             if (pos >= 0) {
                confComment = StringRight(iniValue, -pos-1);
@@ -2168,6 +2178,7 @@ bool CustomPositions.ReadConfig() {
                if (StringStartsWith(confComment, "\"") && StringEndsWith(confComment, "\"")) // führende und schließende Anführungszeichen entfernen
                   confComment = StringSubstrFix(confComment, 1, StringLen(confComment)-2);
             }
+
 
             // Konfigurationsdaten auswerten
             isPositionEmpty   = true;                                 // ob diese Zeile bereits Konfigurationsdaten enthält
@@ -2180,13 +2191,17 @@ bool CustomPositions.ReadConfig() {
                if (!StringLen(values[n]))                             // Leervalue
                   continue;
 
-               if (StringStartsWith(values[n], "H")) {                // H=History | HT=HistoryTotal
-                  if (!CustomPositions.ParseHstEntry(values[n], confComment, hstComments, isPositionEmpty, isPositionGrouped, isTotalHistory, confSizeValue, confValue1, confValue2, confValue3)) return(false);
+               if (StringStartsWith(values[n], "H")) {                // H[T] = History[Total]
+                  if (!CustomPositions.ParseHstEntry(values[n], confComment, hstComment, isPositionEmpty, isPositionGrouped, isTotal, from, to)) return(false);
                   if (isPositionGrouped) {
-                     isPositionEmpty = false;                         // gruppiert:       die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
-                     continue;
-                  }                                                   // nicht gruppiert: die übrigen Variablen wurden bereits in CustomPositions.ParseHstEntry() gesetzt
-                  confTypeValue = ifInt(!isTotalHistory, TYPE_HISTORY, TYPE_HISTORY_TOTAL);
+                     isPositionEmpty = false;
+                     continue;                                        // gruppiert: die Konfiguration wurde bereits in CustomPositions.ParseHstEntry() gespeichert
+                  }
+                  confSizeValue = from;                               // nicht gruppiert
+                  confTypeValue = ifInt(!isTotal, TYPE_HISTORY, TYPE_HISTORY_TOTAL);
+                  confValue1    = to;
+                  confValue2    = EMPTY_VALUE;                        // EMPTY_VALUE, da NULL bei TYPE_HISTORY ein gültiger Wert ist
+                  confValue3    = EMPTY_VALUE;
                }
 
                else if (StringStartsWith(values[n], "#")) {           // Ticket bzw. verbleibender Rest eines Tickets
@@ -2202,7 +2217,7 @@ bool CustomPositions.ReadConfig() {
                else if (StringStartsWith(values[n], "L")) {           // alle verbleibenden Long-Positionen
                   if (values[n] != "L")                               return(!catch("CustomPositions.ReadConfig(3)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = EMPTY;
-                  confTypeValue = TYPE_LONG;
+                  confTypeValue = TYPE_OPEN_LONG;
                   confValue1    = NULL;
                   confValue2    = NULL;
                   confValue3    = NULL;
@@ -2211,13 +2226,22 @@ bool CustomPositions.ReadConfig() {
                else if (StringStartsWith(values[n], "S")) {           // alle verbleibenden Short-Positionen
                   if (values[n] != "S")                               return(!catch("CustomPositions.ReadConfig(4)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = EMPTY;
-                  confTypeValue = TYPE_SHORT;
+                  confTypeValue = TYPE_OPEN_SHORT;
                   confValue1    = NULL;
                   confValue2    = NULL;
                   confValue3    = NULL;
                }
 
-               else if (StringStartsWith(values[n], "E")) {           // E = EQ = Equity
+               else if (StringStartsWith(values[n], "O")) {           // O[T] = die verbleibenden Positionen [aller Symbole] eines Zeitraums
+                  if (!CustomPositions.ParseOpenEntry(values[n], confComment, openComment, isTotal, from, to)) return(false);
+                  confSizeValue = from;
+                  confTypeValue = ifInt(!isTotal, TYPE_OPEN_ANY, TYPE_OPEN_ANY_TOTAL);
+                  confValue1    = to;
+                  confValue2    = NULL;
+                  confValue3    = NULL;
+               }
+
+               else if (StringStartsWith(values[n], "E")) {           // E[Q] = Equity
                   strSize = StringTrim(StringRight(values[n], ifInt(!StringStartsWith(values[n], "EQ"), -1, -2)));
                   if (!StringIsNumeric(strSize))                      return(!catch("CustomPositions.ReadConfig(5)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric equity \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confSizeValue = NULL;
@@ -2242,7 +2266,7 @@ bool CustomPositions.ReadConfig() {
                   confSizeValue = StrToDouble(strSize);
                   if (confSizeValue < 0)                              return(!catch("CustomPositions.ReadConfig(8)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)          return(!catch("CustomPositions.ReadConfig(9)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = TYPE_LONG;
+                  confTypeValue = TYPE_OPEN_LONG;
                   confValue1    = NULL;
                   confValue2    = NULL;
                   confValue3    = NULL;
@@ -2254,7 +2278,7 @@ bool CustomPositions.ReadConfig() {
                   confSizeValue = StrToDouble(strSize);
                   if (confSizeValue < 0)                              return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)          return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = TYPE_SHORT;
+                  confTypeValue = TYPE_OPEN_SHORT;
                   confValue1    = NULL;
                   confValue2    = NULL;
                   confValue3    = NULL;
@@ -2267,7 +2291,7 @@ bool CustomPositions.ReadConfig() {
                   confSizeValue = StrToDouble(strSize);
                   if (confSizeValue < 0)                              return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)          return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = TYPE_LONG;
+                  confTypeValue = TYPE_OPEN_LONG;
                   strPrice = StringTrim(StringRight(values[n], -pos-1));
                   if (!StringIsNumeric(strPrice))                     return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue1 = StrToDouble(strPrice);
@@ -2283,7 +2307,7 @@ bool CustomPositions.ReadConfig() {
                   confSizeValue = StrToDouble(strSize);
                   if (confSizeValue < 0)                              return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (negative lot size \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   if (MathModFix(confSizeValue, 0.001) != 0)          return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (virtual lot size not a multiple of 0.001 \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
-                  confTypeValue = TYPE_SHORT;
+                  confTypeValue = TYPE_OPEN_SHORT;
                   strPrice = StringTrim(StringRight(values[n], -pos-1));
                   if (!StringIsNumeric(strPrice))                     return(!catch("CustomPositions.ReadConfig(21)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric price \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                   confValue1 = StrToDouble(strPrice);
@@ -2312,9 +2336,9 @@ bool CustomPositions.ReadConfig() {
                if (isPositionGrouped && confTypeValue!=TYPE_EQUITY)   return(!catch("CustomPositions.ReadConfig(28)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (cannot combine grouped trade history with other entries) in \""+ file +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
 
                // Die Konfiguration virtueller Positionen muß mit einer virtuellen Position beginnen, damit die virtuellen Lots später nicht von den realen Lots abgezogen werden, siehe (2).
-               if (confSizeValue!=EMPTY && (confTypeValue==TYPE_LONG || confTypeValue==TYPE_SHORT)) {
+               if (confSizeValue!=EMPTY && (confTypeValue==TYPE_OPEN_LONG || confTypeValue==TYPE_OPEN_SHORT)) {
                   if (!isPositionEmpty && !isPositionVirtual) {
-                     double tmp[4] = {0, TYPE_LONG, NULL, NULL, NULL};  // am Anfang der Zeile virtuelle 0-Position einfügen
+                     double tmp[4] = {0, TYPE_OPEN_LONG, NULL, NULL, NULL};   // am Anfang der Zeile virtuelle 0-Position einfügen
                      ArrayInsertDoubleArray(custom.position.conf, positionStartOffset, tmp);
                   }
                   isPositionVirtual = true;
@@ -2334,7 +2358,9 @@ bool CustomPositions.ReadConfig() {
             if (!isPositionEmpty) {                                        // Zeile mit Leerelement abschließen (markiert Zeilenende)
                confSize = ArrayRange(custom.position.conf, 0);
                ArrayResize    (custom.position.conf, confSize+1);          // initialisiert Element mit {*, NULL, ...}
-               ArrayPushString(custom.position.conf.comments, hstComments + ifString(StringLen(hstComments) && StringLen(confComment), ", ", "") + confComment);
+                  comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
+                  comment = comment     + ifString(StringLen(comment    ) && StringLen(confComment), ", ", "") + confComment;
+               ArrayPushString(custom.position.conf.comments, comment);
                positionStartOffset = confSize + 1;                         // Start-Offset der nächsten Custom-Position speichern (falls noch eine weitere Position folgt)
             }
          }
@@ -2353,30 +2379,201 @@ bool CustomPositions.ReadConfig() {
 
 
 /**
+ * Parst einen OpenPositions-Konfigurationseintrag.
+ *
+ * @param  _IN_     string   confValue    - Konfigurationseintrag
+ * @param  _IN_     string   confComment  - Kommentar des Konfigurationseintrags
+ * @param  _IN_OUT_ string   openComments - vorhandene OpenPositions-Kommentare (werden ggf. erweitert)
+ * @param  _OUT_    bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur ein einzelnes Symbol (FALSE) umfassen
+ * @param  _OUT_    datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
+ * @param  _OUT_    datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
+*
+ * @return bool - Erfolgsstatus
+ *
+ *
+ * Format:
+ * -------
+ *  O{DateTime}               • Trade-History eines Symbols eines Standard-Zeitraums
+ *  OT{DateTime}-{DateTime}   • Trade-History aller Symbole von und bis zu einem konkreten Zeitpunkt
+ *
+ *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
+ */
+bool CustomPositions.ParseOpenEntry(string confValue, string confComment, string &openComments, bool &isTotal, datetime &from, datetime &to) {
+   string confValue.orig = StringTrim(confValue);
+          confValue      = StringToUpper(confValue.orig);
+   if (!StringStartsWith(confValue, "O")) return(!catch("CustomPositions.ParseOpenEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_OPEN_ANY)", ERR_INVALID_PARAMETER));
+   confValue = StringTrim(StringRight(confValue, -1));
+
+   isTotal = StringStartsWith(confValue, "T");
+   if (isTotal) confValue = StringTrim(StringRight(confValue, -1));
+
+   bool     isSingleTimespan, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
+   datetime dtFrom, dtTo;
+   string   comment = "";
+
+
+   // (1) Beginn- und Endzeitpunkt parsen
+   int pos = StringFind(confValue, "-");
+   if (pos >= 0) {                                                   // von-bis parsen
+      // {DateTime}-{DateTime}
+      // {DateTime}-NULL
+      //       NULL-{DateTime}
+      dtFrom = ParseDateTime(StringTrim(StringLeft (confValue,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTime(StringTrim(StringRight(confValue, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      if (dtTo != NULL) {
+         if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         else if (isFullWeek2  ) dtTo += 1*WEEK                                         - 1*SECOND;   // Wochenende
+         else if (isFullDay2   ) dtTo += 1*DAY                                          - 1*SECOND;   // Tagesende
+         else if (isFullHour2  ) dtTo -=                                                  1*SECOND;   // Ende der angegebenen Stunde
+         else if (isFullMinute2) dtTo -=                                                  1*SECOND;   // Ende der angegebenen Minute
+      }
+   }
+   else {
+      // {DateTime}                                                  // einzelnen Zeitraum parsen
+      isSingleTimespan = true;
+      dtFrom = ParseDateTime(confValue, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+                                                                                                                         if (!dtFrom)       return(!catch("CustomPositions.ParseOpenEntry(2)  invalid open positions configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+      if      (isFullYear1  ) dtTo = DateTime(TimeYearFix(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
+      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                     - 1*SECOND;   // Tagesende
+      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                    - 1*SECOND;   // Ende der Stunde
+      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
+      else                    dtTo = dtFrom;
+   }
+   //debug("CustomPositions.ParseOpenEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenEntry(3)  invalid open positions configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenEntry(4)  invalid open positions configuration in "+ StringToStr(confValue.orig) +" (start time after end time)", ERR_INVALID_CONFIG_PARAMVALUE));
+
+
+   // (2) Datumswerte definieren und zurückgeben
+   if (isSingleTimespan) {
+      if      (isFullYear1  ) comment =               DateToStr(dtFrom, "Y");
+      else if (isFullMonth1 ) comment =               DateToStr(dtFrom, "Y O");
+      else if (isFullWeek1  ) comment = "Woche vom "+ DateToStr(dtFrom, "D.M.Y");
+      else if (isFullDay1   ) comment =               DateToStr(dtFrom, "D.M.Y");
+      else if (isFullHour1  ) comment =               DateToStr(dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
+      else if (isFullMinute1) comment =               DateToStr(dtFrom, "D.M.Y H:I");
+      else                    comment =               DateToStr(dtFrom, "D.M.Y H:I:S");
+   }
+   else if (!dtTo) {
+      if      (isFullYear1  ) comment = "seit "+      DateToStr(dtFrom, "Y");
+      else if (isFullMonth1 ) comment = "seit "+      DateToStr(dtFrom, "O Y");
+      else if (isFullWeek1  ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y");
+      else if (isFullDay1   ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y");
+      else if (isFullHour1  ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
+      else if (isFullMinute1) comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
+      else                    comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I:S");
+   }
+   else if (!dtFrom) {
+      if      (isFullYear2  ) comment =  "bis "+      DateToStr(dtTo,          "Y");
+      else if (isFullMonth2 ) comment =  "bis "+      DateToStr(dtTo,          "O Y");
+      else if (isFullWeek2  ) comment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
+      else if (isFullDay2   ) comment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
+      else if (isFullHour2  ) comment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
+      else if (isFullMinute2) comment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
+      else                    comment =  "bis "+      DateToStr(dtTo,          "D.M.Y H:I:S");
+   }
+   else {
+      // von und bis angegeben
+      if      (isFullYear1  ) {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "Y")           +" bis "+ DateToStr(dtTo,          "Y");                // 2014 - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014 - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014 - 2015.01.15 12:34:56
+      }
+      else if (isFullMonth1 ) {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01 - 2015.01.15 12:34:56
+      }
+      else if (isFullWeek1  ) {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15W - 2015.01.15 12:34:56
+      }
+      else if (isFullDay1   ) {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 - 2015.01.15 12:34:56
+      }
+      else if (isFullHour1  ) {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:00 - 2015.01.15 12:34:56
+      }
+      else if (isFullMinute1) {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34 - 2015.01.15 12:34:56
+      }
+      else {
+         if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015
+         else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01
+         else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15W
+         else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15
+         else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:00
+         else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:34
+         else                    comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
+      }
+   }
+   if (isTotal) comment = comment +" (gesamt)";
+   from = dtFrom;
+   to   = dtTo;
+
+   if (!StringLen(openComments)) openComments = comment;
+   else                          openComments = openComments +", "+ comment;
+   return(!catch("CustomPositions.ParseOpenEntry(5)"));
+}
+
+
+/**
  * Parst einen History-Konfigurationseintrag.
  *
- * @param  _IN_     string confValue   - Konfigurationseintrag
- * @param  _IN_OUT_ string confComment - Kommentar des Konfigurationseintrags
- * @param  _IN_OUT_ string hstComments - vorhandene History-Kommentare (werden ggf. erweitert)
- * @param  _IN_OUT_ bool   isEmpty     - ob die Konfiguration der aktuellen Position noch leer ist
- * @param  _OUT_    bool   isGrouped   - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
- * @param  _OUT_    bool   isTotal     - ob die History alle verfügbaren Symbole (TRUE) oder nur ein einzelnes Symbol (FALSE) umfaßt.
- * @param  _OUT_    double hstFrom     - Beginnzeitpunkt der zu berücksichtigenden History
- * @param  _OUT_    double hstTo       - Endzeitpunkt der zu berücksichtigenden History
- * @param  _OUT_    double value2      - Cache-Variable für den ermittelten P/L des angegebenen Zeitraums
- * @param  _OUT_    double value3      - Cache-Variable für die Anzahl der Tickets in der History beim letzten Zugriff
+ * @param  _IN_     string   confValue   - Konfigurationseintrag
+ * @param  _IN_     string   confComment - Kommentar des Konfigurationseintrags
+ * @param  _IN_OUT_ string   hstComments - vorhandene History-Kommentare (werden ggf. erweitert)
+ * @param  _IN_OUT_ bool     isEmpty     - ob die Konfiguration der aktuellen Position noch leer ist
+ * @param  _OUT_    bool     isGrouped   - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
+ * @param  _OUT_    bool     isTotal     - ob die History alle verfügbaren Symbole (TRUE) oder nur ein einzelnes Symbol (FALSE) umfaßt
+ * @param  _OUT_    datetime from        - Beginnzeitpunkt der zu berücksichtigenden History
+ * @param  _OUT_    datetime to          - Endzeitpunkt der zu berücksichtigenden History
  *
  * @return bool - Erfolgsstatus
  *
  *
  * Format:
  * -------
- *  H{DateTime}             [Monthly|Weekly|Daily]    • Trade-History eines Symbols eines typischen Zeitraums
+ *  H{DateTime}             [Monthly|Weekly|Daily]    • Trade-History eines Symbols eines Standard-Zeitraums
  *  HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]    • Trade-History aller Symbole von und bis zu einem konkreten Zeitpunkt
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
  */
-bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string &hstComments, bool &isEmpty, bool &isGrouped, bool &isTotal, double &hstFrom, double &hstTo, double &value2, double &value3) {
+bool CustomPositions.ParseHstEntry(string confValue, string confComment, string &hstComments, bool &isEmpty, bool &isGrouped, bool &isTotal, datetime &from, datetime &to) {
    string confValue.orig = StringTrim(confValue);
           confValue      = StringToUpper(confValue.orig);
    if (!StringStartsWith(confValue, "H")) return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
@@ -2387,7 +2584,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
 
    bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
-   string   sValue1, sValue2, hstComment;
+   string   comment = "";
 
 
    // (1) auf Group-Modifier prüfen
@@ -2413,8 +2610,8 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTime(StringTrim(StringSubstrFix(confValue, 0, pos)), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-      dtTo   = ParseDateTime(StringTrim(StringSubstr   (confValue, pos+1 )), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
+      dtFrom = ParseDateTime(StringTrim(StringLeft (confValue,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtTo   = ParseDateTime(StringTrim(StringRight(confValue, -pos-1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearFix(dtTo)+1)                  - 1*SECOND;   // Jahresende
          else if (isFullMonth2 ) dtTo  = DateTime(TimeYearFix(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
@@ -2437,7 +2634,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
       else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
-   //debug("ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGrouped);
+   //debug("CustomPositions.ParseHstEntry(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGrouped);
    if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseHstEntry(4)  invalid history configuration in "+ StringToStr(confValue.orig), ERR_INVALID_CONFIG_PARAMVALUE));
    if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseHstEntry(5)  invalid history configuration in "+ StringToStr(confValue.orig) +" (history start after history end)", ERR_INVALID_CONFIG_PARAMVALUE));
 
@@ -2469,10 +2666,10 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
          //debug("ParseHstEntry(0.2)  group from="+ TimeToStr(groupFrom) +"  to="+ TimeToStr(groupTo));
 
          // Kommentar erstellen
-         if      (groupByMonth) hstComment =               DateToStr(groupFrom, "Y O");
-         else if (groupByWeek ) hstComment = "Woche vom "+ DateToStr(groupFrom, "D.M.Y");
-         else if (groupByDay  ) hstComment =               DateToStr(groupFrom, "D.M.Y");
-         if (isTotal)           hstComment = hstComment +" (gesamt)";
+         if      (groupByMonth) comment =               DateToStr(groupFrom, "Y O");
+         else if (groupByWeek ) comment = "Woche vom "+ DateToStr(groupFrom, "D.M.Y");
+         else if (groupByDay  ) comment =               DateToStr(groupFrom, "D.M.Y");
+         if (isTotal)           comment = comment +" (gesamt)";
 
          // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(custom.position.conf, 0);
@@ -2487,115 +2684,113 @@ bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string
          // Zeile mit Zeilenende abschließen (außer bei der letzten Gruppe)
          if (nextGroupFrom <= dtTo) {
             ArrayResize    (custom.position.conf, confSize+2);       // initialisiert Element mit {*, NULL, ...}
-            ArrayPushString(custom.position.conf.comments, hstComment + ifString(StringLen(confComment), ", ", "") + confComment);
+            ArrayPushString(custom.position.conf.comments, comment + ifString(StringLen(confComment), ", ", "") + confComment);
          }
       }
    }
    else {
       // (4) normale Rückgabewerte ohne Gruppierung
       if (isSingleTimespan) {
-         if      (isFullYear1  ) hstComment =               DateToStr(dtFrom, "Y");
-         else if (isFullMonth1 ) hstComment =               DateToStr(dtFrom, "Y O");
-         else if (isFullWeek1  ) hstComment = "Woche vom "+ DateToStr(dtFrom, "D.M.Y");
-         else if (isFullDay1   ) hstComment =               DateToStr(dtFrom, "D.M.Y");
-         else if (isFullHour1  ) hstComment =               DateToStr(dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
-         else if (isFullMinute1) hstComment =               DateToStr(dtFrom, "D.M.Y H:I");
-         else                    hstComment =               DateToStr(dtFrom, "D.M.Y H:I:S");
+         if      (isFullYear1  ) comment =               DateToStr(dtFrom, "Y");
+         else if (isFullMonth1 ) comment =               DateToStr(dtFrom, "Y O");
+         else if (isFullWeek1  ) comment = "Woche vom "+ DateToStr(dtFrom, "D.M.Y");
+         else if (isFullDay1   ) comment =               DateToStr(dtFrom, "D.M.Y");
+         else if (isFullHour1  ) comment =               DateToStr(dtFrom, "D.M.Y H:I") + DateToStr(dtTo+1*SECOND, "-H:I");
+         else if (isFullMinute1) comment =               DateToStr(dtFrom, "D.M.Y H:I");
+         else                    comment =               DateToStr(dtFrom, "D.M.Y H:I:S");
       }
       else if (!dtTo) {
-         if      (isFullYear1  ) hstComment = "seit "+      DateToStr(dtFrom, "Y");
-         else if (isFullMonth1 ) hstComment = "seit "+      DateToStr(dtFrom, "O Y");
-         else if (isFullWeek1  ) hstComment = "seit "+      DateToStr(dtFrom, "D.M.Y");
-         else if (isFullDay1   ) hstComment = "seit "+      DateToStr(dtFrom, "D.M.Y");
-         else if (isFullHour1  ) hstComment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
-         else if (isFullMinute1) hstComment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
-         else                    hstComment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I:S");
+         if      (isFullYear1  ) comment = "seit "+      DateToStr(dtFrom, "Y");
+         else if (isFullMonth1 ) comment = "seit "+      DateToStr(dtFrom, "O Y");
+         else if (isFullWeek1  ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y");
+         else if (isFullDay1   ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y");
+         else if (isFullHour1  ) comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
+         else if (isFullMinute1) comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I");
+         else                    comment = "seit "+      DateToStr(dtFrom, "D.M.Y H:I:S");
       }
       else if (!dtFrom) {
-         if      (isFullYear2  ) hstComment =  "bis "+      DateToStr(dtTo,          "Y");
-         else if (isFullMonth2 ) hstComment =  "bis "+      DateToStr(dtTo,          "O Y");
-         else if (isFullWeek2  ) hstComment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
-         else if (isFullDay2   ) hstComment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
-         else if (isFullHour2  ) hstComment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
-         else if (isFullMinute2) hstComment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
-         else                    hstComment =  "bis "+      DateToStr(dtTo,          "D.M.Y H:I:S");
+         if      (isFullYear2  ) comment =  "bis "+      DateToStr(dtTo,          "Y");
+         else if (isFullMonth2 ) comment =  "bis "+      DateToStr(dtTo,          "O Y");
+         else if (isFullWeek2  ) comment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
+         else if (isFullDay2   ) comment =  "bis "+      DateToStr(dtTo,          "D.M.Y");
+         else if (isFullHour2  ) comment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
+         else if (isFullMinute2) comment =  "bis "+      DateToStr(dtTo+1*SECOND, "D.M.Y H:I");
+         else                    comment =  "bis "+      DateToStr(dtTo,          "D.M.Y H:I:S");
       }
       else {
          // von und bis angegeben
          if      (isFullYear1  ) {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "Y")           +" bis "+ DateToStr(dtTo,          "Y");                // 2014 - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014 - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014 - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "Y")           +" bis "+ DateToStr(dtTo,          "Y");                // 2014 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014 - 2015.01.15 12:34:56
          }
          else if (isFullMonth1 ) {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01 - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "O Y")         +" bis "+ DateToStr(dtTo,          "O Y");              // 2014.01 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01 - 2015.01.15 12:34:56
          }
          else if (isFullWeek1  ) {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15W - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15W - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15W - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15W - 2015.01.15 12:34:56
          }
          else if (isFullDay1   ) {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y")       +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 - 2015.01.15 12:34:56
          }
          else if (isFullHour1  ) {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:00 - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:00 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:00 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:00 - 2015.01.15 12:34:56
          }
          else if (isFullMinute1) {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34 - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y H:I")   +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34 - 2015.01.15 12:34:56
          }
          else {
-            if      (isFullYear2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015
-            else if (isFullMonth2 ) hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01
-            else if (isFullWeek2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15W
-            else if (isFullDay2   ) hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15
-            else if (isFullHour2  ) hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:00
-            else if (isFullMinute2) hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:34
-            else                    hstComment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
+            if      (isFullYear2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015
+            else if (isFullMonth2 ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01
+            else if (isFullWeek2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15W
+            else if (isFullDay2   ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y");            // 2014.01.15 12:34:56 - 2015.01.15
+            else if (isFullHour2  ) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:00
+            else if (isFullMinute2) comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo+1*SECOND, "D.M.Y H:I");        // 2014.01.15 12:34:56 - 2015.01.15 12:34
+            else                    comment = DateToStr(dtFrom, "D.M.Y H:I:S") +" bis "+ DateToStr(dtTo,          "D.M.Y H:I:S");      // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
          }
       }
-      if (isTotal) hstComment = hstComment +" (gesamt)";
-      hstFrom     = dtFrom;
-      hstTo       = dtTo;
-      value2      = EMPTY_VALUE;
-      value3      = EMPTY_VALUE;
+      if (isTotal) comment = comment +" (gesamt)";
+      from = dtFrom;
+      to   = dtTo;
    }
 
-   if (!StringLen(hstComments)) hstComments = hstComment;
-   else                         hstComments = hstComments +", "+ hstComment;
-   return(true);
+   if (!StringLen(hstComments)) hstComments = comment;
+   else                         hstComments = hstComments +", "+ comment;
+   return(!catch("CustomPositions.ParseHstEntry(6)"));
 }
 
 
@@ -2731,7 +2926,7 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
  * Extrahiert aus den übergebenen Positionen eine Teilposition.
  *
  * @param  _IN_     double lotsize    - zu extrahierende Lotsize
- * @param  _IN_     int    type       - zu extrahierender Typ: virtualLong | virtualShort | Ticket | History | HistoryTotal | Betrag | Equity
+ * @param  _IN_     int    type       - zu extrahierender Typ: Ticket | [virtual]Long | [virtual]Short | AnyOpen[Total] | History[Total] | Betrag | Equity
  * @param  _IN_OUT_ double value1     - Wert 1: Preis/Betrag/Equity (Änderungen bleiben erhalten)
  * @param  _IN_OUT_ double value2     - sonstiger Wert 2            (Änderungen bleiben erhalten)
  * @param  _IN_OUT_ double value3     - sonstiger Wert 3            (Änderungen bleiben erhalten)
@@ -2743,12 +2938,13 @@ datetime ParseDateTime(string value, bool &isYear, bool &isMonth, bool &isWeek, 
  * @return bool - Erfolgsstatus
  */
 bool ExtractPosition(double lotsize, int type, double &value1, double &value2, double &value3,
-                     double &longPosition,       double &shortPosition,       double &totalPosition,                                                                            int &tickets[],       int &types[],       double &lots[],       double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
+                     double &longPosition,       double &shortPosition,       double &totalPosition,                                                                            int &tickets[],       int &types[],       double &lots[],       datetime &openTimes[], double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
                      bool   &isVirtual,
-                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, double &customRealized, double &customHistory, double &customEquity, int &customTickets[], int &customTypes[], double &customLots[], double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
+                     double &customLongPosition, double &customShortPosition, double &customTotalPosition, double &customRealized, double &customHistory, double &customEquity, int &customTickets[], int &customTypes[], double &customLots[],                        double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[]) {
+   datetime from, to;
    int sizeTickets = ArraySize(tickets);
 
-   if (type == TYPE_LONG) {
+   if (type == TYPE_OPEN_LONG) {
       if (lotsize == EMPTY) {
          // alle (noch) existierenden Long-Positionen
          if (longPosition > 0) {
@@ -2779,7 +2975,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
          // virtuelle Long-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden ignoriert, es gibt nichts abzuziehen oder hinzuzufügen
             double openPrice = ifDouble(value1, value1, Ask);
-            ArrayPushInt   (customTickets,     TYPE_LONG                                     );
+            ArrayPushInt   (customTickets,     TYPE_OPEN_LONG                                );
             ArrayPushInt   (customTypes,       OP_BUY                                        );
             ArrayPushDouble(customLots,        lotsize                                       );
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
@@ -2793,7 +2989,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
       }
    }
 
-   else if (type == TYPE_SHORT) {
+   else if (type == TYPE_OPEN_SHORT) {
       if (lotsize == EMPTY) {
          // alle Short-Positionen
          if (shortPosition > 0) {
@@ -2824,7 +3020,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
          // virtuelle Short-Position zu custom.* hinzufügen (Ausgangsdaten bleiben unverändert)
          if (lotsize != 0) {                                         // 0-Lots-Positionen werden ignoriert, es gibt nichts abzuziehen oder hinzuzufügen
             openPrice = ifDouble(value1, value1, Bid);
-            ArrayPushInt   (customTickets,     TYPE_SHORT                                    );
+            ArrayPushInt   (customTickets,     TYPE_OPEN_SHORT                               );
             ArrayPushInt   (customTypes,       OP_SELL                                       );
             ArrayPushDouble(customLots,        lotsize                                       );
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
@@ -2838,11 +3034,43 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
       }
    }
 
+   else if (type == TYPE_OPEN_ANY) {
+      from = lotsize;
+      to   = value1;
+
+      // alle Positionen eines Zeitraumes
+      if (shortPosition || longPosition) {
+         for (i=0; i < sizeTickets; i++) {
+            if (!tickets[i])
+               continue;
+            if (from <= openTimes[i] && openTimes[i] <= to) {
+               // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
+               ArrayPushInt   (customTickets,     tickets    [i]);
+               ArrayPushInt   (customTypes,       types      [i]);
+               ArrayPushDouble(customLots,        lots       [i]);
+               ArrayPushDouble(customOpenPrices,  openPrices [i]);
+               ArrayPushDouble(customCommissions, commissions[i]);
+               ArrayPushDouble(customSwaps,       swaps      [i]);
+               ArrayPushDouble(customProfits,     profits    [i]);
+               if (!isVirtual) {
+                  if (types[i] == OP_BUY) longPosition     = NormalizeDouble(longPosition  - lots[i]      , 2);
+                  else                    shortPosition    = NormalizeDouble(shortPosition - lots[i]      , 2);
+                                          totalPosition    = NormalizeDouble(longPosition  - shortPosition, 2);
+                                          tickets[i]       = NULL;
+               }
+               if (types[i] == OP_BUY) customLongPosition  = NormalizeDouble(customLongPosition  + lots[i]            , 3);
+               else                    customShortPosition = NormalizeDouble(customShortPosition + lots[i]            , 3);
+                                       customTotalPosition = NormalizeDouble(customLongPosition  - customShortPosition, 3);
+            }
+         }
+      }
+   }
+
    else if (type==TYPE_HISTORY || type==TYPE_HISTORY_TOTAL) {
-      datetime hstFrom    = lotsize;
-      datetime hstTo      = value1;
-      double   lastProfit = value2;
-      int      lastOrders = value3;                                  // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
+      from              = lotsize;
+      to                = value1;
+      double lastProfit = value2;
+      int    lastOrders = value3;                                  // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
 
       int orders=OrdersHistoryTotal(), _orders=orders;
 
@@ -2941,15 +3169,15 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
          lastProfit=0; n=0;
          for (i=0; i < orders; i++) {
             if (!hst.tickets[i])                                       continue; // verworfene Hedges überspringen
-            if (hstFrom!=NULL) /*&&*/ if (hst.closeTimes[i] < hstFrom) continue;
-            if (hstTo  !=NULL) /*&&*/ if (hst.closeTimes[i] > hstTo  ) continue;
+            if (from!=NULL) /*&&*/ if (hst.closeTimes[i] < from) continue;
+            if (to  !=NULL) /*&&*/ if (hst.closeTimes[i] > to  ) continue;
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
          }
          lastProfit = NormalizeDouble(lastProfit, 2);
          value2     = lastProfit;
          value3     = _orders;
-         //debug("ExtractPosition(0.1)  from="+ ifString(hstFrom, TimeToStr(hstFrom), "start") +"  to="+ ifString(hstTo, TimeToStr(hstTo), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
+         //debug("ExtractPosition(0.1)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
       }
       // Betrag zu customHistory hinzufügen (Ausgangsdaten bleiben unverändert)
       customHistory += lastProfit;
@@ -2999,9 +3227,9 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
                if (EQ(lotsize, lots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(EMPTY, type, value1, value2, value3,
-                                       longPosition,       shortPosition,       totalPosition,                                                         tickets,       types,       lots,       openPrices,       commissions,       swaps,       profits,
+                                       longPosition,       shortPosition,       totalPosition,                                                         tickets,       types,       lots,  openTimes, openPrices,       commissions,       swaps,       profits,
                                        isVirtual,
-                                       customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits))
+                                       customLongPosition, customShortPosition, customTotalPosition, customRealized, customHistory, customEquity, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits))
                      return(false);
                }
                else {
@@ -3145,7 +3373,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
          ArrayResize(positions.ddata, size+1);
 
          positions.idata[size][I_POSITION_TYPE    ] = TYPE_CUSTOM + isVirtual;
-         positions.idata[size][I_DIRECTION_TYPE   ] = TYPE_HEDGE;
+         positions.idata[size][I_DIRECTION_TYPE   ] = TYPE_OPEN_HEDGE;
          positions.idata[size][I_COMMENT          ] = iCommentLine;
          positions.ddata[size][I_DIRECT_LOTSIZE   ] = 0;
          positions.ddata[size][I_HEDGED_LOTSIZE   ] = hedgedLotSize;
@@ -3203,7 +3431,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       ArrayResize(positions.ddata, size+1);
 
       positions.idata[size][I_POSITION_TYPE    ] = TYPE_CUSTOM + isVirtual;
-      positions.idata[size][I_DIRECTION_TYPE   ] = TYPE_LONG;
+      positions.idata[size][I_DIRECTION_TYPE   ] = TYPE_OPEN_LONG;
       positions.idata[size][I_COMMENT          ] = iCommentLine;
       positions.ddata[size][I_DIRECT_LOTSIZE   ] = totalPosition;
       positions.ddata[size][I_HEDGED_LOTSIZE   ] = hedgedLotSize;
@@ -3262,7 +3490,7 @@ bool StoreCustomPosition(bool isVirtual, double longPosition, double shortPositi
       ArrayResize(positions.ddata, size+1);
 
       positions.idata[size][I_POSITION_TYPE    ] = TYPE_CUSTOM + isVirtual;
-      positions.idata[size][I_DIRECTION_TYPE   ] = TYPE_SHORT;
+      positions.idata[size][I_DIRECTION_TYPE   ] = TYPE_OPEN_SHORT;
       positions.idata[size][I_COMMENT          ] = iCommentLine;
       positions.ddata[size][I_DIRECT_LOTSIZE   ] = -totalPosition;
       positions.ddata[size][I_HEDGED_LOTSIZE   ] = hedgedLotSize;
@@ -3394,7 +3622,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       ArrayResize(positions.ddata, size+1);
 
       positions.idata[size][I_POSITION_TYPE  ] = TYPE_DEFAULT;
-      positions.idata[size][I_DIRECTION_TYPE ] = TYPE_LONG;
+      positions.idata[size][I_DIRECTION_TYPE ] = TYPE_OPEN_LONG;
       positions.idata[size][I_COMMENT        ] = -1;                 // kein Kommentar
       positions.ddata[size][I_DIRECT_LOTSIZE ] = totalPosition;
       positions.ddata[size][I_HEDGED_LOTSIZE ] = 0;
@@ -3453,7 +3681,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       ArrayResize(positions.ddata, size+1);
 
       positions.idata[size][I_POSITION_TYPE  ] = TYPE_DEFAULT;
-      positions.idata[size][I_DIRECTION_TYPE ] = TYPE_SHORT;
+      positions.idata[size][I_DIRECTION_TYPE ] = TYPE_OPEN_SHORT;
       positions.idata[size][I_COMMENT        ] = -1;                 // kein Kommentar
       positions.ddata[size][I_DIRECT_LOTSIZE ] = -totalPosition;
       positions.ddata[size][I_HEDGED_LOTSIZE ] = 0;
@@ -3512,7 +3740,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
       ArrayResize(positions.ddata, size+1);
 
       positions.idata[size][I_POSITION_TYPE  ] = TYPE_DEFAULT;
-      positions.idata[size][I_DIRECTION_TYPE ] = TYPE_HEDGE;
+      positions.idata[size][I_DIRECTION_TYPE ] = TYPE_OPEN_HEDGE;
       positions.idata[size][I_COMMENT        ] = -1;                 // kein Kommentar
       positions.ddata[size][I_DIRECT_LOTSIZE ] = 0;
       positions.ddata[size][I_HEDGED_LOTSIZE ] = hedgedLotSize;
