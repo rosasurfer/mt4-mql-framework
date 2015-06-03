@@ -173,7 +173,7 @@ int onStart() {
 
 
 /**
- * Liest die Konfiguration der zusätzlichen extern verwalteten Assets erneut ein.
+ * Liest die Konfiguration zusätzlichen, extern verwalteten Assets erneut ein.
  *
  * @return bool - Erfolgsstatus
  */
