@@ -1,5 +1,5 @@
 /**
- * Zeigt ein oder mehrere StopLoss- und TakeProfit-Level einer imaginären Position an.
+ * Zeigt die Soll-StopLoss- und -TakeProfit-Level einer imaginären oder realen Position an.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
