@@ -244,8 +244,10 @@ int onTick() {
  * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
  *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History ein/aus.
+ *                "cmd=ToggleTargetLevels"     - Schaltet die Anzeige der Soll-StopLoss- und -TakeProfit-Level ein/aus.
  *                "cmd=ToggleAuM"              - Schaltet die Assets-under-Management-Anzeige ein/aus.
- *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor.
+ *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
+ *                                               da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
@@ -264,6 +266,11 @@ bool onChartCommand(string commands[]) {
       }
       if (commands[i] == "cmd=ToggleTradeHistory") {
          if (!ToggleTradeHistory())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=ToggleTargetLevels") {
+         if (!ToggleTargetLevels())
             return(false);
          continue;
       }
@@ -516,7 +523,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
    ObjectSetText(label, ""+ status, 0);
 
-   return(!catch("SetOpenOrderDisplayStatus()"));
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
 }
 
 
@@ -573,6 +580,104 @@ bool ToggleTradeHistory() {
 
 
 /**
+ * Schaltet die Anzeige der Soll-StopLoss- und -TakeProfit-Level offener oder imaginärer Positionen ein/aus.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ToggleTargetLevels() {
+   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
+   bool status = !GetTargetLevelsDisplayStatus();
+
+   // Status ON: Target-Level anzeigen
+   if (status) {
+      int positions = ShowTargetLevels();
+      if (positions == -1)
+         return(false);
+      if (!positions) {                                              // ohne Target-Level bleibt die Anzeige unverändert (wenn Equity und Std.-UnitSize zu klein sind)
+         status = false;
+         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
+      }
+   }
+
+   // Status OFF: Chartobjekte der Target-Level löschen
+   else {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR    );
+               if (arrow == SYMBOL_ORDEROPEN)
+                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT)
+                     continue;
+               if (arrow == SYMBOL_ORDERCLOSE)
+                  if (clr!=CLR_CLOSE)
+                     continue;
+               ObjectDelete(name);
+            }
+            else if (ObjectType(name) == OBJ_TREND) {
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // Anzeigestatus im Chart speichern
+   SetTargetLevelsDisplayStatus(status);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleTargetLevels(1)"));
+}
+
+
+/**
+ * Zeigt die Soll-Target-Level der offenen oder imaginären Positionen an.
+ *
+ * @return int - Anzahl der verarbeiteten Positionen oder -1 (EMPTY), falls ein Fehler auftrat.
+ */
+int ShowTargetLevels() {
+   return(0);
+}
+
+
+/**
+ * Liest den im Chart gespeicherten aktuellen TargetLevels-Anzeigestatus aus.
+ *
+ * @return bool - Status: ON/OFF
+ */
+bool GetTargetLevelsDisplayStatus() {
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".TargetLevelsDisplay.status";
+   if (ObjectFind(label) != -1)
+      return(StrToInteger(ObjectDescription(label)) != 0);
+   return(false);
+}
+
+
+/**
+ * Speichert den angegebenen TargetLevels-Anzeigestatus im Chart.
+ *
+ * @param  bool status - Status
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SetTargetLevelsDisplayStatus(bool status) {
+   status = status!=0;
+
+   // TODO: Status statt im Chart im Fenster lesen/schreiben
+   string label = __NAME__ +".TargetLevelsDisplay.status";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+
+   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
+   ObjectSetText(label, ""+ status, 0);
+
+   return(!catch("SetTargetLevelsDisplayStatus(1)"));
+}
+
+
+/**
  * Liest den im Chart gespeicherten aktuellen TradeHistory-Anzeigestatus aus.
  *
  * @return bool - Status: ON/OFF
@@ -604,7 +709,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
    ObjectSetText(label, ""+ status, 0);
 
-   return(!catch("SetTradeHistoryDisplayStatus()"));
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
 }
 
 
@@ -962,7 +1067,7 @@ bool SetAuMDisplayStatus(bool status) {
    ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
    ObjectSetText(label, ""+ status, 0);
 
-   return(!catch("SetAuMDisplayStatus()"));
+   return(!catch("SetAuMDisplayStatus(1)"));
 }
 
 
