@@ -9,17 +9,6 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-   // Std.-UnitSize berechnen
-
-   // StopLoss-Konfiguration einlesen: Daily, Weekly, Monthly %
-   // StopLoss-Werte berechnen (absolut)
-   // StopLoss-Distanz berechnen
-
-   // TakeProfit-Konfiguration eonlesen: Daily %
-   // TakeProfit-Wert berechnen (absolut)
-   // TakeProfit-Distanz berechnen
-
-
 /**
  * Main-Funktion
  *

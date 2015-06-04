@@ -69,7 +69,7 @@ int onInit() {
          if (!StringIsNumeric(sValue)) return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          dValue = StrToDouble(sValue);
          if (dValue <= 0)              return(catch("onInit(6)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
-         mm.vola = dValue;
+         mm.stdVola = dValue;
       }
    }
 
