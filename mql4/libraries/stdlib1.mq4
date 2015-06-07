@@ -7532,7 +7532,7 @@ int ObjectRegister(string label) {
 /**
  * Alias
  */
-int RegisterObject(string label) {
+int RegisterChartObject(string label) {
    return(ObjectRegister(label));
 }
 
