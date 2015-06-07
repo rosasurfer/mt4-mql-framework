@@ -55,17 +55,17 @@ int onInit() {
          double dValue = StrToDouble(sValue);
          if (dValue < 0.1)             return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.customLeverage   = dValue;
-         mm.isCustomLeverage = true;
+         mm.isCustomUnitSize = true;
       }
       else {
-         // allgemeine Konfiguration: der Hebel wird aus der Soll-Volatilität berechnet
-         mm.isCustomLeverage = false;
+         // Standard-Konfiguration: der Hebel wird aus der Standard-Volatilität berechnet
+         mm.isCustomUnitSize = false;
       }
 
       // Volatilität
-      if (!mm.isCustomLeverage) {
+      if (!mm.isCustomUnitSize) {
          key    = "Volatility";
-         sValue = GetLocalConfigString(section, key, DoubleToStr(DEFAULT_VOLATILITY, 2));
+         sValue = GetLocalConfigString(section, key, DoubleToStr(STANDARD_VOLATILITY, 2));
          if (!StringIsNumeric(sValue)) return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          dValue = StrToDouble(sValue);
          if (dValue <= 0)              return(catch("onInit(6)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));

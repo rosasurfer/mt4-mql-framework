@@ -50,7 +50,7 @@ int __DEINIT_FLAGS__[];
 
 
 // Moneymanagement
-#define DEFAULT_VOLATILITY    2.5                                    // Default-Volatilität einer Unit in Prozent Equity je Woche (Erfahrungswert)
+#define STANDARD_VOLATILITY    2.5                                   // Standard-Volatilität einer Unit in Prozent Equity je Woche (Erfahrungswert)
 
 double aum.value;                                                    // zusätzliche extern verwaltete und bei Equity-Berechnungen zu berücksichtigende Assets
 string aum.currency = "";
@@ -95,7 +95,7 @@ int onStart() {
 
 
    // (5) Levelberechnung
-   double weeklyVola     = DEFAULT_VOLATILITY;
+   double weeklyVola     = STANDARD_VOLATILITY;
    double gridSize       = ETRwAbs/weeklyVola;
    double takeProfitDist = gridSize / 2;
    double stopLossDist   = gridSize * 2;
