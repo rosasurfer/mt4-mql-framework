@@ -652,7 +652,7 @@ int ShowTargetLevels() {
    if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(EMPTY);
    if (!mode.intern)                                  return(0);     // TargetLevel werden zur Zeit nur mit internem Account unterstützt
 
-   // Default-UnitSize ermitteln und auf MinLotSize aufrunden
+   // (1) Default-UnitSize ermitteln und auf MinLotSize aufrunden
    double lotsize    = mm.normalizedDefaultLots;
    double minLotSize = MarketInfo(Symbol(), MODE_MINLOT);
    if (!lotsize)    return(0);
@@ -662,27 +662,96 @@ int ShowTargetLevels() {
    if (!pipValue)   return(0);                                       // falls MarketInfo()-Daten noch nicht verfügbar sind
    debug("ShowTargetLevels(0.1)  pipValue("+ NumberToStr(lotsize, ".1+") +")="+ NumberToStr(pipValue, ".+"));
 
-   // StopLoss- und TakeProfit-Konfiguration einlesen: in %
-   double slDailyPct   = 4;
-   double slWeeklyPct  = 8;
-   double slMonthlyPct = 12;
-   double tpDailyPct   = 1;
 
-   // absolute StopLoss- und TakeProfit-Werte berechnen
-   double slDailyAbs   = mm.availableEquity * slDailyPct  /100;
-   double slWeeklyAbs  = mm.availableEquity * slWeeklyPct /100;
-   double slMonthlyAbs = mm.availableEquity * slMonthlyPct/100;
-   double tpDailyAbs   = mm.availableEquity * tpDailyPct  /100;
-   debug("ShowTargetLevels(0.2)  equity="+ DoubleToStr(mm.availableEquity, 2));
-   debug("ShowTargetLevels(0.2)  TakeProfit="+ DoubleToStr(tpDailyAbs, 2) +"  StopLoss="+ DoubleToStr(slDailyAbs, 2));
+   // (2) StopLoss- und TakeProfit-Konfiguration einlesen und Absolutwerte und Pips berechnen
+   double slDailyPct   =  4, slDailyAbs   = mm.availableEquity * slDailyPct  /100, slDailyPips   = slDailyAbs  /pipValue;
+   double slWeeklyPct  =  8, slWeeklyAbs  = mm.availableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
+   double slMonthlyPct = 12, slMonthlyAbs = mm.availableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
+   double tpDailyPct   =  1, tpDailyAbs   = mm.availableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
+   debug("ShowTargetLevels(0.2)  equity="+ DoubleToStr(mm.availableEquity, 2) +"  TP="+ DoubleToStr(tpDailyAbs, 2) +"  SL="+ DoubleToStr(slDailyAbs, 2));
+   debug("ShowTargetLevels(0.3)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
 
-   // StopLoss- und TakeProfit-Werte in Pip berechnen
-   double slDailyPips   = slDailyAbs  /pipValue;
-   double slWeeklyPips  = slWeeklyAbs /pipValue;
-   double slMonthlyPips = slMonthlyAbs/pipValue;
-   double tpDailyPips   = tpDailyAbs  /pipValue;
 
-   debug("ShowTargetLevels(0.2)  TakeProfit("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  StopLoss("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
+   // (3) StopLoss- und TakeProfit-Preise berechnen
+   double slPriceDailyLong    = Ask -   slDailyPips * Pips;
+   double slPriceDailyShort   = Bid +   slDailyPips * Pips;
+
+   double slPriceWeeklyLong   = Ask -  slWeeklyPips * Pips;
+   double slPriceWeeklyShort  = Bid +  slWeeklyPips * Pips;
+
+   double slPriceMonthlyLong  = Ask - slMonthlyPips * Pips;
+   double slPriceMonthlyShort = Bid + slMonthlyPips * Pips;
+
+   double tpPriceDailyLong    = Ask +   tpDailyPips * Pips;
+   double tpPriceDailyShort   = Bid -   tpDailyPips * Pips;
+
+
+   // (4) Levelanzeige
+   datetime from = TimeCurrentFix() + 12*HOURS;
+   datetime to   = TimeCurrentFix() +  2*DAYS;
+
+   string label = StringConcatenate(__NAME__, ".Target.Entry");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_TREND, 0, from, Close[0], to, Close[0])) {
+      ObjectSet(label, OBJPROP_RAY  , false      );
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, Blue       );
+      ObjectSet(label, OBJPROP_BACK , false      );
+      ObjectRegister(label);
+   }
+   label = StringConcatenate(__NAME__, ".Target.TakeProfit.Daily.Long");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_TREND, 0, from, tpPriceDailyLong, to, tpPriceDailyLong)) {
+      ObjectSet(label, OBJPROP_RAY  , false      );
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, LimeGreen  );
+      ObjectSet(label, OBJPROP_BACK , true       );
+      ObjectRegister(label);
+   }
+   label = StringConcatenate(__NAME__, ".Target.TakeProfit.Daily.Short");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_TREND, 0, from, tpPriceDailyShort, to, tpPriceDailyShort)) {
+      ObjectSet(label, OBJPROP_RAY  , false      );
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, LimeGreen  );
+      ObjectSet(label, OBJPROP_BACK , true       );
+      ObjectRegister(label);
+   }
+   label = StringConcatenate(__NAME__, ".Target.StopLoss.Daily.Long");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_TREND, 0, from, slPriceDailyLong, to, slPriceDailyLong)) {
+      ObjectSet(label, OBJPROP_RAY  , false      );
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, Red        );
+      ObjectSet(label, OBJPROP_BACK , true       );
+      ObjectRegister(label);
+   }
+   label = StringConcatenate(__NAME__, ".Target.StopLoss.Daily.Short");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_TREND, 0, from, slPriceDailyShort, to, slPriceDailyShort)) {
+      ObjectSet(label, OBJPROP_RAY  , false      );
+      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet(label, OBJPROP_COLOR, Red        );
+      ObjectSet(label, OBJPROP_BACK , true       );
+      ObjectRegister(label);
+   }
+
+   /*
+   // (7) Parameteranzeige
+   string msg = StringConcatenate(__NAME__, "  for weekly volatility of "+ DoubleToStr(weeklyVola, 1) +"%",                                                       NL,
+                                                                                                                                                                  NL,
+                                 "ETR:        ",  DoubleToStr(ETRwAbs       /Pips, 1) +" pip = "+ NumberToStr(ETRwPct*100, "R.2") +"%",                           NL,
+                                 "Gridsize:   ",  DoubleToStr(gridSize      /Pips, 1) +" pip  =  1.0%",                                                           NL,
+                                 "TP:          ", DoubleToStr(takeProfitDist/Pips, 1) +" pip  =  0.5%",                                                           NL,
+                                 "SL:          ", DoubleToStr(stopLossDist  /Pips, 1) +" pip  =  3.0%  =  ", DoubleToStr(0.03*equity, 2), " ", AccountCurrency(), NL,
+                                 "");
+   Comment(StringConcatenate(NL, NL, NL, msg));                                     // 3 Zeilen Abstand nach oben für evt. vorhandene andere Anzeigen
+   */
 
    if (!catch("ShowTargetLevels(1)"))
       return(1);
@@ -4683,8 +4752,8 @@ string InputsToStr() {
    bool     IsCurrency(string value);
    bool     IsFile(string filename);
    bool     IsGlobalConfigKey(string section, string key);
-   int      ObjectRegister(string label);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
+   int      ObjectRegister(string label);
    string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
