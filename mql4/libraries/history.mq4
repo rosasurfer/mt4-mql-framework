@@ -1,7 +1,7 @@
 /**
- * Funktionen zum Verwalten und Bearbeiten von Historydateien (Kursreihen im "history"-Verzeichnis).
+ * Funktionen zur Verwaltung von Historydateien (Kursreihen im "history"-Verzeichnis).
  *
- * TODO: Alle Offsets analog zur Chart-Indizierung implementieren (Offset 0 = jüngste Bar)
+ * TODO: Offsets analog zur Chart-Indizierung implementieren (Offset 0 = jüngste Bar)
  */
 #property library
 
@@ -89,7 +89,7 @@ int history.GetLastError() {
 
 // Daten einzelner HistoryFiles ----------------------------------------------------------------------------------------------------------------------------
 int      hf.hFile     [];                          // Dateihandle: Arrayindex, wenn Datei offen; kleiner/gleich 0, wenn geschlossen/ungültig
-int      hf.hFile.valid = -1;                      // das zuletzt benutzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
+int      hf.hFile.valid = -1;                      // das letzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hf.name      [];                          // Dateiname
 bool     hf.read      [];                          // ob das Handle Lese-Zugriff erlaubt
 bool     hf.write     [];                          // ob das Handle Schreib-Zugriff erlaubt
@@ -105,15 +105,15 @@ int      hf.bars      [];                          // Anzahl der Bars der Datei
 datetime hf.from      [];                          // OpenTime der ersten Bar der Datei
 datetime hf.to        [];                          // OpenTime der letzten Bar der Datei
 
-// Cache der aktuellen Bar (Position des File-Pointers)
-int      hf.currentBar.offset       [];            // relativ zum Header: Offset 0 ist älteste Bar
+// Cache der aktuellen Bar (an der Position des File-Pointers)
+int      hf.currentBar.offset       [];            // relativ zum Header: Offset 0 ist die älteste Bar
 datetime hf.currentBar.openTime     [];            //
 datetime hf.currentBar.closeTime    [];            //
 datetime hf.currentBar.nextCloseTime[];            //
 double   hf.currentBar.data         [][5];         // Bar-Infos (OHLCV)
 
 // Ticks einer ungespeicherten Bar (bei HST_CACHE_TICKS=On)
-int      hf.tickBar.offset          [];            // relativ zum Header: Offset 0 ist älteste Bar
+int      hf.tickBar.offset          [];            // relativ zum Header: Offset 0 ist die älteste Bar
 datetime hf.tickBar.openTime        [];            //
 datetime hf.tickBar.closeTime       [];            //
 datetime hf.tickBar.nextCloseTime   [];            //
@@ -121,13 +121,13 @@ double   hf.tickBar.data            [][5];         // Bar-Infos (OHLCV)
 
 
 // Daten einzelner History-Sets ----------------------------------------------------------------------------------------------------------------------------
-int    h.hHst       [];                            // History-Handle: Arrayindex, wenn Handle gültig; kleiner/gleich 0, wenn Handle geschlossen/ungültig
-int    h.hHst.valid = -1;                          // das zuletzt benutzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
-string h.symbol     [];                            // Symbol
-string h.description[];                            // Symbolbeschreibung
-int    h.digits     [];                            // Symboldigits
-int    h.hFile      [][9];                         // HistoryFile-Handles des Sets je Timeframe
-int    h.periods    [] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
+int      h.hHst       [];                          // History-Handle: Arrayindex, wenn Handle gültig; kleiner/gleich 0, wenn Handle geschlossen/ungültig
+int      h.hHst.valid = -1;                        // das letzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
+string   h.symbol     [];                          // Symbol
+string   h.description[];                          // Symbolbeschreibung
+int      h.digits     [];                          // Symboldigits
+int      h.hFile      [][9];                       // HistoryFile-Handles des Sets je Standard-Timeframe
+int      h.periods    [] = {PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, PERIOD_H4, PERIOD_D1, PERIOD_W1, PERIOD_MN1};
 
 
 /**
@@ -201,18 +201,19 @@ int FindHistory(string symbol) {
  * @return bool - Erfolgsstatus
  */
 bool ResetHistory(int hHst) {
-   return(!catch("ResetHistory()", ERR_NOT_IMPLEMENTED));
+   return(!catch("ResetHistory(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
 /**
- * Fügt der History eines Symbols einen Tick hinzu. Der Tick wird in allen Timeframes als letzter Tick (Close) der entsprechenden Bars gespeichert.
+ * Fügt der gesamten History eines Symbols einen Tick hinzu (außer PERIOD_W1 und PERIOD_MN1). Der Tick wird in allen Timeframes als letzter Tick (Close)
+ * der entsprechenden Bars gespeichert.
  *
- * @param  int      hHst  - History-Handle des Symbols; @see GetHistory()
+ * @param  int      hHst  - History-Handle des Symbols wie von FindHistory() zurückgegeben
  * @param  datetime time  - Zeitpunkt des Ticks
  * @param  double   value - Datenwert
  * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                          HST_CACHE_TICKS: speichert aufeinanderfolgende Ticks zwischen und schreibt die Daten beim jeweils nächsten BarOpen-Event
+ *                          HST_CACHE_TICKS: speichert aufeinanderfolgende Ticks zwischen und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
  *                          HST_FILL_GAPS:   füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
@@ -238,7 +239,7 @@ bool History.AddTick(int hHst, datetime time, double value, int flags=NULL) {
 
 
 /**
- * Fügt einer Historydatei einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
+ * Fügt einer einzelnen Historydatei einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
  *
  * @param  int      hFile - Dateihandle der Historydatei
  * @param  datetime time  - Zeitpunkt des Ticks
@@ -253,6 +254,7 @@ bool History.AddTick(int hHst, datetime time, double value, int flags=NULL) {
  * NOTE: Zur Performancesteigerung werden die Tickdaten nicht zusätzlich validiert.
  */
 bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL) {
+   // Validierung
    if (hFile <= 0)                      return(!catch("HistoryFile.AddTick(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.valid) {
       if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.AddTick(2)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -268,7 +270,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
    double data[5];
 
 
-   // (1) Tick zwischenspeichern --------------------------------------------------------------------------------------
+   // (1) Tick ggf. zwischenspeichern -------------------------------------------------------------------------------------------------------------
    if (bHST_CACHE_TICKS) {
       if (time < hf.tickBar.openTime[hFile] || time >= hf.tickBar.closeTime[hFile]) {
          // (1.1) Queue leer oder Tick gehört zu anderer Bar (davor oder dahinter)
@@ -323,14 +325,14 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       }
       return(true);
    }
-   // -----------------------------------------------------------------------------------------------------------------
+   // ---------------------------------------------------------------------------------------------------------------------------------------------
 
 
-   // (2) gefüllte Queue-Bar schreiben --------------------------------------------------------------------------------
+   // (2) gefüllte Queue-Bar schreiben ------------------------------------------------------------------------------------------------------------
    if (hf.tickBar.offset[hFile] >= 0) {                                       // HST_CACHE_TICKS wechselte zur Laufzeit
       bool tick_in_queue = (time >= hf.tickBar.openTime[hFile] && time < hf.tickBar.closeTime[hFile]);
       if (tick_in_queue) {
-         //.tickBar.data[hFile][BAR_O] = ...                                  // Tick zur Queue hinzufügen
+       //hf.tickBar.data[hFile][BAR_O] = ... (unverändert)                    // Tick zur Queue hinzufügen
          hf.tickBar.data[hFile][BAR_H] = MathMax(hf.tickBar.data[hFile][BAR_H], value);
          hf.tickBar.data[hFile][BAR_L] = MathMin(hf.tickBar.data[hFile][BAR_L], value);
          hf.tickBar.data[hFile][BAR_C] = value;
@@ -346,10 +348,10 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       if (tick_in_queue)
          return(true);
    }
-   // -----------------------------------------------------------------------------------------------------------------
+   // ---------------------------------------------------------------------------------------------------------------------------------------------
 
 
-   // (3) Tick schreiben ----------------------------------------------------------------------------------------------
+   // (3) Tick schreiben --------------------------------------------------------------------------------------------------------------------------
    datetime openTime = time - time%hf.periodSecs[hFile];                      // OpenTime der Tickbar ermitteln
    offset = HistoryFile.FindBar(hFile, openTime, barExists);                  // Offset der Tickbar ermitteln
    if (offset < 0)
@@ -364,21 +366,21 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
    data[BAR_C] = value;
    data[BAR_V] = 1;
    return(HistoryFile.InsertBar(hFile, offset, openTime, data, flags));
-   // -----------------------------------------------------------------------------------------------------------------
+   // ---------------------------------------------------------------------------------------------------------------------------------------------
 }
 
 
 /**
- * Findet den Offset der Bar innerhalb einer Historydatei, die den angegebenen Zeitpunkt abdeckt, und signalisiert, ob an diesem
- * Offset bereits eine Bar existiert. Eine Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke enthält oder
+ * Findet den Offset der Bar innerhalb einer Historydatei, die den angegebenen Zeitpunkt abdeckt, und signalisiert, ob an diesem Offset
+ * bereits eine Bar existiert. Eine Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist oder
  * wenn der Zeitpunkt außerhalb des von der Zeitreihe abgedeckten Datenbereichs liegt.
  *
  * @param  int      hFile          - Dateihandle der Historydatei
  * @param  datetime time           - Zeitpunkt
  * @param  bool     lpBarExists[1] - Zeiger auf Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
  *                                   (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
- *                                   TRUE:  Bar existiert       (zum Aktualisieren dieser Bar ist HistoryFile.UpdateBar() zu verwenden)
- *                                   FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar ist HistoryFile.InsertBar() zu verwenden)
+ *                                   TRUE:  Bar existiert       (zum Aktualisieren dieser Bar muß HistoryFile.UpdateBar() verwendet werden)
+ *                                   FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar muß HistoryFile.InsertBar() verwendet werden)
  *
  * @return int - Bar-Offset oder -1 (EMPTY), falls ein Fehler auftrat
  */
@@ -431,7 +433,7 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    int offset;
    return(_EMPTY(catch("HistoryFile.FindBar(6)  Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
 
-   if (!last_error|catch("HistoryFile.FindBar(7)", ERR_NOT_IMPLEMENTED))
+   if (!catch("HistoryFile.FindBar(7)", ERR_NOT_IMPLEMENTED))
       return(offset);
    return(EMPTY);
 }
@@ -477,7 +479,7 @@ bool HistoryFile.ReadBar(int hFile, int offset, datetime &time[], double &data[]
    hf.currentBar.data         [hFile][BAR_C] = data[BAR_C];
    hf.currentBar.data         [hFile][BAR_V] = data[BAR_V];
 
-   return(!last_error|catch("HistoryFile.ReadBar(7)"));
+   return(!catch("HistoryFile.ReadBar(7)"));
 }
 
 
@@ -615,7 +617,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, datetime time, double data[], i
                                    hf.currentBar.data         [hFile][BAR_C] = data[BAR_C];
                                    hf.currentBar.data         [hFile][BAR_V] = data[BAR_V];
 
-   return(!last_error|catch("HistoryFile.WriteBar(9)"));
+   return(!catch("HistoryFile.WriteBar(9)"));
 }
 
 
@@ -660,7 +662,7 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
    if (offset == 0)                hf.from[hFile] = time;
    if (offset == hf.bars[hFile]-1) hf.to  [hFile] = time;
 
-   return(!last_error|catch("HistoryFile.WriteCurrentBar(7)"));
+   return(!catch("HistoryFile.WriteCurrentBar(7)"));
 }
 
 
@@ -717,7 +719,7 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
                                    hf.currentBar.data         [hFile][BAR_C] = hf.tickBar.data         [hFile][BAR_C];
                                    hf.currentBar.data         [hFile][BAR_V] = hf.tickBar.data         [hFile][BAR_V];
 
-   return(!last_error|catch("HistoryFile.WriteTickBar(7)"));
+   return(!catch("HistoryFile.WriteTickBar(7)"));
 }
 
 
@@ -730,7 +732,7 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
  * @return bool - Erfolgsstatus
  */
 bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
-   return(!last_error|catch("HistoryFile.MoveBars()", ERR_NOT_IMPLEMENTED));
+   return(!catch("HistoryFile.MoveBars(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
