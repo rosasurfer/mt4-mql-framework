@@ -173,7 +173,7 @@ int start() {
       return(last_error);
    }
 
-   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick++;         zTick++;                                                         // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
    ValidBars     = -1;

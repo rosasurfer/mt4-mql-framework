@@ -1,5 +1,5 @@
 /**
- * Funktionen zum Verwalten und Bearbeiten von MetaTrader-Historydateien ("history"-Verzeichnis).
+ * Funktionen zur Verwaltung von Historydateien (Kursreihen im "history"-Verzeichnis).
  */
 #import "history.ex4"
 
