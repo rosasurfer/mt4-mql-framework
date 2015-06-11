@@ -18,52 +18,60 @@
  *
  * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
+#define I_HH.version           0
+#define I_HH.description       1
+#define I_HH.symbol           17
+#define I_HH.period           20
+#define I_HH.digits           21
+#define I_HH.dbVersion        22
+#define I_HH.prevDbVersion    23
+
 
 // Getter
-int      hh.Version          (/*HISTORY_HEADER*/int hh[])          {                  return(hh[ 0]);                                                                         HISTORY_HEADER.toStr(hh); }
-string   hh.Description      (/*HISTORY_HEADER*/int hh[])          { return(BufferCharsToStr(hh, 4, 64));                                                                     HISTORY_HEADER.toStr(hh); }
-string   hh.Symbol           (/*HISTORY_HEADER*/int hh[])          { return(BufferCharsToStr(hh,68, 12));                                                                     HISTORY_HEADER.toStr(hh); }
-int      hh.Period           (/*HISTORY_HEADER*/int hh[])          {                  return(hh[20]);                                                                         HISTORY_HEADER.toStr(hh); }
-int      hh.Digits           (/*HISTORY_HEADER*/int hh[])          {                  return(hh[21]);                                                                         HISTORY_HEADER.toStr(hh); }
-datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[])          {                  return(hh[22]);                                                                         HISTORY_HEADER.toStr(hh); }
-datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[])          {                  return(hh[23]);                                                                         HISTORY_HEADER.toStr(hh); }
+int      hh.Version          (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.version      ]);                                                                          HISTORY_HEADER.toStr(hh); }
+string   hh.Description      (/*HISTORY_HEADER*/int hh[])          { return(BufferCharsToStr(hh,I_HH.description*4, 64));                                                                      HISTORY_HEADER.toStr(hh); }
+string   hh.Symbol           (/*HISTORY_HEADER*/int hh[])          { return(BufferCharsToStr(hh,I_HH.symbol     *4, 12));                                                                      HISTORY_HEADER.toStr(hh); }
+int      hh.Period           (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.period       ]);                                                                          HISTORY_HEADER.toStr(hh); }
+int      hh.Digits           (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.digits       ]);                                                                          HISTORY_HEADER.toStr(hh); }
+datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.dbVersion    ]);                                                                          HISTORY_HEADER.toStr(hh); }
+datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.prevDbVersion]);                                                                          HISTORY_HEADER.toStr(hh); }
 
-int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][ 0]);                                                                      HISTORY_HEADER.toStr(hh); }
-string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i) { return(BufferCharsToStr(hh, ArrayRange(hh, 1)*i*4 +  4, 64));                                            HISTORY_HEADER.toStr(hh); }
-string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i) { return(BufferCharsToStr(hh, ArrayRange(hh, 1)*i*4 + 68, 12));                                            HISTORY_HEADER.toStr(hh); }
-int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][20]);                                                                      HISTORY_HEADER.toStr(hh); }
-int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][21]);                                                                      HISTORY_HEADER.toStr(hh); }
-datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][22]);                                                                      HISTORY_HEADER.toStr(hh); }
-datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][23]);                                                                      HISTORY_HEADER.toStr(hh); }
+int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.version      ]);                                                                       HISTORY_HEADER.toStr(hh); }
+string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i) { return(BufferCharsToStr(hh, ArrayRange(hh, 1)*i*4 + I_HH.description*4, 64));                                             HISTORY_HEADER.toStr(hh); }
+string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i) { return(BufferCharsToStr(hh, ArrayRange(hh, 1)*i*4 + I_HH.symbol     *4, 12));                                             HISTORY_HEADER.toStr(hh); }
+int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.period       ]);                                                                       HISTORY_HEADER.toStr(hh); }
+int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.digits       ]);                                                                       HISTORY_HEADER.toStr(hh); }
+datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.dbVersion    ]);                                                                       HISTORY_HEADER.toStr(hh); }
+datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.prevDbVersion]);                                                                       HISTORY_HEADER.toStr(hh); }
 
 // Setter
-int      hh.setVersion       (/*HISTORY_HEADER*/int &hh[],          int      version    ) { hh[ 0] = version;                                            return(version    ); HISTORY_HEADER.toStr(hh); }
+int      hh.setVersion       (/*HISTORY_HEADER*/int &hh[],          int      version    ) { hh[I_HH.version      ] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
 string   hh.setDescription   (/*HISTORY_HEADER*/int &hh[],          string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
    if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hh.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
-   CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+4, StringLen(description)+1); /*terminierendes <NUL> wird mitkopiert*/                 return(description); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+ I_HH.description*4, StringLen(description)+1); /*terminierendes <NUL> wird mitkopiert*/                return(description); HISTORY_HEADER.toStr(hh); }
 string   hh.setSymbol        (/*HISTORY_HEADER*/int &hh[],          string   symbol     ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hh.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hh.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+68, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/                          return(symbol     ); HISTORY_HEADER.toStr(hh); }
-int      hh.setPeriod        (/*HISTORY_HEADER*/int &hh[],          int      period     ) { hh[20] = period;                                             return(period     ); HISTORY_HEADER.toStr(hh); }
-int      hh.setDigits        (/*HISTORY_HEADER*/int &hh[],          int      digits     ) { hh[21] = digits;                                             return(digits     ); HISTORY_HEADER.toStr(hh); }
-datetime hh.setDbVersion     (/*HISTORY_HEADER*/int &hh[],          datetime dbVersion  ) { hh[22] = dbVersion;                                          return(dbVersion  ); HISTORY_HEADER.toStr(hh); }
-datetime hh.setPrevDbVersion (/*HISTORY_HEADER*/int &hh[],          datetime dbVersion  ) { hh[23] = dbVersion;                                          return(dbVersion  ); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+ I_HH.symbol*4, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/                               return(symbol     ); HISTORY_HEADER.toStr(hh); }
+int      hh.setPeriod        (/*HISTORY_HEADER*/int &hh[],          int      period     ) { hh[I_HH.period       ] = period;                                              return(period     ); HISTORY_HEADER.toStr(hh); }
+int      hh.setDigits        (/*HISTORY_HEADER*/int &hh[],          int      digits     ) { hh[I_HH.digits       ] = digits;                                              return(digits     ); HISTORY_HEADER.toStr(hh); }
+datetime hh.setDbVersion     (/*HISTORY_HEADER*/int &hh[],          datetime version    ) { hh[I_HH.dbVersion    ] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
+datetime hh.setPrevDbVersion (/*HISTORY_HEADER*/int &hh[],          datetime version    ) { hh[I_HH.prevDbVersion] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
 
-int      hhs.setVersion      (/*HISTORY_HEADER*/int &hh[][], int i, int      version    ) { hh[i][ 0] = version;                                         return(version    ); HISTORY_HEADER.toStr(hh); }
+int      hhs.setVersion      (/*HISTORY_HEADER*/int &hh[][], int i, int      version    ) { hh[i][I_HH.version      ] = version;                                          return(version    ); HISTORY_HEADER.toStr(hh); }
 string   hhs.setDescription  (/*HISTORY_HEADER*/int &hh[][], int i, string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
    if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hhs.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
-   CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + 4, StringLen(description)+1); /*term. <NUL> wird mitkopiert*/ return(description); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(GetStringAddress(description), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + I_HH.description*4, StringLen(description)+1); /*term. <NUL> wird mitkopiert*/ return(description); HISTORY_HEADER.toStr(hh); }
 string   hhs.setSymbol       (/*HISTORY_HEADER*/int &hh[][], int i, string   symbol     ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hhs.setSymbol(1)  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hhs.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (> "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER)));
-   CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + 68, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/ return(symbol     ); HISTORY_HEADER.toStr(hh); }
-int      hhs.setPeriod       (/*HISTORY_HEADER*/int &hh[][], int i, int      period     ) { hh[i][20] = period;                                          return(period     ); HISTORY_HEADER.toStr(hh); }
-int      hhs.setDigits       (/*HISTORY_HEADER*/int &hh[][], int i, int      digits     ) { hh[i][21] = digits;                                          return(digits     ); HISTORY_HEADER.toStr(hh); }
-datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int &hh[][], int i, datetime dbVersion  ) { hh[i][22] = dbVersion;                                       return(dbVersion  ); HISTORY_HEADER.toStr(hh); }
-datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int &hh[][], int i, datetime dbVersion  ) { hh[i][23] = dbVersion;                                       return(dbVersion  ); HISTORY_HEADER.toStr(hh); }
+   CopyMemory(GetStringAddress(symbol), GetBufferAddress(hh)+ i*ArrayRange(hh, 1)*4 + I_HH.symbol*4, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/       return(symbol     ); HISTORY_HEADER.toStr(hh); }
+int      hhs.setPeriod       (/*HISTORY_HEADER*/int &hh[][], int i, int      period     ) { hh[i][I_HH.period       ] = period;                                           return(period     ); HISTORY_HEADER.toStr(hh); }
+int      hhs.setDigits       (/*HISTORY_HEADER*/int &hh[][], int i, int      digits     ) { hh[i][I_HH.digits       ] = digits;                                           return(digits     ); HISTORY_HEADER.toStr(hh); }
+datetime hhs.setDbVersion    (/*HISTORY_HEADER*/int &hh[][], int i, datetime version    ) { hh[i][I_HH.dbVersion    ] = version;                                          return(version    ); HISTORY_HEADER.toStr(hh); }
+datetime hhs.setPrevDbVersion(/*HISTORY_HEADER*/int &hh[][], int i, datetime version    ) { hh[i][I_HH.prevDbVersion] = version;                                          return(version    ); HISTORY_HEADER.toStr(hh); }
 
 
 /**
