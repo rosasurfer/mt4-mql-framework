@@ -645,7 +645,6 @@ void DummyCalls() {
 
 #import "stdlib1.ex4"
    int      ArrayPushIntArray(int array[][], int values[]);
-   string   BufferCharsToStr(int buffer[], int from, int length);
    int      GetAccountNumber();
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);

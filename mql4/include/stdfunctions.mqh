@@ -1721,17 +1721,6 @@ bool IsNaT(datetime value) {
 
 
 /**
- * Pseudo-Funktion, die nichts tut oder zurückgibt. Dummy-Statement
- *
- * @param  beliebige Parameter (werden ignoriert)
- *
- * @return void
- */
-void _void(int param1=NULL, int param2=NULL, int param3=NULL, int param4=NULL) {
-}
-
-
-/**
  * Pseudo-Funktion, die nichts weiter tut, als den ersten Parameter zurückzugeben. Kann zur Verbesserung der Übersichtlichkeit
  * und Lesbarkeit verwendet werden.
  *
@@ -3452,7 +3441,6 @@ void __DummyCalls() {
    _NO_ERROR();
    _NULL();
    _true();
-   _void();
    Abs(NULL);
    ArrayUnshiftString(sNulls, NULL);
    BoolToStr(NULL);
@@ -3629,6 +3617,7 @@ void __DummyCalls() {
    int      GetApplicationWindow();
    int      GetBufferAddress(int buffer[]);
    int      GetLastWin32Error();
+   string   GetString(int address);
    string   IntToHexStr(int integer);
    bool     IsBuiltinTimeframe(int timeframe);
    bool     IsUIThread();
