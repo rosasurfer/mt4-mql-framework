@@ -264,8 +264,8 @@ bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd
 bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   != 0); }
 bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     != 0); }
 bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       != 0); }
-string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(BufferCharsToStr(wfd, 44, MAX_PATH)); }
-string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(BufferCharsToStr(wfd, 304, 14)); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) +  44)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) + 304)); }
 
 
 /**

@@ -109,7 +109,7 @@ int mql_GetIntValue(int value) {
  *
 int onStart() {
 
-   int n = 1000000;
+   int startTime, endTime, i, n=1000000;
    string result;
 
 
@@ -119,11 +119,11 @@ int onStart() {
 
 
    // MQL
-   int startTime = GetTickCount();
-   for (int i=0; i < n; i++) {
+   startTime = GetTickCount();
+   for (i=0; i < n; i++) {
       result = mql_IntToHexStr(i);
    }
-   int endTime = GetTickCount();
+   endTime = GetTickCount();
    debug("onStart(0.1)  mql loop("+ n +") took "+ DoubleToStr((endTime-startTime)/1000., 3) +" sec  0x"+ result);
 
 

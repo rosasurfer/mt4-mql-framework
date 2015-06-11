@@ -28,21 +28,21 @@
 
 
 // Getter
-int      hh.Version          (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.version      ]);                                                                          HISTORY_HEADER.toStr(hh); }
-string   hh.Description      (/*HISTORY_HEADER*/int hh[])          { return(BufferCharsToStr(hh,I_HH.description*4, 64));                                                                      HISTORY_HEADER.toStr(hh); }
-string   hh.Symbol           (/*HISTORY_HEADER*/int hh[])          { return(BufferCharsToStr(hh,I_HH.symbol     *4, 12));                                                                      HISTORY_HEADER.toStr(hh); }
-int      hh.Period           (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.period       ]);                                                                          HISTORY_HEADER.toStr(hh); }
-int      hh.Digits           (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.digits       ]);                                                                          HISTORY_HEADER.toStr(hh); }
-datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.dbVersion    ]);                                                                          HISTORY_HEADER.toStr(hh); }
-datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[])          {                  return(hh[I_HH.prevDbVersion]);                                                                          HISTORY_HEADER.toStr(hh); }
+int      hh.Version          (/*HISTORY_HEADER*/int hh[])          {                            return(hh[I_HH.version      ]);                                                                HISTORY_HEADER.toStr(hh); }
+string   hh.Description      (/*HISTORY_HEADER*/int hh[])          { return(GetString(GetBufferAddress(hh)+I_HH.description*4));                                                               HISTORY_HEADER.toStr(hh); }
+string   hh.Symbol           (/*HISTORY_HEADER*/int hh[])          { return(GetString(GetBufferAddress(hh)+I_HH.symbol     *4));                                                               HISTORY_HEADER.toStr(hh); }
+int      hh.Period           (/*HISTORY_HEADER*/int hh[])          {                            return(hh[I_HH.period       ]);                                                                HISTORY_HEADER.toStr(hh); }
+int      hh.Digits           (/*HISTORY_HEADER*/int hh[])          {                            return(hh[I_HH.digits       ]);                                                                HISTORY_HEADER.toStr(hh); }
+datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[])          {                            return(hh[I_HH.dbVersion    ]);                                                                HISTORY_HEADER.toStr(hh); }
+datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[])          {                            return(hh[I_HH.prevDbVersion]);                                                                HISTORY_HEADER.toStr(hh); }
 
-int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.version      ]);                                                                       HISTORY_HEADER.toStr(hh); }
-string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i) { return(BufferCharsToStr(hh, ArrayRange(hh, 1)*i*4 + I_HH.description*4, 64));                                             HISTORY_HEADER.toStr(hh); }
-string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i) { return(BufferCharsToStr(hh, ArrayRange(hh, 1)*i*4 + I_HH.symbol     *4, 12));                                             HISTORY_HEADER.toStr(hh); }
-int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.period       ]);                                                                       HISTORY_HEADER.toStr(hh); }
-int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.digits       ]);                                                                       HISTORY_HEADER.toStr(hh); }
-datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.dbVersion    ]);                                                                       HISTORY_HEADER.toStr(hh); }
-datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i) {                  return(hh[i][I_HH.prevDbVersion]);                                                                       HISTORY_HEADER.toStr(hh); }
+int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i) {                            return(hh[i][I_HH.version      ]);                                                             HISTORY_HEADER.toStr(hh); }
+string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i) { return(GetString(GetBufferAddress(hh)+ ArrayRange(hh, 1)*i*4 + I_HH.description*4));                                      HISTORY_HEADER.toStr(hh); }
+string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i) { return(GetString(GetBufferAddress(hh)+ ArrayRange(hh, 1)*i*4 + I_HH.symbol     *4));                                      HISTORY_HEADER.toStr(hh); }
+int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i) {                            return(hh[i][I_HH.period       ]);                                                             HISTORY_HEADER.toStr(hh); }
+int      hhs.Digits          (/*HISTORY_HEADER*/int hh[][], int i) {                            return(hh[i][I_HH.digits       ]);                                                             HISTORY_HEADER.toStr(hh); }
+datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i) {                            return(hh[i][I_HH.dbVersion    ]);                                                             HISTORY_HEADER.toStr(hh); }
+datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i) {                            return(hh[i][I_HH.prevDbVersion]);                                                             HISTORY_HEADER.toStr(hh); }
 
 // Setter
 int      hh.setVersion       (/*HISTORY_HEADER*/int &hh[],          int      version    ) { hh[I_HH.version      ] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
@@ -153,7 +153,6 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
 
 #import "stdlib1.ex4"
-   string BufferCharsToStr(int buffer[], int from, int length);
    string JoinStrings(string array[], string separator);
 
 #import "Expander.dll"

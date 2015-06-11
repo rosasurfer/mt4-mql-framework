@@ -73,7 +73,7 @@ datetime lo.CloseTime           (/*LFX_ORDER*/int lo[]         ) {              
 double   lo.ClosePriceLfx       (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.closePriceLfx      ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
 double   lo.Profit              (/*LFX_ORDER*/int lo[]         ) {                                  return(NormalizeDouble(lo[I_LFX_ORDER.profit             ]/100., 2));                                                             LFX_ORDER.toStr(lo); }
 double   lo.Deviation           (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.deviation          ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
-string   lo.Comment             (/*LFX_ORDER*/int lo[]         ) {                                 return(BufferCharsToStr(lo,I_LFX_ORDER.comment*4, 32));                                                                            LFX_ORDER.toStr(lo); }
+string   lo.Comment             (/*LFX_ORDER*/int lo[]         ) {                       return(GetString(GetBufferAddress(lo) + I_LFX_ORDER.comment*4));                                                                             LFX_ORDER.toStr(lo); }
 datetime lo.ModificationTime    (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.modificationTime   ]);                                                                      LFX_ORDER.toStr(lo); }
 int      lo.Version             (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.version            ]);                                                                      LFX_ORDER.toStr(lo); }
 //----------------------------------------------------------------------- Helper Functions -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ datetime los.CloseTime          (/*LFX_ORDER*/int lo[][], int i) {              
 double   los.ClosePriceLfx      (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.closePriceLfx      ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
 double   los.Profit             (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][I_LFX_ORDER.profit             ]/100., 2));                                                          LFX_ORDER.toStr(lo); }
 double   los.Deviation          (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo, i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.deviation          ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
-string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                                 return(BufferCharsToStr(lo,i* LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4, 32));                                                   LFX_ORDER.toStr(lo); }
+string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                       return(GetString(GetBufferAddress(lo)+ i*LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4));                                                      LFX_ORDER.toStr(lo); }
 datetime los.ModificationTime   (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.modificationTime   ]);                                                                   LFX_ORDER.toStr(lo); }
 int      los.Version            (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.version            ]);                                                                   LFX_ORDER.toStr(lo); }
 //----------------------------------------------------------------------- Helper Functions -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -356,7 +356,6 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 
 
 #import "stdlib1.ex4"
-   string BufferCharsToStr(int buffer[], int from, int length);
    string GetCurrency(int id);
    string JoinStrings(string array[], string separator);
    string NumberToStr(double number, string format);
