@@ -10370,12 +10370,13 @@ for(int i=0; i&lt;bars_count; i++,bar--)
       caption=WindowExpertName()
       type=string
       <content>
-Returns name of the executed expert, script, custom indicator, or library, depending on the MQL4 program, from which
-this function has been called.
+Returns the name of the currently executed MQL module.<br/>
+<br/>
+<span style="color:red">Notes:</span> <br/>
+In Terminalversionen bis Build 4.??? gibt die Funktion den Namen des Moduls inklusive eines evt. Pfades zurück (z.B. <span class="string">"test/testlibrary"</span>).<br/>
       </content>
       <example>
-string name=WindowExpertName();
-GlobalVariablesDeleteAll(name);
+string name = WindowExpertName();
       </example>
     </function>
 
