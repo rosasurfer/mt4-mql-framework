@@ -4608,25 +4608,6 @@ datetime GetFxtTime() {
 
 
 /**
- * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurück.
- *
- * @param  double number
- *
- * @return int - Anzahl der Nachkommastellen, höchstens jedoch 8
- */
-int CountDecimals(double number) {
-   string str = number;
-   int dot    = StringFind(str, ".");
-
-   for (int i=StringLen(str)-1; i > dot; i--) {
-      if (StringGetChar(str, i) != '0')
-         break;
-   }
-   return(i - dot);
-}
-
-
-/**
  * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
  * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
  *

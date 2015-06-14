@@ -127,7 +127,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
    string result = StringConcatenate("{hThreadId="         ,                         ec.hThreadId         (ec),
                                     ", programId="         ,                         ec.ProgramId         (ec),
-                                    ", programType="       ,         ModuleTypeToStr(ec.ProgramType       (ec)),
+                                    ", programType="       ,        ModuleTypesToStr(ec.ProgramType       (ec)),
                                     ", programName="       ,             StringToStr(ec.ProgramName       (ec)),
                                     ", launchType="        ,                         ec.LaunchType        (ec),
                                     ", superContext="      ,               ifString(!ec.lpSuperContext    (ec), "0", "0x"+ IntToHexStr(ec.lpSuperContext(ec))),
