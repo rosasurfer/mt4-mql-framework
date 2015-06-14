@@ -948,7 +948,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
                   static.hWndSelf = -1;                                 // Rückgabewert -1
                   return(static.hWndSelf);
                }                                                        // vorhandene ChildWindows im Debugger ausgeben
-               return(!catch(sError +" in context Indicator::"+ RootFunctionDescription(__WHEREAMI__), _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+               return(!catch(sError +" in context Indicator::"+ RootFunctionName(__WHEREAMI__) +"()", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
             }
             int hChartWindow = hWndLast;
          }
@@ -962,7 +962,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
             hWndMdi   = GetDlgItem(hWndMain, IDC_MDI_CLIENT); if (!hWndMdi)  return(!catch("WindowHandleEx(6)  MDIClient window not found (hWndMain = 0x"+ IntToHexStr(hWndMain) +")", ERR_RUNTIME_ERROR));
             hWndChild = GetWindow(hWndMdi, GW_CHILD);                   // das erste Child in Z order
-            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+            if (!hWndChild) return(!catch("WindowHandleEx(7)  MDIClient window has no child windows in context Script::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
 
             if (symbol == "0") symbol = Symbol();                       // (string) NULL
             if (!timeframe) timeframe = Period();
@@ -983,7 +983,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
          // (1.3) Experts
          else {
-            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+            return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
          }
 
          // (1.4) Das so gefundene Chartfenster hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte MetaTrader-Handle() ist.
@@ -1287,23 +1287,23 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
 /**
  * Gibt den PipValue des aktuellen Instrument für die angegebene Lotsize zurück.
  *
- * @param  double lots       - Lotsize (default: 1 lot)
- * @param  bool   hideErrors - ob Laufzeitfehler abgefangen werden sollen (default: nein)
+ * @param  double lots           - Lotsize (default: 1 lot)
+ * @param  bool   suppressErrors - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  */
-double PipValue(double lots=1.0, bool hideErrors=false) {
-   hideErrors = hideErrors!=0;
+double PipValue(double lots=1.0, bool suppressErrors=false) {
+   suppressErrors = suppressErrors!=0;
 
    if (!TickSize) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                   // schlägt fehl, wenn kein Tick vorhanden ist
       int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
       if (IsError(error)) {                                             // - ERR_UNKNOWN_SYMBOL: synthetisches Symbol im Offline-Chart
-         if (!hideErrors) catch("PipValue(1)", error);
+         if (!suppressErrors) catch("PipValue(1)", error);
          return(0);
       }
       if (!TickSize) {
-         if (!hideErrors) catch("PipValue(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
+         if (!suppressErrors) catch("PipValue(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
          return(0);
       }
    }
@@ -1312,13 +1312,13 @@ double PipValue(double lots=1.0, bool hideErrors=false) {
    error = GetLastError();
    if (!error) {
       if (!tickValue) {
-         if (!hideErrors) catch("PipValue(3)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
+         if (!suppressErrors) catch("PipValue(3)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
          return(0);
       }
       return(Pip/TickSize * tickValue * lots);
    }
 
-   if (!hideErrors) catch("PipValue(4)", error);
+   if (!suppressErrors) catch("PipValue(4)", error);
    return(0);
 }
 
@@ -2001,6 +2001,25 @@ int Div(int a, int b, int onZero=0) {
 
 
 /**
+ * Gibt die Anzahl der Dezimal- bzw. Nachkommastellen eines Zahlenwertes zurück.
+ *
+ * @param  double number
+ *
+ * @return int - Anzahl der Nachkommastellen, höchstens jedoch 8
+ */
+int CountDecimals(double number) {
+   string str = number;
+   int dot    = StringFind(str, ".");
+
+   for (int i=StringLen(str)-1; i > dot; i--) {
+      if (StringGetChar(str, i) != '0')
+         break;
+   }
+   return(i - dot);
+}
+
+
+/**
  * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (NULL-Pointer) ist.
  *
  * @param  string value - zu prüfende Stringvariable
@@ -2187,27 +2206,27 @@ string RootFunctionToStr(int id) {
    }
 
    string msg = "unknown MQL root function id "+ id;
-   debug("RootFunctionToStr()  "+ msg, ERR_INVALID_PARAMETER);
+   debug("RootFunctionToStr(1)  "+ msg, ERR_INVALID_PARAMETER);
    return("("+ msg +")");
 }
 
 
 /**
- * Gibt die lesbare Beschreibung einer RootFunction-ID zurück.
+ * Gibt den Namen einer RootFunction zurück.
  *
  * @param  int id
  *
  * @return string
  */
-string RootFunctionDescription(int id) {
+string RootFunctionName(int id) {
    switch (id) {
-      case RF_INIT  : return("init()"  );
-      case RF_START : return("start()" );
-      case RF_DEINIT: return("deinit()");
+      case RF_INIT  : return("init"  );
+      case RF_START : return("start" );
+      case RF_DEINIT: return("deinit");
    }
 
    string msg = "unknown MQL root function id "+ id;
-   debug("RootFunctionDescription()  "+ msg, ERR_INVALID_PARAMETER);
+   debug("RootFunctionName(1)  "+ msg, ERR_INVALID_PARAMETER);
    return("("+ msg +")");
 }
 
@@ -2432,7 +2451,7 @@ void CopyMemory(int destination, int source, int bytes) {
  * @return int - Fehlerstatus
  *
  *
- * NOTE: Erläuterungen zu den MODE_'s in stddefine.mqh
+ * NOTE: Erläuterungen zu den MODEs in stddefine.mqh
  */
 int DebugMarketInfo(string location) {
    int    error;
@@ -2717,7 +2736,7 @@ bool Script.IsTesting() {
 
    string title = GetWindowText(GetParent(hWnd));
    if (!StringLen(title))
-      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ RootFunctionDescription(__WHEREAMI__), ERR_RUNTIME_ERROR));
+      return(!catch("Script.IsTesting(2)  title(hWndChart)=\""+ title +"\"  in context Script::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
 
    static.result = StringEndsWith(title, "(visual)");                // (int) bool
 
@@ -3357,21 +3376,21 @@ string BoolToStr(bool value) {
 
 
 /**
- * Gibt die lesbare Konstante eines Module-Types zurück.
+ * Gibt die lesbare Konstante eines ModuleType-Flags zurück.
  *
- * @param  int type - Module-Type
+ * @param  int fType - ModuleType-Flag
  *
  * @return string
  */
-string ModuleTypeToStr(int type) {
+string ModuleTypesToStr(int fType) {
    string result = "";
 
-   if (type & MT_EXPERT    && 1) result = StringConcatenate(result, "|MT_EXPERT"   );
-   if (type & MT_SCRIPT    && 1) result = StringConcatenate(result, "|MT_SCRIPT"   );
-   if (type & MT_INDICATOR && 1) result = StringConcatenate(result, "|MT_INDICATOR");
-   if (type & MT_LIBRARY   && 1) result = StringConcatenate(result, "|MT_LIBRARY"  );
+   if (fType & MT_EXPERT    && 1) result = StringConcatenate(result, "|MT_EXPERT"   );
+   if (fType & MT_SCRIPT    && 1) result = StringConcatenate(result, "|MT_SCRIPT"   );
+   if (fType & MT_INDICATOR && 1) result = StringConcatenate(result, "|MT_INDICATOR");
+   if (fType & MT_LIBRARY   && 1) result = StringConcatenate(result, "|MT_LIBRARY"  );
 
-   if (!StringLen(result)) result = "(unknown module type "+ type +")";
+   if (!StringLen(result)) result = "(unknown module type "+ fType +")";
    else                    result = StringSubstr(result, 1);
    return(result);
 }
@@ -3449,6 +3468,7 @@ void __DummyCalls() {
    CharToHexStr(NULL);
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
+   CountDecimals(NULL);
    CreateString(NULL);
    DateTime(NULL);
    debug(NULL);
@@ -3488,14 +3508,14 @@ void __DummyCalls() {
    Max(NULL, NULL);
    MT4InternalMsg();
    Min(NULL, NULL);
-   ModuleTypeToStr(NULL);
+   ModuleTypesToStr(NULL);
    NE(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodToStr(NULL);
    PipValue();
    ResetLastError();
-   RootFunctionDescription(NULL);
+   RootFunctionName(NULL);
    RootFunctionToStr(NULL);
    Round(NULL);
    RoundCeil(NULL);

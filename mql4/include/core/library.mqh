@@ -15,7 +15,7 @@ int __lpSuperContext = NULL;
  */
 int init() {
    if (StringEndsWith(WindowExpertName(), "testlibrary")) {
-      debug(WindowExpertName()+ "::init()");
+      debug("init()");
       GetExecutionContext(__ExecutionContext);
    }
 
@@ -52,7 +52,7 @@ int start() {
  */
 int deinit() {
    if (StringEndsWith(WindowExpertName(), "testlibrary")) {
-      debug(WindowExpertName()+ "::deinit()");
+      debug("deinit()");
    }
    return(catch("deinit(1)")); __DummyCalls();
 }

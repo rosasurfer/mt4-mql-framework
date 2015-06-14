@@ -1,25 +1,6 @@
 /**
- * Je Modultyp unterschiedlich implementierte Funktionen (core):
- * -------------------------------------------------------------
- *  bool IsExpert();
- *  bool IsScript();
- *  bool IsIndicator();
- *  bool IsLibrary();
- *
- *  bool Expert.IsTesting();
- *  bool Script.IsTesting();
- *  bool Indicator.IsTesting();
- *  bool This.IsTesting();
- *
- *  int  InitReason();
- *  int  DeinitReason();
- *  int  InitExecutionContext();                                     // außer in Libraries (dort nicht notwendig)
- *  bool IsSuperContext();
- *
- *  int  SetLastError(int error, int param);
- *  int  UpdateProgramStatus(int value);
+ * letzte Version mit vollständigem Funktions-Listing: v1.484
  */
-
 #import "stdlib1.ex4"
 
    // Status- und Laufzeit-Informationen
@@ -27,12 +8,10 @@
    bool     Init.IsNewSymbol(string symbol);
    void     Init.StoreSymbol(string symbol);
 
-   bool     IsLogging();
    int      SetCustomLog(int id, string file);
    int      GetCustomLogID();
    string   GetCustomLogFile(int id);
 
-   bool     IsError(int value);
    int      stdlib.GetLastError();
 
    string   GetTerminalVersion();
@@ -44,28 +23,18 @@
    string   GetServerDirectory();
    string   GetComputerName();
 
-   bool     Tester.IsPaused();
-   bool     Tester.IsStopped();
-
-   int      MT4InternalMsg(); int WM_MT4();  // Alias                // MetaTrader4_Internal_Message (kann wie Pseudo-Konstante benutzt werden)
-
 
    // Account-Informationen
    int      GetAccountNumber();
    string   ShortAccountCompany();
    string   GetServerTimezone(); // throws ERR_INVALID_TIMEZONE_CONFIG
    double   GetCommission();
-   int      DebugMarketInfo(string location);
 
 
    // Terminal-Interaktionen
-   int      Toolbar.Experts(bool enable);
-   int      Chart.Expert.Properties();
    int      Chart.Objects.UnselectAll();
    int      Chart.Refresh();
    int      Chart.SendTick(bool sound);
-   int      MarketWatch.Symbols();
-   int      Tester.Pause();
 
 
    // Arrays
@@ -169,13 +138,6 @@
    int      ExplodeStringsW(int buffer[], string results[]);
 
 
-   // Conditional Statements
-   bool     ifBool  (bool condition, bool   bThen, bool   bElse);
-   int      ifInt   (bool condition, int    iThen, int    iElse);
-   double   ifDouble(bool condition, double dThen, double dElse);
-   string   ifString(bool condition, string sThen, string sElse);
-
-
    // Configuration
    string   GetLocalConfigPath();
    string   GetGlobalConfigPath();
@@ -219,8 +181,6 @@
    // Date/Time
  //datetime TimeCurrent();                         // Built-in: Serverzeit des letzten Ticks, im Tester modelliert
  //datetime TimeLocal();                           // Built-in: lokale Zeit, im Tester Serverzeit
-   datetime TimeGMT();                             //           GMT-Zeit von TimeLocal(), im Tester also GMT der Serverzeit
-   datetime TimeFXT();                             //           FXT-Zeit von TimeLocal(), im Tester also FXT der Serverzeit
 
    datetime mql.GetLocalTime();                    //           immer aktuelle lokale Zeit
    datetime     GetGmtTime();                      //           immer aktuelle GMT-Zeit
@@ -273,7 +233,6 @@
 
 
    // Event-Listener: Diese Library-Versionen können durch spezielle lokale Versionen überschrieben werden.
-   bool     EventListener.NewTick        (int    data[], int param);    // fest in stdfunctions.mqh implementiert
    bool     EventListener.BarOpen        (int    data[], int param);
    bool     EventListener.AccountChange  (int    data[], int param);
    bool     EventListener.ChartCommand   (string data[], int param);
@@ -309,8 +268,6 @@
    // Files, I/O
    bool     IsFile(string filename);
    bool     IsDirectory(string filename);
-   bool     IsMqlFile(string filename);
-   bool     IsMqlDirectory(string dirname);
    int      FindFileNames(string pattern, string results[], int flags);
    int      FileReadLines(string filename, string lines[], bool skipEmptyLines);
 
@@ -324,75 +281,24 @@
    bool     ReleaseLocks(bool warn);
 
 
-   // Math, Numbers
-   bool     EQ(double a, double b, int digits);
-   bool     NE(double a, double b, int digits);
-
-   bool     LT(double a, double b, int digits);
-   bool     LE(double a, double b, int digits);
-
-   bool     GT(double a, double b, int digits);
-   bool     GE(double a, double b, int digits);
-
-   bool     IsNaN(double value);
-   bool     IsInfinity(double value);
-
-   int      Div       (int    a, int    b, int    onZero);
-   double   MathDiv   (double a, double b, double onZero);
-   double   MathModFix(double a, double b);
-
-   int      Abs(int value);
-   int      Min(int a, int b);
-   int      Max(int a, int b);
-   int      Floor     (double value);
-   int      Ceil      (double value);
-   int      Sign      (double value);
-   int      Round     (double value);
-   double   RoundEx   (double value, int decimals);
-   double   RoundFloor(double value, int decimals);
-   double   RoundCeil (double value, int decimals);
-
-   int      CountDecimals(double value);
-
-
    // Strings
-   string   CreateString(int length);
-   string   StringToStr(string value);                               // "value" (mit Anführungszeichen) oder NULL (ohne Anführungszeichen)
-
    bool     StringIsDigit(string value);
    bool     StringIsInteger(string value);
    bool     StringIsNumeric(string value);
-   bool     StringIsNull(string value);
    bool     StringIsPhoneNumber(string value);
 
    bool     StringContains(string object, string substring);
    bool     StringIContains(string object, string substring);
 
-   bool     StringStartsWith(string object, string prefix);
-   bool     StringIStartsWith(string object, string prefix);
-   bool     StringEndsWith(string object, string postfix);
-   bool     StringIEndsWith(string object, string postfix);
    bool     StringICompare(string a, string b);
 
-   string   StringLeft(string value, int n);
-   string   StringRight(string value, int n);
-
-   string   StringTrim(string value);
-   string   StringPad     (string input, int length, string pad_string, int pad_type);
-   string   StringPadLeft (string input, int length, string pad_string);   string StringLeftPad (string input, int length, string pad_string);  // Alias
-   string   StringPadRight(string input, int length, string pad_string);   string StringRightPad(string input, int length, string pad_string);  // Alias
-
-   string   StringToLower(string value);
-   string   StringToUpper(string value);
+   string   StringPad(string input, int length, string pad_string, int pad_type);
 
    int      StringFindR(string object, string search);
    string   StringRepeat(string input, int times);
-   string   StringReplace          (string object, string search, string replace);
    string   StringReplace.Recursive(string object, string search, string replace);
-   string   StringSubstrFix(string object, int start, int length);
 
    int      Explode(string input, string separator, string results[], int limit);
-   string   UrlEncode(string value);
 
 
    // Tradefunktionen, Orderhandling
@@ -412,11 +318,6 @@
    bool     OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]);
    bool     DeletePendingOrders(color markerColor);
 
-   int      OrderPush(string location);
-   bool     OrderPop(string location);
-   bool     SelectTicket(int ticket, string location, bool orderPush, bool onErrorOrderPop);
-   bool     WaitForTicket(int ticket, bool orderKeep);
-
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    bool     ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment);
    bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);
@@ -430,14 +331,8 @@
 
 
    // sonstiges
-   bool     IsEmpty      (double   value);
-   bool     IsEmptyString(string   value);
-   bool     IsEmptyValue (double   value);
-   bool     IsNaT        (datetime value);                                          // Not-A-Time
-
    int      GetAccountHistory(int account, string results[]);
    int      GetBalanceHistory(int account, datetime times[], double values[]);
-   double   PipValue(double lots, bool hideErrors);
    int      SortTicketsChronological(int tickets[]);
 #import "stdlib2.ex4"
    bool     SortClosedTickets(int keys[][]);
@@ -464,8 +359,6 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
-   bool     StrToBool(string value);
-   int      StrToMaMethod(string method, int execFlags); int StrToMovingAverageMethod(string method, int execFlags); // Alias
    int      StrToPeriod(string value);  int StrToTimeframe(string value);           // Alias
    int      PeriodFlag(int period);
    int      StrToOperationType(string value);
@@ -480,21 +373,17 @@
    int      iAccountBalance(int account, double buffer[], int bar);
    int      iAccountBalanceSeries(int account, double buffer[]);
 
-   int      ForceMessageBox(string caption, string message, int flags);
-   int      PlaySoundEx(string soundfile);
    bool     SendSMS(string receiver, string message);
 
 
    // toString-Funktionen
-   string   BoolToStr(bool value);
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
 
    string   IntegerToBinaryStr(int integer);
 
    string   IntegerToHexStr(int decimal);
-   string   ByteToHexStr(int byte);   string CharToHexStr(int char);                // Alias
+   string   ByteToHexStr(int byte);
    string   WordToHexStr(int word);
-   string   StringToHexStr(string value);
 
 #import "stdlib2.ex4"
    string   BoolsToStr        (bool array[], string separator);
@@ -514,39 +403,28 @@
    string   InitFlagsToStr(int flags);
    string   DateToStr(datetime time, string format);  string DateTimeToStr(datetime time, string format);               // Alias
    string   DeinitFlagsToStr(int flags);
-   string   ErrorDescription(int error);
-   string   ErrorToStr      (int error);
    string   EventToStr(int event);
    string   FileAccessModeToStr(int mode);
    string   MessageBoxCmdToStr(int cmd);
    string   ModuleTypeDescription(int type);
-   string   ModuleTypeToStr      (int type);
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);       string OrderTypeDescription(int type);                            // Alias
    string   OperationTypeToStr      (int type);       string OrderTypeToStr      (int type);                            // Alias
    string   PeriodFlagToStr(int flag);
-   string   PeriodDescription(int period);            string TimeframeDescription(int timeframe);                       // Alias
-   string   PeriodToStr(int period, int execFlags);   string TimeframeToStr(int timeframe, int execFlags);              // Alias
    string   PriceTypeDescription(int type);
    string   PriceTypeToStr      (int type);
-   string   RootFunctionDescription(int id);
-   string   RootFunctionToStr(int id);
    string   ShellExecuteErrorDescription(int error);
    string   SwapCalculationModeToStr(int mode);
    string   TestFlagsToStr(int flags);
    string   UninitializeReasonDescription(int reason);
-   string   UninitializeReasonToStr      (int reason);
    string   InitReasonDescription(int reason);
    string   InitReasonToStr      (int reason);
    string   WaitForSingleObjectValueToStr(int value);
 
 
    // Win32-Funktionen (an MQL angepaßt)
-   void     CopyMemory(int dest, int src, int bytes);                // intern als MoveMemory() implementiert
-   bool     EnumChildWindows(int hWnd, bool recursive);
-   string   GetClassName(int hWnd);
    string   GetWindowsShortcutTarget(string lnkFile);
    string   GetWindowText(int hWnd);
    int      WinExecAndWait(string cmdLine, int cmdShow);
