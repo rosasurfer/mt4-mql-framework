@@ -218,10 +218,8 @@ int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    // (2) EXECUTION_CONTEXT von Indikatoren zwischenspeichern
    if (IsIndicator()) {
       ArrayCopy(__ExecutionContext, ec);
-      if (IsError(catch("stdlib.deinit(1)"))) {
-         ArrayInitialize(__ExecutionContext, 0);
+      if (IsError(catch("stdlib.deinit(1)")))
          error = last_error;
-      }
    }
    return(error);
 }
@@ -580,23 +578,16 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 /**
  * Restauriert einen in der Library zwischengespeicherten EXECUTION_CONTEXT eines Indikators. Wird nur in Indicator::InitExecutionContext() verwendet.
  *
- * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls, wird mit gespeicherter Version überschrieben
+ * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls, wird mit in der Library gespeicherter Version überschrieben
  *
  * @return int - Fehlerstatus
  */
 int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__ |= MT_INDICATOR;                                         // Type der Library initialisieren (Aufruf immer aus Indikator)
 
-   if (!ec.ProgramId(__ExecutionContext))                            // Context ggf. (re-)initialisieren ...      TODO: wirklich notwendig???
-      ArrayInitialize(__ExecutionContext, 0);
-   ArrayCopy(ec, __ExecutionContext);                                // ...und ins übergeordnete Modul zurückkopieren
+   ArrayCopy(ec, __ExecutionContext);                                // lokalen Context ins Hauptmodul zurückkopieren
 
-   if (!catch("Indicator.InitExecutionContext(1)"))
-      return(NO_ERROR);
-
-   ArrayInitialize(ec,                 0);
-   ArrayInitialize(__ExecutionContext, 0);
-   return(last_error);
+   return(catch("Indicator.InitExecutionContext(1)"));
 }
 
 
@@ -11127,7 +11118,6 @@ void Tester.ResetGlobalArrays() {
    int    ec.LastError               (/*EXECUTION_CONTEXT*/int ec[]                        );
    bool   ec.Logging                 (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.ProgramId               (/*EXECUTION_CONTEXT*/int ec[]                        );
    string ec.ProgramName             (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.ProgramType             (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.RootFunction            (/*EXECUTION_CONTEXT*/int ec[]                        );

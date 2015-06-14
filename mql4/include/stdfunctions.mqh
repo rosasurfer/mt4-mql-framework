@@ -3641,7 +3641,6 @@ void __DummyCalls() {
    bool     IsBuiltinTimeframe(int timeframe);
    bool     IsUIThread();
    bool     SetExecutionContext(int context[]);
-   bool     GetExecutionContext(int context[]);
    void     SetLogLevel(int level);
 
 #import "kernel32.dll"

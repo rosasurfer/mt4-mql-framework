@@ -17,11 +17,10 @@ extern string LogLevel = "inherit";
  * @throws ERS_TERMINAL_NOT_YET_READY
  */
 int init() {
-   //SetLogLevel(L_DEBUG);
-   //debug(WindowExpertName()+ "::init()");
-
    if (__STATUS_OFF)
       return(last_error);
+
+   SetExecutionContext(__ExecutionContext);                                // noch bevor die erste Library geladen wird
 
    if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
       __WHEREAMI__ = RF_INIT;
@@ -31,7 +30,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.ProgramId(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec.ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -510,7 +509,7 @@ int DeinitReason() {
  * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen.
  */
 bool InitExecutionContext() {
-   if (ec.ProgramId(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programId = "+ ec.ProgramId(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec.ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec.ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -541,7 +540,7 @@ bool InitExecutionContext() {
 
 
    // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
-   if (!ec.ProgramId(__ExecutionContext)) {
+   if (!ec.ProgramType(__ExecutionContext)) {
 
       // (3.1) Gibt es einen SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
@@ -561,13 +560,14 @@ bool InitExecutionContext() {
       }
 
       // (3.2) Fixe Context-Properties setzen
+    //ec.setProgramId         ...kein MQL-Setter
       ec.setProgramType       (__ExecutionContext, __TYPE__                 );
       ec.setProgramName       (__ExecutionContext, __NAME__                 );
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
-    //ec.setUninitializeReason ...wird in (3.4) gesetzt, da variabel
     //ec.setRootFunction       ...wird in (3.4) gesetzt, da variabel
+    //ec.setUninitializeReason ...wird in (3.4) gesetzt, da variabel
 
     //ec.setSymbol             ...wird in (3.4) gesetzt, da variabel
     //ec.setTimeframe          ...wird in (3.4) gesetzt, da variabel
@@ -575,7 +575,7 @@ bool InitExecutionContext() {
       ec.setHChart            (__ExecutionContext, hChart                   );
       ec.setTestFlags         (__ExecutionContext, testFlags                );
 
-    //ec.setLastError         ...bereits NULL
+    //ec.setLastError         ...wird nicht überschrieben
       ec.setLogging           (__ExecutionContext, __LOG                    );
       ec.setLogFile           (__ExecutionContext, logFile                  );
    }
@@ -588,8 +588,8 @@ bool InitExecutionContext() {
    }
 
    // (3.4) variable Context-Properties aktualisieren
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    ec.setRootFunction      (__ExecutionContext, __WHEREAMI__        );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    ec.setSymbol            (__ExecutionContext, Symbol()            );
    ec.setTimeframe         (__ExecutionContext, Period()            );
 
@@ -609,12 +609,7 @@ bool InitExecutionContext() {
    PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-
-   if (!catch("InitExecutionContext(4)"))
-      return(true);
-
-   ArrayInitialize(__ExecutionContext, 0);
-   return(false);
+   return(!catch("InitExecutionContext(4)"));
 }
 
 
@@ -761,7 +756,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
