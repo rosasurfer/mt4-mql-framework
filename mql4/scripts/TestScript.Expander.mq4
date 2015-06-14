@@ -17,7 +17,6 @@ int __DEINIT_FLAGS__[];
    bool Test_onStart (int context[], int logLevel);
    bool Test_onDeinit(int context[], int logLevel);
 
- //bool GetExecutionContext(int context[]);
    int  Test();
 #import
 

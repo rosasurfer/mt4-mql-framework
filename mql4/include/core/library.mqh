@@ -15,7 +15,9 @@ int __lpSuperContext = NULL;
  */
 int init() {
    if (StringEndsWith(WindowExpertName(), "testlibrary")) {
-      debug("init()");
+      debug("init()->GetExecutionContext() => "+ GetExecutionContext(__ExecutionContext));
+   }
+   else {
       GetExecutionContext(__ExecutionContext);
    }
 
@@ -176,12 +178,15 @@ int UpdateProgramStatus(int value=NULL) {
 #import "stdlib2.ex4"
    int    GetTerminalRuntime();
 
+#import "struct.EXECUTION_CONTEXT.ex4"
+   int    ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+
+#import "Expander.dll"
+   bool   GetExecutionContext(int context[]);
+
 #import "kernel32.dll"
    int    GetCurrentThreadId();
 
 #import "user32.dll"
    int    GetParent(int hWnd);
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
 #import

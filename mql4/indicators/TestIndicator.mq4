@@ -40,7 +40,7 @@ int onTick() {
    //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
 
    testlibrary();
-   debug("onStart()->testlibrary()");
+   debug("onTick()->testlibrary()");
 
    return(last_error);
 }

@@ -12,10 +12,10 @@ extern string LogLevel = "inherit";
  * @return int - Fehlerstatus
  */
 int init() {
-   //SetLogLevel(L_DEBUG);
-
    if (__STATUS_OFF)
       return(last_error);
+
+   SetExecutionContext(__ExecutionContext);                                // noch bevor die erste Library geladen wird
 
    if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
       __WHEREAMI__ = RF_INIT;
@@ -25,7 +25,7 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.ProgramId(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec.ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
@@ -283,7 +283,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.ProgramId(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programId = "+ ec.ProgramId(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec.ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec.ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -309,11 +309,10 @@ bool InitExecutionContext() {
 
 
    // (2) EXECUTION_CONTEXT initialisieren
-   ArrayInitialize(__ExecutionContext, 0);
-
+ //ec.setProgramId         ...kein MQL-Setter
    ec.setProgramType       (__ExecutionContext, __TYPE__                                            );
    ec.setProgramName       (__ExecutionContext, WindowExpertName()                                  );
- //ec.setLpSuperContext    ...bereits NULL
+   ec.setLpSuperContext    (__ExecutionContext, NULL                                                );
    ec.setInitFlags         (__ExecutionContext, initFlags                                           );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                         );
    ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                        );
@@ -325,16 +324,11 @@ bool InitExecutionContext() {
    ec.setHChart            (__ExecutionContext, hChart                                              );
    ec.setTestFlags         (__ExecutionContext, ifInt(Script.IsTesting(), TF_TESTING | TF_VISUAL, 0));
 
- //ec.setLastError         ...bereits NULL
+ //ec.setLastError         ...wird nicht überschrieben
    ec.setLogging           (__ExecutionContext, __LOG                                               );
- //ec.setLogFile           ...bereits NULL
+   ec.setLogFile           (__ExecutionContext, ""                                                  );
 
-
-   if (!catch("InitExecutionContext(2)"))
-      return(true);
-
-   ArrayInitialize(__ExecutionContext, 0);
-   return(false);
+   return(!catch("InitExecutionContext(2)"));
 }
 
 
@@ -459,14 +453,15 @@ int UpdateProgramStatus(int value=NULL) {
 
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
+   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
@@ -474,4 +469,5 @@ int UpdateProgramStatus(int value=NULL) {
    string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
    int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
+
 #import
