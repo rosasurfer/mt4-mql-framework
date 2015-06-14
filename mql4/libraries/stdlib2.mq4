@@ -862,16 +862,16 @@ int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
 
    // Inhalt des Ausgangsarrays von offset nach hinten verschieben
    int array.dim2.size = array.dim2 * DOUBLE_VALUE;
-   int srcAddr = GetDoublesAddress(array) + offset * array.dim2.size;
-   int dstAddr =                           srcAddr + array.dim2.size;
-   int bytes   =               (array.dim1-offset) * array.dim2.size;
-   CopyMemory(srcAddr, dstAddr, bytes);
+   int src   = GetDoublesAddress(array) + offset * array.dim2.size;
+   int dest  =                               src + array.dim2.size;
+   int bytes =               (array.dim1-offset) * array.dim2.size;
+   CopyMemory(dest, src, bytes);
 
    // Inhalt des anderen Arrays an den gewünschten Offset schreiben
-   dstAddr = srcAddr;
-   srcAddr = GetDoublesAddress(values);
-   bytes   = array.dim2.size;
-   CopyMemory(srcAddr, dstAddr, bytes);
+   dest  = src;
+   src   = GetDoublesAddress(values);
+   bytes = array.dim2.size;
+   CopyMemory(dest, src, bytes);
 
    return(newSize);
 }

@@ -114,7 +114,7 @@ int afterInit() {
  * @return int - Fehlerstatus
  */
 int CreateStatusBox() {
-   if (!IsChart)
+   if (!__CHART)
       return(false);
 
    int x=0, y[]={33, 66}, fontSize=115, rectangles=ArraySize(y);

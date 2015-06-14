@@ -9,15 +9,14 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 #include <structs/pewa/EXECUTION_CONTEXT.mqh>
+#include <history.mqh>
+#include <test/testlibrary.mqh>
 
 
 #import "Expander.Release.dll"
    bool Test_onInit  (int context[], int logLevel);
    bool Test_onStart (int context[], int logLevel);
    bool Test_onDeinit(int context[], int logLevel);
-
-#import "test/testlibrary.ex4"
-   int test_context();
 #import
 
 
@@ -39,6 +38,10 @@ int onInit() {
 int onTick() {
    //Test_onStart(__ExecutionContext, L_DEBUG);
    //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+
+   testlibrary();
+   debug("onStart()->testlibrary()");
+
    return(last_error);
 }
 

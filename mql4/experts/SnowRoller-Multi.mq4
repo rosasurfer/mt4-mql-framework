@@ -231,7 +231,7 @@ bool StartSequence(int hSeq) {
  */
 void RedrawStartStop(int hSeq) {
    if (IsLastError())                              return;
-   if (!IsChart)                                   return;
+   if (!__CHART)                                   return;
    if (hSeq < 0 || hSeq >= ArraySize(sequence.id)) return(_NULL(catch("RedrawStartStop(1)  invalid parameter hSeq = "+ hSeq, ERR_INVALID_PARAMETER)));
 
    return(_NULL(catch("RedrawStartStop(2)", ERR_NOT_IMPLEMENTED)));

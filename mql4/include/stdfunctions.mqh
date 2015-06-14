@@ -44,7 +44,6 @@ int debug(string message, int error=NO_ERROR) {
    else if (error != NO_ERROR       ) message = StringConcatenate(message, "  [",                                     ErrorToStr(error)      , "]");
 
    OutputDebugStringA(StringConcatenate("MetaTrader::", Symbol(), ",", PeriodDescription(NULL), "::", name, "::", StringReplace(message, NL, " ")));
-
    return(error);
 }
 
@@ -915,7 +914,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             if (IsSuperContext()) {
                if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
                int superContext[EXECUTION_CONTEXT.intSize];
-               CopyMemory(__lpSuperContext, GetBufferAddress(superContext), EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
+               CopyMemory(GetBufferAddress(superContext), __lpSuperContext, EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
                static.hWndSelf = ec.hChart(superContext);                                             // u.U. noch nicht endgültig initialisiert ist.
                ArrayResize(superContext, 0);
                return(static.hWndSelf);
@@ -2410,15 +2409,15 @@ int TimeYearFix(datetime time) {
 /**
  * Kopiert einen Speicherbereich. Als MoveMemory() implementiert, die betroffenen Speicherblöcke können sich also überlappen.
  *
- * @param  int source      - Quelladdrese
  * @param  int destination - Zieladresse
+ * @param  int source      - Quelladdrese
  * @param  int bytes       - Anzahl zu kopierender Bytes
  *
  * @return int - Fehlerstatus
  */
-void CopyMemory(int source, int destination, int bytes) {
-   if (source      < MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter source = 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
-   if (destination < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter destination = 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
+void CopyMemory(int destination, int source, int bytes) {
+   if (destination < MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination = 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (source      < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source = 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
 
    RtlMoveMemory(destination, source, bytes);
    return(NO_ERROR);
@@ -2751,7 +2750,7 @@ bool Indicator.IsTesting() {
    if (IsSuperContext()) {
       if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
       int superCopy[EXECUTION_CONTEXT.intSize];
-      CopyMemory(__lpSuperContext, GetBufferAddress(superCopy), EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
+      CopyMemory(GetBufferAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                              // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() benutzt wird.
       static.result = (ec.TestFlags(superCopy) & TF_TESTING && 1);         // (int) bool
       ArrayResize(superCopy, 0);
@@ -3622,6 +3621,7 @@ void __DummyCalls() {
    bool     IsBuiltinTimeframe(int timeframe);
    bool     IsUIThread();
    bool     SetExecutionContext(int context[]);
+   bool     GetExecutionContext(int context[]);
    void     SetLogLevel(int level);
 
 #import "kernel32.dll"

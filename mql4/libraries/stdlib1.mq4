@@ -65,7 +65,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    __TYPE__      |=                   ec.ProgramType (ec);
    __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
    __WHEREAMI__   =                   ec.RootFunction(ec);
-   IsChart        =                  (ec.hChart      (ec)!=0);
+   __CHART        =                  (ec.hChart      (ec)!=0);
    __LOG          =                   ec.Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
@@ -578,37 +578,18 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
 
 
 /**
- * Restauriert den in der Library zwischengespeicherten EXECUTION_CONTEXT eines Indikators. Wird nur in Indicator::InitExecutionContext() verwendet.
+ * Restauriert einen in der Library zwischengespeicherten EXECUTION_CONTEXT eines Indikators. Wird nur in Indicator::InitExecutionContext() verwendet.
  *
  * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls, wird mit gespeicherter Version überschrieben
  *
  * @return int - Fehlerstatus
  */
 int Indicator.InitExecutionContext(/*EXECUTION_CONTEXT*/int ec[]) {
-   __TYPE__ |= MT_INDICATOR;                                                                       // Type der Library initialisieren (Aufruf immer aus Indikator)
+   __TYPE__ |= MT_INDICATOR;                                         // Type der Library initialisieren (Aufruf immer aus Indikator)
 
-
-   // (1) Context ggf. initialisieren
-   if (!ec.ProgramId(__ExecutionContext)) {
+   if (!ec.ProgramId(__ExecutionContext))                            // Context ggf. (re-)initialisieren ...      TODO: wirklich notwendig???
       ArrayInitialize(__ExecutionContext, 0);
-
-      // (1.1) Speicher für Programm- und LogFileName alloziieren (static: Indikator ok)
-      string names[2]; names[0] = CreateString(MAX_PATH);                                          // Programm-Name (Länge variabel, da hier noch nicht bekannt)
-                       names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
-      int  lpNames[3]; CopyMemory(GetStringsAddress(names)+ 4, GetBufferAddress(lpNames),   4);    // Zeiger auf beide Strings holen
-                       CopyMemory(GetStringsAddress(names)+12, GetBufferAddress(lpNames)+4, 4);
-                       CopyMemory(GetBufferAddress(lpNames)+8, lpNames[0], 1);                     // beide Strings mit <NUL> initialisieren (lpNames[2] = <NUL>)
-                       CopyMemory(GetBufferAddress(lpNames)+8, lpNames[1], 1);
-
-      // (1.2) Zeiger auf die Namen im Context speichern
-      ec.setLpProgramName(__ExecutionContext, lpNames[0]);
-      ec.setLpLogFile    (__ExecutionContext, lpNames[1]);
-   }
-
-
-   // (2) Context ins übergeordnete Modul zurückkopieren (also in den übergebenen Parameter)
-   ArrayCopy(ec, __ExecutionContext);
-
+   ArrayCopy(ec, __ExecutionContext);                                // ...und ins übergeordnete Modul zurückkopieren
 
    if (!catch("Indicator.InitExecutionContext(1)"))
       return(NO_ERROR);
@@ -1629,7 +1610,9 @@ int ArraySetIntArray(int array[][], int offset, int values[]) {
    if (ArraySize(values) != dim2)    return(catch("ArraySetIntArray(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
    if (offset < 0 || offset >= dim1) return(catch("ArraySetIntArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
-   CopyMemory(GetBufferAddress(values), GetBufferAddress(array) + offset*dim2*4, dim2*4);
+   int src  = GetBufferAddress(values);
+   int dest = GetBufferAddress(array) + offset*dim2*4;
+   CopyMemory(dest, src, dim2*4);
    return(NO_ERROR);
 }
 
@@ -1690,7 +1673,9 @@ int ArrayPushIntArray(int array[][], int value[]) {
    if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushIntArray(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
 
    ArrayResize(array, dim1+1);
-   CopyMemory(GetBufferAddress(value), GetBufferAddress(array) + dim1*dim2*4, dim2*4);
+   int src  = GetBufferAddress(value);
+   int dest = GetBufferAddress(array) + dim1*dim2*4;
+   CopyMemory(dest, src, dim2*4);
    return(dim1+1);
 }
 
@@ -9121,8 +9106,7 @@ private*/ string __Order.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
  * @see ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
-   if (!IsChart)
-      return(true);
+   if (!__CHART) return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderSent_A(1)", O_PUSH))
       return(false);
@@ -9154,8 +9138,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  * @see ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, string comment) {
-   if (!IsChart)
-      return(true);
+   if (!__CHART) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -9424,7 +9407,7 @@ private*/ string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], doubl
  * @see ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, datetime modifyTime, double oldOpenPrice, double oldStopLoss, double oldTakeprofit) {
-   if (!IsChart)
+   if (!__CHART)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderModified_A(1)", O_PUSH))
@@ -9461,8 +9444,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  * @see ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, datetime modifyTime, double oldOpenPrice, double openPrice, double oldStopLoss, double stopLoss, double oldTakeProfit, double takeProfit, string comment) {
-   if (!IsChart)
-      return(true);
+   if (!__CHART) return(true);
 
    bool openModified = NE(openPrice,  oldOpenPrice );
    bool slModified   = NE(stopLoss,   oldStopLoss  );
@@ -9549,7 +9531,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  * @see ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor) {
-   if (!IsChart)
+   if (!__CHART)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderFilled_A(1)", O_PUSH))
@@ -9581,8 +9563,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  * @see ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice, int digits, color markerColor, double lots, string symbol, datetime openTime, double openPrice, string comment) {
-   if (!IsChart)
-      return(true);
+   if (!__CHART) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -9630,7 +9611,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
-   if (!IsChart)
+   if (!__CHART)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.PositionClosed_A(1)", O_PUSH))
@@ -9660,8 +9641,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
  * @return bool - Erfolgsstatus
  */
 bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   if (!IsChart)
-      return(true);
+   if (!__CHART) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -9717,7 +9697,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  * @see ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
 bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
-   if (!IsChart)
+   if (!__CHART)
       return(true);
 
    if (!SelectTicket(ticket, "ChartMarker.OrderDeleted_A(1)", O_PUSH))
@@ -9749,8 +9729,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  * @see ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
 bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
-   if (!IsChart)
-      return(true);
+   if (!__CHART) return(true);
 
    static string types[] = {"buy","sell","buy limit","sell limit","buy stop","sell stop"};
 
@@ -10407,7 +10386,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(8)")));
-      CopyMemory(GetBufferAddress(oe), GetBufferAddress(oes), ArraySize(oe)*4);
+      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(9)") && !oes.setError(oes, -1, last_error));
    }
@@ -10436,7 +10415,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfSymbols == 1) {
       if (!__OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(11)")));
-      CopyMemory(GetBufferAddress(oes2), GetBufferAddress(oes), ArraySize(oes2)*4);
+      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2, 0);
       return(OrderPop("OrderMultiClose(12)") && !oes.setError(oes, -1, last_error));
    }
@@ -10581,7 +10560,7 @@ private*/ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error)));
-      CopyMemory(GetBufferAddress(oe), GetBufferAddress(oes), ArraySize(oe)*4);
+      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(true);
    }
@@ -11163,20 +11142,19 @@ void Tester.ResetGlobalArrays() {
    string GetString(int address);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.ProgramId               (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.ProgramType             (/*EXECUTION_CONTEXT*/int ec[]                        );
-   string ec.ProgramName             (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.InitFlags               (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.RootFunction            (/*EXECUTION_CONTEXT*/int ec[]                        );
-   bool   ec.Logging                 (/*EXECUTION_CONTEXT*/int ec[]                        );
    int    ec.LastError               (/*EXECUTION_CONTEXT*/int ec[]                        );
+   bool   ec.Logging                 (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.ProgramId               (/*EXECUTION_CONTEXT*/int ec[]                        );
+   string ec.ProgramName             (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.ProgramType             (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.RootFunction            (/*EXECUTION_CONTEXT*/int ec[]                        );
+   int    ec.UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]                        );
 
-   int    ec.setLpProgramName        (/*EXECUTION_CONTEXT*/int ec[], int lpName            );
-   int    ec.setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+   string ec.setProgramName          (/*EXECUTION_CONTEXT*/int ec[], string programName    );
    int    ec.setRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
-   int    ec.setLpLogFile            (/*EXECUTION_CONTEXT*/int ec[], int lpLogFile         );
+   int    ec.setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
 
 #import "structs.win32.ex4"
    int    pi.hProcess                (/*PROCESS_INFORMATION*/int pi[]);

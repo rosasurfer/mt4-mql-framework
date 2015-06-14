@@ -12,25 +12,6 @@ int __DEINIT_FLAGS__[];
 #include <structs/pewa/EXECUTION_CONTEXT.mqh>
 
 
-#import "Expander.Release.dll"
-   bool SetExecutionContext(int context[]);
-#import
-
-
-/**
- *
- * @return int - Fehlerstatus
- */
-int test_context() {
-
-   int context[EXECUTION_CONTEXT.intSize];
-   if (!SetExecutionContext(context)) return(catch("test_context(1)->SetExecutionContext() failed", ERR_RUNTIME_ERROR));
-   EXECUTION_CONTEXT.toStr(context, true);
-
-   return(catch("test_context(2)"));
-}
-
-
 /**
  * Initialisierung
  *
@@ -54,7 +35,7 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__      |=                   ec.ProgramType (ec);
    __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
    __WHEREAMI__   =                   ec.RootFunction(ec);
-   IsChart        = (hChart != 0);
+   __CHART        = (hChart != 0);
    __LOG          =                   ec.Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
@@ -82,6 +63,13 @@ void Tester.ResetGlobalArrays() {
 int ex4_GetIntValue(int value) {
    int b = value + 666;
    return(b);
+}
+
+
+/**
+ *
+ */
+void testlibrary() {
 }
 
 

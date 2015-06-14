@@ -38,7 +38,7 @@ int history.init(/*EXECUTION_CONTEXT*/int ec[]) {
    __TYPE__      |=                   ec.ProgramType (ec);
    __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
    __WHEREAMI__   =                   ec.RootFunction(ec);
-   IsChart        = (hChart != 0);
+   __CHART        = (hChart != 0);
    __LOG          =                   ec.Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
@@ -1103,7 +1103,9 @@ int hf.Header(int hFile, int array[]) {
    if (ArrayDimension(array) > 1)       return(catch("hf.Header(5)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
 
    ArrayResize(array, HISTORY_HEADER.intSize);                       // entspricht: array = hf.header[hFile];
-   CopyMemory(GetBufferAddress(hf.header) + hFile*HISTORY_HEADER.size, GetBufferAddress(array), HISTORY_HEADER.size);
+   int src  = GetBufferAddress(hf.header) + hFile*HISTORY_HEADER.size;
+   int dest = GetBufferAddress(array);
+   CopyMemory(dest, src, HISTORY_HEADER.size);
    return(NO_ERROR);
 }
 
