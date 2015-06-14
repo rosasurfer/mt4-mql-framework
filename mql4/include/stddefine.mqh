@@ -1,7 +1,8 @@
 /**
  * Globale Konstanten und Variablen
  */
-#property stacksize  32768                                  // intern eine normale Konstante
+#property stacksize 32768                                   // intern eine normale Konstante
+
 #include <stderror.mqh>
 #include <shared/defines.h>                                 // in MQL und C++ gemeinsam verwendete Konstanten
 #include <structs/sizes.mqh>
@@ -14,7 +15,7 @@ int      __lpTestContext;                                   // im Tester Zeiger 
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
-bool     IsChart;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
+bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
 bool     __LOG;                                             // ob das Logging aktiviert ist
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird

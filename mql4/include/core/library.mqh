@@ -7,29 +7,34 @@ int __lpSuperContext = NULL;
  * Initialisierung der Library.
  *
  * @return int - Fehlerstatus
+ *
+ *
+ * NOTE: Im Indikator wird Library::init() bei einem Timeframe-Wechsel vor Indicator:init() aufgerufen. Das bedeutet, daß die Speicheradresse
+ *       des neuen EXECUTION_CONTEXT des Hauptmoduls (des Indikators) zum Zeitpunkt des Aufrufs von Library::init() noch nicht bekannt ist,
+ *       der alte EXECUTION_CONTEXT jedoch schon ungültig ist.
  */
 int init() {
+   if (StringEndsWith(WindowExpertName(), "testlibrary")) {
+      debug(WindowExpertName()+ "::init()");
+      GetExecutionContext(__ExecutionContext);
+   }
+
    // Im Tester globale Arrays eines EA's zurücksetzen.
    if (IsTesting()) {                                             // Zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
       Tester.ResetGlobalArrays();                                 // Könnte ein Feature für die Optimization sein, um Daten testübergreifend verwalten zu können.
    }
-   //SetExecutionContext(__ExecutionContext);
-   return(catch("init()"));
+   return(catch("init(1)"));
 }
 
 
 /**
- * Startfunktion für Libraries (Dummy).
+ * Dummy-Startfunktion für Libraries. Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
+ * damit die init()-Funktion aufgerufen wird.
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: Für den Compiler v224 muß ab einer unbestimmten Komplexität der Library eine start()-Funktion existieren,
- *       wenn die init()-Funktion aufgerufen werden soll.
  */
 int start() {
-   //SetExecutionContext(__ExecutionContext);
-   return(catch("start()", ERR_WRONG_JUMP));
+   return(catch("start(1)", ERR_WRONG_JUMP));
 }
 
 
@@ -46,8 +51,10 @@ int start() {
  *          undefiniert.
  */
 int deinit() {
-   //SetExecutionContext(__ExecutionContext);
-   return(catch("deinit()")); __DummyCalls();
+   if (StringEndsWith(WindowExpertName(), "testlibrary")) {
+      debug(WindowExpertName()+ "::deinit()");
+   }
+   return(catch("deinit(1)")); __DummyCalls();
 }
 
 
@@ -57,7 +64,7 @@ int deinit() {
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
 int InitReason() {
-   return(_NULL(catch("InitReason()", ERR_NOT_IMPLEMENTED)));
+   return(_NULL(catch("InitReason(1)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -67,7 +74,7 @@ int InitReason() {
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
 int DeinitReason() {
-   return(_NULL(catch("DeinitReason()", ERR_NOT_IMPLEMENTED)));
+   return(_NULL(catch("DeinitReason(1)", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -77,7 +84,7 @@ int DeinitReason() {
  * @return bool
  */
 bool IsExpert() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsExpert()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsExpert(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    return(__TYPE__ & MT_EXPERT != 0);
 }
@@ -89,7 +96,7 @@ bool IsExpert() {
  * @return bool
  */
 bool IsScript() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsScript()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsScript(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    return(__TYPE__ & MT_SCRIPT != 0);
 }
@@ -101,7 +108,7 @@ bool IsScript() {
  * @return bool
  */
 bool IsIndicator() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsIndicator()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsIndicator(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    return(__TYPE__ & MT_INDICATOR != 0);
 }
@@ -123,7 +130,7 @@ bool IsLibrary() {
  * @return bool
  */
 bool IsSuperContext() {
-   if (__TYPE__ == MT_LIBRARY) return(!catch("IsSuperContext()  library not initialized", ERR_RUNTIME_ERROR));
+   if (__TYPE__ == MT_LIBRARY) return(!catch("IsSuperContext(1)  library not initialized", ERR_RUNTIME_ERROR));
 
    return(__lpSuperContext != 0);
 }
@@ -154,7 +161,7 @@ int SetLastError(int error, int param=NULL) {
  * @return int - der übergebene Wert
  */
 int UpdateProgramStatus(int value=NULL) {
-   catch("UpdateProgramStatus()", ERR_FUNC_NOT_ALLOWED);
+   catch("UpdateProgramStatus(1)", ERR_FUNC_NOT_ALLOWED);
    return(value);
 }
 

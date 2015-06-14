@@ -393,17 +393,7 @@ bool InitExecutionContext() {
    NaN   =  N_INF - N_INF;
 
 
-   // (1) Speicher für Programm- und LogFileName alloziieren
-   string names[2]; names[0] = WindowExpertName();                                              // Programm-Name (Länge konstant)
-                    names[1] = CreateString(MAX_PATH);                                          // LogFileName   (Länge variabel)
-
-   int  lpNames[3]; CopyMemory(GetStringsAddress(names)+ 4, GetBufferAddress(lpNames),   4);    // Zeiger auf beide Strings holen
-                    CopyMemory(GetStringsAddress(names)+12, GetBufferAddress(lpNames)+4, 4);
-
-                    CopyMemory(GetBufferAddress(lpNames)+8, lpNames[1], 1);                     // LogFileName mit <NUL> initialisieren (lpNames[2] = <NUL>)
-
-
-   // (2) globale Variablen initialisieren
+   // (1) globale Variablen initialisieren
    int initFlags    = SumInts(__INIT_FLAGS__  );
    int deinitFlags  = SumInts(__DEINIT_FLAGS__);
    int hChart       = WindowHandleEx(NULL); if (!hChart) return(false);
@@ -411,10 +401,10 @@ bool InitExecutionContext() {
       if (hChart == -1) hChart       = 0;
       else              hChartWindow = GetParent(hChart);
 
-   __NAME__       = names[0];
-   IsChart        = !IsTesting() || IsVisualMode();
+   __NAME__       = WindowExpertName();
+   __CHART        = !IsTesting() || IsVisualMode();
    __LOG          = IsLogging();
-   __LOG_CUSTOM   = initFlags & INIT_CUSTOMLOG;
+   __LOG_CUSTOM   = __LOG && initFlags & INIT_CUSTOMLOG;
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -423,22 +413,26 @@ bool InitExecutionContext() {
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
-   // (3) EXECUTION_CONTEXT initialisieren
+   // (2) EXECUTION_CONTEXT initialisieren
    ArrayInitialize(__ExecutionContext, 0);
 
    ec.setProgramType       (__ExecutionContext, __TYPE__                                                                                                             );
-   ec.setLpProgramName     (__ExecutionContext, lpNames[0]                                                                                                           );
+   ec.setProgramName       (__ExecutionContext, WindowExpertName()                                                                                                   );
+ //ec.setLpSuperContext    ...bereits NULL
+   ec.setInitFlags         (__ExecutionContext, initFlags                                                                                                            );
+   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                          );
+   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                                                                                         );
+   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                 );
+
+   ec.setSymbol            (__ExecutionContext, Symbol()                                                                                                             );
+   ec.setTimeframe         (__ExecutionContext, Period()                                                                                                             );
    ec.setHChartWindow      (__ExecutionContext, hChartWindow                                                                                                         );
    ec.setHChart            (__ExecutionContext, hChart                                                                                                               );
    ec.setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TESTING, 0) | ifInt(IsVisualMode(), TF_VISUAL, 0) | ifInt(IsOptimization(), TF_OPTIMIZATION, 0));
- //ec.setLpSuperContext    ...bereits initialisiert
-   ec.setInitFlags         (__ExecutionContext, initFlags                                                                                                            );
-   ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                          );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                 );
-   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                                                                                         );
+
+ //ec.setLastError         ...bereits NULL
    ec.setLogging           (__ExecutionContext, __LOG                                                                                                                );
-   ec.setLpLogFile         (__ExecutionContext, lpNames[1]                                                                                                           );
- //ec.setLastError         ...bereits initialisiert
+ //ec.setLogFile           ...bereits NULL
 
 
    if (!catch("InitExecutionContext(2)"))
@@ -640,18 +634,19 @@ int Tester.Stop() {
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int  deinitFlags       );
-   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int  hChart            );
-   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int  hChartWindow      );
-   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int  initFlags         );
-   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int  lastError         );
-   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool logging           );
-   int    ec.setLpLogFile         (/*EXECUTION_CONTEXT*/int ec[], int  lpLogFile         );
-   int    ec.setLpProgramName     (/*EXECUTION_CONTEXT*/int ec[], int  lpName            );
-   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int  programType       );
-   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int  uninitializeReason);
-   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int  testFlags         );
-   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int  rootFunction      );
+   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
+   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
+   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
+   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
+   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
+   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
+   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
+   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
+   string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
+   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
+   int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);

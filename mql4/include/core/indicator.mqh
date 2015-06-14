@@ -18,6 +18,7 @@ extern string LogLevel = "inherit";
  */
 int init() {
    //SetLogLevel(L_DEBUG);
+   //debug(WindowExpertName()+ "::init()");
 
    if (__STATUS_OFF)
       return(last_error);
@@ -509,7 +510,7 @@ int DeinitReason() {
  * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen.
  */
 bool InitExecutionContext() {
-   if (ec.ProgramId(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.id = "+ ec.ProgramId(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec.ProgramId(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programId = "+ ec.ProgramId(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -524,16 +525,17 @@ bool InitExecutionContext() {
    int testFlags;
       if (This.IsTesting()) {
          testFlags              |= TF_TESTING;
-         if (IsChart) testFlags |= TF_VISUAL;
+         if (__CHART) testFlags |= TF_VISUAL;
       }
 
-   __NAME__     = WindowExpertName();
-   IsChart      = (hChart != 0);
-   __LOG        = true;
-   __LOG_CUSTOM = false;                                             // Custom-Logging gibt es vorerst nur für Experts
+   __NAME__       = WindowExpertName();
+   __CHART        = hChart && 1;
+   __LOG          = true;
+   __LOG_CUSTOM   = false;                                           // Custom-Logging gibt es vorerst nur für Experts
+   string logFile = "";
 
 
-   // (2) in Library zwischengespeicherten letzten EXECUTION_CONTEXT zurückholen
+   // (2) letzten in Library zwischengespeicherten EXECUTION_CONTEXT holen
    int error = Indicator.InitExecutionContext(__ExecutionContext);
    if (IsError(error)) return(!SetLastError(error));
 
@@ -541,44 +543,55 @@ bool InitExecutionContext() {
    // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
    if (!ec.ProgramId(__ExecutionContext)) {
 
-      // (3.1) Existiert ein SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
+      // (3.1) Gibt es einen SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
          if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
          int superCopy[EXECUTION_CONTEXT.intSize];
-         CopyMemory(__lpSuperContext, GetBufferAddress(superCopy), EXECUTION_CONTEXT.size);
+         CopyMemory(GetBufferAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);
 
          hChart       = ec.hChart      (superCopy);
          hChartWindow = ec.hChartWindow(superCopy);
          testFlags    = ec.TestFlags   (superCopy);
-         IsChart      = (hChart != 0);
+         logFile      = ec.LogFile     (superCopy);
+         __CHART      = hChart && 1;
          __LOG        = ec.Logging     (superCopy);
-         ArrayResize(superCopy, 0);
+         __LOG_CUSTOM = __LOG && StringLen(logFile);
+
+         ArrayResize(superCopy, 0);                                  // Speicher freigeben
       }
 
-      // (3.2) Context-Variablen setzen
+      // (3.2) Fixe Context-Properties setzen
       ec.setProgramType       (__ExecutionContext, __TYPE__                 );
       ec.setProgramName       (__ExecutionContext, __NAME__                 );
-      ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
-      ec.setHChart            (__ExecutionContext, hChart                   );
-      ec.setTestFlags         (__ExecutionContext, testFlags                );
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
-    //ec.setUninitializeReason ...wird in (3.4) gesetzt
-    //ec.setRootFunction       ...wird in (3.4) gesetzt
-      ec.setLogging           (__ExecutionContext, __LOG                    );
-    //ec.setLpLogFile         ...bereits gesetzt
+    //ec.setUninitializeReason ...wird in (3.4) gesetzt, da variabel
+    //ec.setRootFunction       ...wird in (3.4) gesetzt, da variabel
+
+    //ec.setSymbol             ...wird in (3.4) gesetzt, da variabel
+    //ec.setTimeframe          ...wird in (3.4) gesetzt, da variabel
+      ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
+      ec.setHChart            (__ExecutionContext, hChart                   );
+      ec.setTestFlags         (__ExecutionContext, testFlags                );
+
     //ec.setLastError         ...bereits NULL
+      ec.setLogging           (__ExecutionContext, __LOG                    );
+      ec.setLogFile           (__ExecutionContext, logFile                  );
    }
    else {
-      // (3.3) Context war bereits initialisiert, globale Variablen aktualisieren
-      IsChart = ec.hChart (__ExecutionContext) && 1;
-      __LOG   = ec.Logging(__ExecutionContext);
+      // (3.3) Der Context in der Library war bereits initialisiert, globale Variablen aktualisieren.
+      logFile      = ec.LogFile(__ExecutionContext);
+      __CHART      = ec.hChart (__ExecutionContext) && 1;
+      __LOG        = ec.Logging(__ExecutionContext);
+      __LOG_CUSTOM = __LOG && StringLen(logFile);
    }
 
-   // (3.4) variable Context-Werte aktualisieren
+   // (3.4) variable Context-Properties aktualisieren
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    ec.setRootFunction      (__ExecutionContext, __WHEREAMI__        );
+   ec.setSymbol            (__ExecutionContext, Symbol()            );
+   ec.setTimeframe         (__ExecutionContext, Period()            );
 
 
    // (4) restliche globale Variablen initialisieren
@@ -586,13 +599,15 @@ bool InitExecutionContext() {
    // Bug 1: Die Variablen Digits und Point sind in init() beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
    //        Nur ein Reload des Templates korrigiert die falschen Werte.
    //
-   // Bug 2: Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).
+   // Bug 2: Die Variablen Digits und Point sind in Offline-Charts ab Terminalversion ??? permanent auf 5 und ?? gesetzt.
    //
-   PipDigits       = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints       = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat  = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat     = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   // Bug 3: Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).
+   //
+   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
    if (!catch("InitExecutionContext(4)"))
@@ -660,7 +675,7 @@ int UpdateProgramStatus(int value=NULL) {
  * @return bool - Ergebnis
  */
 bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
-   if (!IsChart)
+   if (!__CHART)
       return(false);
 
    static string label, mutex; if (!StringLen(label)) {
@@ -744,6 +759,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
 
@@ -752,13 +768,16 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
    int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
-   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
-   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
+   string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
+   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
+   int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
+   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();

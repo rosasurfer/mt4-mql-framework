@@ -154,7 +154,9 @@ double   lo.setDeviation           (/*LFX_ORDER*/int &lo[],          double   de
 string   lo.setComment             (/*LFX_ORDER*/int &lo[],          string   comment            ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if (StringLen(comment) > 31) return(_EMPTY_STR(catch("lo.setComment()  too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
-   CopyMemory(GetStringAddress(comment), GetBufferAddress(lo)+I_LFX_ORDER.comment*4, StringLen(comment)+1);                                                                                                                               return(comment                 ); LFX_ORDER.toStr(lo); }
+   int src  = GetStringAddress(comment);
+   int dest = GetBufferAddress(lo) + I_LFX_ORDER.comment*4;
+   CopyMemory(dest, src, StringLen(comment)+1);                                                                                                                                                                                           return(comment                 ); LFX_ORDER.toStr(lo); }
 datetime lo.setModificationTime    (/*LFX_ORDER*/int &lo[],          datetime modificationTime   ) { int v=modificationTime;                                                                  lo[I_LFX_ORDER.modificationTime   ] = v;    return(modificationTime        ); LFX_ORDER.toStr(lo); }
 int      lo.setVersion             (/*LFX_ORDER*/int &lo[],          int      version            ) { int v=version;                                                                           lo[I_LFX_ORDER.version            ] = v;    return(version                 ); LFX_ORDER.toStr(lo); }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -186,7 +188,9 @@ double   los.setDeviation          (/*LFX_ORDER*/int &lo[][], int i, double   de
 string   los.setComment            (/*LFX_ORDER*/int &lo[][], int i, string   comment            ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 31) return(_EMPTY_STR(catch("los.setComment()  too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
-   CopyMemory(GetStringAddress(comment), GetBufferAddress(lo)+ i*LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4, StringLen(comment)+1);                                                                                                      return(comment                 ); LFX_ORDER.toStr(lo); }
+   int src  = GetStringAddress(comment);
+   int dest = GetBufferAddress(lo) + i*LFX_ORDER.intSize*4 + I_LFX_ORDER.comment*4;
+   CopyMemory(dest, src, StringLen(comment)+1);                                                                                                                                                                                           return(comment                 ); LFX_ORDER.toStr(lo); }
 datetime los.setModificationTime   (/*LFX_ORDER*/int &lo[][], int i, datetime modificationTime   ) { int v=modificationTime;                                                                  lo[i][I_LFX_ORDER.modificationTime   ] = v; return(modificationTime        ); LFX_ORDER.toStr(lo); }
 int      los.setVersion            (/*LFX_ORDER*/int &lo[][], int i, int      version            ) { int v=version;                                                                           lo[i][I_LFX_ORDER.version            ] = v; return(version                 ); LFX_ORDER.toStr(lo); }
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

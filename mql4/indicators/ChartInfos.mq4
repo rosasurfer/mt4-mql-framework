@@ -3994,7 +3994,7 @@ bool StoreRegularPositions(double longPosition, double shortPosition, double tot
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleLfxTerminalMessages() {
-   if (!IsChart)
+   if (!__CHART)
       return(true);
 
    // (1) ggf. Receiver starten
@@ -4200,7 +4200,7 @@ bool SaveVolatileLfxStatus() {
  * @return bool - Erfolgsstatus
  */
 bool QC.HandleTradeCommands() {
-   if (!IsChart)
+   if (!__CHART)
       return(true);
 
    // (1) ggf. Receiver starten
