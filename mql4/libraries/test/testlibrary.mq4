@@ -13,43 +13,6 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung
- *
- * @param  int ec[] - EXECUTION_CONTEXT des Hauptmoduls
- *
- * @return int - Fehlerstatus
- */
-int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
-   prev_error = last_error;
-   last_error = NO_ERROR;
-
-   // (1) Context in die Library kopieren
-   ArrayCopy(__ExecutionContext, ec);
-   __lpSuperContext = ec.lpSuperContext(ec);
-
-
-   // (2) globale Variablen (re-)initialisieren
-   int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
-   int hChart    = ec.hChart(ec);
-
-   __TYPE__      |=                   ec.ProgramType (ec);
-   __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.RootFunction(ec);
-   __CHART        = (hChart != 0);
-   __LOG          =                   ec.Logging     (ec);
-   __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
-
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-
-   return(catch("testlib.init(1)"));
-}
-
-
-/**
  * Wird nur im Tester aus Library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
