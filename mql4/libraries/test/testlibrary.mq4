@@ -50,7 +50,7 @@ int testlib.init(/*EXECUTION_CONTEXT*/int ec[]) {
 
 
 /**
- * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
+ * Wird nur im Tester aus Library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);

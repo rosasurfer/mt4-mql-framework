@@ -20,9 +20,9 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   SetExecutionContext(__ExecutionContext);                                // noch bevor die erste Library geladen wird
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // noch bevor die erste Library geladen wird
 
-   if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
+   if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
       __WHEREAMI__ = RF_INIT;
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
@@ -30,11 +30,11 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec_ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // wiederholter Aufruf
 
 
    // (2) stdlib initialisieren
@@ -57,7 +57,7 @@ int init() {
 
 
    // (4) user-spezifische Init-Tasks ausführen
-   int initFlags = ec.InitFlags(__ExecutionContext);
+   int initFlags = ec_InitFlags(__ExecutionContext);
 
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
@@ -229,7 +229,7 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    // (5) stdLib benachrichtigen
@@ -271,7 +271,7 @@ int deinit() {
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    // User-Routinen *können*, müssen aber nicht implementiert werden.
@@ -509,7 +509,7 @@ int DeinitReason() {
  * NOTE: In Indikatoren wird der EXECUTION_CONTEXT des Hauptmoduls nach jedem init-Cycle an einer anderen Adresse liegen.
  */
 bool InitExecutionContext() {
-   if (ec.ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec.ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec_ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec_ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -540,7 +540,7 @@ bool InitExecutionContext() {
 
 
    // (3) Context initialisieren, wenn er neu ist (also nicht aus dem letzten init-Cycle stammt)
-   if (!ec.ProgramType(__ExecutionContext)) {
+   if (!ec_ProgramType(__ExecutionContext)) {
 
       // (3.1) Gibt es einen SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
@@ -548,12 +548,12 @@ bool InitExecutionContext() {
          int superCopy[EXECUTION_CONTEXT.intSize];
          CopyMemory(GetBufferAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);
 
-         hChart       = ec.hChart      (superCopy);
-         hChartWindow = ec.hChartWindow(superCopy);
-         testFlags    = ec.TestFlags   (superCopy);
-         logFile      = ec.LogFile     (superCopy);
+         hChart       = ec_hChart      (superCopy);
+         hChartWindow = ec_hChartWindow(superCopy);
+         testFlags    = ec_TestFlags   (superCopy);
+         logFile      = ec_LogFile     (superCopy);
          __CHART      = hChart && 1;
-         __LOG        = ec.Logging     (superCopy);
+         __LOG        = ec_Logging     (superCopy);
          __LOG_CUSTOM = __LOG && StringLen(logFile);
 
          ArrayResize(superCopy, 0);                                  // Speicher freigeben
@@ -581,9 +581,9 @@ bool InitExecutionContext() {
    }
    else {
       // (3.3) Der Context in der Library war bereits initialisiert, globale Variablen aktualisieren.
-      logFile      = ec.LogFile(__ExecutionContext);
-      __CHART      = ec.hChart (__ExecutionContext) && 1;
-      __LOG        = ec.Logging(__ExecutionContext);
+      logFile      = ec_LogFile(__ExecutionContext);
+      __CHART      = ec_hChart (__ExecutionContext) && 1;
+      __LOG        = ec_Logging(__ExecutionContext);
       __LOG_CUSTOM = __LOG && StringLen(logFile);
    }
 
@@ -744,19 +744,18 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    Chart.SendTick(bool sound);
    string InitReasonToStr(int reason);
    bool   ReleaseLock(string mutexName);
-   int    SumInts(int array[]);
 
 #import "Expander.dll"
+   int    ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow(/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_LogFile     (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging     (/*EXECUTION_CONTEXT*/int ec[]);
    int    GetBufferAddress(int buffer[]);
    bool   IsUIThread();
+   bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]);
-
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );

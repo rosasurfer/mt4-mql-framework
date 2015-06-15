@@ -7,24 +7,46 @@ int __lpSuperContext = NULL;
  * Initialisierung der Library.
  *
  * @return int - Fehlerstatus
- *
- *
- * NOTE: Im Indikator wird Library::init() bei einem Timeframe-Wechsel vor Indicator:init() aufgerufen. Das bedeutet, daß die Speicheradresse
- *       des neuen EXECUTION_CONTEXT des Hauptmoduls (des Indikators) zum Zeitpunkt des Aufrufs von Library::init() noch nicht bekannt ist,
- *       der alte EXECUTION_CONTEXT jedoch schon ungültig ist.
  */
 int init() {
-   if (StringEndsWith(WindowExpertName(), "testlibrary")) {
-      debug("init()->GetExecutionContext() => "+ GetExecutionContext(__ExecutionContext));
-   }
-   else {
-      GetExecutionContext(__ExecutionContext);
-   }
+   prev_error = last_error;
+   last_error = NO_ERROR;
 
-   // Im Tester globale Arrays eines EA's zurücksetzen.
-   if (IsTesting()) {                                             // Zur Zeit kein besserer Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
-      Tester.ResetGlobalArrays();                                 // Könnte ein Feature für die Optimization sein, um Daten testübergreifend verwalten zu können.
-   }
+   // !!!
+   //
+   // TODO: In Libraries, die vor Finalisierung des Hauptmodulkontexts geladen werden, sind die globalen Library-Variablen dauerhaft falsch gesetzt.
+   //
+   // !!!
+   // betrifft zur Zeit nur "stdlib1" und "history"
+
+
+   // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
+   bool result = SyncExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
+   if (StringEndsWith(WindowExpertName(), "testlibrary"))
+      debug("init()->SyncExecutionContext() => "+ result);
+
+
+   // (2) globale Variablen (re-)initialisieren                                     // !!! Ist der Hauptmodulkontext noch nicht finalisiert, sind diese Werte falsch !!!
+   __lpSuperContext =                   ec_lpSuperContext(__ExecutionContext);
+   __TYPE__        |=                   ec_ProgramType   (__ExecutionContext);
+   __NAME__         = StringConcatenate(ec_ProgramName   (__ExecutionContext), "::", WindowExpertName());
+   __WHEREAMI__     =                   ec_RootFunction  (__ExecutionContext);
+   __CHART          =                  (ec_hChart        (__ExecutionContext) != 0);
+   __LOG            =                   ec_Logging       (__ExecutionContext);
+      int initFlags =                   ec_InitFlags     (__ExecutionContext) | SumInts(__INIT_FLAGS__);
+   __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG != 0);
+
+   PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+
+
+   // (3) Im Tester globale Arrays eines EA's zurücksetzen.
+   if (IsTesting())
+      Tester.ResetGlobalArrays();                                                // Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
+
    return(catch("init(1)"));
 }
 
@@ -171,18 +193,17 @@ int UpdateProgramStatus(int value=NULL) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
-   int    GetTesterWindow();
-   string GetWindowText(int hWnd);
-
-#import "stdlib2.ex4"
-   int    GetTerminalRuntime();
-
 #import "struct.EXECUTION_CONTEXT.ex4"
    int    ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
 
 #import "Expander.dll"
-   bool   GetExecutionContext(int context[]);
+   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ProgramType   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();

@@ -1,15 +1,23 @@
 /**
  * MQL structure EXECUTION_CONTEXT
  *
+ * Ausführungskontext eines MQL-Programms für Laufzeitinformationen und Datenaustausch zwischen MQL-Modulen und DLL
+ *
+ * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wiedereintritt in
+ * Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später wird ein neuer alloziiert.
+ * Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt, also die Funktionen Library::deinit()
+ * und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen also während ihres init()-Cycles nicht auf den alten, bereits
+ * ungültigen Hauptmodulkontext zugreifen (weder lesend noch schreibend).
+ *
  * @see  Definition in Expander.dll::Expander.h
+ * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  *
  *
- * TODO: __SMS.alerts        integrieren
+ * TODO: In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Kauptmodulkontexts arbeiten.
+ *       __SMS.alerts        integrieren
  *       __SMS.receiver      integrieren
  *       __STATUS_OFF        integrieren
  *       __STATUS_OFF.reason integrieren
- *
- * Note: Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
 #define I_EC.programId              0        // ohne MQL-Setter
 #define I_EC.programType            1
@@ -247,6 +255,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 //   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
 //   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
 
-//   string   EXECUTION_CONTEXT.toStr (/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
-//   string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug);
+//   string   EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
+//   string lpEXECUTION_CONTEXT.toStr(int lpContext                , bool outputDebug);
 //#import

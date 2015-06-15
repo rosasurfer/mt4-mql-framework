@@ -15,9 +15,9 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   SetExecutionContext(__ExecutionContext);                                // noch bevor die erste Library geladen wird
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // noch bevor die erste Library geladen wird
 
-   if (__WHEREAMI__ == NULL) {                                             // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
+   if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal, alle Variablen sind zurückgesetzt
       __WHEREAMI__ = RF_INIT;
       prev_error   = NO_ERROR;
       last_error   = NO_ERROR;
@@ -25,11 +25,11 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
+   if (!ec_ProgramType(__ExecutionContext)) /*&&*/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // wiederholter Aufruf
 
 
    // (2) stdlib initialisieren
@@ -40,12 +40,12 @@ int init() {
       if (__STATUS_OFF) return(last_error);
    }
 
-                                                                              // #define INIT_TIMEZONE               in stdlib.init()
-   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
-   int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
-                                                                              // #define INIT_CUSTOMLOG
+                                                                                          // #define INIT_TIMEZONE               in stdlib.init()
+   // (3) user-spezifische Init-Tasks ausführen                                           // #define INIT_PIPVALUE
+   int initFlags = ec_InitFlags(__ExecutionContext);                                      // #define INIT_BARS_ON_HIST_UPDATE
+                                                                                          // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                                     // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(1)"))) {
          UpdateProgramStatus();
          if (__STATUS_OFF) return(last_error);
@@ -59,7 +59,7 @@ int init() {
       }
       if (!tickValue)      return(UpdateProgramStatus(catch("init(4)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                                      // noch nicht implementiert
 
 
    // (4) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -67,30 +67,30 @@ int init() {
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
    // (falls implementiert) -1 zurückgeben.
-   error = onInit();                                                          // Preprocessing-Hook
-   if (!error) {                                                              //
-      switch (UninitializeReason()) {                                         //
-         case REASON_PARAMETERS : error = onInitParameterChange(); break;     //
-         case REASON_CHARTCHANGE: error = onInitChartChange();     break;     //
-         case REASON_ACCOUNT    : error = onInitAccountChange();   break;     //
-         case REASON_CHARTCLOSE : error = onInitChartClose();      break;     //
-         case REASON_UNDEFINED  : error = onInitUndefined();       break;     //
-         case REASON_REMOVE     : error = onInitRemove();          break;     //
-         case REASON_RECOMPILE  : error = onInitRecompile();       break;     //
-         // build > 509                                                       //
-         case REASON_TEMPLATE   : error = onInitTemplate();        break;     //
-         case REASON_INITFAILED : error = onInitFailed();          break;     //
-         case REASON_CLOSE      : error = onInitClose();           break;     //
-                                                                              //
+   error = onInit();                                                                      // Preprocessing-Hook
+   if (!error) {                                                                          //
+      switch (UninitializeReason()) {                                                     //
+         case REASON_PARAMETERS : error = onInitParameterChange(); break;                 //
+         case REASON_CHARTCHANGE: error = onInitChartChange();     break;                 //
+         case REASON_ACCOUNT    : error = onInitAccountChange();   break;                 //
+         case REASON_CHARTCLOSE : error = onInitChartClose();      break;                 //
+         case REASON_UNDEFINED  : error = onInitUndefined();       break;                 //
+         case REASON_REMOVE     : error = onInitRemove();          break;                 //
+         case REASON_RECOMPILE  : error = onInitRecompile();       break;                 //
+         // build > 509                                                                   //
+         case REASON_TEMPLATE   : error = onInitTemplate();        break;                 //
+         case REASON_INITFAILED : error = onInitFailed();          break;                 //
+         case REASON_CLOSE      : error = onInitClose();           break;                 //
+                                                                                          //
          default: return(UpdateProgramStatus(catch("init(5)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
-      }                                                                       //
-   }                                                                          //
-   UpdateProgramStatus();                                                     //
-                                                                              //
-   if (error != -1) {                                                         //
-      afterInit();                                                            // Postprocessing-Hook
-      UpdateProgramStatus();                                                  //
-   }                                                                          //
+      }                                                                                   //
+   }                                                                                      //
+   UpdateProgramStatus();                                                                 //
+                                                                                          //
+   if (error != -1) {                                                                     //
+      afterInit();                                                                        // Postprocessing-Hook
+      UpdateProgramStatus();                                                              //
+   }                                                                                      //
 
    UpdateProgramStatus(catch("init(6)"));
    return(last_error);
@@ -131,13 +131,13 @@ int start() {
    __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);
 
 
-   // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars)                                                                                //       Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
-      return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
+   // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)  //       Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
+   if (!Bars)                                                                                // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
+      return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  //       andere brauchen die aktuelle Zeitreihe nicht.
 
 
-   SetExecutionContext(__ExecutionContext);
-                                                                                             //       andere brauchen die aktuelle Zeitreihe nicht.
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
+
 
    // (3) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
@@ -165,7 +165,7 @@ int deinit() {
    ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    // (1) User-spezifische deinit()-Routinen *können*, müssen aber nicht implementiert werden.
@@ -283,7 +283,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec.ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec_ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec_ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -442,18 +442,17 @@ int UpdateProgramStatus(int value=NULL) {
    int    afterDeinit();
 
    string GetWindowText(int hWnd);
-   int    SumInts(int array[]);
 
 #import "Expander.dll"
+   int    ec_InitFlags(/*EXECUTION_CONTEXT*/int ec[]);
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
+   bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
 
 #import "user32.dll"
    int    GetParent(int hWnd);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );

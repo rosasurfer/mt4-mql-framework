@@ -14,9 +14,9 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   bool Test_onInit  (int context[], int logLevel);
-   bool Test_onStart (int context[], int logLevel);
-   bool Test_onDeinit(int context[], int logLevel);
+   bool Test_onInit  (int ec[], int logLevel);
+   bool Test_onStart (int ec[], int logLevel);
+   bool Test_onDeinit(int ec[], int logLevel);
 #import
 
 

@@ -23,7 +23,7 @@ bool icChartInfos(int timeframe=NULL) {
       warn("icChartInfos(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");       // TODO: geladene Bars prüfen
    }
 
-   error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
+   error = ec_LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
       return(true);
    return(!SetLastError(error));
@@ -34,8 +34,6 @@ bool icChartInfos(int timeframe=NULL) {
 
 
 #import "Expander.dll"
+   int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
    int GetBufferAddress(int buffer[]);
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
 #import
