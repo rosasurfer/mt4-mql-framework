@@ -55,7 +55,6 @@
    bool WriteProcessMemory(int hProcess, int destAddress, int srcBuffer[], int bytes, int lpNumberOfBytesWritten[]); //         +-- stdlib::FlushIniCache()
 
 #import "ntdll.dll"
-   int  RtlGetLastWin32Error();
    bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
 
 #import "shell32.dll"
