@@ -50,8 +50,6 @@ bool icEventTracker.neu(int timeframe=NULL) {
 
 
 #import "Expander.dll"
+   int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
    int GetBufferAddress(int buffer[]);
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int ec.LastError(/*EXECUTION_CONTEXT*/int ec[]);
 #import

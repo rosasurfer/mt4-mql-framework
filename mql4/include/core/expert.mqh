@@ -28,9 +28,9 @@ int init() {
    if (__STATUS_OFF)
       return(last_error);
 
-   SetExecutionContext(__ExecutionContext);                          // noch bevor die erste Library geladen wird
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // noch bevor die erste Library geladen wird
 
-   if (__WHEREAMI__ == NULL) {                                       // Aufruf durch Terminal
+   if (__WHEREAMI__ == NULL) {                                                            // Aufruf durch Terminal
       __WHEREAMI__ = RF_INIT;
       prev_error   = last_error;
       SetLastError(NO_ERROR);
@@ -39,11 +39,11 @@ int init() {
 
 
    // (1) EXECUTION_CONTEXT initialisieren
-   if (!ec.ProgramType(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
+   if (!ec_ProgramType(__ExecutionContext)) /**/ if (!InitExecutionContext()) {
       UpdateProgramStatus();
       if (__STATUS_OFF) return(last_error);
    }
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());   // wiederholter Aufruf
 
 
    // (2) stdlib initialisieren
@@ -54,17 +54,9 @@ int init() {
       if (__STATUS_OFF) return(last_error);
    }
 
-
-   // (3) in Experts immer auch die HistoryLib initialisieren
-   error = history.init(__ExecutionContext);
-   if (IsError(error)) {
-      UpdateProgramStatus(SetLastError(error));
-      if (__STATUS_OFF) return(last_error);
-   }
-
                                                                               // #define INIT_TIMEZONE               in stdlib.init()
-   // (4) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
-   int initFlags = ec.InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
+   // (3) user-spezifische Init-Tasks ausführen                               // #define INIT_PIPVALUE
+   int initFlags = ec_InitFlags(__ExecutionContext);                          // #define INIT_BARS_ON_HIST_UPDATE
                                                                               // #define INIT_CUSTOMLOG
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                         // schlägt fehl, wenn kein Tick vorhanden ist
@@ -88,7 +80,7 @@ int init() {
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                          // noch nicht implementiert
 
 
-   // (5) ggf. EA's aktivieren
+   // (4) ggf. EA's aktivieren
    int reasons1[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE };
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);
@@ -99,13 +91,13 @@ int init() {
    }
 
 
-   // (6) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
+   // (5) nach Neuladen explizit Orderkontext zurücksetzen (siehe MQL.doc)
    int reasons2[] = { REASON_UNDEFINED, REASON_CHARTCLOSE, REASON_REMOVE, REASON_ACCOUNT };
    if (IntInArray(reasons2, UninitializeReason()))
       OrderSelect(0, SELECT_BY_TICKET);
 
 
-   // (7) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
+   // (6) User-spezifische init()-Routinen *können*, müssen aber nicht implementiert werden.
    //
    // Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
    // Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -140,7 +132,7 @@ int init() {
    if (__STATUS_OFF) return(last_error);                                      //
 
 
-   // (8) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
+   // (7) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (IsTesting()) {
       Test.fromDate    = TimeCurrentFix();                                    // für Teststatistiken
       Test.startMillis = GetTickCount();
@@ -219,7 +211,7 @@ int start() {
       return(UpdateProgramStatus(ShowStatus(SetLastError(debug("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY)))));
 
 
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    // (4) stdLib benachrichtigen
@@ -264,7 +256,7 @@ int deinit() {
    ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
    ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
 
-   SetExecutionContext(__ExecutionContext);
+   SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
    if (IsTesting()) {
@@ -388,7 +380,7 @@ bool IsLibrary() {
  * @return bool - Erfolgsstatus
  */
 bool InitExecutionContext() {
-   if (ec.ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec.ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
+   if (ec_ProgramType(__ExecutionContext) != 0) return(!catch("InitExecutionContext(1)  unexpected EXECUTION_CONTEXT.programType = "+ ec_ProgramType(__ExecutionContext) +" (not NULL)", ERR_ILLEGAL_STATE));
 
    N_INF = MathLog(0);
    P_INF = -N_INF;
@@ -619,16 +611,15 @@ int Tester.Stop() {
    int    Chart.SendTick(bool sound);
    bool   IntInArray(int haystack[], int needle);
    int    PeriodFlag(int period);
-   int    SumInts(int array[]);
 
 #import "Expander.dll"
+   int    ec_InitFlags(/*EXECUTION_CONTEXT*/int ec[]);
    int    GetApplicationWindow();
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
+   bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
-
    int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );

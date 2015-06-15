@@ -39,8 +39,6 @@
 
 
    // Library-Management
-   int      history.init  (/*EXECUTION_CONTEXT*/int ec[]);
-   int      history.deinit(/*EXECUTION_CONTEXT*/int ec[]);
    int      history.GetLastError();
 
 #import

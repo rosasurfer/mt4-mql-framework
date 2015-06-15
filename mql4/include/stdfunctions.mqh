@@ -885,7 +885,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       if (static.hWndSelf != 0)
          return(static.hWndSelf);
 
-      int hChart = ec.hChart(__ExecutionContext);                    // Zuerst wird ein schon im ExcecutionContext gespeichertes eigenes ChartHandle abgefragt.
+      int hChart = ec_hChart(__ExecutionContext);                    // Zuerst wird ein schon im ExcecutionContext gespeichertes eigenes ChartHandle abgefragt.
       if (hChart > 0) {                                              // (vor allem für Libraries)
          static.hWndSelf = hChart;
          return(static.hWndSelf);
@@ -915,7 +915,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
                if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
                int superContext[EXECUTION_CONTEXT.intSize];
                CopyMemory(GetBufferAddress(superContext), __lpSuperContext, EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
-               static.hWndSelf = ec.hChart(superContext);                                             // u.U. noch nicht endgültig initialisiert ist.
+               static.hWndSelf = ec_hChart(superContext);                                             // u.U. noch nicht endgültig initialisiert ist.
                ArrayResize(superContext, 0);
                return(static.hWndSelf);
             }
@@ -1061,7 +1061,7 @@ string GetClassName(int hWnd) {
  * @return bool
  */
 bool IsVisualModeFix() {
-   return(ec.TestFlags(__ExecutionContext) & TF_VISUAL == TF_VISUAL);
+   return(ec_TestFlags(__ExecutionContext) & TF_VISUAL == TF_VISUAL);
 }
 
 
@@ -2444,6 +2444,24 @@ void CopyMemory(int destination, int source, int bytes) {
 
 
 /**
+ * Addiert die Werte eines Integer-Arrays.
+ *
+ * @param  int values[] - Array mit Ausgangswerten
+ *
+ * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
+ */
+int SumInts(int values[]) {
+   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int sum, size=ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      sum += values[i];
+   }
+   return(sum);
+}
+
+/**
  * Gibt alle verfügbaren MarketInfo()-Daten des aktuellen Instruments aus.
  *
  * @param  string location - Aufruf-Bezeichner
@@ -2771,7 +2789,7 @@ bool Indicator.IsTesting() {
       int superCopy[EXECUTION_CONTEXT.intSize];
       CopyMemory(GetBufferAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                              // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() benutzt wird.
-      static.result = (ec.TestFlags(superCopy) & TF_TESTING && 1);         // (int) bool
+      static.result = (ec_TestFlags(superCopy) & TF_TESTING && 1);         // (int) bool
       ArrayResize(superCopy, 0);
 
       return(static.result != 0);
@@ -3425,7 +3443,7 @@ string UninitializeReasonToStr(int reason) {
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
-   int    iNull;
+   int    iNulls[];
    string sNulls[];
 
    IsExpert();
@@ -3544,6 +3562,7 @@ void __DummyCalls() {
    StrToBool(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
+   SumInts(iNulls);
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
@@ -3627,12 +3646,12 @@ void __DummyCalls() {
    string   StringRepeat(string input, int times);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int      ec.hChart      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec.SuperContext(/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
-   int      ec.TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec.ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
 
 #import "Expander.dll"
+   int      ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
    int      GetApplicationWindow();
    int      GetBufferAddress(int buffer[]);
    int      GetLastWin32Error();
@@ -3640,7 +3659,6 @@ void __DummyCalls() {
    string   IntToHexStr(int integer);
    bool     IsBuiltinTimeframe(int timeframe);
    bool     IsUIThread();
-   bool     SetExecutionContext(int context[]);
    void     SetLogLevel(int level);
 
 #import "kernel32.dll"

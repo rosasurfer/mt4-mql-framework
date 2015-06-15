@@ -56,17 +56,17 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
 
    // (1) Context in die Library kopieren
    ArrayCopy(__ExecutionContext, ec);
-   __lpSuperContext = ec.lpSuperContext(ec);
+   __lpSuperContext = ec_lpSuperContext(ec);
 
 
    // (2) globale Variablen (re-)initialisieren
-   int initFlags = ec.InitFlags(ec) | SumInts(__INIT_FLAGS__);
+   int initFlags = ec_InitFlags(ec) | SumInts(__INIT_FLAGS__);
 
-   __TYPE__      |=                   ec.ProgramType (ec);
-   __NAME__       = StringConcatenate(ec.ProgramName (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec.RootFunction(ec);
-   __CHART        =                  (ec.hChart      (ec)!=0);
-   __LOG          =                   ec.Logging     (ec);
+   __TYPE__      |=                   ec_ProgramType (ec);
+   __NAME__       = StringConcatenate(ec_ProgramName (ec), "::", WindowExpertName());
+   __WHEREAMI__   =                   ec_RootFunction(ec);
+   __CHART        =                  (ec_hChart      (ec)!=0);
+   __LOG          =                   ec_Logging     (ec);
    __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
 
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -108,7 +108,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
    // (4) nur für EA's durchzuführende globale Initialisierungen
    if (IsExpert()) {                                                 // nach Neuladen Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       int reasons[] = { REASON_ACCOUNT, REASON_REMOVE, REASON_UNDEFINED, REASON_CHARTCLOSE };
-      if (IntInArray(reasons, ec.UninitializeReason(ec)))
+      if (IntInArray(reasons, ec_UninitializeReason(ec)))
          OrderSelect(0, SELECT_BY_TICKET);
 
 
@@ -148,15 +148,6 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
  * @return int - Fehlerstatus
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
-   // Nach Recompilation der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
-   if (__TYPE__ == MT_LIBRARY) {
-      if (UninitializeReason() == REASON_RECOMPILE) {
-         int iNull[];
-         if (IsError(stdlib.init(ec, iNull)))
-            return(last_error);
-      }
-   }
-
    __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);
 
 
@@ -195,18 +186,9 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  *       verfrüht und nicht erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
-   // Nach Recompilation der Library ist niemand da, der stdlib.init() aufrufen könnte. Ist die Library also nicht initialisiert, muß dies nachgeholt werden.
-   if (__TYPE__ == MT_LIBRARY) {
-      if (UninitializeReason() == REASON_RECOMPILE) {
-         int iNull[];
-         if (IsError(stdlib.init(ec, iNull)))
-            return(last_error);
-      }
-   }
-
    __WHEREAMI__ =                               RF_DEINIT;
    ec.setRootFunction      (__ExecutionContext, RF_DEINIT                );
-   ec.setUninitializeReason(__ExecutionContext, ec.UninitializeReason(ec));
+   ec.setUninitializeReason(__ExecutionContext, ec_UninitializeReason(ec));
 
 
    // (1) ggf. noch gehaltene Locks freigeben
@@ -3021,25 +3003,6 @@ string JoinStrings(string values[], string separator) {
       result = StringLeft(result, -StringLen(separator));
 
    return(result);
-}
-
-
-/**
- * Addiert die Werte eines Integer-Arrays.
- *
- * @param  int values[] - Array mit Ausgangswerten
- *
- * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
- */
-int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int sum, size=ArraySize(values);
-
-   for (int i=0; i < size; i++) {
-      sum += values[i];
-   }
-   return(sum);
 }
 
 
@@ -11075,7 +11038,7 @@ bool DeletePendingOrders(color markerColor=CLR_NONE) {
 
 
 /**
- * Wird nur im Tester in library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
+ * Wird nur im Tester aus Library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);
@@ -11106,6 +11069,8 @@ void Tester.ResetGlobalArrays() {
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
+   int    ec_LastError         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitializeReason(/*EXECUTION_CONTEXT*/int ec[]);
    int    GetBoolsAddress  (bool   array[]);
    int    GetBufferAddress (int    array[]);
    int    GetDoublesAddress(double array[]);
@@ -11114,15 +11079,6 @@ void Tester.ResetGlobalArrays() {
    string GetString(int address);
 
 #import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.InitFlags               (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.LastError               (/*EXECUTION_CONTEXT*/int ec[]                        );
-   bool   ec.Logging                 (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.lpSuperContext          (/*EXECUTION_CONTEXT*/int ec[]                        );
-   string ec.ProgramName             (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.ProgramType             (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.RootFunction            (/*EXECUTION_CONTEXT*/int ec[]                        );
-   int    ec.UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]                        );
-
    string ec.setProgramName          (/*EXECUTION_CONTEXT*/int ec[], string programName    );
    int    ec.setRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
    int    ec.setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
