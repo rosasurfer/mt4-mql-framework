@@ -147,7 +147,7 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
  * @return int - Fehlerstatus
  */
 int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars) {
-   __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);
+   __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);
 
 
    if (Tick != tick) {
@@ -186,8 +186,8 @@ int stdlib.start(/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int
  */
 int stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]) {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setRootFunction      (__ExecutionContext, RF_DEINIT                );
-   ec.setUninitializeReason(__ExecutionContext, ec_UninitializeReason(ec));
+   ec_setRootFunction      (__ExecutionContext, RF_DEINIT                );
+   ec_setUninitializeReason(__ExecutionContext, ec_UninitializeReason(ec));
 
 
    // (1) ggf. noch gehaltene Locks freigeben
@@ -11068,19 +11068,18 @@ void Tester.ResetGlobalArrays() {
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
-   int    ec_LastError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitializeReason(/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+
    int    GetBoolsAddress  (bool   array[]);
    int    GetBufferAddress (int    array[]);
    int    GetDoublesAddress(double array[]);
    int    GetStringAddress (string value  );
    int    GetStringsAddress(string array[]);
    string GetString(int address);
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   string ec.setProgramName          (/*EXECUTION_CONTEXT*/int ec[], string programName    );
-   int    ec.setRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
-   int    ec.setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
 
 #import "structs.win32.ex4"
    int    pi.hProcess                (/*PROCESS_INFORMATION*/int pi[]);

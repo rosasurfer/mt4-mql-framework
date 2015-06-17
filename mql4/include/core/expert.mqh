@@ -176,7 +176,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+      __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -186,7 +186,7 @@ int start() {
          if (__STATUS_OFF) return(ShowStatus(last_error));
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(ShowStatus(error));
          }
       }
@@ -253,8 +253,8 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+   ec_setRootFunction      (__ExecutionContext, RF_DEINIT           );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
 
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
@@ -414,8 +414,8 @@ bool InitExecutionContext() {
    ec.setLpSuperContext    (__ExecutionContext, NULL                                                                                                                 );
    ec.setInitFlags         (__ExecutionContext, initFlags                                                                                                            );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                                                                                          );
-   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                                                                                         );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                 );
+   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__                                                                                                         );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason()                                                                                                 );
 
    ec.setSymbol            (__ExecutionContext, Symbol()                                                                                                             );
    ec.setTimeframe         (__ExecutionContext, Period()                                                                                                             );
@@ -613,8 +613,12 @@ int Tester.Stop() {
    int    PeriodFlag(int period);
 
 #import "Expander.dll"
-   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int lastError         );
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+
    int    GetApplicationWindow();
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
@@ -630,11 +634,9 @@ int Tester.Stop() {
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
-   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
-   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
 #import "user32.dll"
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
