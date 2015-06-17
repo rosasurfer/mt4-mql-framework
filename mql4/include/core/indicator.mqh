@@ -181,7 +181,7 @@ int start() {
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
-      __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
+      __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
          debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
@@ -191,7 +191,7 @@ int start() {
          if (__STATUS_OFF) return(last_error);
 
          if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
+            __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_INIT);         // __WHEREAMI__ zurücksetzen und auf den nächsten Tick warten
             return(error);
          }
       }
@@ -267,8 +267,8 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+   ec_setRootFunction      (__ExecutionContext, RF_DEINIT           );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
    Init.StoreSymbol(Symbol());                                                   // TODO: aktuelles Symbol im ExecutionContext speichern
 
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
@@ -566,8 +566,8 @@ bool InitExecutionContext() {
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
-    //ec.setRootFunction       ...wird in (3.4) gesetzt, da variabel
-    //ec.setUninitializeReason ...wird in (3.4) gesetzt, da variabel
+    //ec_setRootFunction       ...wird in (3.4) gesetzt, da variabel
+    //ec_setUninitializeReason ...wird in (3.4) gesetzt, da variabel
 
     //ec.setSymbol             ...wird in (3.4) gesetzt, da variabel
     //ec.setTimeframe          ...wird in (3.4) gesetzt, da variabel
@@ -588,8 +588,8 @@ bool InitExecutionContext() {
    }
 
    // (3.4) variable Context-Properties aktualisieren
-   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__        );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__        );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
    ec.setSymbol            (__ExecutionContext, Symbol()            );
    ec.setTimeframe         (__ExecutionContext, Period()            );
 
@@ -746,12 +746,16 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    bool   ReleaseLock(string mutexName);
 
 #import "Expander.dll"
-   int    ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow(/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile     (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging     (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+   int    ec_hChart               (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int lastError         );
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+
    int    GetBufferAddress(int buffer[]);
    bool   IsUIThread();
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
@@ -766,11 +770,9 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
-   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
-   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();

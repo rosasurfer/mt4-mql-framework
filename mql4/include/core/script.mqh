@@ -128,7 +128,7 @@ int start() {
 
 
    // (1) init() war immer erfolgreich
-   __WHEREAMI__ = ec.setRootFunction(__ExecutionContext, RF_START);
+   __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)  //       Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
@@ -162,8 +162,8 @@ int start() {
  */
 int deinit() {
    __WHEREAMI__ =                               RF_DEINIT;
-   ec.setRootFunction      (__ExecutionContext, RF_DEINIT           );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason());
+   ec_setRootFunction      (__ExecutionContext, RF_DEINIT           );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
 
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
@@ -315,8 +315,8 @@ bool InitExecutionContext() {
    ec.setLpSuperContext    (__ExecutionContext, NULL                                                );
    ec.setInitFlags         (__ExecutionContext, initFlags                                           );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                         );
-   ec.setRootFunction      (__ExecutionContext, __WHEREAMI__                                        );
-   ec.setUninitializeReason(__ExecutionContext, UninitializeReason()                                );
+   ec_setRootFunction      (__ExecutionContext, __WHEREAMI__                                        );
+   ec_setUninitializeReason(__ExecutionContext, UninitializeReason()                                );
 
    ec.setSymbol            (__ExecutionContext, Symbol()                                            );
    ec.setTimeframe         (__ExecutionContext, Period()                                            );
@@ -444,8 +444,12 @@ int UpdateProgramStatus(int value=NULL) {
    string GetWindowText(int hWnd);
 
 #import "Expander.dll"
-   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
+   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int lastError);
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
+
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
@@ -463,10 +467,8 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
    int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
-   int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
-   int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
 #import
