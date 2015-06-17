@@ -423,7 +423,7 @@ bool InitExecutionContext() {
    ec.setHChart            (__ExecutionContext, hChart                                                                                                               );
    ec.setTestFlags         (__ExecutionContext, ifInt(IsTesting(), TF_TESTING, 0) | ifInt(IsVisualMode(), TF_VISUAL, 0) | ifInt(IsOptimization(), TF_OPTIMIZATION, 0));
 
- //ec.setLastError         ...wird nicht überschrieben
+ //ec_setLastError         ...wird nicht überschrieben
    ec.setLogging           (__ExecutionContext, __LOG                                                                                                                );
    ec.setLogFile           (__ExecutionContext, ""                                                                                                                   );
 
@@ -452,8 +452,8 @@ bool IsSuperContext() {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = error;
-   return(ec.setLastError(__ExecutionContext, last_error));
+   last_error = ec_setLastError(__ExecutionContext, last_error);
+   return(error);
 }
 
 
@@ -613,7 +613,8 @@ int Tester.Stop() {
    int    PeriodFlag(int period);
 
 #import "Expander.dll"
-   int    ec_InitFlags(/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
    int    GetApplicationWindow();
    int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
@@ -624,7 +625,6 @@ int Tester.Stop() {
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
    string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );

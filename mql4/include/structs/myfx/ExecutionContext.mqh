@@ -81,13 +81,6 @@ int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int &ec[], int    timeframe
 int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;       return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;             return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[I_EC.testFlags         ] = testFlags;          return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) { ec[I_EC.lastError         ] = lastError;
-   int lpSuperContext = ec_lpSuperContext(ec);                       // Fehler immer auch im SuperContext setzen
-   if (lpSuperContext != 0) {
-      int src  = GetBufferAddress(ec) + I_EC.lastError*4;
-      int dest = lpSuperContext       + I_EC.lastError*4;
-      CopyMemory(dest, src, 4);
-   }                                                                                                                                           return(lastError         ); EXECUTION_CONTEXT.toStr(ec); }
 bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[I_EC.logging           ] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
    if (StringIsNull(logFile)) logFile = "";                                                          // sicherstellen, daﬂ der String initialisiert ist
@@ -151,7 +144,6 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
                             ec.setHChartWindow      (ec, NULL);
                             ec.setHChart            (ec, NULL);
                             ec.setTestFlags         (ec, NULL);
-                            ec.setLastError         (ec, NULL);
                             ec.setLogging           (ec, NULL);
                             ec.setLogFile           (ec, NULL);
    lpEXECUTION_CONTEXT.toStr(NULL);
@@ -233,7 +225,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 //   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
 //   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
 //   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-//   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
 //   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
 //   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
 

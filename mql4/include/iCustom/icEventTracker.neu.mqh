@@ -39,7 +39,7 @@ bool icEventTracker.neu(int timeframe=NULL) {
       warn("icEventTracker.neu(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")"); // TODO: geladene Bars prüfen
    }
 
-   error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
+   error = ec_LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
       return(true);
    return(!SetLastError(error));

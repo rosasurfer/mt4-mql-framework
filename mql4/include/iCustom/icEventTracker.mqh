@@ -23,7 +23,7 @@ bool icEventTracker(int timeframe) {
          return(!catch("icEventTracker(1)", error));
       warn("icEventTracker(2)  ERS_HISTORY_UPDATE (tick="+ Tick +")");     // TODO: geladene Bars prüfen
    }
-   error = ec.LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
+   error = ec_LastError(__ExecutionContext);                               // TODO: Synchronisation von Original und Kopie sicherstellen
    if (!error)
       return(true);
    return(!SetLastError(error));
