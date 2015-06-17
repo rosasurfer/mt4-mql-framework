@@ -3645,9 +3645,6 @@ void __DummyCalls() {
    bool     StringIsDigit(string value);
    string   StringRepeat(string input, int times);
 
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int      ec.SuperContext(/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
-
 #import "Expander.dll"
    int      ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);

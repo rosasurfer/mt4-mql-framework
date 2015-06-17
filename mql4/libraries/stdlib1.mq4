@@ -56,24 +56,23 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
 
    // (1) Context in die Library kopieren
    ArrayCopy(__ExecutionContext, ec);
-   __lpSuperContext = ec_lpSuperContext(ec);
 
 
    // (2) globale Variablen (re-)initialisieren
-   int initFlags = ec_InitFlags(ec) | SumInts(__INIT_FLAGS__);
+   __lpSuperContext =                   ec_lpSuperContext(ec);
+   __TYPE__        |=                   ec_ProgramType   (ec);
+   __NAME__         = StringConcatenate(ec_ProgramName   (ec), "::", WindowExpertName());
+   __WHEREAMI__     =                   ec_RootFunction  (ec);
+   __CHART          =                  (ec_hChart        (ec)!=0);
+   __LOG            =                   ec_Logging       (ec);
+      int initFlags = ec_InitFlags(ec) | SumInts(__INIT_FLAGS__);
+   __LOG_CUSTOM     = (initFlags & INIT_CUSTOMLOG && 1);
 
-   __TYPE__      |=                   ec_ProgramType (ec);
-   __NAME__       = StringConcatenate(ec_ProgramName (ec), "::", WindowExpertName());
-   __WHEREAMI__   =                   ec_RootFunction(ec);
-   __CHART        =                  (ec_hChart      (ec)!=0);
-   __LOG          =                   ec_Logging     (ec);
-   __LOG_CUSTOM   = (initFlags & INIT_CUSTOMLOG && 1);
-
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
-   PipPriceFormat = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
+   PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
+   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pips              = Pip;
+   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
 
    // (3) user-spezifische Init-Tasks ausführen

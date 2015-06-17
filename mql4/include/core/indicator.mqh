@@ -575,7 +575,7 @@ bool InitExecutionContext() {
       ec.setHChart            (__ExecutionContext, hChart                   );
       ec.setTestFlags         (__ExecutionContext, testFlags                );
 
-    //ec.setLastError         ...wird nicht überschrieben
+    //ec_setLastError         ...wird nicht überschrieben
       ec.setLogging           (__ExecutionContext, __LOG                    );
       ec.setLogFile           (__ExecutionContext, logFile                  );
    }
@@ -634,8 +634,8 @@ bool IsSuperContext() {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = error;
-   return(ec.setLastError(__ExecutionContext, last_error));
+   last_error = ec_setLastError(__ExecutionContext, last_error);
+   return(error);
 }
 
 
@@ -751,6 +751,7 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_InitFlags   (/*EXECUTION_CONTEXT*/int ec[]);
    string ec_LogFile     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging     (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
    int    GetBufferAddress(int buffer[]);
    bool   IsUIThread();
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
@@ -760,7 +761,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
    int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
    int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   int    ec.setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
    string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );

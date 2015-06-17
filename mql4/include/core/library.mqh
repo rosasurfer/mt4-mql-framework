@@ -171,8 +171,8 @@ bool IsSuperContext() {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = error;
-   return(ec.setLastError(__ExecutionContext, last_error));
+   last_error = ec_setLastError(__ExecutionContext, error);
+   return(error);
 }
 
 
@@ -193,9 +193,6 @@ int UpdateProgramStatus(int value=NULL) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.setLastError(/*EXECUTION_CONTEXT*/int ec[], int lastError);
-
 #import "Expander.dll"
    int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
@@ -203,6 +200,9 @@ int UpdateProgramStatus(int value=NULL) {
    string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_ProgramType   (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
+
+   int    ec_setLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
+
    bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
 
 #import "kernel32.dll"
