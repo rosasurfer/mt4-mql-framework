@@ -3729,15 +3729,15 @@ int WinExecAndWait(string cmdLine, int cmdShow) {
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
       return(catch("WinExecAndWait(1)->kernel32::CreateProcessA(cmdLine=\""+ cmdLine +"\")", ERR_WIN32_ERROR));
 
-   int result = WaitForSingleObject(pi.hProcess(pi), INFINITE);
+   int result = WaitForSingleObject(pi_hProcess(pi), INFINITE);
 
    if (result != WAIT_OBJECT_0) {
       if (result == WAIT_FAILED) catch("WinExecAndWait(2)->kernel32::WaitForSingleObject()", ERR_WIN32_ERROR);
       else if (__LOG)              log("WinExecAndWait(3)->kernel32::WaitForSingleObject() => "+ WaitForSingleObjectValueToStr(result));
    }
 
-   CloseHandle(pi.hProcess(pi));
-   CloseHandle(pi.hThread (pi));
+   CloseHandle(pi_hProcess(pi));
+   CloseHandle(pi_hThread (pi));
 
    return(catch("WinExecAndWait(4)"));
 }
@@ -11068,12 +11068,6 @@ void Tester.ResetGlobalArrays() {
    int    GetIniKeys.2(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
-   int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
-
-   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
-
    int    GetBoolsAddress  (bool   array[]);
    int    GetBufferAddress (int    array[]);
    int    GetDoublesAddress(double array[]);
@@ -11081,10 +11075,16 @@ void Tester.ResetGlobalArrays() {
    int    GetStringsAddress(string array[]);
    string GetString(int address);
 
-#import "structs.win32.ex4"
-   int    pi.hProcess                (/*PROCESS_INFORMATION*/int pi[]);
-   int    pi.hThread                 (/*PROCESS_INFORMATION*/int pi[]);
+   int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
 
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+
+   int    pi_hProcess             (/*PROCESS_INFORMATION*/int pi[]);
+   int    pi_hThread              (/*PROCESS_INFORMATION*/int pi[]);
+
+#import "structs.win32.ex4"
    int    si.cb                      (/*STARTUPINFO*/int si[]);
    int    si.Flags                   (/*STARTUPINFO*/int si[]);
    int    si.ShowWindow              (/*STARTUPINFO*/int si[]);
