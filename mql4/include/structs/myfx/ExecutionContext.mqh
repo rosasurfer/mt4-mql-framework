@@ -42,20 +42,7 @@
 #define I_EC.logFile               84
 
 
-// Getter
-int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
-   if (ArrayDimension(sec) != 1)        return(catch("ec.SuperContext(1)  too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
-      ArrayResize(sec, EXECUTION_CONTEXT.intSize);
-   int lpSuperContext = ec_lpSuperContext(ec);
-   if (!lpSuperContext) ArrayInitialize(sec, 0);
-   else                 CopyMemory(GetBufferAddress(sec), lpSuperContext, EXECUTION_CONTEXT.size);
-   return(catch("ec.SuperContext(2)"));                                                                                                                                    EXECUTION_CONTEXT.toStr(ec);
-}
-
-
 // Setter
-//     ec.setProgramId         ...kein MQL-Setter
 int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
    if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
@@ -128,20 +115,19 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-                            ec.setProgramType       (ec, NULL);
-                            ec.setProgramName       (ec, NULL);
-                            ec.setLaunchType        (ec, NULL);
-                            ec.setLpSuperContext    (ec, NULL);
-   ec.SuperContext(ec, ec);
-                            ec.setInitFlags         (ec, NULL);
-                            ec.setDeinitFlags       (ec, NULL);
-                            ec.setSymbol            (ec, NULL);
-                            ec.setTimeframe         (ec, NULL);
-                            ec.setHChartWindow      (ec, NULL);
-                            ec.setHChart            (ec, NULL);
-                            ec.setTestFlags         (ec, NULL);
-                            ec.setLogging           (ec, NULL);
-                            ec.setLogFile           (ec, NULL);
+   ec.setProgramType       (ec, NULL);
+   ec.setProgramName       (ec, NULL);
+   ec.setLaunchType        (ec, NULL);
+   ec.setLpSuperContext    (ec, NULL);
+   ec.setInitFlags         (ec, NULL);
+   ec.setDeinitFlags       (ec, NULL);
+   ec.setSymbol            (ec, NULL);
+   ec.setTimeframe         (ec, NULL);
+   ec.setHChartWindow      (ec, NULL);
+   ec.setHChart            (ec, NULL);
+   ec.setTestFlags         (ec, NULL);
+   ec.setLogging           (ec, NULL);
+   ec.setLogFile           (ec, NULL);
    lpEXECUTION_CONTEXT.toStr(NULL);
 }
 
@@ -206,8 +192,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 
 
 //#import "struct.EXECUTION_CONTEXT.ex4"
-//   int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
-
 //   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type              );
 //   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
 //   int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type              );
