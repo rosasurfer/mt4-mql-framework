@@ -560,9 +560,9 @@ bool InitExecutionContext() {
       }
 
       // (3.2) Fixe Context-Properties setzen
-    //ec.setProgramId         ...kein MQL-Setter
-      ec.setProgramType       (__ExecutionContext, __TYPE__                 );
-      ec.setProgramName       (__ExecutionContext, __NAME__                 );
+    //ec_setProgramId         ...kein MQL-Setter
+      ec_setProgramType       (__ExecutionContext, __TYPE__                 );
+      ec_setProgramName       (__ExecutionContext, __NAME__                 );
       ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
       ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
       ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
@@ -752,9 +752,11 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int lastError         );
-   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
+   int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetBufferAddress(int buffer[]);
    bool   IsUIThread();
@@ -768,8 +770,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
-   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );

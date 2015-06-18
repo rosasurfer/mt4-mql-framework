@@ -9,8 +9,8 @@
  * und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen also während ihres init()-Cycles nicht auf den alten, bereits
  * ungültigen Hauptmodulkontext zugreifen (weder lesend noch schreibend).
  *
+ *
  * @see  Definition in Expander.dll::Expander.h
- * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  *
  *
  * TODO: In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Kauptmodulkontexts arbeiten.
@@ -43,13 +43,6 @@
 
 
 // Setter
-int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
-string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
-   if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
-   if (StringLen(name) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setProgramName(2)  illegal parameter name = \""+ name +"\" (max "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
-   int src  = GetStringAddress(name);
-   int dest = GetBufferAddress(ec) + I_EC.programName*4;
-   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                  return(name              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) {
    if (lpSuperContext && lpSuperContext < MIN_VALID_POINTER) return(!catch("ec.setLpSuperContext(1)  invalid parameter lpSuperContext = 0x"+ IntToHexStr(lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
@@ -115,19 +108,17 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   ec.setProgramType       (ec, NULL);
-   ec.setProgramName       (ec, NULL);
-   ec.setLaunchType        (ec, NULL);
-   ec.setLpSuperContext    (ec, NULL);
-   ec.setInitFlags         (ec, NULL);
-   ec.setDeinitFlags       (ec, NULL);
-   ec.setSymbol            (ec, NULL);
-   ec.setTimeframe         (ec, NULL);
-   ec.setHChartWindow      (ec, NULL);
-   ec.setHChart            (ec, NULL);
-   ec.setTestFlags         (ec, NULL);
-   ec.setLogging           (ec, NULL);
-   ec.setLogFile           (ec, NULL);
+   ec.setLaunchType    (ec, NULL);
+   ec.setLpSuperContext(ec, NULL);
+   ec.setInitFlags     (ec, NULL);
+   ec.setDeinitFlags   (ec, NULL);
+   ec.setSymbol        (ec, NULL);
+   ec.setTimeframe     (ec, NULL);
+   ec.setHChartWindow  (ec, NULL);
+   ec.setHChart        (ec, NULL);
+   ec.setTestFlags     (ec, NULL);
+   ec.setLogging       (ec, NULL);
+   ec.setLogFile       (ec, NULL);
    lpEXECUTION_CONTEXT.toStr(NULL);
 }
 
@@ -192,8 +183,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
 
 
 //#import "struct.EXECUTION_CONTEXT.ex4"
-//   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type              );
-//   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
 //   int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type              );
 //   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
 //   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
