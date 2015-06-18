@@ -309,9 +309,9 @@ bool InitExecutionContext() {
 
 
    // (2) EXECUTION_CONTEXT initialisieren
- //ec.setProgramId         ...kein MQL-Setter
-   ec.setProgramType       (__ExecutionContext, __TYPE__                                            );
-   ec.setProgramName       (__ExecutionContext, WindowExpertName()                                  );
+ //ec_setProgramId         ...kein MQL-Setter
+   ec_setProgramType       (__ExecutionContext, __TYPE__                                            );
+   ec_setProgramName       (__ExecutionContext, WindowExpertName()                                  );
    ec.setLpSuperContext    (__ExecutionContext, NULL                                                );
    ec.setInitFlags         (__ExecutionContext, initFlags                                           );
    ec.setDeinitFlags       (__ExecutionContext, deinitFlags                                         );
@@ -446,7 +446,9 @@ int UpdateProgramStatus(int value=NULL) {
 #import "Expander.dll"
    int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int lastError);
+   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
+   int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
@@ -465,8 +467,6 @@ int UpdateProgramStatus(int value=NULL) {
    string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
    int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   string ec.setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );
-   int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
    string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
    int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );

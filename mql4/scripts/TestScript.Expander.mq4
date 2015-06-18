@@ -18,6 +18,9 @@ int __DEINIT_FLAGS__[];
    bool Test_onDeinit(int ec[], int logLevel);
 
    int  Test();
+
+#import "struct.EXECUTION_CONTEXT.ex4"
+   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
 #import
 
 
@@ -41,8 +44,12 @@ int onStart() {
    //Test_onStart(__ExecutionContext, L_DEBUG);
    //Test();
 
-   testlibrary();
-   debug("onStart()->testlibrary()");
+   //testlibrary();
+   //debug("onStart()->testlibrary()");
+
+   EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+   ec_setProgramName(__ExecutionContext, "hello_world");
+   EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
 
    return(last_error);
 }
