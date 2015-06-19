@@ -18,9 +18,6 @@ int __DEINIT_FLAGS__[];
    bool Test_onDeinit(int ec[], int logLevel);
 
    int  Test();
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug);
 #import
 
 

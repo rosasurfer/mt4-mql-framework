@@ -526,12 +526,12 @@ bool InitExecutionContext() {
          testFlags              |= TF_TESTING;
          if (__CHART) testFlags |= TF_VISUAL;
       }
+   string logFile;
 
    __NAME__       = WindowExpertName();
    __CHART        = hChart && 1;
    __LOG          = true;
    __LOG_CUSTOM   = false;                                           // Custom-Logging gibt es vorerst nur für Experts
-   string logFile = "";
 
 
    // (2) letzten in Library zwischengespeicherten EXECUTION_CONTEXT holen
@@ -563,21 +563,21 @@ bool InitExecutionContext() {
     //ec_setProgramId         ...kein MQL-Setter
       ec_setProgramType       (__ExecutionContext, __TYPE__                 );
       ec_setProgramName       (__ExecutionContext, __NAME__                 );
-      ec.setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
-      ec.setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
-      ec.setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
+      ec_setLpSuperContext    (__ExecutionContext, __lpSuperContext         );
+      ec_setInitFlags         (__ExecutionContext, SumInts(__INIT_FLAGS__  ));
+      ec_setDeinitFlags       (__ExecutionContext, SumInts(__DEINIT_FLAGS__));
     //ec_setRootFunction       ...wird in (3.4) gesetzt, da variabel
     //ec_setUninitializeReason ...wird in (3.4) gesetzt, da variabel
 
-    //ec.setSymbol             ...wird in (3.4) gesetzt, da variabel
-    //ec.setTimeframe          ...wird in (3.4) gesetzt, da variabel
-      ec.setHChartWindow      (__ExecutionContext, hChartWindow             );
-      ec.setHChart            (__ExecutionContext, hChart                   );
-      ec.setTestFlags         (__ExecutionContext, testFlags                );
+    //ec_setSymbol             ...wird in (3.4) gesetzt, da variabel
+    //ec_setTimeframe          ...wird in (3.4) gesetzt, da variabel
+      ec_setHChartWindow      (__ExecutionContext, hChartWindow             );
+      ec_setHChart            (__ExecutionContext, hChart                   );
+      ec_setTestFlags         (__ExecutionContext, testFlags                );
 
     //ec_setLastError         ...wird nicht überschrieben
-      ec.setLogging           (__ExecutionContext, __LOG                    );
-      ec.setLogFile           (__ExecutionContext, logFile                  );
+      ec_setLogging           (__ExecutionContext, __LOG                    );
+      ec_setLogFile           (__ExecutionContext, logFile                  );
    }
    else {
       // (3.3) Der Context in der Library war bereits initialisiert, globale Variablen aktualisieren.
@@ -590,8 +590,8 @@ bool InitExecutionContext() {
    // (3.4) variable Context-Properties aktualisieren
    ec_setRootFunction      (__ExecutionContext, __WHEREAMI__        );
    ec_setUninitializeReason(__ExecutionContext, UninitializeReason());
-   ec.setSymbol            (__ExecutionContext, Symbol()            );
-   ec.setTimeframe         (__ExecutionContext, Period()            );
+   ec_setSymbol            (__ExecutionContext, Symbol()            );
+   ec_setTimeframe         (__ExecutionContext, Period()            );
 
 
    // (4) restliche globale Variablen initialisieren
@@ -752,27 +752,25 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
 
+   int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
+   int    ec_setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
+   int    ec_setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
+   int    ec_setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
    int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
+   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
+   string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
+   int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name              );
    int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    programType       );
    int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    rootFunction      );
+   string ec_setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
+   int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
+   int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetBufferAddress(int buffer[]);
    bool   IsUIThread();
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
-
-#import "struct.EXECUTION_CONTEXT.ex4"
-   int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    deinitFlags       );
-   int    ec.setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hChart            );
-   int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
-   int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
-   string ec.setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
-   bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
-   int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
-   string ec.setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol            );
-   int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags         );
-   int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();

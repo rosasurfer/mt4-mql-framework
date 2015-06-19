@@ -43,6 +43,9 @@ int onTick() {
    debug("onTick()->testlibrary()");
 
    return(last_error);
+
+   int iNull[];
+   EXECUTION_CONTEXT.toStr(iNull);
 }
 
 
