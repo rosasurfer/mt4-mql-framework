@@ -3713,15 +3713,15 @@ string ShortAccountCompany() {
  * Führt eine Anwendung aus und wartet, bis sie beendet ist.
  *
  * @param  string cmdLine - Befehlszeile
- * @param  int    cmdShow - ShowWindow() command id
+ * @param  int    cmdShow - ShowWindow()-Konstante
  *
  * @return int - Fehlerstatus
  */
 int WinExecAndWait(string cmdLine, int cmdShow) {
    /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO.size);
-      si.setCb        (si, STARTUPINFO.size);
-      si.setFlags     (si, STARTF_USESHOWWINDOW);
-      si.setShowWindow(si, cmdShow);
+   si_setCb        (si, STARTUPINFO.size);
+   si_setFlags     (si, STARTF_USESHOWWINDOW);
+   si_setShowWindow(si, cmdShow);
 
    int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeByteBuffer(pi, PROCESS_INFORMATION.size);
    string sNull;
@@ -4511,12 +4511,12 @@ datetime mql.GetLocalTime() {
    return(time[0]);
 
    /*
-   int year  = st.Year  (st);
-   int month = st.Month (st);
-   int day   = st.Day   (st);
-   int hour  = st.Hour  (st);
-   int min   = st.Minute(st);
-   int sec   = st.Second(st);
+   int year  = st_Year  (st);
+   int month = st_Month (st);
+   int day   = st_Day   (st);
+   int hour  = st_Hour  (st);
+   int min   = st_Minute(st);
+   int sec   = st_Second(st);
 
    string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
    datetime time    = StrToTime(strTime);
@@ -6370,7 +6370,7 @@ string EventToStr(int event) {
 
 /**
  * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück. Kann nicht im Tester verwendet werden, da
- * (1) dieser Offset der tatsächliche aktuelle Offset ist und
+ * (1) dieser Offset der aktuelle Offset der aktuellen Zeit ist und
  * (2) die lokale Zeitzone im Tester modelliert wird und nicht mit der tatsächlichen lokalen Zeitzone übereinstimmt.
  *
  * @return int - Offset in Sekunden oder, es gilt: GMT + Offset = LocalTime
@@ -6384,9 +6384,9 @@ int GetLocalToGmtTimeOffset() {
    int offset, type=GetTimeZoneInformation(tzi);
 
    if (type != TIME_ZONE_ID_UNKNOWN) {
-      offset = tzi.Bias(tzi);
+      offset = tzi_Bias(tzi);
       if (type == TIME_ZONE_ID_DAYLIGHT)
-         offset += tzi.DaylightBias(tzi);
+         offset += tzi_DaylightBias(tzi);
       offset *= -60;
    }
 
@@ -11078,31 +11078,20 @@ void Tester.ResetGlobalArrays() {
    int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int rootFunction      );
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int uninitializeReason);
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int reason  );
 
    int    pi_hProcess             (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread              (/*PROCESS_INFORMATION*/int pi[]);
 
+   int    si_setCb                (/*STARTUPINFO*/int si[], int size   );
+   int    si_setFlags             (/*STARTUPINFO*/int si[], int flags  );
+   int    si_setShowWindow        (/*STARTUPINFO*/int si[], int cmdShow);
+
+   int    tzi_Bias                (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   int    tzi_DaylightBias        (/*TIME_ZONE_INFORMATION*/int tzi[]);
+
 #import "structs.win32.ex4"
-   int    si.cb                      (/*STARTUPINFO*/int si[]);
-   int    si.Flags                   (/*STARTUPINFO*/int si[]);
-   int    si.ShowWindow              (/*STARTUPINFO*/int si[]);
-
-   int    si.setCb                   (/*STARTUPINFO*/int si[], int size   );
-   int    si.setFlags                (/*STARTUPINFO*/int si[], int flags  );
-   int    si.setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
-
-   int    st.Year                    (/*SYSTEMTIME*/int st[]);
-   int    st.Month                   (/*SYSTEMTIME*/int st[]);
-   int    st.Day                     (/*SYSTEMTIME*/int st[]);
-   int    st.Hour                    (/*SYSTEMTIME*/int st[]);
-   int    st.Minute                  (/*SYSTEMTIME*/int st[]);
-   int    st.Second                  (/*SYSTEMTIME*/int st[]);
-
-   int    tzi.Bias                   (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   int    tzi.DaylightBias           (/*TIME_ZONE_INFORMATION*/int tzi[]);
-
    bool   wfd.FileAttribute.Directory(/*WIN32_FIND_DATA*/int wfd[]);
    string wfd.FileName               (/*WIN32_FIND_DATA*/int wfd[]);
 #import

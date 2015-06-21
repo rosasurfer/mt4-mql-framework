@@ -154,38 +154,28 @@ string si.ShowWindowToStr(/*STARTUPINFO*/int si[]) {
  *    WORD wMilliseconds;     //  2
  * } st;                      // 16 byte = int[4]
  */
-int st.Year     (/*SYSTEMTIME*/int st[]) { return(st[0] &  0x0000FFFF); }
-int st.Month    (/*SYSTEMTIME*/int st[]) { return(st[0] >> 16        ); }
-int st.DayOfWeek(/*SYSTEMTIME*/int st[]) { return(st[1] &  0x0000FFFF); }
-int st.Day      (/*SYSTEMTIME*/int st[]) { return(st[1] >> 16        ); }
-int st.Hour     (/*SYSTEMTIME*/int st[]) { return(st[2] &  0x0000FFFF); }
-int st.Minute   (/*SYSTEMTIME*/int st[]) { return(st[2] >> 16        ); }
-int st.Second   (/*SYSTEMTIME*/int st[]) { return(st[3] &  0x0000FFFF); }
-int st.MilliSec (/*SYSTEMTIME*/int st[]) { return(st[3] >> 16        ); }
+int st.Year        (/*SYSTEMTIME*/int st[]) { return(st[0] &  0x0000FFFF); }
+int st.Month       (/*SYSTEMTIME*/int st[]) { return(st[0] >> 16        ); }
+int st.DayOfWeek   (/*SYSTEMTIME*/int st[]) { return(st[1] &  0x0000FFFF); }
+int st.Day         (/*SYSTEMTIME*/int st[]) { return(st[1] >> 16        ); }
+int st.Hour        (/*SYSTEMTIME*/int st[]) { return(st[2] &  0x0000FFFF); }
+int st.Minute      (/*SYSTEMTIME*/int st[]) { return(st[2] >> 16        ); }
+int st.Second      (/*SYSTEMTIME*/int st[]) { return(st[3] &  0x0000FFFF); }
+int st.Milliseconds(/*SYSTEMTIME*/int st[]) { return(st[3] >> 16        ); }
 
 
 /**
  * Win32 structure TIME_ZONE_INFORMATION
  *
  * struct TIME_ZONE_INFORMATION {
- *    LONG       Bias;                    //   4     => tzi[ 0]      // Bias             = -Offset
- *    WCHAR      StandardName[32];        //  64     => tzi[ 1]      // LocalTime + Bias = GMT        (LocalTime -> GMT)
- *    SYSTEMTIME StandardDate;            //  16     => tzi[17]      // GMT + Offset     = LocalTime  (GMT -> LocalTime)
+ *    LONG       Bias;                    //   4     => tzi[ 0]      // Bias             = -Offset in Minuten
+ *    WCHAR      StandardName[32];        //  64     => tzi[ 1]      // LocalTime + Bias = GMT                 (z.B. "G…T…B… …N…o…r…m…a…l…z…e…i…t")
+ *    SYSTEMTIME StandardDate;            //  16     => tzi[17]      // GMT + Offset     = LocalTime
  *    LONG       StandardBias;            //   4     => tzi[21]
- *    WCHAR      DaylightName[32];        //  64     => tzi[22]
+ *    WCHAR      DaylightName[32];        //  64     => tzi[22]                                                (z.B. "G…T…B… …S…o…m…m…e…r…z…e…i…t")
  *    SYSTEMTIME DaylightDate;            //  16     => tzi[38]
  *    LONG       DaylightBias;            //   4     => tzi[42]
  * } tzi;                                 // 172 byte = int[43]
- *
- * BufferToHexStr(TIME_ZONE_INFORMATION) = 88FFFFFF
- *                                         47005400 42002000 4E006F00 72006D00 61006C00 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
- *                                         G   T    B   .    N   o    r   m    a   l    z   e    i   t
- *                                         00000A00 00000500 04000000 00000000
- *                                         00000000
- *                                         47005400 42002000 53006F00 6D006D00 65007200 7A006500 69007400 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
- *                                         G   T    B   .    S   o    m   m    e   r    z   e    i   t
- *                                         00000300 00000500 03000000 00000000
- *                                         C4FFFFFF
  */
 int    tzi.Bias        (/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(tzi[0]); }                               // Bias in Minuten
 string tzi.StandardName(/*TIME_ZONE_INFORMATION*/int tzi[])                         { return(BufferWCharsToStr(tzi, 1, 16)); }
