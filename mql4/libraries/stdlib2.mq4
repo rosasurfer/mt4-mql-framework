@@ -9,25 +9,6 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <structs/win32/structs.mqh>
-
-
-#import "kernel32.dll"
-   bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
-   int  GetCurrentProcess();
-
-   // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist geringer, da der Buffer
-   // selbst geparst werden muß. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
-   int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
-
-   bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
-   void GetSystemTime(int lpSystemTime[]);
-   bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
-
-#import "ntdll.dll"
-   bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
-
-#import
 
 
 /**
@@ -35,7 +16,7 @@ int __DEINIT_FLAGS__[];
  *
  * @param  string fileName - Name der .ini-Datei
  * @param  string section  - Name des Abschnitts
- * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüsselnamen
+ * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüssel
  *
  * @return int - Anzahl der gefundenen Schlüssel oder -1 (EMPTY), falls ein Fehler auftrat
  */
@@ -53,14 +34,14 @@ int GetIniKeys.2(string fileName, string section, string keys[]) {
       chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
    }
 
-   int length;
+   if (!chars) int length = ArrayResize(keys, 0);                    // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
+   else            length = ExplodeStrings(buffer, keys);
 
-   if (!chars) length = ArrayResize(keys, 0);                        // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
-   else        length = ExplodeStrings(buffer, keys);
+   ArrayResize(buffer, 0);
 
-   if (catch("GetIniKeys.2()") != NO_ERROR)
-      return(EMPTY);
-   return(length);
+   if (!catch("GetIniKeys.2()"))
+      return(length);
+   return(EMPTY);
 }
 
 
@@ -1187,12 +1168,12 @@ int GetTerminalRuntime() {
    if (!GetProcessTimes(hProcess, ft, iNull, iNull, iNull)) return(catch("GetTerminalRuntime(1)->kernel32::GetProcessTimes()", ERR_WIN32_ERROR));
    if (!RtlTimeToSecondsSince1970(ft, creationTime))        return(catch("GetTerminalRuntime(2)->kernel32::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
    if (!FileTimeToSystemTime(ft, st))                       return(catch("GetTerminalRuntime(3)->kernel32::FileTimeToSystemTime()", ERR_WIN32_ERROR));
-   creationTime[1] = st.MilliSec(st);
+   creationTime[1] = st_Milliseconds(st);
 
    GetSystemTime(st);
    if (!SystemTimeToFileTime(st, ft))                       return(catch("GetTerminalRuntime(4)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
    if (!RtlTimeToSecondsSince1970(ft, currentTime))         return(catch("GetTerminalRuntime(5)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
-   currentTime[1] = st.MilliSec(st);
+   currentTime[1] = st_Milliseconds(st);
 
    int secDiff  = currentTime[0] - creationTime[0];                  // Sekunden
    int mSecDiff = currentTime[1] - creationTime[1];                  // Millisekunden
@@ -1210,3 +1191,24 @@ int GetTerminalRuntime() {
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);
 }
+
+
+#import "Expander.dll"
+   int  st_Milliseconds(/*SYSTEMTIME*/int st[]);
+
+#import "kernel32.dll"
+   bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
+   int  GetCurrentProcess();
+
+   // Diese Deklaration benutzt zur Rückgabe statt eines String-Buffers einen Byte-Buffer. Die Performance ist geringer, da der Buffer
+   // selbst geparst werden muß. Dies ermöglicht jedoch die Rückgabe mehrerer Werte.
+   int  GetPrivateProfileStringA(string lpSection, string lpKey, string lpDefault, int lpBuffer[], int bufferSize, string lpFileName);
+
+   bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
+   void GetSystemTime(int lpSystemTime[]);
+   bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
+
+#import "ntdll.dll"
+   bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
+
+#import

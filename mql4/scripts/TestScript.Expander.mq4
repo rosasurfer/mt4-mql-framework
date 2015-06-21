@@ -7,18 +7,18 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <structs/pewa/EXECUTION_CONTEXT.mqh>
+
+//#include <structs/pewa/EXECUTION_CONTEXT.mqh>
 #include <history.mqh>
 #include <test/testlibrary.mqh>
+#include <win32api.mqh>
 
 
 #import "Expander.Release.dll"
-   bool Test_onInit  (int ec[], int logLevel);
-   bool Test_onStart (int ec[], int logLevel);
-   bool Test_onDeinit(int ec[], int logLevel);
-
-   int  Test();
+   int    Test();
+   string tzi_StandardName(/*TIME_ZONE_INFORMATION*/int tzi[]);
 #import
+
 
 
 /**
@@ -27,7 +27,6 @@ int __DEINIT_FLAGS__[];
  */
 int onInit() {
    //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-   //Test_onInit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
 
@@ -38,15 +37,20 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   //Test_onStart(__ExecutionContext, L_DEBUG);
    //Test();
-
    //testlibrary();
    //debug("onStart()->testlibrary()");
 
-   EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
-   ec_setProgramName(__ExecutionContext, "hello_world");
-   EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+
+
+   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);
+   int type = GetTimeZoneInformation(tzi);
+
+   string stdName.dll = tzi_StandardName(tzi);
+   debug("onStart()->tzi_StandardName() = "+ StringToStr(stdName.dll));
+
+
+   ArrayResize(tzi, 0);
 
    return(last_error);
 }
@@ -57,7 +61,6 @@ int onStart() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   //Test_onDeinit(__ExecutionContext, L_DEBUG);
    //int error = test_context(); if (IsError(error)) return(catch("onStart(2)->test_context() failed", error));
    return(last_error);
 }

@@ -14,9 +14,6 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   bool Test_onInit  (int ec[], int logLevel);
-   bool Test_onStart (int ec[], int logLevel);
-   bool Test_onDeinit(int ec[], int logLevel);
 #import
 
 
@@ -25,7 +22,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   //Test_onInit(__ExecutionContext, L_DEBUG);
    return(last_error);
 }
 
@@ -36,7 +32,6 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   //Test_onStart(__ExecutionContext, L_DEBUG);
    //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
 
    testlibrary();
@@ -54,7 +49,6 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   //Test_onDeinit(__ExecutionContext, L_DEBUG);
    //int error = test_context(); if (IsError(error)) return(catch("onStart(2)->test_context() failed", error));
    return(last_error);
 }

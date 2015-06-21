@@ -194,6 +194,8 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
+   bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
+
    int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
    bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
@@ -202,8 +204,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
    int    ec_setLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
-
-   bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
 
 #import "kernel32.dll"
    int    GetCurrentThreadId();
