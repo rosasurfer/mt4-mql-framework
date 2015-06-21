@@ -652,11 +652,9 @@ void DummyCalls() {
    int      GetCurrencyId(string currency);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
    datetime GetGmtTime();
-   int      GetIniKeys(string fileName, string section, string names[]);
    string   GetIniString(string fileName, string section, string key, string defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
-   int      InitializeByteBuffer(int buffer[], int length);
    bool     IsIniKey(string fileName, string section, string key);
    bool     IsPendingTradeOperation(int value);
    bool     IsTradeOperation(int value);
@@ -669,6 +667,9 @@ void DummyCalls() {
    bool     StringIsNumeric(string value);
    string   StringReplace.Recursive(string object, string search, string replace);
    int      StrToOperationType(string value);
+
+#import "stdlib2.ex4"
+   int      GetIniKeys(string fileName, string section, string names[]);
 
 #import "Expander.dll"
    int      GetIntsAddress(int array[]);

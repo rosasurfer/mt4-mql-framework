@@ -10,6 +10,7 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <stdlib.mqh>
 #include <structs/mt4/HISTORY_HEADER.mqh>
 

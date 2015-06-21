@@ -1,5 +1,5 @@
 /**
- * NOTE: Libraries use predefined variables of the module that called the library.
+ *
  */
 #property library
 
@@ -8,6 +8,8 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
+#include <functions/ExplodeStrings.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <stdlib.mqh>
 
 
@@ -20,7 +22,7 @@ int __DEINIT_FLAGS__[];
  *
  * @return int - Anzahl der gefundenen Schlüssel oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int GetIniKeys.2(string fileName, string section, string keys[]) {
+int GetIniKeys(string fileName, string section, string keys[]) {
    string sNull;
    int bufferSize = 200;
    int buffer[]; InitializeByteBuffer(buffer, bufferSize);
@@ -34,13 +36,13 @@ int GetIniKeys.2(string fileName, string section, string keys[]) {
       chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
    }
 
-   if (!chars) int length = ArrayResize(keys, 0);                    // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
-   else            length = ExplodeStrings(buffer, keys);
+   if (!chars) int size = ArrayResize(keys, 0);                      // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
+   else            size = ExplodeStrings(buffer, keys);
 
    ArrayResize(buffer, 0);
 
-   if (!catch("GetIniKeys.2()"))
-      return(length);
+   if (!catch("GetIniKeys(1)"))
+      return(size);
    return(EMPTY);
 }
 
