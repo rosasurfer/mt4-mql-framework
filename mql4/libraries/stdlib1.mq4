@@ -18,10 +18,6 @@
  * | 1 qword | 2 dword | 4 word | 8 byte | 64 bit |                 | 0xFFFFFFFF 0xFFFFFFFF |   -9.223.372.036.854.775.808 |                              0 |     double     |  LONGLONG,DWORDLONG |     double     | MQL-double: 53 bit Mantisse (Integers bis 53 Bit ohne Genauigkeitsverlust)
  * |         |         |        |        |        |                 |                       |    9.223.372.036.854.775.807 |     18.446.744.073.709.551.616 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+-----------------------+------------------------------+--------------------------------+----------------+---------------------+----------------+
- *
- *
- * NOTE: 1) Die Library ist kompatibel zur Original-MetaQuotes-Version.
- *       2) Libraries use predefined variables of the module that called the library.
  */
 #property library
 
@@ -30,6 +26,8 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
+#include <functions/ExplodeStrings.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
 
@@ -900,20 +898,6 @@ int GetIniSections(string fileName, string names[]) {
 
 
 /**
- * Gibt alle Schlüssel eines Abschnitts einer .ini-Datei zurück.
- *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Name des Abschnitts
- * @param  string keys[]   - Array zur Aufnahme der gefundenen Schlüsselnamen
- *
- * @return int - Anzahl der gefundenen Schlüssel oder -1, falls ein Fehler auftrat
- */
-int GetIniKeys(string fileName, string section, string keys[]) {
-   return(GetIniKeys.2(fileName, section, keys));
-}
-
-
-/**
  * Ob ein Abschnitt in einer .ini-Datei existiert. Groß-/Kleinschreibung wird nicht beachtet.
  *
  * @param  string fileName - Name der .ini-Datei
@@ -940,7 +924,7 @@ bool IsIniSection(string fileName, string section) {
  */
 bool IsIniKey(string fileName, string section, string key) {
    string keys[];
-   if (GetIniKeys.2(fileName, section, keys) > 0)
+   if (GetIniKeys(fileName, section, keys) > 0)
       return(StringInArrayI(keys, key));
    return(false);
 }
@@ -1056,46 +1040,6 @@ int GetTerminalBuild() {
 
    static.result = build;
    return(static.result);
-}
-
-
-/**
- * Initialisiert einen Buffer zur Aufnahme der gewünschten Anzahl von Bytes.
- *
- * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
- * @param  int length   - Anzahl der im Buffer zu speichernden Bytes
- *
- * @return int - Fehlerstatus
- */
-int InitializeByteBuffer(int buffer[], int length) {
-   int dimensions = ArrayDimension(buffer);
-
-   if (dimensions > 2) return(catch("InitializeByteBuffer(1)  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
-   if (length < 0)     return(catch("InitializeByteBuffer(2)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER));
-
-   if (length & 0x03 == 0) length = length >> 2;                     // length & 0x03 entspricht length % 4
-   else                    length = length >> 2 + 1;
-
-   if (dimensions == 1) {
-      if (ArraySize(buffer) != length)
-         ArrayResize(buffer, length);
-   }
-   else if (ArrayRange(buffer, 1) != length) {                       // die 2. Dimension mehrdimensionale Arrays kann nicht dynamisch angepaßt werden
-      return(catch("InitializeByteBuffer(3)  cannot runtime adjust size of dimension 2 (size="+ ArrayRange(buffer, 1) +")", ERR_INCOMPATIBLE_ARRAYS));
-   }
-
-   if (ArraySize(buffer) > 0)
-      ArrayInitialize(buffer, 0);
-
-   return(catch("InitializeByteBuffer(4)"));
-}
-
-
-/**
- * Alias
- */
-int InitializeCharBuffer(int buffer[], int length) {
-   return(InitializeByteBuffer(buffer, length));
 }
 
 
@@ -3231,70 +3175,6 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
 
 
 /**
- * Konvertiert einen String-Buffer in ein String-Array.
- *
- * @param  int    buffer[]  - Buffer mit durch NUL-Zeichen getrennten Strings, terminiert durch ein weiteres NUL-Zeichen
- * @param  string results[] - Ergebnisarray
- *
- * @return int - Anzahl der konvertierten Strings
- */
-int ExplodeStrings(int buffer[], string &results[]) {
-   int  bufferSize = ArraySize(buffer);
-   bool separator  = true;
-
-   ArrayResize(results, 0);
-   int resultSize = 0;
-
-   for (int i=0; i < bufferSize; i++) {
-      int value, shift=0, integer=buffer[i];
-
-      // Die Reihenfolge von HIBYTE, LOBYTE, HIWORD und LOWORD eines Integers muß in die eines Strings konvertiert werden.
-      for (int n=0; n < 4; n++) {
-         value = integer >> shift & 0xFF;             // Integer in Bytes zerlegen
-
-         if (value != 0x00) {                         // kein Trennzeichen, Character in Array ablegen
-            if (separator) {
-               resultSize++;
-               ArrayResize(results, resultSize);
-               results[resultSize-1] = "";
-               separator = false;
-            }
-            results[resultSize-1] = StringConcatenate(results[resultSize-1], CharToStr(value));
-         }
-         else {                                       // Trennzeichen
-            if (separator) {                          // 2 Trennzeichen = Separator + Terminator, beide Schleifen verlassen
-               i = bufferSize;
-               break;
-            }
-            separator = true;
-         }
-         shift += 8;
-      }
-   }
-
-   if (!catch("ExplodeStrings()"))
-      return(ArraySize(results));
-   return(0);
-}
-
-
-/**
- * Alias
- */
-int ExplodeStringsA(int buffer[], string results[]) {
-   return(ExplodeStrings(buffer, results));
-}
-
-
-/**
- *
- */
-int ExplodeStringsW(int buffer[], string results[]) {
-   return(catch("ExplodeStringsW()", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
  * Ermittelt den vollständigen Dateipfad der Zieldatei, auf die ein Windows-Shortcut (.lnk-File) zeigt.
  *
  * @return string lnkFilename - vollständige Pfadangabe zum Shortcut
@@ -3612,8 +3492,8 @@ string GetServerDirectory() {
       int hFindDir=FindFirstFileA(pattern, wfd), next=hFindDir;
 
       while (next > 0) {
-         if (wfd.FileAttribute.Directory(wfd)) {
-            string name = wfd.FileName(wfd);
+         if (wfd_FileAttribute_Directory(wfd)) {
+            string name = wfd_FileName(wfd);
             if (name != ".") /*&&*/ if (name != "..") {
                pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
@@ -7738,7 +7618,7 @@ bool IsFile(string filename) {
       int hSearch = FindFirstFileA(filename, wfd);
 
       if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
-         result = !wfd.FileAttribute.Directory(wfd);
+         result = !wfd_FileAttribute_Directory(wfd);
          FindClose(hSearch);
       }
       ArrayResize(wfd, 0);
@@ -7767,7 +7647,7 @@ bool IsDirectory(string filename) {
       int hSearch = FindFirstFileA(filename, wfd);
 
       if (hSearch != INVALID_HANDLE_VALUE) {                         // INVALID_HANDLE_VALUE = nichts gefunden
-         result = wfd.FileAttribute.Directory(wfd);
+         result = wfd_FileAttribute_Directory(wfd);
          FindClose(hSearch);
       }
       ArrayResize(wfd, 0);
@@ -7800,11 +7680,9 @@ int FindFileNames(string pattern, string &lpResults[], int flags=NULL) {
    int hSearch = FindFirstFileA(pattern, wfd), next=hSearch;
 
    while (next > 0) {
-      name = wfd.FileName(wfd);
-      //debug("FindFileNames()  \""+ name +"\"   "+ wfd.FileAttributesToStr(wfd));
-
+      name = wfd_FileName(wfd);
       while (true) {
-         if (wfd.FileAttribute.Directory(wfd)) {
+         if (wfd_FileAttribute_Directory(wfd)) {
             if (flags & FF_FILESONLY && 1)  break;
             if (name ==  ".")               break;
             if (name == "..")               break;
@@ -11064,8 +10942,8 @@ void Tester.ResetGlobalArrays() {
 
 #import "stdlib2.ex4"
    string DoublesToStr(double array[], string separator);
+   int    GetIniKeys(string fileName, string section, string keys[]);
    string TicketsToStr.Lots(int array[], string separator);
-   int    GetIniKeys.2(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
    int    GetBoolsAddress  (bool   array[]);
@@ -11075,23 +10953,22 @@ void Tester.ResetGlobalArrays() {
    int    GetStringsAddress(string array[]);
    string GetString(int address);
 
-   int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LastError               (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int function);
-   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int reason  );
+   int    ec_setRootFunction         (/*EXECUTION_CONTEXT*/int ec[], int function);
+   int    ec_setUninitializeReason   (/*EXECUTION_CONTEXT*/int ec[], int reason  );
 
-   int    pi_hProcess             (/*PROCESS_INFORMATION*/int pi[]);
-   int    pi_hThread              (/*PROCESS_INFORMATION*/int pi[]);
+   int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
+   int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);
 
-   int    si_setCb                (/*STARTUPINFO*/int si[], int size   );
-   int    si_setFlags             (/*STARTUPINFO*/int si[], int flags  );
-   int    si_setShowWindow        (/*STARTUPINFO*/int si[], int cmdShow);
+   int    si_setCb                   (/*STARTUPINFO*/int si[], int size   );
+   int    si_setFlags                (/*STARTUPINFO*/int si[], int flags  );
+   int    si_setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
 
-   int    tzi_Bias                (/*TIME_ZONE_INFORMATION*/int tzi[]);
-   int    tzi_DaylightBias        (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   int    tzi_Bias                   (/*TIME_ZONE_INFORMATION*/int tzi[]);
+   int    tzi_DaylightBias           (/*TIME_ZONE_INFORMATION*/int tzi[]);
 
-#import "structs.win32.ex4"
-   bool   wfd.FileAttribute.Directory(/*WIN32_FIND_DATA*/int wfd[]);
-   string wfd.FileName               (/*WIN32_FIND_DATA*/int wfd[]);
+   bool   wfd_FileAttribute_Directory(/*WIN32_FIND_DATA*/int wfd[]);
+   string wfd_FileName               (/*WIN32_FIND_DATA*/int wfd[]);
 #import

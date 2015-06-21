@@ -18,6 +18,7 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <stdlib.mqh>
 
 #include <win32api.mqh>

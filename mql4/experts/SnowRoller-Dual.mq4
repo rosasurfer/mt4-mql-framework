@@ -20,6 +20,7 @@ extern     string StopConditions       = "@profit(500)";
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 #include <stdlib.mqh>
 
 #include <win32api.mqh>

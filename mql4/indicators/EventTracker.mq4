@@ -1,5 +1,5 @@
 /**
- * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch und/oder per SMS.  
+ * EventTracker für verschiedene Ereignisse. Benachrichtigt optisch, akustisch und/oder per SMS.
  * Die Art der Benachrichtigung (optisch, akustisch, SMS) kann je Event konfiguriert werden.
  *
  *
@@ -14,7 +14,7 @@
  *
  *
  * (2) Preis-Events (Signale)
- *     Die Signalüberwachung wird im Indikator aktiviert bzw. deaktiviert, die einzelnen Signale werden je Instrument in der Account-Konfiguration konfiguriert. 
+ *     Die Signalüberwachung wird im Indikator aktiviert bzw. deaktiviert, die einzelnen Signale werden je Instrument in der Account-Konfiguration konfiguriert.
  *     Es liegt in der Verantwortung des Benutzers, nur einen EventTracker je Instrument für Signale zu aktivieren. Folgende Signale können konfiguriert werden:
  *
  *      • Eventkey:     {Timeframe-ID}.{Signal-ID}[.Params]
@@ -1526,3 +1526,8 @@ string InputsToStr() {
                             )
    );
 }
+
+
+#import "stdlib2.ex4"
+   int GetIniKeys(string fileName, string section, string keys[]);
+#import

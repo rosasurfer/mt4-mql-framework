@@ -7,6 +7,7 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 
 //#include <structs/pewa/EXECUTION_CONTEXT.mqh>
 #include <history.mqh>
@@ -40,7 +41,6 @@ int onStart() {
    //Test();
    //testlibrary();
    //debug("onStart()->testlibrary()");
-
 
 
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);

@@ -121,7 +121,6 @@
 
 
    // Buffer-Funktionen
-   int      InitializeCharBuffer  (int    buffer[], int length);  int InitializeByteBuffer(int buffer[], int length);                  // Alias
    int      InitializeDoubleBuffer(double buffer[], int size  );
    int      InitializeStringBuffer(string buffer[], int length);
 
@@ -132,9 +131,6 @@
    //int    BufferSetChar(int buffer[], int pos, int char);
 
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
-
-   int      ExplodeStringsA(int buffer[], string results[]);   int ExplodeStrings(int buffer[], string results[]);                     // Alias
-   int      ExplodeStringsW(int buffer[], string results[]);
 
 
    // Configuration
@@ -166,9 +162,8 @@
    int      GetIniSections (string fileName, string names[]);
    bool     IsIniSection   (string fileName, string section);
 
-   int      GetIniKeys     (string fileName, string section, string names[]);
-   bool     IsIniKey       (string fileName, string section, string key    );
-   bool     DeleteIniKey   (string fileName, string section, string key    );
+   bool     IsIniKey       (string fileName, string section, string key);
+   bool     DeleteIniKey   (string fileName, string section, string key);
 
    bool     GetIniBool     (string fileName, string section, string key, bool   defaultValue);
    int      GetIniInt      (string fileName, string section, string key, int    defaultValue);

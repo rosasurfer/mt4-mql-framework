@@ -71,8 +71,8 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Magic characters zur Markierung/Visualisierung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 - Ersatzzeichen für NUL-Bytes in Strings
-#define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 - Ersatzzeichen für Control-Characters in Strings
+#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 (133) - Ersatzzeichen für NUL-Bytes in Strings
+#define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
 
 
 // Mathematische Konstanten
