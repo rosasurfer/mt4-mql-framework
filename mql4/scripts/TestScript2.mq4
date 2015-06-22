@@ -7,6 +7,8 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 
+#include <structs\pewa\EXECUTION_CONTEXT.mqh>
+
 
 /**
  * Main-Funktion

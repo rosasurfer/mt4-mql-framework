@@ -8,7 +8,6 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <structs/pewa/EXECUTION_CONTEXT.mqh>
 #include <history.mqh>
 #include <test/testlibrary.mqh>
 
@@ -40,7 +39,6 @@ int onTick() {
    return(last_error);
 
    int iNull[];
-   EXECUTION_CONTEXT.toStr(iNull);
 }
 
 

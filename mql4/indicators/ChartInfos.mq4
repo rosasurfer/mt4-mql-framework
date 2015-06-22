@@ -24,8 +24,8 @@
 int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
 int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
-#include <functions/InitializeByteBuffer.mqh>
 #include <stdfunctions.mqh>
+#include <functions/InitializeByteBuffer.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <win32api.mqh>
@@ -40,7 +40,7 @@ int __DEINIT_FLAGS__[];
 
 
 // Typ der Kursanzeige
-int    appliedPrice = PRICE_MEDIAN;                      // Preis: Bid | Ask | Median (default)
+int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | Median (default)
 
 
 // Moneymanagement

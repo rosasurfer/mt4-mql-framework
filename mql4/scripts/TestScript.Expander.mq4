@@ -6,10 +6,9 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <stdlib.mqh>
 
-//#include <structs/pewa/EXECUTION_CONTEXT.mqh>
 #include <history.mqh>
 #include <test/testlibrary.mqh>
 #include <win32api.mqh>
