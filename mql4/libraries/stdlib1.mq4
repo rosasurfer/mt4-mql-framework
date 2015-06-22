@@ -1526,8 +1526,8 @@ int ArraySetIntArray(int array[][], int offset, int values[]) {
    if (ArraySize(values) != dim2)    return(catch("ArraySetIntArray(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
    if (offset < 0 || offset >= dim1) return(catch("ArraySetIntArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
-   int src  = GetBufferAddress(values);
-   int dest = GetBufferAddress(array) + offset*dim2*4;
+   int src  = GetIntsAddress(values);
+   int dest = GetIntsAddress(array) + offset*dim2*4;
    CopyMemory(dest, src, dim2*4);
    return(NO_ERROR);
 }
@@ -1589,8 +1589,8 @@ int ArrayPushIntArray(int array[][], int value[]) {
    if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushIntArray(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
 
    ArrayResize(array, dim1+1);
-   int src  = GetBufferAddress(value);
-   int dest = GetBufferAddress(array) + dim1*dim2*4;
+   int src  = GetIntsAddress(value);
+   int dest = GetIntsAddress(array) + dim1*dim2*4;
    CopyMemory(dest, src, dim2*4);
    return(dim1+1);
 }
@@ -10198,7 +10198,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(8)")));
-      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
+      CopyMemory(GetIntsAddress(oes), GetIntsAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(OrderPop("OrderMultiClose(9)") && !oes.setError(oes, -1, last_error));
    }
@@ -10227,7 +10227,7 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
    if (sizeOfSymbols == 1) {
       if (!__OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(11)")));
-      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oes2), ArraySize(oes2)*4);
+      CopyMemory(GetIntsAddress(oes), GetIntsAddress(oes2), ArraySize(oes2)*4);
       ArrayResize(oes2, 0);
       return(OrderPop("OrderMultiClose(12)") && !oes.setError(oes, -1, last_error));
    }
@@ -10372,7 +10372,7 @@ private*/ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       if (!OrderCloseEx(tickets[0], NULL, NULL, slippage, markerColor, oeFlags, oe))
          return(_false(oes.setError(oes, -1, last_error)));
-      CopyMemory(GetBufferAddress(oes), GetBufferAddress(oe), ArraySize(oe)*4);
+      CopyMemory(GetIntsAddress(oes), GetIntsAddress(oe), ArraySize(oe)*4);
       ArrayResize(oe, 0);
       return(true);
    }
@@ -10947,11 +10947,11 @@ void Tester.ResetGlobalArrays() {
 
 #import "Expander.dll"
    int    GetBoolsAddress  (bool   array[]);
-   int    GetBufferAddress (int    array[]);
+   int    GetIntsAddress   (int    array[]);
    int    GetDoublesAddress(double array[]);
    int    GetStringAddress (string value  );
    int    GetStringsAddress(string array[]);
-   string GetString(int address);
+   string GetString        (int    address);
 
    int    ec_LastError               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
