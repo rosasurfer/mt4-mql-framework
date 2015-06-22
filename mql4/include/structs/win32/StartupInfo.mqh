@@ -3,7 +3,7 @@
  *
  *
  * struct STARTUPINFOA {
- *    DWORD  cb;                          //  4      => si[ 0]
+ *    DWORD  cb;                          //  4      => si[ 0]    // Getter/Setter mit Alias: si.Size
  *    LPSTR  lpReserved;                  //  4      => si[ 1]
  *    LPSTR  lpDesktop;                   //  4      => si[ 2]
  *    LPSTR  lpTitle;                     //  4      => si[ 3]
@@ -23,7 +23,7 @@
  *    HANDLE hStdError;                   //  4      => si[16]
  * } STARTUPINFO, si;                     // 68 byte = int[17]
  */
-int si.cb           (/*STARTUPINFO*/int si[]) { return(si[ 0]); }
+int si.Size         (/*STARTUPINFO*/int si[]) { return(si[ 0]); }
 int si.Desktop      (/*STARTUPINFO*/int si[]) { return(si[ 2]); }
 int si.Title        (/*STARTUPINFO*/int si[]) { return(si[ 3]); }
 int si.X            (/*STARTUPINFO*/int si[]) { return(si[ 4]); }
@@ -39,9 +39,25 @@ int si.hStdInput    (/*STARTUPINFO*/int si[]) { return(si[14]); }
 int si.hStdOutput   (/*STARTUPINFO*/int si[]) { return(si[15]); }
 int si.hStdError    (/*STARTUPINFO*/int si[]) { return(si[16]); }
 
-int si.setCb        (/*STARTUPINFO*/int &si[], int size   ) { si[ 0] =  size; }
-int si.setFlags     (/*STARTUPINFO*/int &si[], int flags  ) { si[11] = flags; }
-int si.setShowWindow(/*STARTUPINFO*/int &si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); }
+int si.setSize      (/*STARTUPINFO*/int &si[], int size   ) { si[ 0] =  size;                                      return(size   ); }
+int si.setFlags     (/*STARTUPINFO*/int &si[], int flags  ) { si[11] = flags;                                      return(flags  ); }
+int si.setShowWindow(/*STARTUPINFO*/int &si[], int cmdShow) { si[12] = (si[12] & 0xFFFF0000) + (cmdShow & 0xFFFF); return(cmdShow); }
+
+
+// STARTUPINFO flags
+#define STARTF_FORCEONFEEDBACK      0x0040
+#define STARTF_FORCEOFFFEEDBACK     0x0080
+#define STARTF_PREVENTPINNING       0x2000
+#define STARTF_RUNFULLSCREEN        0x0020
+#define STARTF_TITLEISAPPID         0x1000
+#define STARTF_TITLEISLINKNAME      0x0800
+#define STARTF_USECOUNTCHARS        0x0008
+#define STARTF_USEFILLATTRIBUTE     0x0010
+#define STARTF_USEHOTKEY            0x0200
+#define STARTF_USEPOSITION          0x0004
+#define STARTF_USESHOWWINDOW        0x0001
+#define STARTF_USESIZE              0x0002
+#define STARTF_USESTDHANDLES        0x0100
 
 
 /**
@@ -75,8 +91,23 @@ string si.FlagsToStr(/*STARTUPINFO*/int si[]) {
 }
 
 
+// ShowWindow() constants
+#define SW_SHOW                           5
+#define SW_SHOWNA                         8
+#define SW_HIDE                           0
+#define SW_SHOWMAXIMIZED                  3
+#define SW_SHOWMINIMIZED                  2
+#define SW_SHOWMINNOACTIVE                7
+#define SW_MINIMIZE                       6
+#define SW_FORCEMINIMIZE                 11
+#define SW_SHOWNORMAL                     1
+#define SW_SHOWNOACTIVATE                 4
+#define SW_RESTORE                        9
+#define SW_SHOWDEFAULT                   10
+
+
 /**
- * Gibt die lesbare ShowWindow-Konstante einer STARTUPINFO zurück.
+ * Gibt die lesbare ShowWindow()-Konstante einer STARTUPINFO zurück.
  *
  * @param  int si[] - STARTUPINFO
  *
@@ -102,10 +133,22 @@ string si.ShowWindowToStr(/*STARTUPINFO*/int si[]) {
 
 
 #import "Expander.dll"
-   int si_setCb        (/*STARTUPINFO*/int si[], int size   );
+   int si_setSize      (/*STARTUPINFO*/int si[], int size   );
+   //  ...
+   //  ...
+   //  ...
+   //  ...
+   //  ...
+   //  ...
+   //  ...
+   //  ...
+   //  ...
    int si_setFlags     (/*STARTUPINFO*/int si[], int flags  );
+   //  ...
    int si_setShowWindow(/*STARTUPINFO*/int si[], int cmdShow);
+   //  ...
+   //  ...
+   //  ...
+   //  ...
+   //  ...
 #import
-
-
-
