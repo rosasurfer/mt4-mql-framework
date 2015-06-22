@@ -3,11 +3,11 @@
  *
  *
  * struct PROCESS_INFORMATION {
- *    HANDLE hProcess;           //  4
- *    HANDLE hThread;            //  4
- *    DWORD  dwProcessId;        //  4
- *    DWORD  dwThreadId;         //  4
- * } pi;                         // 16 byte = int[4]
+ *    HANDLE hProcess;              //  4         pi[0]
+ *    HANDLE hThread;               //  4         pi[1]
+ *    DWORD  dwProcessId;           //  4         pi[2]
+ *    DWORD  dwThreadId;            //  4         pi[3]
+ * } pi;                            // 16 byte = int[4]
  */
 int pi.hProcess (/*PROCESS_INFORMATION*/int pi[]) { return(pi[0]); }
 int pi.hThread  (/*PROCESS_INFORMATION*/int pi[]) { return(pi[1]); }

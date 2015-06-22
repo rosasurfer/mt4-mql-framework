@@ -606,7 +606,7 @@
 #define REALTIME_PRIORITY_CLASS                  0x0100
 
 
-// ShowWindow() command ids
+// ShowWindow() constants
 #define SW_SHOW                           5  // Activates the window and displays it in its current size and position.
 #define SW_SHOWNA                         8  // Displays the window in its current size and position. Similar to SW_SHOW, except that the window is not activated.
 #define SW_HIDE                           0  // Hides the window and activates another window.

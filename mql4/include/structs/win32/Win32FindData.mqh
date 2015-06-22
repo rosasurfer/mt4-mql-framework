@@ -13,9 +13,31 @@
  *    DWORD    dwReserved1;               //   4     => wfd[10]
  *    CHAR     cFileName[MAX_PATH];       // 260     => wfd[11]
  *    CHAR     cAlternateFileName[14];    //  14     => wfd[76]
- * } WIN32_FIND_DATAA, wfd;               // 318 byte = int[80]      2 Byte Überhang
+ * } WIN32_FIND_DATA, wfd;                // 318 byte = int[80]      2 Byte Überhang
  */
 int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0]); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) +  44)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) + 304)); }
+
+
+// File attributes
+#define FILE_ATTRIBUTE_READONLY              1
+#define FILE_ATTRIBUTE_HIDDEN                2
+#define FILE_ATTRIBUTE_SYSTEM                4
+#define FILE_ATTRIBUTE_DIRECTORY            16
+#define FILE_ATTRIBUTE_ARCHIVE              32
+#define FILE_ATTRIBUTE_DEVICE               64
+#define FILE_ATTRIBUTE_NORMAL              128
+#define FILE_ATTRIBUTE_TEMPORARY           256
+#define FILE_ATTRIBUTE_SPARSE_FILE         512
+#define FILE_ATTRIBUTE_REPARSE_POINT      1024
+#define FILE_ATTRIBUTE_COMPRESSED         2048
+#define FILE_ATTRIBUTE_OFFLINE            4096
+#define FILE_ATTRIBUTE_NOT_INDEXED        8192  // FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ist zu lang für MQL
+#define FILE_ATTRIBUTE_ENCRYPTED         16384
+#define FILE_ATTRIBUTE_VIRTUAL           65536
+
+
 bool   wfd.FileAttribute.ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_READONLY      && 1); }
 bool   wfd.FileAttribute.Hidden      (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_HIDDEN        && 1); }
 bool   wfd.FileAttribute.System      (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_SYSTEM        && 1); }
@@ -31,8 +53,6 @@ bool   wfd.FileAttribute.Offline     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd
 bool   wfd.FileAttribute.NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_NOT_INDEXED   && 1); }
 bool   wfd.FileAttribute.Encrypted   (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_ENCRYPTED     && 1); }
 bool   wfd.FileAttribute.Virtual     (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0] & FILE_ATTRIBUTE_VIRTUAL       && 1); }
-string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) +  44)); }
-string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) + 304)); }
 
 
 /**
@@ -70,6 +90,16 @@ string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
 
 #import "Expander.dll"
    int    wfd_FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]);
+   //     ...
+   //     ...
+   //     ...
+   //     ...
+   //     ...
+   //     ...
+   //     ...
+   string wfd_FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
+   string wfd_AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
+
    bool   wfd_FileAttribute_ReadOnly    (/*WIN32_FIND_DATA*/int wfd[]);
    bool   wfd_FileAttribute_Hidden      (/*WIN32_FIND_DATA*/int wfd[]);
    bool   wfd_FileAttribute_System      (/*WIN32_FIND_DATA*/int wfd[]);
@@ -85,6 +115,4 @@ string wfd.FileAttributesToStr(/*WIN32_FIND_DATA*/int wfd[]) {
    bool   wfd_FileAttribute_NotIndexed  (/*WIN32_FIND_DATA*/int wfd[]);
    bool   wfd_FileAttribute_Encrypted   (/*WIN32_FIND_DATA*/int wfd[]);
    bool   wfd_FileAttribute_Virtual     (/*WIN32_FIND_DATA*/int wfd[]);
-   string wfd_FileName                  (/*WIN32_FIND_DATA*/int wfd[]);
-   string wfd_AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]);
 #import

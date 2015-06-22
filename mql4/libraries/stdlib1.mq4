@@ -3599,7 +3599,7 @@ string ShortAccountCompany() {
  */
 int WinExecAndWait(string cmdLine, int cmdShow) {
    /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO.size);
-   si_setCb        (si, STARTUPINFO.size);
+   si_setSize      (si, STARTUPINFO.size);
    si_setFlags     (si, STARTF_USESHOWWINDOW);
    si_setShowWindow(si, cmdShow);
 
@@ -10962,7 +10962,7 @@ void Tester.ResetGlobalArrays() {
    int    pi_hProcess                (/*PROCESS_INFORMATION*/int pi[]);
    int    pi_hThread                 (/*PROCESS_INFORMATION*/int pi[]);
 
-   int    si_setCb                   (/*STARTUPINFO*/int si[], int size   );
+   int    si_setSize                 (/*STARTUPINFO*/int si[], int size   );
    int    si_setFlags                (/*STARTUPINFO*/int si[], int flags  );
    int    si_setShowWindow           (/*STARTUPINFO*/int si[], int cmdShow);
 

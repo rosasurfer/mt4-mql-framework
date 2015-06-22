@@ -3,15 +3,15 @@
  *
  *
  * struct SYSTEMTIME {
- *    WORD wYear;                   //  2
- *    WORD wMonth;                  //  2
- *    WORD wDayOfWeek;              //  2
- *    WORD wDay;                    //  2
- *    WORD wHour;                   //  2
- *    WORD wMinute;                 //  2
- *    WORD wSecond;                 //  2
- *    WORD wMilliseconds;           //  2
- * } st;                            // 16 byte = int[4]
+ *    WORD wYear;                //  2
+ *    WORD wMonth;               //  2
+ *    WORD wDayOfWeek;           //  2
+ *    WORD wDay;                 //  2
+ *    WORD wHour;                //  2
+ *    WORD wMinute;              //  2
+ *    WORD wSecond;              //  2
+ *    WORD wMilliseconds;        //  2
+ * } st;                         // 16 byte = int[4]
  */
 int st.Year        (/*SYSTEMTIME*/int st[]) { return(st[0] &  0x0000FFFF); }
 int st.Month       (/*SYSTEMTIME*/int st[]) { return(st[0] >> 16        ); }
