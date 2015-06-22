@@ -172,7 +172,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-//#import "struct.HISTORY_HEADER.ex4"
+//#import "Expander.dll"
 //   int      hh.Version          (/*HISTORY_HEADER*/int hh[]);
 //   string   hh.Description      (/*HISTORY_HEADER*/int hh[]);
 //   string   hh.Symbol           (/*HISTORY_HEADER*/int hh[]);
