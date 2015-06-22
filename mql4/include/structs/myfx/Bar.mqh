@@ -137,7 +137,7 @@ string BAR.toStr(/*BAR*/double bar[], bool outputDebug=false) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-//#import "struct.BAR.ex4"
+//#import "Expander.dll"
 //   // Getter
 //   datetime bar.Time      (/*BAR*/double bar[]);
 //   double   bar.Open      (/*BAR*/double bar[]);
