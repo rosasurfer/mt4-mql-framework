@@ -19,7 +19,7 @@
  *       __STATUS_OFF        integrieren
  *       __STATUS_OFF.reason integrieren
  */
-#define I_EC.programId              0        // ohne Setter
+#define I_EC.programId              0
 #define I_EC.programType            1
 #define I_EC.programName            2
 #define I_EC.launchType            67
@@ -43,61 +43,62 @@
 
 
 // Getter
-int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.programId         ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.programType       ]);           EXECUTION_CONTEXT.toStr(ec); }
-string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetBufferAddress(ec)+I_EC.programName*4));               EXECUTION_CONTEXT.toStr(ec); }
-int    ec.LaunchType           (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.launchType        ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.lpSuperContext    ]);           EXECUTION_CONTEXT.toStr(ec); }
+int    ec.ProgramId            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.programId         ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.ProgramType          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.programType       ]);                      EXECUTION_CONTEXT.toStr(ec); }
+string ec.ProgramName          (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetIntsAddress(ec)+I_EC.programName*4));                          EXECUTION_CONTEXT.toStr(ec); }
+int    ec.LaunchType           (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.launchType        ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.lpSuperContext    ]);                      EXECUTION_CONTEXT.toStr(ec); }
 int    ec.SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]) {
    if (ArrayDimension(sec) != 1)        return(catch("ec.SuperContext(1)  too many dimensions of parameter sec = "+ ArrayDimension(sec), ERR_INCOMPATIBLE_ARRAYS));
    if (ArraySize(sec) != EXECUTION_CONTEXT.intSize)
       ArrayResize(sec, EXECUTION_CONTEXT.intSize);
    int lpSuperContext = ec.lpSuperContext(ec);
    if (!lpSuperContext) ArrayInitialize(sec, 0);
-   else                 CopyMemory(GetBufferAddress(sec), lpSuperContext, EXECUTION_CONTEXT.size);
-   return(catch("ec.SuperContext(2)"));                                                                                                                                    EXECUTION_CONTEXT.toStr(ec);
+   else                 CopyMemory(GetIntsAddress(sec), lpSuperContext, EXECUTION_CONTEXT.size);
+   return(catch("ec.SuperContext(2)"));                                                                                                                                             EXECUTION_CONTEXT.toStr(ec);
 }
-int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.initFlags         ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.deinitFlags       ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.RootFunction         (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.rootFunction      ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.uninitializeReason]);           EXECUTION_CONTEXT.toStr(ec); }
-string ec.Symbol               (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetBufferAddress(ec)+I_EC.symbol*4));                    EXECUTION_CONTEXT.toStr(ec); }
-int    ec.Timeframe            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.timeframe         ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.hChartWindow      ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.hChart            ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.TestFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.testFlags         ]);           EXECUTION_CONTEXT.toStr(ec); }
-int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.lastError         ]);           EXECUTION_CONTEXT.toStr(ec); }
-bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {                            return(ec[I_EC.logging           ] != 0);      EXECUTION_CONTEXT.toStr(ec); }
-string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetBufferAddress(ec)+I_EC.logFile*4));                   EXECUTION_CONTEXT.toStr(ec); }
+int    ec.InitFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.initFlags         ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.deinitFlags       ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.RootFunction         (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.rootFunction      ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.uninitializeReason]);                      EXECUTION_CONTEXT.toStr(ec); }
+string ec.Symbol               (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetIntsAddress(ec)+I_EC.symbol*4));                               EXECUTION_CONTEXT.toStr(ec); }
+int    ec.Timeframe            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.timeframe         ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.hChartWindow      ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.hChart               (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.hChart            ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.TestFlags            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.testFlags         ]);                      EXECUTION_CONTEXT.toStr(ec); }
+int    ec.LastError            (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.lastError         ]);                      EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.Logging              (/*EXECUTION_CONTEXT*/int ec[]                                ) {                          return(ec[I_EC.logging           ] != 0);                 EXECUTION_CONTEXT.toStr(ec); }
+string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                                ) { return(GetString(GetIntsAddress(ec)+I_EC.logFile*4));                              EXECUTION_CONTEXT.toStr(ec); }
 
 
 // Setter
-//     ec.setProgramId         ...kein MQL-Setter
-int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setProgramId         (/*EXECUTION_CONTEXT*/int &ec[], int    id                ) { ec[I_EC.programId         ] = id;                          return(id                ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
    if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setProgramName(2)  illegal parameter name = \""+ name +"\" (max "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
    int src  = GetStringAddress(name);
-   int dest = GetBufferAddress(ec) + I_EC.programName*4;
-   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                  return(name              ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;               return(type              ); EXECUTION_CONTEXT.toStr(ec); }
+   int dest = GetIntsAddress(ec) + I_EC.programName*4;
+   CopyMemory(dest, src, StringLen(name)+1);                         /*terminierendes <NUL> wird mitkopiert*/                                           return(name              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setSuperContext      (/*EXECUTION_CONTEXT*/int  ec[], int    sec[]             ) { int lpSec = ec.setLpSuperContext(ec, GetIntsAddress(sec)); return(lpSec             ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) {
    if (lpSuperContext && lpSuperContext < MIN_VALID_POINTER) return(!catch("ec.setLpSuperContext(1)  invalid parameter lpSuperContext = 0x"+ IntToHexStr(lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
-                                                                                             ec[I_EC.lpSuperContext    ] = lpSuperContext;     return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[I_EC.initFlags         ] = initFlags;          return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[I_EC.deinitFlags       ] = deinitFlags;        return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int &ec[], int    rootFunction      ) { ec[I_EC.rootFunction      ] = rootFunction;       return(rootFunction      ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[I_EC.uninitializeReason] = uninitializeReason; return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
+                                                                                             ec[I_EC.lpSuperContext    ] = lpSuperContext;              return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[I_EC.initFlags         ] = initFlags;                   return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[I_EC.deinitFlags       ] = deinitFlags;                 return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int &ec[], int    rootFunction      ) { ec[I_EC.rootFunction      ] = rootFunction;                return(rootFunction      ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[I_EC.uninitializeReason] = uninitializeReason;          return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setSymbol            (/*EXECUTION_CONTEXT*/int &ec[], string symbol            ) {
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("ec.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("ec.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    int src  = GetStringAddress(symbol);
-   int dest = GetBufferAddress(ec) + I_EC.symbol*4;
-   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                                  return(symbol            ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int &ec[], int    timeframe         ) { ec[I_EC.timeframe         ] = timeframe;          return(timeframe         ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;       return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;             return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
-int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[I_EC.testFlags         ] = testFlags;          return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
+   int dest = GetIntsAddress(ec) + I_EC.symbol*4;
+   CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                                           return(symbol            ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setTimeframe         (/*EXECUTION_CONTEXT*/int &ec[], int    timeframe         ) { ec[I_EC.timeframe         ] = timeframe;                   return(timeframe         ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setHChartWindow      (/*EXECUTION_CONTEXT*/int &ec[], int    hChartWindow      ) { ec[I_EC.hChartWindow      ] = hChartWindow;                return(hChartWindow      ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setHChart            (/*EXECUTION_CONTEXT*/int &ec[], int    hChart            ) { ec[I_EC.hChart            ] = hChart;                      return(hChart            ); EXECUTION_CONTEXT.toStr(ec); }
+int    ec.setTestFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    testFlags         ) { ec[I_EC.testFlags         ] = testFlags;                   return(testFlags         ); EXECUTION_CONTEXT.toStr(ec); }
 
 int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError         ) { ec[I_EC.lastError         ] = lastError;
    int lpSuperContext = ec.lpSuperContext(ec);
@@ -106,14 +107,14 @@ int    ec.setLastError         (/*EXECUTION_CONTEXT*/int &ec[], int    lastError
       ec.SuperContext(ec, sec);
       ec.setLastError(sec, lastError);                               // Fehler rekursiv in allen SuperContexten setzen
       ArrayResize(sec, 0);
-   }                                                                                                                                           return(lastError         ); EXECUTION_CONTEXT.toStr(ec); }
-bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[I_EC.logging           ] = logging != 0;       return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
+   }                                                                                                                                                    return(lastError         ); EXECUTION_CONTEXT.toStr(ec); }
+bool   ec.setLogging           (/*EXECUTION_CONTEXT*/int &ec[], bool   logging           ) { ec[I_EC.logging           ] = logging != 0;                return(logging != 0      ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setLogFile           (/*EXECUTION_CONTEXT*/int &ec[], string logFile           ) {
    if (StringIsNull(logFile)) logFile = "";                                                          // sicherstellen, daß der String initialisiert ist
    if (StringLen(logFile) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setLogFile(1)  illegal parameter logFile = \""+ logFile +"\" (max. "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
    int src  = GetStringAddress(logFile);
-   int dest = GetBufferAddress(ec) + I_EC.logFile*4;
-   CopyMemory(dest, src, StringLen(logFile)+1);                      /*terminierendes <NUL> wird mitkopiert*/  return(logFile           ); EXECUTION_CONTEXT.toStr(ec);
+   int dest = GetIntsAddress(ec) + I_EC.logFile*4;
+   CopyMemory(dest, src, StringLen(logFile)+1);                      /*terminierendes <NUL> wird mitkopiert*/                                           return(logFile           ); EXECUTION_CONTEXT.toStr(ec);
 }
 
 
@@ -153,27 +154,6 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
    catch("EXECUTION_CONTEXT.toStr(3)");
    return(result);
-
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   ec.ProgramId         (ec    );
-   ec.ProgramType       (ec    ); ec.setProgramType       (ec, NULL);
-   ec.ProgramName       (ec    ); ec.setProgramName       (ec, NULL);
-   ec.LaunchType        (ec    ); ec.setLaunchType        (ec, NULL);
-   ec.SuperContext      (ec, ec);
-   ec.lpSuperContext    (ec    ); ec.setLpSuperContext    (ec, NULL);
-   ec.InitFlags         (ec    ); ec.setInitFlags         (ec, NULL);
-   ec.DeinitFlags       (ec    ); ec.setDeinitFlags       (ec, NULL);
-   ec.RootFunction      (ec    ); ec.setRootFunction      (ec, NULL);
-   ec.UninitializeReason(ec    ); ec.setUninitializeReason(ec, NULL);
-   ec.Symbol            (ec    ); ec.setSymbol            (ec, NULL);
-   ec.Timeframe         (ec    ); ec.setTimeframe         (ec, NULL);
-   ec.hChartWindow      (ec    ); ec.setHChartWindow      (ec, NULL);
-   ec.hChart            (ec    ); ec.setHChart            (ec, NULL);
-   ec.TestFlags         (ec    ); ec.setTestFlags         (ec, NULL);
-   ec.LastError         (ec    ); ec.setLastError         (ec, NULL);
-   ec.Logging           (ec    ); ec.setLogging           (ec, NULL);
-   ec.LogFile           (ec    ); ec.setLogFile           (ec, NULL);
-   lpEXECUTION_CONTEXT.toStr(NULL);
 }
 
 
@@ -191,7 +171,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    if (lpContext < MIN_VALID_POINTER) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
 
    int tmp[EXECUTION_CONTEXT.intSize];
-   CopyMemory(GetBufferAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
+   CopyMemory(GetIntsAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
 
    string result = EXECUTION_CONTEXT.toStr(tmp, outputDebug);
    ArrayResize(tmp, 0);
@@ -209,25 +189,53 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    string TestFlagsToStr(int flags);
 
 #import "Expander.dll"
-   int    ec_DeinitFlags       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChart            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_hChartWindow      (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_InitFlags         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LastError         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_LaunchType        (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_LogFile           (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging           (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_lpSuperContext    (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ProgramId         (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ProgramName       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ProgramType       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_RootFunction      (/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_Symbol            (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_TestFlags         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_Timeframe         (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_UninitializeReason(/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ProgramId            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_ProgramType          (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_ProgramName          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LaunchType           (/*EXECUTION_CONTEXT*/int ec[]);
+   bool   ec_SuperContext         (/*EXECUTION_CONTEXT*/int ec[], /*EXECUTION_CONTEXT*/int sec[]);
+   int    ec_lpSuperContext       (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_InitFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_DeinitFlags          (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_RootFunction         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_UninitializeReason   (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_Symbol               (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_Timeframe            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChartWindow         (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_hChart               (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_TestFlags            (/*EXECUTION_CONTEXT*/int ec[]);
+   int    ec_LastError            (/*EXECUTION_CONTEXT*/int ec[]);
+   //     ...
+   //     ...
+   bool   ec_Logging              (/*EXECUTION_CONTEXT*/int ec[]);
+   string ec_LogFile              (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    GetBufferAddress(int buffer[]);
+
+   int    ec_setProgramId         (/*EXECUTION_CONTEXT*/int ec[], int    id       );
+   int    ec_setProgramType       (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string name     );
+   int    ec_setLaunchType        (/*EXECUTION_CONTEXT*/int ec[], int    type     );
+   int    ec_setSuperContext      (/*EXECUTION_CONTEXT*/int ec[], int    sec[]    );
+   int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSec    );
+   int    ec_setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
+   int    ec_setDeinitFlags       (/*EXECUTION_CONTEXT*/int ec[], int    flags    );
+   int    ec_setRootFunction      (/*EXECUTION_CONTEXT*/int ec[], int    function );
+   int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    reason   );
+   string ec_setSymbol            (/*EXECUTION_CONTEXT*/int ec[], string symbol   );
+   int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe);
+   int    ec_setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
+   int    ec_setHChart            (/*EXECUTION_CONTEXT*/int ec[], int    hWnd     );
+   int    ec_setTestFlags         (/*EXECUTION_CONTEXT*/int ec[], int    testFlags);
+   int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    error    );
+   //     ...
+   //     ...
+   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging  );
+   string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
+
+
+   int    GetIntsAddress  (int values[]);
    int    GetStringAddress(string value);
    string IntToHexStr(int integer);
 #import
+
+
