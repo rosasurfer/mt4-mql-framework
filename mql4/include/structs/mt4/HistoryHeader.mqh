@@ -1,22 +1,10 @@
 /**
  * MT4 structure HISTORY_HEADER
  *
- * Header der Historydateien (Kursreihen im "history"-Verzeichnis).
- *
- *                                  size         offset
- * struct HISTORY_HEADER {          ----         ------
- *   int    version;                   4      => hh[ 0]     // HST-Formatversion (MT4: immer 400)
- *   szchar description[64];          64      => hh[ 1]     // Beschreibung, <NUL>-terminiert
- *   szchar symbol[12];               12      => hh[17]     // Symbol, <NUL>-terminiert
- *   int    period;                    4      => hh[20]     // Timeframe
- *   int    digits;                    4      => hh[21]     // Digits
- *   int    dbVersion;                 4      => hh[22]     // Server-Datenbankversion (timestamp)
- *   int    prevDbVersion;             4      => hh[23]     // LastSync                (timestamp)   unbenutzt
- *   int    reserved[13];             52      => hh[24]     //                                       unbenutzt
- * } hh;                           = 148 byte = int[37]
+ * Header von Historydateien (Kursreihen im "history"-Verzeichnis).
  *
  *
- * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
+ * @see  Definition in Expander.dll::Expander.h
  */
 #define I_HH.version           0
 #define I_HH.description       1
