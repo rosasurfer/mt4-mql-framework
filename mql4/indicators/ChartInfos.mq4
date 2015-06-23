@@ -2787,8 +2787,8 @@ bool CustomPositions.ParseOpenEntry(string confValue, string confComment, string
  * Parst einen History-Konfigurationseintrag.
  *
  * @param  _IN_     string   confValue   - Konfigurationseintrag
- * @param  _IN_     string   confComment - Kommentar des Konfigurationseintrags
- * @param  _IN_OUT_ string   hstComments - vorhandene History-Kommentare (werden ggf. erweitert)
+ * @param  _IN_OUT_ string   confComment - Kommentar des Konfigurationseintrags (wird bei Gruppierungen nur bei der ersten Gruppe angezeigt)
+ * @param  _IN_OUT_ string   hstComments - dynamisch generierte History-Kommentare (werden ggf. erweitert)
  * @param  _IN_OUT_ bool     isEmpty     - ob die Konfiguration der aktuellen Position noch leer ist
  * @param  _OUT_    bool     isGrouped   - ob die Konfiguration des hier zu parsenden Eintrags eine gruppierende Konfiguration gewesen ist
  * @param  _OUT_    bool     isTotal     - ob die History alle verfügbaren Symbole (TRUE) oder nur ein einzelnes Symbol (FALSE) umfaßt
@@ -2805,7 +2805,7 @@ bool CustomPositions.ParseOpenEntry(string confValue, string confComment, string
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]
  */
-bool CustomPositions.ParseHstEntry(string confValue, string confComment, string &hstComments, bool &isEmpty, bool &isGrouped, bool &isTotal, datetime &from, datetime &to) {
+bool CustomPositions.ParseHstEntry(string confValue, string &confComment, string &hstComments, bool &isEmpty, bool &isGrouped, bool &isTotal, datetime &from, datetime &to) {
    string confValue.orig = StringTrim(confValue);
           confValue      = StringToUpper(confValue.orig);
    if (!StringStartsWith(confValue, "H")) return(!catch("CustomPositions.ParseHstEntry(1)  invalid parameter confValue = "+ StringToStr(confValue.orig) +" (not TYPE_HISTORY)", ERR_INVALID_PARAMETER));
@@ -2888,7 +2888,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string confComment, string 
          else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                              - 1*SECOND;   // aktuelles Tagesende
       }
 
-      for (; groupFrom < dtTo; groupFrom=nextGroupFrom) {
+      for (bool firstGroup=true; groupFrom < dtTo; groupFrom=nextGroupFrom) {
          if      (groupByMonth) nextGroupFrom = DateTime(TimeYearFix(groupFrom), TimeMonth(groupFrom)+1);
          else if (groupByWeek ) nextGroupFrom = groupFrom + 7*DAYS;
          else if (groupByDay  ) nextGroupFrom = groupFrom + 1*DAY;
@@ -2917,6 +2917,7 @@ bool CustomPositions.ParseHstEntry(string confValue, string confComment, string 
          if (nextGroupFrom <= dtTo) {
             ArrayResize    (custom.position.conf, confSize+2);       // initialisiert Element mit {*, NULL, ...}
             ArrayPushString(custom.position.conf.comments, comment + ifString(StringLen(confComment), ", ", "") + confComment);
+            if (firstGroup) confComment = "";                        // für folgende Gruppen wird der konfigurierte Kommentar nicht ständig wiederholt
          }
       }
    }
