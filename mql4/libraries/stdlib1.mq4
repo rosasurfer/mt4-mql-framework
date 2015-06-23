@@ -3130,21 +3130,47 @@ int BufferGetChar(int buffer[], int pos) {
 
 
 /**
+ * Gibt den in einem Byte-Buffer im angegebenen Bereich gespeicherten WCHAR-String als MQL-String zurück.
+ *
+ * @param  int buffer[] - Byte-Buffer
+ * @param  int from     - Offset des WCHAR-Strings innerhalb des Buffers in Bytes (Vielfaches von 2)
+ * @param  int size     - Anzahl der für den WCHAR-String reservierten Bytes (Vielfaches von 2)
+ *
+ * @return string - MQL-String oder Leerstring, falls ein Fehler auftrat
+ *
+string BufferWCharsToStr(int buffer[], int from, int size) {
+   int bufferSize = ArraySize(buffer) * 4;
+   if (from < 0 || from >= bufferSize)     return(_EMPTY_STR(catch("BufferWCharsToStr(1)  invalid parameter from = "+ from +" (out of range)", ERR_INVALID_PARAMETER)));
+   if (from%2 != 0)                        return(_EMPTY_STR(catch("BufferWCharsToStr(2)  invalid parameter from = "+ from +" (not a multiple of 2)", ERR_INVALID_PARAMETER));
+   if (size < 0 || from+size > bufferSize) return(_EMPTY_STR(catch("BufferWCharsToStr(3)  invalid parameter size = "+ size +" (out of range)", ERR_INVALID_PARAMETER)));
+   if (size%2 != 0)                        return(_EMPTY_STR(catch("BufferWCharsToStr(4)  invalid parameter size = "+ size +" (not a multiple of 2)", ERR_INVALID_PARAMETER));
+
+   string result;
+   if (!size)
+      return(result);                                                // NULL-Pointer
+
+   int fromAddr = GetIntsAddress(buffer) + from;
+}
+*/
+
+
+/**
  * Gibt die in einem Byte-Buffer im angegebenen Bereich gespeicherte und mit einem NULL-Byte terminierte WCHAR-Charactersequenz (Multibyte-Characters) zurück.
  *
  * @param  int buffer[] - Byte-Buffer (kann in MQL nur über ein Integer-Array abgebildet werden)
  * @param  int from     - Index des ersten Integers der Zeichensequenz
  * @param  int length   - Anzahl der für die Zeichensequenz reservierten Integers
  *
- * @return string - ANSI-String
+ * @return string - ANSI-String oder Leerstring, falls ein Fehler auftrat
  *
  *
  * TODO: Zur Zeit kann diese Funktion nur mit Integer-Boundaries, nicht mit WCHAR-Boundaries (words) umgehen.
  */
 string BufferWCharsToStr(int buffer[], int from, int length) {
-   if (from < 0)  return(catch("BufferWCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER));
+   if (from   < 0) return(_EMPTY_STR(catch("BufferWCharsToStr(1)  invalid parameter from = "+ from, ERR_INVALID_PARAMETER)));
+   if (length < 0) return(_EMPTY_STR(catch("BufferWCharsToStr(2)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
    int to = from+length, size=ArraySize(buffer);
-   if (to > size) return(catch("BufferWCharsToStr(2)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER));
+   if (to > size)  return(_EMPTY_STR(catch("BufferWCharsToStr(3)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
 
    string result = "";
 
@@ -3160,7 +3186,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
          int byte2 = word >> 8 & 0xFF;
 
          if (byte1 && !byte2) sChar = CharToStr(byte1);
-         else                 sChar = "?";                           // multi-byte character
+         else                 sChar = "¿";                           // multi-byte character
          result = StringConcatenate(result, sChar);
          shift += 16;
       }
@@ -3168,7 +3194,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
          break;
    }
 
-   if (!catch("BufferWCharsToStr(3)"))
+   if (!catch("BufferWCharsToStr(4)"))
       return(result);
    return("");
 }
