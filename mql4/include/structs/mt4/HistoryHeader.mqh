@@ -1,7 +1,7 @@
 /**
  * MT4 structure HISTORY_HEADER
  *
- * Header von Historydateien (Kursreihen im "history"-Verzeichnis).
+ * HistoryFile-Header (Kursreihen im "history"-Verzeichnis).
  *
  *
  * @see  Definition in Expander.dll::Expander.h
