@@ -5285,40 +5285,40 @@ static int time1;
  * @return bool - Erfolgsstatus
  */
 bool RecordEquity(int flags=NULL) {
-   /* Speedtest EUR/USD 04.10.2012, nur M15, ,long, GridSize 18
-   +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   |                                     |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Laptop v419 - ohne RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
-   | Laptop v225 - Schreiben jedes Ticks |  6.426 t/sec |           |              |             |             |              |              |              |
-   | Laptop v419 - Schreiben jedes Ticks |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | Laptop v419 - mit Tick-Collector    |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +-------------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   /* Speedtest EUR/USD 04.10.2012, nur M15, long, GridSize 18
+   +----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | Toshiba Satellite          |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
+   +----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | v419 - ohne RecordEquity() | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v225 - HST_CACHE_TICKS = 0 |  6.426 t/sec |           |              |             |             |              |              |              |
+   | v419 - HST_CACHE_TICKS = 0 |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
+   | v419 - HST_CACHE_TICKS = 1 |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
+   +----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
    if (IsLastError()) return(false);
    if (!IsTesting())  return(true );
 
    static int hHst;
    if (!hHst) {
-      string symbol = StringConcatenate(ifString(IsTesting(), "_", ""), "SR", sequenceId);
+      string symbol = ifString(IsTesting(), "_", "") +"SR"+ sequenceId;
 
-      hHst = FindHistory(symbol);
+      hHst = HistorySet.FindBySymbol(symbol);
       if (hHst > 0) {
-         if (!ResetHistory(hHst))
+         if (!HistorySet.Reset(hHst))
             return(!SetLastError(history.GetLastError()));
       }
       else {
          int error = history.GetLastError();
          if (IsError(error))
             return(!SetLastError(error));
-         hHst = CreateHistory(symbol, "Equity SR."+ sequenceId, 2);
+         hHst = HistorySet.Create(symbol, "Equity SR."+ sequenceId, 2);
          if (hHst <= 0)
             return(!SetLastError(history.GetLastError()));
       }
    }
    double value = sequence.startEquity + sequence.totalPL;
 
-   if (History.AddTick(hHst, Tick.Time, value, flags))
+   if (HistorySet.AddTick(hHst, Tick.Time, value, flags))
       return(true);
    return(!SetLastError(history.GetLastError()));
 }
@@ -5351,6 +5351,6 @@ void DummyCalls() {
  * @return int - Fehlerstatus
  */
 int afterDeinit() {
-   History.CloseFiles(false);
+   history.CloseFiles(false);
    return(NO_ERROR);
 }

@@ -1,13 +1,12 @@
 /**
- * Funktionen zur Verwaltung von Historydateien (Kursreihen im "history"-Verzeichnis).
+ * Funktionen zur Verwaltung von Dateien im "history"-Verzeichnis.
  */
 #import "history.ex4"
 
-   int      CreateHistory(string symbol, string description, int digits);
-   int      FindHistory(string symbol);
-   bool     ResetHistory(int hHst);
-   bool     History.AddTick(int hHst, datetime time, double value, int flags=NULL);
-   bool     History.CloseFiles(bool warn);
+   int      HistorySet.Create      (string symbol, string description, int digits);
+   int      HistorySet.FindBySymbol(string symbol);
+   bool     HistorySet.AddTick     (int hSet, datetime time, double value, int flags=NULL);
+   bool     HistorySet.Reset       (int hSet);
 
    int      HistoryFile.Open           (string symbol, string description, int digits, int timeframe, int mode);
    bool     HistoryFile.Close          (int hFile);
@@ -39,6 +38,7 @@
 
 
    // Library-Management
+   bool     history.CloseFiles(bool warn=false);
    int      history.GetLastError();
 
 #import
