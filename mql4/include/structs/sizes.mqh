@@ -32,8 +32,11 @@
 #define HISTORY_HEADER.size             148
 #define HISTORY_HEADER.intSize           37
 
-#define RATE_INFO.size                   44
-#define RATE_INFO.intSize                11
+#define HISTORY_BAR_400.size             44
+#define HISTORY_BAR_400.intSize          11
+
+#define HISTORY_BAR_401.size             60
+#define HISTORY_BAR_401.intSize          15
 
 #define SUBSCRIBED_SYMBOL.size          128
 #define SUBSCRIBED_SYMBOL.intSize        32
