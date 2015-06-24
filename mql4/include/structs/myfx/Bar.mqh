@@ -1,5 +1,6 @@
 /**
- * MQL-Structure BAR. MQL-Darstellung der MT4-Structure RATE_INFO. Der Datentyp der Elemente ist einheitlich, die Kursreihenfolge ist wie in RATE_INFO OLHC.
+ * MQL-Structure BAR. MQL-Darstellung der MT4-Structure HISTORY_BAR_400. Der Datentyp der Elemente ist einheitlich,
+ * die Kursreihenfolge ist wie in HISTORY_BAR_400 OLHC.
  *
  *                          size          offset
  * struct BAR {             ----          ------
