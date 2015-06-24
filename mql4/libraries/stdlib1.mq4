@@ -3010,7 +3010,9 @@ string BufferToStr(int buffer[]) {
  *
  * @return string
  *
-private*/string __BuffersToStr(int buffer[][]) {
+ * @private
+ */
+string __BuffersToStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
@@ -3077,7 +3079,9 @@ string BufferToHexStr(int buffer[]) {
  *
  * @return string
  *
-private*/string __BuffersToHexStr(int buffer[][]) {
+ * @private
+ */
+string __BuffersToHexStr(int buffer[][]) {
    int dimensions = ArrayDimension(buffer);
    if (dimensions > 2) return(_EMPTY_STR(catch("__BuffersToHexStr()  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 
@@ -8757,7 +8761,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, dou
  *
  * @return int - derselbe Fehler
  *
-private*/int __Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+int __Order.HandleError(string message, int error, bool serverError, int oeFlags, /*ORDER_EXECUTION*/int oe[]) {
    serverError = serverError!=0;
 
    oe.setError(oe, error);
@@ -8799,7 +8805,9 @@ private*/int __Order.HandleError(string message, int error, bool serverError, in
  *
  * @return string
  *
-private*/ string __OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
@@ -8839,7 +8847,9 @@ private*/ string __OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string __OrderSendEx.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
+ * @private
+ */
+string __OrderSendEx.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
    if (oe.Error(oe) != ERR_OFF_QUOTES)
       return(__Order.TempErrorMsg(oe, errors));
 
@@ -8875,7 +8885,9 @@ private*/ string __OrderSendEx.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int err
  *
  * @return string
  *
-private*/ string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s and 1 requote
 
    int    digits      = oe.Digits(oe);
@@ -8916,7 +8928,9 @@ private*/ string __OrderSendEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string __Order.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
+ * @private
+ */
+string __Order.TempErrorMsg(/*ORDER_EXECUTION*/int oe[], int errors) {
    // temporary error after 0.345 s and 1 requote, retrying...
 
    string message = StringConcatenate("temporary error after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s");
@@ -9168,7 +9182,9 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
  *
  * @return string
  *
-private*/ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
+ * @private
+ */
+string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
    // modified #1 Stop Buy 0.1 GBPUSD "SR.12345.+2" at 1.5500'0[ =>1.5520'0][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0] after 0.345 s
 
    int    digits      = oe.Digits(oe);
@@ -9200,7 +9216,9 @@ private*/ string __OrderModifyEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[], double 
  *
  * @return string
  *
-private*/ string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
+ * @private
+ */
+string __OrderModifyEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[], double origOpenPrice, double origStopLoss, double origTakeProfit) {
    // permanent error while trying to modify #1 Stop Buy 0.5 GBPUSD "SR.12345.+2" at 1.5524'8[ =>1.5520'0][ (market Bid/Ask)][, sl: 1.5450'0 =>1.5455'0][, tp: 1.5520'0 =>1.5530'0][, stop distance=5 pip] after 0.345 s
 
    int    digits      = oe.Digits(oe);
@@ -9830,7 +9848,9 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
  *
  * @return string
  *
-private*/ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4, remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
@@ -9875,7 +9895,9 @@ private*/ string __OrderCloseEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderCloseEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to close #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);
@@ -10149,7 +10171,9 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, /*
  *
  * @return string
  *
-private*/ string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderCloseByEx.SuccessMsg(int first, int second, int largerType, /*ORDER_EXECUTION*/int oe[]) {
    // closed #30 by #38, remainder: #39 Buy 0.6 GBPUSD after 0.000 s
    // closed #31 by #39, no remainder after 0.000 s
 
@@ -10172,7 +10196,9 @@ private*/ string __OrderCloseByEx.SuccessMsg(int first, int second, int largerTy
  *
  * @return string
  *
-private*/ string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderCloseByEx.PermErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to close #1 by #2 after 0.345 s
 
    return(StringConcatenate("permanent error while trying to close #", first, " by #", second, " after ", DoubleToStr(oe.Duration(oe)/1000., 3), " s"));
@@ -10385,7 +10411,9 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  *
-private*/ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+ * @private
+ */
+bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
@@ -10509,7 +10537,9 @@ private*/ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color
  *
  *       4) Der Rückgabewert der Funktion entspricht dem in einem der Tickets gesetzten Wert von oe.RemainingTicket (siehe Note 3).
  *
-private*/ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+ * @private
+ */
+int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets == 0)
@@ -10665,7 +10695,9 @@ private*/ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFl
  *       2) Die vom MT4-Server berechneten Einzelwerte in oe.Swap, oe.Commission und oe.Profit können vom tatsächlichen Einzelwert abweichen,
  *          die Summe der Einzelwerte aller Tickets entspricht jedoch dem tatsächlichen Gesamtwert.
  *
-private*/ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
+ * @private
+ */
+bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, /*ORDER_EXECUTION*/int oes[][]) {
    // keine nochmalige, ausführliche Parametervalidierung (private)
    int sizeOfTickets = ArraySize(tickets);
    if (sizeOfTickets < 2)
@@ -10862,7 +10894,9 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, /*ORDER_EXECUTION
  *
  * @return string
  *
-private*/ string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    // deleted #1 Stop Buy 0.5 GBPUSD at 1.5520'3 ("SR.12345.+3") after 0.2 s
 
    int    digits      = oe.Digits(oe);
@@ -10885,7 +10919,9 @@ private*/ string __OrderDeleteEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
  *
  * @return string
  *
-private*/ string __OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
+ * @private
+ */
+string __OrderDeleteEx.PermErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    // permanent error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (market Bid/Ask), sl=1.5500'0, tp=1.5600'0 after 0.345 s
 
    int    digits      = oe.Digits(oe);

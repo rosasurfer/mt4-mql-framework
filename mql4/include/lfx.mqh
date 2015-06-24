@@ -571,7 +571,9 @@ bool LFX.SaveOrders(/*LFX_ORDER*/int los[][]) {
  *
  * @return int - derselbe Fehler
  *
-private*/int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
+ * @private
+ */
+int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
    if (!error)
       return(NO_ERROR);
    SetLastError(error);

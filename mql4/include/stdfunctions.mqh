@@ -297,7 +297,9 @@ int log(string message, int error=NO_ERROR) {
  *
  * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
  *
-private*/bool __log.custom(string message) {
+ * @private
+ */
+bool __log.custom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
    int logId = GetCustomLogID();
    if (logId == NULL)
