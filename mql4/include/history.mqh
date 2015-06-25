@@ -5,8 +5,8 @@
 
    int      HistorySet.Create      (string symbol, string description, int digits);
    int      HistorySet.FindBySymbol(string symbol);
-   bool     HistorySet.AddTick     (int hSet, datetime time, double value, int flags=NULL);
-   bool     HistorySet.Reset       (int hSet);
+   bool     HistorySet.AddTick     (int hHSet, datetime time, double value, int flags=NULL);
+   bool     HistorySet.Reset       (int hHSet);
 
    int      HistoryFile.Open           (string symbol, string description, int digits, int timeframe, int mode);
    bool     HistoryFile.Close          (int hFile);
@@ -21,8 +21,8 @@
    bool     HistoryFile.AddTick        (int hFile, datetime time, double value, int flags=NULL);
 
    string   hf.Name         (int hFile);
-   bool     hf.Read         (int hFile);
-   bool     hf.Write        (int hFile);
+   bool     hf.ReadAccess   (int hFile);
+   bool     hf.WriteAccess  (int hFile);
    int      hf.Size         (int hFile);
    int      hf.Bars         (int hFile);
    datetime hf.From         (int hFile);

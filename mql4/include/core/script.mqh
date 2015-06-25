@@ -374,7 +374,7 @@ int HandleScriptError(string location, string message, int error) {
  * NOTE: Akzeptiert einen weiteren beliebigen Parameter, der bei der Verarbeitung jedoch ignoriert wird.
  */
 int SetLastError(int error, int param=NULL) {
-   last_error = ec_setLastError(__ExecutionContext, last_error);
+   last_error = ec_setLastError(__ExecutionContext, error);
    return(error);
 }
 

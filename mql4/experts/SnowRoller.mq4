@@ -5298,29 +5298,36 @@ bool RecordEquity(int flags=NULL) {
    if (IsLastError()) return(false);
    if (!IsTesting())  return(true );
 
-   static int hHst;
-   if (!hHst) {
-      string symbol = ifString(IsTesting(), "_", "") +"SR"+ sequenceId;
+   static int hHSet;
+   if (!hHSet) {
+      string symbol      = ifString(IsTesting(), "_", "") +"SR"+ sequenceId;
+      string description = "Equity SR."+ sequenceId;
+      int    digits      = 2;
 
-      hHst = HistorySet.FindBySymbol(symbol);
-      if (hHst > 0) {
-         if (!HistorySet.Reset(hHst))
-            return(!SetLastError(history.GetLastError()));
+      hHSet = HistorySet.FindBySymbol(symbol);
+      if (!hHSet) return(!SetLastError(history.GetLastError()));           // Fehler
+
+      if (hHSet == -1) {                                                   // HistorySet nicht gefunden
+         hHSet = HistorySet.Create(symbol, description, digits);
+         if (hHSet <= 0) return(!SetLastError(history.GetLastError()));
       }
-      else {
-         int error = history.GetLastError();
-         if (IsError(error))
-            return(!SetLastError(error));
-         hHst = HistorySet.Create(symbol, "Equity SR."+ sequenceId, 2);
-         if (hHst <= 0)
-            return(!SetLastError(history.GetLastError()));
-      }
+      else if (!HistorySet.Reset(hHSet)) return(!SetLastError(history.GetLastError()));
    }
+
    double value = sequence.startEquity + sequence.totalPL;
 
-   if (HistorySet.AddTick(hHst, Tick.Time, value, flags))
+   if (HistorySet.AddTick(hHSet, Tick.Time, value, flags))
       return(true);
    return(!SetLastError(history.GetLastError()));
+}
+
+
+/**
+ * @return int - Fehlerstatus
+ */
+int afterDeinit() {
+   history.CloseFiles(false);
+   return(NO_ERROR);
 }
 
 
@@ -5344,13 +5351,4 @@ void DummyCalls() {
    Sync.ProcessEvents(iNull, dNull);
    Sync.PushEvent(dNulls, NULL, NULL, NULL, NULL, NULL);
    UploadStatus(NULL, NULL, NULL, NULL);
-}
-
-
-/**
- * @return int - Fehlerstatus
- */
-int afterDeinit() {
-   history.CloseFiles(false);
-   return(NO_ERROR);
 }
