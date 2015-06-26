@@ -463,7 +463,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
-   int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
 

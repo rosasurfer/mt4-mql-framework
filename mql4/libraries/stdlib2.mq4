@@ -1211,6 +1211,7 @@ void Tester.ResetGlobalArrays() {
 
 #import "Expander.dll"
    int  st_Milliseconds(/*SYSTEMTIME*/int st[]);
+   int  GetDoublesAddress(double array[]);
 
 #import "kernel32.dll"
    bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);

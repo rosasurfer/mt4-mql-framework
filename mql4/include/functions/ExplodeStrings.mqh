@@ -8,7 +8,7 @@
  */
 int ExplodeStrings(int buffer[], string &results[]) {
    string value;
-   int length, fromAddr=GetBufferAddress(buffer), toAddr=fromAddr + ArraySize(buffer)*4, resultsSize=ArrayResize(results, 0);
+   int length, fromAddr=GetIntsAddress(buffer), toAddr=fromAddr + ArraySize(buffer)*4, resultsSize=ArrayResize(results, 0);
 
    for (int addr=fromAddr; addr < toAddr; addr+=(length+1)) {
       value  = GetString(addr);

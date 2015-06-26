@@ -10,6 +10,11 @@ int __DEINIT_FLAGS__[];
 #include <history.mqh>
 
 
+#import "Expander.Release.dll"
+
+#import
+
+
 /**
  * Main-Funktion
  *
@@ -17,9 +22,13 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   datetime time = GetGmtTime();
+   debug("onStart(0.1)  GMT time = "+ TimeToStr(time, TIME_FULL));
+   return(last_error);
+
+
    RecordEquity();
    //RecordEquity(HST_CACHE_TICKS);
-
    return(last_error);
 }
 

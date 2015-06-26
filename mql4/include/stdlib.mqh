@@ -173,12 +173,7 @@
 
 
    // Date/Time
- //datetime TimeCurrent();                         // Built-in: Serverzeit des letzten Ticks, im Tester modelliert
- //datetime TimeLocal();                           // Built-in: lokale Zeit, im Tester Serverzeit
-
-   datetime mql.GetLocalTime();                    //           immer aktuelle lokale Zeit
-   datetime     GetGmtTime();                      //           immer aktuelle GMT-Zeit
-   datetime     GetFxtTime();                      //           immer aktuelle FXT-Zeit
+   datetime GetFxtTime();                       // immer aktuelle FXT-Zeit
 
    datetime FxtToGmtTime   (datetime fxtTime);
    datetime FxtToServerTime(datetime fxtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
@@ -473,20 +468,6 @@
    int      stdlib.init  (/*EXECUTION_CONTEXT*/int ec[], int tickData[]);
    int      stdlib.start (/*EXECUTION_CONTEXT*/int ec[], int tick, datetime tickTime, int validBars, int changedBars);
    int      stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
-
-
-#import "Expander.dll"
-   int      GetBoolsAddress  (bool   array[]);
-   int      GetIntsAddress   (int    array[]);  int GetBufferAddress(int buffer[]); // Alias
-   int      GetDoublesAddress(double array[]);
-   int      GetStringAddress (string value  );
-   int      GetStringsAddress(string array[]);
-   string   GetString(int address);
-
-   int      GetLastWin32Error();
-
-   bool     IsBuiltinTimeframe(int timeframe);
-   bool     IsCustomTimeframe(int timeframe);
 #import
 
 

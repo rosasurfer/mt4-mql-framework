@@ -19,7 +19,7 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 
    bool hotkeysEnabled = false;
    int  maMaxValues    = 10;                                               // mindestens 10 Werte berechnen, um vorherrschenden Trend korrekt zu detektieren
-   int  lpLocalContext = GetBufferAddress(__ExecutionContext);
+   int  lpLocalContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
                           maPeriods,                                       // MA.Periods
@@ -59,5 +59,4 @@ double icMovingAverage(int timeframe, string maPeriods, string maTimeframe, stri
 
 #import "Expander.dll"
    int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
-   int GetBufferAddress(int buffer[]);
 #import

@@ -7,7 +7,7 @@
  */
 bool icChartInfos(int timeframe=NULL) {
    // TODO: Aufruf statisch machen
-   int lpLocalContext = GetBufferAddress(__ExecutionContext);
+   int lpLocalContext = GetIntsAddress(__ExecutionContext);
 
    iCustom(NULL, timeframe, "ChartInfos",
            "",                                                             // ________________
@@ -35,5 +35,4 @@ bool icChartInfos(int timeframe=NULL) {
 
 #import "Expander.dll"
    int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
-   int GetBufferAddress(int buffer[]);
 #import

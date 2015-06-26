@@ -546,7 +546,7 @@ bool InitExecutionContext() {
       if (__lpSuperContext != NULL) {
          if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
          int superCopy[EXECUTION_CONTEXT.intSize];
-         CopyMemory(GetBufferAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);
+         CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);
 
          hChart       = ec_hChart      (superCopy);
          hChartWindow = ec_hChartWindow(superCopy);
@@ -768,7 +768,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    ec_setTimeframe         (/*EXECUTION_CONTEXT*/int ec[], int    timeframe         );
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
-   int    GetBufferAddress(int buffer[]);
    bool   IsUIThread();
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
 
