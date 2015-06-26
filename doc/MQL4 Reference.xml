@@ -34,6 +34,7 @@
   .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
   .constant     { font-weight:normal; color:#980000; }
+  .type         { font-weight:normal; color:#0000FF; }
   .function     { font-weight:normal; color:#42639C; }  <!-- wie a -->
   .number       { font-weight:normal; color:#7070FF; }
   .string       { font-weight:normal; color:#008080; }
@@ -4550,15 +4551,14 @@ Note: The SendNotification() function has strict limitations on its usage: no mo
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Sporadisch (nicht eindeutig reproduzierbar) werden die Sekunden verschluckt, wenn sie nicht zweistellig angegeben sind:<br/>
+      Sind die einzelnen Werte nicht in voller Länge angegeben, werden teilweise (nicht immer) die Sekunden verschluckt:<br/>
       <span class="function">StrToTime</span>(<span class="string">"2014.4.23 14:2:50"</span>) => <span class="string">"2014.04.23 14:02:00"</span><br/>
       Workaround: Werte in voller Länge formatieren
       </content>
       <example>
-  datetime var1;
-  var1 = StrToTime(&quot;2003.8.12 17:35&quot;);
-  var1 = StrToTime(&quot;17:35&quot;);          // returns the current date with the given time
-  var1 = StrToTime(&quot;2003.8.12&quot;);      // returns the date with the midnight time of &quot;00:00&quot;
+  datetime value1 = StrToTime(<span class="string">&quot;2003.8.12 17:35&quot;</span>);
+  datetime value2 = StrToTime(<span class="string">&quot;17:35&quot;</span>);            // current date with the given time
+  datetime value3 = StrToTime(<span class="string">&quot;2003.8.12&quot;</span>);        // given date with a time of &quot;00:00&quot;
       </example>
       <parameter>
         type=string
