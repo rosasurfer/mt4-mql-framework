@@ -632,7 +632,6 @@ int Tester.Stop() {
    int    ec_setUninitializeReason(/*EXECUTION_CONTEXT*/int ec[], int    uninitializeReason);
 
    int    GetApplicationWindow();
-   int    GetBufferAddress(int buffer[]);
    int    GetStringsAddress(string array[]);
    bool   SetMainExecutionContext(int ec[], string name, string symbol, int period);
 

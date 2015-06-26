@@ -61,7 +61,7 @@
 
 // Getter
 int      oe.Error              (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 0]);                                         ORDER_EXECUTION.toStr(oe); }
-string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                    return(GetString(GetBufferAddress(oe)+4));                                         ORDER_EXECUTION.toStr(oe); }
+string   oe.Symbol             (/*ORDER_EXECUTION*/int oe[]         ) {                      return(GetString(GetIntsAddress(oe)+4));                                         ORDER_EXECUTION.toStr(oe); }
 int      oe.Digits             (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[ 5]);                                         ORDER_EXECUTION.toStr(oe); }
 double   oe.StopDistance       (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 6]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
 double   oe.FreezeDistance     (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[ 7]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
@@ -79,7 +79,7 @@ double   oe.ClosePrice         (/*ORDER_EXECUTION*/int oe[]         ) { int digi
 double   oe.Swap               (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[19]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
 double   oe.Commission         (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[20]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
 double   oe.Profit             (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[21]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
-string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                    return(GetString(GetBufferAddress(oe)+88));                                        ORDER_EXECUTION.toStr(oe); }
+string   oe.Comment            (/*ORDER_EXECUTION*/int oe[]         ) {                      return(GetString(GetIntsAddress(oe)+88));                                        ORDER_EXECUTION.toStr(oe); }
 int      oe.Duration           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[29]);                                         ORDER_EXECUTION.toStr(oe); }
 int      oe.Requotes           (/*ORDER_EXECUTION*/int oe[]         ) {                                               return(oe[30]);                                         ORDER_EXECUTION.toStr(oe); }
 double   oe.Slippage           (/*ORDER_EXECUTION*/int oe[]         ) { int digits=oe.Digits(oe);     return(NormalizeDouble(oe[31]/MathPow(10, digits & 1), digits & 1));    ORDER_EXECUTION.toStr(oe); }
@@ -87,7 +87,7 @@ int      oe.RemainingTicket    (/*ORDER_EXECUTION*/int oe[]         ) {         
 double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {                               return(NormalizeDouble(oe[33]/100., 2));                                ORDER_EXECUTION.toStr(oe); }
 
 int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 0]);                                      ORDER_EXECUTION.toStr(oe); }
-string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                    return(GetString(GetBufferAddress(oe) + ArrayRange(oe, 1)*i*4 + 4));               ORDER_EXECUTION.toStr(oe); }
+string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                      return(GetString(GetIntsAddress(oe) + ArrayRange(oe, 1)*i*4 + 4));               ORDER_EXECUTION.toStr(oe); }
 int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][ 5]);                                      ORDER_EXECUTION.toStr(oe); }
 double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 6]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
 double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][ 7]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
@@ -105,7 +105,7 @@ double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digi
 double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][19]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
 double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][20]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
 double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][21]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
-string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                    return(GetString(GetBufferAddress(oe) + ArrayRange(oe, 1)*i*4 + 88));              ORDER_EXECUTION.toStr(oe); }
+string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                      return(GetString(GetIntsAddress(oe) + ArrayRange(oe, 1)*i*4 + 88));              ORDER_EXECUTION.toStr(oe); }
 int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][29]);                                      ORDER_EXECUTION.toStr(oe); }
 int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][30]);                                      ORDER_EXECUTION.toStr(oe); }
 double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][31]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
@@ -119,7 +119,7 @@ string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    int src  = GetStringAddress(symbol);
-   int dest = GetBufferAddress(oe) + 4;
+   int dest = GetIntsAddress(oe) + 4;
    CopyMemory(dest, src, StringLen(symbol)+1); /*terminierendes <NUL> wird mitkopiert*/                                                                             return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setDigits          (/*ORDER_EXECUTION*/int &oe[],          int      digits    ) { oe[ 5]    = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
 double   oe.setStopDistance    (/*ORDER_EXECUTION*/int &oe[],          double   distance  ) { oe[ 6]    = MathRound(distance * MathPow(10, oe.Digits(oe) & 1));     return(distance  ); ORDER_EXECUTION.toStr(oe); }
@@ -145,7 +145,7 @@ string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 27) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment = \""+ comment +"\" (max 27 chars)"), ERR_INVALID_PARAMETER));
    int src  = GetStringAddress(comment);
-   int dest = GetBufferAddress(oe) + 88;
+   int dest = GetIntsAddress(oe) + 88;
    CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/                                                       return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setDuration        (/*ORDER_EXECUTION*/int &oe[],          int      milliSec  ) { oe[29]    = milliSec;                                                 return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
 int      oe.setRequotes        (/*ORDER_EXECUTION*/int &oe[],          int      requotes  ) { oe[30]    = requotes;                                                 return(requotes  ); ORDER_EXECUTION.toStr(oe); }
@@ -160,7 +160,7 @@ string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   
    if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol)), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    int src  = GetStringAddress(symbol);
-   int dest = GetBufferAddress(oe) + i*ArrayRange(oe, 1)*4 + 4;
+   int dest = GetIntsAddress(oe) + i*ArrayRange(oe, 1)*4 + 4;
    CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/                                                       return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][ 5] = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
 double   oes.setStopDistance   (/*ORDER_EXECUTION*/int &oe[][], int i, double   distance  ) { oe[i][ 6] = MathRound(distance * MathPow(10, oes.Digits(oe, i) & 1)); return(distance  ); ORDER_EXECUTION.toStr(oe); }
@@ -186,7 +186,7 @@ string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
    if ( StringLen(comment) > 27) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment = \""+ comment +"\" (max 27 chars)"), ERR_INVALID_PARAMETER));
    int src  = GetStringAddress(comment);
-   int dest = GetBufferAddress(oe) + i*ArrayRange(oe, 1)*4 + 88;
+   int dest = GetIntsAddress(oe) + i*ArrayRange(oe, 1)*4 + 88;
    CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/                                                       return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][29] = milliSec;                                                 return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setRequotes       (/*ORDER_EXECUTION*/int &oe[][], int i, int      requotes  ) { oe[i][30] = requotes;                                                 return(requotes  ); ORDER_EXECUTION.toStr(oe); }
@@ -362,7 +362,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
    string OperationTypeToStr(int type);
 
 #import "Expander.dll"
-   int    GetBufferAddress(int buffer[]);
    int    GetStringAddress(string value);
 #import
 

@@ -916,7 +916,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             if (IsSuperContext()) {
                if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
                int superContext[EXECUTION_CONTEXT.intSize];
-               CopyMemory(GetBufferAddress(superContext), __lpSuperContext, EXECUTION_CONTEXT.size);  // SuperContext selbst kopieren, da der Context des laufenden Programms
+               CopyMemory(GetIntsAddress(superContext), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms
                static.hWndSelf = ec_hChart(superContext);                                             // u.U. noch nicht endgültig initialisiert ist.
                ArrayResize(superContext, 0);
                return(static.hWndSelf);
@@ -2789,7 +2789,7 @@ bool Indicator.IsTesting() {
    if (IsSuperContext()) {
       if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
       int superCopy[EXECUTION_CONTEXT.intSize];
-      CopyMemory(GetBufferAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);     // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
+      CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);       // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                              // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() benutzt wird.
       static.result = (ec_TestFlags(superCopy) & TF_TESTING && 1);         // (int) bool
       ArrayResize(superCopy, 0);
@@ -3628,7 +3628,6 @@ void __DummyCalls() {
    void     DummyCalls();                                                     // Library-Stub: *kann* lokal überschrieben werden
    bool     GetConfigBool(string section, string key, bool defaultValue);
    int      GetCustomLogID();
-   datetime GetGmtTime();
    bool     GetLocalConfigBool(string section, string key, bool defaultValue);
    int      GetTerminalBuild();
    int      GetTesterWindow();
@@ -3651,9 +3650,12 @@ void __DummyCalls() {
    int      ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
+
    int      GetApplicationWindow();
-   int      GetBufferAddress(int buffer[]);
+   datetime GetGmtTime();
+   int      GetIntsAddress(int buffer[]);
    int      GetLastWin32Error();
+   datetime GetLocalTime();
    string   GetString(int address);
    string   IntToHexStr(int integer);
    bool     IsBuiltinTimeframe(int timeframe);

@@ -16,8 +16,8 @@
  * } WIN32_FIND_DATA, wfd;                // 318 byte = int[80]      2 Byte Überhang
  */
 int    wfd.FileAttributes            (/*WIN32_FIND_DATA*/int wfd[]) { return(wfd[0]); }
-string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) +  44)); }
-string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetBufferAddress(wfd) + 304)); }
+string wfd.FileName                  (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetIntsAddress(wfd) +  44)); }
+string wfd.AlternateFileName         (/*WIN32_FIND_DATA*/int wfd[]) { return(GetString(GetIntsAddress(wfd) + 304)); }
 
 
 // File attributes

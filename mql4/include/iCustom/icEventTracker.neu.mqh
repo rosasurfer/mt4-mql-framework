@@ -14,7 +14,7 @@ bool icEventTracker.neu(int timeframe=NULL) {
    string alertSMSReceiver  = "";
    string alertHTTPUrl      = "";
    string alertICQUserID    = "";
-   int    lpLocalContext    = GetBufferAddress(__ExecutionContext);        // TODO: Aufruf statisch machen
+   int    lpLocalContext    = GetIntsAddress(__ExecutionContext);          // TODO: Aufruf statisch machen
 
 
    iCustom(NULL, timeframe, "EventTracker.neu",
@@ -51,5 +51,4 @@ bool icEventTracker.neu(int timeframe=NULL) {
 
 #import "Expander.dll"
    int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
-   int GetBufferAddress(int buffer[]);
 #import

@@ -23,7 +23,6 @@
    int  GetEnvironmentStringsA();
    int  GetFileSize(int hFile, int lpFileSizeHiWord[]);
    int  GetFullPathNameA(string lpFileName, int bufferSize, string lpBuffer, int lpFilePart[]);
-   void GetLocalTime(int lpSystemTime[]);
    int  GetLongPathNameA(string lpShortPath, string lpLongPath, int bufferSize);
    int  GetModuleFileNameA(int hModule, string lpBuffer, int bufferSize);
    int  GetModuleHandleA(string lpModuleName);

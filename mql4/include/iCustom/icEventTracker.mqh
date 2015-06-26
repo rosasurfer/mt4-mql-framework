@@ -9,7 +9,7 @@ bool icEventTracker(int timeframe) {
    if (IsLastError())
       return(false);
 
-   int lpLocalContext = GetBufferAddress(__ExecutionContext);
+   int lpLocalContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "EventTracker",                 // throws ERS_HISTORY_UPDATE, ERR_SERIES_NOT_AVAILABLE
                           "",                                              // ________________
@@ -35,5 +35,4 @@ bool icEventTracker(int timeframe) {
 
 #import "Expander.dll"
    int ec_LastError(/*EXECUTION_CONTEXT*/int ec[]);
-   int GetBufferAddress(int buffer[]);
 #import

@@ -4405,60 +4405,6 @@ string GetLongSymbolNameStrict(string symbol) {
 
 
 /**
- * Gibt immer die aktuelle lokale Zeit zurück (auch im Tester).
- *
- * @return datetime - lokale Zeit oder NULL, falls ein Fehler auftrat
- */
-datetime mql.GetLocalTime() {
-   /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
-   /*FILETIME*/  int ft[]; InitializeByteBuffer(ft, FILETIME.size  );
-   datetime time[1];
-
-   GetLocalTime(st);
-   if (!SystemTimeToFileTime(st, ft))        return(!catch("mql.GetLocalTime(1)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
-   if (!RtlTimeToSecondsSince1970(ft, time)) return(!catch("mql.GetLocalTime(2)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
-
-   return(time[0]);
-
-   /*
-   int year  = st_Year  (st);
-   int month = st_Month (st);
-   int day   = st_Day   (st);
-   int hour  = st_Hour  (st);
-   int min   = st_Minute(st);
-   int sec   = st_Second(st);
-
-   string   strTime = StringConcatenate(year, ".", StringRight("0"+month, 2), ".", StringRight("0"+day, 2), " ", StringRight("0"+hour, 2), ":", StringRight("0"+min, 2), ":", StringRight("0"+sec, 2));
-   datetime time    = StrToTime(strTime);
-
-   // Sporadischer Fehler in StrToTime(): Beim Parsen des Strings werden teilweise (nicht immer) die Sekunden verschluckt:
-   // StrToTime("2014.4.23 14:2:50") => "2014.04.23 14:02:00"
-   if (TimeSeconds(time) != sec) warn("mql.GetLocalTime()  StrToTime("+ strTime +") => \""+ TimeToStr(time, TIME_FULL) +"\"");
-
-   return(time);
-   */
-}
-
-
-/**
- * Gibt immer die aktuelle GMT-Zeit zurück (auch im Tester).
- *
- * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
- */
-datetime GetGmtTime() {
-   /*SYSTEMTIME*/int st[]; InitializeByteBuffer(st, SYSTEMTIME.size);
-   /*FILETIME*/  int ft[]; InitializeByteBuffer(ft, FILETIME.size  );
-   datetime time[1];
-
-   GetSystemTime(st);
-   if (!SystemTimeToFileTime(st, ft))        return(!catch("GetGmtTime(1)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
-   if (!RtlTimeToSecondsSince1970(ft, time)) return(!catch("GetGmtTime(2)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
-
-   return(time[0]);
-}
-
-
-/**
  * Gibt immer die aktuelle Zeit in FXT zurück (auch im Tester).
  *
  * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
