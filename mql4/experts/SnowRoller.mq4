@@ -288,7 +288,7 @@ int onTick() {
 
    // (5) Equity-Kurve aufzeichnen (erst nach allen Orderfunktionen, ab dem ersten ausgeführten Trade)
    if (status==STATUS_PROGRESSING) /*&&*/ if (sequence.maxLevel != 0) {
-      RecordEquity(HST_CACHE_TICKS);
+      RecordEquity(HST_COLLECT_TICKS);
    }
 
    return(last_error);
@@ -5279,44 +5279,44 @@ static int time1;
  * Zeichnet die Equity-Kurve der Sequenz auf.
  *
  * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                     HST_CACHE_TICKS: speichert aufeinanderfolgende Ticks zwischen und schreibt die Daten beim jeweils nächsten BarOpen-Event
- *                     HST_FILL_GAPS:   füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ *                     HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                     HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  */
 bool RecordEquity(int flags=NULL) {
    /* Speedtest EUR/USD 04.10.2012, nur M15, long, GridSize 18
-   +----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | Toshiba Satellite          |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
-   +----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - ohne RecordEquity() | 17.613 t/sec |           |              |             |             |              |              |              |
-   | v225 - HST_CACHE_TICKS = 0 |  6.426 t/sec |           |              |             |             |              |              |              |
-   | v419 - HST_CACHE_TICKS = 0 |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
-   | v419 - HST_CACHE_TICKS = 1 |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
-   +----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | Toshiba Satellite            |     alt      | optimiert | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
+   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
+   | v419 - ohne RecordEquity()   | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v225 - HST_COLLECT_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
+   | v419 - HST_COLLECT_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
+   | v419 - HST_COLLECT_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
+   +------------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
    if (IsLastError()) return(false);
    if (!IsTesting())  return(true );
 
-   static int hHSet;
-   if (!hHSet) {
+   static int hSet;
+   if (!hSet) {
       string symbol      = ifString(IsTesting(), "_", "") +"SR"+ sequenceId;
       string description = "Equity SR."+ sequenceId;
       int    digits      = 2;
 
-      hHSet = HistorySet.FindBySymbol(symbol);
-      if (!hHSet) return(!SetLastError(history.GetLastError()));           // Fehler
+      hSet = HistorySet.FindBySymbol(symbol);
+      if (!hSet) return(!SetLastError(history.GetLastError()));            // Fehler
 
-      if (hHSet == -1) {                                                   // HistorySet nicht gefunden
-         hHSet = HistorySet.Create(symbol, description, digits);
-         if (hHSet <= 0) return(!SetLastError(history.GetLastError()));
+      if (hSet == -1) {                                                    // HistorySet nicht gefunden
+         hSet = HistorySet.Create.Old(symbol, description, digits);
+         if (hSet <= 0) return(!SetLastError(history.GetLastError()));
       }
-      else if (!HistorySet.Reset(hHSet)) return(!SetLastError(history.GetLastError()));
+      else if (!HistorySet.Reset(hSet)) return(!SetLastError(history.GetLastError()));
    }
 
    double value = sequence.startEquity + sequence.totalPL;
 
-   if (HistorySet.AddTick(hHSet, Tick.Time, value, flags))
+   if (HistorySet.AddTick(hSet, Tick.Time, value, flags))
       return(true);
    return(!SetLastError(history.GetLastError()));
 }

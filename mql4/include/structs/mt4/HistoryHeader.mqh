@@ -6,7 +6,7 @@
  *
  * @see  Definition in Expander.dll::Expander.h
  */
-#define I_HH.version           0
+#define I_HH.format            0
 #define I_HH.description       1
 #define I_HH.symbol           17
 #define I_HH.period           20
@@ -16,7 +16,7 @@
 
 
 // Getter
-int      hh.Version          (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.version      ]);                                                                  HISTORY_HEADER.toStr(hh); }
+int      hh.Format           (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.format       ]);                                                                  HISTORY_HEADER.toStr(hh); }
 string   hh.Description      (/*HISTORY_HEADER*/int hh[])          { return(GetString(GetIntsAddress(hh)+I_HH.description*4));                                                                 HISTORY_HEADER.toStr(hh); }
 string   hh.Symbol           (/*HISTORY_HEADER*/int hh[])          { return(GetString(GetIntsAddress(hh)+I_HH.symbol     *4));                                                                 HISTORY_HEADER.toStr(hh); }
 int      hh.Period           (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.period       ]);                                                                  HISTORY_HEADER.toStr(hh); }
@@ -24,7 +24,7 @@ int      hh.Digits           (/*HISTORY_HEADER*/int hh[])          {            
 datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.dbVersion    ]);                                                                  HISTORY_HEADER.toStr(hh); }
 datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.prevDbVersion]);                                                                  HISTORY_HEADER.toStr(hh); }
 
-int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.version      ]);                                                               HISTORY_HEADER.toStr(hh); }
+int      hhs.Format          (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.format       ]);                                                               HISTORY_HEADER.toStr(hh); }
 string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i) { return(GetString(GetIntsAddress(hh)+ ArrayRange(hh, 1)*i*4 + I_HH.description*4));                                        HISTORY_HEADER.toStr(hh); }
 string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i) { return(GetString(GetIntsAddress(hh)+ ArrayRange(hh, 1)*i*4 + I_HH.symbol     *4));                                        HISTORY_HEADER.toStr(hh); }
 int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.period       ]);                                                               HISTORY_HEADER.toStr(hh); }
@@ -33,7 +33,7 @@ datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i) {            
 datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.prevDbVersion]);                                                               HISTORY_HEADER.toStr(hh); }
 
 // Setter
-int      hh.setVersion       (/*HISTORY_HEADER*/int &hh[],          int      version    ) { hh[I_HH.version      ] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
+int      hh.setFormat        (/*HISTORY_HEADER*/int &hh[],          int      format     ) { hh[I_HH.format       ] = format;                                              return(format     ); HISTORY_HEADER.toStr(hh); }
 string   hh.setDescription   (/*HISTORY_HEADER*/int &hh[],          string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
    if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hh.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
@@ -51,7 +51,7 @@ int      hh.setDigits        (/*HISTORY_HEADER*/int &hh[],          int      dig
 datetime hh.setDbVersion     (/*HISTORY_HEADER*/int &hh[],          datetime version    ) { hh[I_HH.dbVersion    ] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
 datetime hh.setPrevDbVersion (/*HISTORY_HEADER*/int &hh[],          datetime version    ) { hh[I_HH.prevDbVersion] = version;                                             return(version    ); HISTORY_HEADER.toStr(hh); }
 
-int      hhs.setVersion      (/*HISTORY_HEADER*/int &hh[][], int i, int      version    ) { hh[i][I_HH.version      ] = version;                                          return(version    ); HISTORY_HEADER.toStr(hh); }
+int      hhs.setFormat       (/*HISTORY_HEADER*/int &hh[][], int i, int      format     ) { hh[i][I_HH.format       ] = format;                                           return(format     ); HISTORY_HEADER.toStr(hh); }
 string   hhs.setDescription  (/*HISTORY_HEADER*/int &hh[][], int i, string   description) {
    if (!StringLen(description)) description = "";                    // sicherstellen, daß der String initialisiert ist
    if ( StringLen(description) > 63)          return(_EMPTY_STR(catch("hhs.setDescription(1)  too long parameter description = \""+ description +"\" (max 63 chars)", ERR_INVALID_PARAMETER)));
@@ -90,7 +90,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
    if (dimensions == 1) {
       // hh ist struct HISTORY_HEADER (eine Dimension)
-      line = StringConcatenate("{version="      ,                   hh.Version      (hh),
+      line = StringConcatenate("{format="       ,                   hh.Format       (hh),
                               ", description=\"",                   hh.Description  (hh), "\"",
                               ", symbol=\""     ,                   hh.Symbol       (hh), "\"",
                               ", period="       , PeriodDescription(hh.Period       (hh)),
@@ -106,7 +106,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
       int size = ArrayRange(hh, 0);
 
       for (int i=0; i < size; i++) {
-         line = StringConcatenate("[", i, "]={version="      ,                   hhs.Version      (hh, i),
+         line = StringConcatenate("[", i, "]={format="       ,                   hhs.Format       (hh, i),
                                            ", description=\"",                   hhs.Description  (hh, i), "\"",
                                            ", symbol=\""     ,                   hhs.Symbol       (hh, i), "\"",
                                            ", period="       , PeriodDescription(hhs.Period       (hh, i)),
@@ -127,7 +127,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
 
    // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   hh.Version         (hh);       hhs.Version         (hh, NULL);
+   hh.Format          (hh);       hhs.Format          (hh, NULL);
    hh.Description     (hh);       hhs.Description     (hh, NULL);
    hh.Symbol          (hh);       hhs.Symbol          (hh, NULL);
    hh.Period          (hh);       hhs.Period          (hh, NULL);
@@ -135,7 +135,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
    hh.DbVersion       (hh);       hhs.DbVersion       (hh, NULL);
    hh.PrevDbVersion   (hh);       hhs.PrevDbVersion   (hh, NULL);
 
-   hh.setVersion      (hh, NULL); hhs.setVersion      (hh, NULL, NULL);
+   hh.setFormat       (hh, NULL); hhs.setFormat       (hh, NULL, NULL);
    hh.setDescription  (hh, NULL); hhs.setDescription  (hh, NULL, NULL);
    hh.setSymbol       (hh, NULL); hhs.setSymbol       (hh, NULL, NULL);
    hh.setPeriod       (hh, NULL); hhs.setPeriod       (hh, NULL, NULL);
@@ -160,7 +160,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
 
 //#import "Expander.dll"
-//   int      hh.Version          (/*HISTORY_HEADER*/int hh[]);
+//   int      hh.Format           (/*HISTORY_HEADER*/int hh[]);
 //   string   hh.Description      (/*HISTORY_HEADER*/int hh[]);
 //   string   hh.Symbol           (/*HISTORY_HEADER*/int hh[]);
 //   int      hh.Period           (/*HISTORY_HEADER*/int hh[]);
@@ -168,7 +168,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 //   datetime hh.DbVersion        (/*HISTORY_HEADER*/int hh[]);
 //   datetime hh.PrevDbVersion    (/*HISTORY_HEADER*/int hh[]);
 
-//   int      hhs.Version         (/*HISTORY_HEADER*/int hh[][], int i);
+//   int      hhs.Format          (/*HISTORY_HEADER*/int hh[][], int i);
 //   string   hhs.Description     (/*HISTORY_HEADER*/int hh[][], int i);
 //   string   hhs.Symbol          (/*HISTORY_HEADER*/int hh[][], int i);
 //   int      hhs.Period          (/*HISTORY_HEADER*/int hh[][], int i);
@@ -176,7 +176,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 //   datetime hhs.DbVersion       (/*HISTORY_HEADER*/int hh[][], int i);
 //   datetime hhs.PrevDbVersion   (/*HISTORY_HEADER*/int hh[][], int i);
 
-//   int      hh.setVersion       (/*HISTORY_HEADER*/int hh[], int      version    );
+//   int      hh.setFormat        (/*HISTORY_HEADER*/int hh[], int      format     );
 //   string   hh.setDescription   (/*HISTORY_HEADER*/int hh[], string   description);
 //   string   hh.setSymbol        (/*HISTORY_HEADER*/int hh[], string   symbol     );
 //   int      hh.setPeriod        (/*HISTORY_HEADER*/int hh[], int      period     );
@@ -184,7 +184,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 //   datetime hh.setDbVersion     (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
 //   datetime hh.setPrevDbVersion (/*HISTORY_HEADER*/int hh[], datetime dbVersion  );
 
-//   int      hhs.setVersion      (/*HISTORY_HEADER*/int hh[][], int i, int      version    );
+//   int      hhs.setFormat       (/*HISTORY_HEADER*/int hh[][], int i, int      format     );
 //   string   hhs.setDescription  (/*HISTORY_HEADER*/int hh[][], int i, string   description);
 //   string   hhs.setSymbol       (/*HISTORY_HEADER*/int hh[][], int i, string   symbol     );
 //   int      hhs.setPeriod       (/*HISTORY_HEADER*/int hh[][], int i, int      period     );

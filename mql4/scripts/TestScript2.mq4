@@ -22,13 +22,16 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   datetime time = GetGmtTime();
-   debug("onStart(0.1)  GMT time = "+ TimeToStr(time, TIME_FULL));
+   RecordEquity();
    return(last_error);
 
 
-   RecordEquity();
-   //RecordEquity(HST_CACHE_TICKS);
+
+   int hSet = HistorySet.Get(Symbol());
+   debug("onStart()  hSet = "+ hSet);
+   return(last_error);
+
+   RecordEquity(HST_COLLECT_TICKS);
    return(last_error);
 }
 
@@ -37,34 +40,43 @@ int onStart() {
  * Zeichnet die Equity-Kurve des Accounts auf.
  *
  * @param  int flags - das Schreiben steuernde Flags (default: keine)
- *                     HST_CACHE_TICKS: speichert aufeinanderfolgende Ticks zwischen und schreibt die Daten beim jeweils nächsten BarOpen-Event
- *                     HST_FILL_GAPS:   füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ *                     HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                     HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  */
 bool RecordEquity(int flags=NULL) {
-   if (IsTesting()) return(true);
 
-   static int hHSet;
-   if (!hHSet) {
-      string symbol      = ifString(IsTesting(), "_", "") + GetAccountNumber() +".EQ";
+   string symbol      = GetAccountNumber() +".EQ";
+   string description = "Account Equity #"+ GetAccountNumber();
+   int    digits      = 2;
+
+   int hSet = HistorySet.Get(symbol);
+   debug("RecordEquity()  hSet = "+ hSet);
+   if (!hSet) return(!SetLastError(history.GetLastError()));            // Fehler
+
+   /*
+   static int hSet;
+   if (!hSet) {
+      string symbol      = GetAccountNumber() +".EQ";
       string description = "Account Equity #"+ GetAccountNumber();
       int    digits      = 2;
 
-      hHSet = HistorySet.FindBySymbol(symbol);
-      if (!hHSet) return(!SetLastError(history.GetLastError()));           // Fehler
+      hSet = HistorySet.FindBySymbol(symbol);
+      if (!hSet) return(!SetLastError(history.GetLastError()));            // Fehler
 
-      if (hHSet == -1) {                                                   // HistorySet nicht gefunden
-         hHSet = HistorySet.Create(symbol, description, digits);
-         if (hHSet <= 0) return(!SetLastError(history.GetLastError()));
+      if (hSet == -1) {                                                    // HistorySet nicht gefunden
+         hSet = HistorySet.Create.Old(symbol, description, digits);
+         if (hSet <= 0) return(!SetLastError(history.GetLastError()));
       }
-      else if (!HistorySet.Reset(hHSet)) return(!SetLastError(history.GetLastError()));
+      else if (!HistorySet.Reset(hSet)) return(!SetLastError(history.GetLastError()));
    }
 
    double equity = AccountEquity()-AccountCredit();
 
-   if (HistorySet.AddTick(hHSet, Tick.Time, equity, flags))
+   if (HistorySet.AddTick(hSet, Tick.Time, equity, flags))
       return(true);
+   */
    return(!SetLastError(history.GetLastError()));
 }
 

@@ -675,7 +675,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Flag zum Schreiben von Historyfiles
-#define HST_CACHE_TICKS             1
+#define HST_COLLECT_TICKS           1
 #define HST_FILL_GAPS               2
 
 
