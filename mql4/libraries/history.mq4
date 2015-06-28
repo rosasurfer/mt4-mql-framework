@@ -30,25 +30,28 @@ int      periods[] = { PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, 
 
 
 // Daten kompletter History-Sets --------------------------------------------------------------------------------------------------------------------------
-int      hs.hSet      [];                          // Set-Handle: größer 0, wenn Handle gültig; kleiner 0, wenn Handle geschlossen; 0, wenn Handle ungültig
-int      hs.hSet.lastValid = -1;                   // das letzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
+int      hs.hSet      [];                          // Set-Handle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
+int      hs.hSet.lastValid;                        // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                         // Symbol
+string   hs.symbolU    [];                         // Symbol in Upper-Case
 string   hs.description[];                         // Symbol-Beschreibung
 int      hs.digits     [];                         // Symbol-Digits
 int      hs.hFile      [][9];                      // HistoryFile-Handles des Sets je Standard-Timeframe
+int      hs.format     [];                         // Datenformat für neu zu erstellende HistoryFiles
 
 
 // Daten einzelner History-Files --------------------------------------------------------------------------------------------------------------------------
-int      hf.hFile      [];                         // Dateihandle: größer 0, wenn Datei offen; kleiner 0, wenn Datei geschlossen; 0, wenn Handle ungültig
-int      hf.hFile.lastValid = -1;                  // das letzte gültige Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
+int      hf.hFile      [];                         // Dateihandle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
+int      hf.hFile.lastValid;                       // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hf.name       [];                         // Dateiname
 bool     hf.readAccess [];                         // ob das Handle Lese-Zugriff erlaubt
 bool     hf.writeAccess[];                         // ob das Handle Schreib-Zugriff erlaubt
-int      hf.size       [];                         // aktuelle Größe der Datei (inkl. noch ungeschriebener Daten im Schreibpuffer/-cache)
+int      hf.size       [];                         // aktuelle Größe der Datei (inkl. noch ungeschriebener Daten im Schreibpuffer)
 
 int      hf.header     [][HISTORY_HEADER.intSize]; // History-Header der Datei
 int      hf.format     [];                         // Datenformat: 400 | 401
 string   hf.symbol     [];                         // Symbol
+string   hf.symbolU    [];                         // Symbol in Upper-Case
 int      hf.period     [];                         // Periode
 int      hf.periodSecs [];                         // Dauer einer Periode in Sekunden
 int      hf.digits     [];                         // Digits
@@ -66,7 +69,7 @@ datetime hf.currentBar.nextCloseTime  [];          //
 double   hf.currentBar.data           [][5];       // Bar-Daten (OHLCV)
 
 
-// Zwischenspeicher der gesammelten Ticks einer noch ungespeicherten Bar (bei HST_COLLECT_TICKS = On) -----------------------------------------------------
+// Schreibpuffer für gesammelte Ticks einer noch ungespeicherten Bar (bei HST_COLLECT_TICKS = On) ---------------------------------------------------------
 int      hf.collectedBar.offset       [];          // Offset relativ zum Header: Offset 0 ist die älteste Bar
 datetime hf.collectedBar.openTime     [];          //
 datetime hf.collectedBar.closeTime    [];          //
@@ -76,8 +79,8 @@ double   hf.collectedBar.data         [][5];       // Bar-Daten (OHLCV)
 
 /**
  * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create() erzeugt,
- * muß mindestens ein HistoryFile des Symbols bereits existieren. Noch nicht existierende HistoryFiles werden beim Speichern der ersten
- * hinzugefügten Daten automatisch erstellt (altes Datenformat).
+ * muß mindestens ein HistoryFile des Symbols existieren. Nicht existierende HistoryFiles werden dann beim Speichern der ersten hinzugefügten
+ * Daten automatisch erstellt (altes Datenformat).
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  *
@@ -86,23 +89,50 @@ double   hf.collectedBar.data         [][5];       // Bar-Daten (OHLCV)
  * @return int - • Set-Handle oder -1, falls weder ein HistorySet noch ein HistoryFile dieses Symbols existieren. In diesem Fall kann
  *                 mit HistorySet.Create() ein neues Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
+ *
+ *
+ * TODO:   Parameter int fTimeframes - Timeframe-Flags implementieren
  */
 int HistorySet.Get(string symbol) {
    if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ StringToStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
+   string symbolU = StringToUpper(symbol);
 
-   // (1) vorhandene Handles durchsuchen
+   // (1) offene Set-Handles durchsuchen
    int size = ArraySize(hs.hSet);
-   for (int i=1; i < size; i++) {                                    // i=0 überspringen: Das Handle entspricht dem Index und 0 kann kein gültiges Handle sein.
-      if (hs.symbol[i] == symbol) {
-         if (hs.hSet[i] > 0)                                         // Das Handle muß offen sein (zur Zeit wird es nie geschlossen).
-            return(hs.hSet[i]);
+   for (int i=0; i < size; i++) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) {       // Das Handle muß offen sein.
+         debug("HistorySet.Get(0.1)  hSet="+ hs.hSet[i] +"  symbol=\""+ hs.symbol[i] +"\"  description=\""+ hs.description[i] +"\"  digits="+ hs.digits[i]);
+         return(hs.hSet[i]);
       }
-   }                                                                 // kein vorhandenes Handle gefunden
+   }                                                                 // kein offenes Set-Handle gefunden
 
-   // (2) existierende HistoryFiles suchen
+   int iH, hSet=-1;
+
+   // (2) offene File-Handles durchsuchen
+   size = ArraySize(hf.hFile);
+   for (i=0; i < size; i++) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) {      // Das Handle muß offen sein.
+         size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
+         hs.__ResizeInternalArrays(size);
+         iH   = size-1;
+         hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
+
+         hs.hSet       [iH] = hSet;
+         hs.symbol     [iH] = hf.symbol [i];
+         hs.symbolU    [iH] = hf.symbolU[i];
+         hs.description[iH] = hhs.Description(hf.header, i);
+         hs.digits     [iH] = hf.digits [i];
+         hs.format     [iH] = 400;                                   // Default für neu zu erstellende HistoryFiles
+
+         debug("HistorySet.Get(0.2)  hFile="+ hf.hFile[i] +"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
+         return(hSet);
+      }
+   }                                                                 // kein offenes File-Handle gefunden
+
+   // (3) existierende HistoryFiles suchen
    string fileName;
-   int hFile, fileSize, iH, hSet=-1, sizeOfPeriods=ArraySize(periods);
+   int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
 
    for (i=0; i < sizeOfPeriods; i++) {
       fileName = StringConcatenate(symbol, periods[i], ".hst");
@@ -112,38 +142,38 @@ int HistorySet.Get(string symbol) {
          fileSize = FileSize(hFile);
          if (fileSize < HISTORY_HEADER.size) {
             FileClose(hFile);
-            warn("HistorySet.Get(3)  corrupted history file \""+ fileName +"\" (size="+ fileSize +")", ERR_RUNTIME_ERROR);
+            warn("HistorySet.Get(3)  invalid history file \""+ fileName +"\" found (size="+ fileSize +")");
             continue;
          }
-
-         /*HISTORY_HEADER*/int hh[HISTORY_HEADER.intSize];           // HISTORY_HEADER auslesen
+                                                                     // HISTORY_HEADER auslesen
+         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER.intSize);
          FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize);
          FileClose(hFile);
 
-         size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (Index[0] überspringen, dort kann kein gültiges Handle liegen)
+         size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
          hs.__ResizeInternalArrays(size);
          iH   = size-1;
          hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hh.Symbol     (hh);
+         hs.symbolU    [iH] = StringToUpper(hs.symbol[iH]);
          hs.description[iH] = hh.Description(hh);
          hs.digits     [iH] = hh.Digits     (hh);
+         hs.format     [iH] = 400;                                   // Default für neu zu erstellende HistoryFiles
 
-         debug("HistorySet.Get()  hFile(\""+ fileName +"\")="+ hFile +"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
-         break;
+         debug("HistorySet.Get(0.3)  file=\""+ fileName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
+         ArrayResize(hh, 0);
+         return(hSet);
       }
-      else {                                                         // Datei konnte nicht geöffnet werden
-         int error = GetLastError();
-         if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ StringToStr(fileName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
-      }
+
+      int error = GetLastError();                                    // Datei konnte nicht geöffnet werden
+      if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ StringToStr(fileName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
    }
 
 
-   if (!catch("HistorySet.Get(5)")) {
-      hs.hSet.lastValid = hSet;
-      return(hSet);
-   }
+   if (!catch("HistorySet.Get(5)"))
+      return(-1);
    return(NULL);
 }
 
@@ -153,7 +183,7 @@ int HistorySet.Get(string symbol) {
  * bereits existierende HistoryFiles des Symbol zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
  * ungültig. Noch nicht existierende HistoryFiles werden beim Speichern der ersten hinzugefügten Daten automatisch erstellt.
  *
- * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
+ * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
  * @param  string symbol      - Symbol
  * @param  string description - Beschreibung des Symbols
@@ -162,21 +192,100 @@ int HistorySet.Get(string symbol) {
  *                                                             401 - neues Datenformat (wie MetaTrader ab Build 510)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
+ *
+ *
+ * TODO:   Parameter int fTimeframes - Timeframe-Flags implementieren
  */
 int HistorySet.Create(string symbol, string description, int digits, int format) {
    // Parametervalidierung
    if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  invalid parameter symbol = "+ StringToStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
-   if (StringLen(description) > 63)
-      description = StringLeft(description, 63);
+   string symbolU = StringToUpper(symbol);
+   if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
+   if (StringLen(description) > 63) description = StringLeft(description, 63);   // ein zu langer String wird gekürzt
    if (digits < 0)                            return(!catch("HistorySet.Create(3)  invalid parameter digits = "+ digits, ERR_INVALID_PARAMETER));
-   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(4)  invalid parameter format = "+ format +" (400 or 401)", ERR_INVALID_PARAMETER));
+   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet.Create(4)  invalid parameter format = "+ format +" (needs 400 or 401)", ERR_INVALID_PARAMETER));
 
 
-   // vorhandene Set-Handles durchsuchen
-   // offene HistoryFile-Handles schließen
-   // existierende HistoryFiles zurücksetzen und Header aktualisieren
-   // Daten in internen Schreibpuffern löschen
+   // (1) offene Set-Handles durchsuchen und Sets schließen
+   int size = ArraySize(hs.hSet);
+   for (int i=0; i < size; i++) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) {       // Das Handle muß offen sein.
+         // wenn Symbol gefunden, Set schließen...
+         if (hs.hSet.lastValid == hs.hSet[i])
+            hs.hSet.lastValid = NULL;
+         hs.hSet[i] = -1;
+
+         // Dateien des Sets schließen...
+         size = ArrayRange(hs.hFile, 1);
+         for (int n=0; n < size; n++) {
+            if (hs.hFile[i][n] > 0) {
+               if (!HistoryFile.Close(hs.hFile[i][n]))
+                  return(NULL);
+               hs.hFile[i][n] = -1;
+            }
+         }
+      }
+   }
+
+
+   // (2) offene File-Handles durchsuchen und Dateien schließen
+   size = ArraySize(hf.hFile);
+   for (i=0; i < size; i++) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) {      // Das Handle muß offen sein.
+         if (!HistoryFile.Close(hf.hFile[i]))
+            return(NULL);
+      }
+   }
+
+
+   // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
+   string fileName;
+   int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
+
+   /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
+   hh.setFormat     (hh, format     );
+   hh.setDescription(hh, description);
+   hh.setSymbol     (hh, symbol     );
+   hh.setDigits     (hh, digits     );
+
+   for (i=0; i < sizeOfPeriods; i++) {
+      fileName = StringConcatenate(symbol, periods[i], ".hst");
+      hFile    = FileOpenHistory(fileName, FILE_BIN|FILE_READ);      // Datei nur öffnen, wenn sie existiert
+
+      if (hFile > 0) {                                               // Datei gefunden und geöffnet
+         FileClose(hFile);
+         hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);     // Datei auf Größe 0 zurücksetzen
+         if (hFile > 0) {
+            hh.setPeriod(hh, periods[i]);
+            FileWriteArray(hFile, hh, 0, ArraySize(hh));             // neuen HISTORY_HEADER schreiben
+            FileClose(hFile);
+            if (!catch("HistorySet.Create(5)")) continue;
+            return(NULL);
+         }
+         error = GetLastError();                                     // Datei konnte nicht geöffnet werden
+         return(!catch("HistorySet.Create(6)  fileName=\""+ fileName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+      }
+      error = GetLastError();                                        // Datei konnte nicht geöffnet werden
+      if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Create(7)  fileName=\""+ fileName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+   }
+   ArrayResize(hh, 0);
+
+
+   // (4) neues HistorySet erzeugen
+   size = Max(ArraySize(hs.hSet), 1) + 1;                            // minSize=2: auf Index[0] kann kein gültiges Handle liegen
+   hs.__ResizeInternalArrays(size);
+   int iH   = size-1;
+   int hSet = iH;                                                    // das Set-Handle entspricht jeweils dem Index in hs.*[]
+
+   hs.hSet       [iH] = hSet;
+   hs.symbol     [iH] = symbol;
+   hs.symbolU    [iH] = symbolU;
+   hs.description[iH] = description;
+   hs.digits     [iH] = digits;
+   hs.format     [iH] = format;
+
+   return(hSet);
 }
 
 
@@ -190,7 +299,9 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
  *
  * @return int - HistorySet-Handle oder 0, falls ein Fehler auftrat
  */
-int HistorySet.Create.Old(string symbol, string description, int digits) {
+int HistorySet.Create.Old(string symbol, string description, int digits, int format) {
+   string symbolU = StringToUpper(symbol);
+
    int size = Max(ArraySize(hs.hSet), 1) + 1;                        // ersten Index überspringen (0 ist kein gültiges Handle)
    hs.__ResizeInternalArrays(size);
 
@@ -198,8 +309,10 @@ int HistorySet.Create.Old(string symbol, string description, int digits) {
    int iH=size-1, hSet=iH;                                           // das Handle entspricht dem Index
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
+   hs.symbolU    [iH] = symbolU;
    hs.description[iH] = description;
    hs.digits     [iH] = digits;
+   hs.format     [iH] = 400;                                         // Default für neu zu erstellende HistoryFiles
 
    int sizeOfPeriods = ArraySize(periods);
 
@@ -212,13 +325,15 @@ int HistorySet.Create.Old(string symbol, string description, int digits) {
 
    // (2) offene HistorySet-Handles desselben Symbols schließen
    for (i=1; i < size-1; i++) {                                      // erstes (ungültiges) und letztes (gerade erzeugtes) Handle überspringen
-      if (hs.symbol[i] == symbol) {
-         if (hs.hSet[i] > 0)
+      if (hs.symbolU[i] == symbolU) {
+         if (hs.hSet[i] > 0) {
+            if (hs.hSet.lastValid == hs.hSet[i])
+               hs.hSet.lastValid = NULL;
             hs.hSet[i] = -1;
+         }
       }
    }
 
-   hs.hSet.lastValid = hSet;
    return(hSet);
 }
 
@@ -233,11 +348,13 @@ int HistorySet.Create.Old(string symbol, string description, int digits) {
  */
 int HistorySet.FindBySymbol(string symbol) {
    if (!StringLen(symbol)) return(!catch("HistorySet.FindBySymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER));
+   string symbolU = StringToUpper(symbol);
+
    int size = ArraySize(hs.hSet);
 
    // es kann mehrere Handles je Symbol, jedoch nur ein offenes (das letzte) geben
    for (int i=size-1; i > 0; i--) {                                  // auf Index 0 kann kein gültiges Handle liegen
-      if (hs.symbol[i] == symbol) {
+      if (hs.symbolU[i] == symbolU) {
          if (hs.hSet[i] > 0)
             return(hs.hSet[i]);
       }
@@ -278,18 +395,6 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
 
 
 /**
- * Setzt das angegebene HistorySet zurück. Alle gespeicherten Kursreihen werden gelöscht.
- *
- * @param  int hSet - Set-Handle
- *
- * @return bool - Erfolgsstatus
- */
-bool HistorySet.Reset(int hSet) {
-   return(!catch("HistorySet.Reset(1)", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
  * Öffnet eine Historydatei und gibt ein Dateihandle für sie zurück. Ist der Access-Mode FILE_WRITE angegeben und die Datei existiert nicht,
  * wird sie erstellt und ein HISTORY_HEADER geschrieben.
  *
@@ -307,6 +412,7 @@ bool HistorySet.Reset(int hSet) {
  */
 int HistoryFile.Open(string symbol, string description, int digits, int timeframe, int mode=FILE_READ) {
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(1)  illegal parameter symbol = "+ symbol +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   string symbolU = StringToUpper(symbol);
    if (digits < 0)                            return(_NULL(catch("HistoryFile.Open(2)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
    if (timeframe <= 0)                        return(_NULL(catch("HistoryFile.Open(3)  illegal parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER)));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile.Open(4)  invalid file access mode = "+ mode +" (needs FILE_READ and/or FILE_WRITE)", ERR_INVALID_PARAMETER)));
@@ -324,10 +430,10 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
    if (fileSize < HISTORY_HEADER.size) {
       if (!(mode & FILE_WRITE)) {                                    // wenn "read-only" mode
          FileClose(hFile);
-         return(_NULL(catch("HistoryFile.Open(6)  corrupted history file \""+ fileName +"\" (size = "+ fileSize +")", ERR_RUNTIME_ERROR)));
+         return(_NULL(catch("HistoryFile.Open(6)  corrupted history file \""+ fileName +"\" (size="+ fileSize +")", ERR_RUNTIME_ERROR)));
       }
       // neuen HISTORY_HEADER schreiben
-      datetime now = TimeCurrentFix();                               // TODO: ServerTime() implementieren (TimeCurrent() ist Zeit des letzten globalen Ticks)
+      datetime now = TimeCurrentFix();                               // TODO: ServerTime() implementieren, TimeCurrent() ist Zeit des letzten globalen Ticks
       hh.setFormat       (hh, 400        );
       hh.setDescription  (hh, description);
       hh.setSymbol       (hh, symbol     );
@@ -353,7 +459,7 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
       }
    }
 
-   // Daten zwischenspeichern
+   // Daten lokal zwischenspeichern
    if (hFile >= ArraySize(hf.hFile))
       hf.__ResizeInternalArrays(hFile+1);
 
@@ -366,6 +472,7 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
    ArraySetIntArray(hf.header,     hFile, hh);                       // entspricht: hf.header[hFile] = hh;
                     hf.format     [hFile] = 400;
                     hf.symbol     [hFile] = symbol;
+                    hf.symbolU    [hFile] = symbolU;
                     hf.period     [hFile] = timeframe;
                     hf.periodSecs [hFile] = timeframe * MINUTES;
                     hf.digits     [hFile] = digits;
@@ -373,8 +480,6 @@ int HistoryFile.Open(string symbol, string description, int digits, int timefram
                     hf.bars       [hFile] = bars;
                     hf.from       [hFile] = from;
                     hf.to         [hFile] = to;
-
-   hf.hFile.lastValid = hFile;
 
    ArrayResize(hh, 0);
 
@@ -397,27 +502,18 @@ bool HistoryFile.Close(int hFile) {
       if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile.Close(2)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR));
       if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile.Close(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR));
    }
-   else {
-      hf.hFile.lastValid = -1;
-   }
+   else hf.hFile.lastValid = NULL;
 
-   if (hf.hFile[hFile] < 0)                                          // Datei ist bereits geschlossen worden
-      return(true);
-
-   int error = GetLastError();
-   if (IsError(error))
-      return(!catch("HistoryFile.Close(4)", error));
+   if (hf.hFile[hFile] < 0)                    return(true);         // Handle wurde bereits geschlossen (kann ignoriert werden)
+   if (IsError(catch("HistoryFile.Close(4)"))) return(false);        // vor FileClose() alle evt. Fehler abfangen
 
    FileClose(hFile);
    hf.hFile[hFile] = -1;
 
-   error = GetLastError();
-   if (error == ERR_INVALID_PARAMETER) {                             // Datei war bereits geschlossen: kann ignoriert werden
-   }
-   else if (IsError(error)) {
-      return(!catch("HistoryFile.Close(5)", error));
-   }
-   return(true);
+   int error = GetLastError();
+   if (!error)                         return(true);
+   if (error == ERR_INVALID_PARAMETER) return(true);                 // Datei wurde bereits geschlossen (kann ignoriert werden)
+   return(!catch("HistoryFile.Close(5)", error));
 }
 
 
@@ -941,6 +1037,7 @@ int hf.__ResizeInternalArrays(int size) {
       ArrayResize(hf.header,                     size);
       ArrayResize(hf.format,                     size);
       ArrayResize(hf.symbol,                     size);
+      ArrayResize(hf.symbolU,                    size);
       ArrayResize(hf.period,                     size);
       ArrayResize(hf.periodSecs,                 size);
       ArrayResize(hf.digits,                     size);
@@ -983,9 +1080,11 @@ int hs.__ResizeInternalArrays(int size) {
    if (size != ArraySize(hs.hSet)) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
+      ArrayResize(hs.symbolU,     size);
       ArrayResize(hs.description, size);
       ArrayResize(hs.digits,      size);
       ArrayResize(hs.hFile,       size);
+      ArrayResize(hs.format,      size);
    }
    return(size);
 }
@@ -1364,6 +1463,7 @@ void Tester.ResetGlobalArrays() {
    ArrayResize(hf.header                    , 0);
    ArrayResize(hf.format                    , 0);
    ArrayResize(hf.symbol                    , 0);
+   ArrayResize(hf.symbolU                   , 0);
    ArrayResize(hf.period                    , 0);
    ArrayResize(hf.periodSecs                , 0);
    ArrayResize(hf.digits                    , 0);
@@ -1389,8 +1489,10 @@ void Tester.ResetGlobalArrays() {
    // Daten einzelner History-Sets
    ArrayResize(hs.hSet                      , 0);
    ArrayResize(hs.symbol                    , 0);
+   ArrayResize(hs.symbolU                   , 0);
    ArrayResize(hs.description               , 0);
    ArrayResize(hs.digits                    , 0);
    ArrayResize(hs.hFile                     , 0);
+   ArrayResize(hs.format                    , 0);
  //ArrayResize(periods...                                            // hat Initializer und wird nicht modifiziert
 }

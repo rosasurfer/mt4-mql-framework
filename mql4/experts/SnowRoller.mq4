@@ -5311,7 +5311,6 @@ bool RecordEquity(int flags=NULL) {
          hSet = HistorySet.Create.Old(symbol, description, digits);
          if (hSet <= 0) return(!SetLastError(history.GetLastError()));
       }
-      else if (!HistorySet.Reset(hSet)) return(!SetLastError(history.GetLastError()));
    }
 
    double value = sequence.startEquity + sequence.totalPL;

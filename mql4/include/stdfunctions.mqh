@@ -3658,7 +3658,7 @@ void __DummyCalls() {
    datetime GetLocalTime();
    string   GetString(int address);
    string   IntToHexStr(int integer);
-   bool     IsBuiltinTimeframe(int timeframe);
+   bool     IsStandardTimeframe(int timeframe);
    bool     IsUIThread();
    void     SetLogLevel(int level);
 

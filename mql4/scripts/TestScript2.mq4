@@ -47,13 +47,25 @@ int onStart() {
  */
 bool RecordEquity(int flags=NULL) {
 
-   string symbol      = GetAccountNumber() +".EQ";
-   string description = "Account Equity #"+ GetAccountNumber();
-   int    digits      = 2;
+   string symbol = GetAccountNumber() +".EQ";
+   int hSet = -1;
 
-   int hSet = HistorySet.Get(symbol);
-   debug("RecordEquity()  hSet = "+ hSet);
+   //hSet = HistorySet.Get(symbol);                                   debug("RecordEquity()->HistorySet.Get()  hSet="+ hSet);
    if (!hSet) return(!SetLastError(history.GetLastError()));            // Fehler
+
+   if (hSet < 0) {
+      string description = "Account Equity #"+ GetAccountNumber();
+      int    digits      = 2;
+      int    format      = 401;
+      hSet = HistorySet.Create    (symbol, description, digits, format);debug("RecordEquity()->HistorySet.Create()  hSet="+ hSet);
+    //hSet = HistorySet.Create.Old(symbol, description, digits, format);debug("RecordEquity()->HistorySet.Create.Old()  hSet="+ hSet);
+      if (!hSet) return(!SetLastError(history.GetLastError()));         // Fehler
+
+      history.CloseFiles(false);
+   }
+
+
+
 
    /*
    static int hSet;
@@ -69,7 +81,6 @@ bool RecordEquity(int flags=NULL) {
          hSet = HistorySet.Create.Old(symbol, description, digits);
          if (hSet <= 0) return(!SetLastError(history.GetLastError()));
       }
-      else if (!HistorySet.Reset(hSet)) return(!SetLastError(history.GetLastError()));
    }
 
    double equity = AccountEquity()-AccountCredit();
