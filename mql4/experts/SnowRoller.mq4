@@ -5303,14 +5303,10 @@ bool RecordEquity(int flags=NULL) {
       string symbol      = ifString(IsTesting(), "_", "") +"SR"+ sequenceId;
       string description = "Equity SR."+ sequenceId;
       int    digits      = 2;
+      int    format      = 400;
 
-      hSet = HistorySet.FindBySymbol(symbol);
-      if (!hSet) return(!SetLastError(history.GetLastError()));            // Fehler
-
-      if (hSet == -1) {                                                    // HistorySet nicht gefunden
-         hSet = HistorySet.Create.Old(symbol, description, digits);
-         if (hSet <= 0) return(!SetLastError(history.GetLastError()));
-      }
+      hSet = HistorySet.Create(symbol, description, digits, format);
+      if (!hSet) return(!SetLastError(history.GetLastError()));
    }
 
    double value = sequence.startEquity + sequence.totalPL;
