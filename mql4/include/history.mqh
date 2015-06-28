@@ -6,10 +6,10 @@
    int      HistorySet.Get         (string symbol);
    int      HistorySet.Create      (string symbol, string description, int digits, int format);
 
-   int      HistorySet.Create.Old  (string symbol, string description, int digits);
    int      HistorySet.FindBySymbol(string symbol);
+   int      HistorySet.Create.Old  (string symbol, string description, int digits, int format);
+
    bool     HistorySet.AddTick     (int hSet, datetime time, double value, int flags=NULL);
-   bool     HistorySet.Reset       (int hSet);
 
    int      HistoryFile.Open           (string symbol, string description, int digits, int timeframe, int mode);
    bool     HistoryFile.Close          (int hFile);
