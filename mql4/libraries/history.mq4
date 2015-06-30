@@ -94,8 +94,8 @@ double   hf.collectedBar.data         [][5];       // Bar-Daten (OHLCV)
  * TODO:   Parameter int fTimeframes - Timeframe-Flags implementieren
  */
 int HistorySet.Get(string symbol) {
-   if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ StringToStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    string symbolU = StringToUpper(symbol);
 
    // (1) offene Set-Handles durchsuchen
@@ -168,7 +168,7 @@ int HistorySet.Get(string symbol) {
       }
 
       int error = GetLastError();                                    // Datei konnte nicht geöffnet werden
-      if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ StringToStr(fileName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
+      if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ DoubleQuoteStr(fileName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
    }
 
 
@@ -198,8 +198,8 @@ int HistorySet.Get(string symbol) {
  */
 int HistorySet.Create(string symbol, string description, int digits, int format) {
    // Parametervalidierung
-   if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  illegal parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  illegal parameter symbol = "+ StringToStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  illegal parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  illegal parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    string symbolU = StringToUpper(symbol);
    if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
    if (StringLen(description) > 63) description = StringLeft(description, 63);   // ein zu langer String wird gekürzt
@@ -324,7 +324,6 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
       }
       if (!HistoryFile.AddTick(hFile, time, value, flags)) return(false);
    }
-
    return(true);
 }
 
@@ -352,8 +351,8 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  */
 int HistoryFile.Open(string symbol, int timeframe, string description, int digits, int format, int mode) {
    // Validierung
-   if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  illegal parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  illegal parameter symbol = "+ StringToStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  illegal parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  illegal parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
    string symbolU = StringToUpper(symbol);
    if (timeframe <= 0)                        return(_NULL(catch("HistoryFile.Open(3)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER)));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile.Open(4)  invalid file access mode = "+ mode +" (needs to be FILE_READ and/or FILE_WRITE)", ERR_INVALID_PARAMETER)));
@@ -1396,7 +1395,7 @@ bool history.CloseFiles(bool warn=false) {
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         if (warn) warn("history.CloseFiles(1)  open file handle "+ hf.hFile[i] +" found: "+ StringToStr(hf.name[i]));
+         if (warn) warn("history.CloseFiles(1)  open file handle "+ hf.hFile[i] +" found: "+ DoubleQuoteStr(hf.name[i]));
 
          if (!HistoryFile.Close(hf.hFile[i]))
             error = last_error;

@@ -116,7 +116,7 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 // Setter
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[ 0]    = error;                                                    return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    int src  = GetStringAddress(symbol);
    int dest = GetIntsAddress(oe) + 4;
@@ -157,7 +157,7 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
    if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][ 0] = error;                                                    return(error     ); }
                                                                                               oe[i][ 0] = error;                                                    return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol)), ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol)), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    int src  = GetStringAddress(symbol);
    int dest = GetIntsAddress(oe) + i*ArrayRange(oe, 1)*4 + 4;

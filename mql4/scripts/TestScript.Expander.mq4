@@ -46,7 +46,7 @@ int onStart() {
    int type = GetTimeZoneInformation(tzi);
 
    string stdName.dll = tzi_StandardName(tzi);
-   debug("onStart()->tzi_StandardName() = "+ StringToStr(stdName.dll));
+   debug("onStart()->tzi_StandardName() = "+ DoubleQuoteStr(stdName.dll));
 
 
    ArrayResize(tzi, 0);
