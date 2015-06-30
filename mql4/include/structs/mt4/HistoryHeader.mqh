@@ -42,7 +42,7 @@ string   hh.setDescription (/*HISTORY_HEADER*/int &hh[],          string   descr
    int dest = GetIntsAddress(hh) + I_HH.description*4;
    CopyMemory(dest, src, StringLen(description)+1);                  /*terminierendes <NUL> wird mitkopiert*/                 return(description); HISTORY_HEADER.toStr(hh); }
 string   hh.setSymbol      (/*HISTORY_HEADER*/int &hh[],          string   symbol     ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hh.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("hh.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("hh.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    int src  = GetStringAddress(symbol);
    int dest = GetIntsAddress(hh) + I_HH.symbol*4;

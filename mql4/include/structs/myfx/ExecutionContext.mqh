@@ -75,7 +75,7 @@ string ec.LogFile              (/*EXECUTION_CONTEXT*/int ec[]                   
 int    ec.setProgramId         (/*EXECUTION_CONTEXT*/int &ec[], int    id                ) { ec[I_EC.programId         ] = id;                          return(id                ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setProgramType       (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.programType       ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name              ) {
-   if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ StringToStr(name), ERR_INVALID_PARAMETER)));
+   if (!StringLen(name))             return(_EMPTY_STR(catch("ec.setProgramName(1)  invalid parameter name = "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_PATH-1) return(_EMPTY_STR(catch("ec.setProgramName(2)  illegal parameter name = \""+ name +"\" (max "+ (MAX_PATH-1) +" chars)", ERR_TOO_LONG_STRING)));
    int src  = GetStringAddress(name);
    int dest = GetIntsAddress(ec) + I_EC.programName*4;
@@ -90,7 +90,7 @@ int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFla
 int    ec.setRootFunction      (/*EXECUTION_CONTEXT*/int &ec[], int    rootFunction      ) { ec[I_EC.rootFunction      ] = rootFunction;                return(rootFunction      ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setUninitializeReason(/*EXECUTION_CONTEXT*/int &ec[], int    uninitializeReason) { ec[I_EC.uninitializeReason] = uninitializeReason;          return(uninitializeReason); EXECUTION_CONTEXT.toStr(ec); }
 string ec.setSymbol            (/*EXECUTION_CONTEXT*/int &ec[], string symbol            ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("ec.setSymbol(1)  invalid parameter symbol = "+ StringToStr(symbol), ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("ec.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("ec.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    int src  = GetStringAddress(symbol);
    int dest = GetIntsAddress(ec) + I_EC.symbol*4;
@@ -134,21 +134,21 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 
    string result = StringConcatenate("{programId="         ,                         ec.ProgramId         (ec),
                                     ", programType="       ,        ModuleTypesToStr(ec.ProgramType       (ec)),
-                                    ", programName="       ,             StringToStr(ec.ProgramName       (ec)),
+                                    ", programName="       ,          DoubleQuoteStr(ec.ProgramName       (ec)),
                                     ", launchType="        ,                         ec.LaunchType        (ec),
                                     ", superContext="      ,               ifString(!ec.lpSuperContext    (ec), "0", "0x"+ IntToHexStr(ec.lpSuperContext(ec))),
                                     ", initFlags="         ,          InitFlagsToStr(ec.InitFlags         (ec)),
                                     ", deinitFlags="       ,        DeinitFlagsToStr(ec.DeinitFlags       (ec)),
                                     ", rootFunction="      ,       RootFunctionToStr(ec.RootFunction      (ec)),
                                     ", uninitializeReason=", UninitializeReasonToStr(ec.UninitializeReason(ec)),
-                                    ", symbol="            ,             StringToStr(ec.Symbol            (ec)),
+                                    ", symbol="            ,          DoubleQuoteStr(ec.Symbol            (ec)),
                                     ", timeframe="         ,             PeriodToStr(ec.Timeframe         (ec)),
                                     ", hChartWindow="      ,               ifString(!ec.hChartWindow      (ec), "0", "0x"+ IntToHexStr(ec.hChartWindow  (ec))),
                                     ", hChart="            ,               ifString(!ec.hChart            (ec), "0", "0x"+ IntToHexStr(ec.hChart        (ec))),
                                     ", testFlags="         ,          TestFlagsToStr(ec.TestFlags         (ec)),
                                     ", lastError="         ,              ErrorToStr(ec.LastError         (ec)),
                                     ", logging="           ,               BoolToStr(ec.Logging           (ec)),
-                                    ", logFile="           ,             StringToStr(ec.LogFile           (ec)), "}");
+                                    ", logFile="           ,          DoubleQuoteStr(ec.LogFile           (ec)), "}");
    if (outputDebug)
       debug("EXECUTION_CONTEXT.toStr()  "+ result);
 

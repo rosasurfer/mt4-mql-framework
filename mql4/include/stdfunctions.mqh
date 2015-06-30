@@ -2294,7 +2294,7 @@ int StrToMaMethod(string value, int execFlags=NULL) {
    if (str ==         "ALMA") return(MODE_ALMA);
    if (str == ""+ MODE_ALMA ) return(MODE_ALMA);
 
-   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ StringToStr(value), ERR_INVALID_PARAMETER)));
+   if (!execFlags & MUTE_ERR_INVALID_PARAMETER) return(_EMPTY(catch("StrToMaMethod(1)  invalid parameter value = "+ DoubleQuoteStr(value), ERR_INVALID_PARAMETER)));
    else                                         return(_EMPTY(SetLastError(ERR_INVALID_PARAMETER)));
 }
 
@@ -2308,21 +2308,40 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
 
 
 /**
- * Gibt die lesbare Repräsentation eines Strings zurück (in Anführungszeichen). Für einen nicht initialisierten String (NULL-Pointer)
- * wird der String NULL (ohne Anführungszeichen) zurückgegeben.
+ * Faßt einen Strings in einfache Anführungszeichen ein. Für einen nicht initialisierten String (NULL-Pointer)
+ * wird der String "NULL" (ohne Anführungszeichen) zurückgegeben.
  *
  * @param  string value
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
-string StringToStr(string value) {
+string QuoteStr(string value) {
+   string tmp = value;                                               // ERR_NOT_INITIALIZED_STRING provozieren
+
+   int error = GetLastError();
+   if (!error)                              return(StringConcatenate("'", value, "'"));
+   if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
+
+   return(_EMPTY_STR(catch("QuoteStr(1)", error)));
+}
+
+
+/**
+ * Faßt einen Strings in doppelte Anführungszeichen ein. Für einen nicht initialisierten String (NULL-Pointer)
+ * wird der String "NULL" (ohne Anführungszeichen) zurückgegeben.
+ *
+ * @param  string value
+ *
+ * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
+ */
+string DoubleQuoteStr(string value) {
    string tmp = value;                                               // ERR_NOT_INITIALIZED_STRING provozieren
 
    int error = GetLastError();
    if (!error)                              return(StringConcatenate("\"", value, "\""));
    if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
 
-   return(_EMPTY_STR(catch("StringToStr(1)", error)));
+   return(_EMPTY_STR(catch("DoubleQuoteStr(1)", error)));
 }
 
 
@@ -3494,6 +3513,7 @@ void __DummyCalls() {
    debug(NULL);
    DebugMarketInfo(NULL);
    Div(NULL, NULL);
+   DoubleQuoteStr(NULL);
    DummyCalls();
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
@@ -3526,14 +3546,15 @@ void __DummyCalls() {
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
    Max(NULL, NULL);
-   MT4InternalMsg();
    Min(NULL, NULL);
    ModuleTypesToStr(NULL);
+   MT4InternalMsg();
    NE(NULL, NULL);
    OrderPop(NULL);
    OrderPush(NULL);
    PeriodToStr(NULL);
    PipValue();
+   QuoteStr(NULL);
    ResetLastError();
    RootFunctionName(NULL);
    RootFunctionToStr(NULL);

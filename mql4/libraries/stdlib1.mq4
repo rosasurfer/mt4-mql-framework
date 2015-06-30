@@ -328,7 +328,7 @@ int stdlib.GetLastError() {
  * @return bool - Erfolgsstatus
  */
 bool EditFile(string filename) {
-   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename = "+ StringToStr(filename), ERR_INVALID_PARAMETER));
+   if (!StringLen(filename)) return(!catch("EditFile(1)  invalid parameter filename = "+ DoubleQuoteStr(filename), ERR_INVALID_PARAMETER));
 
    string file[1]; file[0] = filename;
    return(EditFiles(file));
@@ -347,7 +347,7 @@ bool EditFiles(string filenames[]) {
    if (!size)                       return(!catch("EditFiles(1)  invalid parameter filenames = {}", ERR_INVALID_PARAMETER));
 
    for (int i=0; i < size; i++) {
-      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid file name at filenames["+ i +"] = "+ StringToStr(filenames[i]), ERR_INVALID_PARAMETER));
+      if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid file name at filenames["+ i +"] = "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
    }
 
 

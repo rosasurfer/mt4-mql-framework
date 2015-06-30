@@ -25,7 +25,7 @@ void GlobalPrimitives(bool st, bool in) {
 
    if (st) {
       if (in) {
-         debug("GlobalPrimitives(static in=1)  g.int="+ g.int.st.in +"  g.double="+ DoubleToStr(g.double.st.in, 1) +"  g.string="+ StringToStr(g.string.st.in));
+         debug("GlobalPrimitives(static in=1)  g.int="+ g.int.st.in +"  g.double="+ DoubleToStr(g.double.st.in, 1) +"  g.string="+ DoubleQuoteStr(g.string.st.in));
          g.int.st.in++;
          g.double.st.in = g.double.st.in + 1;
             if (!StringLen(g.string.st.in))
@@ -33,7 +33,7 @@ void GlobalPrimitives(bool st, bool in) {
          g.string.st.in = CharToStr(StringGetChar(g.string.st.in, 0) + 1);
       }
       else /*(!in)*/ {
-         debug("GlobalPrimitives(static in=0)  g.int="+ g.int.st +"  g.double="+ DoubleToStr(g.double.st, 1) +"  g.string="+ StringToStr(g.string.st));
+         debug("GlobalPrimitives(static in=0)  g.int="+ g.int.st +"  g.double="+ DoubleToStr(g.double.st, 1) +"  g.string="+ DoubleQuoteStr(g.string.st));
          g.int.st++;
          g.double.st = g.double.st +1;
             if (!StringLen(g.string.st))
@@ -43,7 +43,7 @@ void GlobalPrimitives(bool st, bool in) {
    }
    else /*(!st)*/ {
       if (in) {
-         debug("GlobalPrimitives(in=1)  g.int="+ g.int.in +"  g.double="+ DoubleToStr(g.double.in, 1) +"  g.string="+ StringToStr(g.string.in));
+         debug("GlobalPrimitives(in=1)  g.int="+ g.int.in +"  g.double="+ DoubleToStr(g.double.in, 1) +"  g.string="+ DoubleQuoteStr(g.string.in));
          g.int.in++;
          g.double.in = g.double.in + 1;
             if (!StringLen(g.string.in))
@@ -51,7 +51,7 @@ void GlobalPrimitives(bool st, bool in) {
          g.string.in = CharToStr(StringGetChar(g.string.in, 0) + 1);
       }
       else /*(!in)*/ {
-         debug("GlobalPrimitives(in=0)  g.int="+ g.int +"  g.double="+ DoubleToStr(g.double, 1) +"  g.string="+ StringToStr(g.string));
+         debug("GlobalPrimitives(in=0)  g.int="+ g.int +"  g.double="+ DoubleToStr(g.double, 1) +"  g.string="+ DoubleQuoteStr(g.string));
          g.int++;
          g.double = g.double +1;
             if (!StringLen(g.string))
@@ -77,7 +77,7 @@ void LocalPrimitives(bool in) {
    static string l.string.in = "";
 
    if (in) {
-      debug("LocalPrimitives(in=1)  l.int="+ l.int.in +"  l.double="+ DoubleToStr(l.double.in, 1) +"  l.string="+ StringToStr(l.string.in));
+      debug("LocalPrimitives(in=1)  l.int="+ l.int.in +"  l.double="+ DoubleToStr(l.double.in, 1) +"  l.string="+ DoubleQuoteStr(l.string.in));
       l.int.in++;
       l.double.in = l.double.in + 1;
          if (!StringLen(l.string.in))
@@ -85,7 +85,7 @@ void LocalPrimitives(bool in) {
       l.string.in = CharToStr(StringGetChar(l.string.in, 0) + 1);
    }
    else {
-      debug("LocalPrimitives(in=0)  l.int="+ l.int +"  l.double="+ DoubleToStr(l.double, 1) +"  l.string="+ StringToStr(l.string));
+      debug("LocalPrimitives(in=0)  l.int="+ l.int +"  l.double="+ DoubleToStr(l.double, 1) +"  l.string="+ DoubleQuoteStr(l.string));
       l.int++;
       l.double = l.double +1;
          if (!StringLen(l.string))

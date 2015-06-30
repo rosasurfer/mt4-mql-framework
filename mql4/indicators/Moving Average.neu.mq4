@@ -390,17 +390,17 @@ void SetIndicatorStyles() {
 string InputsToStr() {
    return(StringConcatenate("init()  inputs: ",
 
-                            "MA.Periods=",                 StringToStr(MA.Periods)                , "; ",
-                            "MA.Periods.Hotkeys.Enabled=", BoolToStr  (MA.Periods.Hotkeys.Enabled), "; ",
-                            "MA.Timeframe=",               StringToStr(MA.Timeframe)              , "; ",
-                            "MA.Method=",                  StringToStr(MA.Method)                 , "; ",
-                            "MA.AppliedPrice=",            StringToStr(MA.AppliedPrice)           , "; ",
+                            "MA.Periods=",                 DoubleQuoteStr(MA.Periods)                , "; ",
+                            "MA.Periods.Hotkeys.Enabled=",      BoolToStr(MA.Periods.Hotkeys.Enabled), "; ",
+                            "MA.Timeframe=",               DoubleQuoteStr(MA.Timeframe)              , "; ",
+                            "MA.Method=",                  DoubleQuoteStr(MA.Method)                 , "; ",
+                            "MA.AppliedPrice=",            DoubleQuoteStr(MA.AppliedPrice)           , "; ",
 
-                            "Color.UpTrend=",              ColorToStr (Color.UpTrend)             , "; ",
-                            "Color.DownTrend=",            ColorToStr (Color.DownTrend)           , "; ",
+                            "Color.UpTrend=",              ColorToStr(Color.UpTrend)                 , "; ",
+                            "Color.DownTrend=",            ColorToStr(Color.DownTrend)               , "; ",
 
-                            "Max.Values=",                             Max.Values                 , "; ",
-                            "Shift.Horizontal.Bars=",                  Shift.Horizontal.Bars      , "; ",
-                            "Shift.Vertical.Pips=",                    Shift.Vertical.Pips        , "; ")
+                            "Max.Values=",                 Max.Values                                , "; ",
+                            "Shift.Horizontal.Bars=",      Shift.Horizontal.Bars                     , "; ",
+                            "Shift.Vertical.Pips=",        Shift.Vertical.Pips                       , "; ")
    );
 }
