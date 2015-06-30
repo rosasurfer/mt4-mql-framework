@@ -10,7 +10,7 @@
    int      HistoryFile.Open           (string symbol, int timeframe, string description, int digits, int format, int mode);
    bool     HistoryFile.Close          (int hFile);
    int      HistoryFile.FindBar        (int hFile, datetime time, bool lpBarExists[]);
-   bool     HistoryFile.ReadBar        (int hFile, int offset, datetime time[], double data[]);
+   bool     HistoryFile.ReadBar        (int hFile, int offset, datetime barTime[], double barData[]);
    bool     HistoryFile.InsertBar      (int hFile, int offset, datetime time, double data[], int flags=NULL);
    bool     HistoryFile.UpdateBar      (int hFile, int offset, double value);
    bool     HistoryFile.WriteBar       (int hFile, int offset, datetime time, double data[], int flags=NULL);

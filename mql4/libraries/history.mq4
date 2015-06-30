@@ -84,7 +84,7 @@ double   hf.collectedBar.data         [][5];       // Bar-Daten (OHLCV)
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  *
- * @param  string symbol - Symbol
+ * @param  __IN__ string symbol - Symbol
  *
  * @return int - • Set-Handle oder -1, falls weder ein HistorySet noch ein HistoryFile dieses Symbols existieren. In diesem Fall kann
  *                 mit HistorySet.Create() ein neues Set erzeugt werden.
@@ -185,11 +185,11 @@ int HistorySet.Get(string symbol) {
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
- * @param  string symbol      - Symbol
- * @param  string description - Beschreibung des Symbols
- * @param  int    digits      - Digits der Datenreihe
- * @param  int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
- *                                                             401 - neues Datenformat (wie MetaTrader ab Build 510)
+ * @param  __IN__ string symbol      - Symbol
+ * @param  __IN__ string description - Beschreibung des Symbols
+ * @param  __IN__ int    digits      - Digits der Datenreihe
+ * @param  __IN__ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
+ *                                                                    401 - neues Datenformat (wie MetaTrader ab Build 510)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  *
@@ -292,12 +292,12 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
 /**
  * Fügt dem HistorySet eines Symbols einen Tick hinzu (außer PERIOD_W1 und PERIOD_MN1). Der Tick wird als letzter Tick (Close) der entsprechenden Bars gespeichert.
  *
- * @param  int      hSet  - Set-Handle des Symbols
- * @param  datetime time  - Zeitpunkt des Ticks
- * @param  double   value - Datenwert
- * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                          HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                          HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ * @param  __INT__ int      hSet  - Set-Handle des Symbols
+ * @param  __INT__ datetime time  - Zeitpunkt des Ticks
+ * @param  __INT__ double   value - Datenwert
+ * @param  __INT__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                  HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                                  HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  */
@@ -334,12 +334,12 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie im angegebenen Format erstellt.
  * • Ist FILE_WRITE, nicht jedoch FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und im angegebenen Format neu erstellt.
  *
- * @param  string symbol      - Symbol des Instruments
- * @param  int    timeframe   - Timeframe der Zeitreihe
- * @param  string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
- * @param  int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
- * @param  int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
- * @param  int    mode        - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  __INT__ string symbol      - Symbol des Instruments
+ * @param  __INT__ int    timeframe   - Timeframe der Zeitreihe
+ * @param  __INT__ string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
+ * @param  __INT__ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
+ * @param  __INT__ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
+ * @param  __INT__ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
  *
  * @return int - • Dateihandle
  *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert
@@ -433,8 +433,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 
                     hf.hFile      [hFile] = hFile;
                     hf.name       [hFile] = fileName;
-                    hf.readAccess [hFile] = mode & FILE_READ;
-                    hf.writeAccess[hFile] = mode & FILE_WRITE;
+                    hf.readAccess [hFile] = !write_only;
+                    hf.writeAccess[hFile] = !read_only;
                     hf.size       [hFile] = fileSize;
 
    ArraySetIntArray(hf.header,     hFile, hh);                       // entspricht: hf.header[hFile] = hh;
@@ -460,7 +460,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 /**
  * Schließt die Historydatei mit dem angegebenen Handle. Die Datei muß vorher mit HistoryFile.Open() geöffnet worden sein.
  *
- * @param  int hFile - Dateihandle
+ * @param  __INT__ int hFile - Dateihandle
  *
  * @return bool - Erfolgsstatus
  */
@@ -488,12 +488,12 @@ bool HistoryFile.Close(int hFile) {
 /**
  * Fügt einer einzelnen Historydatei einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
  *
- * @param  int      hFile - Dateihandle der Historydatei
- * @param  datetime time  - Zeitpunkt des Ticks
- * @param  double   value - Datenwert
- * @param  int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                          HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                          HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ * @param  __INT__ int      hFile - Dateihandle der Historydatei
+ * @param  __INT__ datetime time  - Zeitpunkt des Ticks
+ * @param  __INT__ double   value - Datenwert
+ * @param  __INT__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                  HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                                  HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  *
@@ -618,16 +618,16 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
 
 
 /**
- * Findet den Offset der Bar innerhalb einer Historydatei, die den angegebenen Zeitpunkt abdeckt, und signalisiert, ob an diesem Offset
- * bereits eine Bar existiert. Eine Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist oder
- * wenn der Zeitpunkt außerhalb des von der Zeitreihe abgedeckten Datenbereichs liegt.
+ * Findet in einer Historydatei den Offset der Bar, die den angegebenen Zeitpunkt abdeckt/abdecken würde, und signalisiert, ob diese Bar
+ * bereits existiert. Die Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist oder wenn der
+ * Zeitpunkt außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
  *
- * @param  int      hFile          - Dateihandle der Historydatei
- * @param  datetime time           - Zeitpunkt
- * @param  bool     lpBarExists[1] - Zeiger auf Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
- *                                   (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
- *                                   TRUE:  Bar existiert       (zum Aktualisieren dieser Bar muß HistoryFile.UpdateBar() verwendet werden)
- *                                   FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar muß HistoryFile.InsertBar() verwendet werden)
+ * @param  __IN__  int      hFile          - Dateihandle der Historydatei
+ * @param  __IN__  datetime time           - Zeitpunkt
+ * @param  __OUT__ bool     lpBarExists[1] - Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
+ *                                           (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
+ *                                           TRUE:  Bar existiert       (zum Aktualisieren dieser Bar muß HistoryFile.UpdateBar() verwendet werden)
+ *                                           FALSE: Bar existiert nicht (zum Aktualisieren dieser Bar muß HistoryFile.InsertBar() verwendet werden)
  *
  * @return int - Bar-Offset oder -1 (EMPTY), falls ein Fehler auftrat
  */
@@ -644,27 +644,27 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
       ArrayResize(lpBarExists, 1);
 
    // OpenTime der entsprechenden Bar berechnen
-   time -= time%(hhs.Period(hf.header, hFile)*MINUTES);
+   time -= time%(hf.period[hFile]*MINUTES);
 
-   // (1) Zeitpunkt ist der Zeitpunkt der letzten Bar          // die beiden am häufigsten auftretenden Fälle zu Beginn prüfen
+   // (1) Zeitpunkt wird von der letzten Bar abgedeckten       // die beiden am häufigsten auftretenden Fälle zu Beginn prüfen
    if (time == hf.to[hFile]) {
       lpBarExists[0] = true;
       return(hf.bars[hFile] - 1);
    }
 
-   // (2) Zeitpunkt liegt zeitlich nach der letzten Bar        // die beiden am häufigsten auftretenden Fälle zu Beginn prüfen
+   // (2) Zeitpunkt würde von der nächsten Bar abgedeckt       // die beiden am häufigsten auftretenden Fälle zu Beginn prüfen
    if (time > hf.to[hFile]) {
       lpBarExists[0] = false;
       return(hf.bars[hFile]);
    }
 
    // (3) History leer
-   if (hf.bars[hFile] == 0) {
+   if (!hf.bars[hFile]) {
       lpBarExists[0] = false;
       return(0);
    }
 
-   // (4) Zeitpunkt ist der Zeitpunkt der ersten Bar
+   // (4) Zeitpunkt wird von der ersten Bar abgedeckt
    if (time == hf.from[hFile]) {
       lpBarExists[0] = true;
       return(0);
@@ -680,7 +680,7 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    int offset;
    return(_EMPTY(catch("HistoryFile.FindBar(6)  Suche nach Zeitpunkt innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
 
-   if (!catch("HistoryFile.FindBar(7)", ERR_NOT_IMPLEMENTED))
+   if (!catch("HistoryFile.FindBar(7)"))
       return(offset);
    return(EMPTY);
 }
@@ -689,10 +689,10 @@ int HistoryFile.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
 /**
  * Liest die Bar am angegebenen Offset einer Historydatei.
  *
- * @param  int      hFile   - Dateihandle der Historydatei
- * @param  int      offset  - Offset der Bar (relativ zum History-Header; Offset 0 ist älteste Bar)
- * @param  datetime time[1] - Array zur Aufnahme von Bar-Time
- * @param  double   data[5] - Array zur Aufnahme der übrigen Bar-Daten (OHLCV)
+ * @param  __IN__  int      hFile   - Dateihandle der Historydatei
+ * @param  __IN__  int      offset  - Offset der Bar (relativ zum History-Header; Offset 0 ist älteste Bar)
+ * @param  __OUT__ datetime time[1] - Array zur Aufnahme der Bar-Time
+ * @param  __OUT__ double   data[5] - Array zur Aufnahme der übrigen Bar-Daten (OHLCV)
  *
  * @return bool - Erfolgsstatus
  */
@@ -708,15 +708,35 @@ bool HistoryFile.ReadBar(int hFile, int offset, datetime &time[], double &data[]
    if (ArraySize(time) < 1) ArrayResize(time, 1);
    if (ArraySize(data) < 5) ArrayResize(data, 5);
 
-   // Bar lesen
-   int position = HISTORY_HEADER.size + offset*HISTORY_BAR_400.size;
-   if (!FileSeek(hFile, position, SEEK_SET))
-      return(!catch("HistoryFile.ReadBar(6)"));
 
-   time[0] = FileReadInteger(hFile);
-             FileReadArray  (hFile, data, 0, 5);
+   // (1) FilePointer positionieren
+   int barSize  = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
+   int position = HISTORY_HEADER.size + offset*barSize;
+   if (!FileSeek(hFile, position, SEEK_SET))   return(!catch("HistoryFile.ReadBar(6)"));
 
-   hf.currentBar.offset       [hFile]        = offset;                              // Cache aktualisieren
+
+   // (2) Bar je nach Format lesen
+   if (hf.format[hFile] == 400) {
+      time[0]     = FileReadInteger(hFile);
+      data[BAR_O] = FileReadDouble (hFile);
+      data[BAR_L] = FileReadDouble (hFile);
+      data[BAR_H] = FileReadDouble (hFile);
+      data[BAR_C] = FileReadDouble (hFile);
+      data[BAR_V] = FileReadDouble (hFile);
+   }
+   else {
+      time[0]     = FileReadInteger(hFile);        // int64
+                    FileReadInteger(hFile);
+      data[BAR_O] = FileReadDouble (hFile);
+      data[BAR_H] = FileReadDouble (hFile);
+      data[BAR_L] = FileReadDouble (hFile);
+      data[BAR_C] = FileReadDouble (hFile);
+      data[BAR_V] = FileReadInteger(hFile);        // uint64: ticks
+   }
+
+
+   // (3) CurrentBar-Cache aktualisieren
+   hf.currentBar.offset       [hFile]        = offset;
    hf.currentBar.openTime     [hFile]        = time[0];
    hf.currentBar.closeTime    [hFile]        = time[0] + hf.periodSecs[hFile];
    hf.currentBar.nextCloseTime[hFile]        = time[0] + hf.periodSecs[hFile]<<1;   // schneller für * 2
@@ -731,11 +751,11 @@ bool HistoryFile.ReadBar(int hFile, int offset, datetime &time[], double &data[]
 
 
 /**
- * Aktualisiert die Bar am angegebenen Offset einer Historydatei.
+ * Aktualisiert den Schlußkurs der Bar am angegebenen Offset einer Historydatei.
  *
- * @param  int    hFile  - Dateihandle der Historydatei
- * @param  int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
- * @param  double value  - hinzuzufügender Wert
+ * @param  __INT__ int    hFile  - Dateihandle der Historydatei
+ * @param  __INT__ int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
+ * @param  __INT__ double value  - hinzuzufügender Wert
  *
  * @return bool - Erfolgsstatus
  *
@@ -752,15 +772,14 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
    }
    if (offset < 0 || offset >= hf.bars[hFile]) return(!catch("HistoryFile.UpdateBar(5)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
-   // (1) Bar ggf. neu in den Cache einlesen...
+   // (1) Bar ggf. neu einlesen...
    if (offset != hf.currentBar.offset[hFile]) {
       int    time[1];
       double data[5];
-      if (!HistoryFile.ReadBar(hFile, offset, time, data))
-         return(false);
+      if (!HistoryFile.ReadBar(hFile, offset, time, data)) return(false);
    }
 
-   // (2) ...und zur Performancesteigerung direkt im Cache modifizieren
+   // (2) ...zur Performancesteigerung nur den CurrentBar-Cache modifizieren
  //hf.currentBar.data[hFile][BAR_O] = ...                                     // unverändert
    hf.currentBar.data[hFile][BAR_H] = MathMax(hf.currentBar.data[hFile][BAR_H], value);
    hf.currentBar.data[hFile][BAR_L] = MathMin(hf.currentBar.data[hFile][BAR_L], value);
@@ -775,12 +794,12 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 /**
  * Fügt eine neue Bar am angegebenen Offset einer Historydatei ein. Die Funktion überprüft *nicht* die Plausibilität der einzufügenden Daten.
  *
- * @param  int      hFile   - Dateihandle der Historydatei
- * @param  int      offset  - Offset der einzufügenden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
- * @param  datetime time    - Bar-Time
- * @param  double   data[5] - Bardaten
- * @param  int      flags   - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                            HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  __INT__ int      hFile   - Dateihandle der Historydatei
+ * @param  __INT__ int      offset  - Offset der einzufügenden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
+ * @param  __INT__ datetime time    - Bar-Time
+ * @param  __INT__ double   data[5] - Bardaten
+ * @param  __INT__ int      flags   - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                    HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  *
@@ -812,19 +831,19 @@ bool HistoryFile.InsertBar(int hFile, int offset, datetime time, double data[], 
 
 
 /**
- * Schreibt eine Bar in die angegebene Historydatei. Eine ggf. vorhandene Bar mit dem selben Open-Zeitpunkt wird überschrieben.
+ * Schreibt eine Bar in die angegebene Historydatei. Eine ggf. vorhandene Bar mit demselben Open-Zeitpunkt wird überschrieben.
  *
- * @param  int      hFile   - Dateihandle der Historydatei
- * @param  int      offset  - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
- * @param  datetime time    - Bar-Time
- * @param  double   data[5] - Bar-Daten (OHLCV)
- * @param  int      flags   - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                            HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  __INT__ int      hFile   - Dateihandle der Historydatei
+ * @param  __INT__ int      offset  - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
+ * @param  __INT__ datetime time    - Bar-Time
+ * @param  __INT__ double   data[5] - Bar-Daten (OHLCV)
+ * @param  __INT__ int      flags   - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                    HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  *
  *
- * NOTE: Zur Performancesteigerung werden die Bardaten *nicht* zusätzlich validiert.
+ * NOTE: Zur Performancesteigerung werden die Bardaten nicht zusätzlich validiert.
  */
 bool HistoryFile.WriteBar(int hFile, int offset, datetime time, double data[], int flags=NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile.WriteBar(1)  invalid parameter hFile = "+ hFile, ERR_INVALID_PARAMETER));
@@ -839,17 +858,34 @@ bool HistoryFile.WriteBar(int hFile, int offset, datetime time, double data[], i
    if (ArraySize(data) != 5)            return(!catch("HistoryFile.WriteBar(7)  invalid size of parameter data[] = "+ ArraySize(data), ERR_INCOMPATIBLE_ARRAYS));
 
 
-   // (1) Bar schreiben
-   int position = HISTORY_HEADER.size + offset*HISTORY_BAR_400.size;
-   if (!FileSeek(hFile, position, SEEK_SET))
-      return(!catch("HistoryFile.WriteBar(8)"));
-
-   FileWriteInteger(hFile, time);
-   FileWriteArray  (hFile, data, 0, 5);
+   // (1) FilePointer positionieren
+   int barSize  = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
+   int position = HISTORY_HEADER.size + offset*barSize;
+   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.WriteBar(8)"));
 
 
-   // (2) interne Daten aktualisieren
-   if (offset >= hf.bars[hFile]) { hf.size                    [hFile]        = position + HISTORY_BAR_400.size;
+   // (2) Bar schreiben
+   if (hf.format[hFile] == 400) {
+      FileWriteInteger(hFile, time);
+      FileWriteArray  (hFile, data, 0, 5);
+   }
+   else {
+      FileWriteInteger(hFile, time       );        // int64
+      FileWriteInteger(hFile, 0          );
+      FileWriteDouble (hFile, data[BAR_O]);
+      FileWriteDouble (hFile, data[BAR_H]);
+      FileWriteDouble (hFile, data[BAR_L]);
+      FileWriteDouble (hFile, data[BAR_C]);
+      FileWriteInteger(hFile, data[BAR_V]);        // uint64
+      FileWriteInteger(hFile, 0          );
+      FileWriteInteger(hFile, 0          );        // int:    spread
+      FileWriteInteger(hFile, 0          );        // uint64: volume
+      FileWriteInteger(hFile, 0          );
+   }
+
+
+   // (3) interne Daten aktualisieren
+   if (offset >= hf.bars[hFile]) { hf.size                    [hFile]        = position + barSize;
                                    hf.bars                    [hFile]        = offset + 1; }
    if (offset == 0)                hf.from                    [hFile]        = time;
    if (offset == hf.bars[hFile]-1) hf.to                      [hFile]        = time;
@@ -857,7 +893,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, datetime time, double data[], i
                                    hf.currentBar.offset       [hFile]        = offset;
                                    hf.currentBar.openTime     [hFile]        = time;
                                    hf.currentBar.closeTime    [hFile]        = time + hf.periodSecs[hFile];
-                                   hf.currentBar.nextCloseTime[hFile]        = time + hf.periodSecs[hFile]<<1;
+                                   hf.currentBar.nextCloseTime[hFile]        = time + hf.periodSecs[hFile]<<1;    // schneller für * 2
                                    hf.currentBar.data         [hFile][BAR_O] = data[BAR_O];
                                    hf.currentBar.data         [hFile][BAR_H] = data[BAR_H];
                                    hf.currentBar.data         [hFile][BAR_L] = data[BAR_L];
@@ -871,9 +907,9 @@ bool HistoryFile.WriteBar(int hFile, int offset, datetime time, double data[], i
 /**
  * Schreibt die aktuellen Bardaten in die Historydatei.
  *
- * @param  int hFile - Dateihandle der Historydatei
- * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  __INT__ int hFile - Dateihandle der Historydatei
+ * @param  __INT__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                             HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  */
@@ -890,21 +926,39 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
    int      offset = hf.currentBar.offset  [hFile];
    if (offset < 0)                      return(!catch("HistoryFile.WriteCurrentBar(5)  invalid hf.currentBar.offset["+ hFile +"] value = "+ offset, ERR_RUNTIME_ERROR));
 
-   // (1) Bar schreiben
-   int position = HISTORY_HEADER.size + offset*HISTORY_BAR_400.size;
-   if (!FileSeek(hFile, position, SEEK_SET))
-      return(!catch("HistoryFile.WriteCurrentBar(6)"));
 
-   FileWriteInteger(hFile, time                            );
-   FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_O]);
-   FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_L]);
-   FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_H]);
-   FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_C]);
-   FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_V]);
+   // (1) FilePointer positionieren
+   int barSize  = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
+   int position = HISTORY_HEADER.size + offset*barSize;
+   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.WriteCurrentBar(6)"));
 
 
-   // (2) interne Daten aktualisieren
-   if (offset >= hf.bars[hFile]) { hf.size[hFile] = position + HISTORY_BAR_400.size;
+   // (2) Bar schreiben
+   if (hf.format[hFile] == 400) {
+      FileWriteInteger(hFile, time                            );
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_O]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_L]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_H]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_C]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_V]);
+   }
+   else {
+      FileWriteInteger(hFile, time                            );     // int64
+      FileWriteInteger(hFile, 0                               );
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_O]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_H]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_L]);
+      FileWriteDouble (hFile, hf.currentBar.data[hFile][BAR_C]);
+      FileWriteInteger(hFile, hf.currentBar.data[hFile][BAR_V]);     // uint64: ticks
+      FileWriteInteger(hFile, 0          );
+      FileWriteInteger(hFile, 0          );                          // int:    spread
+      FileWriteInteger(hFile, 0          );                          // uint64: volume
+      FileWriteInteger(hFile, 0          );
+   }
+
+
+   // (3) interne Daten aktualisieren
+   if (offset >= hf.bars[hFile]) { hf.size[hFile] = position + barSize;
                                    hf.bars[hFile] = offset + 1; }
    if (offset == 0)                hf.from[hFile] = time;
    if (offset == hf.bars[hFile]-1) hf.to  [hFile] = time;
@@ -916,9 +970,9 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
 /**
  * Schreibt die zwischengespeicherten Tickdaten in die Historydatei.
  *
- * @param  int hFile - Dateihandle der Historydatei
- * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                     HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  __INT__ int hFile - Dateihandle der Historydatei
+ * @param  __INT__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                             HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  */
@@ -936,21 +990,38 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
    if (offset < 0)                      return(!catch("HistoryFile.WriteTickBar(5)  invalid hf.collectedBar.offset["+ hFile +"] value = "+ offset, ERR_RUNTIME_ERROR));
 
 
-   // (1) Bar schreiben
-   int position = HISTORY_HEADER.size + offset*HISTORY_BAR_400.size;
-   if (!FileSeek(hFile, position, SEEK_SET))
-      return(!catch("HistoryFile.WriteTickBar(6)"));
-
-   FileWriteInteger(hFile, time                         );
-   FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_O]);
-   FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_L]);
-   FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_H]);
-   FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_C]);
-   FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_V]);
+   // (1) FilePointer positionieren
+   int barSize  = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
+   int position = HISTORY_HEADER.size + offset*barSize;
+   if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.WriteTickBar(6)"));
 
 
-   // (2) interne Daten aktualisieren
-   if (offset >= hf.bars[hFile]) { hf.size                    [hFile]        = position + HISTORY_BAR_400.size;
+   // (2) Bar schreiben
+   if (hf.format[hFile] == 400) {
+      FileWriteInteger(hFile, time                              );
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_O]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_L]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_H]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_C]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_V]);
+   }
+   else {
+      FileWriteInteger(hFile, time                              );      // int64
+      FileWriteInteger(hFile, 0                                 );
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_O]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_H]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_L]);
+      FileWriteDouble (hFile, hf.collectedBar.data[hFile][BAR_C]);
+      FileWriteInteger(hFile, hf.collectedBar.data[hFile][BAR_V]);      // uint64: ticks
+      FileWriteInteger(hFile, 0                                 );
+      FileWriteInteger(hFile, 0                                 );      // int:    spread
+      FileWriteInteger(hFile, 0                                 );      // uint64: volume
+      FileWriteInteger(hFile, 0                                 );
+   }
+
+
+   // (3) interne Daten aktualisieren
+   if (offset >= hf.bars[hFile]) { hf.size                    [hFile]        = position + barSize;
                                    hf.bars                    [hFile]        = offset + 1; }
    if (offset == 0)                hf.from                    [hFile]        = time;
    if (offset == hf.bars[hFile]-1) hf.to                      [hFile]        = time;
@@ -961,8 +1032,8 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
                                    hf.currentBar.closeTime    [hFile]        = hf.collectedBar.closeTime    [hFile];
                                    hf.currentBar.nextCloseTime[hFile]        = hf.collectedBar.nextCloseTime[hFile];
                                    hf.currentBar.data         [hFile][BAR_O] = hf.collectedBar.data         [hFile][BAR_O];
-                                   hf.currentBar.data         [hFile][BAR_L] = hf.collectedBar.data         [hFile][BAR_L];
                                    hf.currentBar.data         [hFile][BAR_H] = hf.collectedBar.data         [hFile][BAR_H];
+                                   hf.currentBar.data         [hFile][BAR_L] = hf.collectedBar.data         [hFile][BAR_L];
                                    hf.currentBar.data         [hFile][BAR_C] = hf.collectedBar.data         [hFile][BAR_C];
                                    hf.currentBar.data         [hFile][BAR_V] = hf.collectedBar.data         [hFile][BAR_V];
 
@@ -972,9 +1043,9 @@ bool HistoryFile.WriteTickBar(int hFile, int flags=NULL) {
 
 /**
  *
- * @param  int hFile       - Dateihandle der Historydatei
- * @param  int startOffset
- * @param  int destOffset
+ * @param  __INT__ int hFile       - Dateihandle der Historydatei
+ * @param  __INT__ int startOffset
+ * @param  __INT__ int destOffset
  *
  * @return bool - Erfolgsstatus
  */
