@@ -661,11 +661,11 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Data types, siehe FileRead()/FileWrite()
-#define CHAR_VALUE                  1                    // integer: 1 byte
-#define SHORT_VALUE                 2                    // integer: 2 bytes
-#define LONG_VALUE                  4                    // integer: 4 bytes (default)
-#define FLOAT_VALUE                 4                    // float:   4 bytes
-#define DOUBLE_VALUE                8                    // float:   8 bytes (default)
+#define CHAR_VALUE                  1                    // char:   1 byte
+#define SHORT_VALUE                 2                    // WORD:   2 bytes
+#define LONG_VALUE                  4                    // DWORD:  4 bytes (default)
+#define FLOAT_VALUE                 4                    // float:  4 bytes
+#define DOUBLE_VALUE                8                    // double: 8 bytes (default)
 
 
 // FindFileNames() flags
