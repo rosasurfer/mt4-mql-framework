@@ -397,13 +397,13 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
       if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(8)  invalid parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
       if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(9)  invalid parameter format = "+ format +" (needs to be 400 or 401)", ERR_INVALID_PARAMETER)));
 
-      hh.setFormat       (hh, format     );
-      hh.setDescription  (hh, description);
-      hh.setSymbol       (hh, symbol     );
-      hh.setPeriod       (hh, timeframe  );
-      hh.setDigits       (hh, digits     );
-    //hh.setDbVersion    (hh, 0          );                                         // wird beim nächsten Online-Refresh mit Server-DbVersion überschrieben
-    //hh.setPrevDbVersion(hh, 0          );                                         // wird beim nächsten Online-Refresh *nicht* überschrieben
+      hh.setFormat     (hh, format     );
+      hh.setDescription(hh, description);
+      hh.setSymbol     (hh, symbol     );
+      hh.setPeriod     (hh, timeframe  );
+      hh.setDigits     (hh, digits     );
+    //hh.setSyncMark   (hh, 0          );                                           // wird beim Online-Refresh mit Server-SyncMark überschrieben
+    //hh.setLastSync   (hh, 0          );                                           // wird beim Online-Refresh *nicht* überschrieben
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER.intSize);
    }
 
@@ -1340,45 +1340,45 @@ int hf.Digits(int hFile) {
 
 
 /**
- * Gibt die DB-Version der zu einem Handle gehörenden Historydatei zurück.
+ * Gibt den SyncMarker der zu einem Handle gehörenden Historydatei zurück.
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Versions-Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - SyncMarker oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int hf.DbVersion(int hFile) {
-   if (hFile <= 0)                      return(_EMPTY(catch("hf.DbVersion(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+int hf.SyncMark(int hFile) {
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.SyncMark(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.DbVersion(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.SyncMark(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.DbVersion(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_EMPTY(catch("hf.DbVersion(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.SyncMark(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.SyncMark(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.lastValid = hFile;
    }
-   return(hhs.DbVersion(hf.header, hFile));
+   return(hhs.SyncMark(hf.header, hFile));
 }
 
 
 /**
- * Gibt die vorherige DB-Version der zu einem Handle gehörenden Historydatei zurück.
+ * Gibt den Zeitpunkt der letzten Synchronisation der zu einem Handle gehörenden Historydatei zurück.
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Versions-Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int hf.PrevDbVersion(int hFile) {
+int hf.LastSync(int hFile) {
    // 2 oder mehr Tests
-   if (hFile <= 0)                      return(_EMPTY(catch("hf.PrevDbVersion(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.LastSync(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.PrevDbVersion(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.LastSync(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
       if (hf.hFile[hFile] <= 0) {
-         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.PrevDbVersion(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
-                                        return(_EMPTY(catch("hf.PrevDbVersion(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.LastSync(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.LastSync(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
       }
       hf.hFile.lastValid = hFile;
    }
-   return(hhs.PrevDbVersion(hf.header, hFile));
+   return(hhs.LastSync(hf.header, hFile));
 }
 
 
