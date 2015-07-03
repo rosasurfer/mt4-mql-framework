@@ -45,7 +45,6 @@ int      prev_error;                                        // der letzte Fehler
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
 
 
-
 // Special constants
 #define NULL                        0
 #define INT_MIN            0x80000000                       // kleinster negativer (signed) Integer-Value: -2147483648                     (datetime) INT_MIN = '1901-12-13 20:45:52'
@@ -677,24 +676,25 @@ double  N_INF;                                              // -1.#INF: negative
 // Flag zum Schreiben von Historyfiles
 #define HST_COLLECT_TICKS           1
 #define HST_FILL_GAPS               2
+#define HST_IS_BAR_OPENTIME         4
 
 
 // MessageBox() flags
-#define MB_OK                       0x00000000        // buttons
+#define MB_OK                       0x00000000           // buttons
 #define MB_OKCANCEL                 0x00000001
 #define MB_YESNO                    0x00000004
 #define MB_YESNOCANCEL              0x00000003
 #define MB_ABORTRETRYIGNORE         0x00000002
 #define MB_CANCELTRYCONTINUE        0x00000006
 #define MB_RETRYCANCEL              0x00000005
-#define MB_HELP                     0x00004000        // additional help button
+#define MB_HELP                     0x00004000           // additional help button
 
-#define MB_DEFBUTTON1               0x00000000        // default button
+#define MB_DEFBUTTON1               0x00000000           // default button
 #define MB_DEFBUTTON2               0x00000100
 #define MB_DEFBUTTON3               0x00000200
 #define MB_DEFBUTTON4               0x00000300
 
-#define MB_ICONEXCLAMATION          0x00000030        // icons
+#define MB_ICONEXCLAMATION          0x00000030           // icons
 #define MB_ICONWARNING      MB_ICONEXCLAMATION
 #define MB_ICONINFORMATION          0x00000040
 #define MB_ICONASTERISK     MB_ICONINFORMATION
@@ -704,11 +704,11 @@ double  N_INF;                                              // -1.#INF: negative
 #define MB_ICONHAND                MB_ICONSTOP
 #define MB_USERICON                 0x00000080
 
-#define MB_APPLMODAL                0x00000000        // modality
+#define MB_APPLMODAL                0x00000000           // modality
 #define MB_SYSTEMMODAL              0x00001000
 #define MB_TASKMODAL                0x00002000
 
-#define MB_DEFAULT_DESKTOP_ONLY     0x00020000        // other
+#define MB_DEFAULT_DESKTOP_ONLY     0x00020000           // other
 #define MB_RIGHT                    0x00080000
 #define MB_RTLREADING               0x00100000
 #define MB_SETFOREGROUND            0x00010000
@@ -732,22 +732,22 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_ORDEROPEN                        1     // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
-//                                              2     // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
-#define SYMBOL_ORDERCLOSE                       3     // left pointing arrow  (default closed order marker)
-#define SYMBOL_DASH                             4     // dash symbol          (default takeprofit and stoploss marker)
-#define SYMBOL_LEFTPRICE                        5     // left sided price label
-#define SYMBOL_RIGHTPRICE                       6     // right sided price label
-#define SYMBOL_THUMBSUP                        67     // thumb up symbol
-#define SYMBOL_THUMBSDOWN                      68     // thumb down symbol
-#define SYMBOL_ARROWUP                        241     // arrow up symbol
-#define SYMBOL_ARROWDOWN                      242     // arrow down symbol
-#define SYMBOL_STOPSIGN                       251     // stop sign symbol
-#define SYMBOL_CHECKSIGN                      252     // check sign symbol
+#define SYMBOL_ORDEROPEN                        1        // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
+//                                              2        // wie SYMBOL_ORDEROPEN                                           // docs MetaQuotes: right pointing down arrow
+#define SYMBOL_ORDERCLOSE                       3        // left pointing arrow  (default closed order marker)
+#define SYMBOL_DASH                             4        // dash symbol          (default takeprofit and stoploss marker)
+#define SYMBOL_LEFTPRICE                        5        // left sided price label
+#define SYMBOL_RIGHTPRICE                       6        // right sided price label
+#define SYMBOL_THUMBSUP                        67        // thumb up symbol
+#define SYMBOL_THUMBSDOWN                      68        // thumb down symbol
+#define SYMBOL_ARROWUP                        241        // arrow up symbol
+#define SYMBOL_ARROWDOWN                      242        // arrow down symbol
+#define SYMBOL_STOPSIGN                       251        // stop sign symbol
+#define SYMBOL_CHECKSIGN                      252        // check sign symbol
 
 
 // MT4 internal messages
-#define MT4_TICK                                2     // künstlicher Tick: Ausführung von start()
+#define MT4_TICK                                2        // künstlicher Tick: Ausführung von start()
 
 #define MT4_LOAD_STANDARD_INDICATOR            13
 #define MT4_LOAD_CUSTOM_INDICATOR              15
@@ -756,7 +756,7 @@ double  N_INF;                                              // -1.#INF: negative
 
 #define MT4_COMPILE_REQUEST                 12345
 #define MT4_COMPILE_PERMISSION              12346
-#define MT4_MQL_REFRESH                     12349     // Rescan und Reload modifizierter .ex4-Files
+#define MT4_MQL_REFRESH                     12349        // Rescan und Reload modifizierter .ex4-Files
 
 
 // ID Naming and Numbering Conventions
@@ -765,67 +765,67 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // MT4 command ids (Menüs, Toolbars, Hotkeys)
-#define ID_EXPERTS_ONOFF                    33020     // Toolbar: Experts on/off                    Ctrl+E
+#define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
 
-#define ID_CHART_REFRESH                    33324     // Chart: Refresh
-#define ID_CHART_STEPFORWARD                33197     //        eine Bar vorwärts                      F12
-#define ID_CHART_STEPBACKWARD               33198     //        eine Bar rückwärts               Shift+F12
-#define ID_CHART_EXPERT_PROPERTIES          33048     //        Expert Properties-Dialog                F7
-#define ID_CHART_OBJECTS_UNSELECTALL        35462     //        Objects: Unselect All
+#define ID_CHART_REFRESH                    33324        // Chart: Refresh
+#define ID_CHART_STEPFORWARD                33197        //        eine Bar vorwärts                      F12
+#define ID_CHART_STEPBACKWARD               33198        //        eine Bar rückwärts               Shift+F12
+#define ID_CHART_EXPERT_PROPERTIES          33048        //        Expert Properties-Dialog                F7
+#define ID_CHART_OBJECTS_UNSELECTALL        35462        //        Objects: Unselect All
 
-#define ID_MARKETWATCH_SYMBOLS              33171     // Market Watch: Symbols
+#define ID_MARKETWATCH_SYMBOLS              33171        // Market Watch: Symbols
 
-#define ID_TESTER_TICK       ID_CHART_STEPFORWARD     // Tester: nächster Tick                         F12
+#define ID_TESTER_TICK       ID_CHART_STEPFORWARD        // Tester: nächster Tick                         F12
 
 
 // MT4 control ids (Controls, Fenster)
-#define IDC_TOOLBAR                         59419     // Toolbar
-#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160     // MQL4/MQL5-Button (Builds <= 509)
-#define IDC_TOOLBAR_SEARCHBOX               38213     // Suchbox          (Builds  > 509)
-#define IDC_STATUSBAR                       59393     // Statusbar
-#define IDC_MDI_CLIENT                      59648     // MDI-Container (enthält alle Charts)
-#define IDC_DOCKABLES_CONTAINER             59422     // window containing all child windows docked to the main application window
-#define IDC_UNDOCKED_CONTAINER              59423     // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
+#define IDC_TOOLBAR                         59419        // Toolbar
+#define IDC_TOOLBAR_COMMUNITY_BUTTON        38160        // MQL4/MQL5-Button (Builds <= 509)
+#define IDC_TOOLBAR_SEARCHBOX               38213        // Suchbox          (Builds  > 509)
+#define IDC_STATUSBAR                       59393        // Statusbar
+#define IDC_MDI_CLIENT                      59648        // MDI-Container (enthält alle Charts)
+#define IDC_DOCKABLES_CONTAINER             59422        // window containing all child windows docked to the main application window
+#define IDC_UNDOCKED_CONTAINER              59423        // window containing a single undocked/floating dockable child window (ggf. mehrere, sind keine Top-Level-Windows)
 
-#define IDC_MARKETWATCH                        80     // Market Watch
-#define IDC_MARKETWATCH_SYMBOLS             35441     // Market Watch - Symbols
-#define IDC_MARKETWATCH_TICKCHART           35442     // Market Watch - Tick Chart
+#define IDC_MARKETWATCH                        80        // Market Watch
+#define IDC_MARKETWATCH_SYMBOLS             35441        // Market Watch - Symbols
+#define IDC_MARKETWATCH_TICKCHART           35442        // Market Watch - Tick Chart
 
-#define IDC_NAVIGATOR                          82     // Navigator
-#define IDC_NAVIGATOR_COMMON                35439     // Navigator - Common
-#define IDC_NAVIGATOR_FAVOURITES            35440     // Navigator - Favourites
+#define IDC_NAVIGATOR                          82        // Navigator
+#define IDC_NAVIGATOR_COMMON                35439        // Navigator - Common
+#define IDC_NAVIGATOR_FAVOURITES            35440        // Navigator - Favourites
 
-#define IDC_TERMINAL                           81     // Terminal
-#define IDC_TERMINAL_TRADE                  33217     // Terminal - Trade
-#define IDC_TERMINAL_ACCOUNTHISTORY         33208     // Terminal - Account History
-#define IDC_TERMINAL_NEWS                   33211     // Terminal - News
-#define IDC_TERMINAL_ALERTS                 33206     // Terminal - Alerts
-#define IDC_TERMINAL_MAILBOX                33210     // Terminal - Mailbox
-#define IDC_TERMINAL_COMPANY                 4078     // Terminal - Company
-#define IDC_TERMINAL_MARKET                  4081     // Terminal - Market
-#define IDC_TERMINAL_SIGNALS                 1405     // Terminal - Signals
-#define IDC_TERMINAL_CODEBASE               33212     // Terminal - Code Base
-#define IDC_TERMINAL_EXPERTS                35434     // Terminal - Experts
-#define IDC_TERMINAL_JOURNAL                33209     // Terminal - Journal
+#define IDC_TERMINAL                           81        // Terminal
+#define IDC_TERMINAL_TRADE                  33217        // Terminal - Trade
+#define IDC_TERMINAL_ACCOUNTHISTORY         33208        // Terminal - Account History
+#define IDC_TERMINAL_NEWS                   33211        // Terminal - News
+#define IDC_TERMINAL_ALERTS                 33206        // Terminal - Alerts
+#define IDC_TERMINAL_MAILBOX                33210        // Terminal - Mailbox
+#define IDC_TERMINAL_COMPANY                 4078        // Terminal - Company
+#define IDC_TERMINAL_MARKET                  4081        // Terminal - Market
+#define IDC_TERMINAL_SIGNALS                 1405        // Terminal - Signals
+#define IDC_TERMINAL_CODEBASE               33212        // Terminal - Code Base
+#define IDC_TERMINAL_EXPERTS                35434        // Terminal - Experts
+#define IDC_TERMINAL_JOURNAL                33209        // Terminal - Journal
 
-#define IDC_TESTER                             83     // Tester
-#define IDC_TESTER_SETTINGS                 33215     // Tester - Settings
-#define IDC_TESTER_SETTINGS_PAUSERESUME      1402     // Tester - Settings Pause/Resume button
-#define IDC_TESTER_SETTINGS_STARTSTOP        1034     // Tester - Settings Start/Stop button
-#define IDC_TESTER_RESULTS                  33214     // Tester - Results
-#define IDC_TESTER_GRAPH                    33207     // Tester - Graph
-#define IDC_TESTER_REPORT                   33213     // Tester - Report
-#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS     // Tester - Journal (entspricht Terminal - Experts)
+#define IDC_TESTER                             83        // Tester
+#define IDC_TESTER_SETTINGS                 33215        // Tester - Settings
+#define IDC_TESTER_SETTINGS_PAUSERESUME      1402        // Tester - Settings Pause/Resume button
+#define IDC_TESTER_SETTINGS_STARTSTOP        1034        // Tester - Settings Start/Stop button
+#define IDC_TESTER_RESULTS                  33214        // Tester - Results
+#define IDC_TESTER_GRAPH                    33207        // Tester - Graph
+#define IDC_TESTER_REPORT                   33213        // Tester - Report
+#define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (entspricht Terminal - Experts)
 
 
-// Flags zur Fehlerbehandlung                         // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
-#define MUTE_ERR_INVALID_STOP                   1     // ERR_INVALID_STOP
-#define MUTE_ERR_ORDER_CHANGED                  2     // ERR_ORDER_CHANGED
-#define MUTE_ERR_CONCUR_MODIFICATION            4     // ERR_CONCURRENT_MODIFICATION
-#define MUTE_ERR_SERIES_NOT_AVAILABLE           8     // ERR_SERIES_NOT_AVAILABLE
-#define MUTE_ERR_INVALID_PARAMETER             16     // ERR_INVALID_PARAMETER
-#define MUTE_ERS_EXECUTION_STOPPING            32     // ERS_EXECUTION_STOPPING        (Status)
-#define MUTE_ERS_TERMINAL_NOT_YET_READY        64     // ERS_TERMINAL_NOT_YET_READY    (Status)
+// Flags zur Fehlerbehandlung                            // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
+#define MUTE_ERR_INVALID_STOP                   1        // ERR_INVALID_STOP
+#define MUTE_ERR_ORDER_CHANGED                  2        // ERR_ORDER_CHANGED
+#define MUTE_ERR_CONCUR_MODIFICATION            4        // ERR_CONCURRENT_MODIFICATION
+#define MUTE_ERR_SERIES_NOT_AVAILABLE           8        // ERR_SERIES_NOT_AVAILABLE
+#define MUTE_ERR_INVALID_PARAMETER             16        // ERR_INVALID_PARAMETER
+#define MUTE_ERS_EXECUTION_STOPPING            32        // ERS_EXECUTION_STOPPING        (Status)
+#define MUTE_ERS_TERMINAL_NOT_YET_READY        64        // ERS_TERMINAL_NOT_YET_READY    (Status)
 
 // String padding types, siehe StringPad()
 #define STR_PAD_LEFT                            1
@@ -839,3 +839,17 @@ double  N_INF;                                              // -1.#INF: negative
 #define BAR_H                                   2
 #define BAR_C                                   3
 #define BAR_V                                   4
+
+
+// Timezones
+string  __Timezones[] = {/* 0 =>*/ "server",             // der Index entspricht jeweils der Timezone-ID
+                         /* 1 =>*/ TIMEZONE_ALPARI,
+                         /* 2 =>*/ TIMEZONE_AMERICA_NEW_YORK,
+                         /* 3 =>*/ TIMEZONE_EUROPE_BERLIN,
+                         /* 4 =>*/ TIMEZONE_EUROPE_KIEV,
+                         /* 5 =>*/ TIMEZONE_EUROPE_LONDON,
+                         /* 6 =>*/ TIMEZONE_EUROPE_MINSK,
+                         /* 7 =>*/ TIMEZONE_FXT,
+                         /* 8 =>*/ TIMEZONE_FXT_0200,
+                         /* 9 =>*/ TIMEZONE_GMT
+};

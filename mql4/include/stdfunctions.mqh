@@ -2384,9 +2384,7 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
    if (!month)
       month = 12;
 
-   string sDate = StringConcatenate(StringRight("000"+year, 4), ".", StringRight("0"+month, 2), ".01");
-   //debug("DateTime()  sDate="+ sDate +"  date("+ date +")="+ TimeToStr(date, TIME_FULL));
-
+   string  sDate = StringConcatenate(StringRight("000"+year, 4), ".", StringRight("0"+month, 2), ".01");
    datetime date = StrToTime(sDate);
    if (date < 0) return(_NaT(catch("DateTime()  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
 

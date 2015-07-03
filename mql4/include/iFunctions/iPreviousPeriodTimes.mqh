@@ -148,20 +148,6 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTime.fxt/*=NULL*
 
    // (7) PERIOD_D1
    else if (timeframe == PERIOD_D1) {
-      /*
-      debug("iPreviousPeriodTimes(0.1)  This.IsTesting="+ This.IsTesting() +"  TimeLocal="+ TimeToStr(TimeLocal()) +"  TimeCurrent="+ TimeToStr(TimeCurrent()));
-      debug("iPreviousPeriodTimes(0.2)  gmt="+ TimeGMT());
-
-      if (This.IsTesting()) {
-         // TODO: Vorsicht, Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit.
-
-         gmt = ServerToGmtTime(TimeLocal());                            // TimeLocal() entspricht im Tester der Serverzeit
-      }
-      else {
-         gmt = GetGmtTime();
-      }
-      */
-
       // ist openTime.fxt nicht gesetzt, Variable mit Zeitpunkt des nächsten Tages initialisieren
       if (!openTime.fxt) {
          now.fxt      = TimeFXT(); if (!now.fxt) return(false);
