@@ -13,24 +13,29 @@
 #define I_HH.digits           21
 #define I_HH.syncMark         22
 #define I_HH.lastSync         23
+#define I_HH.timezoneId       24
 
 
 // Getter
-int      hh.Format      (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.format     ]);                             HISTORY_HEADER.toStr(hh); }
+int      hh.Format      (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.format       ]);                           HISTORY_HEADER.toStr(hh); }
 string   hh.Description (/*HISTORY_HEADER*/int hh[])          { return(GetString(GetIntsAddress(hh)+I_HH.description*4));                          HISTORY_HEADER.toStr(hh); }
 string   hh.Symbol      (/*HISTORY_HEADER*/int hh[])          { return(GetString(GetIntsAddress(hh)+I_HH.symbol     *4));                          HISTORY_HEADER.toStr(hh); }
-int      hh.Period      (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.period     ]);                             HISTORY_HEADER.toStr(hh); }
-int      hh.Digits      (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.digits     ]);                             HISTORY_HEADER.toStr(hh); }
-datetime hh.SyncMark    (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.syncMark   ]);                             HISTORY_HEADER.toStr(hh); }
-datetime hh.LastSync    (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.lastSync   ]);                             HISTORY_HEADER.toStr(hh); }
+int      hh.Period      (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.period       ]);                           HISTORY_HEADER.toStr(hh); }
+int      hh.Digits      (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.digits       ]);                           HISTORY_HEADER.toStr(hh); }
+datetime hh.SyncMark    (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.syncMark     ]);                           HISTORY_HEADER.toStr(hh); }
+datetime hh.LastSync    (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.lastSync     ]);                           HISTORY_HEADER.toStr(hh); }
+int      hh.TimezoneId  (/*HISTORY_HEADER*/int hh[])          {                          return(hh[I_HH.timezoneId   ]);                           HISTORY_HEADER.toStr(hh); }
+string   hh.Timezone    (/*HISTORY_HEADER*/int hh[])          {              return(__Timezones[hh[I_HH.timezoneId   ]]);                          HISTORY_HEADER.toStr(hh); }
 
-int      hhs.Format     (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.format       ]);                        HISTORY_HEADER.toStr(hh); }
+int      hhs.Format     (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.format    ]);                           HISTORY_HEADER.toStr(hh); }
 string   hhs.Description(/*HISTORY_HEADER*/int hh[][], int i) { return(GetString(GetIntsAddress(hh)+ ArrayRange(hh, 1)*i*4 + I_HH.description*4)); HISTORY_HEADER.toStr(hh); }
 string   hhs.Symbol     (/*HISTORY_HEADER*/int hh[][], int i) { return(GetString(GetIntsAddress(hh)+ ArrayRange(hh, 1)*i*4 + I_HH.symbol     *4)); HISTORY_HEADER.toStr(hh); }
-int      hhs.Period     (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.period  ]);                             HISTORY_HEADER.toStr(hh); }
-int      hhs.Digits     (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.digits  ]);                             HISTORY_HEADER.toStr(hh); }
-datetime hhs.SyncMark   (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.syncMark]);                             HISTORY_HEADER.toStr(hh); }
-datetime hhs.LastSync   (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.lastSync]);                             HISTORY_HEADER.toStr(hh); }
+int      hhs.Period     (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.period    ]);                           HISTORY_HEADER.toStr(hh); }
+int      hhs.Digits     (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.digits    ]);                           HISTORY_HEADER.toStr(hh); }
+datetime hhs.SyncMark   (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.syncMark  ]);                           HISTORY_HEADER.toStr(hh); }
+datetime hhs.LastSync   (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.lastSync  ]);                           HISTORY_HEADER.toStr(hh); }
+int      hhs.TimezoneId (/*HISTORY_HEADER*/int hh[][], int i) {                          return(hh[i][I_HH.timezoneId]);                           HISTORY_HEADER.toStr(hh); }
+string   hhs.Timezone   (/*HISTORY_HEADER*/int hh[][], int i) {              return(__Timezones[hh[i][I_HH.timezoneId]]);                          HISTORY_HEADER.toStr(hh); }
 
 
 // Setter
@@ -91,13 +96,14 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
    if (dimensions == 1) {
       // hh ist struct HISTORY_HEADER (eine Dimension)
-      line = StringConcatenate("{format="       ,                   hh.Format     (hh),
-                              ", description=\"",                   hh.Description(hh), "\"",
-                              ", symbol=\""     ,                   hh.Symbol     (hh), "\"",
-                              ", period="       , PeriodDescription(hh.Period     (hh)),
-                              ", digits="       ,                   hh.Digits     (hh),
-                              ", syncMark="     ,          ifString(hh.SyncMark   (hh), "'"+ TimeToStr(hh.SyncMark(hh), TIME_FULL) +"'", 0),
-                              ", lastSync="     ,          ifString(hh.LastSync   (hh), "'"+ TimeToStr(hh.LastSync(hh), TIME_FULL) +"'", 0), "}");
+      line = StringConcatenate("{format="     ,                   hh.Format     (hh),
+                              ", description=",    DoubleQuoteStr(hh.Description(hh)),
+                              ", symbol="     ,    DoubleQuoteStr(hh.Symbol     (hh)),
+                              ", period="     , PeriodDescription(hh.Period     (hh)),
+                              ", digits="     ,                   hh.Digits     (hh),
+                              ", syncMark="   ,          ifString(hh.SyncMark   (hh), QuoteStr(TimeToStr(hh.SyncMark(hh), TIME_FULL)), 0),
+                              ", lastSync="   ,          ifString(hh.LastSync   (hh), QuoteStr(TimeToStr(hh.LastSync(hh), TIME_FULL)), 0),
+                              ", timezone="   ,    DoubleQuoteStr(hh.Timezone   (hh)), "}");
       if (outputDebug)
          debug("HISTORY_HEADER.toStr()  "+ line);
       ArrayPushString(lines, line);
@@ -107,13 +113,14 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
       int size = ArrayRange(hh, 0);
 
       for (int i=0; i < size; i++) {
-         line = StringConcatenate("[", i, "]={format="       ,                   hhs.Format     (hh, i),
-                                           ", description=\"",                   hhs.Description(hh, i), "\"",
-                                           ", symbol=\""     ,                   hhs.Symbol     (hh, i), "\"",
-                                           ", period="       , PeriodDescription(hhs.Period     (hh, i)),
-                                           ", digits="       ,                   hhs.Digits     (hh, i),
-                                           ", syncMark="     ,          ifString(hhs.SyncMark   (hh, i), "'"+ TimeToStr(hhs.SyncMark(hh, i), TIME_FULL) +"'", 0),
-                                           ", lastSync="     ,          ifString(hhs.LastSync   (hh, i), "'"+ TimeToStr(hhs.LastSync(hh, i), TIME_FULL) +"'", 0), "}");
+         line = StringConcatenate("[", i, "]={format="     ,                   hhs.Format     (hh, i),
+                                           ", description=",    DoubleQuoteStr(hhs.Description(hh, i)),
+                                           ", symbol="     ,    DoubleQuoteStr(hhs.Symbol     (hh, i)),
+                                           ", period="     , PeriodDescription(hhs.Period     (hh, i)),
+                                           ", digits="     ,                   hhs.Digits     (hh, i),
+                                           ", syncMark="   ,          ifString(hhs.SyncMark   (hh, i), QuoteStr(TimeToStr(hhs.SyncMark(hh, i), TIME_FULL)), 0),
+                                           ", lastSync="   ,          ifString(hhs.LastSync   (hh, i), QuoteStr(TimeToStr(hhs.LastSync(hh, i), TIME_FULL)), 0),
+                                           ", timezone="   ,    DoubleQuoteStr(hhs.Digits     (hh, i)), "}");
          if (outputDebug)
             debug("HISTORY_HEADER.toStr()  "+ line);
          ArrayPushString(lines, line);
@@ -135,6 +142,8 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
    hh.Digits        (hh);       hhs.Digits        (hh, NULL);
    hh.SyncMark      (hh);       hhs.SyncMark      (hh, NULL);
    hh.LastSync      (hh);       hhs.LastSync      (hh, NULL);
+   hh.Timezone      (hh);       hhs.Timezone      (hh, NULL);
+   hh.TimezoneId    (hh);       hhs.TimezoneId    (hh, NULL);
 
    hh.setFormat     (hh, NULL); hhs.setFormat     (hh, NULL, NULL);
    hh.setDescription(hh, NULL); hhs.setDescription(hh, NULL, NULL);

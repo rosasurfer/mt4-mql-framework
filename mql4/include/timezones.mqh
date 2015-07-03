@@ -24,6 +24,7 @@
  *  2 Wechsel:                          1975.04.01 00:00:00     DST_OFFSET      1975.11.01 00:00:00     STD_OFFSET      // Normalzeit -> Sommerzeit -> Normalzeit
  */
 
+
 // Spaltenindizes der Transition-Arrays
 #define TR_TO_DST.gmt       0       // Wechsel zu Sommerzeit in GMT
 #define TR_TO_DST.local     1       // Wechsel zu Sommerzeit in lokaler Zeit
