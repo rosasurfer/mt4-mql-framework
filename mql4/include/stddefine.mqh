@@ -44,6 +44,18 @@ int      ChangedBars;
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
 
+string   __Timezones[] = {/* 0                            =>*/ "server",
+                          /* TIMEZONE_ID_ALPARI           =>*/ TIMEZONE_ALPARI,
+                          /* TIMEZONE_ID_AMERICA_NEW_YORK =>*/ TIMEZONE_AMERICA_NEW_YORK,
+                          /* TIMEZONE_ID_EUROPE_BERLIN    =>*/ TIMEZONE_EUROPE_BERLIN,
+                          /* TIMEZONE_ID_EUROPE_KIEV      =>*/ TIMEZONE_EUROPE_KIEV,
+                          /* TIMEZONE_ID_EUROPE_LONDON    =>*/ TIMEZONE_EUROPE_LONDON,
+                          /* TIMEZONE_ID_EUROPE_MINSK     =>*/ TIMEZONE_EUROPE_MINSK,
+                          /* TIMEZONE_ID_FXT              =>*/ TIMEZONE_FXT,
+                          /* TIMEZONE_ID_FXT_M_0200       =>*/ TIMEZONE_FXT_M_0200,
+                          /* TIMEZONE_ID_GMT              =>*/ TIMEZONE_GMT
+};
+
 
 // Special constants
 #define NULL                        0
@@ -493,15 +505,6 @@ double  N_INF;                                              // -1.#INF: negative
 #define PRICE_ASK                      8        // Ask
 
 
-// Rates array identifier, siehe ArrayCopyRates()
-#define I_BAR.time                     0        // bar open time
-#define I_BAR.open                     1        // open price
-#define I_BAR.low                      2        // low price
-#define I_BAR.high                     3        // high price
-#define I_BAR.close                    4        // close price
-#define I_BAR.volume                   5        // volume
-
-
 // Event-Flags
 #define EVENT_NEW_TICK                 1
 #define EVENT_BAR_OPEN                 2
@@ -833,23 +836,19 @@ double  N_INF;                                              // -1.#INF: negative
 #define STR_PAD_BOTH                            3
 
 
-// History bar ID's
-#define BAR_O                                   0
-#define BAR_L                                   1
+// Array ID's für von ArrayCopyRates() definierte Arrays
+#define I_BAR.time                              0
+#define I_BAR.open                              1
+#define I_BAR.low                               2
+#define I_BAR.high                              3
+#define I_BAR.close                             4
+#define I_BAR.volume                            5
+
+
+// Price-Bar ID's (siehe Historyfunktionen)
+#define BAR_T                                   0        // (double) datetime
+#define BAR_O                                   1
 #define BAR_H                                   2
-#define BAR_C                                   3
-#define BAR_V                                   4
-
-
-// Timezones
-string  __Timezones[] = {/* 0 =>*/ "server",             // der Index entspricht jeweils der Timezone-ID
-                         /* 1 =>*/ TIMEZONE_ALPARI,
-                         /* 2 =>*/ TIMEZONE_AMERICA_NEW_YORK,
-                         /* 3 =>*/ TIMEZONE_EUROPE_BERLIN,
-                         /* 4 =>*/ TIMEZONE_EUROPE_KIEV,
-                         /* 5 =>*/ TIMEZONE_EUROPE_LONDON,
-                         /* 6 =>*/ TIMEZONE_EUROPE_MINSK,
-                         /* 7 =>*/ TIMEZONE_FXT,
-                         /* 8 =>*/ TIMEZONE_FXT_0200,
-                         /* 9 =>*/ TIMEZONE_GMT
-};
+#define BAR_L                                   3
+#define BAR_C                                   4
+#define BAR_V                                   5

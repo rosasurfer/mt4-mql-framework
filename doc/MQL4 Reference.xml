@@ -3642,14 +3642,17 @@ Copies an array to another one. Arrays must be of the same type but arrays of ty
 Returns the amount of copied elements.
       </content>
       <example>
-  double array1[][6];
-  double array2[10][6];
-  // array2 is filled with some data
-  ArrayCopyRates(array1);
-  ArrayCopy(array2,array1,0,0,60);
-  // array2 is having the first 10 bars from the history now (first bar considered as bar with index [Bars-1])
-  ArrayCopy(array2,array1,0,Bars*6-60,60);
-  // array2 is having the last 10 bars from the history now (last bar considered as current bar, bar wit index [0])
+   double array1[][6];
+   double array2[10][6];
+
+   // array1 is filled with some data
+   ArrayCopyRates(array1);
+
+   ArrayCopy(array2, array1, 0, 0, 60);
+   // array2 now holds the oldest 10 bars from the history
+
+   ArrayCopy(array2, array1, 0, Bars*6-60, 60);
+   // array2 now holds the newest 10 bars from the history
       </example>
       <parameter>
         type=object
@@ -3686,8 +3689,8 @@ Returns the amount of copied elements.
       caption=ArrayCopyRates()
       type=int
       <content>
-Copies a pointer to a wrapper of a price rates array to a two-dimensional destination array and returns the number of contained bars or -1 on failure.
-When accessed the first dimension of the destination array holds the rates bar offset, the second dimension holds the 6 elements:<br/>
+Assigns a pointer to a wrapper around a <span class="type">RatesInfo</span> array to the destination array and returns the number of contained bars or -1 on failure.
+The first dimension of the destination array holds the bar offset, the second dimension holds the 6 elements:<br/>
 0 - time<br/>
 1 - open<br/>
 2 - low<br/>
@@ -3705,9 +3708,10 @@ set in the <a href="help://runtime_errors">last_error</a> variable, in which cas
 target array and access is redirected.
 <br/>
 <br/>
-(2) Das Target-Array (type double) fungiert als Wrapper um das MT4-interne Datenarray (type struct RateInfo). Beide Arrays sind unterschiedlich aufgebaut, der Wrapper leitet Zugriffe
-entsprechend um. Wird das Double-Array an eine DLL übergeben, wird ein Zeiger auf das interne RateInfo-Array übergeben (ohne Wrapper). Dieses interne Array ist
-<a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit dynamisch bis MAX_CHART_BARS erweitert. Index 0 enthält die älteste Bar.
+(2) Das Target-Array (<span class="type">double</span>) fungiert als Wrapper um das MT4-interne <span class="type">RatesInfo</span>-Array. Beide Arrays sind unterschiedlich aufgebaut,
+der Wrapper leitet Zugriffe entsprechend um. Wird das <span class="type">double</span>-Array an eine DLL übergeben, erhält die DLL einen Zeiger auf das interne
+<span class="type">RatesInfo</span>-Array (ohne Wrapper). Dieses interne Array ist <a href="help://array_ArrayGetAsSeries">reverse-indexed</a> und wird zur Laufzeit dynamisch bis
+<span class="const">MAX_CHART_BARS</span> erweitert. Index 0 weist auf die älteste Bar.
 <br/>
 <br/>
 (3) Das Target-Array ist durch den zugewiesenen Zeiger nicht mehr automatisch <a href="help://basics_variables_static">static</a> (wie übliche Arrays).
@@ -3734,21 +3738,21 @@ EURUSD,H1: FXTradePro::EventListener.BandsCrossing()->ArrayCopyRates(EURUSD,M5) 
   Print("Current bar: Time ", TimeToStr(array[0][0]), ", Open ", array[0][1]);
   .
   .
-  // interne Array-Implementierung
-  // -----------------------------
+  // interne Implementierung
+  // -----------------------
   struct RateInfo {
-     unsigned int time;          // 4 statt 8 Bytes
+     unsigned int time;          // 4 Bytes
      double       open;
      double       low;
      double       high;
      double       close;
-     double       volume;        // sizeof(RateInfo)     = 44
-  };                             // sizeof(double[1][6]) = 48
+     double       volume;        // sizeof(RateInfo)  = 44
+  };                             // sizeof(double[0]) = 48
 
       </example>
       <parameter>
         type=double
-        name=<nobr>dest_array[][6]</nobr>
+        name=<nobr>dest[][6]</nobr>
         description=destination array
       </parameter>
       <parameter>
