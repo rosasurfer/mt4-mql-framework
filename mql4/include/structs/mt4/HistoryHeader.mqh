@@ -202,5 +202,5 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 //   datetime hhs.setSyncMark   (/*HISTORY_HEADER*/int hh[][], int i, datetime time       );
 //   datetime hhs.setLastSync   (/*HISTORY_HEADER*/int hh[][], int i, datetime time       );
 
-//   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug);
+//   string   HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], int outputDebug);
 //#import

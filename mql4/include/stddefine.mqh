@@ -44,16 +44,17 @@ int      ChangedBars;
 int      prev_error;                                        // der letzte Fehler des vorherigen start()-Aufrufs
 int      last_error;                                        // der letzte Fehler innerhalb der aktuellen Rootfunktion
 
-string   __Timezones[] = {/* 0                            =>*/ "server",
-                          /* TIMEZONE_ID_ALPARI           =>*/ TIMEZONE_ALPARI,
-                          /* TIMEZONE_ID_AMERICA_NEW_YORK =>*/ TIMEZONE_AMERICA_NEW_YORK,
-                          /* TIMEZONE_ID_EUROPE_BERLIN    =>*/ TIMEZONE_EUROPE_BERLIN,
-                          /* TIMEZONE_ID_EUROPE_KIEV      =>*/ TIMEZONE_EUROPE_KIEV,
-                          /* TIMEZONE_ID_EUROPE_LONDON    =>*/ TIMEZONE_EUROPE_LONDON,
-                          /* TIMEZONE_ID_EUROPE_MINSK     =>*/ TIMEZONE_EUROPE_MINSK,
-                          /* TIMEZONE_ID_FXT              =>*/ TIMEZONE_FXT,
-                          /* TIMEZONE_ID_FXT_M_0200       =>*/ TIMEZONE_FXT_M_0200,
-                          /* TIMEZONE_ID_GMT              =>*/ TIMEZONE_GMT
+string   __Timezones[] = {
+   /*0                           =>*/ "server",             // default
+   /*TIMEZONE_ID_ALPARI          =>*/ TIMEZONE_ALPARI,
+   /*TIMEZONE_ID_AMERICA_NEW_YORK=>*/ TIMEZONE_AMERICA_NEW_YORK,
+   /*TIMEZONE_ID_EUROPE_BERLIN   =>*/ TIMEZONE_EUROPE_BERLIN,
+   /*TIMEZONE_ID_EUROPE_KIEV     =>*/ TIMEZONE_EUROPE_KIEV,
+   /*TIMEZONE_ID_EUROPE_LONDON   =>*/ TIMEZONE_EUROPE_LONDON,
+   /*TIMEZONE_ID_EUROPE_MINSK    =>*/ TIMEZONE_EUROPE_MINSK,
+   /*TIMEZONE_ID_FXT             =>*/ TIMEZONE_FXT,
+   /*TIMEZONE_ID_FXT_M_0200      =>*/ TIMEZONE_FXT_M_0200,  // FXT-0200
+   /*TIMEZONE_ID_GMT             =>*/ TIMEZONE_GMT
 };
 
 
