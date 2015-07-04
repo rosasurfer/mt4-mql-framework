@@ -257,13 +257,12 @@ bool b = false;
 bool c = 1;</pre>
         <p>The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.</p>
         <br/>
-         <br/>
-         <span style="color:red">Bug:</span>
-         <br/>
-         Ausdrücke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch für
-         die Übergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">true</span> oder
-         <span class="const">false</span> schlagen immer fehl.<br/>
-         Workaround: Die Ausdrücke müssen bei der Zuweisung explizit gecastet werden.
+        <span style="color:red">Bug:</span>
+        <br/>
+        Ausdrücke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch für
+        die Übergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">true</span> oder
+        <span class="const">false</span> schlagen immer fehl.<br/>
+        Workaround: Die Ausdrücke müssen bei der Zuweisung explizit gecastet werden.
       </content>
     </text>
 
@@ -5672,14 +5671,20 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       <content>
          Opens the file with the specified name in the current history directory <span class="string">"{terminal_directory}\history\{server_name}"</span> or its subdirectories
          and returns a handle for it. If the function fails the returned value is -1. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-         <br/>
 
+         <br/>
          <span>Notes:</span>
          <br/>
          (1) The client terminal can connect to servers of different brokerage companies. History data (*.hst files) for each brokerage company is stored in the corresponding
              subdirectory of <span class="string">"{terminal_directory}\history"</span>. Files in the history directory can be opened and charted offline.<br/>
          <br/>
          (2) For descriptions of opening mode flag combinations see notes of <a href="help://files_FileOpen">FileOpen()</a>.<br/>
+
+         <br/>
+         <span style="color:red">Bug:</span>
+         <br/>
+         Ab Build 810 ist die Funktion im Tester blockiert.<br>
+         Workaround: Dateifunktionen des MT4Expanders verwenden.
       </content>
       <example>
    int hFile = FileOpenHistory(<span class="string">&quot;USDX240.HST&quot;</span>, <span class="const">FILE_BIN</span>|<span class="const">FILE_WRITE</span>);
