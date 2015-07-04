@@ -229,7 +229,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    error    );
    //     ...
    //     ...
-   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging  );
+   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
 
 

@@ -1383,42 +1383,52 @@ void ShowCopyright()
       files). The module name is specified in the <em>#import</em> directive.<br/>
       For each function to import a function declaration is needed. Declarations follow the <em>#import &quot;module name&quot;</em> directive.
       The next <em>#import</em> directive or an empty directive (without a module name) finishes the declaration block.</p>
-        <pre class="docmql4"><i>#import "file_name"
-    func1 define;
-    func2 define;
-    ...
-    funcN define;
+      <pre class="docmql4"><i>#import "file_name"
+   function1 declaration;
+   function2 declaration;
+   ...
+   functionN declaration;
 #import</i></pre><br/>
 <p>Imported functions must have unique names. Functions having the same name from different modules cannot be imported simultaneously. Imported function
 names may not overlap with names of built-in functions.</p>
 <p>Since the functions are imported from another module the compiler cannot check the correctness of passed parameters. Parameters of imported functions
 cannot have default values.</p>
         <p class="doctabhdr">Examples:</p>
-        <pre class="docmql4">#import "user32.dll"
+        <pre class="docmql4">
+#import "user32.dll"
    int    MessageBoxA(int hWnd, string lpText, string lpCaption, int uType);<br/>
+
 #import "stdlib.ex4"
    string ErrorDescription(int error_code);
    int    RGB(int red_value, int green_value, int blue_value);
    bool   CompareDoubles(double number1, double number2);
    string DoubleToStrMorePrecision(double number, int precision);
    string IntegerToHexString(int integer_number);<br/>
+
 #import "ExpertSample.dll"
    int    GetIntValue(int);
    double GetDoubleValue(double);
    string GetStringValue(string);
    double GetArrayItemValue(double arr[], int, int);
-   bool   SetArrayItemValue(double&amp; arr[], int,int, double);
+   bool   SetArrayItemValue(double &arr[], int, int, double);
    double GetRatesItemValue(double rates[][6], int, int, int);
-   int    SortStringArray(string&amp; arr[], int);
-   int    ProcessStringArray(string&amp; arr[], int);
-#import</pre><br/>
+   int    SortStringArray(string &arr[], int);
+   int    ProcessStringArray(string &arr[], int);
+#import
+         </pre><br/>
 
-        <p>For importing of functions during execution of an MQL4 program so-called <em>late binding</em> is used.
-        This means that until the imported function has not been called, the corresponding module (EX4 or DLL) will not be loaded.</p>
+         <p>Imported functions are executed using so-called <em>late binding</em>. This means that the module (EX4 or DLL) is not loaded until the first imported function is called.</p>
 
-        <p>While it is possible it is not recommended to use the fully qualified name of modules to load as in <span class="string">"drive:\directory\filename.ext"</span>.
-        By default MQL4 libraries are loaded from <span class="string">"{terminal_directory}\experts\libraries"</span>.
-        If a library can not be found an attempt is made to load the library from <span class="string">"{terminal_directory}\experts"</span>.</p>
+         <p>While it is possible it is not recommended to use the fully qualified module name in an import statement as in <span class="string">"drive:\directory\filename.ext"</span>.
+         By default MQL4 libraries are loaded from <span class="string">"{terminal_directory}\experts\libraries"</span>.
+         If a library can not be found an attempt is made to load the library from <span class="string">"{terminal_directory}\experts"</span>.</p>
+
+         <span style="color:red">Bug:</span>
+         <br/>
+         Der MQL-Typ <span class="type">bool</span> wird als Parameter an DLL-Funktionen falsch übergeben, die DLL erhält immer den Wert <span class="type">BOOL</span>
+         <span class="const">FALSE</span>. <span class="type">bool</span>-Arrays und Rückgabewerte des Typs <span class="type">bool</span> und sind von diesem Fehler
+         nicht betroffen.<br/>
+         Workaround: Die Funktionsdeklaration muß statt des Parameter-Typs <span class="type">bool</span> den Typ <span class="type">int</span> verwenden.
       </content>
     </text>
   </group>

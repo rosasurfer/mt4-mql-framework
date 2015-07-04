@@ -45,7 +45,7 @@
    void OutputDebugStringA(string lpMessage);         // funktioniert nur für Admins zuverlässig
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
-   int  SleepEx(int milliseconds, bool alertable);
+   int  SleepEx(int milliseconds, int alertable);
    bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);

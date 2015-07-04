@@ -620,7 +620,7 @@ int Tester.Stop() {
    int    ec_setHChartWindow      (/*EXECUTION_CONTEXT*/int ec[], int    hChartWindow      );
    int    ec_setInitFlags         (/*EXECUTION_CONTEXT*/int ec[], int    initFlags         );
    int    ec_setLastError         (/*EXECUTION_CONTEXT*/int ec[], int    lastError         );
-   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], bool   logging           );
+   bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging           );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile           );
    int    ec_setLpSuperContext    (/*EXECUTION_CONTEXT*/int ec[], int    lpSuperContext    );
    string ec_setProgramName       (/*EXECUTION_CONTEXT*/int ec[], string programName       );

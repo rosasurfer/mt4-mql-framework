@@ -459,10 +459,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   datetime lo.setOpenTriggerTime     (/*LFX_ORDER*/int lo[], datetime openTriggerTime    );
 //   double   lo.setStopLossLfx         (/*LFX_ORDER*/int lo[], double   stopLossLfx        );
 //   double   lo.setStopLossValue       (/*LFX_ORDER*/int lo[], double   stopLossValue      );
-//   bool     lo.setStopLossTriggered   (/*LFX_ORDER*/int lo[], bool     stopLossTriggered  );
+//   bool     lo.setStopLossTriggered   (/*LFX_ORDER*/int lo[], int      stopLossTriggered  );
 //   double   lo.setTakeProfitLfx       (/*LFX_ORDER*/int lo[], double   takeProfitLfx      );
 //   double   lo.setTakeProfitValue     (/*LFX_ORDER*/int lo[], double   takeProfitValue    );
-//   bool     lo.setTakeProfitTriggered (/*LFX_ORDER*/int lo[], bool     takeProfitTriggered);
+//   bool     lo.setTakeProfitTriggered (/*LFX_ORDER*/int lo[], int      takeProfitTriggered);
 //   datetime lo.setCloseTriggerTime    (/*LFX_ORDER*/int lo[], datetime closeTriggerTime   );
 //   datetime lo.setCloseTime           (/*LFX_ORDER*/int lo[], datetime closeTime          );
 //   double   lo.setClosePriceLfx       (/*LFX_ORDER*/int lo[], double   closePriceLfx      );
@@ -486,10 +486,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   datetime los.setOpenTriggerTime    (/*LFX_ORDER*/int lo[][], int i, datetime openTriggerTime    );
 //   double   los.setStopLossLfx        (/*LFX_ORDER*/int lo[][], int i, double   stopLoss           );
 //   double   los.setStopLossValue      (/*LFX_ORDER*/int lo[][], int i, double   stopLossValue      );
-//   bool     los.setStopLossTriggered  (/*LFX_ORDER*/int lo[][], int i, bool     stopLossTriggered  );
+//   bool     los.setStopLossTriggered  (/*LFX_ORDER*/int lo[][], int i, int      stopLossTriggered  );
 //   double   los.setTakeProfitLfx      (/*LFX_ORDER*/int lo[][], int i, double   takeProfit         );
 //   double   los.setTakeProfitValue    (/*LFX_ORDER*/int lo[][], int i, double   takeProfitValue    );
-//   bool     los.setTakeProfitTriggered(/*LFX_ORDER*/int lo[][], int i, bool     takeProfitTriggered);
+//   bool     los.setTakeProfitTriggered(/*LFX_ORDER*/int lo[][], int i, int      takeProfitTriggered);
 //   datetime los.setCloseTriggerTime   (/*LFX_ORDER*/int lo[][], int i, datetime closeTriggerTime   );
 //   datetime los.setCloseTime          (/*LFX_ORDER*/int lo[][], int i, datetime closeTime          );
 //   double   los.setClosePriceLfx      (/*LFX_ORDER*/int lo[][], int i, double   closePrice         );
@@ -503,5 +503,5 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   double   los.setTakeProfit         (/*LFX_ORDER*/int lo[][], int i, double   takeProfit         );
 //   double   los.setClosePrice         (/*LFX_ORDER*/int lo[][], int i, double   closePrice         );
 
-//   string   LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug);
+//   string   LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], int outputDebug);
 //#import
