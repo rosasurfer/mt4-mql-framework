@@ -5,6 +5,7 @@
 
    int      HistorySet.Create (string symbol, string description, int digits, int format);
    int      HistorySet.Get    (string symbol);
+   bool     HistorySet.Close  (int hSet);
    bool     HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL);
 
    int      HistoryFile.Open             (string symbol, int timeframe, string description, int digits, int format, int mode);

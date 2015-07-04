@@ -21,8 +21,8 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   RecordEquity();
-   return(last_error);
+   //RecordEquity();
+   //return(last_error);
 
    RecordEquity(HST_COLLECT_TICKS);
    return(last_error);
@@ -51,6 +51,8 @@ bool RecordEquity(int flags=NULL) {
 
    double equity = AccountEquity()-AccountCredit();
    if (!HistorySet.AddTick(hSet, Tick.Time, equity, flags)) return(!SetLastError(history.GetLastError()));
+   if (!HistorySet.Close(hSet))                             return(!SetLastError(history.GetLastError()));
+
    return(true);
 }
 
