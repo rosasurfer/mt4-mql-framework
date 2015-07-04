@@ -77,7 +77,7 @@
 #define TIMEZONE_EUROPE_LONDON         "Europe/London"
 #define TIMEZONE_EUROPE_MINSK          "Europe/Minsk"
 #define TIMEZONE_FXT                   "FXT"                // Europe/Kiev   (GMT+0200/+0300) mit DST-Wechseln von America/New_York
-#define TIMEZONE_FXT_0200              "FXT-0200"           // Europe/London (GMT+0000/+0100) mit DST-Wechseln von America/New_York
+#define TIMEZONE_FXT_M_0200            "FXT-0200"           // Europe/London (GMT+0000/+0100) mit DST-Wechseln von America/New_York
 #define TIMEZONE_GMT                   "GMT"
 
 
@@ -89,5 +89,5 @@
 #define TIMEZONE_ID_EUROPE_LONDON      5
 #define TIMEZONE_ID_EUROPE_MINSK       6
 #define TIMEZONE_ID_FXT                7
-#define TIMEZONE_ID_FXT_0200           8
+#define TIMEZONE_ID_FXT_M_0200         8
 #define TIMEZONE_ID_GMT                9
