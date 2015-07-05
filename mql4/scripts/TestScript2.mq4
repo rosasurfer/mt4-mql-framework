@@ -10,9 +10,7 @@ int __DEINIT_FLAGS__[];
 #include <history.mqh>
 
 
-#import "Expander.Release.dll"
-
-#import
+int equity.hSet;
 
 
 /**
@@ -39,19 +37,17 @@ int onStart() {
  * @return bool - Erfolgsstatus
  */
 bool RecordEquity(int flags=NULL) {
-   static int hSet;
-   if (!hSet) {
+   if (!equity.hSet) {
       string symbol      = ifString(IsTesting(), "_", "") + GetAccountNumber() +".EQ";
       string description = "Account Equity #"+ GetAccountNumber();
       int    digits      = 2;
       int    format      = 400;
-      hSet = HistorySet.Create(symbol, description, digits, format);
-      if (!hSet) return(!SetLastError(history.GetLastError()));
+      equity.hSet = HistorySet.Create(symbol, description, digits, format);
+      if (!equity.hSet) return(!SetLastError(history.GetLastError()));
    }
 
    double equity = AccountEquity()-AccountCredit();
-   if (!HistorySet.AddTick(hSet, Tick.Time, equity, flags)) return(!SetLastError(history.GetLastError()));
-   if (!HistorySet.Close(hSet))                             return(!SetLastError(history.GetLastError()));
+   if (!HistorySet.AddTick(equity.hSet, Tick.Time, equity, flags)) return(!SetLastError(history.GetLastError()));
 
    return(true);
 }
@@ -60,7 +56,10 @@ bool RecordEquity(int flags=NULL) {
 /**
  * @return int - Fehlerstatus
  */
-int afterDeinit() {
-   history.CloseFiles(false);
+int onDeinit() {
+   if (equity.hSet != 0) {
+      if (!HistorySet.Close(equity.hSet)) return(!SetLastError(history.GetLastError()));
+      equity.hSet = NULL;
+   }
    return(NO_ERROR);
 }
