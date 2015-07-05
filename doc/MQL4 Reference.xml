@@ -1425,7 +1425,7 @@ cannot have default values.</p>
          <span style="color:red">Bug:</span>
          <br/>
          Der MQL-Typ <span class="type">bool</span> wird als Parameter an DLL-Funktionen falsch übergeben, die DLL erhält immer den Wert <span class="type">BOOL</span>
-         <span class="const">FALSE</span>. <span class="type">bool</span>-Arrays und Rückgabewerte des Typs <span class="type">bool</span> und sind von diesem Fehler
+         <span class="const">FALSE</span>. <span class="type">bool</span>-Arrays und Rückgabewerte des Typs <span class="type">bool</span> sind von diesem Fehler
          nicht betroffen.<br/>
          Workaround: Die Funktionsdeklaration muß statt des Parameter-Typs <span class="type">bool</span> den Typ <span class="type">int</span> verwenden.
       </content>
