@@ -15,6 +15,7 @@ extern int    iParameter = 12345;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <history.mqh>
 
 
 int hSet;

@@ -16,7 +16,7 @@ int      __lpTestContext;                                   // im Tester Zeiger 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
 bool     __CHART;                                           // ob ein Chart existiert (z.B. nicht bei VisualMode=Off oder Optimization=On)
-bool     __LOG;                                             // ob das Logging aktiviert ist
+bool     __LOG;                                             // ob das Logging aktiviert ist (defaults: Online=On, Tester=Off), @see IsLogging()
 int      __LOG_LEVEL;                                       // TODO: der konfigurierte Loglevel
 bool     __LOG_CUSTOM;                                      // ob ein eigenes Logfile benutzt wird
 bool     __SMS.alerts;                                      // ob SMS-Benachrichtigungen aktiviert sind

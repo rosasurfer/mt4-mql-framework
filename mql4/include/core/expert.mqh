@@ -5,7 +5,6 @@
 extern string ___________________________;
 extern string LogLevel = "inherit";
 
-#include <history.mqh>
 #include <iCustom/icChartInfos.mqh>
 
 
@@ -230,7 +229,7 @@ int start() {
 
 
    // (6) im Tester
-   if (IsVisualMode())
+   if (false && IsVisualMode())
       icChartInfos();               // nur im Tester bei VisualMode=On ChartInfos anzeigen (online nicht notwendig)
 
 

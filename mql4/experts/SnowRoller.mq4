@@ -87,6 +87,7 @@ extern /*sticky*/ string Sequence.StatusLocation = "";               // Unterver
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <stdlib.mqh>
+#include <history.mqh>
 
 #include <win32api.mqh>
 #include <SnowRoller/functions.mqh>
