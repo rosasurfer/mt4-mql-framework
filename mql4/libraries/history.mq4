@@ -398,9 +398,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 
    // (1.1) read-only
    if (read_only) {
-      debug("HistoryFile.Open()  TODO: ERR_FILE_NOT_FOUND abfangen");
-      int error = GetLastError();                                                   // !!! TODO: ERR_FILE_NOT_FOUND abfangen
-      if (hFile==999) /*&&*/ if (error==ERR_FILE_NOT_FOUND) return(-1);
+      int error = GetLastError();                                                   // TODO: !!! ERR_CANNOT_OPEN_FILE müllt das Log zu !!!
+      if (error == ERR_CANNOT_OPEN_FILE) return(-1);                                // file not found
       if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(5)->FileOpenHistory(\""+ fileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR))));
    }
 

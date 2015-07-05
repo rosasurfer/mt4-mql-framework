@@ -461,15 +461,15 @@ double  N_INF;                                              // -1.#INF: negative
 //                                     6        // ???
 //                                     7        // ???
 //                                     8        // ???
-#define MODE_BID                       9        // last bid price                       (entspricht Bid bzw. Close[0])
-#define MODE_ASK                      10        // last ask price                       (entspricht Ask)
-#define MODE_POINT                    11        // point size in the quote currency     (entspricht Point)                                               0.0000'1
-#define MODE_DIGITS                   12        // number of digits after decimal point (entspricht Digits)
+#define MODE_BID                       9        // last bid price                           (entspricht Bid bzw. Close[0])
+#define MODE_ASK                      10        // last ask price                           (entspricht Ask)
+#define MODE_POINT                    11        // point size in the quote currency         (entspricht Point)                           Preisauflösung: 0.0000'1
+#define MODE_DIGITS                   12        // number of digits after the decimal point (entspricht Digits)
 #define MODE_SPREAD                   13        // spread value in points
 #define MODE_STOPLEVEL                14        // stop level in points
 #define MODE_LOTSIZE                  15        // unit size of 1 lot                                                                                    100.000
 #define MODE_TICKVALUE                16        // tick value in the deposit currency
-#define MODE_TICKSIZE                 17        // tick size in the quote currency                                                                       0.0000'5
+#define MODE_TICKSIZE                 17        // tick size in the quote currency                                                 Vielfaches von Point: 0.0000'5
 #define MODE_SWAPLONG                 18        // swap of long positions
 #define MODE_SWAPSHORT                19        // swap of short positions
 #define MODE_STARTING                 20        // contract starting date (usually for futures)
