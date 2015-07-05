@@ -2,8 +2,8 @@
 // MQL structure SYMBOL (Dateiformat "symbols.raw")
 //
 //                                        size        offset
-// typedef struct _SYMBOL {               ----        ------
-// } SYMBOL, symbol;
+// struct SYMBOL {                        ----        ------
+// };
 //
 
 template    "MT4 Symbols"
@@ -14,6 +14,7 @@ fixed_start 0
 
 begin
    { endsection
-      char[12] "Symbol"
+
+   char[12] "Symbol"
    }[4]
 end

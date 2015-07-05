@@ -8,13 +8,13 @@
 //    double           high;                8
 //    double           low;                 8
 //    double           close;               8
-//    unsigned __int64 tickVolume;          8
-//    int              spread;              4
-//    unsigned __int64 realVolume;          8
+//    unsigned __int64 ticks;               8
+//    int              spread;              4         // unbenutzt
+//    unsigned __int64 volume;              8         // unbenutzt
 // };                                    = 60 bytes
 //
 
-template    "MT4 History Data v401"
+template    "MT4 History Data v401 (1 bar)"
 description "Files '*.hst'"
 
 applies_to  file
@@ -22,15 +22,15 @@ fixed_start 148
 multiple
 
 begin
-   { endsection
-      UnixDateTime "Time"
-      move         4
-      double       "Open"
-      double       "High"
-      double       "Low"
-      double       "Close"
-      int64        "TickVolume"
-      int32        "Spread"
-      int64        "RealVolume"
-   }[3]
+   endsection
+
+   UnixDateTime "Time"
+   move         4
+   double       "Open"
+   double       "High"
+   double       "Low"
+   double       "Close"
+   int64        "Ticks"
+   int32        "Spread"
+   int64        "Volume"
 end

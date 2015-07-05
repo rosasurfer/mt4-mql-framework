@@ -2,10 +2,10 @@
 // MQL structure SYMBOL_GROUP (Dateiformat "symgroups.raw")
 //
 //                                        size        offset
-// typedef struct _SYMBOL_GROUP {         ----        ------
+// struct SYMBOL_GROUP {                  ----        ------
 //   char name       [16];                 16            0        // Name
 //   char description[64];                 64            4        // Beschreibung
-// } SYMBOL_GROUP, sg;                   = 80 byte
+// };                                    = 80 byte
 //
 
 template    "MT4 Symbol Groups"
@@ -16,7 +16,8 @@ fixed_start 0
 
 begin
    { endsection
-      char[16] "Name"
-      char[64] "Description"
+
+   char[16] "Name"
+   char[64] "Description"
    }[32]
 end

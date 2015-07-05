@@ -21,7 +21,7 @@
 //   char   reserved[16];                  16           96
 //   double bid;                            8          112        // Bid (Wiederholung)
 //   double ask;                            8          120        // Ask (Wiederholung)
-// } ss;                                = 128 byte
+// };                                   = 128 byte
 //
 
 template    "MT4 Subscribed Symbols"
@@ -33,27 +33,28 @@ requires    0 "90 01"               // Version = 400
 
 begin
    move 4
-  { endsection
-     char[12]     "Symbol"
-     move 4
-     uint32       "Index (symbols.raw)"
-     move -8
-     uint32       "Digits"
-     move 4
-     hex 12       "(undocumented)"
-     double       "Point"
-     uint32       "Spread"
-     hex  4       "(undocumented)"
-     uint32       "Tick: 0 - Up, 1 - Down, 2 - n/a"
-     hex  4       "(undocumented)"
-     UNIXDateTime "Time"
-     hex  4       "(undocumented)"
-     double       "Bid"
-     double       "Ask"
-     double       "Session High"
-     double       "Session Low"
-     move 32
-  }[128]
+   { endsection
+
+   char[12]     "Symbol"
+   move 4
+   uint32       "Index (symbols.raw)"
+   move -8
+   uint32       "Digits"
+   move 4
+   hex 12       "(undocumented)"
+   double       "Point"
+   uint32       "Spread"
+   hex  4       "(undocumented)"
+   uint32       "Tick: 0 - Up, 1 - Down, 2 - n/a"
+   hex  4       "(undocumented)"
+   UNIXDateTime "Time"
+   hex  4       "(undocumented)"
+   double       "Bid"
+   double       "Ask"
+   double       "Session High"
+   double       "Session Low"
+   move 32
+   }[128]
 
 
 //{ char[12]     "Symbol"

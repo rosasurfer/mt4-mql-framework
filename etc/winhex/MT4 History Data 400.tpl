@@ -12,7 +12,7 @@
 // };                                    = 44 byte
 //
 
-template    "MT4 History Data v400"
+template    "MT4 History Data v400 (1 bar)"
 description "Files '*.hst'"
 
 applies_to  file
@@ -20,15 +20,15 @@ fixed_start 148
 multiple
 
 begin
-   { endsection
-      UNIXDateTime "Time"
-      double       "Open"
-      move         8
-      double       "High"
-      move         -16
-      double       "Low"
-      move         8
-      double       "Close"
-      double       "Volume"
-   }[4]
+   endsection
+
+   UNIXDateTime "Time"
+   double       "Open"
+   move         8
+   double       "High"
+   move         -16
+   double       "Low"
+   move         8
+   double       "Close"
+   double       "Volume"
 end
