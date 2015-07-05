@@ -41,7 +41,7 @@ int onStart() {
 bool RecordEquity(int flags=NULL) {
    static int hSet;
    if (!hSet) {
-      string symbol      = GetAccountNumber() +".EQ";
+      string symbol      = ifString(IsTesting(), "_", "") + GetAccountNumber() +".EQ";
       string description = "Account Equity #"+ GetAccountNumber();
       int    digits      = 2;
       int    format      = 400;

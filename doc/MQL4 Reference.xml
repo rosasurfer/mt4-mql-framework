@@ -2467,8 +2467,21 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=Digits
       type=int
       <content>
-      Number of digits after decimal point for the current symbol prices.<br/>
+      Number of digits after the decimal point for prices of the current symbol.<br/>
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
+
+      <br/>
+      <br/>
+      <span style="color:red">Bugs:</span>
+      <br/>
+      (1) Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
+          Nur ein Reload des Templates korrigiert die falschen Werte.<br/>
+      <br/>
+      (2) Die Variablen Digits und Point sind in Offline-Charts ab Terminalversion ??? permanent auf 5 und ?? gesetzt.<br/>
+      <br/>
+      (3) Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).<br/>
+      <br/>
+      Workaround für alle Bugs: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
       </content>
       example=Print(DoubleToStr(Close[0], Digits));
     </variable>
@@ -2576,8 +2589,21 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=Point
       type=double
       <content>
-      The current symbol point value in the quote currency.<br/>
+      The price resolution of prices of the current symbol in the quote currency.<br/>
       <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
+
+      <br/>
+      <br/>
+      <span style="color:red">Bugs:</span>
+      <br/>
+      (1) Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
+          Nur ein Reload des Templates korrigiert die falschen Werte.<br/>
+      <br/>
+      (2) Die Variablen Digits und Point sind in Offline-Charts ab Terminalversion ??? permanent auf 5 und ?? gesetzt.<br/>
+      <br/>
+      (3) Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).<br/>
+      <br/>
+      Workaround für alle Bugs: Stattdessen die globalen Variablen _Digits und _Point verwenden.<br/>
       </content>
       example=OrderSend(Symbol(), OP_BUY, Lots,  Ask, 3, 0, Ask + TakeProfit*Point);
     </variable>
