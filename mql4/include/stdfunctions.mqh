@@ -3055,7 +3055,7 @@ string UrlEncode(string value) {
 /**
  * Prüft, ob die angegebene Datei im MQL-Files-Verzeichnis existiert und eine normale Datei ist (kein Verzeichnis).
  *
- * @return string filename - zu ".\{mql-dir}\files\" relativer Dateiname
+ * @return string filename - zu "{mql_directory}\files\" relativer Dateiname
  *
  * @return bool
  */
@@ -3072,7 +3072,7 @@ bool IsMqlFile(string filename) {
 /**
  * Prüft, ob das angegebene Verzeichnis im MQL-Files-Verzeichnis existiert.
  *
- * @return string dirname - zu ".\{mql-dir}\files\" relativer Verzeichnisname
+ * @return string dirname - zu "{mql_directory}\files\" relativer Verzeichnisname
  *
  * @return bool
  */
