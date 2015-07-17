@@ -240,7 +240,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
 
 
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
-   string fileName;
+   string hstDirectory=TerminalPath() +"\\history\\"+ GetServerDirectory(), fileName, baseName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
@@ -250,12 +250,11 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
    hh.setDigits     (hh, digits     );
 
    for (i=0; i < sizeOfPeriods; i++) {
-      fileName = StringConcatenate(symbol, periods[i], ".hst");
-      hFile    = FileOpenHistory(fileName, FILE_BIN|FILE_READ);      // Datei nur öffnen, wenn sie existiert
+      baseName = StringConcatenate(symbol, periods[i], ".hst");
+      fileName = StringConcatenate(hstDirectory, "\\", baseName);
 
-      if (hFile > 0) {                                               // Datei gefunden und geöffnet
-         FileClose(hFile);
-         hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);     // Datei auf Größe 0 zurücksetzen
+      if (IsFile(fileName)) {                                        // wenn Datei existiert
+         hFile = FileOpenHistory(baseName, FILE_BIN|FILE_WRITE);     // Datei auf Größe 0 zurücksetzen
          if (hFile > 0) {
             hh.setPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));             // neuen HISTORY_HEADER schreiben
@@ -266,8 +265,6 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
          error = GetLastError();                                     // Datei konnte nicht geöffnet werden
          return(!catch("HistorySet.Create(6)  fileName=\""+ fileName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
       }
-      error = GetLastError();                                        // Datei konnte nicht geöffnet werden
-      if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Create(7)  fileName=\""+ fileName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
    }
    ArrayResize(hh, 0);
 
