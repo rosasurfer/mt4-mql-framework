@@ -621,7 +621,6 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       }
       return(true);
    } // end if (HST_COLLECT_TICKS)
-   // ---------------------------------------------------------------------------------------------------------------------------------------------
 
 
    // (2) gefüllte Collected-Bar schreiben --------------------------------------------------------------------------------------------------------
@@ -645,7 +644,6 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
       if (tick_in_collectedBar)
          return(true);
    }
-   // ---------------------------------------------------------------------------------------------------------------------------------------------
 
 
    // (3) Tick schreiben --------------------------------------------------------------------------------------------------------------------------
@@ -664,7 +662,6 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
    bar[BAR_C] = value;
    bar[BAR_V] = 1;
    return(HistoryFile.InsertBar(hFile, offset, bar, flags|HST_IS_BAR_OPENTIME));
-   // ---------------------------------------------------------------------------------------------------------------------------------------------
 }
 
 
@@ -960,7 +957,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
       FileWriteDouble (hFile, bar[BAR_L]);
       FileWriteDouble (hFile, bar[BAR_H]);
       FileWriteDouble (hFile, bar[BAR_C]);
-      FileWriteInteger(hFile, bar[BAR_V]);
+      FileWriteDouble (hFile, bar[BAR_V]);
    }
    else {               // 401
       FileWriteInteger(hFile, openTime  );      // int64
