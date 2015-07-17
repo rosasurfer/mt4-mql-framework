@@ -20,11 +20,11 @@ int equity.hSet;
  */
 int onStart() {
 
-   string hstDirectory = TerminalPath() +"\\history\\"+ AccountServer() +"\\";
-   debug("onStart()  hstDirectory="+ hstDirectory);
+   //string hstDirectory = TerminalPath() +"\\history\\"+ AccountServer() +"\\";
+   //debug("onStart()  hstDirectory="+ hstDirectory);
 
-   //RecordEquity();
-   //return(last_error);
+   RecordEquity();
+   return(last_error);
 
    RecordEquity(HST_COLLECT_TICKS);
    return(last_error);
