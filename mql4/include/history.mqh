@@ -2,7 +2,8 @@
  * Funktionen zur Verwaltung von Historydateien.
  *
  *
- *  • Alte MetaTrader-Versionen löschen neue Historydateien (nachdem sie auf sie zugegriffen haben).
+ *  • Alte MetaTrader-Versionen löschen beim Beenden neue Historydateien, wenn sie auf sie zugegriffen haben.
+ *  • Neue MetaTrader-Versionen konvertieren beim Beenden alte Historydateien, wenn sie auf sie zugegriffen haben.
  *
  *    - Um die Chartperiode von synthetischen Charts dynamisch umschalten zu können, müssen "symbols.raw" und "symbols.sel" modifiziert werden.
  *    - Synthetische Charts müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, damit "symbols.raw" und "symbols.sel" modifiziert werden können.
@@ -16,16 +17,15 @@
  *
  *  • Das Wechseln der SuperBar-Timeframes funktioniert in Offline-Charts nicht.
  *
- *
  */
 #import "history.ex4"
 
-   int      HistorySet.Create (string symbol, string description, int digits, int format);
-   int      HistorySet.Get    (string symbol);
+   int      HistorySet.Create (string symbol, string description, int digits, int format, bool synthetic=false);
+   int      HistorySet.Get    (string symbol, bool synthetic=false);
    bool     HistorySet.Close  (int hSet);
    bool     HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL);
 
-   int      HistoryFile.Open             (string symbol, int timeframe, string description, int digits, int format, int mode);
+   int      HistoryFile.Open             (string symbol, int timeframe, string description, int digits, int format, int mode, bool synthetic=false);
    bool     HistoryFile.Close            (int hFile);
    int      HistoryFile.FindBar          (int hFile, datetime time, int flags, bool lpBarExists[]);
    bool     HistoryFile.ReadBar          (int hFile, int offset, double bar[]);

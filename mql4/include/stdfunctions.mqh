@@ -3061,7 +3061,7 @@ string UrlEncode(string value) {
  */
 bool IsMqlFile(string filename) {
 
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_root}\tester\" zugreifen.
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_directory}\tester\" zugreifen.
 
    if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    else                                        mqlDir = "\\tester";
@@ -3078,7 +3078,7 @@ bool IsMqlFile(string filename) {
  */
 bool IsMqlDirectory(string dirname) {
 
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_root}\tester\" zugreifen.
+   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal_directory}\tester\" zugreifen.
 
    if (IsScript() || !This.IsTesting()) string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    else                                        mqlDir = "\\tester";
