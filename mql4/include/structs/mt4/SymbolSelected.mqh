@@ -1,5 +1,5 @@
 /**
- * MT4 structure SUBSCRIBED_SYMBOL (Format der Datei "symbols.sel")
+ * MT4 structure SYMBOL_SELECTED (Format der Datei "symbols.sel")
  *                                  size        offset
  * struct SUBSCRIBED_SYMBOL {       ----        ------
  *   szchar symbol[12];              12            0        // Symbol
