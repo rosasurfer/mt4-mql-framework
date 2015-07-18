@@ -3,8 +3,8 @@
 //
 //                                        size        offset
 // struct SYMBOL_GROUP {                  ----        ------
-//   char name       [16];                 16            0        // Name
-//   char description[64];                 64            4        // Beschreibung
+//    char name       [16];                16            0        // Name
+//    char description[64];                64            4        // Beschreibung
 // };                                    = 80 byte
 //
 
