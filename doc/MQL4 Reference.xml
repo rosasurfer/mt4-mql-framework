@@ -2477,7 +2477,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       (1) Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
           Nur ein Reload des Templates korrigiert die falschen Werte.<br/>
       <br/>
-      (2) Die Variablen Digits und Point sind in Offline-Charts ab Terminalversion ??? permanent auf 5 und ?? gesetzt.<br/>
+      (2) Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.<br/>
       <br/>
       (3) Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).<br/>
       <br/>
@@ -2599,7 +2599,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       (1) Die Variablen Digits und Point sind in <span class="function">init()</span> beim Öffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
           Nur ein Reload des Templates korrigiert die falschen Werte.<br/>
       <br/>
-      (2) Die Variablen Digits und Point sind in Offline-Charts ab Terminalversion ??? permanent auf 5 und ?? gesetzt.<br/>
+      (2) Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.<br/>
       <br/>
       (3) Die Variablen Digits und Point können vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).<br/>
       <br/>

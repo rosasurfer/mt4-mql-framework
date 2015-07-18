@@ -24,8 +24,14 @@ begin
    endsection
 
    uint32       "Format"
-   char[64]     "Description"
+
+   move         64
    char[12]     "Symbol"
+
+   move         -76
+   char[64]     "Description"
+
+   move         12
    uint32       "Timeframe (minutes)"
    uint32       "Digits"
    UNIXDateTime "SyncMark"
