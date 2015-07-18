@@ -1,5 +1,22 @@
 /**
- * Funktionen zur Verwaltung von Dateien im "history"-Verzeichnis.
+ * Funktionen zur Verwaltung von Historydateien.
+ *
+ *
+ *  • Alte MetaTrader-Versionen löschen neue Historydateien (nachdem sie auf sie zugegriffen haben).
+ *
+ *    - Um die Chartperiode von synthetischen Charts dynamisch umschalten zu können, müssen "symbols.raw" und "symbols.sel" modifiziert werden.
+ *    - Synthetische Charts müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, damit "symbols.raw" und "symbols.sel" modifiziert werden können.
+ *    - In einem Verzeichnis ohne Serververbindung müssen "symbols.raw" und "symbols.sel" nicht extra geschützt werden.
+ *    - Synthetische Charts müssen automatisiert aufgerufen werden können (vor allem nach Tests).
+ *
+ *
+ *
+ *
+ *  • Neue MetaTrader-Versionen setzen die Variablen Digits und Point in Offline-Charts permanent falsch, bei alten Versionen reicht es, das Template neuzuladen.
+ *
+ *  • Das Wechseln der SuperBar-Timeframes funktioniert in Offline-Charts nicht.
+ *
+ *
  */
 #import "history.ex4"
 

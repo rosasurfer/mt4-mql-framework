@@ -1,9 +1,6 @@
 /**
- * MT4 structure SYMBOL (Dateiformat "symbols.raw")
+ * MT4 structure SYMBOL (Format der Datei "symbols.raw")
  *                                  size        offset
  * struct SYMBOL {                  ----        ------
  * } symbol;
- *
- *
- * @see  Importdeklarationen der entsprechenden Library am Ende dieser Datei
  */
