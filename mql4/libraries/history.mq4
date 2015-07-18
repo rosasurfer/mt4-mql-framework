@@ -30,12 +30,13 @@ int      periods[] = { PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, 
 
 
 // Daten kompletter History-Sets --------------------------------------------------------------------------------------------------------------------------
-int      hs.hSet      [];                          // Set-Handle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
+int      hs.hSet       [];                         // Set-Handle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
 int      hs.hSet.lastValid;                        // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                         // Symbol
 string   hs.symbolU    [];                         // Symbol in Upper-Case
 string   hs.description[];                         // Symbol-Beschreibung
 int      hs.digits     [];                         // Symbol-Digits
+bool     hs.synthetic  [];                         // ob das Instrument synthetisch ist
 int      hs.hFile      [][9];                      // HistoryFile-Handles des Sets je Standard-Timeframe
 int      hs.format     [];                         // Datenformat für neu zu erstellende HistoryFiles
 
@@ -43,7 +44,7 @@ int      hs.format     [];                         // Datenformat für neu zu ers
 // Daten einzelner History-Files --------------------------------------------------------------------------------------------------------------------------
 int      hf.hFile      [];                         // Dateihandle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
 int      hf.hFile.lastValid;                       // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
-string   hf.name       [];                         // Dateiname
+string   hf.name       [];                         // Dateiname, ggf. mit Unterverzeichnis "MyFX-Synthetic\"
 bool     hf.readAccess [];                         // ob das Handle Lese-Zugriff erlaubt
 bool     hf.writeAccess[];                         // ob das Handle Schreib-Zugriff erlaubt
 int      hf.size       [];                         // aktuelle Größe der Datei (inkl. noch ungeschriebener Daten im Schreibpuffer)
@@ -55,6 +56,7 @@ string   hf.symbolU    [];                         // Symbol in Upper-Case
 int      hf.period     [];                         // Periode
 int      hf.periodSecs [];                         // Dauer einer Periode in Sekunden (nicht gültig für Perioden > 1 Tag)
 int      hf.digits     [];                         // Digits
+int      hf.synthetic  [];                         // ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist
 
 int      hf.bars       [];                         // Anzahl der Bars der Datei
 datetime hf.from       [];                         // OpenTime der ersten Bar der Datei
@@ -84,24 +86,27 @@ double   hf.collectedBar.data         [][6];       // Bar-Daten (T-OHLCV)
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  *
- * @param  __IN__ string symbol - Symbol
+ * @param  __IN__ string symbol    - Symbol
+ * @param  __IN__ bool   synthetic - ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist (default: FALSE)
  *
  * @return int - • Set-Handle oder -1, falls weder ein HistorySet noch ein HistoryFile dieses Symbols existieren. In diesem Fall kann
  *                 mit HistorySet.Create() ein neues Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
  *
  *
- * TODO:   Parameter int fTimeframes - Timeframe-Flags implementieren
+ * TODO: Parameter int fTimeframes - Timeframe-Flags implementieren
  */
-int HistorySet.Get(string symbol) {
+int HistorySet.Get(string symbol, bool synthetic=false) {
+   synthetic = synthetic!=0;
+
    if (!StringLen(symbol))                    return(!catch("HistorySet.Get(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Get(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    string symbolU = StringToUpper(symbol);
 
    // (1) offene Set-Handles durchsuchen
    int size = ArraySize(hs.hSet);
-   for (int i=0; i < size; i++) {
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) {       // Das Handle muß offen sein.
+   for (int i=0; i < size; i++) {                                    // Das Handle muß offen sein.
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (hs.synthetic[i]==synthetic) {
          debug("HistorySet.Get(0.1)  hSet="+ hs.hSet[i] +"  symbol=\""+ hs.symbol[i] +"\"  description=\""+ hs.description[i] +"\"  digits="+ hs.digits[i]);
          return(hs.hSet[i]);
       }
@@ -111,18 +116,19 @@ int HistorySet.Get(string symbol) {
 
    // (2) offene File-Handles durchsuchen
    size = ArraySize(hf.hFile);
-   for (i=0; i < size; i++) {
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) {      // Das Handle muß offen sein.
+   for (i=0; i < size; i++) {                                        // Das Handle muß offen sein.
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (hf.synthetic[i]==synthetic) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
          hs.__ResizeInternalArrays(size);
          iH   = size-1;
          hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
          hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hf.symbol [i];
-         hs.symbolU    [iH] = hf.symbolU[i];
+         hs.symbol     [iH] = hf.symbol   [i];
+         hs.symbolU    [iH] = hf.symbolU  [i];
          hs.description[iH] = hhs.Description(hf.header, i);
-         hs.digits     [iH] = hf.digits [i];
+         hs.digits     [iH] = hf.digits   [i];
+         hs.synthetic  [iH] = hf.synthetic[i];
          hs.format     [iH] = 400;                                   // Default für neu zu erstellende HistoryFiles
 
          debug("HistorySet.Get(0.2)  hFile="+ hf.hFile[i] +"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
@@ -131,44 +137,51 @@ int HistorySet.Get(string symbol) {
    }                                                                 // kein offenes File-Handle gefunden
 
    // (3) existierende HistoryFiles suchen
-   string fileName;
+   string serverName   = ifString(synthetic, "MyFX-Synthetic", GetServerName());
+   string mqlDirectory =                  ".history\\"+ serverName +"\\";
+   string hstDirectory = TerminalPath() +"\\history\\"+ serverName +"\\";
+   string baseName, mqlName, fullName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
 
    for (i=0; i < sizeOfPeriods; i++) {
-      fileName = StringConcatenate(symbol, periods[i], ".hst");
-      hFile    = FileOpenHistory(fileName, FILE_BIN|FILE_READ);      // Datei nur öffnen, wenn sie existiert
+      baseName = symbol + periods[i] +".hst";
+      mqlName  = mqlDirectory + baseName;
+      fullName = hstDirectory + baseName;
 
-      if (hFile > 0) {                                               // Datei gefunden und geöffnet
-         fileSize = FileSize(hFile);
-         if (fileSize < HISTORY_HEADER.size) {
-            FileClose(hFile);
-            warn("HistorySet.Get(3)  invalid history file \""+ fileName +"\" found (size="+ fileSize +")");
-            continue;
-         }
+      if (IsFile(fullName)) {                                        // wenn Datei existiert
+         hFile = FileOpen(mqlName, FILE_BIN|FILE_READ);              // Datei öffnen: FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
+         if (hFile > 0) {                                            // Datei gefunden und geöffnet
+            fileSize = FileSize(hFile);
+            if (fileSize < HISTORY_HEADER.size) {
+               FileClose(hFile);
+               warn("HistorySet.Get(3)  invalid history file \""+ mqlName +"\" found (size="+ fileSize +")");
+               continue;
+            }
                                                                      // HISTORY_HEADER auslesen
-         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER.intSize);
-         FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize);
-         FileClose(hFile);
+            /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER.intSize);
+            FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize);
+            FileClose(hFile);
 
-         size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         hs.__ResizeInternalArrays(size);
-         iH   = size-1;
-         hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
+            size = Max(ArraySize(hs.hSet), 1) + 1;                   // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
+            hs.__ResizeInternalArrays(size);
+            iH   = size-1;
+            hSet = iH;                                               // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
-         hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hh.Symbol     (hh);
-         hs.symbolU    [iH] = StringToUpper(hs.symbol[iH]);
-         hs.description[iH] = hh.Description(hh);
-         hs.digits     [iH] = hh.Digits     (hh);
-         hs.format     [iH] = 400;                                   // Default für neu zu erstellende HistoryFiles
+            hs.hSet       [iH] = hSet;
+            hs.symbol     [iH] = hh.Symbol     (hh);
+            hs.symbolU    [iH] = StringToUpper(hs.symbol[iH]);
+            hs.description[iH] = hh.Description(hh);
+            hs.digits     [iH] = hh.Digits     (hh);
+            hs.synthetic  [iH] = synthetic;
+            hs.format     [iH] = 400;                                // Default für neu zu erstellende HistoryFiles
 
-         debug("HistorySet.Get(0.3)  file=\""+ fileName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
-         ArrayResize(hh, 0);
-         return(hSet);
+            debug("HistorySet.Get(0.3)  file=\""+ mqlName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
+            ArrayResize(hh, 0);
+            return(hSet);
+         }
+         int error = GetLastError();                                 // Datei konnte nicht geöffnet werden
+         if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ DoubleQuoteStr(mqlName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
       }
-
-      int error = GetLastError();                                    // Datei konnte nicht geöffnet werden
-      if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ DoubleQuoteStr(fileName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
    }
 
 
@@ -190,13 +203,16 @@ int HistorySet.Get(string symbol) {
  * @param  __IN__ int    digits      - Digits der Datenreihe
  * @param  __IN__ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
  *                                                                    401 - neues Datenformat (wie MetaTrader ab Build 510)
+ * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist (default: FALSE)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  *
  *
  * TODO:   Parameter int fTimeframes - Timeframe-Flags implementieren
  */
-int HistorySet.Create(string symbol, string description, int digits, int format) {
+int HistorySet.Create(string symbol, string description, int digits, int format, bool synthetic=false) {
+   synthetic = synthetic!=0;
+
    // Parametervalidierung
    if (!StringLen(symbol))                    return(!catch("HistorySet.Create(1)  illegal parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet.Create(2)  illegal parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
@@ -209,8 +225,8 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
 
    // (1) offene Set-Handles durchsuchen und Sets schließen
    int size = ArraySize(hs.hSet);
-   for (int i=0; i < size; i++) {
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) {       // Das Handle muß offen sein.
+   for (int i=0; i < size; i++) {                                    // Das Handle muß offen sein.
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (hs.synthetic[i]==synthetic) {
          // wenn Symbol gefunden, Set schließen...
          if (hs.hSet.lastValid == hs.hSet[i])
             hs.hSet.lastValid = NULL;
@@ -231,8 +247,8 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
 
    // (2) offene File-Handles durchsuchen und Dateien schließen
    size = ArraySize(hf.hFile);
-   for (i=0; i < size; i++) {
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) {      // Das Handle muß offen sein.
+   for (i=0; i < size; i++) {                                        // Das Handle muß offen sein.
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (hf.synthetic[i]==synthetic){
          if (!HistoryFile.Close(hf.hFile[i]))
             return(NULL);
       }
@@ -240,7 +256,10 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
 
 
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
-   string hstDirectory=TerminalPath() +"\\history\\"+ GetServerDirectory(), fileName, baseName;
+   string serverName   = ifString(synthetic, "MyFX-Synthetic", GetServerName());
+   string mqlDirectory =                  ".history\\"+ serverName +"\\";
+   string hstDirectory = TerminalPath() +"\\history\\"+ serverName +"\\";
+   string baseName, mqlName, fullName;
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
@@ -250,11 +269,12 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
    hh.setDigits     (hh, digits     );
 
    for (i=0; i < sizeOfPeriods; i++) {
-      baseName = StringConcatenate(symbol, periods[i], ".hst");
-      fileName = StringConcatenate(hstDirectory, "\\", baseName);
+      baseName = symbol + periods[i] +".hst";
+      mqlName  = mqlDirectory + baseName;
+      fullName = hstDirectory + baseName;
 
-      if (IsFile(fileName)) {                                        // wenn Datei existiert
-         hFile = FileOpenHistory(baseName, FILE_BIN|FILE_WRITE);     // Datei auf Größe 0 zurücksetzen
+      if (IsFile(fullName)) {                                        // wenn Datei existiert
+         hFile = FileOpen(mqlName, FILE_BIN|FILE_WRITE);             // Datei auf 0 zurücksetzen: FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
          if (hFile > 0) {
             hh.setPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));             // neuen HISTORY_HEADER schreiben
@@ -263,7 +283,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
             return(NULL);
          }
          error = GetLastError();                                     // Datei konnte nicht geöffnet werden
-         return(!catch("HistorySet.Create(6)  fileName=\""+ fileName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+         return(!catch("HistorySet.Create(6)  fileName=\""+ mqlName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
       }
    }
    ArrayResize(hh, 0);
@@ -280,6 +300,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
    hs.symbolU    [iH] = symbolU;
    hs.description[iH] = description;
    hs.digits     [iH] = digits;
+   hs.synthetic  [iH] = synthetic;
    hs.format     [iH] = format;
 
    return(hSet);
@@ -289,7 +310,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format)
 /**
  * Schließt das HistorySet mit dem angegebenen Handle.
  *
- * @param  __INT__ int hSet  - Set-Handle
+ * @param  __IN__ int hSet  - Set-Handle
  *
  * @return bool - Erfolgsstatus
  */
@@ -319,12 +340,12 @@ bool HistorySet.Close(int hSet) {
 /**
  * Fügt dem HistorySet eines Symbols einen Tick hinzu (außer PERIOD_W1 und PERIOD_MN1). Der Tick wird als letzter Tick (Close) der entsprechenden Bars gespeichert.
  *
- * @param  __INT__ int      hSet  - Set-Handle des Symbols
- * @param  __INT__ datetime time  - Zeitpunkt des Ticks
- * @param  __INT__ double   value - Datenwert
- * @param  __INT__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                  • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                                  • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ * @param  __IN__ int      hSet  - Set-Handle des Symbols
+ * @param  __IN__ datetime time  - Zeitpunkt des Ticks
+ * @param  __IN__ double   value - Datenwert
+ * @param  __IN__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                 • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                                 • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  */
@@ -345,7 +366,7 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
       if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
-         hFile = HistoryFile.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE);
+         hFile = HistoryFile.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.synthetic[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
       }
@@ -361,12 +382,13 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie im angegebenen Format erstellt.
  * • Ist FILE_WRITE, nicht jedoch FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und im angegebenen Format neu erstellt.
  *
- * @param  __INT__ string symbol      - Symbol des Instruments
- * @param  __INT__ int    timeframe   - Timeframe der Zeitreihe
- * @param  __INT__ string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
- * @param  __INT__ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
- * @param  __INT__ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
- * @param  __INT__ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  __IN__ string symbol      - Symbol des Instruments
+ * @param  __IN__ int    timeframe   - Timeframe der Zeitreihe
+ * @param  __IN__ string description - Beschreibung des Instruments (falls die Historydatei neu erstellt wird)
+ * @param  __IN__ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
+ * @param  __IN__ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
+ * @param  __IN__ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist (default: FALSE)
  *
  * @return int - • Dateihandle
  *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert
@@ -376,7 +398,9 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * NOTES: (1) Das Dateihandle kann nicht modul-übergreifend verwendet werden.
  *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 32 Dateien gleichzeitig offen gehalten werden.
  */
-int HistoryFile.Open(string symbol, int timeframe, string description, int digits, int format, int mode) {
+int HistoryFile.Open(string symbol, int timeframe, string description, int digits, int format, int mode, bool synthetic=false) {
+   synthetic = synthetic!=0;
+
    // Validierung
    if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile.Open(1)  illegal parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile.Open(2)  illegal parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
@@ -390,24 +414,29 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 
 
    // (1) Datei öffnen
-   string fileName = StringConcatenate(symbol, timeframe, ".hst");
-   int    hFile    = FileOpenHistory(fileName, mode|FILE_BIN);
+   string serverName   = ifString(synthetic, "MyFX-Synthetic", GetServerName());
+   string mqlDirectory =                  ".history\\"+ serverName +"\\";
+   string hstDirectory = TerminalPath() +"\\history\\"+ serverName +"\\";
+   string baseName     = symbol + timeframe +".hst";
+   string mqlName      = mqlDirectory + baseName;
+   string fullName     = hstDirectory + baseName;
+   int    hFile        = FileOpen(mqlName, mode|FILE_BIN);                          // FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
 
-   // (1.1) read-only
-   if (read_only) {
-      int error = GetLastError();                                                   // TODO: !!! ERR_CANNOT_OPEN_FILE müllt das Log zu !!!
+   // (1.1) read-only                                                               // TODO: !!! Bei read-only Existenz mit IsFile() prüfen, da FileOpenHistory() sonst das Log ggf.
+   if (read_only) {                                                                 // TODO: !!! mit Warnungen ERR_CANNOT_OPEN_FILE zupflastert !!!
+      int error = GetLastError();
       if (error == ERR_CANNOT_OPEN_FILE) return(-1);                                // file not found
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(5)->FileOpenHistory(\""+ fileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(5)->FileOpen(\""+ mqlName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR))));
    }
 
    // (1.2) read-write
    else if (read_write) {
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(6)->FileOpenHistory(\""+ fileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(6)->FileOpen(\""+ mqlName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
 
    // (1.3) write-only
    else if (write_only) {
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpenHistory(\""+ fileName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
 
    int bars, from, to, fileSize=FileSize(hFile), /*HISTORY_HEADER*/hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
@@ -434,7 +463,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    else if (read_only || fileSize > 0) {
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize) != HISTORY_HEADER.intSize) {
          FileClose(hFile);
-         return(_NULL(catch("HistoryFile.Open(10)  invalid history file \""+ fileName +"\" (size="+ fileSize +")", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
+         return(_NULL(catch("HistoryFile.Open(10)  invalid history file \""+ mqlName +"\" (size="+ fileSize +")", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
       }
 
       // (3.2) ggf. Bar-Infos auslesen
@@ -455,7 +484,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
       hf.__ResizeInternalArrays(hFile+1);
 
                     hf.hFile      [hFile] = hFile;
-                    hf.name       [hFile] = fileName;
+                    hf.name       [hFile] = baseName;
                     hf.readAccess [hFile] = !write_only;
                     hf.writeAccess[hFile] = !read_only;
                     hf.size       [hFile] = fileSize;
@@ -467,6 +496,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
                     hf.period     [hFile] = timeframe;
                     hf.periodSecs [hFile] = timeframe * MINUTES;
                     hf.digits     [hFile] = hh.Digits(hh);
+                    hf.synthetic  [hFile] = synthetic;
 
                     hf.bars       [hFile] = bars;
                     hf.from       [hFile] = from;
@@ -484,7 +514,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
  * Schließt die Historydatei mit dem angegebenen Handle. Alle noch ungespeicherten Tickdaten werden geschrieben.
  * Die Datei muß vorher mit HistoryFile.Open() geöffnet worden sein.
  *
- * @param  __INT__ int hFile - Dateihandle
+ * @param  __IN__ int hFile - Dateihandle
  *
  * @return bool - Erfolgsstatus
  */
@@ -519,12 +549,12 @@ bool HistoryFile.Close(int hFile) {
 /**
  * Fügt einer einzelnen Historydatei einen Tick hinzu. Der Tick wird als letzter Tick (Close) der entsprechenden Bar gespeichert.
  *
- * @param  __INT__ int      hFile - Dateihandle der Historydatei
- * @param  __INT__ datetime time  - Zeitpunkt des Ticks
- * @param  __INT__ double   value - Datenwert
- * @param  __INT__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                  • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                                  • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
+ * @param  __IN__ int      hFile - Dateihandle der Historydatei
+ * @param  __IN__ datetime time  - Zeitpunkt des Ticks
+ * @param  __IN__ double   value - Datenwert
+ * @param  __IN__ int      flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                 • HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
+ *                                 • HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
  * @return bool - Erfolgsstatus
  *
@@ -672,7 +702,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
  *
  * @param  __IN__  int      hFile          - Dateihandle der Historydatei
  * @param  __IN__  datetime time           - Zeitpunkt
- * @param  __INT__ int      flags          - das Auffinden der Bar steuernde Flags (default: keine)
+ * @param  __IN__  int      flags          - das Auffinden der Bar steuernde Flags (default: keine)
  *                                           • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
  * @param  __OUT__ bool     lpBarExists[1] - Variable, die nach Rückkehr anzeigt, ob die Bar am zurückgegebenen Offset existiert
  *                                           (als Array implementiert, um Zeigerübergabe an eine Library zu ermöglichen)
@@ -823,9 +853,9 @@ bool HistoryFile.ReadBar(int hFile, int offset, double &bar[]) {
 /**
  * Aktualisiert den Schlußkurs der Bar am angegebenen Offset einer Historydatei.
  *
- * @param  __INT__ int    hFile  - Dateihandle der Historydatei
- * @param  __INT__ int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
- * @param  __INT__ double value  - hinzuzufügender Wert
+ * @param  __IN__ int    hFile  - Dateihandle der Historydatei
+ * @param  __IN__ int    offset - Offset der zu aktualisierenden Bar innerhalb der Zeitreihe
+ * @param  __IN__ double value  - hinzuzufügender Wert
  *
  * @return bool - Erfolgsstatus
  *
@@ -864,12 +894,12 @@ bool HistoryFile.UpdateBar(int hFile, int offset, double value) {
 /**
  * Fügt eine neue Bar am angegebenen Offset einer Historydatei ein. Die Funktion überprüft *nicht* die Plausibilität der einzufügenden Daten.
  *
- * @param  __INT__ int    hFile  - Dateihandle der Historydatei
- * @param  __INT__ int    offset - Offset der einzufügenden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
- * @param  __INT__ double bar[6] - Bardaten
- * @param  __INT__ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                 • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
- *                                 • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
+ * @param  __IN__ int    hFile  - Dateihandle der Historydatei
+ * @param  __IN__ int    offset - Offset der einzufügenden Bar innerhalb der Zeitreihe (die erste Bar hat den Offset 0)
+ * @param  __IN__ double bar[6] - Bardaten
+ * @param  __IN__ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                                • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
  * @return bool - Erfolgsstatus
  *
  *
@@ -899,12 +929,12 @@ bool HistoryFile.InsertBar(int hFile, int offset, double bar[], int flags=NULL) 
 /**
  * Schreibt eine Bar in die angegebene Historydatei. Eine ggf. vorhandene Bar mit demselben Open-Zeitpunkt wird überschrieben.
  *
- * @param  __INT__ int    hFile  - Dateihandle der Historydatei
- * @param  __INT__ int    offset - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
- * @param  __INT__ double bar[]  - Bar-Daten (T-OHLCV)
- * @param  __INT__ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                                 • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
- *                                 • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
+ * @param  __IN__ int    hFile  - Dateihandle der Historydatei
+ * @param  __IN__ int    offset - Offset der zu schreibenden Bar (relativ zum Dateiheader; Offset 0 ist die älteste Bar)
+ * @param  __IN__ double bar[]  - Bar-Daten (T-OHLCV)
+ * @param  __IN__ int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                                • HST_FILL_GAPS:       beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ *                                • HST_IS_BAR_OPENTIME: die angegebene Zeit ist die Bar-OpenTime und muß nicht mehr normalisiert werden
  *
  * @return bool - Erfolgsstatus
  *
@@ -998,9 +1028,9 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
 /**
  * Schreibt die aktuellen Bardaten in die Historydatei.
  *
- * @param  __INT__ int hFile - Dateihandle der Historydatei
- * @param  __INT__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                             • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  __IN__ int hFile - Dateihandle der Historydatei
+ * @param  __IN__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                            • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  */
@@ -1061,9 +1091,9 @@ bool HistoryFile.WriteCurrentBar(int hFile, int flags=NULL) {
 /**
  * Schreibt die zwischengespeicherten Tickdaten in die Historydatei.
  *
- * @param  __INT__ int hFile - Dateihandle der Historydatei
- * @param  __INT__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
- *                             • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
+ * @param  __IN__ int hFile - Dateihandle der Historydatei
+ * @param  __IN__ int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
+ *                            • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
  * @return bool - Erfolgsstatus
  */
@@ -1135,9 +1165,9 @@ bool HistoryFile.WriteCollectedBar(int hFile, int flags=NULL) {
 
 /**
  *
- * @param  __INT__ int hFile       - Dateihandle der Historydatei
- * @param  __INT__ int startOffset
- * @param  __INT__ int destOffset
+ * @param  __IN__ int hFile       - Dateihandle der Historydatei
+ * @param  __IN__ int startOffset
+ * @param  __IN__ int destOffset
  *
  * @return bool - Erfolgsstatus
  */
@@ -1172,6 +1202,7 @@ int hf.__ResizeInternalArrays(int size) {
       ArrayResize(hf.period,                     size);
       ArrayResize(hf.periodSecs,                 size);
       ArrayResize(hf.digits,                     size);
+      ArrayResize(hf.synthetic,                  size);
 
       ArrayResize(hf.bars,                       size);
       ArrayResize(hf.from,                       size);
@@ -1214,6 +1245,7 @@ int hs.__ResizeInternalArrays(int size) {
       ArrayResize(hs.symbolU,     size);
       ArrayResize(hs.description, size);
       ArrayResize(hs.digits,      size);
+      ArrayResize(hs.synthetic,   size);
       ArrayResize(hs.hFile,       size);
       ArrayResize(hs.format,      size);
    }
@@ -1582,48 +1614,8 @@ int history.GetLastError() {
  * Wird nur im Tester aus Library::init() aufgerufen, um alle verwendeten globalen Arrays zurückzusetzen (EA-Bugfix).
  */
 void Tester.ResetGlobalArrays() {
-   ArrayResize(stack.orderSelections        , 0);
+   ArrayResize(stack.orderSelections, 0);
 
-   // Daten einzelner HistoryFiles
-   ArrayResize(hf.hFile                     , 0);
-   ArrayResize(hf.name                      , 0);
-   ArrayResize(hf.readAccess                , 0);
-   ArrayResize(hf.writeAccess               , 0);
-   ArrayResize(hf.size                      , 0);
-
-   ArrayResize(hf.header                    , 0);
-   ArrayResize(hf.format                    , 0);
-   ArrayResize(hf.symbol                    , 0);
-   ArrayResize(hf.symbolU                   , 0);
-   ArrayResize(hf.period                    , 0);
-   ArrayResize(hf.periodSecs                , 0);
-   ArrayResize(hf.digits                    , 0);
-
-   ArrayResize(hf.bars                      , 0);
-   ArrayResize(hf.from                      , 0);
-   ArrayResize(hf.to                        , 0);
-
-   // Cache der aktuellen Bar
-   ArrayResize(hf.currentBar.offset         , 0);
-   ArrayResize(hf.currentBar.openTime       , 0);
-   ArrayResize(hf.currentBar.closeTime      , 0);
-   ArrayResize(hf.currentBar.nextCloseTime  , 0);
-   ArrayResize(hf.currentBar.data           , 0);
-
-   // Ticks einer ungespeicherten Bar
-   ArrayResize(hf.collectedBar.offset       , 0);
-   ArrayResize(hf.collectedBar.openTime     , 0);
-   ArrayResize(hf.collectedBar.closeTime    , 0);
-   ArrayResize(hf.collectedBar.nextCloseTime, 0);
-   ArrayResize(hf.collectedBar.data         , 0);
-
-   // Daten einzelner History-Sets
-   ArrayResize(hs.hSet                      , 0);
-   ArrayResize(hs.symbol                    , 0);
-   ArrayResize(hs.symbolU                   , 0);
-   ArrayResize(hs.description               , 0);
-   ArrayResize(hs.digits                    , 0);
-   ArrayResize(hs.hFile                     , 0);
-   ArrayResize(hs.format                    , 0);
- //ArrayResize(periods...                                            // hat Initializer und wird nicht modifiziert
+   hs.__ResizeInternalArrays(0);
+   hf.__ResizeInternalArrays(0);
 }

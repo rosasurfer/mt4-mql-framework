@@ -5305,8 +5305,9 @@ bool RecordEquity(int flags=NULL) {
       string description = "Equity SR."+ sequenceId;
       int    digits      = 2;
       int    format      = 400;
+      bool   synthetic   = true;
 
-      hSet = HistorySet.Create(symbol, description, digits, format);
+      hSet = HistorySet.Create(symbol, description, digits, format, synthetic);
       if (!hSet) return(!SetLastError(history.GetLastError()));
    }
 

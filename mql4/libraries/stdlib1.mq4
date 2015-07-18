@@ -3487,7 +3487,7 @@ int Chart.SendTick(bool sound=false) {
  *
  * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
  */
-string GetServerDirectory() {
+string GetServerName() {
    // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
    // die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im alten Serververzeichnis.
    // Erst ValidBars = 0 stellt sicher, daﬂ wir uns tats‰chlich im neuen Serververzeichnis befinden.
@@ -3513,7 +3513,7 @@ string GetServerDirectory() {
       string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
       int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
       if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_EMPTY_STR(catch("GetServerDirectory(1)->FileOpenHistory(\""+ fileName +"\")")));
+         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory(\""+ fileName +"\")")));
       FileClose(hFile);
 
       // Datei suchen und Verzeichnisnamen auslesen
@@ -3528,11 +3528,11 @@ string GetServerDirectory() {
                pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
                int hFindFile = FindFirstFileA(pattern, wfd);
                if (hFindFile != INVALID_HANDLE_VALUE) {
-                  //debug("GetServerDirectory(2)  file = "+ pattern +"   found");
+                  //debug("GetServerName(2)  file = "+ pattern +"   found");
                   FindClose(hFindFile);
                   directory = name;
                   if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API lˆschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_EMPTY_STR(catch("GetServerDirectory(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
                   break;
                }
             }
@@ -3540,19 +3540,19 @@ string GetServerDirectory() {
          next = FindNextFileA(hFindDir, wfd);
       }
       if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_EMPTY_STR(catch("GetServerDirectory(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+         return(_EMPTY_STR(catch("GetServerName(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
 
       FindClose(hFindDir);
       ArrayResize(wfd, 0);
-      //debug("GetServerDirectory(5)  resolved directory = \""+ directory +"\"");
+      //debug("GetServerName(5)  resolved directory = \""+ directory +"\"");
    }
 
    int error = GetLastError();
    if (IsError(error))
-      return(_EMPTY_STR(catch("GetServerDirectory(6)", error)));
+      return(_EMPTY_STR(catch("GetServerName(6)", error)));
 
    if (!StringLen(directory))
-      return(_EMPTY_STR(catch("GetServerDirectory(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+      return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
 
    static.result[0] = directory;
    return(static.result[0]);
@@ -3566,7 +3566,7 @@ string GetServerDirectory() {
  * @return string - Kurzname
  */
 string ShortAccountCompany() {
-   string server=StringToLower(GetServerDirectory());
+   string server=StringToLower(GetServerName());
 
    if      (StringStartsWith(server, "alpari-"            )) return("Alpari"          );
    else if (StringStartsWith(server, "alparibroker-"      )) return("Alpari"          );
@@ -6859,7 +6859,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
 
 
    // (2) Timezone-ID ermitteln
-   string timezone, directory=StringToLower(GetServerDirectory());
+   string timezone, directory=StringToLower(GetServerName());
 
    if (!StringLen(directory))
       return("");
@@ -6913,7 +6913,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
       // Fallback zur manuellen Konfiguration in globaler Config
       timezone = GetGlobalConfigString("Timezones", directory, "");
       if (!StringLen(timezone))
-         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerDirectory() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
+         return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerName() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
 
 

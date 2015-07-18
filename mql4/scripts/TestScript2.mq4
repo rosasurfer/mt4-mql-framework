@@ -19,8 +19,8 @@ int equity.hSet;
  * @return int - Fehlerstatus
  */
 int onStart() {
-   //RecordEquity();
-   //return(last_error);
+   RecordEquity();
+   return(last_error);
 
    RecordEquity(HST_COLLECT_TICKS);
    return(last_error);
@@ -42,7 +42,8 @@ bool RecordEquity(int flags=NULL) {
       string description = "Account Equity #"+ GetAccountNumber();
       int    digits      = 2;
       int    format      = 400;
-      equity.hSet = HistorySet.Create(symbol, description, digits, format);
+      bool   synthetic   = true;
+      equity.hSet = HistorySet.Create(symbol, description, digits, format, synthetic);
       if (!equity.hSet) return(!SetLastError(history.GetLastError()));
    }
 

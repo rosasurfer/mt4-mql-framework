@@ -57,7 +57,8 @@ bool RecordEquity(int flags=NULL) {
       string description = "Account Equity #"+ GetAccountNumber();
       int    digits      = 2;
       int    format      = 400;
-      equity.hSet = HistorySet.Create(symbol, description, digits, format);
+      bool   synthetic   = true;
+      equity.hSet = HistorySet.Create(symbol, description, digits, format, synthetic);
       if (!equity.hSet) return(!SetLastError(history.GetLastError()));
    }
 
