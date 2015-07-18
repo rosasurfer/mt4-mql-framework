@@ -5,10 +5,10 @@
  *  • Alte MetaTrader-Versionen löschen beim Beenden neue Historydateien, wenn sie auf sie zugegriffen haben.
  *  • Neue MetaTrader-Versionen konvertieren beim Beenden alte Historydateien, wenn sie auf sie zugegriffen haben.
  *
- *    - Um die Chartperiode von synthetischen Charts dynamisch umschalten zu können, müssen "symbols.raw" und "symbols.sel" modifiziert werden.
- *    - Synthetische Charts müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, damit "symbols.raw" und "symbols.sel" modifiziert werden können.
- *    - In einem Verzeichnis ohne Serververbindung müssen "symbols.raw" und "symbols.sel" nicht extra geschützt werden.
- *    - Synthetische Charts müssen automatisiert aufgerufen werden können (vor allem nach Tests).
+ *    - Um die Chartperiode von synthetischen Instrumenten dynamisch umschalten zu können, müssen "symbols.raw" und "symbols.sel" modifiziert werden.
+ *    - Synthetische Instrumente müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, um Änderungen an "symbols.raw" und "symbols.sel" nicht zu verlieren.
+ *    - Ohne Serververbindung müssen "symbols.raw" und "symbols.sel" nicht extra geschützt werden.
+ *    - Charts synthetischer Instrumente müssen automatisiert aufgerufen werden können (vor allem nach Tests).
  *
  *
  *
