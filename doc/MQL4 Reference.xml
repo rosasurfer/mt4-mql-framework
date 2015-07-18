@@ -10837,17 +10837,20 @@ The value will be <span class="const">true</span> only if the expert or script w
      tag=mt4_1
      caption=<nobr>MetaTrader 4.1</nobr>
      <content>
-     <p>MetaTrader 4.1</p>
-
-     <ul>
-        <li>Geändertes History-Format</li>
-        <!--
-        <li><p>no <i>do ... while</i> operator</p></li>
-        <li><p>no <i>goto</i> operator </p></li>
-        <li><p>no ternary operator <i>[condition] ? [expression1] : [expression2]</i></p></li>
-        -->
-     </ul>
+     <p>MetaTrader 4.1 (ab Build 510)</p>
   	  </content>
+
+	  <group>
+		  tag=mt4_1_historyformat
+		  caption=<nobr>Neues Historyformat</nobr>
+		  <content>
+		  <p>Neues History-Format</p>
+
+		  <ul>
+			  <li>Alte MetaTrader-Versionen (bis Build 509), die auf eine Historydatei im neuen Format stoßen, löschen diese Datei beim Beenden.</li>
+		  </ul>
+		  </content>
+		</group>
 	</group>
 
 </group>
