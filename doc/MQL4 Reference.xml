@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="iso-8859-15"?>
 <dictionary>
   tag=MetaQuotesLanguage
-  caption=<nobr>MetaQuotes Language 4</nobr>
+  caption=MetaQuotes Language 4
   lang_params=Parameters:
   lang_sample=Example:
 
@@ -44,7 +44,7 @@
 
   <group>
     tag=index
-    caption=<nobr>MQL4 Reference</nobr>
+    caption=MQL4 Reference
 
     <content>
       <p>MetaQuotes Language 4 (MQL4) is a built-in language for programming of trading strategies, trade management automation, custom indicators and scripts.
@@ -138,7 +138,7 @@
 
     <text>
       tag=basics_syntax_reserved
-      caption=<nobr>Reserved words</nobr>
+      caption=Reserved words
       <content>
         <p>Reserved words cannot be used as identifiers:</p>
 
@@ -162,7 +162,7 @@
 
     <group>
       tag=basics_types
-      caption=<nobr>Data types</nobr>
+      caption=Data types
 
     <content>
       <p>The main data types are:</p>
@@ -179,7 +179,7 @@
 
     <text>
       tag=basics_types_casting
-      caption=<nobr>Type casting</nobr>
+      caption=Type casting
       <content>
         <p>Only implicit type casting is used in <a href="help://basics_operations_expression">expressions</a>. The type priority grows from <i>int</i>
         (and its internal equivalent types <i>bool</i>, <i>color</i>, <i>datetime</i>) to <i>double</i> to <i>string</i>.</p>
@@ -200,7 +200,7 @@ string s = &quot;Ticket #&quot;+12345; // the operands are casted to string, res
 
     <text>
       tag=basics_types_integer
-      caption=<nobr>Integer constants</nobr>
+      caption=Integer constants
       keywords=;int;
       <content>
         <p>Decimals: digits from 0 to 9; the first digit cannot be zero (0).</p>
@@ -218,7 +218,7 @@ string s = &quot;Ticket #&quot;+12345; // the operands are casted to string, res
 
     <text>
       tag=basics_types_literal
-      caption=<nobr>Literal constants</nobr>
+      caption=Literal constants
       <content>
         <p>Any single character enclosed in single quotes or a hexadecimal ASCII-code of a character looking
         like '\x10' is a character constant of integer type. Some characters like a single quote ('), double quote
@@ -245,7 +245,7 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
 
    <text>
       tag=basics_types_bool
-      caption=<nobr>Boolean constants</nobr>
+      caption=Boolean constants
       keywords=;bool;true;false;
       <content>
         <p>Booleans can have the value of <span class="const">true</span> or <span class="const">false</span>, the numeric representation is 1 and 0.
@@ -268,7 +268,7 @@ bool c = 1;</pre>
 
     <text>
       tag=basics_types_double
-      caption=<nobr>Floating-point number constants (double)</nobr>
+      caption=Floating-point number constants (double)
       keywords=;double;
       <content>
         <p>Floating-point constants consist of an integer part, a point (.), and a fractional part. The integer
@@ -285,7 +285,7 @@ double d = 16;</pre>
 
     <text>
       tag=basics_types_string
-      caption=<nobr>String constants</nobr>
+      caption=String constants
       keywords=;string;
       <content>
       <p>A string is a sequence of ASCII-code characters represented with enclosed double quotes: &quot;This is a string&quot;.</p>
@@ -311,7 +311,7 @@ struct MqlStr {
 
     <text>
       tag=basics_types_color
-      caption=<nobr>Color constants</nobr>
+      caption=Color constants
       keywords=;color;
       <content>
 <p>Color constants can be represented in three ways: literally, by integers, or by name (for named Web colors only).</p>
@@ -348,7 +348,7 @@ Black
 
     <text>
       tag=basics_types_datetime
-      caption=<nobr>Datetime constants</nobr>
+      caption=Datetime constants
       keywords=;datetime;
       <content>
 <p>Datetime constants can be represented as a literal line consisting of 6 parts for values of year, month,
@@ -374,7 +374,7 @@ D<span class="string">'''</span>                     //equal to D<span class="st
 
   <group>
     tag=basics_operations
-    caption=<nobr>Operations &amp; Expressions</nobr>
+    caption=Operations &amp; Expressions
     <content>
      Some characters and character sequences are of a special importance. These are so-called operation symbols, for example:
 <pre class="docmql4">
@@ -401,7 +401,7 @@ x = (y * z) /
 
     <text>
       tag=basics_operations_math
-      caption=<nobr>Arithmetic operators</nobr>
+      caption=Arithmetic operators
       keywords=;+;-;*;/;%;++;--;
       <content>
  <p>Arithmetic operators:</p>
@@ -427,7 +427,7 @@ int b=(a++)*3;    // unsupported expression
 
     <text>
       tag=basics_operations_assign
-      caption=<nobr>Assignment operators</nobr>
+      caption=Assignment operators
       keywords=+=;-=;*=;/=;%=;&gt;&gt;=;&lt;&lt;=;&amp;=;|=;^=;
       <content>
         <p>The value of the expression that includes the given operation is the value of the left operand after assignment.</p>
@@ -455,7 +455,7 @@ so the shift is for the range of 0 to 31 bit. By %= operation (modulo x of y) th
 
     <text>
       tag=basics_operations_relation
-      caption=<nobr>Conditional operators</nobr>
+      caption=Conditional operators
       keywords=;==;!=;&lt;;&gt;;&lt;=;&gt;=;
       <content>
 <p>The logical value <span class="const">false</span> is represented with an integer zero value, while the logical value <span class="const">true</span> is
@@ -477,7 +477,7 @@ outcome needs to be compared to <span class="const">NULL</span>.</p>
 
     <text>
       tag=basics_operations_bool
-      caption=<nobr>Boolean operators</nobr>
+      caption=Boolean operators
       keywords=;||;&amp;&amp;;
       <content>
 <p>Operand of logical negation (operation NOT displayed as exclamation mark) must be of arithmetic type. The result equals <span class="const">true</span> (1) if the operand value is <span class="const">false</span> (0);
@@ -496,7 +496,7 @@ Otherwise, it is <span class="const">false</span> (0). </p>
 
     <text>
       tag=basics_operations_bit
-      caption=<nobr>Bit operators</nobr>
+      caption=Bit operators
       keywords=;&lt;&lt;;&gt;&gt;;~;!;^;&amp;;|;
       <content>
 <p>Complement of the variable value up to one. The value of the expression contains 1 in all digits where n contains 0,
@@ -529,7 +529,7 @@ in all digits where x and y have different binary values, and it contains 0 in a
 
     <text>
       tag=basics_operations_other
-      caption=<nobr>Other operators</nobr>
+      caption=Other operators
       <content>
 <p><b>Indexing</b><br/>
 At addressing to the i-th element of array, the expression value is the value of the variable with serial number of i.</p>
@@ -563,7 +563,7 @@ of parameters to be passed (see above) can be considered as an example.</p>
 
     <text>
       tag=basics_operations_rules
-      caption=<nobr>Precedence rules</nobr>
+      caption=Precedence rules
       <content>
 <p>Each group of operators in the table has the same priority. The higher the priority the higher the position of the group in the table.
 Precedence determines grouping of operations and operands.</p>
@@ -642,7 +642,7 @@ if(Month() == 12)
 
     <text>
       tag=basics_operators_compound
-      caption=<nobr>Compound operator</nobr>
+      caption=Compound operator
       <content>
 <p>A compound operator (a block) consists of one or more operators of any type enclosed in braces {}. The closing
 brace must not be followed by a semicolon (;).</p>
@@ -657,7 +657,7 @@ brace must not be followed by a semicolon (;).</p>
 
     <text>
       tag=basics_operators_expression
-      caption=<nobr>Expression operator</nobr>
+      caption=Expression operator
       <content>
        <p>Any expression followed by a semicolon (;) is an operator. Here are some examples of expression operators:</p>
        <p><b>Assignment operator</b>:</p>
@@ -678,7 +678,7 @@ y=x=3; // error</pre>
 
     <text>
       tag=basics_operators_break
-      caption=<nobr>Break operator</nobr>
+      caption=Break operator
       keywords=;break;
       <content>
 <p>A <em>break</em> operator terminates the execution of the nearest nested outward
@@ -696,7 +696,7 @@ for(i=0;i&lt;array_size;i++)
 
     <text>
       tag=basics_operators_continue
-      caption=<nobr>Continue operator</nobr>
+      caption=Continue operator
       keywords=;continue;
       <content>
 <p>A <em>continue</em> operator gives control to the beginning of the nearest outward cycle
@@ -719,7 +719,7 @@ int func(int array[]) {
 
     <text>
       tag=basics_operators_return
-      caption=<nobr>Return operator</nobr>
+      caption=Return operator
       keywords=;return;
       <content>
 <p>A <em>return</em> operator terminates the current function execution and returns the control to the calling program.
@@ -742,7 +742,7 @@ must be enclosed in parentheses and should not contain an assignment operator.</
 
     <text>
       tag=basics_operators_if
-      caption=<nobr>Conditional operator if-else</nobr>
+      caption=Conditional operator if-else
       keywords=;else;
       <content>
         <p>If the expression is <span class="const">true</span>, operator1 is executed and the control is given to the operator that follows
@@ -788,7 +788,7 @@ else Print(&quot;ERROR&quot;);
 
     <text>
       tag=basics_operators_switch
-      caption=<nobr>Switch operator</nobr>
+      caption=Switch operator
       keywords=;switch;case;default;
       <content>
        <p>It compares the expression value with constants in all variants of <em>case</em> and gives control to the
@@ -832,7 +832,7 @@ the same values.</p>
 
     <text>
       tag=basics_operators_while
-      caption=<nobr>Cycle operator while</nobr>
+      caption=Cycle operator while
       keywords=;while;
       <content>
         <p>If the expression is <span class="const">true</span>, the operator is executed until the expression becomes <span class="const">false</span>. If the expression
@@ -852,7 +852,7 @@ the same values.</p>
 
     <text>
       tag=basics_operators_for
-      caption=<nobr>Cycle operator for</nobr>
+      caption=Cycle operator for
       keywords=;for;
       <content>
         <p><em>Expression1</em> describes the cycle initialization. <em>Expression2</em> is the conditional test for the cycle
@@ -931,7 +931,7 @@ int somefunc(double a, double d=0.0001, int n, bool b, string s="passed string")
 
     <text>
       tag=basics_functions_call
-      caption=<nobr>Function call</nobr>
+      caption=Function call
       <content>
         <p>If a name that has not been described before appears in an expression and is followed by the left parenthesis,
       it will be contextually considered as the name of a function.</p>
@@ -975,7 +975,7 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
 
     <text>
       tag=basics_functions_special
-      caption=<nobr>Special functions</nobr>
+      caption=Special functions
       keywords=;init;deinit;start;
       <content>
         <p>There are three functions with pre-defined names in MQL4:<br/><br/>
@@ -1055,7 +1055,7 @@ double m[7][50];    // Two-dimensional array of seven arrays,
 
     <text>
       tag=basics_variables_local
-      caption=<nobr>Local variables</nobr>
+      caption=Local variables
       <content>
        <p>A variable declared inside any function is local. The scope of a local variable is limited to the
       function range inside which it is declared. A local variable can be initialized by outcome of any expression. Every call of
@@ -1073,7 +1073,7 @@ int somefunc()
 
     <text>
       tag=basics_variables_formal
-      caption=<nobr>Formal parameters</nobr>
+      caption=Formal parameters
       <content>
 
 <p>Parameters <a href="help://basics_functions_call">passed to the function</a> are local. Scope is the function block.
@@ -1135,7 +1135,7 @@ void func(int&amp; x, double&amp; y, double&amp; z[])
 
     <text>
       tag=basics_variables_static
-      caption=<nobr>Static variables</nobr>
+      caption=Static variables
       keywords=;static;
       <content>
 <p>The memory class of "static" defines a static variable. The specifier "static" is declared before a data type.</p>
@@ -1158,7 +1158,7 @@ int somefunc()
 
     <text>
       tag=basics_variables_global
-      caption=<nobr>Global variables</nobr>
+      caption=Global variables
       keywords=;static;
       <content>
       <p>Global variables are defined at the same level as functions, i.e. they are not local in any block.</p>
@@ -1182,7 +1182,7 @@ int start()
 
     <text>
       tag=basics_variables_extern
-      caption=<nobr>Defining extern variables</nobr>
+      caption=Defining extern variables
       keywords=;extern;
      <content>
         <p>The <em>extern</em> memory class defines an extern variable. The <em>extern</em> specifier
@@ -1201,7 +1201,7 @@ int init()
 
     <text>
       tag=basics_variables_initialization
-      caption=<nobr>Initialization of variables</nobr>
+      caption=Initialization of variables
       <content>
         <p>Any variable can be initialized at its defining. Any variable is initialized with zero (0)
       if no other initial value is explicitly defined. Global and static variables can be initialized only by a constant
@@ -1226,7 +1226,7 @@ int    a[4][4] = { 1, 1, 1, 1,  2, 2, 2, 2,  3, 3, 3, 3,  4, 4, 4, 4 };</pre><br
 
    <text>
       tag=basics_variables_extfunctions
-      caption=<nobr>External functions definition</nobr>
+      caption=External functions definition
       keywords=;import;#import;
       <content>
         <p>The type of external functions defined in another component of a program must be explicitly described.
@@ -1277,7 +1277,7 @@ int start()
     </content>
     <text>
       tag=basics_preprocessor_constant
-      caption=<nobr>Constant declaration</nobr>
+      caption=Constant declaration
       keywords=;#define;define;
       <content>
         <p>Using the <em>#define</em> construction, one can define the symbolic name or symbolic constant
@@ -1303,7 +1303,7 @@ void ShowCopyright()
 
     <text>
       tag=basics_preprocessor_compilation
-      caption=<nobr>Controlling compilation</nobr>
+      caption=Controlling compilation
       <keywords>
       ;#property;property;link;copyright;stacksize;indicator_chart_window;indicator_separate_window;indicator_buffers;
       ;indicator_minimum;indicator_maximum;indicator_color1;indicator_color2;indicator_color3;indicator_color4;
@@ -1351,7 +1351,7 @@ void ShowCopyright()
 
     <text>
       tag=basics_preprocessor_include
-      caption=<nobr>Include files</nobr>
+      caption=Include files
       keywords=;include;
       <content>
         <p>The <em>#include</em> directive can be placed anywhere in the program, but usually all inclusions are placed at the beginning of the source code.<br/>
@@ -1375,7 +1375,7 @@ void ShowCopyright()
 
     <text>
       tag=basics_preprocessor_import
-      caption=<nobr>Imported functions</nobr>
+      caption=Imported functions
       keywords=;import;DLL;EX4;
       <content>
         <p>Functions can be imported from compiled MQL4 modules (*.ex4 files) or from operating system modules (*.dll
@@ -1436,7 +1436,7 @@ cannot have default values.</p>
 
   <group>
     tag=constants
-    caption=<nobr>Predefined constants</nobr>
+    caption=Predefined constants
     <content>
      <p>To simplify the program writing and to make program texts more convenient for perception, predefined constants are
      forseen in MQL4.<br/><br/>
@@ -1446,7 +1446,7 @@ cannot have default values.</p>
 
     <text>
       tag=constants_series
-      caption=<nobr>Series arrays</nobr>
+      caption=Series arrays
       keywords=;MODE_OPEN;MODE_LOW;MODE_HIGH;MODE_CLOSE;MODE_TIME;MODE_VOLUME;
       <content>
 <p>Series array identifier used with <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>,
@@ -1488,7 +1488,7 @@ It can be any of the following values:</p>
 
     <text>
       tag=constants_trading
-      caption=<nobr>Trade operations</nobr>
+      caption=Trade operations
       keywords=;OP_BUY;OP_SELL;OP_BUYLIMIT;OP_SELLLIMIT;OP_BUYSTOP;OP_SELLSTOP;
       <content>
 <p>Operation type for the <a href="help://trading_OrderSend">OrderSend()</a> function.
@@ -1507,7 +1507,7 @@ It can be any of the following values:</p>
 
     <text>
       tag=constants_prices
-      caption=<nobr>Price constants</nobr>
+      caption=Price constants
       keywords=;PRICE_CLOSE;PRICE_OPEN;PRICE_HIGH;PRICE_LOW;PRICE_MEDIAN;PRICE_TYPICAL;PRICE_WEIGHTED;
       <content>
 <p>Applied price constants. It can be any of the following values:</p>
@@ -1572,7 +1572,7 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_drawstyles
-      caption=<nobr>Drawing styles</nobr>
+      caption=Drawing styles
       keywords=;DRAW_NONE;DRAW_LINE;DRAW_SECTION;DRAW_HISTOGRAM;DRAW_ARROW;STYLE_SOLID;STYLE_DASH;STYLE_DOT;STYLE_DASHDOT;STYLE_DASHDOTDOT;
       <content>
 <p>Drawing shape style enumeration for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle()</a> function.</p>
@@ -1601,7 +1601,7 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_arrows
-      caption=<nobr>Arrow codes</nobr>
+      caption=Arrow codes
       keywords=;SYMBOL_LEFTPRICE;SYMBOL_RIGHTPRICE;SYMBOL_THUMBSUP;SYMBOL_THUMBSDOWN;SYMBOL_ORDEROPEN;SYMBOL_ORDERCLOSE;SYMBOL_STOPSIGN;SYMBOL_CHECKSIGN;
       <content>
 
@@ -1754,7 +1754,7 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_colors
-      caption=<nobr>Web colors</nobr>
+      caption=Web colors
       <content>
       color type supported color constants.
       </content>
@@ -1935,7 +1935,7 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_lines
-      caption=<nobr>Indicator lines</nobr>
+      caption=Indicator lines
       keywords=;MODE_MAIN;MODE_PLUSDI;MODE_MINUSDI;MODE_SIGNAL;MODE_UPPER;MODE_LOWER;
       <content>
 <p>Indicator line identifiers used in <a href="help://indicators_iMACD">iMACD()</a>, <a href="help://indicators_iRVI">iRVI()</a>
@@ -1966,7 +1966,7 @@ and <a href="help://indicators_iGator">iGator()</a> indicators.</p>
 
     <text>
       tag=constants_ichimoku
-      caption=<nobr>Ichimoku Kinko Hyo</nobr>
+      caption=Ichimoku Kinko Hyo
       keywords=;MODE_TENKANSEN;MODE_KIJUNSEN;MODE_SENKOUSPANA;MODE_SENKOUSPANB;MODE_CHINKOUSPAN;
       <content>
 <p>Ichimoku Kinko Hyo identifiers used in <a href="help://indicators_iIchimoku">iIchimoku()</a> indicator call as source of requested data.<br/>
@@ -1984,7 +1984,7 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_movings
-      caption=<nobr>Moving Average methods</nobr>
+      caption=Moving Average methods
       keywords=;MODE_SMA;MODE_EMA;MODE_SMMA;MODE_LWMA;
       <content>
 <p>Moving Average calculation method used with <a href="help://indicators_iAlligator">iAlligator()</a>,
@@ -2069,7 +2069,7 @@ To indicate the buttons displayed in the message box, specify one of the followi
 
     <text>
       tag=constants_objects
-      caption=<nobr>Object types</nobr>
+      caption=Object types
       <keywords>
 ;OBJ_HLINE;OBJ_VLINE;OBJ_TREND;OBJ_TRENDBYANGLE;OBJ_REGRESSION;
 ;OBJ_CHANNEL;OBJ_STDDEVCHANNEL;OBJ_GANNLINE;OBJ_GANNFAN;OBJ_GANNGRID;OBJ_FIBO;
@@ -2116,7 +2116,7 @@ Objects can have 1-3 coordinates related to type.
 
     <text>
       tag=constants_objects_properties
-      caption=<nobr>Object properties</nobr>
+      caption=Object properties
       <keywords>
 ;OBJPROP_TIME1;OBJPROP_PRICE1;OBJPROP_TIME2;OBJPROP_PRICE2;OBJPROP_TIME3;OBJPROP_PRICE3;OBJPROP_COLOR;OBJPROP_DEVIATION;
 ;OBJPROP_STYLE;OBJPROP_WIDTH;OBJPROP_BACK;OBJPROP_RAY;OBJPROP_ELLIPSE;OBJPROP_SCALE;OBJPROP_ANGLE;OBJPROP_TIMEFRAMES;
@@ -2159,7 +2159,7 @@ Objects can have 1-3 coordinates related to type.
 
     <text>
       tag=constants_objects_visible
-      caption=<nobr>Object visibility</nobr>
+      caption=Object visibility
       <keywords>
 ;OBJ_PERIOD_M1;OBJ_PERIOD_M5;OBJ_PERIOD_M15;OBJ_PERIOD_M30;OBJ_PERIOD_H1;OBJ_PERIOD_H4;
 ;OBJ_PERIOD_D1;OBJ_PERIOD_W1;OBJ_PERIOD_MN1;OBJ_PERIODS_ALL;
@@ -2186,7 +2186,7 @@ Objects can have 1-3 coordinates related to type.
 
     <text>
       tag=constants_uninit
-      caption=<nobr>Uninitialize reason codes</nobr>
+      caption=Uninitialize reason codes
       keywords=;REASON_REMOVE;REASON_RECOMPILE;REASON_CHARTCHANGE;REASON_CHARTCLOSE;REASON_PARAMETERS;REASON_ACCOUNT;
       <content>
 <p>Uninitialize reason codes returned by <a href="help://runtimestatus_UninitializeReason">UninitializeReason()</a> function. It can be any one of the following values:</p>
@@ -2205,7 +2205,7 @@ Objects can have 1-3 coordinates related to type.
 
     <text>
       tag=constants_special
-      caption=<nobr>Special constants</nobr>
+      caption=Special constants
       keywords=;NULL;EMPTY_VALUE;CLR_NONE;EMPTY;WHOLE_ARRAY;
       <content>
 <p>Special constants used to indicate parameters and variables states.
@@ -2223,7 +2223,7 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_errors
-      caption=<nobr>Error codes</nobr>
+      caption=Error codes
       <keywords>
 ;ERR_NO_ERROR;ERR_NO_RESULT;ERR_COMMON_ERROR;ERR_INVALID_TRADE_PARAMETERS;ERR_SERVER_BUSY;
 ;ERR_OLD_VERSION;ERR_NO_CONNECTION;ERR_NOT_ENOUGH_RIGHTS;ERR_TOO_FREQUENT_REQUESTS;ERR_MALFUNCTIONAL_TRADE;
@@ -2379,7 +2379,7 @@ void SendMyMessage(string text)
 
   <group>
     tag=predefined_variables
-    caption=<nobr>Predefined variables</nobr>
+    caption=Predefined variables
     <content>
     For each executable MQL4 program, a number of predefined variables is supported that reflect the state of the current price chart
      at the launching of a program: an expert, a script, or a custom indicator.<br/><br/>
@@ -2680,7 +2680,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 
   <group>
     tag=runtime
-    caption=<nobr>Program Execution</nobr>
+    caption=Program Execution
     <content>
     For an MQL4 program to work it must be compiled. After compilation an executable file of the same base name as the source file and the extension EX4 is created
     in <span class="string">"{terminal_directory}\experts"</span>, <span class="string">"{terminal_directory}\experts\indicators"</span> or
@@ -2699,7 +2699,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </content>
     <text>
       tag=runtime_start
-      caption=<nobr>init(), start(), deinit()</nobr>
+      caption=init(), start(), deinit()
       <keywords>
       ;init;start;deinit;
       </keywords>
@@ -2744,7 +2744,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </text>
     <text>
       tag=runtime_imports
-      caption=<nobr>Imported functions</nobr>
+      caption=Imported functions
       keywords=;init;deinit;start;
       <content>
         <p>
@@ -2792,7 +2792,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
     </text>
     <text>
       tag=runtime_errors
-      caption=<nobr>Runtime errors</nobr>
+      caption=Runtime errors
       <keywords>
       ;ERR_NO_ERROR;ERR_NO_RESULT;ERR_COMMON_ERROR;ERR_INVALID_TRADE_PARAMETERS;ERR_SERVER_BUSY;
       ;ERR_OLD_VERSION;ERR_NO_CONNECTION;ERR_NOT_ENOUGH_RIGHTS;ERR_TOO_FREQUENT_REQUESTS;ERR_MALFUNCTIONAL_TRADE;
@@ -3104,7 +3104,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
 
   <group>
     tag=runtimestatus
-    caption=<nobr>Runtime status</nobr>
+    caption=Runtime status
     <content>
     A group of functions that allow determining of the current status of the client terminal, including the environment status of the MQL4 program.
     </content>
@@ -3348,7 +3348,7 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
 
   <group>
     tag=terminal
-    caption=<nobr>Terminal functions</nobr>
+    caption=Terminal functions
     <content>
     Functions returning information about client terminal.
     </content>
@@ -3387,7 +3387,7 @@ Returns <span class="const">true</span> if a thread for trading is occupied by a
 
   <group>
     tag=account
-    caption=<nobr>Account functions</nobr>
+    caption=Account functions
     <content>
     A group of functions to access to the active account information.
     </content>
@@ -3603,7 +3603,7 @@ else
 
   <group>
     tag=array
-    caption=<nobr>Array functions</nobr>
+    caption=Array functions
     <content>
     A group of functions to work with arrays.<br/><br/>
     Arrays are allowed to be maximum four-dimensional. Each dimension is indexed from 0 to <b>dimension size</b>-1.
@@ -4178,7 +4178,7 @@ Array sorting direction. It can be any of the following values:<br/>
 
   <group>
     tag=common
-    caption=<nobr>Common functions</nobr>
+    caption=Common functions
     <content>
     General-purpose functions not included into any specialized groups.
     </content>
@@ -4472,7 +4472,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
 
   <group>
     tag=convert
-    caption=<nobr>Conversion functions</nobr>
+    caption=Conversion functions
     <content>
     A group of functions that provide conversion of data from one format into another.<br/><br/>
     The <a href="help://convert_NormalizeDouble">NormalizeDouble()</a> function must be specially noted as it provides the necessary accuracy
@@ -4640,7 +4640,7 @@ Optional data output mode can be one or combination of:<br/>
 
   <group>
     tag=indicatormanagement
-    caption=<nobr>Indicator management</nobr>
+    caption=Indicator management
     <content>
     A group of functions used at producing of custom indicators.<br/><br/>
     These functions cannot be used in experts and scripts.
@@ -5177,7 +5177,7 @@ SetLevelValue(1,3.14);
 
   <group>
     tag=dateandtime
-    caption=<nobr>Date &amp; Time functions</nobr>
+    caption=Date &amp; Time functions
     <content>
     A group of functions providing the working with data of the datetime type (integer representing the amount of seconds since midnight, 1 January 1970).
     </content>
@@ -5505,7 +5505,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
 
   <group>
     tag=files
-    caption=<nobr>File functions</nobr>
+    caption=File functions
     <content>
     A group of functions for working with files.<br/><br/>
     There are three directories (with subdirectories) where working files can be placed:
@@ -5644,7 +5644,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       type=int
       keywords=;FILE_BIN;FILE_CSV;FILE_READ;FILE_WRITE;
       <content>
-         Opens the specified file for input and/or output and returns a file handle for it or -1 if the function fails.
+         Opens the specified file and returns a file handle for it or -1 if the function fails.
          To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
          <br/>
 
@@ -5693,8 +5693,9 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileOpenHistory()
       type=int
       <content>
-         Opens the file with the specified name in the current history directory <span class="string">"{terminal_directory}\history\{server_name}"</span> or its subdirectories
-         and returns a handle for it. If the function fails the returned value is -1. To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+         Opens the file with the specified name in the current history directory <span class="string">"{terminal_directory}\history\{server_name}"</span> 
+         <strike>or its subdirectories</strike> and returns a handle for it. If the function fails the returned value is -1. To get detailed error information 
+         call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 
          <br/>
          <span>Notes:</span>
@@ -5707,7 +5708,10 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          <br/>
          <span style="color:red">Bug:</span>
          <br/>
-         Ab Build 810 ist die Funktion im Tester blockiert.<br>
+         (1) Ab Build 810 ist die Funktion im Tester blockiert.<br>
+         <br/>
+         (2) Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.<br/>
+			<br/>
          Workaround: Dateifunktionen des MT4Expanders verwenden.
       </content>
       <example>
@@ -6212,7 +6216,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
 
   <group>
     tag=globals
-    caption=<nobr>Global variables</nobr>
+    caption=Global variables
     <content>
     A group of functions intended for working with global variables.<br/><br/>
     Global variables of the client terminal should not be mixed up with <a href="help://basics_variables_global">variables</a> declared in the global
@@ -6422,7 +6426,7 @@ several experts working simultaneously within one client terminal.
 
   <group>
     tag=math
-    caption=<nobr>Math &amp; Trig</nobr>
+    caption=Math &amp; Trig
     <content>
     A set of mathematical and trigonometric functions.
     </content>
@@ -6870,7 +6874,7 @@ a loss of significance in the result occurs and the function returns <span class
 
   <group>
     tag=objects
-    caption=<nobr>Object functions</nobr>
+    caption=Object functions
     <content>
     A group of functions intended for working with graphical objects related to the current chart.
     </content>
@@ -7377,7 +7381,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
 
   <group>
     tag=strings
-    caption=<nobr>String functions</nobr>
+    caption=String functions
     <content>
     A group of functions intended for working with data of the string type.
     </content>
@@ -7594,7 +7598,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
 
   <group>
     tag=indicators
-    caption=<nobr>Technical indicators</nobr>
+    caption=Technical indicators
     <content>
     A group of functions intended for calculation of standard and custom indicators.<br/><br/>
     For an expert (or any other MQL4 program) to take up the value of any indicator, it is not necessary that this indicator is present in the chart.
@@ -7608,7 +7612,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
 
     <function>
       tag=indicators_iAC
-      caption=<nobr>iAC() - Accelerator Oscillator (Acceleration/Deceleration)</nobr>
+      caption=iAC() - Accelerator Oscillator (Acceleration/Deceleration)
       type=double
       <content>
       Calculates the Bill Williams' Accelerator/Decelerator oscillator.
@@ -7635,7 +7639,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
 
     <function>
       tag=indicators_iAD
-      caption=<nobr>iAD() - Accumulation/Distribution</nobr>
+      caption=iAD() - Accumulation/Distribution
       type=double
       <content>
       Calculates the Accumulation/Distribution indicator and returns its value.
@@ -7662,7 +7666,7 @@ The StringConcatenate() works faster and more memory-saving than when strings ar
 
     <function>
       tag=indicators_iAlligator
-      caption=<nobr>iAlligator() - Alligator</nobr>
+      caption=iAlligator() - Alligator
       type=double
       keywords=;MODE_GATORJAW;MODE_GATORTEETH;MODE_GATORLIPS;
       <content>
@@ -7740,7 +7744,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iADX
-      caption=<nobr>iADX() - Average Directional Movement Index</nobr>
+      caption=iADX() - Average Directional Movement Index
       type=double
       <content>
       Calculates the Movement directional index and returns its value.
@@ -7780,7 +7784,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iATR
-      caption=<nobr>iATR() - Average True Range</nobr>
+      caption=iATR() - Average True Range
       type=double
       <content>
       Calculates the Indicator of the average true range and returns its value.
@@ -7812,7 +7816,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iAO
-      caption=<nobr>iAO() - Awesome Oscillator</nobr>
+      caption=iAO() - Awesome Oscillator
       type=double
       <content>
       Calculates the Bill Williams' Awesome oscillator and returns its value.
@@ -7839,7 +7843,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iBearsPower
-      caption=<nobr>iBearsPower() - Bears Power</nobr>
+      caption=iBearsPower() - Bears Power
       type=double
       <content>
       Calculates the Bears Power indicator and returns its value.
@@ -7876,7 +7880,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iBands
-      caption=<nobr>iBands() - Bollinger Bands</nobr>
+      caption=iBands() - Bollinger Bands
       type=double
       <content>
       Calculates the Bollinger Bands® indicator and returns its value.
@@ -7926,7 +7930,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iBandsOnArray
-      caption=<nobr>iBandsOnArray() - Bollinger Bands on buffer</nobr>
+      caption=iBandsOnArray() - Bollinger Bands on buffer
       type=double
       <content>
         Calculation of the Bollinger Bands® indicator on data stored in a numeric array.
@@ -7975,7 +7979,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iBullsPower
-      caption=<nobr>iBullsPower() - Bulls Power</nobr>
+      caption=iBullsPower() - Bulls Power
       type=double
       <content>
       Calculates the Bulls Power indicator and returns its value.
@@ -8012,7 +8016,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iCCI
-      caption=<nobr>iCCI() - Commodity Channel Index</nobr>
+      caption=iCCI() - Commodity Channel Index
       type=double
       <content>
       Calculates the Commodity channel index and returns its value.
@@ -8049,7 +8053,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iCCIOnArray
-      caption=<nobr>iCCIOnArray() - Commodity Channel Index on buffer</nobr>
+      caption=iCCIOnArray() - Commodity Channel Index on buffer
       type=double
       <content>
         Calculation of the Commodity Channel Index on data stored in a numeric array.
@@ -8083,7 +8087,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iCustom
-      caption=<nobr>iCustom() - Custom Indicator</nobr>
+      caption=iCustom() - Custom Indicator
       type=double
       <content>
       Calculates the specified custom indicator and returns its value. The custom indicator must be compiled (*.EX4 file)
@@ -8126,7 +8130,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iDeMarker
-      caption=<nobr>iDeMarker() - DeMarker</nobr>
+      caption=iDeMarker() - DeMarker
       type=double
       <content>
       Calculates the DeMarker indicator and returns its value.
@@ -8158,7 +8162,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iEnvelopes
-      caption=<nobr>iEnvelopes() - Envelopes</nobr>
+      caption=iEnvelopes() - Envelopes
       type=double
       <content>
       Calculates the Envelopes indicator and returns its value.
@@ -8215,7 +8219,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iEnvelopesOnArray
-      caption=<nobr>iEnvelopesOnArray() - Envelopes on buffer</nobr>
+      caption=iEnvelopesOnArray() - Envelopes on buffer
       type=double
       <content>
         Calculation of the Envelopes indicator on data stored in a numeric array.
@@ -8271,7 +8275,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iForce
-      caption=<nobr>iForce() - Force Index</nobr>
+      caption=iForce() - Force Index
       type=double
       <content>
       Calculates the Force index and returns its value.
@@ -8313,7 +8317,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iFractals
-      caption=<nobr>iFractals() - Fractals</nobr>
+      caption=iFractals() - Fractals
       type=double
       <content>
       Calculates the Fractals and returns its value.
@@ -8345,7 +8349,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iGator
-      caption=<nobr>iGator() - Gator Oscillator</nobr>
+      caption=iGator() - Gator Oscillator
       type=double
       <content>
       Gator oscillator calculation. The oscillator displays the difference between the <a href="help://indicators_iAlligator">Alligator</a> red and blue lines (the upper histogram) and that between red and green lines (the lower histogram).
@@ -8417,7 +8421,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iIchimoku
-      caption=<nobr>iIchimoku() - Ichimoku Kinko Hyo</nobr>
+      caption=iIchimoku() - Ichimoku Kinko Hyo
       type=double
       <content>
       Calculates the Ichimoku Kinko Hyo and returns its value.
@@ -8465,7 +8469,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iBWMFI
-      caption=<nobr>iBWMFI() - Market Facilitation Index (Bill Williams)</nobr>
+      caption=iBWMFI() - Market Facilitation Index (Bill Williams)
       type=double
       <content>
       Calculates the Bill Williams Market Facilitation index and returns its value.
@@ -8492,7 +8496,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iMomentum
-      caption=<nobr>iMomentum() - Momentum</nobr>
+      caption=iMomentum() - Momentum
       type=double
       <content>
       Calculates the Momentum indicator and returns its value.
@@ -8527,7 +8531,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iMomentumOnArray
-      caption=<nobr>iMomentumOnArray() - Momentum on buffer</nobr>
+      caption=iMomentumOnArray() - Momentum on buffer
       type=double
       <content>
         Calculation of the Momentum indicator on data stored in a numeric array.
@@ -8561,7 +8565,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iMFI
-      caption=<nobr>iMFI() - Money Flow Index</nobr>
+      caption=iMFI() - Money Flow Index
       type=double
       <content>
       Calculates the Money flow index and returns its value.
@@ -8591,7 +8595,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iMA
-      caption=<nobr>iMA() - Moving Average</nobr>
+      caption=iMA() - Moving Average
       type=double
       <content>
       Calculates the Moving average indicator and returns its value.
@@ -8636,7 +8640,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iMAOnArray
-      caption=<nobr>iMAOnArray() - Moving Average on buffer</nobr>
+      caption=iMAOnArray() - Moving Average on buffer
       type=double
       <content>
         Calculation of the Moving Average on data stored in a numeric array.
@@ -8688,7 +8692,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iOsMA
-      caption=<nobr>iOsMA() - Moving Average of Oscillator</nobr>
+      caption=iOsMA() - Moving Average of Oscillator
       type=double
       <content>
       Calculates the Moving Average of Oscillator and returns its value. Sometimes called MACD Histogram in some systems.
@@ -8733,7 +8737,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iMACD
-      caption=<nobr>iMACD() - Moving Averages Convergence/Divergence</nobr>
+      caption=iMACD() - Moving Averages Convergence/Divergence
       type=double
       <content>
       Calculates the Moving averages convergence/divergence and returns its value. In the systems where OsMA is called MACD Histogram, this indicator is displayed as two lines.
@@ -8784,7 +8788,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iOBV
-      caption=<nobr>iOBV() - On Balance Volume</nobr>
+      caption=iOBV() - On Balance Volume
       type=double
       <content>
       Calculates the On Balance Volume indicator and returns its value.
@@ -8816,7 +8820,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iSAR
-      caption=<nobr>iSAR() - Parabolic SAR</nobr>
+      caption=iSAR() - Parabolic SAR
       type=double
       <content>
       Calculates the Parabolic Stop and Reverse system and returns its value.
@@ -8851,7 +8855,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iRSI
-      caption=<nobr>iRSI() - Relative Strength Index</nobr>
+      caption=iRSI() - Relative Strength Index
       type=double
       <content>
       Calculates the Relative strength index and returns its value.
@@ -8886,7 +8890,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iRSIOnArray
-      caption=<nobr>iRSIOnArray() - Relative Strength Index on buffer</nobr>
+      caption=iRSIOnArray() - Relative Strength Index on buffer
       type=double
       <content>
         Calculation of the Relative Strength Index on data stored in a numeric array.
@@ -8920,7 +8924,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iRVI
-      caption=<nobr>iRVI() - Relative Vigor Index</nobr>
+      caption=iRVI() - Relative Vigor Index
       type=double
       <content>
       Calculates the Relative Vigor index and returns its value.
@@ -8957,7 +8961,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iStdDev
-      caption=<nobr>iStdDev() - Standard Deviation</nobr>
+      caption=iStdDev() - Standard Deviation
       type=double
       <content>
       Calculates the Standard Deviation indicator and returns its value.
@@ -9002,7 +9006,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iStdDevOnArray
-      caption=<nobr>iStdDevOnArray() - Standard Deviation on buffer</nobr>
+      caption=iStdDevOnArray() - Standard Deviation on buffer
       type=double
       <content>
         Calculation of the Standard Deviation indicator on data stored in a numeric array.
@@ -9046,7 +9050,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iStochastic
-      caption=<nobr>iStochastic() - Stochastic Oscillator</nobr>
+      caption=iStochastic() - Stochastic Oscillator
       type=double
       <content>
       Calculates the Stochastic oscillator and returns its value.
@@ -9104,7 +9108,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
     <function>
       tag=indicators_iWPR
-      caption=<nobr>iWPR() - William's Percent Range</nobr>
+      caption=iWPR() - William's Percent Range
       type=double
       <content>
       Calculates the Larry William's percent range indicator and returns its value.
@@ -9136,7 +9140,7 @@ Data source, identifier of a line of the indicator. It can be any of the followi
 
   <group>
     tag=series
-    caption=<nobr>Time series access</nobr>
+    caption=Time series access
     <content>
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
@@ -9510,7 +9514,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
 
   <group>
     tag=trading
-    caption=<nobr>Trade functions</nobr>
+    caption=Trade functions
     <content>
     A group of functions intended for trade management.<br/><br/>
     Trade functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
@@ -9527,7 +9531,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
 
     <text>
       tag=trading_errors
-      caption=<nobr>Trade execution errors</nobr>
+      caption=Trade execution errors
       <keywords>
       ;ERR_NO_ERROR;ERR_NO_RESULT;ERR_COMMON_ERROR;ERR_INVALID_TRADE_PARAMETERS;ERR_SERVER_BUSY;
       ;ERR_OLD_VERSION;ERR_NO_CONNECTION;ERR_TOO_FREQUENT_REQUESTS;
@@ -10293,7 +10297,7 @@ Note: order must be selected by <a href="help://trading_OrderSelect">OrderSelect
 
   <group>
     tag=windows
-    caption=<nobr>Window functions</nobr>
+    caption=Window functions
     <content>
     A group of functions intended for working with the current chart window.
     </content>
@@ -10782,7 +10786,7 @@ The value will be <span class="const">true</span> only if the expert or script w
 
   <group>
     tag=deprecated
-    caption=<nobr>Deprecated functions</nobr>
+    caption=Deprecated functions
     <content>
       <p>In further development of MQL4, some functions were renamed and moved from one group to another in order
       to systematize them better. The old function names are not highlighted or linked to the
@@ -10818,7 +10822,7 @@ The value will be <span class="const">true</span> only if the expert or script w
 
   <group>
     tag=expander
-    caption=<nobr>MT4 Expander</nobr>
+    caption=MT4 Expander
     <content>
       <p>Der Expander des Fortschritts</p>
       <br/>
@@ -10835,14 +10839,14 @@ The value will be <span class="const">true</span> only if the expert or script w
 
   <group>
      tag=mt4_1
-     caption=<nobr>MetaTrader 4.1</nobr>
+     caption=MetaTrader 4.1
      <content>
      <p>MetaTrader 4.1 (ab Build 510)</p>
   	  </content>
 
 	  <group>
 		  tag=mt4_1_historyformat
-		  caption=<nobr>Neues Historyformat</nobr>
+		  caption=Neues Historyformat
 		  <content>
 		  <p>Neues History-Format</p>
 
