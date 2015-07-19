@@ -7,7 +7,7 @@
 // @see  Definition in MT4Expander::Expander.h
 //
 
-template    "MT4 History Data v401 [1]"
+template    "MT4 History Data v401 [3]"
 description "Files '*.hst'"
 
 applies_to   file
@@ -16,7 +16,7 @@ requires    -148 "91 01"              // Version = 401
 multiple
 
 begin
-   endsection
+   { endsection
 
    UnixDateTime "Time"
    move         4
@@ -27,4 +27,5 @@ begin
    int64        "Ticks"
    int32        "Spread"
    int64        "Volume"
+   }[3]
 end
