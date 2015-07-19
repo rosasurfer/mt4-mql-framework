@@ -1,11 +1,8 @@
 //
-// MQL structure SYMBOL_GROUP (Dateiformat "symgroups.raw")
+// MT4 structure SYMBOL_GROUP: Dateiformat "symgroups.raw"
 //
-//                                        size        offset
-// struct SYMBOL_GROUP {                  ----        ------
-//    char name       [16];                16            0        // Name
-//    char description[64];                64            4        // Beschreibung
-// };                                    = 80 byte
+//
+// @see  Definition in MT4Expander::Expander.h
 //
 
 template    "MT4 Symbol Groups"
@@ -17,7 +14,7 @@ fixed_start 0
 begin
    { endsection
 
-   char[16] "Name"
+   char[16] "Name  ~"
    char[64] "Description"
-   }[32]
+   }[unlimited]
 end
