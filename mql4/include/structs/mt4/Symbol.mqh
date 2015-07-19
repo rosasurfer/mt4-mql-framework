@@ -1,7 +1,6 @@
 /**
- * MT4 structure SYMBOL (Format der Datei "symbols.raw")
+ * MT4 structure SYMBOL: Dateiformat "symbols.raw"
  *
- *                                  size        offset
- * struct SYMBOL {                  ----        ------
- * } symbol;
+ *
+ * @see  Definition in MT4Expander::Expander.h
  */

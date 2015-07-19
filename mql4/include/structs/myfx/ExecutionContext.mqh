@@ -10,7 +10,7 @@
  * ungültigen Hauptmodulkontext zugreifen (weder lesend noch schreibend).
  *
  *
- * @see  Definition in Expander.dll::Expander.h
+ * @see  Definition in MT4Expander::Expander.h
  *
  *
  * TODO: In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Kauptmodulkontexts arbeiten.

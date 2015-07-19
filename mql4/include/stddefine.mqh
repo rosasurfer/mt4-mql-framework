@@ -549,25 +549,25 @@ double  N_INF;                                              // -1.#INF: negative
 #define I_AH_COMMENT                  19
 
 
-// Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
-#define MCM_FOREX                      0
-#define MCM_CFD                        1
-#define MCM_CFDFUTURES                 2
-#define MCM_CFDINDEX                   3
-#define MCM_CFDLEVERAGE                4        // siehe MQL5
+// Profit calculation modes, siehe MarketInfo(symbol, MODE_PROFITCALCMODE)
+#define PCM_FOREX                      0
+#define PCM_CFD                        1
+#define PCM_FUTURES                    2
 
 
-// Swap calculation modes, siehe MarketInfo(symbol, MODE_SWAPTYPE): jeweils per Lot und Tag
+// Swap type, siehe MarketInfo(symbol, MODE_SWAPTYPE): jeweils per Lot und Tag
 #define SCM_POINTS                     0        // in points of quote currency
 #define SCM_BASE_CURRENCY              1        // as amount of base currency   (see "symbols.raw")
 #define SCM_INTEREST                   2
 #define SCM_MARGIN_CURRENCY            3        // as amount of margin currency (see "symbols.raw")
 
 
-// Profit calculation modes, siehe MarketInfo(symbol, MODE_PROFITCALCMODE)
-#define PCM_FOREX                      0
-#define PCM_CFD                        1
-#define PCM_FUTURES                    2
+// Margin calculation modes, siehe MarketInfo(symbol, MODE_MARGINCALCMODE)
+#define MCM_FOREX                      0
+#define MCM_CFD                        1
+#define MCM_CFDFUTURES                 2
+#define MCM_CFDINDEX                   3
+#define MCM_CFDLEVERAGE                4        // siehe MQL5
 
 
 // Account stopout modes, siehe AccountStopoutMode()
