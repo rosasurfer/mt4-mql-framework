@@ -1,9 +1,6 @@
 /**
- * MT4 structure SYMBOL_GROUP (Format der Datei "symgroups.raw")
+ * MT4 structure SYMBOL_GROUP: Dateiformat "symgroups.raw"
  *
- *                                  size        offset
- * struct SYMBOL_GROUP {            ----        ------
- *    szchar name       [16];        16            0        // Name
- *    szchar description[64];        64            4        // Beschreibung
- * } sg;                           = 80 byte
+ *
+ * @see  Definition in MT4Expander::Expander.h
  */
