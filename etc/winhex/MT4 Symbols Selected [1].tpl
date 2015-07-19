@@ -14,28 +14,43 @@ requires    -4 "90 01"              // Version = 400
 multiple
 
 begin
-   { endsection
+   {
+   endsection
 
    char[12]     "Symbol"
    move 4
    uint32       "Symbol Index"
-   hex  4       "(undocumented)"
+   uint32       "(undocumented DWORD)"
+   endsection
+
    uint32       "Group Index"
-   hex  4       "(undocumented)"
+   uint32       "(undocumented DWORD)"
+   endsection
+
    move -20
    uint32       "Digits"
    move 16
    double       "Point"
    int32        "Spread"
-   hex  4       "(undocumented)"
+   uint32       "(undocumented DWORD)"
+   endsection
+
    uint32       "Tick Type: 0=Up, 1=Down, 2=n/a"
-   hex  4       "(undocumented)"
+   uint16       "(undocumented WORD)"
+   uint16       "(undocumented WORD 2)"
+   move -2
+   hex   2      "(undocumented HEX 2)"
+   endsection
+
    UNIXDateTime "Time"
-   hex  4       "(undocumented)"
+   uint32       "(undocumented DWORD)"
+   endsection
+
    double       "Bid"
    double       "Ask"
    double       "Session High"
    double       "Session Low"
-   move 32
+   hex  16      "(undocumented)"
+   move 16                                   // Bid und Ask werden hier wiederholt
    }
 end
