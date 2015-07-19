@@ -30,7 +30,7 @@ begin
    uint32       "Digits"
    move 16
    double       "Point"
-   int32        "Spread"
+   uint32       "Fixed Spread"
    uint32       "(undocumented DWORD)"
 
    uint32       "Tick Type: 0=Up, 1=Down, 2=n/a"

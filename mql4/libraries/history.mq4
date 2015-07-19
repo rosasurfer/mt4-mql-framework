@@ -56,7 +56,7 @@ string   hf.symbolU    [];                         // Symbol in Upper-Case
 int      hf.period     [];                         // Periode
 int      hf.periodSecs [];                         // Dauer einer Periode in Sekunden (nicht gültig für Perioden > 1 Tag)
 int      hf.digits     [];                         // Digits
-int      hf.synthetic  [];                         // ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist
+bool     hf.synthetic  [];                         // ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist
 
 int      hf.bars       [];                         // Anzahl der Bars der Datei
 datetime hf.from       [];                         // OpenTime der ersten Bar der Datei
@@ -87,7 +87,7 @@ double   hf.collectedBar.data         [][6];       // Bar-Daten (T-OHLCV)
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  *
  * @param  __IN__ string symbol    - Symbol
- * @param  __IN__ bool   synthetic - ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist (default: FALSE)
+ * @param  __IN__ bool   synthetic - ob das Instrument synthetisch ist und die History im Serververzeichnis ".\history\XTrade-Synthetic\" gespeichert wird (default: FALSE)
  *
  * @return int - • Set-Handle oder -1, falls weder ein HistorySet noch ein HistoryFile dieses Symbols existieren. In diesem Fall kann
  *                 mit HistorySet.Create() ein neues Set erzeugt werden.
@@ -150,37 +150,35 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
 
       if (IsFile(fullName)) {                                        // wenn Datei existiert
          hFile = FileOpen(mqlName, FILE_BIN|FILE_READ);              // Datei öffnen: FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
-         if (hFile > 0) {                                            // Datei gefunden und geöffnet
-            fileSize = FileSize(hFile);
-            if (fileSize < HISTORY_HEADER.size) {
-               FileClose(hFile);
-               warn("HistorySet.Get(3)  invalid history file \""+ mqlName +"\" found (size="+ fileSize +")");
-               continue;
-            }
-                                                                     // HISTORY_HEADER auslesen
-            /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER.intSize);
-            FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize);
+         if (hFile <= 0) return(!catch("HistorySet.Get(3)  hFile(\""+ mqlName +"\") = "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
+
+         fileSize = FileSize(hFile);                                 // Datei geöffnet
+         if (fileSize < HISTORY_HEADER.size) {
             FileClose(hFile);
-
-            size = Max(ArraySize(hs.hSet), 1) + 1;                   // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-            hs.__ResizeInternalArrays(size);
-            iH   = size-1;
-            hSet = iH;                                               // das Set-Handle entspricht jeweils dem Index in hs.*[]
-
-            hs.hSet       [iH] = hSet;
-            hs.symbol     [iH] = hh.Symbol     (hh);
-            hs.symbolU    [iH] = StringToUpper(hs.symbol[iH]);
-            hs.description[iH] = hh.Description(hh);
-            hs.digits     [iH] = hh.Digits     (hh);
-            hs.synthetic  [iH] = synthetic;
-            hs.format     [iH] = 400;                                // Default für neu zu erstellende HistoryFiles
-
-            debug("HistorySet.Get(0.3)  file=\""+ mqlName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
-            ArrayResize(hh, 0);
-            return(hSet);
+            warn("HistorySet.Get(4)  invalid history file \""+ mqlName +"\" found (size="+ fileSize +")");
+            continue;
          }
-         int error = GetLastError();                                 // Datei konnte nicht geöffnet werden
-         if (error != ERR_CANNOT_OPEN_FILE) return(!catch("HistorySet.Get(4)  hFile("+ DoubleQuoteStr(mqlName) +") = "+ hFile + ifString(error, "", " (NO_ERROR)"), ifInt(error, error, ERR_RUNTIME_ERROR)));
+                                                                     // HISTORY_HEADER auslesen
+         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER.intSize);
+         FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize);
+         FileClose(hFile);
+
+         size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
+         hs.__ResizeInternalArrays(size);
+         iH   = size-1;
+         hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
+
+         hs.hSet       [iH] = hSet;
+         hs.symbol     [iH] = hh.Symbol     (hh);
+         hs.symbolU    [iH] = StringToUpper(hs.symbol[iH]);
+         hs.description[iH] = hh.Description(hh);
+         hs.digits     [iH] = hh.Digits     (hh);
+         hs.synthetic  [iH] = synthetic;
+         hs.format     [iH] = 400;                                // Default für neu zu erstellende HistoryFiles
+
+         debug("HistorySet.Get(0.3)  file=\""+ mqlName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
+         ArrayResize(hh, 0);
+         return(hSet);
       }
    }
 
@@ -194,7 +192,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
 /**
  * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der Funktion werden
  * bereits existierende HistoryFiles des Symbol zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
- * ungültig. Noch nicht existierende HistoryFiles werden beim Speichern der ersten hinzugefügten Daten automatisch erstellt.
+ * geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten automatisch erstellt.
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
@@ -203,7 +201,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
  * @param  __IN__ int    digits      - Digits der Datenreihe
  * @param  __IN__ int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader bis Build 509)
  *                                                                    401 - neues Datenformat (wie MetaTrader ab Build 510)
- * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist (default: FALSE)
+ * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch ist und die History im Serververzeichnis ".\history\XTrade-Synthetic\" gespeichert wird (default: FALSE)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  *
@@ -273,17 +271,16 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
       mqlName  = mqlDirectory + baseName;
       fullName = hstDirectory + baseName;
 
-      if (IsFile(fullName)) {                                        // wenn Datei existiert
+      if (IsFile(fullName)) {                                        // wenn die Datei existiert
          hFile = FileOpen(mqlName, FILE_BIN|FILE_WRITE);             // Datei auf 0 zurücksetzen: FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
-         if (hFile > 0) {
-            hh.setPeriod(hh, periods[i]);
-            FileWriteArray(hFile, hh, 0, ArraySize(hh));             // neuen HISTORY_HEADER schreiben
-            FileClose(hFile);
-            if (!catch("HistorySet.Create(5)")) continue;
-            return(NULL);
-         }
-         error = GetLastError();                                     // Datei konnte nicht geöffnet werden
-         return(!catch("HistorySet.Create(6)  fileName=\""+ mqlName +"\"  hFile="+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistorySet.Create(5)  fileName=\""+ mqlName +"\"  hFile="+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
+
+         hh.setPeriod(hh, periods[i]);
+         FileWriteArray(hFile, hh, 0, ArraySize(hh));                // neuen HISTORY_HEADER schreiben
+         FileClose(hFile);
+         if (!catch("HistorySet.Create(6)"))
+            continue;
+         return(NULL);
       }
    }
    ArrayResize(hh, 0);
@@ -302,6 +299,11 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    hs.digits     [iH] = digits;
    hs.synthetic  [iH] = synthetic;
    hs.format     [iH] = format;
+
+
+   // (5) ist das Instrument synthetisch, neuen Instrumentdatensatz in "symbols.raw" schreiben
+   if (synthetic) {
+   }
 
    return(hSet);
 }
@@ -388,7 +390,7 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * @param  __IN__ int    digits      - Digits der Werte             (falls die Historydatei neu erstellt wird)
  * @param  __IN__ int    format      - Datenformat der Zeitreihe    (falls die Historydatei neu erstellt wird)
  * @param  __IN__ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
- * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch und die Datei im Verzeichnis "{terminal_directory}\history\XTrade-Synthetic\" gespeichert ist (default: FALSE)
+ * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch ist und die History im Serververzeichnis ".\history\XTrade-Synthetic\" gespeichert wird (default: FALSE)
  *
  * @return int - • Dateihandle
  *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert
@@ -422,8 +424,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    string fullName     = hstDirectory + baseName;
    int    hFile        = FileOpen(mqlName, mode|FILE_BIN);                          // FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
 
-   // (1.1) read-only                                                               // TODO: !!! Bei read-only Existenz mit IsFile() prüfen, da FileOpenHistory() sonst das Log ggf.
-   if (read_only) {                                                                 // TODO: !!! mit Warnungen ERR_CANNOT_OPEN_FILE zupflastert !!!
+   // (1.1) read-only                                                               // TODO: !!! Bei read-only Existenz mit IsFile() prüfen, da FileOpenHistory()
+   if (read_only) {                                                                 // TODO: !!! sonst das Log ggf. mit Warnungen ERR_CANNOT_OPEN_FILE zupflastert !!!
       int error = GetLastError();
       if (error == ERR_CANNOT_OPEN_FILE) return(-1);                                // file not found
       if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(5)->FileOpen(\""+ mqlName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR))));
@@ -1530,6 +1532,27 @@ int hf.Digits(int hFile) {
       hf.hFile.lastValid = hFile;
    }
    return(hf.digits[hFile]);
+}
+
+
+/**
+ * Ob das Instrument einer zu einem Handle gehörende Historydatei synthetisch ist.
+ *
+ * @param  int hFile - Dateihandle
+ *
+ * @return bool
+ */
+bool hf.Synthetic(int hFile) {
+   if (hFile <= 0)                      return(_EMPTY(catch("hf.Synthetic(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+   if (hFile != hf.hFile.lastValid) {
+      if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.Synthetic(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
+      if (hf.hFile[hFile] <= 0) {
+         if (hf.hFile[hFile] == 0)      return(_EMPTY(catch("hf.Synthetic(3)  unknown file handle "+ hFile, ERR_RUNTIME_ERROR)));
+                                        return(_EMPTY(catch("hf.Synthetic(4)  closed file handle "+ hFile, ERR_RUNTIME_ERROR)));
+      }
+      hf.hFile.lastValid = hFile;
+   }
+   return(hf.synthetic[hFile]);
 }
 
 
