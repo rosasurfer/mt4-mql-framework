@@ -1,6 +1,8 @@
 //
 // MT4 structure SYMBOL: Dateiformat "symbols.raw"
 //
+// Die Symbole in der Datei sind alphabetisch nach Symbolnamen sortiert.
+//
 //
 // @see  Definition in MT4Expander::Expander.h
 //
@@ -12,8 +14,6 @@ applies_to  file
 fixed_start 0
 
 begin
-   numbering 1
-
    { endsection
                                  // -------------- offset -
    char[12] "Symbol  ~"          //                     0
