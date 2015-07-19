@@ -50,6 +50,7 @@
    string   hf.Description(int hFile);
    int      hf.Period     (int hFile);
    int      hf.Digits     (int hFile);
+   bool     hf.Synthetic  (int hFile);
    int      hf.SyncMark   (int hFile);
    int      hf.LastSync   (int hFile);
 
