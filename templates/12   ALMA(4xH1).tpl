@@ -8769,8 +8769,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
@@ -8783,8 +8781,10 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=3
-MA.Timeframe=D1
+MA.Periods=4
+MA.Timeframe=H1
+Color.UpTrend=16711680
+Color.DownTrend=255
 Max.Values=5000
 </inputs>
 </expert>
@@ -8793,7 +8793,7 @@ weight_1=0
 weight_2=3
 weight_3=3
 weight_4=3
-period_flags=62
+period_flags=7
 show_data=1
 </indicator>
 
