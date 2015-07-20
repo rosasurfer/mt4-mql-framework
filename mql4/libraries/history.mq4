@@ -301,18 +301,38 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    hs.format     [iH] = format;
 
 
-   // (5) ist das Instrument synthetisch, Symboldatensätze schreiben
-   if (synthetic) {
-      // (5.1) "symgroups.raw": Existenz der Symbolgruppe prüfen und ggf. Gruppe anlegen
+   // (5) ist das Instrument synthetisch, Symboldatensatz aktualisieren
+   if (false && synthetic) {
+      // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
+      string groupName, suffix = StringRight(symbolU, 3);
+      string accountDataSuffixes[] = {".AB", ".EQ", ".FM", ".LV", ".PL", ".UM"};
+
+      // Gruppe bestimmen und deren Index ermitteln
+      bool isAccountData   =  StringInArray(accountDataSuffixes, suffix);
       bool isLfxInstrument = (StringLen(symbolU)==6) && (StringStartsWith(symbolU, "LFX") || StringEndsWith(symbolU, "LFX"));
 
-      // Gruppe bestimmen: LFXCharts | EquityCharts Online | EquityCharts Tester
-      string groupName,groupDescription;
-      if (isLfxInstrument) {
-         groupName = "Currency Indexes";
+      if (This.IsTesting()) {
+         if (isAccountData) groupName = "Tester Results";            // es können nur Testdaten sein
+         else               groupName = "Tester Other";
       }
       else {
+         if      (isAccountData  ) groupName = "Account Statistics"; // es können Accountdaten sein
+         else if (isLfxInstrument) groupName = "Currency Indexes";   // es kann ein LFX-Instrument sein
+         else                      groupName = "Other";              // es kann etwas anderes sein
       }
+
+
+      /*
+      string prefix = StringLeft(symbolU, -3);
+      if      (suffix == ".AB") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix)); }
+      else if (suffix == ".EQ") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix)); }
+      else if (suffix == ".LV") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Leverage", " #", prefix)); }
+      else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Profit/Loss"     , " #", prefix)); }
+      else if (suffix == ".FM") { if (StringIsDigit(prefix)) return(StringConcatenate("Free Margin"     , " #", prefix)); }
+      else if (suffix == ".UM") { if (StringIsDigit(prefix)) return(StringConcatenate("Used Margin"     , " #", prefix)); }
+      */
+
+
 
 
       // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben
