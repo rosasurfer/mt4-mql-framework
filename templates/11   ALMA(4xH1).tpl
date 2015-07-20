@@ -8785,7 +8785,7 @@ MA.Periods=4
 MA.Timeframe=H1
 Color.UpTrend=16711680
 Color.DownTrend=255
-Max.Values=5000
+Max.Values=4000
 </inputs>
 </expert>
 weight_0=0
