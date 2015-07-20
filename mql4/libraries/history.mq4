@@ -301,8 +301,23 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    hs.format     [iH] = format;
 
 
-   // (5) ist das Instrument synthetisch, neuen Instrumentdatensatz in "symbols.raw" schreiben
+   // (5) ist das Instrument synthetisch, Symboldatensätze schreiben
    if (synthetic) {
+      // (5.1) "symgroups.raw": Existenz der Symbolgruppe prüfen und ggf. Gruppe anlegen
+      bool isLfxInstrument = (StringLen(symbolU)==6) && (StringStartsWith(symbolU, "LFX") || StringEndsWith(symbolU, "LFX"));
+
+      // Gruppe bestimmen: LFXCharts | EquityCharts Online | EquityCharts Tester
+      string groupName,groupDescription;
+      if (isLfxInstrument) {
+         groupName = "Currency Indexes";
+      }
+      else {
+      }
+
+
+      // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben
+
+      // (5.3) "symbols.sel": keine Änderungen
    }
 
    return(hSet);
