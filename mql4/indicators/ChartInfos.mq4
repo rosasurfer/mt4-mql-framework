@@ -1658,7 +1658,7 @@ bool UpdatePositions() {
 
       // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
       if (mm.ATRwPct != 0)
-         strCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%      ");
+         strCurrentVola = StringConcatenate("V", DoubleToStr(mm.ATRwPct * 100 * currentLeverage, 1), "%     ");
 
       strCurrentPosition = StringConcatenate("Position:   " , strCurrentVola, strCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
