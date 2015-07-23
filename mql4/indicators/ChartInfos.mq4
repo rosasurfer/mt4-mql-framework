@@ -1679,13 +1679,12 @@ bool UpdatePositions() {
    while (lines < positions) {
       lines++;
       for (int col=0; col < cols; col++) {
-         string label = label.position +".line"+ lines +"_col"+ col;
+         string label = StringConcatenate(label.position, ".line", lines, "_col", col);
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
             ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
             ObjectSet    (label, OBJPROP_YDISTANCE, yDist + (lines-1)*(positions.fontSize+8));
             ObjectSetText(label, " ", 1);
-            //ObjectSetText(label, " ", positions.fontSize, positions.fontName, CLR_NONE);
             ObjectRegister(label);
          }
          else GetLastError();
@@ -1695,7 +1694,7 @@ bool UpdatePositions() {
    // (2.2) nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
-         label = label.position +".line"+ lines +"_col"+ col;
+         label = StringConcatenate(label.position, ".line", lines, "_col", col);
          if (ObjectFind(label) != -1)
             ObjectDelete(label);
       }
@@ -1719,65 +1718,65 @@ bool UpdatePositions() {
 
       if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_HISTORY) {
          // History
-         ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE ]],                                                 positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col1", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col2", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col3", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                               positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_DIRECTION_TYPE ]],                 positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
             otherProfits = positions.ddata[i][I_REALIZED_PROFIT];
             if (!otherProfits) sOtherProfits = "";
-            else               sOtherProfits = " ("+ DoubleToStr(otherProfits, 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col5",      DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2) + sOtherProfits,                              positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col6",      DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT ], 2) +"%",                                         positions.fontSize, positions.fontName, fontColor);
-            if (positions.idata[i][I_COMMENT] == -1)  sComment = "";
-            else                                      sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
-         ObjectSetText(label.position +".line"+ line +"_col7", sComment +" ",                                                                                           positions.fontSize, positions.fontName, fontColor);
+            else               sOtherProfits = StringConcatenate(" (", DoubleToStr(otherProfits, 2), ")");
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2) + sOtherProfits,   positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT ], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            if (positions.idata[i][I_COMMENT] == -1) sComment = "";
+            else                                     sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), sComment +" ",                                                           positions.fontSize, positions.fontName, fontColor);
       }
       else if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_REALIZED) {
          // Realized Profit
-         ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE ]],                                                 positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col1", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col2", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col3", " ",                                                                                                     positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                               positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col5",      DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2),                                              positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col6",      DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT ], 2) +"%",                                         positions.fontSize, positions.fontName, fontColor);
-            if (positions.idata[i][I_COMMENT] == -1)  sComment = "";
-            else                                      sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
-         ObjectSetText(label.position +".line"+ line +"_col7", sComment +" ",                                                                                           positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_DIRECTION_TYPE ]],                 positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2),                   positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT ], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            if (positions.idata[i][I_COMMENT] == -1) sComment = "";
+            else                                     sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), sComment +" ",                                                           positions.fontSize, positions.fontName, fontColor);
       }
       else {
          if (positions.idata[i][I_DIRECTION_TYPE] == TYPE_OPEN_HEDGE) {
             // Hedged
-            ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(label.position +".line"+ line +"_col1",      NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot",                                 positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(label.position +".line"+ line +"_col2", "Dist:",                                                                                              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+") +" lot", positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                              positions.fontSize, positions.fontName, fontColor);
                if (!positions.ddata[i][I_BREAKEVEN]) sDistance = "...";
                else                                  sDistance = DoubleToStr(RoundFloor(positions.ddata[i][I_BREAKEVEN], Digits-PipDigits), Digits-PipDigits) +" pip";
-            ObjectSetText(label.position +".line"+ line +"_col3", sDistance,                                                                                            positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                            positions.fontSize, positions.fontName, fontColor);
          }
          else {
             // Not Hedged
-            ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],                                               positions.fontSize, positions.fontName, fontColor);
-               if (!positions.ddata[i][I_HEDGED_LOTSIZE]) sLotSize =   NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+");
-               else                                       sLotSize =   NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+");
-            ObjectSetText(label.position +".line"+ line +"_col1", sLotSize +" lot",                                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_DIRECTION_TYPE]],               positions.fontSize, positions.fontName, fontColor);
+               if (!positions.ddata[i][I_HEDGED_LOTSIZE]) sLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+");
+               else                                       sLotSize = NumberToStr(positions.ddata[i][I_DIRECT_LOTSIZE], ".+") +" ±"+ NumberToStr(positions.ddata[i][I_HEDGED_LOTSIZE], ".+");
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), sLotSize +" lot",                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                                positions.fontSize, positions.fontName, fontColor);
                if (!positions.ddata[i][I_BREAKEVEN     ]) sBreakeven = "...";
                else                                       sBreakeven = NumberToStr(RoundEx(positions.ddata[i][I_BREAKEVEN], Digits), PriceFormat);
-            ObjectSetText(label.position +".line"+ line +"_col3", sBreakeven,                                                                                           positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sBreakeven,                                                           positions.fontSize, positions.fontName, fontColor);
          }
 
          // Hedged und Not-Hedged
-         ObjectSetText(label.position +".line"+ line +"_col4", "Profit:",                                                                                               positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
             otherProfits = positions.ddata[i][I_REALIZED_PROFIT] + positions.ddata[i][I_HISTORICAL_PROFIT];
             if (!otherProfits) sOtherProfits = "";
-            else               sOtherProfits = " ("+ DoubleToStr(otherProfits, 2) +")";
-         ObjectSetText(label.position +".line"+ line +"_col5", DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2) + sOtherProfits,                                   positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col6", DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT ], 2) +"%",                                              positions.fontSize, positions.fontName, fontColor);
+            else               sOtherProfits = StringConcatenate(" (", DoubleToStr(otherProfits, 2), ")");
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), DoubleToStr(positions.ddata[i][I_FLOATING_PROFIT], 2) + sOtherProfits,   positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), DoubleToStr(positions.ddata[i][I_PROFIT_PERCENT ], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
             if (positions.idata[i][I_COMMENT] == -1) sComment = "";
             else                                     sComment = custom.position.conf.comments[positions.idata[i][I_COMMENT]];
-         ObjectSetText(label.position +".line"+ line +"_col7", sComment +" ",                                                                                           positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), sComment +" ",                                                           positions.fontSize, positions.fontName, fontColor);
       }
    }
 
@@ -1787,14 +1786,14 @@ bool UpdatePositions() {
          line++;
          if (positions.idata[i][I_POSITION_TYPE] == TYPE_VIRTUAL) fontColor = positions.fontColor.virtual;
          else                                                     fontColor = positions.fontColor.remote;
-         ObjectSetText(label.position +".line"+ line +"_col0", typeDescriptions[los.Type   (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col1", NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col2", "BE:",                                                          positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col3", NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col4", "SL:",                                                          positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col5", NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col6", "Profit:",                                                      positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(label.position +".line"+ line +"_col7", DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[los.Type   (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                          positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "SL:",                                                          positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), "Profit:",                                                      positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, fontColor);
       }
    }
    return(!catch("UpdatePositions(2)"));
