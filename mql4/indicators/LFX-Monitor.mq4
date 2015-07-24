@@ -1,5 +1,8 @@
 /**
- * Berechnet die Kurse der momentan verfügbaren LiteForex-Indizes und zeigt sie an.
+ * Berechnet die Kurse der momentan verfügbaren LiteForex-Indizes und zeigt sie an. Ein Währungs-Index kann direkt über die Kurse seiner beteiligten
+ * Crosses oder über das Verhältnis des USD-Indexes zum USD-Kurs der Währung berechnet werden, beide Werte unterscheiden sich nur im resultierenden
+ * Spread. Wird eine Indexposition nicht über seine Crosses (im Durchschnitt höherer Spread), sondern über den USD-Index abgebildet, sind die Anzahl
+ * der Teilpositionen und entsprechend die Margin-Requirements höher.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -7,6 +10,7 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <history.mqh>
 
 
 #property indicator_chart_window
@@ -30,6 +34,9 @@ string symbols[] = { "USD","AUD","CAD","CHF","EUR","GBP","JPY","NZD" };
 #define I_NZD  7
 
 
+int usdlfx.hSet;
+
+
 /**
  * Initialisierung
  *
@@ -40,7 +47,7 @@ int onInit() {
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-   return(catch("onInit()"));
+   return(catch("onInit(1)"));
 }
 
 
@@ -51,7 +58,12 @@ int onInit() {
  */
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
-   return(catch("onDeinit()"));
+
+   if (usdlfx.hSet != 0) {
+      if (!HistorySet.Close(usdlfx.hSet)) return(!SetLastError(history.GetLastError()));
+      usdlfx.hSet = NULL;
+   }
+   return(catch("onDeinit(1)"));
 }
 
 
@@ -201,12 +213,12 @@ int CreateLabels() {
       else GetLastError();
    }
 
-   return(catch("CreateLabels()"));
+   return(catch("CreateLabels(1)"));
 }
 
 
 /**
- * Berechnet die Indizes und zeigt sie an.
+ * Berechnet die Indizes über die beteiligten Crosses (???lfx-Variablen) und über den USD-Index (???lfx.u-Variablen) und zeigt sie an.
  *
  * @return int - Fehlerstatus
  */
@@ -229,9 +241,13 @@ int UpdateInfos() {
    double gbpusd_Bid = MarketInfo("GBPUSD", MODE_BID), gbpusd_Ask = MarketInfo("GBPUSD", MODE_ASK), gbpusd = (gbpusd_Bid + gbpusd_Ask)/2;
    bool   usd = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
    if (usd) {
-      usdlfx     = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
-      usdlfx_Bid = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
-      usdlfx_Ask = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+      usdlfx       = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
+      usdlfx_Bid   = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+      usdlfx_Ask   = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+
+      usdlfx.u     = usdlfx;
+      usdlfx_Bid.u = usdlfx_Bid;
+      usdlfx_Ask.u = usdlfx_Ask;
    }
 
    // AUDLFX
@@ -243,9 +259,9 @@ int UpdateInfos() {
    double gbpaud_Bid = MarketInfo("GBPAUD", MODE_BID), gbpaud_Ask = MarketInfo("GBPAUD", MODE_ASK), gbpaud = (gbpaud_Bid + gbpaud_Ask)/2;
    bool   aud = (audcad_Bid && audchf_Bid && audjpy_Bid && audusd_Bid && euraud_Bid && gbpaud_Bid);
    if (aud) {
-      audlfx     = MathPow((audcad     * audchf     * audjpy     * audusd    ) / (euraud     * gbpaud    ), 1/7.);
-      audlfx_Bid = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.);
-      audlfx_Ask = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.);
+      audlfx       = MathPow((audcad     * audchf     * audjpy     * audusd    ) / (euraud     * gbpaud    ), 1/7.);
+      audlfx_Bid   = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.);
+      audlfx_Ask   = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.);
    }
    if (usd) {
       audlfx.u     = usdlfx * audusd;
@@ -262,9 +278,9 @@ int UpdateInfos() {
    //     usdcad_Bid = ...
    bool   cad = (cadchf_Bid && cadjpy_Bid && audcad_Bid && eurcad_Bid && gbpcad_Bid && usdcad_Bid);
    if (cad) {
-      cadlfx     = MathPow((cadchf     * cadjpy    ) / (audcad     * eurcad     * gbpcad     * usdcad    ), 1/7.);
-      cadlfx_Bid = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.);
-      cadlfx_Ask = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.);
+      cadlfx       = MathPow((cadchf     * cadjpy    ) / (audcad     * eurcad     * gbpcad     * usdcad    ), 1/7.);
+      cadlfx_Bid   = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.);
+      cadlfx_Ask   = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.);
    }
    if (usd) {
       cadlfx.u     = usdlfx / usdcad;
@@ -281,9 +297,9 @@ int UpdateInfos() {
    //     usdchf_Bid = ...
    bool   chf = (chfjpy_Bid && audchf_Bid && cadchf_Bid && eurchf_Bid && gbpchf_Bid && usdchf_Bid);
    if (chf) {
-      chflfx     = MathPow(chfjpy     / (audchf     * cadchf     * eurchf     * gbpchf     * usdchf    ), 1/7.);
-      chflfx_Bid = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.);
-      chflfx_Ask = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.);
+      chflfx       = MathPow(chfjpy     / (audchf     * cadchf     * eurchf     * gbpchf     * usdchf    ), 1/7.);
+      chflfx_Bid   = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.);
+      chflfx_Ask   = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.);
    }
    if (usd) {
       chflfx.u     = usdlfx / usdchf;
@@ -344,9 +360,9 @@ int UpdateInfos() {
    //     eurusd_Bid = ...
    bool   eur = (euraud_Bid && eurcad_Bid && eurchf_Bid && eurgbp_Bid && eurjpy_Bid && eurusd_Bid);
    if (eur) {
-      eurlfx     = MathPow((euraud     * eurcad     * eurchf     * eurgbp     * eurjpy     * eurusd    ), 1/7.);
-      eurlfx_Bid = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.);
-      eurlfx_Ask = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.);
+      eurlfx       = MathPow((euraud     * eurcad     * eurchf     * eurgbp     * eurjpy     * eurusd    ), 1/7.);
+      eurlfx_Bid   = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.);
+      eurlfx_Ask   = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.);
    }
    if (usd) {
       eurlfx.u     = usdlfx * eurusd;
@@ -363,9 +379,9 @@ int UpdateInfos() {
    //     eurgbp_Bid = ...
    bool   gbp = (gbpaud_Bid && gbpcad_Bid && gbpchf_Bid && gbpjpy_Bid && gbpusd_Bid && eurgbp_Bid);
    if (gbp) {
-      gbplfx     = MathPow((gbpaud     * gbpcad     * gbpchf     * gbpjpy     * gbpusd    ) / eurgbp    , 1/7.);
-      gbplfx_Bid = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.);
-      gbplfx_Ask = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.);
+      gbplfx       = MathPow((gbpaud     * gbpcad     * gbpchf     * gbpjpy     * gbpusd    ) / eurgbp    , 1/7.);
+      gbplfx_Bid   = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.);
+      gbplfx_Ask   = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.);
    }
    if (usd) {
       gbplfx.u     = usdlfx * gbpusd;
@@ -382,9 +398,9 @@ int UpdateInfos() {
    //     usdjpy_Bid = ...
    bool   jpy = (audjpy_Bid && cadjpy_Bid && chfjpy_Bid && eurjpy_Bid && gbpjpy_Bid && usdjpy_Bid);
    if (jpy) {
-      jpylfx     = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
-      jpylfx_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
-      jpylfx_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
+      jpylfx       = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
+      jpylfx_Bid   = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
+      jpylfx_Ask   = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
    }
    if (usd) {
       jpylfx.u     = usdjpy / usdlfx;
@@ -402,11 +418,11 @@ int UpdateInfos() {
    double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2;
    bool   nzd = (audnzd_Bid && eurnzd_Bid && gbpnzd_Bid && nzdcad_Bid && nzdchf_Bid && nzdjpy_Bid && nzdusd_Bid);
    if (nzd) {
-      nzdlfx     = MathPow((nzdcad     * nzdchf     * nzdjpy     * nzdusd    ) / (audnzd     * eurnzd     * gbpnzd    ), 1/7.);
-      nzdlfx_Bid = MathPow((nzdcad_Bid * nzdchf_Bid * nzdjpy_Bid * nzdusd_Bid) / (audnzd_Ask * eurnzd_Ask * gbpnzd_Ask), 1/7.);
-      nzdlfx_Ask = MathPow((nzdcad_Ask * nzdchf_Ask * nzdjpy_Ask * nzdusd_Ask) / (audnzd_Bid * eurnzd_Bid * gbpnzd_Bid), 1/7.);
+      nzdlfx       = MathPow((nzdcad     * nzdchf     * nzdjpy     * nzdusd    ) / (audnzd     * eurnzd     * gbpnzd    ), 1/7.);
+      nzdlfx_Bid   = MathPow((nzdcad_Bid * nzdchf_Bid * nzdjpy_Bid * nzdusd_Bid) / (audnzd_Ask * eurnzd_Ask * gbpnzd_Ask), 1/7.);
+      nzdlfx_Ask   = MathPow((nzdcad_Ask * nzdchf_Ask * nzdjpy_Ask * nzdusd_Ask) / (audnzd_Bid * eurnzd_Bid * gbpnzd_Bid), 1/7.);
    }
-   if (usd && nzdusd_Bid!=0) {
+   if (usd && nzdusd_Bid) {
       nzdlfx.u     = usdlfx * nzdusd;
       nzdlfx_Bid.u = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
       nzdlfx_Ask.u = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
@@ -492,6 +508,7 @@ int UpdateInfos() {
    if (nzdlfx_Bid   != 0) ObjectSetText(symbols[I_NZD] +".spread.direct",     "("+ DoubleToStr((nzdlfx_Ask-nzdlfx_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".spread.direct", " ", fontSize, fontName);
 
    // Index-Anzeige: via USDLFX
+   if (usdlfx.u     != 0) ObjectSetText(symbols[I_USD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(usdlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_USD] +".quote.viaUSD",  " ", fontSize, fontName);
    if (audlfx.u     != 0) ObjectSetText(symbols[I_AUD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(audlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_AUD] +".quote.viaUSD",  " ", fontSize, fontName);
    if (cadlfx.u     != 0) ObjectSetText(symbols[I_CAD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(cadlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CAD] +".quote.viaUSD",  " ", fontSize, fontName);
    if (chflfx.u     != 0) ObjectSetText(symbols[I_CHF] +".quote.viaUSD",             NumberToStr(NormalizeDouble(chflfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CHF] +".quote.viaUSD",  " ", fontSize, fontName);
@@ -501,6 +518,7 @@ int UpdateInfos() {
    if (nzdlfx.u     != 0) ObjectSetText(symbols[I_NZD] +".quote.viaUSD",             NumberToStr(NormalizeDouble(nzdlfx.u, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".quote.viaUSD",  " ", fontSize, fontName);
 
    // Spread-Anzeige: via USDLFX
+   if (usdlfx_Bid.u != 0) ObjectSetText(symbols[I_USD] +".spread.viaUSD", "("+ DoubleToStr((usdlfx_Ask.u-usdlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_USD] +".spread.viaUSD", " ", fontSize, fontName);
    if (audlfx_Bid.u != 0) ObjectSetText(symbols[I_AUD] +".spread.viaUSD", "("+ DoubleToStr((audlfx_Ask.u-audlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_AUD] +".spread.viaUSD", " ", fontSize, fontName);
    if (cadlfx_Bid.u != 0) ObjectSetText(symbols[I_CAD] +".spread.viaUSD", "("+ DoubleToStr((cadlfx_Ask.u-cadlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CAD] +".spread.viaUSD", " ", fontSize, fontName);
    if (chflfx_Bid.u != 0) ObjectSetText(symbols[I_CHF] +".spread.viaUSD", "("+ DoubleToStr((chflfx_Ask.u-chflfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_CHF] +".spread.viaUSD", " ", fontSize, fontName);
@@ -509,5 +527,42 @@ int UpdateInfos() {
    if (jpylfx_Bid.u != 0) ObjectSetText(symbols[I_JPY] +".spread.viaUSD", "("+ DoubleToStr((jpylfx_Ask.u-jpylfx_Bid.u)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_JPY] +".spread.viaUSD", " ", fontSize, fontName);
    if (nzdlfx_Bid.u != 0) ObjectSetText(symbols[I_NZD] +".spread.viaUSD", "("+ DoubleToStr((nzdlfx_Ask.u-nzdlfx_Bid.u)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(symbols[I_NZD] +".spread.viaUSD", " ", fontSize, fontName);
 
+
+
+   // LFX-Charts schreiben
+   if (usd) {
+      RecordLfxIndex(usdlfx);
+   }
+
    return(catch("UpdateInfos(2)"));
+}
+
+
+/**
+ * Zeichnet den USDLFX-Chart auf.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool RecordLfxIndex(double value) {
+   if (IsTesting())
+      return(true);
+
+   if (!usdlfx.hSet) {
+      string symbol      = "USDLFX";
+      string description = "USD Index (LiteForex)";
+      int    digits      = 5;
+      int    format      = 400;
+      bool   synthetic   = true;
+
+      usdlfx.hSet = HistorySet.Get(symbol, synthetic);
+      if (usdlfx.hSet == -1)
+         usdlfx.hSet = HistorySet.Create(symbol, description, digits, format, synthetic);
+      if (!usdlfx.hSet) return(!SetLastError(history.GetLastError()));
+   }
+
+   int flags;
+   //flags = HST_COLLECT_TICKS;
+
+   if (!HistorySet.AddTick(usdlfx.hSet, Tick.Time, value, flags)) return(!SetLastError(history.GetLastError()));
+   return(true);
 }
