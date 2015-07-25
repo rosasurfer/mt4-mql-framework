@@ -5661,7 +5661,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          (4) If <span class="const">FILE_READ</span> is not combined with <span class="const">FILE_WRITE</span> the file will be opened only if it already exists. If the file does not
              exist it can be created using the <span class="const">FILE_WRITE</span> mode.<br/>
          <br/>
-         (5) Within a single MQL module no more than 32 files can be opened simultaneously. File handles opened in one module cannot be used in other modules.
+         (5) Within a single MQL module no more than 64 files can be opened simultaneously. File handles opened in one module cannot be used in other modules.
       </content>
       <example>
    int hFile = FileOpen(<span class="string">&quot;my_data.csv&quot;</span>, <span class="const">FILE_CSV</span>|<span class="const">FILE_READ</span>, <span class="char">';'</span>);
