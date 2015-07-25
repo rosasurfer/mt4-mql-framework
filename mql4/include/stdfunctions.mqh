@@ -910,7 +910,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       if (IsError(error)) return(!catch("WindowHandleEx(1)", error));
 
       if (!hChart) {
-         // (1.1) Indikatoren
+         // (1.1) Suche nach eigenem Chart in Indikatoren: WindowHandle() ist NULL
          if (IsIndicator()) {
             // Ein Indikator im SuperContext übernimmt das ChartHandle von dort.
             if (IsSuperContext()) {
@@ -955,10 +955,10 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             int hChartWindow = hWndLast;
          }
 
-         // (1.2) Scripte
+         // (1.2) Suche nach eigenem Chart in Scripten: WindowHandle() ist NULL
          else if (IsScript()) {
             // Bis Build 509+ ??? gibt die Funktion bei Terminal-Start in init() und in start() 0 zurück, solange das Terminal nicht endgültig initialisiert ist.
-            // Scripte werden in diesem Fall über die Startkonfiguration ausgeführt und laufen im ersten entsprechenden Chart in absoluter Reihenfolge, nicht in Z-Order.
+            // Scripte werden in diesem Fall über die Startkonfiguration ausgeführt und laufen im ersten passenden Chart in absoluter Reihenfolge (CtrlID), nicht in Z-Order.
             // Das erste passende Chartfenster in absoluter Reihenfolge ist das gesuchte Fenster.
 
             hWndMain  = GetApplicationWindow();               if (!hWndMain) return(NULL);
@@ -972,18 +972,18 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
             int id = INT_MAX;
 
             while (hWndChild != NULL) {
-               title = GetWindowText(hWndChild);
+               title = GetWindowText(hWndChild); if (StringEndsWith(title, " (offline)")) title = StringLeft(title, -10);
                if (title == chartDescription) {                         // alle Childwindows durchlaufen und das erste passende in absoluter Reihenfolge finden
                   id = Min(id, GetDlgCtrlID(hWndChild));
                   if (!id) return(!catch("WindowHandleEx(8)  MDIClient child window 0x"+ IntToHexStr(hWndChild) +" has no control id", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
                }
                hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);           // das nächste Child in Z order
             }
-            if (id == INT_MAX) return(!catch("WindowHandleEx(9)  no matching MDIClient child window for \""+ chartDescription +"\" found", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
+            if (id == INT_MAX) return(!catch("WindowHandleEx(9)  no matching MDIClient child window found for \""+ chartDescription +"\"", _int(ERR_RUNTIME_ERROR, EnumChildWindows(hWndMdi))));
             hChartWindow = GetDlgItem(hWndMdi, id);
          }
 
-         // (1.3) Experts
+         // (1.3) Suche nach eigenem Chart in Experts: WindowHandle() ist NULL
          else {
             return(!catch("WindowHandleEx(10)->WindowHandle() => 0 in context Expert::"+ RootFunctionName(__WHEREAMI__) +"()", ERR_RUNTIME_ERROR));
          }
@@ -1016,7 +1016,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
    hWndChild = GetWindow(hWndMdi, GW_CHILD);                         // das erste Child in Z order
 
    while (hWndChild != NULL) {
-      title = GetWindowText(hWndChild);
+      title = GetWindowText(hWndChild); if (StringEndsWith(title, " (offline)")) title = StringLeft(title, -10);
       if (title == chartDescription) {                               // Das Child hat selbst wieder genau ein Child (AfxFrameOrView), welches das gesuchte ChartWindow
          hChart = GetWindow(hWndChild, GW_CHILD);                    // mit dem MetaTrader-WindowHandle() ist.
          if (!hChart) return(!catch("WindowHandleEx(14)  no MetaTrader chart window inside of MDIClient window 0x"+ IntToHexStr(hWndChild) +" found", ERR_RUNTIME_ERROR));
