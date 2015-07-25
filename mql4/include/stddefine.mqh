@@ -12,6 +12,8 @@
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
 //int    __lpSuperContext;                                  // global, aber nur in Indikatoren ungleich NULL: Zeiger auf einen SuperContext (wird je Modultyp deklariert)
 int      __lpTestContext;                                   // im Tester Zeiger auf den ExecutionContext des Experts
+int      __initFlags;
+int      __deinitFlags;
 
 string   __NAME__;                                          // Name des aktuellen Programms
 int      __WHEREAMI__;                                      // ID der aktuell ausgeführten MQL-Rootfunktion: RF_INIT | RF_START | RF_DEINIT
@@ -234,6 +236,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define INIT_PIPVALUE               2           // stellt sicher, daß der aktuelle PipValue berechnet werden kann (benötigt TickSize und TickValue)
 #define INIT_BARS_ON_HIST_UPDATE    4           //
 #define INIT_CUSTOMLOG              8           // das Programm verwendet ein eigenes Logfile
+#define INIT_DOESNT_REQUIRE_BARS   16           // Script, das auch ohne vorhandene Bars der jeweiligen Zeitreihe ausgeführt werden kann
 
 
 // Tester-Statusflags

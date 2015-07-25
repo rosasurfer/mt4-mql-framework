@@ -2,7 +2,7 @@
  * Schlieﬂt die angegebenen Positionen. Ohne zus‰tzliche Parameter werden alle offenen Positionen geschlossen.
  */
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[];
+int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
 int __DEINIT_FLAGS__[];
 
 #property show_inputs

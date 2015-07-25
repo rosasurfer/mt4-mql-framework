@@ -2,7 +2,7 @@
  * Schickt dem ChartInfos-Indikator im aktuellen Chart die Nachricht, den internen Parameter "Track.Signal" umzuschalten.
  */
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[];
+int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
 int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
