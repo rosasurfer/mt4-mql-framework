@@ -131,9 +131,10 @@ int start() {
    __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);
 
 
-   // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)  //       Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
-   if (!Bars)                                                                                // TODO: In Scripten in initFlags integrieren. Manche Scripte laufen nicht ohne Bars,
-      return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  //       andere brauchen die aktuelle Zeitreihe nicht.
+   // (2) Abschluß der Chart-Initialisierung überprüfen
+   if (!(ec_InitFlags(__ExecutionContext) & INIT_DOESNT_REQUIRE_BARS))                          // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet
+      if (!Bars)                                                                                // (Waiting for update...) oder der Chart beim Terminal-Start noch nicht
+         return(UpdateProgramStatus(catch("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));  // vollständig initialisiert ist
 
 
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
