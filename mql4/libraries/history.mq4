@@ -474,9 +474,6 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    else if (write_only) {
       if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
-   static int count = 0;
-   count++;
-   debug("HistoryFile.Open(0.1)  count="+count);
 
    int bars, from, to, fileSize=FileSize(hFile), /*HISTORY_HEADER*/hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
 
