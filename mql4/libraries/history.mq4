@@ -107,7 +107,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                    // Das Handle muß offen sein.
       if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (hs.synthetic[i]==synthetic) {
-         debug("HistorySet.Get(0.1)  hSet="+ hs.hSet[i] +"  symbol=\""+ hs.symbol[i] +"\"  description=\""+ hs.description[i] +"\"  digits="+ hs.digits[i]);
+         //debug("HistorySet.Get(0.1)  hSet="+ hs.hSet[i] +"  symbol=\""+ hs.symbol[i] +"\"  description=\""+ hs.description[i] +"\"  digits="+ hs.digits[i]);
          return(hs.hSet[i]);
       }
    }                                                                 // kein offenes Set-Handle gefunden
@@ -131,7 +131,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
          hs.synthetic  [iH] = hf.synthetic[i];
          hs.format     [iH] = 400;                                   // Default für neu zu erstellende HistoryFiles
 
-         debug("HistorySet.Get(0.2)  hFile="+ hf.hFile[i] +"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
+         //debug("HistorySet.Get(0.2)  hFile="+ hf.hFile[i] +"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
          return(hSet);
       }
    }                                                                 // kein offenes File-Handle gefunden
@@ -176,7 +176,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
          hs.synthetic  [iH] = synthetic;
          hs.format     [iH] = 400;                                // Default für neu zu erstellende HistoryFiles
 
-         debug("HistorySet.Get(0.3)  file=\""+ mqlName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
+         //debug("HistorySet.Get(0.3)  file=\""+ mqlName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
          ArrayResize(hh, 0);
          return(hSet);
       }
@@ -317,7 +317,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
       }
       else {
          if      (isAccountData  ) groupName = "Account Statistics"; // es können Accountdaten sein
-         else if (isLfxInstrument) groupName = "Currency Indexes";   // es kann ein LFX-Instrument sein
+         else if (isLfxInstrument) groupName = "Currency Indices";   // es kann ein LFX-Instrument sein
          else                      groupName = "Other";              // es kann etwas anderes sein
       }
 
@@ -352,10 +352,10 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
  */
 bool HistorySet.Close(int hSet) {
    // Validierung
-   if (hSet <= 0)                     return(!catch("HistoryFile.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
+   if (hSet <= 0)                     return(!catch("HistorySet.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
-      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistoryFile.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistoryFile.Close(3)  unknown set handle "+ hSet, ERR_INVALID_PARAMETER));
+      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet.Close(3)  unknown set handle "+ hSet, ERR_INVALID_PARAMETER));
    }
    else hs.hSet.lastValid = NULL;
    if (hs.hSet[hSet] < 0) return(true);                              // Handle wurde bereits geschlossen (kann ignoriert werden)
@@ -426,13 +426,13 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
  * @param  __IN__ int    mode        - Access-Mode: FILE_READ|FILE_WRITE
  * @param  __IN__ bool   synthetic   - ob das Instrument synthetisch ist und die History im Serververzeichnis ".\history\XTrade-Synthetic\" gespeichert wird (default: FALSE)
  *
- * @return int - • Dateihandle
- *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert
+ * @return int - • Dateihandle oder
+ *               • -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
  *               • NULL, falls ein anderer Fehler auftrat
  *
  *
  * NOTES: (1) Das Dateihandle kann nicht modul-übergreifend verwendet werden.
- *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 32 Dateien gleichzeitig offen gehalten werden.
+ *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 64 Dateien gleichzeitig offen gehalten werden.
  */
 int HistoryFile.Open(string symbol, int timeframe, string description, int digits, int format, int mode, bool synthetic=false) {
    synthetic = synthetic!=0;
@@ -474,6 +474,9 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    else if (write_only) {
       if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
+   static int count = 0;
+   count++;
+   debug("HistoryFile.Open(0.1)  count="+count);
 
    int bars, from, to, fileSize=FileSize(hFile), /*HISTORY_HEADER*/hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
 
