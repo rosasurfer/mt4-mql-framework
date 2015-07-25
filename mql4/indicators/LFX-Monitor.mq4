@@ -22,9 +22,10 @@ color  fontColor = Blue;
 color  bgColor   = C'212,208,200';
 
 string lfx.labels    [8];
-string lfx.currencies[ ] = { "USD"   , "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"    };
-string lfx.symbols   [ ] = { "USDLFX", "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX" };
+string lfx.currencies[ ] = { "USD"   , "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"    };    // NZDLFX wird nicht aufgezeichnet, da das Aufzeichnen
+string lfx.symbols   [ ] = { "USDLFX", "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX" };    // aller Indizes das 64-File-Limit eines MQL-Moduls sprengt.
 int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5 };
+bool   lfx.record    [ ] = {     true,     true,     true,     true,     true,     true,     true,    false };
 bool   isLfx.usd     [8];                                            // ob der über den USD-Index berechnete LFX-Index einer Währung verfügbar ist
 double lfx.usd       [8];                                            // über den USD-Index berechneter LFX-Index je Währung
 int    lfx.hSet      [8];                                            // HistorySet-Handles der LFX-Indizes
@@ -122,14 +123,14 @@ int CreateLabels() {
    int col3width = 110;
    int yCoord    =  58;
    c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Header.direct");
+   label = StringConcatenate(__NAME__, ".", c, ".Header.cross");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 59+col3width);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 44+col3width);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "direct", fontSize, fontName, fontColor);
+      ObjectSetText(label, "via crosses", fontSize, fontName, fontColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -140,9 +141,9 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 59);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 44);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "via USD", fontSize, fontName, fontColor);
+      ObjectSetText(label, "via USDLFX", fontSize, fontName, fontColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -165,8 +166,8 @@ int CreateLabels() {
       }
       else GetLastError();
 
-      // Index direct
-      label = StringConcatenate(lfx.labels[i], ".quote.direct");
+      // Index via Crosses
+      label = StringConcatenate(lfx.labels[i], ".quote.cross");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -178,8 +179,8 @@ int CreateLabels() {
       }
       else GetLastError();
 
-      // Spread direct
-      label = StringConcatenate(lfx.labels[i], ".spread.direct");
+      // Spread via Crosses
+      label = StringConcatenate(lfx.labels[i], ".spread.cross");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -191,7 +192,7 @@ int CreateLabels() {
       }
       else GetLastError();
 
-      // Index via USD
+      // Index via USDLFX
       label = StringConcatenate(lfx.labels[i], ".quote.viaUSD");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
@@ -504,24 +505,24 @@ int UpdateInfos() {
 
 
    // Index-Anzeige: direkt
-   if (is_usd.crs)       ObjectSetText(lfx.labels[I_USD] +".quote.direct",               NumberToStr(NormalizeDouble(usdlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".quote.direct",  " ", fontSize, fontName);
-   if (is_aud.crs)       ObjectSetText(lfx.labels[I_AUD] +".quote.direct",               NumberToStr(NormalizeDouble(audlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".quote.direct",  " ", fontSize, fontName);
-   if (is_cad.crs)       ObjectSetText(lfx.labels[I_CAD] +".quote.direct",               NumberToStr(NormalizeDouble(cadlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".quote.direct",  " ", fontSize, fontName);
-   if (is_chf.crs)       ObjectSetText(lfx.labels[I_CHF] +".quote.direct",               NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".quote.direct",  " ", fontSize, fontName);
-   if (is_eur.crs)       ObjectSetText(lfx.labels[I_EUR] +".quote.direct",               NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".quote.direct",  " ", fontSize, fontName);
-   if (is_gbp.crs)       ObjectSetText(lfx.labels[I_GBP] +".quote.direct",               NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".quote.direct",  " ", fontSize, fontName);
-   if (is_jpy.crs)       ObjectSetText(lfx.labels[I_JPY] +".quote.direct",               NumberToStr(NormalizeDouble(jpylfx.crs, 3), ".2'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".quote.direct",  " ", fontSize, fontName);
-   if (is_nzd.crs)       ObjectSetText(lfx.labels[I_NZD] +".quote.direct",               NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".quote.direct",  " ", fontSize, fontName);
+   if (is_usd.crs)       ObjectSetText(lfx.labels[I_USD] +".quote.cross",                NumberToStr(NormalizeDouble(usdlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".quote.cross",   " ", fontSize, fontName);
+   if (is_aud.crs)       ObjectSetText(lfx.labels[I_AUD] +".quote.cross",                NumberToStr(NormalizeDouble(audlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".quote.cross",   " ", fontSize, fontName);
+   if (is_cad.crs)       ObjectSetText(lfx.labels[I_CAD] +".quote.cross",                NumberToStr(NormalizeDouble(cadlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".quote.cross",   " ", fontSize, fontName);
+   if (is_chf.crs)       ObjectSetText(lfx.labels[I_CHF] +".quote.cross",                NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".quote.cross",   " ", fontSize, fontName);
+   if (is_eur.crs)       ObjectSetText(lfx.labels[I_EUR] +".quote.cross",                NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".quote.cross",   " ", fontSize, fontName);
+   if (is_gbp.crs)       ObjectSetText(lfx.labels[I_GBP] +".quote.cross",                NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".quote.cross",   " ", fontSize, fontName);
+   if (is_jpy.crs)       ObjectSetText(lfx.labels[I_JPY] +".quote.cross",                NumberToStr(NormalizeDouble(jpylfx.crs, 3), ".2'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".quote.cross",   " ", fontSize, fontName);
+   if (is_nzd.crs)       ObjectSetText(lfx.labels[I_NZD] +".quote.cross",                NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".quote.cross",   " ", fontSize, fontName);
 
    // Spread-Anzeige: direkt
-   if (is_usd.crs)       ObjectSetText(lfx.labels[I_USD] +".spread.direct", "("+ DoubleToStr((usdlfx.crs_Ask-usdlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".spread.direct", " ", fontSize, fontName);
-   if (is_aud.crs)       ObjectSetText(lfx.labels[I_AUD] +".spread.direct", "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".spread.direct", " ", fontSize, fontName);
-   if (is_cad.crs)       ObjectSetText(lfx.labels[I_CAD] +".spread.direct", "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".spread.direct", " ", fontSize, fontName);
-   if (is_chf.crs)       ObjectSetText(lfx.labels[I_CHF] +".spread.direct", "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".spread.direct", " ", fontSize, fontName);
-   if (is_eur.crs)       ObjectSetText(lfx.labels[I_EUR] +".spread.direct", "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".spread.direct", " ", fontSize, fontName);
-   if (is_gbp.crs)       ObjectSetText(lfx.labels[I_GBP] +".spread.direct", "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".spread.direct", " ", fontSize, fontName);
-   if (is_jpy.crs)       ObjectSetText(lfx.labels[I_JPY] +".spread.direct", "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".spread.direct", " ", fontSize, fontName);
-   if (is_nzd.crs)       ObjectSetText(lfx.labels[I_NZD] +".spread.direct", "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".spread.direct", " ", fontSize, fontName);
+   if (is_usd.crs)       ObjectSetText(lfx.labels[I_USD] +".spread.cross",  "("+ DoubleToStr((usdlfx.crs_Ask-usdlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".spread.cross",  " ", fontSize, fontName);
+   if (is_aud.crs)       ObjectSetText(lfx.labels[I_AUD] +".spread.cross",  "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".spread.cross",  " ", fontSize, fontName);
+   if (is_cad.crs)       ObjectSetText(lfx.labels[I_CAD] +".spread.cross",  "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".spread.cross",  " ", fontSize, fontName);
+   if (is_chf.crs)       ObjectSetText(lfx.labels[I_CHF] +".spread.cross",  "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".spread.cross",  " ", fontSize, fontName);
+   if (is_eur.crs)       ObjectSetText(lfx.labels[I_EUR] +".spread.cross",  "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".spread.cross",  " ", fontSize, fontName);
+   if (is_gbp.crs)       ObjectSetText(lfx.labels[I_GBP] +".spread.cross",  "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".spread.cross",  " ", fontSize, fontName);
+   if (is_jpy.crs)       ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  " ", fontSize, fontName);
+   if (is_nzd.crs)       ObjectSetText(lfx.labels[I_NZD] +".spread.cross",  "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".spread.cross",  " ", fontSize, fontName);
 
    // Index-Anzeige: via USDLFX
    if (isLfx.usd[I_USD]) ObjectSetText(lfx.labels[I_USD] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_USD], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".quote.viaUSD",  " ", fontSize, fontName);
@@ -565,7 +566,7 @@ bool RecordLfxIndices() {
    int size = ArraySize(lfx.hSet);
 
    for (int i=0; i < size; i++) {
-      if (isLfx.usd[i]) {
+      if (lfx.record[i]) /*&&*/ if (isLfx.usd[i]) {
          if (!lfx.hSet[i]) {
             string symbol      = lfx.symbols   [i];
             string description = lfx.currencies[i] +" Index (LiteForex)";
