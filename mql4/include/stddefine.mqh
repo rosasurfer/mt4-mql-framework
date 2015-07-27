@@ -682,8 +682,9 @@ double  N_INF;                                              // -1.#INF: negative
 
 // Flag zum Schreiben von Historyfiles
 #define HST_COLLECT_TICKS           1
-#define HST_FILL_GAPS               2
-#define HST_IS_BAR_OPENTIME         4
+#define HST_SKIP_DUPLICATE_TICKS    2
+#define HST_FILL_GAPS               4
+#define HST_IS_BAR_OPENTIME         8
 
 
 // MessageBox() flags

@@ -396,6 +396,15 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
    }
    if (time <= 0)                     return(!catch("HistorySet.AddTick(5)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER));
 
+   /*
+   static double lastTick = 0;
+   if (hs.symbolU[hSet] == "USDLFX") {
+      if (EQ(value, lastTick, hs.digits[hSet])) debug("HistorySet.AddTick(0.1)  duplicate tick "+ NumberToStr(value, ".4'"));
+      else                                      debug("HistorySet.AddTick(0.2)  different tick "+ NumberToStr(value, ".4'"));
+      lastTick = value;
+   }
+   */
+
    // Dateihandles holen und jeweils Tick hinzufügen
    int hFile, sizeOfPeriods=ArraySize(periods);
 
@@ -656,7 +665,7 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
          }
 
          if (hf.period[hFile] <= PERIOD_D1) {
-            hf.collectedBar.openTime     [hFile] = time - time % hf.periodSecs[hFile];
+            hf.collectedBar.openTime     [hFile] = time - time%hf.periodSecs[hFile];
             hf.collectedBar.closeTime    [hFile] = hf.collectedBar.openTime [hFile] + hf.periodSecs[hFile];
             hf.collectedBar.nextCloseTime[hFile] = hf.collectedBar.closeTime[hFile] + hf.periodSecs[hFile];
          }
@@ -732,9 +741,9 @@ bool HistoryFile.AddTick(int hFile, datetime time, double value, int flags=NULL)
 
 
 /**
- * Findet in einer Historydatei den Offset der Bar, die den angegebenen Zeitpunkt abdeckt/abdecken würde, und signalisiert, ob diese Bar
- * bereits existiert. Die Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist oder wenn der
- * Zeitpunkt außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
+ * Findet in einer Historydatei den Offset der Bar, die den angegebenen Zeitpunkt abdeckt oder abdecken würde, und signalisiert, ob
+ * diese Bar bereits existiert. Die Bar existiert z.B. dann nicht, wenn die Zeitreihe am angegebenen Zeitpunkt eine Lücke aufweist
+ * oder wenn der Zeitpunkt außerhalb des von den vorhandenen Daten abgedeckten Bereichs liegt.
  *
  * @param  __IN__  int      hFile          - Dateihandle der Historydatei
  * @param  __IN__  datetime time           - Zeitpunkt

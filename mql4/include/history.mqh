@@ -1,14 +1,14 @@
 /**
  * Funktionen zur Verwaltung von Historydateien.
  *
- *
  *  • Alte MetaTrader-Versionen löschen beim Beenden neue Historydateien, wenn sie auf sie zugegriffen haben.
  *  • Neue MetaTrader-Versionen konvertieren beim Beenden alte Historydateien, wenn sie auf sie zugegriffen haben.
  *
- *    - Um die Chartperiode von synthetischen Instrumenten dynamisch umschalten zu können, müssen "symbols.raw" und "symbols.sel" modifiziert werden.
- *    - Synthetische Instrumente müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, um Änderungen an "symbols.raw" und "symbols.sel" nicht zu verlieren.
- *    - Ohne Serververbindung müssen "symbols.raw" und "symbols.sel" nicht extra geschützt werden.
- *    - Charts synthetischer Instrumente müssen automatisiert aufgerufen werden können (vor allem nach Tests).
+ *
+ *    - Um die Chartperiode von synthetischen Instrumenten dynamisch umschalten zu können, muß "symbols.raw" modifiziert werden.
+ *    - Synthetische Instrumente müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, um Änderungen an "symbols.raw" nicht zu verlieren.
+ *    - Ohne Serververbindung muß "symbols.raw" nicht extra geschützt werden.
+ *    - Charts synthetischer Instrumente müssen automatisiert geöffnet werden können (vor allem nach Tests).
  *
  *
  *
