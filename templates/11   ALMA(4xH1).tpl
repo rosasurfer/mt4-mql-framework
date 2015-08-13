@@ -8793,7 +8793,7 @@ weight_1=0
 weight_2=3
 weight_3=3
 weight_4=3
-period_flags=7
+period_flags=3
 show_data=1
 </indicator>
 
