@@ -608,7 +608,7 @@ int onTick() {
    if (track.orders) {
       int failedOrders      []; ArrayResize(failedOrders,    0);
       int openedPositions   []; ArrayResize(openedPositions, 0);
-      int closedPositions[2][]; ArrayResize(closedPositions, 0);     // { Ticket, CloseType=[CLOSE_TYPE_TP | CLOSE_TYPE_SL | CLOSE_TYPE_SO] }
+      int closedPositions[][2]; ArrayResize(closedPositions, 0);     // { Ticket, CloseType=[CLOSE_TYPE_TP | CLOSE_TYPE_SL | CLOSE_TYPE_SO] }
 
       if (!CheckPositions(failedOrders, openedPositions, closedPositions))
          return(last_error);
@@ -647,13 +647,13 @@ int onTick() {
 /**
  * Prüft, ob seit dem letzten Aufruf eine Pending-Order oder ein Close-Limit ausgeführt wurden.
  *
- * @param  int failedOrders   [] - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
- * @param  int openedPositions[] - Array zur Aufnahme der Tickets neuer offener Positionen
- * @param  int closedPositions[] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
+ * @param  int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
+ * @param  int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
+ * @param  int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
  *
  * @return bool - Erfolgsstatus
  */
-bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositions[]) {
+bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositions[][]) {
    /*
    PositionOpen
    ------------
