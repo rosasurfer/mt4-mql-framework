@@ -528,24 +528,24 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    if (hFile >= ArraySize(hf.hFile))
       hf.__ResizeInternalArrays(hFile+1);
 
-                    hf.hFile      [hFile] = hFile;
-                    hf.name       [hFile] = baseName;
-                    hf.readAccess [hFile] = !write_only;
-                    hf.writeAccess[hFile] = !read_only;
-                    hf.size       [hFile] = fileSize;
+                hf.hFile      [hFile] = hFile;
+                hf.name       [hFile] = baseName;
+                hf.readAccess [hFile] = !write_only;
+                hf.writeAccess[hFile] = !read_only;
+                hf.size       [hFile] = fileSize;
 
-   ArraySetIntArray(hf.header,     hFile, hh);                       // entspricht: hf.header[hFile] = hh;
-                    hf.format     [hFile] = hh.Format(hh);
-                    hf.symbol     [hFile] = hh.Symbol(hh);
-                    hf.symbolU    [hFile] = symbolU;
-                    hf.period     [hFile] = timeframe;
-                    hf.periodSecs [hFile] = timeframe * MINUTES;
-                    hf.digits     [hFile] = hh.Digits(hh);
-                    hf.synthetic  [hFile] = synthetic;
+   ArraySetInts(hf.header,     hFile, hh);                           // entspricht: hf.header[hFile] = hh;
+                hf.format     [hFile] = hh.Format(hh);
+                hf.symbol     [hFile] = hh.Symbol(hh);
+                hf.symbolU    [hFile] = symbolU;
+                hf.period     [hFile] = timeframe;
+                hf.periodSecs [hFile] = timeframe * MINUTES;
+                hf.digits     [hFile] = hh.Digits(hh);
+                hf.synthetic  [hFile] = synthetic;
 
-                    hf.bars       [hFile] = bars;
-                    hf.from       [hFile] = from;
-                    hf.to         [hFile] = to;
+                hf.bars       [hFile] = bars;
+                hf.from       [hFile] = from;
+                hf.to         [hFile] = to;
 
    ArrayResize(hh, 0);
 

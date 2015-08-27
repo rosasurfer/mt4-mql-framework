@@ -1498,7 +1498,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
                else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
                   close[0] = OrderCloseTime();
                   close[1] = OrderTicket();                                         // Geschlossene Positionen werden zwischengespeichert, deren Event-IDs werden erst
-                  ArrayPushIntArray(closed, close);                                 // *NACH* allen evt. vorher ausgestoppten Positionen vergeben.
+                  ArrayPushInts(closed, close);                                     // *NACH* allen evt. vorher ausgestoppten Positionen vergeben.
 
                   if (sequence.status[hSeq] != STATUS_STOPPED)
                      sequence.status[hSeq] = STATUS_STOPPING;

@@ -810,7 +810,7 @@ bool UpdateStatus(bool &lpChange, int stops[]) {
             else {                                                               // Sequenzstop im STATUS_MONITORING oder autom. Close bei Testende
                close[0] = OrderCloseTime();
                close[1] = OrderTicket();                                         // Geschlossene Positionen werden zwischengespeichert, deren Event-IDs werden erst
-               ArrayPushIntArray(closed, close);                                 // *NACH* allen evt. vorher ausgestoppten Positionen vergeben.
+               ArrayPushInts(closed, close);                                     // *NACH* allen evt. vorher ausgestoppten Positionen vergeben.
 
                if (status != STATUS_STOPPED)
                   status = STATUS_STOPPING;
@@ -4379,7 +4379,7 @@ bool SynchronizeStatus() {
          else if (!orders.closedBySL[i]) /*&&*/ if (orders.closeEvent[i]==0) {
             close[0] = orders.closeTime[i];                             // bei StopSequence() geschlossene Position: Ticket zur späteren Vergabe der Event-ID zwichenspeichern
             close[1] = orders.ticket   [i];
-            ArrayPushIntArray(closed, close);
+            ArrayPushInts(closed, close);
          }
       }
    }

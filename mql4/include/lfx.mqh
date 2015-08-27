@@ -444,7 +444,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
          break;
       }
       if (match)
-         ArrayPushIntArray(los, lo);                                 // bei Match Order an übergebenes LFX_ORDER-Array anfügen
+         ArrayPushInts(los, lo);                                     // bei Match Order an übergebenes LFX_ORDER-Array anfügen
    }
    ArrayResize(keys, 0);
    ArrayResize(lo,   0);
@@ -648,7 +648,7 @@ void DummyCalls() {
 
 
 #import "stdlib1.ex4"
-   int      ArrayPushIntArray(int array[][], int values[]);
+   int      ArrayPushInts(int array[][], int values[]);
    int      GetAccountNumber();
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);

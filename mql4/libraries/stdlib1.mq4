@@ -1518,13 +1518,13 @@ bool IsPermanentTradeError(int error) {
  *
  * @return int - Fehlerstatus
  */
-int ArraySetIntArray(int array[][], int offset, int values[]) {
-   if (ArrayDimension(array) != 2)   return(catch("ArraySetIntArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayDimension(values) != 1)  return(catch("ArraySetIntArray(2)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+int ArraySetInts(int array[][], int offset, int values[]) {
+   if (ArrayDimension(array) != 2)   return(catch("ArraySetInts(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) != 1)  return(catch("ArraySetInts(2)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(values) != dim2)    return(catch("ArraySetIntArray(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
-   if (offset < 0 || offset >= dim1) return(catch("ArraySetIntArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
+   if (ArraySize(values) != dim2)    return(catch("ArraySetInts(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset < 0 || offset >= dim1) return(catch("ArraySetInts(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
 
    int src  = GetIntsAddress(values);
    int dest = GetIntsAddress(array) + offset*dim2*4;
@@ -1574,19 +1574,19 @@ int ArrayPushInt(int &array[], int value) {
 
 
 /**
- * Fügt ein Array am Ende eines zweidimensionalen Integer-Arrays an.
+ * Fügt ein Integer-Array am Ende eines zweidimensionalen Integer-Arrays an.
  *
  * @param  int array[][] - zu erweiterndes Array ein-dimensionaler Arrays
  * @param  int value[]   - hinzuzufügendes Array (Größe muß zum zu erweiternden Array passen)
  *
  * @return int - neue Größe der ersten Dimension des Arrays oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int ArrayPushIntArray(int array[][], int value[]) {
-   if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushIntArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (ArrayDimension(value) != 1) return(_EMPTY(catch("ArrayPushIntArray(2)  too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS)));
+int ArrayPushInts(int array[][], int value[]) {
+   if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushInts(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(value) != 1) return(_EMPTY(catch("ArrayPushInts(2)  too many dimensions of parameter value = "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAYS)));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushIntArray(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushInts(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAYS)));
 
    ArrayResize(array, dim1+1);
    int src  = GetIntsAddress(value);
