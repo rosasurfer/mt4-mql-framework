@@ -744,9 +744,13 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
                   }
                }
             }
-            if (autoClosed)
-               ArrayPushInt(closedPositions, orders.knownOrders.ticket[i], closeType);    // Position wurde automatisch geschlossen
-            ArraySpliceInts(orders.knownOrders.ticket, i, 1);                             // geschlossene Position aus der Überwachung entfernen
+            if (autoClosed) {
+               int data[2];
+               data[0] = orders.knownOrders.ticket[i];
+               data[1] = closeType;
+               ArrayPushInts(closedPositions, data);                 // Position wurde automatisch geschlossen
+            }
+            ArraySpliceInts(orders.knownOrders.ticket, i, 1);        // geschlossene Position aus der Überwachung entfernen
             ArraySpliceInts(orders.knownOrders.type,   i, 1);
             knownSize--;
          }
@@ -871,14 +875,18 @@ bool onPositionOpen(int tickets[]) {
  *
  * @return bool - Erfolgsstatus
  */
-bool onPositionClose(int tickets[]) {
+bool onPositionClose(int tickets[][]) {
    if (!track.orders)
       return(true);
 
-   int positions = ArraySize(tickets);
+   string closeTypeDescr[] = {"", " (TakeProfit)", " (StoppLoss)", " (StopOut)"};
+
+   int positions = ArrayRange(tickets, 0);
 
    for (int i=0; i < positions; i++) {
-      if (!SelectTicket(tickets[i], "onPositionClose(1)"))
+      int ticket    = tickets[i][0];
+      int closeType = tickets[i][1];
+      if (!SelectTicket(ticket, "onPositionClose(1)"))
          continue;
 
       string type        = OperationTypeDescription(OrderType());
@@ -888,7 +896,7 @@ bool onPositionClose(int tickets[]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
