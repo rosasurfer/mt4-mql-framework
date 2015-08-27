@@ -106,6 +106,10 @@ int    orders.knownOrders.ticket[];                                  // vom letz
 int    orders.knownOrders.type  [];
 string orders.accountAlias;                                          // Verwendung in ausgehenden Messages
 
+// Close-Typen für automatisch geschlossene Positionen
+#define CLOSE_TYPE_TP               1
+#define CLOSE_TYPE_SL               2
+#define CLOSE_TYPE_SO               3
 
 // Price-Events (Signale)
 #define ET_SIGNAL_BAR_CLOSE         1                                // Signaltypen
@@ -602,9 +606,9 @@ bool Configure.Set(int signalId, int signalTimeframe, int signalBar, string name
 int onTick() {
    // (1) Orders überwachen
    if (track.orders) {
-      int failedOrders   []; ArrayResize(failedOrders,    0);
-      int openedPositions[]; ArrayResize(openedPositions, 0);
-      int closedPositions[]; ArrayResize(closedPositions, 0);
+      int failedOrders      []; ArrayResize(failedOrders,    0);
+      int openedPositions   []; ArrayResize(openedPositions, 0);
+      int closedPositions[2][]; ArrayResize(closedPositions, 0);     // { Ticket, CloseType=[CLOSE_TYPE_TP | CLOSE_TYPE_SL | CLOSE_TYPE_SO] }
 
       if (!CheckPositions(failedOrders, openedPositions, closedPositions))
          return(last_error);
@@ -664,7 +668,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
    - Position muß vorher bekannt sein
      (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:   über bekannte Orders iterieren
      (2) alle unbekannten Positionen mit und ohne Exit-Limit registrieren:     über alle Tickets(MODE_TRADES) iterieren
-         (limitlose Positionen können durch Stopout geschlossen worden sein)
+         (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
 
    beides zusammen
    ---------------
@@ -712,26 +716,37 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
          }
          else {
             // jetzt geschlossene Position
-            // prüfen, ob die Position durch ein Close-Limit, durch Stopout oder manuell geschlossen wurde
-            bool closedByBroker = false;
+            // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
+            bool   closedByLimit=false, autoClosed=false;
+            int    closeType;
             string comment = StringToLower(StringTrim(OrderComment()));
 
-            if      (StringStartsWith(comment, "so:" )) closedByBroker = true;   // Margin Stopout erkennen
-            else if (StringEndsWith  (comment, "[tp]")) closedByBroker = true;
-            else if (StringEndsWith  (comment, "[sl]")) closedByBroker = true;
-            else {                                                               // manche Broker setzen den OrderComment bei Schließung durch Limit nicht gemäß MT4-Standard
-               if (!EQ(OrderTakeProfit(), 0)) {
-                  if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() >= OrderTakeProfit());
-                  else                 closedByBroker = closedByBroker || (OrderClosePrice() <= OrderTakeProfit());
+            if      (StringStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; } // Margin Stopout erkennen
+            else if (StringEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
+            else if (StringEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
+            else {
+               if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
+                  closedByLimit = false;                                                              // gemäß MT4-Standard
+                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() >= OrderTakeProfit()); }
+                  else                 { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
+                  if (closedByLimit) {
+                     autoClosed = true;
+                     closeType  = CLOSE_TYPE_TP;
+                  }
                }
                if (!EQ(OrderStopLoss(), 0)) {
-                  if (type == OP_BUY ) closedByBroker = closedByBroker || (OrderClosePrice() <= OrderStopLoss());
-                  else                 closedByBroker = closedByBroker || (OrderClosePrice() >= OrderStopLoss());
+                  closedByLimit = false;
+                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() <= OrderStopLoss()); }
+                  else                 { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
+                  if (closedByLimit) {
+                     autoClosed = true;
+                     closeType  = CLOSE_TYPE_SL;
+                  }
                }
             }
-            if (closedByBroker)
-               ArrayPushInt(closedPositions, orders.knownOrders.ticket[i]);      // Position wurde geschlossen
-            ArraySpliceInts(orders.knownOrders.ticket, i, 1);                    // geschlossene Position aus der Überwachung entfernen
+            if (autoClosed)
+               ArrayPushInt(closedPositions, orders.knownOrders.ticket[i], closeType);    // Position wurde automatisch geschlossen
+            ArraySpliceInts(orders.knownOrders.ticket, i, 1);                             // geschlossene Position aus der Überwachung entfernen
             ArraySpliceInts(orders.knownOrders.type,   i, 1);
             knownSize--;
          }

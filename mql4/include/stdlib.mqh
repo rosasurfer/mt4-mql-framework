@@ -38,11 +38,11 @@
 
 
    // Arrays
-   int      ArraySetIntArray    (int array[][], int i, int values[]);
+   int      ArraySetInts        (int array[][], int i, int values[]);
 
    int      ArrayPushBool       (bool   array[],   bool   value   );
    int      ArrayPushInt        (int    array[],   int    value   );
-   int      ArrayPushIntArray   (int    array[][], int    values[]);
+   int      ArrayPushInts       (int    array[][], int    values[]);
    int      ArrayPushDouble     (double array[],   double value   );
    int      ArrayPushString     (string array[],   string value   );
 
