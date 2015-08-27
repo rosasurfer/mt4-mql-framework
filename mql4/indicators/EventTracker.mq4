@@ -879,7 +879,7 @@ bool onPositionClose(int tickets[][]) {
    if (!track.orders)
       return(true);
 
-   string closeTypeDescr[] = {"", " (TakeProfit)", " (StoppLoss)", " (StopOut)"};
+   string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
 
    int positions = ArrayRange(tickets, 0);
 
