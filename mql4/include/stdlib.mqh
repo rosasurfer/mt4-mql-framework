@@ -68,7 +68,6 @@
 
    int      ArraySpliceBools    (bool   array[],   int offset, int length);
    int      ArraySpliceInts     (int    array[],   int offset, int length);
-   int      ArraySpliceIntArrays(int    array[][], int offset, int length);
    int      ArraySpliceDoubles  (double array[],   int offset, int length);
    int      ArraySpliceStrings  (string array[],   int offset, int length);
 
