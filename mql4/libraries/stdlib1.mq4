@@ -681,8 +681,7 @@ bool AquireLock(string mutexName, bool wait) {
  * @return bool - Erfolgsstatus
  */
 bool ReleaseLock(string mutexName) {
-   if (!StringLen(mutexName))
-      return(!catch("ReleaseLock(1)  illegal parameter mutexName = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName = \"\"", ERR_INVALID_PARAMETER));
 
    // check, if we indeed own that lock
    int i = SearchStringArray(lock.names, mutexName);
@@ -2034,8 +2033,10 @@ int ArraySpliceBools(bool array[], int offset, int length) {
 int ArraySpliceInts(int array[], int offset, int length) {
    int dims = ArrayDimension(array);
    if (dims > 2)        return(_EMPTY(catch("ArraySpliceInts(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   int dim1 = ArrayRange(array, 0);
-   int dim2 = ArrayRange(array, 1);
+
+   int dim1 = ArrayRange(array, 0), dim2=0;
+   if (dims > 1) dim2 = ArrayRange(array, 1);
+
    if (offset < 0)      return(_EMPTY(catch("ArraySpliceInts(2)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
    if (offset > dim1-1) return(_EMPTY(catch("ArraySpliceInts(3)  invalid parameter offset = "+ offset +" for array["+ dim1 +"]"+ ifString(dims==1, "", "[]"), ERR_INVALID_PARAMETER)));
    if (length < 0)      return(_EMPTY(catch("ArraySpliceInts(4)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
@@ -2044,8 +2045,8 @@ int ArraySpliceInts(int array[], int offset, int length) {
    if (length == 0) return(0);
 
    if (offset+length < dim1) {
-      if (dims == 1) ArrayCopy(array, array, offset,       offset+length      );    // ArrayCopy(), wenn die zu entfernenden Elemente
-      else           ArrayCopy(array, array, offset*dim2, (offset+length)*dim2);    // das Ende nicht einschließen
+      if (dims == 1) ArrayCopy(array, array, offset,       offset+length      );    // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschließen
+      else           ArrayCopy(array, array, offset*dim2, (offset+length)*dim2);
    }
    else {
       length = dim1 - offset;
