@@ -718,7 +718,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             // jetzt geschlossene Position
             // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
             bool   closedByLimit=false, autoClosed=false;
-            int    closeType;
+            int    closeType, closeData[2];
             string comment = StringToLower(StringTrim(OrderComment()));
 
             if      (StringStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; } // Margin Stopout erkennen
@@ -745,10 +745,9 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
                }
             }
             if (autoClosed) {
-               int data[2];
-               data[0] = orders.knownOrders.ticket[i];
-               data[1] = closeType;
-               ArrayPushInts(closedPositions, data);                 // Position wurde automatisch geschlossen
+               closeData[0] = orders.knownOrders.ticket[i];
+               closeData[1] = closeType;
+               ArrayPushInts(closedPositions, closeData);            // Position wurde automatisch geschlossen
             }
             ArraySpliceInts(orders.knownOrders.ticket, i, 1);        // geschlossene Position aus der Überwachung entfernen
             ArraySpliceInts(orders.knownOrders.type,   i, 1);
