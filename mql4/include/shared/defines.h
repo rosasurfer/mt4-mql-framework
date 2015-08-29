@@ -22,7 +22,7 @@
 #define MODULETYPE_INDICATOR           1
 #define MODULETYPE_EXPERT              2
 #define MODULETYPE_SCRIPT              4
-#define MODULETYPE_LIBRARY             8
+#define MODULETYPE_LIBRARY             8                    // kein eigenständiges Programm
 
 
 // Programm-Typen
