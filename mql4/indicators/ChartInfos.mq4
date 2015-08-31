@@ -226,7 +226,7 @@ int onTick() {
    if (isLfxInstrument) {
       if (!QC.HandleLfxTerminalMessages()) return(last_error);       // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
       if (!UpdatePositions())              return(last_error);       // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!CheckLfxLimits())               return(last_error);       // prüft alle Pending-LFX-Limits und triggert ggf. entsprechende Trade-Commands
+      if (!CheckLfxLimits())               return(last_error);       // prüft alle Pending-LFX-Limits und verschickt ggf. entsprechende Trade-Commands
    }
    else {
       if (!QC.HandleTradeCommands())       return(last_error);       // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
