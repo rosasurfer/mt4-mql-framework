@@ -220,24 +220,24 @@ int onTick() {
 
    HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
 
-   if (!UpdatePrice())                     return(last_error);
-   if (!UpdateOHLC())                      return(last_error);
+   if (!UpdatePrice())                     return(last_error);       // aktualisiert die Kursanzeige oben rechts
+   if (!UpdateOHLC())                      return(last_error);       // aktualisiert die OHLC-Anzeige oben links                 // TODO: unvollständig
 
    if (isLfxInstrument) {
-      if (!QC.HandleLfxTerminalMessages()) return(last_error);       // Listener für beim LFX-Terminal eingehende Messages
-      if (!UpdatePositions())              return(last_error);
-      if (!CheckLfxLimits())               return(last_error);
+      if (!QC.HandleLfxTerminalMessages()) return(last_error);       // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
+      if (!UpdatePositions())              return(last_error);       // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!CheckLfxLimits())               return(last_error);       // prüft alle Pending-LFX-Limits und triggert ggf. entsprechende Trade-Commands
    }
    else {
-      if (!QC.HandleTradeCommands())       return(last_error);       // Listener für beim Terminal eingehende Trade-Commands
+      if (!QC.HandleTradeCommands())       return(last_error);       // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
       if (!UpdateSpread())                 return(last_error);
-      if (!UpdateUnitSize())               return(last_error);
-      if (!UpdatePositions())              return(last_error);
-      if (!UpdateStopoutLevel())           return(last_error);
+      if (!UpdateUnitSize())               return(last_error);       // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              return(last_error);       // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           return(last_error);       // aktualisiert die Markierung des Stopout-Levels im Chart
    }
 
-   if (IsVisualModeFix())                                            // nur im Tester
-      UpdateTime();
+   if (IsVisualModeFix())                                            // nur im Tester:
+      UpdateTime();                                                  // aktualisiert die Anzeige der Serverzeit unten rechts
    return(last_error);
 }
 
@@ -1249,7 +1249,7 @@ bool TrackSignal(string signalId) {
 
 
 /**
- * Überprüft alle LFX-Orders auf erreichte Limite: Pending-Open, StopLoss, TakeProfit
+ * Überprüft alle Pending-LFX-Limits: Pending-Open, StopLoss, TakeProfit
  *
  * @return bool - Erfolgsstatus
  */
