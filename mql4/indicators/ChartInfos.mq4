@@ -48,11 +48,10 @@ int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | M
 
 bool   mm.done;                                          // Flag
 
-double mm.currentEquity;
-double mm.availableEquity;                               // zum Traden verfügbare Equity
+double mm.availableEquity;                               // zum Traden verfügbare Equity (ohne P/L offener Positionen)              !!! TODO !!! wird falsch berechnet
 
 double mm.lotValue;                                      // Value eines Lots in Account-Currency
-double mm.unleveragedLots;                               // Lotsize für Hebel von 1:1
+double mm.unleveragedLots;                               // Lotsize bei Hebel von 1:1
 
 double mm.defaultVola;
 double mm.defaultLeverage;
@@ -1651,8 +1650,8 @@ bool UpdatePositions() {
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
-      if (!mm.availableEquity) currentLeverage = MathAbs(totalPosition)/(mm.currentEquity/mm.lotValue);  // statt der verfügbaren wird die aktuelle Equity verwendet (unrealisierte Gewinne !!!)
-      else                     currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;
+      if (!mm.availableEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);   // Workaround bei negativer AccountBalance:
+      else                     currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                                // die unrealisierten Gewinne werden mit einbezogen !!!
       strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
       // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
@@ -2176,7 +2175,6 @@ bool UpdateMoneyManagement() {
    if (mode.remote) return(_false(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
  //if (mode.remote) return(!catch("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED));
 
-   mm.currentEquity         = 0;
    mm.availableEquity       = 0;
    mm.lotValue              = 0;
    mm.unleveragedLots       = 0;                                     // Lotsize bei Hebel 1:1
@@ -2203,44 +2201,41 @@ bool UpdateMoneyManagement() {
 
    double externalAssets = GetExternalAssets();
    if (mode.intern) {
-      mm.currentEquity   = AccountEquity()-AccountCredit();
-      mm.availableEquity = MathMin(AccountBalance(), mm.currentEquity) + externalAssets;
-      mm.currentEquity  += externalAssets;
+      mm.availableEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
    }
    else {
-      mm.currentEquity   = externalAssets;
-      mm.availableEquity = externalAssets;
+      mm.availableEquity = externalAssets;                                       // Näherungswert
    }
-   if (mm.availableEquity < 0)
+   if (mm.availableEquity < 0)                                                   // kann negativ sein bei negativer AccountBalance
       mm.availableEquity = 0;
 
 
-   if (!Close[0] || !tickSize || !tickValue || !marginRequired)                              // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   if (!Close[0] || !tickSize || !tickValue || !marginRequired)                  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
-   mm.lotValue        = Close[0]/tickSize * tickValue;                                       // Value eines Lots in Account-Currency
-   mm.unleveragedLots = mm.availableEquity/mm.lotValue;                                      // ungehebelte Lotsize (Leverage 1:1)
+   mm.lotValue        = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
+   mm.unleveragedLots = mm.availableEquity/mm.lotValue;                          // ungehebelte Lotsize (Leverage 1:1)
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY)                return(false);    // ATR(14xW)
+   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(false);       // ATR(14xW)
       if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);//throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
-      if (!a) return(false);
-   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY)                return(false);    // TrueRange letzte Woche
-      if (!b) return(false);
-   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY)                return(false);    // TrueRange aktuelle Woche
-      if (!c) return(false);
+      if (!a)                                               return(false);
+   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(false);       // TrueRange letzte Woche
+      if (!b)                                               return(false);
+   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY) return(false);       // TrueRange aktuelle Woche
+      if (!c)                                               return(false);
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
-      double C = iClose(NULL, PERIOD_W1, 1); if (!C) return(false);
-      double H = iHigh (NULL, PERIOD_W1, 0); if (!H) return(false);
-      double L = iLow  (NULL, PERIOD_W1, 0); if (!L) return(false);
-   mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);                              // median price
+      double C = iClose(NULL, PERIOD_W1, 1); if (!C)        return(false);
+      double H = iHigh (NULL, PERIOD_W1, 0); if (!H)        return(false);
+      double L = iLow  (NULL, PERIOD_W1, 0); if (!L)        return(false);
+   mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);                  // median price
 
 
    if (mm.isCustomUnitSize) {
       // (3) customLots
-      mm.customLots      = mm.unleveragedLots * mm.customLeverage;                           // mit benutzerdefiniertem Hebel gehebelte Lotsize
-      mm.customVola      = mm.customLeverage * (mm.ATRwPct*100);                             // resultierende wöchentliche Volatilität
+      mm.customLots      = mm.unleveragedLots * mm.customLeverage;               // mit benutzerdefiniertem Hebel gehebelte Lotsize
+      mm.customVola      = mm.customLeverage * (mm.ATRwPct*100);                 // resultierende wöchentliche Volatilität
 
       mm.defaultVola     = mm.customVola;
       mm.defaultLeverage = mm.customLeverage;
@@ -2251,7 +2246,7 @@ bool UpdateMoneyManagement() {
       if (!mm.ATRwPct)
          return(false);
       mm.stdLeverage     = mm.stdVola/(mm.ATRwPct*100);
-      mm.stdLots         = mm.unleveragedLots * mm.stdLeverage;                              // auf wöchentliche Volatilität gehebelte Lotsize
+      mm.stdLots         = mm.unleveragedLots * mm.stdLeverage;                  // auf wöchentliche Volatilität gehebelte Lotsize
 
       mm.defaultVola     = mm.stdVola;
       mm.defaultLeverage = mm.stdLeverage;
@@ -4380,6 +4375,7 @@ bool ParseSignal(string value, string &provider, string &signal) {
    else if (value == "simpletrader.caesar21"    ) { provider="simpletrader"; signal="caesar21"    ; }
    else if (value == "simpletrader.dayfox"      ) { provider="simpletrader"; signal="dayfox"      ; }
    else if (value == "simpletrader.fxviper"     ) { provider="simpletrader"; signal="fxviper"     ; }
+   else if (value == "simpletrader.gcedge"      ) { provider="simpletrader"; signal="gcedge"      ; }
    else if (value == "simpletrader.goldstar"    ) { provider="simpletrader"; signal="goldstar"    ; }
    else if (value == "simpletrader.overtrader"  ) { provider="simpletrader"; signal="overtrader"  ; }
    else if (value == "simpletrader.smartscalper") { provider="simpletrader"; signal="smartscalper"; }
