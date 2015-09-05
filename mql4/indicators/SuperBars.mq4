@@ -54,24 +54,19 @@ int onInit() {
    if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
-
    // (2) ETH/Future-Status ermitteln
    string futures[] = {"BRENT","DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
    eth.likeFuture = StringInArray(futures, StdSymbol());
 
-
    // (3) Label für Superbar-Beschreibung erzeugen
    CreateDescriptionLabel();
-
 
    // (4) Status restaurieren
    if (!RestoreWindowStatus())
       return(last_error);
 
-
    // (5) Verfügbarkeit des eingestellten Superbar-Timeframes prüfen bzw. Default festlegen
    CheckSuperTimeframeAvailability();
-
 
    SetIndexLabel(0, NULL);                                              // Datenanzeige ausschalten
    return(catch("onInit(1)"));
@@ -210,7 +205,7 @@ bool CheckSuperTimeframeAvailability() {
       case  PERIOD_H1    : if (Period() >  PERIOD_M15) superBars.timeframe *= -1; break;
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    : if (Period() >  PERIOD_H1 ) superBars.timeframe *= -1; break;
-      case  PERIOD_W1    : if (Period() >  PERIOD_H4 ) superBars.timeframe *= -1; break;
+      case  PERIOD_W1    : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_MN1   : if (Period() >  PERIOD_D1 ) superBars.timeframe *= -1; break;
       case  PERIOD_Q1    : if (Period() >  PERIOD_W1 ) superBars.timeframe *= -1; break;
 
@@ -218,7 +213,7 @@ bool CheckSuperTimeframeAvailability() {
       case -PERIOD_H1    : if (Period() <= PERIOD_M15) superBars.timeframe *= -1; break;
       case -PERIOD_D1_ETH:
       case -PERIOD_D1    : if (Period() <= PERIOD_H1 ) superBars.timeframe *= -1; break;
-      case -PERIOD_W1    : if (Period() <= PERIOD_H4 ) superBars.timeframe *= -1; break;
+      case -PERIOD_W1    : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
       case -PERIOD_MN1   : if (Period() <= PERIOD_D1 ) superBars.timeframe *= -1; break;
       case -PERIOD_Q1    : if (Period() <= PERIOD_W1 ) superBars.timeframe *= -1; break;
 
