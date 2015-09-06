@@ -4378,6 +4378,7 @@ bool ParseSignal(string value, string &provider, string &signal) {
    else if (value == "simpletrader.gcedge"       ) { provider="simpletrader"; signal="gcedge"       ; }
    else if (value == "simpletrader.goldstar"     ) { provider="simpletrader"; signal="goldstar"     ; }
    else if (value == "simpletrader.kilimanjaro"  ) { provider="simpletrader"; signal="kilimanjaro"  ; }
+   else if (value == "simpletrader.novolr"       ) { provider="simpletrader"; signal="novolr"       ; }
    else if (value == "simpletrader.overtrader"   ) { provider="simpletrader"; signal="overtrader"   ; }
    else if (value == "simpletrader.smartscalper" ) { provider="simpletrader"; signal="smartscalper" ; }
    else if (value == "simpletrader.smarttrader"  ) { provider="simpletrader"; signal="smarttrader"  ; }
