@@ -4369,19 +4369,20 @@ bool RestoreWindowStatus() {
 bool ParseSignal(string value, string &provider, string &signal) {
    value = StringToLower(value);
 
-   if      (value == "simpletrader.alexprofit"  ) { provider="simpletrader"; signal="alexprofit"  ; }
-   if      (value == "simpletrader.asta"        ) { provider="simpletrader"; signal="asta"        ; }
-   else if (value == "simpletrader.caesar2"     ) { provider="simpletrader"; signal="caesar2"     ; }
-   else if (value == "simpletrader.caesar21"    ) { provider="simpletrader"; signal="caesar21"    ; }
-   else if (value == "simpletrader.dayfox"      ) { provider="simpletrader"; signal="dayfox"      ; }
-   else if (value == "simpletrader.fxviper"     ) { provider="simpletrader"; signal="fxviper"     ; }
-   else if (value == "simpletrader.gcedge"      ) { provider="simpletrader"; signal="gcedge"      ; }
-   else if (value == "simpletrader.goldstar"    ) { provider="simpletrader"; signal="goldstar"    ; }
-   else if (value == "simpletrader.kilimanjaro" ) { provider="simpletrader"; signal="kilimanjaro" ; }
-   else if (value == "simpletrader.overtrader"  ) { provider="simpletrader"; signal="overtrader"  ; }
-   else if (value == "simpletrader.smartscalper") { provider="simpletrader"; signal="smartscalper"; }
-   else if (value == "simpletrader.smarttrader" ) { provider="simpletrader"; signal="smarttrader" ; }
-   else if (value == "simpletrader.yenfortress" ) { provider="simpletrader"; signal="yenfortress" ; }
+   if      (value == "simpletrader.alexprofit"   ) { provider="simpletrader"; signal="alexprofit"   ; }
+   if      (value == "simpletrader.asta"         ) { provider="simpletrader"; signal="asta"         ; }
+   else if (value == "simpletrader.caesar2"      ) { provider="simpletrader"; signal="caesar2"      ; }
+   else if (value == "simpletrader.caesar21"     ) { provider="simpletrader"; signal="caesar21"     ; }
+   else if (value == "simpletrader.dayfox"       ) { provider="simpletrader"; signal="dayfox"       ; }
+   else if (value == "simpletrader.fxviper"      ) { provider="simpletrader"; signal="fxviper"      ; }
+   else if (value == "simpletrader.gcedge"       ) { provider="simpletrader"; signal="gcedge"       ; }
+   else if (value == "simpletrader.goldstar"     ) { provider="simpletrader"; signal="goldstar"     ; }
+   else if (value == "simpletrader.kilimanjaro"  ) { provider="simpletrader"; signal="kilimanjaro"  ; }
+   else if (value == "simpletrader.overtrader"   ) { provider="simpletrader"; signal="overtrader"   ; }
+   else if (value == "simpletrader.smartscalper" ) { provider="simpletrader"; signal="smartscalper" ; }
+   else if (value == "simpletrader.smarttrader"  ) { provider="simpletrader"; signal="smarttrader"  ; }
+   else if (value == "simpletrader.steadycapture") { provider="simpletrader"; signal="steadycapture"; }
+   else if (value == "simpletrader.yenfortress"  ) { provider="simpletrader"; signal="yenfortress"  ; }
    else {
       return(false);
    }
