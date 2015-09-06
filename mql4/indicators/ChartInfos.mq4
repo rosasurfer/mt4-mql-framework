@@ -4382,6 +4382,7 @@ bool ParseSignal(string value, string &provider, string &signal) {
    else if (value == "simpletrader.smartscalper" ) { provider="simpletrader"; signal="smartscalper" ; }
    else if (value == "simpletrader.smarttrader"  ) { provider="simpletrader"; signal="smarttrader"  ; }
    else if (value == "simpletrader.steadycapture") { provider="simpletrader"; signal="steadycapture"; }
+   else if (value == "simpletrader.twilight"     ) { provider="simpletrader"; signal="twilight"     ; }
    else if (value == "simpletrader.yenfortress"  ) { provider="simpletrader"; signal="yenfortress"  ; }
    else {
       return(false);
