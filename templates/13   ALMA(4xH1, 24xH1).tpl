@@ -8806,7 +8806,7 @@ MA.Periods=4
 MA.Timeframe=H1
 Color.UpTrend=16711680
 Color.DownTrend=255
-Max.Values=5000
+Max.Values=2000
 </inputs>
 </expert>
 weight_0=0
@@ -8814,7 +8814,7 @@ weight_1=0
 weight_2=2
 weight_3=2
 weight_4=2
-period_flags=15
+period_flags=7
 show_data=1
 </indicator>
 
