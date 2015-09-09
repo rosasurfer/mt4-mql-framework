@@ -4698,14 +4698,25 @@ int ReadExternalPositions(string provider, string signal) {
  * @return bool - Erfolgsstatus
  */
 bool EditAccountConfig() {
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\";
-      if      (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
-      else if (mode.extern) file = file + external.provider     +"\\"+ external.signal    +"_config.ini";
-      else if (mode.remote) file = file +"LiteForex\\remote_positions.ini";
-      else return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
+   string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
+   string files[];
 
-   if (!EditFile(file))
+   if (mode.intern) {
+      ArrayPushString(files, baseDir + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
+   }
+   else if (mode.extern) {
+      ArrayPushString(files, baseDir + external.provider +"\\"+ external.signal +"_open.ini"  );
+      ArrayPushString(files, baseDir + external.provider +"\\"+ external.signal +"_closed.ini");
+      ArrayPushString(files, baseDir + external.provider +"\\"+ external.signal +"_config.ini");
+   }
+   else if (mode.remote) {
+      ArrayPushString(files, baseDir +"LiteForex\\remote_positions.ini");
+   }
+   else {
+      return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
+   }
+
+   if (!EditFiles(files))
       return(!SetLastError(stdlib.GetLastError()));
 }
 
@@ -4733,7 +4744,7 @@ string InputsToStr() {
    string   DateToStr(datetime time, string mask);
    bool     DeleteIniKey(string file, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
-   bool     EditFile(string filename);
+   bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    double   GetCommission();
    string   GetConfigString(string section, string key, string defaultValue);
