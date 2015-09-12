@@ -46,9 +46,16 @@ int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | M
 // Moneymanagement
 #define STANDARD_VOLATILITY  10                          // Standard-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
 
-bool   mm.done;                                          // Flag
+//double mm.brokerEquity;                                // vom Broker verwendeter Equity-Betrag: entspricht Wert von AccountEquity()
+                                                         //  - inkl. Credits
+                                                         //  - inkl. unrealiserter P/L
+                                                         //  - inkl. doppelte Spreads und Commissions gehedgter Positionen
 
-double mm.availableEquity;                               // zum Traden verfügbare Equity (ohne P/L offener Positionen)              !!! TODO !!! wird falsch berechnet
+double mm.availableEquity;                               // zum Öffnen neuer Positionen verfügbarer Equity-Betrag:
+                                                         //  - enthält externe Assets                                                           !!! doppelte Spreads und      !!!
+                                                         //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt   = realisiert)    !!! Commissions herausrechnen !!!
+                                                         //  - enthält offene Verluste ungehedgter Positionen
+                                                         //  - enthält keine offenen Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
 
 double mm.lotValue;                                      // Value eines Lots in Account-Currency
 double mm.unleveragedLots;                               // Lotsize bei Hebel von 1:1
@@ -70,8 +77,9 @@ double mm.stdLots;                                       // resultierende Lotsiz
 double mm.customVola;                                    // benutzerdefinierte Volatilität einer Unit je Woche
 double mm.customLeverage;                                // benutzerdefinierter Hebel einer Unit
 double mm.customLots;                                    // resultierende Lotsize
+bool   mm.done;                                          // Flag
 
-double aum.value;                                        // zusätzliche extern verwaltete und bei Equity-Berechnungen zu berücksichtigende Assets
+double aum.value;                                        // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
 string aum.currency = "";
 
 
@@ -1609,7 +1617,7 @@ bool UpdateSpread() {
 
 
 /**
- * Aktualisiert die UnitSize-Anzeige.
+ * Aktualisiert die UnitSize-Anzeige unten rechts.
  *
  * @return bool - Erfolgsstatus
  */
@@ -1634,7 +1642,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Aktualisiert die Positionsanzeigen: Gesamtposition unten rechts, Einzelpositionen unten links.
+ * Aktualisiert die Positionsanzeigen unten rechts (Gesamtposition) und unten links (detaillierte Einzelpositionen).
  *
  * @return bool - Erfolgsstatus
  */
@@ -1650,8 +1658,8 @@ bool UpdatePositions() {
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
-      if (!mm.availableEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);   // Workaround bei negativer AccountBalance:
-      else                     currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                                // die unrealisierten Gewinne werden mit einbezogen !!!
+      if (!mm.availableEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
+      else                     currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
       strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
       // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
@@ -2177,13 +2185,13 @@ bool UpdateMoneyManagement() {
 
    mm.availableEquity       = 0;
    mm.lotValue              = 0;
-   mm.unleveragedLots       = 0;                                     // Lotsize bei Hebel 1:1
-   mm.ATRwAbs               = 0;                                     // wöchentliche ATR, absolut
-   mm.ATRwPct               = 0;                                     // wöchentliche ATR, prozentual
-   mm.stdLeverage           = 0;                                     // Hebel bei wöchentlicher Volatilität einer Unit von {mm.stdVola} Prozent
-   mm.stdLots               = 0;                                     // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdVola} Prozent
-   mm.customVola            = 0;                                     // Volatilität/Woche bei benutzerdefiniertem Hebel
-   mm.customLots            = 0;                                     // Lotsize bei benutzerdefiniertem Hebel
+   mm.unleveragedLots       = 0;                                              // Lotsize bei Hebel 1:1
+   mm.ATRwAbs               = 0;                                              // wöchentliche ATR, absolut
+   mm.ATRwPct               = 0;                                              // wöchentliche ATR, prozentual
+   mm.stdLeverage           = 0;                                              // Hebel bei wöchentlicher Volatilität einer Unit von {mm.stdVola} Prozent
+   mm.stdLots               = 0;                                              // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdVola} Prozent
+   mm.customVola            = 0;                                              // Volatilität/Woche bei benutzerdefiniertem Hebel
+   mm.customLots            = 0;                                              // Lotsize bei benutzerdefiniertem Hebel
    mm.defaultVola           = 0;
    mm.defaultLeverage       = 0;
    mm.defaultLots           = 0;
@@ -2200,42 +2208,41 @@ bool UpdateMoneyManagement() {
       }
 
    double externalAssets = GetExternalAssets();
-   if (mode.intern) {
+   if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
       mm.availableEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
+      if (mm.availableEquity < 0)                                             // kann bei negativer AccountBalance negativ sein
+         mm.availableEquity = 0;
    }
    else {
-      mm.availableEquity = externalAssets;                                       // Näherungswert
+      mm.availableEquity = externalAssets;                                    // ebenfalls falsch (nur Näherungswert)
    }
-   if (mm.availableEquity < 0)                                                   // kann negativ sein bei negativer AccountBalance
-      mm.availableEquity = 0;
 
-
-   if (!Close[0] || !tickSize || !tickValue || !marginRequired)                  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   if (!Close[0] || !tickSize || !tickValue || !marginRequired)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
-   mm.lotValue        = Close[0]/tickSize * tickValue;                           // Value eines Lots in Account-Currency
-   mm.unleveragedLots = mm.availableEquity/mm.lotValue;                          // ungehebelte Lotsize (Leverage 1:1)
+   mm.lotValue        = Close[0]/tickSize * tickValue;                        // Value eines Lots in Account-Currency
+   mm.unleveragedLots = mm.availableEquity/mm.lotValue;                       // ungehebelte Lotsize (Leverage 1:1)
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(false);       // ATR(14xW)
+   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(false);    // ATR(14xW)
       if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);//throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
       if (!a)                                               return(false);
-   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(false);       // TrueRange letzte Woche
+   double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(false);    // TrueRange letzte Woche
       if (!b)                                               return(false);
-   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY) return(false);       // TrueRange aktuelle Woche
+   double c = @ATR(NULL, PERIOD_W1,  1, 0); if (c == EMPTY) return(false);    // TrueRange aktuelle Woche
       if (!c)                                               return(false);
    mm.ATRwAbs = MathMax(a, MathMax(b, c));
       double C = iClose(NULL, PERIOD_W1, 1); if (!C)        return(false);
       double H = iHigh (NULL, PERIOD_W1, 0); if (!H)        return(false);
       double L = iLow  (NULL, PERIOD_W1, 0); if (!L)        return(false);
-   mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);                  // median price
+   mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);               // median price
 
 
    if (mm.isCustomUnitSize) {
       // (3) customLots
-      mm.customLots      = mm.unleveragedLots * mm.customLeverage;               // mit benutzerdefiniertem Hebel gehebelte Lotsize
-      mm.customVola      = mm.customLeverage * (mm.ATRwPct*100);                 // resultierende wöchentliche Volatilität
+      mm.customLots      = mm.unleveragedLots * mm.customLeverage;            // mit benutzerdefiniertem Hebel gehebelte Lotsize
+      mm.customVola      = mm.customLeverage * (mm.ATRwPct*100);              // resultierende wöchentliche Volatilität
 
       mm.defaultVola     = mm.customVola;
       mm.defaultLeverage = mm.customLeverage;
@@ -2246,7 +2253,7 @@ bool UpdateMoneyManagement() {
       if (!mm.ATRwPct)
          return(false);
       mm.stdLeverage     = mm.stdVola/(mm.ATRwPct*100);
-      mm.stdLots         = mm.unleveragedLots * mm.stdLeverage;                  // auf wöchentliche Volatilität gehebelte Lotsize
+      mm.stdLots         = mm.unleveragedLots * mm.stdLeverage;               // auf wöchentliche Volatilität gehebelte Lotsize
 
       mm.defaultVola     = mm.stdVola;
       mm.defaultLeverage = mm.stdLeverage;
