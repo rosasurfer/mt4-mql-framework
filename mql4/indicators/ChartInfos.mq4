@@ -51,11 +51,25 @@ int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | M
                                                          //  - inkl. unrealiserter P/L
                                                          //  - inkl. doppelte Spreads und Commissions gehedgter Positionen
 
-double mm.availableEquity;                               // zum Öffnen neuer Positionen verfügbarer Equity-Betrag:
+double mm.availableEquity;                               // realer zum Traden verfügbarer Equity-Betrag:
                                                          //  - enthält externe Assets                                                           !!! doppelte Spreads und      !!!
-                                                         //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt   = realisiert)    !!! Commissions herausrechnen !!!
+                                                         //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)      !!! Commissions herausrechnen !!!
                                                          //  - enthält offene Verluste ungehedgter Positionen
-                                                         //  - enthält keine offenen Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
+                                                         //  - enthält NICHT offene Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
+/*
+Schreibzugriff in:
+------------------
+- UpdateMoneyManagement()
+
+
+Lesezugriff in:
+---------------
+- UpdatePositions()              Test auf 0 zur Berechnung von 'currentLeverage'
+- ShowStandardTargets()          Berechnung der prozentualen TP/SL-Projections
+*/
+
+
+
 
 double mm.lotValue;                                      // Value eines Lots in Account-Currency
 double mm.unleveragedLots;                               // Lotsize bei Hebel von 1:1
@@ -675,8 +689,7 @@ int ShowTargetLevels() {
    double slWeeklyPct  =  8, slWeeklyAbs  = mm.availableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
    double slMonthlyPct = 12, slMonthlyAbs = mm.availableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
    double tpDailyPct   =  1, tpDailyAbs   = mm.availableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
-   debug("ShowTargetLevels(0.2)  equity="+ DoubleToStr(mm.availableEquity, 2) +"  TP="+ DoubleToStr(tpDailyAbs, 2) +"  SL="+ DoubleToStr(slDailyAbs, 2));
-   debug("ShowTargetLevels(0.3)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
+   debug("ShowTargetLevels(0.2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
 
 
    // (3) StopLoss- und TakeProfit-Preise berechnen
