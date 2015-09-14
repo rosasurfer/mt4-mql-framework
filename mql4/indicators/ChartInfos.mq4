@@ -274,7 +274,7 @@ int onTick() {
  * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
  *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleTargetLevels"     - Schaltet die Anzeige der Soll-StopLoss- und -TakeProfit-Level ein/aus.
+ *                "cmd=ToggleStandardTargets"  - Schaltet die Anzeige der Standard-TP-/SL-Level ein/aus.
  *                "cmd=ToggleAuM"              - Schaltet die Assets-under-Management-Anzeige ein/aus.
  *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
  *                                               da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
@@ -299,8 +299,8 @@ bool onChartCommand(string commands[]) {
             return(false);
          continue;
       }
-      if (commands[i] == "cmd=ToggleTargetLevels") {
-         if (!ToggleTargetLevels())
+      if (commands[i] == "cmd=ToggleStandardTargets") {
+         if (!ToggleStandardTargets())
             return(false);
          continue;
       }
@@ -610,18 +610,18 @@ bool ToggleTradeHistory() {
 
 
 /**
- * Schaltet die Anzeige der Soll-StopLoss- und -TakeProfit-Level offener oder imaginärer Positionen ein/aus.
+ * Schaltet die Anzeige der TP-/SL-Level einer Position in Standard-UnitSize ein/aus.
  *
  * @return bool - Erfolgsstatus
  */
-bool ToggleTargetLevels() {
+bool ToggleStandardTargets() {
    // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetTargetLevelsDisplayStatus();
+   bool status = !GetStandardTargetsDisplayStatus();
    status = true;
 
-   // Status ON: Target-Level anzeigen
+   // Status ON: Standard-Targets anzeigen
    if (status) {
-      int positions = ShowTargetLevels();
+      int positions = ShowStandardTargets();
       if (positions == -1)
          return(false);
       if (!positions) {                                              // ohne Target-Level bleibt die Anzeige unverändert (wenn Equity und Std.-UnitSize zu klein sind)
@@ -656,20 +656,20 @@ bool ToggleTargetLevels() {
    }
 
    // Anzeigestatus im Chart speichern
-   SetTargetLevelsDisplayStatus(status);
+   SetStandardTargetsDisplayStatus(status);
 
    if (This.IsTesting())
       WindowRedraw();
-   return(!catch("ToggleTargetLevels(1)"));
+   return(!catch("ToggleStandardTargets(1)"));
 }
 
 
 /**
- * Zeigt die Soll-Target-Level offener oder, falls keine offene Position vorhanden, einer imaginären Position an.
+ * Zeigt die TP-/SL-Targets einer Position in Standard-UnitSize an.
  *
  * @return int - Anzahl der verarbeiteten Positionen oder -1 (EMPTY), falls ein Fehler auftrat.
  */
-int ShowTargetLevels() {
+int ShowStandardTargets() {
    if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(EMPTY);
    if (!mode.intern)                                  return(0);     // TargetLevel werden zur Zeit nur mit internem Account unterstützt
 
@@ -681,7 +681,7 @@ int ShowTargetLevels() {
    lotsize = MathMax(lotsize, minLotSize);
    double pipValue = PipValue(lotsize, true);
    if (!pipValue)   return(0);                                       // falls MarketInfo()-Daten noch nicht verfügbar sind
-   debug("ShowTargetLevels(0.1)  pipValue("+ NumberToStr(lotsize, ".1+") +")="+ NumberToStr(pipValue, ".+"));
+   debug("ShowStandardTargets(0.1)  pipValue("+ NumberToStr(lotsize, ".1+") +")="+ NumberToStr(pipValue, ".+"));
 
 
    // (2) StopLoss- und TakeProfit-Konfiguration einlesen und Absolutwerte und Pips berechnen
@@ -689,7 +689,7 @@ int ShowTargetLevels() {
    double slWeeklyPct  =  8, slWeeklyAbs  = mm.availableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
    double slMonthlyPct = 12, slMonthlyAbs = mm.availableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
    double tpDailyPct   =  1, tpDailyAbs   = mm.availableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
-   debug("ShowTargetLevels(0.2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
+   debug("ShowStandardTargets(0.2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
 
 
    // (3) StopLoss- und TakeProfit-Preise berechnen
@@ -773,18 +773,18 @@ int ShowTargetLevels() {
    Comment(StringConcatenate(NL, NL, NL, msg));                                     // 3 Zeilen Abstand nach oben für evt. vorhandene andere Anzeigen
    */
 
-   if (!catch("ShowTargetLevels(1)"))
+   if (!catch("ShowStandardTargets(1)"))
       return(1);
    return(EMPTY);
 }
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen TargetLevels-Anzeigestatus aus.
+ * Liest den im Chart gespeicherten aktuellen StandardTargets-Anzeigestatus aus.
  *
  * @return bool - Status: ON/OFF
  */
-bool GetTargetLevelsDisplayStatus() {
+bool GetStandardTargetsDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
    string label = __NAME__ +".TargetLevelsDisplay.status";
    if (ObjectFind(label) != -1)
@@ -800,7 +800,7 @@ bool GetTargetLevelsDisplayStatus() {
  *
  * @return bool - Erfolgsstatus
  */
-bool SetTargetLevelsDisplayStatus(bool status) {
+bool SetStandardTargetsDisplayStatus(bool status) {
    status = status!=0;
 
    // TODO: Status statt im Chart im Fenster lesen/schreiben
@@ -811,7 +811,7 @@ bool SetTargetLevelsDisplayStatus(bool status) {
    ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
    ObjectSetText(label, ""+ status, 0);
 
-   return(!catch("SetTargetLevelsDisplayStatus(1)"));
+   return(!catch("SetStandardTargetsDisplayStatus(1)"));
 }
 
 
