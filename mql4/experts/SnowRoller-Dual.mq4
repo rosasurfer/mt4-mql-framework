@@ -1794,7 +1794,7 @@ bool IsOrderClosedBySL() {
    bool closedBySL = false;
 
    if (closed) /*&&*/ if (position) {
-      if (StringIEndsWith(OrderComment(), "[sl]")) {
+      if (StringEndsWithI(OrderComment(), "[sl]")) {
          closedBySL = true;
       }
       else {

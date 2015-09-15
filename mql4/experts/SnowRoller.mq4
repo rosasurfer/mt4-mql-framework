@@ -1104,7 +1104,7 @@ bool IsOrderClosedBySL() {
    bool closedBySL = false;
 
    if (closed) /*&&*/ if (position) {
-      if (StringIEndsWith(OrderComment(), "[sl]")) {
+      if (StringEndsWithI(OrderComment(), "[sl]")) {
          closedBySL = true;
       }
       else {
@@ -3466,10 +3466,10 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    //debug("ResolveStatusLocation.FindFile()  "+ size +" results for \""+ filePattern +"\"");
 
    for (int i=0; i < size; i++) {
-      if (!StringIStartsWith(files[i], sequenceNames[0])) /*&&*/ if (!StringIStartsWith(files[i], sequenceNames[1])) /*&&*/ if (!StringIStartsWith(files[i], sequenceNames[2])) /*&&*/ if (!StringIStartsWith(files[i], sequenceNames[3]))
-         if (!StringIContains(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StringIContains(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StringIContains(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StringIContains(files[i], "."+ sequenceNames[3]))
+      if (!StringStartsWithI(files[i], sequenceNames[0])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[1])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[2])) /*&&*/ if (!StringStartsWithI(files[i], sequenceNames[3]))
+         if (!StringContainsI(files[i], "."+ sequenceNames[0])) /*&&*/ if (!StringContainsI(files[i], "."+ sequenceNames[1])) /*&&*/ if (!StringContainsI(files[i], "."+ sequenceNames[2])) /*&&*/ if (!StringContainsI(files[i], "."+ sequenceNames[3]))
             continue;
-      if (StringIEndsWith(files[i], ".set")) {
+      if (StringEndsWithI(files[i], ".set")) {
          lpFile = files[i];                                                      // Abbruch nach Fund der ersten .set-Datei
          return(true);
       }
@@ -3901,7 +3901,7 @@ bool RestoreStatus() {
    // (4.2) Abhängigkeiten validieren
    // Account: Eine Testsequenz kann in einem anderen Account visualisiert werden, solange die Zeitzonen beider Accounts übereinstimmen.
    if (accountValue != ShortAccountCompany()+":"+GetAccountNumber()) {
-      if (IsTesting() || !IsTest() || !StringIStartsWith(accountValue, ShortAccountCompany()+":"))
+      if (IsTesting() || !IsTest() || !StringStartsWithI(accountValue, ShortAccountCompany()+":"))
                                                                           return(_false(catch("RestoreStatus(11)  account mis-match \""+ ShortAccountCompany() +":"+ GetAccountNumber() +"\"/\""+ accountValue +"\" in status file \""+ fileName +"\" (line \""+ lines[accountLine] +"\")", ERR_RUNTIME_ERROR)));
    }
 

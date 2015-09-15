@@ -85,7 +85,7 @@ int onStart() {
          if (OrderType() > OP_SELL)
             continue;
          for (int n=0; n < inputSize; n++) {
-            if (StringIStartsWith(OrderComment(), inputLabels[n])) {
+            if (StringStartsWithI(OrderComment(), inputLabels[n])) {
                if (!IntInArray(magics, OrderMagicNumber())) {
                   ArrayPushInt(magics, OrderMagicNumber());
                }
