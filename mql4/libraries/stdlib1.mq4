@@ -7397,9 +7397,9 @@ bool StringContains(string object, string substring) {
  *
  * @return bool
  */
-bool StringIContains(string object, string substring) {
+bool StringContainsI(string object, string substring) {
    if (!StringLen(substring))
-      return(!catch("StringIContains()  empty substring \"\"", ERR_INVALID_PARAMETER));
+      return(!catch("StringContainsI()  empty substring \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
 }
 
@@ -7412,7 +7412,7 @@ bool StringIContains(string object, string substring) {
  *
  * @return bool
  */
-bool StringICompare(string string1, string string2) {
+bool StringCompareI(string string1, string string2) {
    return(StringToUpper(string1) == StringToUpper(string2));
 }
 
@@ -9688,7 +9688,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
          // Restposition finden
          if (NE(lots, openLots)) {
             string strValue, strValue2;
-            if (IsTesting()) /*&&*/ if (!StringIStartsWith(OrderComment(), "to #")) {  // Fallback zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
+            if (IsTesting()) /*&&*/ if (!StringStartsWithI(OrderComment(), "to #")) {  // Fallback zum Serververhalten, falls der Unterschied in späteren Terminalversionen behoben ist.
                // Der Tester überschreibt den OrderComment statt mit "to #2" mit "partial close".
                if (OrderComment() != "partial close")          return(_false(oe.setError(oe, catch("OrderCloseEx(15)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                strValue  = StringConcatenate("split from #", ticket);
@@ -9715,7 +9715,7 @@ bool OrderCloseEx(int ticket, double lots, double price, double slippage, color 
                }
             }
             if (!remainder) {
-               if (!StringIStartsWith(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(21)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
+               if (!StringStartsWithI(OrderComment(), "to #")) return(_false(oe.setError(oe, catch("OrderCloseEx(21)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                strValue = StringRight(OrderComment(), -4);
                if (!StringIsDigit(strValue))                   return(_false(oe.setError(oe, catch("OrderCloseEx(22)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, O_POP))));
                remainder = StrToInteger(strValue);

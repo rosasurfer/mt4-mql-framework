@@ -921,7 +921,7 @@ int ShowTradeHistory() {
          if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
 
             // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
-            if (!StringIStartsWith(comments[i], "close hedge by #"))
+            if (!StringStartsWithI(comments[i], "close hedge by #"))
                return(_EMPTY(catch("ShowTradeHistory(3)  #"+ tickets[i] +" - unknown comment for assumed hedging position: \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
 
             // Gegenstück suchen
@@ -1449,8 +1449,8 @@ bool CreateLabels() {
       }
       else GetLastError();
       string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-      if      (StringIEndsWith(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
-      else if (StringIEndsWith(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+      if      (StringEndsWithI(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
+      else if (StringEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
 
@@ -2397,7 +2397,7 @@ bool CustomPositions.ReadConfig() {
    int    keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
-      if (StringIStartsWith(keys[i], symbol) || StringIStartsWith(keys[i], stdSymbol)) {
+      if (StringStartsWithI(keys[i], symbol) || StringStartsWithI(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {                // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
             iniValue = GetRawIniString(file, section, keys[i], "");
             iniValue = StringReplace(iniValue, TAB, " ");
@@ -3327,15 +3327,15 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
             // wenn OrderType()==OP_BALANCE, dann OrderSymbol()==Leerstring
             if (OrderType() == OP_BALANCE) {
                // Dividenden                                                  // "Ex Dividend US2000" oder
-               if (StringIStartsWith(OrderComment(), "ex dividend ")) {       // "Ex Dividend 17/03/15 US2000"
+               if (StringStartsWithI(OrderComment(), "ex dividend ")) {       // "Ex Dividend 17/03/15 US2000"
                   if (type == TYPE_HISTORY)                                   // single history
-                     if (!StringIEndsWith(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
+                     if (!StringEndsWithI(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
                         continue;
                }
                // Rollover adjustments
-               else if (StringIStartsWith(OrderComment(), "adjustment ")) {   // "Adjustment BRENT"
+               else if (StringStartsWithI(OrderComment(), "adjustment ")) {   // "Adjustment BRENT"
                   if (type == TYPE_HISTORY)                                   // single history
-                     if (!StringIEndsWith(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
+                     if (!StringEndsWithI(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
                         continue;
                }
                else {
@@ -3391,7 +3391,7 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
             if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {          // lotSize = 0: Hedge-Position
 
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
-               if (!StringIStartsWith(hst.comments[i], "close hedge by #"))
+               if (!StringStartsWithI(hst.comments[i], "close hedge by #"))
                   return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
                // Gegenstück suchen
@@ -4802,7 +4802,7 @@ string InputsToStr() {
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    string   ShortAccountCompany();
-   bool     StringICompare(string a, string b);
+   bool     StringCompareI(string a, string b);
 
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);

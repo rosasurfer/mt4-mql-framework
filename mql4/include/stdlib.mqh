@@ -276,9 +276,9 @@
    bool     StringIsPhoneNumber(string value);
 
    bool     StringContains(string object, string substring);
-   bool     StringIContains(string object, string substring);
+   bool     StringContainsI(string object, string substring);
 
-   bool     StringICompare(string a, string b);
+   bool     StringCompareI(string a, string b);
 
    string   StringPad(string input, int length, string pad_string, int pad_type);
 

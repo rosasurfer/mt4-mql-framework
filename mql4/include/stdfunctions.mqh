@@ -2106,9 +2106,9 @@ bool StringStartsWith(string object, string prefix) {
  *
  * @return bool
  */
-bool StringIStartsWith(string object, string prefix) {
+bool StringStartsWithI(string object, string prefix) {
    if (!StringLen(prefix))
-      return(!catch("StringIStartsWith()  empty prefix \"\"", ERR_INVALID_PARAMETER));
+      return(!catch("StringStartsWithI()  empty prefix \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
 
@@ -2116,55 +2116,55 @@ bool StringIStartsWith(string object, string prefix) {
 /**
  * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird beachtet.
  *
- * @param  string object  - zu prüfender String
- * @param  string postfix - Substring
+ * @param  string object - zu prüfender String
+ * @param  string suffix - Substring
  *
  * @return bool
  */
-bool StringEndsWith(string object, string postfix) {
-   int lenObject  = StringLen(object);
-   int lenPostfix = StringLen(postfix);
+bool StringEndsWith(string object, string suffix) {
+   int lenObject = StringLen(object);
+   int lenSuffix = StringLen(suffix);
 
-   if (lenPostfix == 0)
-      return(!catch("StringEndsWith()  empty postfix \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)
+      return(!catch("StringEndsWith()  empty suffix \"\"", ERR_INVALID_PARAMETER));
 
-   if (lenObject < lenPostfix)
+   if (lenObject < lenSuffix)
       return(false);
 
-   if (lenObject == lenPostfix)
-      return(object == postfix);
+   if (lenObject == lenSuffix)
+      return(object == suffix);
 
-   int start = lenObject-lenPostfix;
-   return(StringFind(object, postfix, start) == start);
+   int start = lenObject-lenSuffix;
+   return(StringFind(object, suffix, start) == start);
 }
 
 
 /**
  * Ob ein String mit dem angegebenen Teilstring endet. Groß-/Kleinschreibung wird nicht beachtet.
  *
- * @param  string object  - zu prüfender String
- * @param  string postfix - Substring
+ * @param  string object - zu prüfender String
+ * @param  string suffix - Substring
  *
  * @return bool
  */
-bool StringIEndsWith(string object, string postfix) {
-   int lenObject  = StringLen(object);
-   int lenPostfix = StringLen(postfix);
+bool StringEndsWithI(string object, string suffix) {
+   int lenObject = StringLen(object);
+   int lenSuffix = StringLen(suffix);
 
-   if (lenPostfix == 0)
-      return(!catch("StringIEndsWith()  empty postfix \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)
+      return(!catch("StringEndsWithI()  empty suffix \"\"", ERR_INVALID_PARAMETER));
 
-   if (lenObject < lenPostfix)
+   if (lenObject < lenSuffix)
       return(false);
 
-   object  = StringToUpper(object);
-   postfix = StringToUpper(postfix);
+   object = StringToUpper(object);
+   suffix = StringToUpper(suffix);
 
-   if (lenObject == lenPostfix)
-      return(object == postfix);
+   if (lenObject == lenSuffix)
+      return(object == suffix);
 
-   int start = lenObject-lenPostfix;
-   return(StringFind(object, postfix, start) == start);
+   int start = lenObject-lenSuffix;
+   return(StringFind(object, suffix, start) == start);
 }
 
 
@@ -3564,9 +3564,8 @@ void __DummyCalls() {
    Sign(NULL);
    start.RelaunchInputDialog();
    StringEndsWith(NULL, NULL);
-   StringIEndsWith(NULL, NULL);
+   StringEndsWithI(NULL, NULL);
    StringIsNull(NULL);
-   StringIStartsWith(NULL, NULL);
    StringLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);
    StringPadLeft(NULL, NULL);
@@ -3575,6 +3574,7 @@ void __DummyCalls() {
    StringRight(NULL, NULL);
    StringRightPad(NULL, NULL);
    StringStartsWith(NULL, NULL);
+   StringStartsWithI(NULL, NULL);
    StringSubstrFix(NULL, NULL);
    StringToHexStr(NULL);
    StringToLower(NULL);
