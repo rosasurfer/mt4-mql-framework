@@ -51,21 +51,21 @@ int appliedPrice = PRICE_MEDIAN;                         // Preis: Bid | Ask | M
                                                          //  - inkl. unrealiserter P/L
                                                          //  - inkl. doppelte Spreads und Commissions gehedgter Positionen
 
-double mm.availableEquity;                               // realer zum Traden verfügbarer Equity-Betrag:
+double mm.tradableEquity;                                // realer zum Traden verfügbarer Equity-Betrag:
                                                          //  - enthält externe Assets                                                           !!! doppelte Spreads und      !!!
                                                          //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)      !!! Commissions herausrechnen !!!
                                                          //  - enthält offene Verluste ungehedgter Positionen
                                                          //  - enthält NICHT offene Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
 /*
-Schreibzugriff in:
-------------------
+Schreibzugriff:
+---------------
 - UpdateMoneyManagement()
 
 
-Lesezugriff in:
----------------
+Lesezugriff:
+------------
 - UpdatePositions()              Test auf 0 zur Berechnung von 'currentLeverage'
-- ShowStandardTargets()          Berechnung der prozentualen TP/SL-Projections
+- ShowStandardTargets()          Berechnung der prozentualen TP/SL-Level einer Standard-Unit
 */
 
 
@@ -685,10 +685,10 @@ int ShowStandardTargets() {
 
 
    // (2) StopLoss- und TakeProfit-Konfiguration einlesen und Absolutwerte und Pips berechnen
-   double slDailyPct   =  4, slDailyAbs   = mm.availableEquity * slDailyPct  /100, slDailyPips   = slDailyAbs  /pipValue;
-   double slWeeklyPct  =  8, slWeeklyAbs  = mm.availableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
-   double slMonthlyPct = 12, slMonthlyAbs = mm.availableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
-   double tpDailyPct   =  1, tpDailyAbs   = mm.availableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
+   double slDailyPct   =  4, slDailyAbs   = mm.tradableEquity * slDailyPct  /100, slDailyPips   = slDailyAbs  /pipValue;
+   double slWeeklyPct  =  8, slWeeklyAbs  = mm.tradableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
+   double slMonthlyPct = 12, slMonthlyAbs = mm.tradableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
+   double tpDailyPct   =  1, tpDailyAbs   = mm.tradableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
    debug("ShowStandardTargets(0.2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
 
 
@@ -1671,8 +1671,8 @@ bool UpdatePositions() {
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
-      if (!mm.availableEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
-      else                     currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
+      if (!mm.tradableEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);    // Workaround bei negativer AccountBalance:
+      else                    currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                                 // die unrealisierten Gewinne werden mit einbezogen !!!
       strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
       // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
@@ -2196,7 +2196,7 @@ bool UpdateMoneyManagement() {
    if (mode.remote) return(_false(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
  //if (mode.remote) return(!catch("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED));
 
-   mm.availableEquity       = 0;
+   mm.tradableEquity        = 0;
    mm.lotValue              = 0;
    mm.unleveragedLots       = 0;                                              // Lotsize bei Hebel 1:1
    mm.ATRwAbs               = 0;                                              // wöchentliche ATR, absolut
@@ -2222,19 +2222,19 @@ bool UpdateMoneyManagement() {
 
    double externalAssets = GetExternalAssets();
    if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
-      mm.availableEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
-      if (mm.availableEquity < 0)                                             // kann bei negativer AccountBalance negativ sein
-         mm.availableEquity = 0;
+      mm.tradableEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
+      if (mm.tradableEquity < 0)                                              // kann bei negativer AccountBalance negativ sein
+         mm.tradableEquity = 0;
    }
    else {
-      mm.availableEquity = externalAssets;                                    // ebenfalls falsch (nur Näherungswert)
+      mm.tradableEquity = externalAssets;                                     // ebenfalls falsch (nur Näherungswert)
    }
 
    if (!Close[0] || !tickSize || !tickValue || !marginRequired)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       return(false);
 
    mm.lotValue        = Close[0]/tickSize * tickValue;                        // Value eines Lots in Account-Currency
-   mm.unleveragedLots = mm.availableEquity/mm.lotValue;                       // ungehebelte Lotsize (Leverage 1:1)
+   mm.unleveragedLots = mm.tradableEquity/mm.lotValue;                        // ungehebelte Lotsize (Leverage 1:1)
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
@@ -2353,7 +2353,7 @@ int SearchMagicNumber(int array[], int number) {
  *   [CustomPositions]
  *   GBPAUD.0 = #111111, 0.1#222222      ;  komplettes Ticket #111111 und 0.1 Lot von Ticket #222222 (dieser Text wird als Kommentar angezeigt)
  *   GBPAUD.1 = 0.2#L, #222222           ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
- *   GBPAUD.2 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines P/L's von -34.45
+ *   GBPAUD.2 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines P/L's von -34.56
  *   GBPAUD.2 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel "GBPAUD.2" doppelt vorhanden ist und bereits verarbeitet wurde
  *   GBPAUD.3 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (6)
  *
@@ -3309,29 +3309,44 @@ bool ExtractPosition(double lotsize, int type, double &value1, double &value2, d
       from              = lotsize;
       to                = value1;
       double lastProfit = value2;
-      int    lastOrders = value3;                                  // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
+      int    lastOrders = value3;                                             // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
 
       int orders=OrdersHistoryTotal(), _orders=orders;
 
       if (lastProfit==EMPTY_VALUE || orders!=lastOrders) {
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-         int sortKeys[][3], n, hst.ticket;                           // {CloseTime, OpenTime, Ticket}
+         int sortKeys[][3], n, hst.ticket;                                    // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
-         string exDividendKey="Ex Dividend ", exDividendSymbol=" "+ Symbol();
 
          for (i=0; i < orders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {      // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {               // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
                orders = i;
                break;
             }
-            if (OrderType() == OP_BALANCE) {
-               if (!StringIStartsWith(OrderComment(), exDividendKey))     continue;    // "Ex Dividend US2000"          oder
-               if (type == TYPE_HISTORY)                                               // "Ex Dividend 17/03/15 US2000"
-                  if (!StringIEndsWith(OrderComment(), exDividendSymbol)) continue;
-            }
-            else if (OrderType() > OP_SELL)                               continue;
 
-            if (type==TYPE_HISTORY) /*&&*/ if (OrderSymbol()!=Symbol())   continue;    // ggf. Positionen mehrerer Symbole
+            // wenn OrderType()==OP_BALANCE, dann OrderSymbol()==Leerstring
+            if (OrderType() == OP_BALANCE) {
+               // Dividenden                                                  // "Ex Dividend US2000" oder
+               if (StringIStartsWith(OrderComment(), "ex dividend ")) {       // "Ex Dividend 17/03/15 US2000"
+                  if (type == TYPE_HISTORY)                                   // single history
+                     if (!StringIEndsWith(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
+                        continue;
+               }
+               // Rollover adjustments
+               else if (StringIStartsWith(OrderComment(), "adjustment ")) {   // "Adjustment BRENT"
+                  if (type == TYPE_HISTORY)                                   // single history
+                     if (!StringIEndsWith(OrderComment(), " "+ Symbol()))     // ok, wenn zum aktuellen Symbol gehörend
+                        continue;
+               }
+               else {
+                  continue;                                                   // sonstige Balance-Einträge
+               }
+            }
+
+            else {
+               if (OrderType() > OP_SELL)                                  continue;
+               if (type==TYPE_HISTORY) /*&&*/ if (OrderSymbol()!=Symbol()) continue;   // ggf. Positionen aller Symbole
+            }
 
             sortKeys[n][0] = OrderCloseTime();
             sortKeys[n][1] = OrderOpenTime();
