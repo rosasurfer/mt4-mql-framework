@@ -70,7 +70,7 @@
 
 
 // Timezones
-#define TIMEZONE_ALPARI                "Alpari"             // bis 03.2012 "Europe/Berlin", ab 04.2012 "Europe/Kiev"
+#define TIMEZONE_ALPARI                "Alpari"             // bis 03/2012 "Europe/Berlin", ab 04/2012 "Europe/Kiev"
 #define TIMEZONE_AMERICA_NEW_YORK      "America/New_York"
 #define TIMEZONE_EUROPE_BERLIN         "Europe/Berlin"
 #define TIMEZONE_EUROPE_KIEV           "Europe/Kiev"
