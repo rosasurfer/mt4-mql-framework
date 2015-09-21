@@ -3909,6 +3909,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (StringStartsWith(symbol, "CHFPLN")  )   return("CHFPLN");
                 if (StringStartsWith(symbol, "CHFSGD")  )   return("CHFSGD");
                 if (StringStartsWith(symbol, "CHFZAR")  )   return("CHFZAR");
+                if (                 symbol=="CLX5"     )   return("WTI"   );
                 if (                 symbol=="CRUDE_OIL")   return("WTI"   );
                 break;
 
@@ -3970,6 +3971,7 @@ string GetStandardSymbolStrict(string symbol) {
       case 'K': break;
 
       case 'L': if (StringStartsWith(symbol, "LFXJPY"))     return("LFXJPY");
+                if (                 symbol=="LOX5"   )     return("BRENT" );
                 break;
 
       case 'M': if (StringStartsWith(symbol, "MXNJPY"))     return("MXNJPY");
