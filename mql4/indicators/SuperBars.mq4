@@ -55,7 +55,16 @@ int onInit() {
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
 
    // (2) ETH/Future-Status ermitteln
-   string futures[] = {"BRENT","DJIA","DJTA","EURX","NAS100","NASCOMP","RUS2000","SP500","USDX","WTI","XAGEUR","XAGJPY","XAGUSD","XAUEUR","XAUJPY","XAUUSD"};
+   string futures[] = {"BRENT"  , "LCOX5"  ,
+                       "WTI"    , "CLX5"   ,
+                       "DJIA"   , "DJTA"   ,
+                       "NAS100" , "NASCOMP",
+                       "RUS2000",
+                       "SP500"  ,
+                       "EURX"   ,
+                       "USDX"   ,
+                       "XAGEUR" , "XAGJPY", "XAGUSD", "XAUEUR", "XAUJPY", "XAUUSD"
+   };
    eth.likeFuture = StringInArray(futures, StdSymbol());
 
    // (3) Label für Superbar-Beschreibung erzeugen
