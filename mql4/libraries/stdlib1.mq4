@@ -3971,7 +3971,7 @@ string GetStandardSymbolStrict(string symbol) {
       case 'K': break;
 
       case 'L': if (StringStartsWith(symbol, "LFXJPY"))     return("LFXJPY");
-                if (                 symbol=="LOX5"   )     return("BRENT" );
+                if (                 symbol=="LCOX5"  )     return("BRENT" );
                 break;
 
       case 'M': if (StringStartsWith(symbol, "MXNJPY"))     return("MXNJPY");
