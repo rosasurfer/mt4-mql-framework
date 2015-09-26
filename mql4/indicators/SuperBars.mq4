@@ -278,12 +278,12 @@ bool UpdateSuperBars() {
       case -PERIOD_Q1    : static.lastTimeframe = superBars.timeframe;
                            return(true);
 
-      case  PERIOD_H1    : maxBars = 120; break;                           // 5 Tage
+      case  PERIOD_H1    : maxBars = 30 * DAYS/HOURS; break;               // bei PERIOD_H1 maximal 30 Tage
       case  PERIOD_D1_ETH:
       case  PERIOD_D1    :
       case  PERIOD_W1    :
       case  PERIOD_MN1   :
-      case  PERIOD_Q1    :                break;                           // alle anderen ohne Begrenzung
+      case  PERIOD_Q1    : break;                                          // alle anderen ohne Begrenzung
    }
 
 
