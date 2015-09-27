@@ -3341,7 +3341,7 @@ bool EventListener.NewTick(int results[], int flags=NULL) {
 
 
 /**
- * Gibt die lokale Zeit in GMT zurück. Im Tester wird die GMT-Zeit der vom Tester modellierten Zeit zurückgegeben.
+ * Gibt die lokale Zeit in GMT zurück. Im Tester wird die GMT-Zeit der vom Tester modellierten lokalen Zeit (= Server-Zeit) zurückgegeben.
  *
  * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -3361,7 +3361,7 @@ datetime TimeGMT() {
 
 
 /**
- * Gibt die lokale Zeit in FXT zurück. Im Tester wird die FXT-Zeit der vom Tester modellierten Zeit zurückgegeben.
+ * Gibt die lokale Zeit in FXT zurück. Im Tester wird die FXT-Zeit der vom Tester modellierten lokalen Zeit (= Server-Zeit) zurückgegeben.
  *
  * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -3373,13 +3373,13 @@ datetime TimeFXT() {
 
 
 /**
- * Gibt die lokale Zeit des Terminals zurück. Im Tester entspricht die lokale Zeit immer der Serverzeit.
+ * Gibt die lokale Zeit des Terminals zurück. Im Tester entspricht die lokale Zeit der Serverzeit.
  *
- * @return datetime - Zeitpunkt oder NULL mit Fehlermeldung, wenn TimeLocal() einen fehlerhaften Wert zurückgab
+ * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  */
 datetime TimeLocalFix() {
    datetime now.local = TimeLocal();
-      if (!now.local) return(!catch("TimeLocalFix()->TimeLocal() => 0", ERR_RUNTIME_ERROR));
+      if (!now.local) return(!catch("TimeLocalFix(1)->TimeLocal() => 0", ERR_RUNTIME_ERROR));
    return(now.local);
 }
 
@@ -3387,11 +3387,11 @@ datetime TimeLocalFix() {
 /**
  * Gibt die letzte bekannte Serverzeit zurück. Im Tester wird die Serverzeit modelliert.
  *
- * @return datetime - Zeitpunkt oder NULL mit Fehlermeldung, wenn TimeCurrent() einen fehlerhaften Wert zurückgab
+ * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
  */
 datetime TimeCurrentFix() {
    datetime now.server = TimeCurrent();
-      if (!now.server) return(!catch("TimeCurrentFix()->TimeCurrent() => 0", ERR_RUNTIME_ERROR));
+      if (!now.server) return(!catch("TimeCurrentFix(1)->TimeCurrent() => 0", ERR_RUNTIME_ERROR));
    return(now.server);
 }
 
