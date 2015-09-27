@@ -5288,8 +5288,8 @@ SetLevelValue(1,3.14);
       At testing server time is modelled.<br/>
 
       <br/>
-      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester je nach Terminalversion in <span class="function">init</span>() und/oder in
-      <span class="function">start</span>() <span class="const">NULL</span> zurück, wenn sie bei VisualMode=On von einem Standalone-Indikator verwendet wird.<br/>
+      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester je nach Terminalversion in <span class="function">init</span>() und <span class="function">start</span>() 
+      <span class="const">NULL</span> zurück, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On).<br/>
       <br/>
       Workaround: Noch nicht implementiert. Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch
       <span class="function">MarketInfo</span>()-Fehler in Standalone-Indikatoren unter Test).<br/>
@@ -5392,9 +5392,9 @@ SetLevelValue(1,3.14);
       At testing local time is modelled and is the same as the modelled server time.<br/>
 
       <br/>
-      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zurück, wenn sie bei VisualMode=On von einem Standalone-Indikator verwendet
-      wird. Je nach Terminalversion kann entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch übernommener Wert
-      (<span class="const">NULL</span>) zurückgegeben werden.<br/>
+      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zurück, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On). 
+      Je nach Terminalversion wird entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch übernommener Wert
+      (<span class="const">NULL</span>) zurückgegeben.<br/>
       Workaround: noch nicht implementiert (siehe Notes)<br/>
 
       <br/>
