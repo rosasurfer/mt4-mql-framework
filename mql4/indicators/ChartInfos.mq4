@@ -23,6 +23,13 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_TIMEZONE };
 int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+
+extern bool CustomPositions.DebugTickets = false;                    // ob die Tickets der CustomPositions vom Debugger ausgegeben werden sollen
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
@@ -2124,6 +2131,9 @@ bool AnalyzePositions() {
    double customSwaps      [];
    double customProfits    [];
 
+   static bool debugTickets.done = false;
+
+
    // (2.2) individuell konfigurierte Positionen aus den offenen Positionen extrahieren
    int confSize = ArrayRange(positions.config, 0);
 
@@ -2135,6 +2145,9 @@ bool AnalyzePositions() {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                               // termType=NULL => "Zeilenende"
+         if (CustomPositions.DebugTickets) /*&&*/ if (!debugTickets.done)
+            AnalyzePositions.DebugTickets(isCustomVirtual, customTickets, confLineIndex);
+
          // (2.3) individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
             return(false);
@@ -2165,11 +2178,37 @@ bool AnalyzePositions() {
    }
 
    // (2.4) verbleibende Position(en) speichern
+   if (CustomPositions.DebugTickets) /*&&*/ if (!debugTickets.done)
+      AnalyzePositions.DebugTickets(false, tickets, -1);
+
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
       return(false);
 
+   debugTickets.done = true;
    positionsAnalyzed = true;
    return(!catch("AnalyzePositions(2)"));
+}
+
+
+/**
+ * Schickt die Tickets einer jeden CustomPosition zur Debug-Ausgabe.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool AnalyzePositions.DebugTickets(bool isVirtual, int tickets[], int commentIndex) {
+   if (CustomPositions.DebugTickets) {
+      if (!isVirtual && ArraySize(tickets)) {
+         int copy[];
+         ArrayCopy(copy, tickets);
+         ArrayDropInt(copy, 0);
+
+         if (ArraySize(copy) > 0) {
+            if (commentIndex == -1) debug("DebugTickets()  conf(none) = "                                                                  + TicketsToStr(copy, NULL));
+            else                    debug("DebugTickets()  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr(copy, NULL));
+         }
+      }
+   }
+   return(true);
 }
 
 
@@ -4666,8 +4705,9 @@ string InputsToStr() {
 
 #import "stdlib1.ex4"
    bool     AquireLock(string mutexName, bool wait);
+   int      ArrayDropInt      (int    array[], int value);
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
-   int      ArrayPushDouble(double array[], double value);
+   int      ArrayPushDouble   (double array[], double value);
    string   DateToStr(datetime time, string mask);
    bool     DeleteIniKey(string file, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
@@ -4703,4 +4743,5 @@ string InputsToStr() {
 
    string   DoublesToStr(double array[], string separator);
    string   StringsToStr(string array[], string separator);
+   string   TicketsToStr(int    array[], string separator);
 #import
