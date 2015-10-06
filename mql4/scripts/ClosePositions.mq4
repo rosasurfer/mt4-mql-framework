@@ -8,11 +8,11 @@ int __DEINIT_FLAGS__[];
 #property show_inputs
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern string Close.Symbols      = "";                               // Symbole:                      kommagetrennt
+extern string Close.Symbols      = "";                               // Symbole:      kommagetrennt
 extern string Close.Direction    = "";                               // (B)uy|(L)ong|(S)ell|(S)hort
-extern string Close.Tickets      = "";                               // Tickets:                      kommagetrennt
-extern string Close.MagicNumbers = "";                               // MagicNumbers:                 kommagetrennt
-extern string Close.Comments     = "";                               // Kommentare:                   kommagetrennt, Prüfung per OrderComment().StringStartsWithI(value)
+extern string Close.Tickets      = "";                               // Tickets:      kommagetrennt, mit oder ohne führendem "#"
+extern string Close.MagicNumbers = "";                               // MagicNumbers: kommagetrennt
+extern string Close.Comments     = "";                               // Kommentare:   kommagetrennt, Prüfung per OrderComment().StringStartsWithI(value)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,11 +62,13 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValue = StringTrim(values[i]);
       if (StringLen(sValue) > 0) {
+         if (StringStartsWith(sValue, "#"))
+            sValue = StringTrim(StringRight(sValue, -1));
          if (!StringIsDigit(sValue))
-            return(HandleScriptError("onInit(2)", "Invalid parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMETER));
+            return(HandleScriptError("onInit(2)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
          if (iValue <= 0)
-            return(HandleScriptError("onInit(3)", "Invalid parameter Close.Tickets = \""+ Close.Tickets +"\"", ERR_INVALID_INPUT_PARAMETER));
+            return(HandleScriptError("onInit(3)", "Invalid parameter in Close.Tickets = \""+ values[i] +"\"", ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(orderTickets, iValue);
       }
    }
