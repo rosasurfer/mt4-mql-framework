@@ -968,7 +968,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
             if (symbol == "0") symbol = Symbol();                       // (string) NULL
             if (!timeframe) timeframe = Period();
-            string chartDescription = symbol +","+ PeriodDescription(timeframe);
+            string chartDescription = ChartDescription(symbol, timeframe);
             int id = INT_MAX;
 
             while (hWndChild != NULL) {
@@ -1000,7 +1000,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
 
    if (symbol == "0") symbol = Symbol();                             // (string) NULL
    if (!timeframe) timeframe = Period();
-   chartDescription = symbol +","+ PeriodDescription(timeframe);
+   chartDescription = ChartDescription(symbol, timeframe);
 
 
    // (2) eingebaute Suche nach fremdem Chart                        // TODO: WindowHandle() wird das Handle des eigenen Charts nicht überspringen, wenn dieser auf die Parameter paßt
@@ -1025,6 +1025,32 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
       hWndChild = GetWindow(hWndChild, GW_HWNDNEXT);                 // das nächste Child in Z order
    }
    return(hChart);
+}
+
+
+/**
+ * Gibt die Symbolbeschreibung eines Chartfensters zurück.
+ *
+ * @param  string symbol
+ * @param  int    timeframe
+ *
+ * @return string - Beschreibung oder Leerstring, falls ein Fehler auftrat
+ */
+string ChartDescription(string symbol, int timeframe) {
+   if (!StringLen(symbol)) return(_EMPTY_STR(catch("ChartDescription(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+
+   switch (timeframe) {
+      case PERIOD_M1 : return(StringConcatenate(symbol, ",M1"     ));   // 1 minute
+      case PERIOD_M5 : return(StringConcatenate(symbol, ",M5"     ));   // 5 minutes
+      case PERIOD_M15: return(StringConcatenate(symbol, ",M15"    ));   // 15 minutes
+      case PERIOD_M30: return(StringConcatenate(symbol, ",M30"    ));   // 30 minutes
+      case PERIOD_H1 : return(StringConcatenate(symbol, ",H1"     ));   // 1 hour
+      case PERIOD_H4 : return(StringConcatenate(symbol, ",H4"     ));   // 4 hour
+      case PERIOD_D1 : return(StringConcatenate(symbol, ",Daily"  ));   // 1 day
+      case PERIOD_W1 : return(StringConcatenate(symbol, ",Weekly" ));   // 1 week
+      case PERIOD_MN1: return(StringConcatenate(symbol, ",Monthly"));   // 1 month
+   }
+   return(_EMPTY_STR(catch("ChartDescription(2)  invalid parameter timeframe = "+ timeframe, ERR_INVALID_PARAMETER)));
 }
 
 
