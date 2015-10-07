@@ -10,7 +10,18 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool Parameter = false;
+extern bool   Recording.Enabled = false;                             // default: kein Recording
+
+extern string __________________________;
+
+extern bool   USD.Enabled       = true;
+extern bool   AUD.Enabled       = true;
+extern bool   CAD.Enabled       = true;
+extern bool   CHF.Enabled       = true;
+extern bool   EUR.Enabled       = true;
+extern bool   GBP.Enabled       = true;
+extern bool   JPY.Enabled       = true;
+extern bool   NZD.Enabled       = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,8 +37,8 @@ extern bool Parameter = false;
 string lfx.labels    [8];
 string lfx.currencies[ ] = { "USD"   , "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"    };
 string lfx.symbols   [ ] = { "USDLFX", "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX" };
-int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5 };    // LFXJPY = false: wird nicht aufgezeichnet, da das Aufzeichnen
-bool   lfx.record    [ ] = {     true,     true,     true,     true,     true,     true,    false,     true };    // aller Indizes das 64-File-Limit eines MQL-Moduls sprengt.
+int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5 };
+bool   lfx.record    [8];                                            // default: alle FALSE
 double lfx.usd       [8];                                            // über den USD-Index berechneter LFX-Index je Währung
 bool   isLfx.usd     [8];                                            // ob der über den USD-Index berechnete LFX-Index einer Währung verfügbar ist
 int    lfx.hSet      [8];                                            // HistorySet-Handles der LFX-Indizes
@@ -54,6 +65,20 @@ color  bgColor   = C'212,208,200';
  * @return int - Fehlerstatus
  */
 int onInit() {
+   // Parameterauswertung
+   if (Recording.Enabled) {
+      lfx.record[I_USD] = USD.Enabled;
+      lfx.record[I_AUD] = AUD.Enabled;
+      lfx.record[I_CAD] = CAD.Enabled;
+      lfx.record[I_CHF] = CHF.Enabled;
+      lfx.record[I_EUR] = EUR.Enabled;
+      lfx.record[I_GBP] = GBP.Enabled;
+      lfx.record[I_JPY] = JPY.Enabled;
+      lfx.record[I_NZD] = NZD.Enabled;
+
+      if (!BoolInArray(lfx.record, false))                           // Je MQL-Module können maximal 64 Dateien gleichzeitig offen sein (entspricht 7 Instrumenten).
+         lfx.record[I_NZD] = false;
+   }
    CreateLabels();
 
    // Datenanzeige ausschalten
@@ -509,47 +534,48 @@ int UpdateInfos() {
    if (error == ERS_HISTORY_UPDATE)                 return(SetLastError(error));
    if (IsError(error) && error!=ERR_UNKNOWN_SYMBOL) return(catch("UpdateInfos(1)", error));
 
+   string sValue;
 
-   // Index-Anzeige: direkt
-   if (is_usd.crs)       ObjectSetText(lfx.labels[I_USD] +".quote.cross",                NumberToStr(NormalizeDouble(usdlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".quote.cross",   " ", fontSize, fontName);
-   if (is_aud.crs)       ObjectSetText(lfx.labels[I_AUD] +".quote.cross",                NumberToStr(NormalizeDouble(audlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".quote.cross",   " ", fontSize, fontName);
-   if (is_cad.crs)       ObjectSetText(lfx.labels[I_CAD] +".quote.cross",                NumberToStr(NormalizeDouble(cadlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".quote.cross",   " ", fontSize, fontName);
-   if (is_chf.crs)       ObjectSetText(lfx.labels[I_CHF] +".quote.cross",                NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".quote.cross",   " ", fontSize, fontName);
-   if (is_eur.crs)       ObjectSetText(lfx.labels[I_EUR] +".quote.cross",                NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".quote.cross",   " ", fontSize, fontName);
-   if (is_gbp.crs)       ObjectSetText(lfx.labels[I_GBP] +".quote.cross",                NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".quote.cross",   " ", fontSize, fontName);
-   if (is_jpy.crs)       ObjectSetText(lfx.labels[I_JPY] +".quote.cross",                NumberToStr(NormalizeDouble(jpylfx.crs, 3), ".2'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".quote.cross",   " ", fontSize, fontName);
-   if (is_nzd.crs)       ObjectSetText(lfx.labels[I_NZD] +".quote.cross",                NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".quote.cross",   " ", fontSize, fontName);
 
-   // Spread-Anzeige: direkt
-   if (is_usd.crs)       ObjectSetText(lfx.labels[I_USD] +".spread.cross",  "("+ DoubleToStr((usdlfx.crs_Ask-usdlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".spread.cross",  " ", fontSize, fontName);
-   if (is_aud.crs)       ObjectSetText(lfx.labels[I_AUD] +".spread.cross",  "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".spread.cross",  " ", fontSize, fontName);
-   if (is_cad.crs)       ObjectSetText(lfx.labels[I_CAD] +".spread.cross",  "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".spread.cross",  " ", fontSize, fontName);
-   if (is_chf.crs)       ObjectSetText(lfx.labels[I_CHF] +".spread.cross",  "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".spread.cross",  " ", fontSize, fontName);
-   if (is_eur.crs)       ObjectSetText(lfx.labels[I_EUR] +".spread.cross",  "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".spread.cross",  " ", fontSize, fontName);
-   if (is_gbp.crs)       ObjectSetText(lfx.labels[I_GBP] +".spread.cross",  "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".spread.cross",  " ", fontSize, fontName);
-   if (is_jpy.crs)       ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  " ", fontSize, fontName);
-   if (is_nzd.crs)       ObjectSetText(lfx.labels[I_NZD] +".spread.cross",  "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".spread.cross",  " ", fontSize, fontName);
+   // Index-Anzeige: via Crosses
+   if (!USD.Enabled) sValue = "off"; else if (is_usd.crs) sValue = NumberToStr(NormalizeDouble(usdlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_USD] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!AUD.Enabled) sValue = "off"; else if (is_aud.crs) sValue = NumberToStr(NormalizeDouble(audlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_AUD] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!CAD.Enabled) sValue = "off"; else if (is_cad.crs) sValue = NumberToStr(NormalizeDouble(cadlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_CAD] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!CHF.Enabled) sValue = "off"; else if (is_chf.crs) sValue = NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_CHF] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!EUR.Enabled) sValue = "off"; else if (is_eur.crs) sValue = NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_EUR] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!GBP.Enabled) sValue = "off"; else if (is_gbp.crs) sValue = NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_GBP] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled) sValue = "off"; else if (is_jpy.crs) sValue = NumberToStr(NormalizeDouble(jpylfx.crs, 3), ".2'"); else sValue = " ";           ObjectSetText(lfx.labels[I_JPY] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!NZD.Enabled) sValue = "off"; else if (is_nzd.crs) sValue = NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_NZD] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+
+   // Spread-Anzeige: via Crosses
+   if (!USD.Enabled || !is_usd.crs) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.crs_Ask-usdlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_USD] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!AUD.Enabled || !is_aud.crs) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_AUD] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!CAD.Enabled || !is_cad.crs) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_CAD] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!CHF.Enabled || !is_chf.crs) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_CHF] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!EUR.Enabled || !is_eur.crs) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_EUR] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!GBP.Enabled || !is_gbp.crs) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_GBP] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled || !is_jpy.crs) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*  100, 1) +")";                    ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!NZD.Enabled || !is_nzd.crs) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_NZD] +".spread.cross",  sValue, fontSize, fontName, fontColor);
 
    // Index-Anzeige: via USDLFX
-   if (isLfx.usd[I_USD]) ObjectSetText(lfx.labels[I_USD] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_USD], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_AUD]) ObjectSetText(lfx.labels[I_AUD] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_AUD], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_CAD]) ObjectSetText(lfx.labels[I_CAD] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_CAD], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_CHF]) ObjectSetText(lfx.labels[I_CHF] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_CHF], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_EUR]) ObjectSetText(lfx.labels[I_EUR] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_EUR], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_GBP]) ObjectSetText(lfx.labels[I_GBP] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_GBP], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_JPY]) ObjectSetText(lfx.labels[I_JPY] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_JPY], 3), ".2'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".quote.viaUSD",  " ", fontSize, fontName);
-   if (isLfx.usd[I_NZD]) ObjectSetText(lfx.labels[I_NZD] +".quote.viaUSD",           NumberToStr(NormalizeDouble(lfx.usd[I_NZD], 5), ".4'"), fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".quote.viaUSD",  " ", fontSize, fontName);
+   if (!USD.Enabled) sValue = "off"; else if (isLfx.usd[I_USD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_USD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_USD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!AUD.Enabled) sValue = "off"; else if (isLfx.usd[I_AUD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_AUD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_AUD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!CAD.Enabled) sValue = "off"; else if (isLfx.usd[I_CAD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_CAD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_CAD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!CHF.Enabled) sValue = "off"; else if (isLfx.usd[I_CHF]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_CHF], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_CHF] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!EUR.Enabled) sValue = "off"; else if (isLfx.usd[I_EUR]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_EUR], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_EUR] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!GBP.Enabled) sValue = "off"; else if (isLfx.usd[I_GBP]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_GBP], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_GBP] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled) sValue = "off"; else if (isLfx.usd[I_JPY]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_JPY], 3), ".2'"); else sValue = " "; ObjectSetText(lfx.labels[I_JPY] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!NZD.Enabled) sValue = "off"; else if (isLfx.usd[I_NZD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_NZD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_NZD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
 
    // Spread-Anzeige: via USDLFX
-   if (isLfx.usd[I_USD]) ObjectSetText(lfx.labels[I_USD] +".spread.viaUSD", "("+ DoubleToStr((usdlfx.usd_Ask-usdlfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_USD] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_AUD]) ObjectSetText(lfx.labels[I_AUD] +".spread.viaUSD", "("+ DoubleToStr((audlfx.usd_Ask-audlfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_AUD] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_CAD]) ObjectSetText(lfx.labels[I_CAD] +".spread.viaUSD", "("+ DoubleToStr((cadlfx.usd_Ask-cadlfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CAD] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_CHF]) ObjectSetText(lfx.labels[I_CHF] +".spread.viaUSD", "("+ DoubleToStr((chflfx.usd_Ask-chflfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_CHF] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_EUR]) ObjectSetText(lfx.labels[I_EUR] +".spread.viaUSD", "("+ DoubleToStr((eurlfx.usd_Ask-eurlfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_EUR] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_GBP]) ObjectSetText(lfx.labels[I_GBP] +".spread.viaUSD", "("+ DoubleToStr((gbplfx.usd_Ask-gbplfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_GBP] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_JPY]) ObjectSetText(lfx.labels[I_JPY] +".spread.viaUSD", "("+ DoubleToStr((jpylfx.usd_Ask-jpylfx.usd_Bid)*  100, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_JPY] +".spread.viaUSD", " ", fontSize, fontName);
-   if (isLfx.usd[I_NZD]) ObjectSetText(lfx.labels[I_NZD] +".spread.viaUSD", "("+ DoubleToStr((nzdlfx.usd_Ask-nzdlfx.usd_Bid)*10000, 1) +")", fontSize, fontName, fontColor); else ObjectSetText(lfx.labels[I_NZD] +".spread.viaUSD", " ", fontSize, fontName);
-
+   if (!USD.Enabled || !isLfx.usd[I_USD]) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.usd_Ask-usdlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_USD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!AUD.Enabled || !isLfx.usd[I_AUD]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.usd_Ask-audlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_AUD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!CAD.Enabled || !isLfx.usd[I_CAD]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.usd_Ask-cadlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_CAD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!CHF.Enabled || !isLfx.usd[I_CHF]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.usd_Ask-chflfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_CHF] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!EUR.Enabled || !isLfx.usd[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.usd_Ask-eurlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_EUR] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!GBP.Enabled || !isLfx.usd[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.usd_Ask-gbplfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_GBP] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled || !isLfx.usd[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.usd_Ask-jpylfx.usd_Bid)*  100, 1) +")";              ObjectSetText(lfx.labels[I_JPY] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!NZD.Enabled || !isLfx.usd[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.usd_Ask-nzdlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_NZD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
 
 
    // LFX-Indizes aufzeichnen
