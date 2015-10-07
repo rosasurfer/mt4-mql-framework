@@ -137,7 +137,7 @@ int init() {
       Test.startMillis = GetTickCount();
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluﬂ, da Ticks verloren gehen, wenn die entsprechende Windows-Message
-      error = Chart.SendTick(false);                                          // vor Verlassen von init() verarbeitet wird.
+      error = Chart.SendTick();                                               // vor Verlassen von init() verarbeitet wird.
       if (IsError(error)) {
          UpdateProgramStatus(SetLastError(error));
          if (__STATUS_OFF) return(last_error);
@@ -607,7 +607,6 @@ int Tester.Stop() {
 
    int    ShowStatus(int error);
 
-   int    Chart.SendTick(bool sound);
    bool   IntInArray(int haystack[], int needle);
    int    PeriodFlag(int period);
 

@@ -134,7 +134,7 @@ int init() {
 
    // (6) nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
    if (initReason == INIT_REASON_PARAMETERS) {
-      error = Chart.SendTick(false);                                    // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
+      error = Chart.SendTick();                                      // TODO: !!! Nur bei Existenz des "Indicators List"-Windows (nicht bei einzelnem Indikator)
       if (IsError(error)) {
          UpdateProgramStatus(SetLastError(error));
          if (__STATUS_OFF) return(last_error);
@@ -741,7 +741,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    string InputsToStr();
 
    bool   AquireLock(string mutexName, bool wait);
-   int    Chart.SendTick(bool sound);
    string InitReasonToStr(int reason);
    bool   ReleaseLock(string mutexName);
 

@@ -38,6 +38,6 @@ int onStart() {
 
 
    // (4) Tick senden
-   Chart.SendTick(false);
+   Chart.SendTick();
    return(catch("onStart(4)"));
 }

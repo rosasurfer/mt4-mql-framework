@@ -3167,6 +3167,33 @@ int Chart.Expert.Properties() {
 
 
 /**
+ * Schickt dem aktuellen Chart einen künstlichen Tick.
+ *
+ * @param  bool sound - ob der Tick akustisch bestätigt werden soll oder nicht (default: nein)
+ *
+ * @return int - Fehlerstatus
+ */
+int Chart.SendTick(bool sound=false) {
+   sound = sound!=0;
+
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
+
+   if (!This.IsTesting()) {
+      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 0);
+   }
+   else if (Tester.IsPaused()) {
+      SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
+   }
+
+   if (sound)
+      PlaySoundEx("Tick.wav");
+
+   return(NO_ERROR);
+}
+
+
+/**
  * Schaltet den Tester in den Pause-Mode. Der Aufruf ist nur im Tester möglich.
  *
  * @return int - Fehlerstatus

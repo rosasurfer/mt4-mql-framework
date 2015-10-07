@@ -34,7 +34,6 @@
    // Terminal-Interaktionen
    int      Chart.Objects.UnselectAll();
    int      Chart.Refresh();
-   int      Chart.SendTick(bool sound);
 
 
    // Arrays
