@@ -7,6 +7,13 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+
+extern bool Parameter = false;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
@@ -15,11 +22,6 @@ int __DEINIT_FLAGS__[];
 
 #property indicator_chart_window
 
-
-string fontName  = "Tahoma";
-int    fontSize  = 10;
-color  fontColor = Blue;
-color  bgColor   = C'212,208,200';
 
 string lfx.labels    [8];
 string lfx.currencies[ ] = { "USD"   , "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"    };
@@ -38,6 +40,12 @@ int    lfx.hSet      [8];                                            // HistoryS
 #define I_GBP  5
 #define I_JPY  6
 #define I_NZD  7
+
+
+string fontName  = "Tahoma";
+int    fontSize  = 10;
+color  fontColor = Blue;
+color  bgColor   = C'212,208,200';
 
 
 /**
