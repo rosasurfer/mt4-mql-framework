@@ -1,5 +1,5 @@
 /**
- * TestIndicator
+ *
  */
 #property indicator_chart_window
 #include <stddefine.mqh>
@@ -25,6 +25,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   debug("onTick()  Tick="+ Tick);
    return(last_error);
 }
 
