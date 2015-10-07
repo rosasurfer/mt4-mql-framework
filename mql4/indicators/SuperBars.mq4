@@ -56,16 +56,15 @@ int onInit() {
 
    // (2) ETH/Future-Status ermitteln
    string futures[] = {
-      "BRENT"  ,
-      "WTI"    ,
+      "BRENT"  , "WTI"    ,
       "DJIA"   , "DJTA"   ,
       "NAS100" , "NASCOMP",
       "RUS2000",
       "SP500"  ,
-      "EURX"   ,
-      "USDX"   ,
-      "XAGEUR" , "XAGJPY", "XAGUSD",
-      "XAUEUR" , "XAUJPY", "XAUUSD"
+      "EURX"   , "USDX"   ,
+    //"AUDLFX" , "CADLFX" , "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX", "USDLFX",   // ERROR: EURLFX,M1  SuperBars::TimeCurrentFix(1)->TimeCurrent() => 0  [ERR_RUNTIME_ERROR]
+      "XAGEUR" , "XAGJPY" , "XAGUSD",
+      "XAUEUR" , "XAUJPY" , "XAUUSD"
    };
    eth.likeFuture = StringInArray(futures, StdSymbol());
 
