@@ -35,6 +35,6 @@ int onStart() {
       return(SetLastError(stdlib.GetLastError()));
 
    // Tick senden
-   Chart.SendTick(false);
+   Chart.SendTick();
    return(catch("onStart(4)"));
 }
