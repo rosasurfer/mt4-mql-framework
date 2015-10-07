@@ -24,8 +24,8 @@ color  bgColor   = C'212,208,200';
 string lfx.labels    [8];
 string lfx.currencies[ ] = { "USD"   , "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"    };
 string lfx.symbols   [ ] = { "USDLFX", "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX" };
-int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5 };    // NZDLFX wird nicht aufgezeichnet, da das Aufzeichnen
-bool   lfx.record    [ ] = {     true,     true,     true,     true,     true,     true,     true,    false };    // aller Indizes das 64-File-Limit eines MQL-Moduls sprengt.
+int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5 };    // LFXJPY = false: wird nicht aufgezeichnet, da das Aufzeichnen
+bool   lfx.record    [ ] = {     true,     true,     true,     true,     true,     true,    false,     true };    // aller Indizes das 64-File-Limit eines MQL-Moduls sprengt.
 double lfx.usd       [8];                                            // über den USD-Index berechneter LFX-Index je Währung
 bool   isLfx.usd     [8];                                            // ob der über den USD-Index berechnete LFX-Index einer Währung verfügbar ist
 int    lfx.hSet      [8];                                            // HistorySet-Handles der LFX-Indizes
@@ -497,11 +497,9 @@ int UpdateInfos() {
 
 
    // Fehlerbehandlung
-   int error = GetLastError();
-   if (error == ERS_HISTORY_UPDATE)                                  // TODO: ERS_HISTORY_UPDATE für welches Symbol,Timeframe ???
-      return(SetLastError(error));
-   if (IsError(error) && error!=ERR_UNKNOWN_SYMBOL)
-      return(catch("UpdateInfos(1)", error));
+   int error = GetLastError();                                       // TODO: ERS_HISTORY_UPDATE für welches Symbol,Timeframe ???
+   if (error == ERS_HISTORY_UPDATE)                 return(SetLastError(error));
+   if (IsError(error) && error!=ERR_UNKNOWN_SYMBOL) return(catch("UpdateInfos(1)", error));
 
 
    // Index-Anzeige: direkt
