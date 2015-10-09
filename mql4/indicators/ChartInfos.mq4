@@ -2218,9 +2218,10 @@ bool AnalyzePositions.DebugTickets(bool isVirtual, int tickets[], int commentInd
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
-   if (mm.done    ) return(true);
-   if (mode.remote) return(_false(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
- //if (mode.remote) return(!catch("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED));
+   if (mm.done    ) return(true );
+   if (mode.remote) return(false);
+ //if (mode.remote) return(_false(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
+ //if (mode.remote) return(_false(catch("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
 
    mm.tradableEquity        = 0;
    mm.lotValue              = 0;
