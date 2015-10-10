@@ -767,10 +767,11 @@ double  N_INF;                                              // -1.#INF: negative
 #define MT4_MQL_REFRESH                     12349        // Rescan und Reload modifizierter .ex4-Files
 
 
-// ID Naming and Numbering Conventions
-//
-// @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
-
+/**
+ * ID naming and numbering conventions used by MFC 2.0 for resources, commands, strings, controls and child windows.
+ *
+ * @see  https://msdn.microsoft.com/en-us/library/t2zechd4.aspx
+ */
 
 // MT4 command ids (Menüs, Toolbars, Hotkeys)
 #define ID_EXPERTS_ONOFF                    33020        // Toolbar: Experts on/off                    Ctrl+E
@@ -824,6 +825,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define IDC_TESTER_GRAPH                    33207        // Tester - Graph
 #define IDC_TESTER_REPORT                   33213        // Tester - Report
 #define IDC_TESTER_JOURNAL   IDC_TERMINAL_EXPERTS        // Tester - Journal (entspricht Terminal - Experts)
+// end ID's
 
 
 // Flags zur Fehlerbehandlung                            // korrespondierende Fehler werden statt "laut" "leise" gesetzt, wodurch sie individuell behandelt werden können
