@@ -1,22 +1,8 @@
 /**
  * Funktionen zur Verwaltung von Historydateien.
  *
- *  • Alte MetaTrader-Versionen löschen beim Beenden neue Historydateien, wenn sie auf sie zugegriffen haben.
- *  • Neue MetaTrader-Versionen konvertieren beim Beenden alte Historydateien, wenn sie auf sie zugegriffen haben.
- *
- *
- *    - Um die Chartperiode von synthetischen Instrumenten dynamisch umschalten zu können, muß "symbols.raw" modifiziert werden.
- *    - Synthetische Instrumente müssen in einem Verzeichnis ohne Serververbindung gespeichert werden, um Änderungen an "symbols.raw" nicht zu verlieren.
- *    - Ohne Serververbindung muß "symbols.raw" nicht extra geschützt werden.
- *    - Charts synthetischer Instrumente müssen automatisiert geöffnet werden können (vor allem nach Tests).
- *
- *
- *
- *
- *  • Neue MetaTrader-Versionen setzen die Variablen Digits und Point in Offline-Charts permanent falsch, bei alten Versionen reicht es, das Template neuzuladen.
- *
- *  • Das Wechseln der SuperBar-Timeframes funktioniert in Offline-Charts nicht.
- *
+ *  • Alte MetaTrader-Versionen (Format 400) löschen beim Beenden neuer Historydateien, wenn sie auf sie zugegriffen haben.
+ *  • Neue MetaTrader-Versionen (Format 401) konvertieren beim Beenden alte Historydateien ins neue Format, wenn sie auf sie zugegriffen haben.
  */
 #import "history.ex4"
 
