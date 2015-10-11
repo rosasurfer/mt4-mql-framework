@@ -28,8 +28,8 @@
  Automatische Aktualisierung von Offline-Charts 
 =================================================================================================================================
 
-  Informationsfluﬂ zwischen Quote-Provider und Subscribern
-  --------------------------------------------------------
+  Subscription-Prozeﬂ: Informationsfluﬂ zwischen Quote-Provider und Subscribern
+  -----------------------------------------------------------------------------
   Beliebige Clients (z.B. Charts in beliebigen Terminals) kˆnnen sich per Subscription-Modell beim Quote-Provider anmelden.
   Auch ein weiterer, parallel laufender Quote-Provider kann sich als Subscriber anmelden, um benachrichtigt zu werden, wenn der 
   aktuelle Provider herunterf‰hrt oder offline geht. In diesem Fall kann der zus‰tzliche Provider den Subscription-Channel des 
