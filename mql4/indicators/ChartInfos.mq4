@@ -26,7 +26,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool CustomPositions.DebugTickets = false;                    // ob die Tickets der CustomPositions vom Debugger ausgegeben werden sollen
+extern bool CustomPositions.LogTickets = false;                   // ob die Tickets der CustomPositions geloggt werden sollen
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2131,7 +2131,7 @@ bool AnalyzePositions() {
    double customSwaps      [];
    double customProfits    [];
 
-   static bool debugTickets.done = false;
+   static bool logTickets.done = false;
 
 
    // (2.2) individuell konfigurierte Positionen aus den offenen Positionen extrahieren
@@ -2145,8 +2145,8 @@ bool AnalyzePositions() {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                               // termType=NULL => "Zeilenende"
-         if (CustomPositions.DebugTickets) /*&&*/ if (!debugTickets.done)
-            AnalyzePositions.DebugTickets(isCustomVirtual, customTickets, confLineIndex);
+         if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
+            AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
 
          // (2.3) individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -2178,33 +2178,33 @@ bool AnalyzePositions() {
    }
 
    // (2.4) verbleibende Position(en) speichern
-   if (CustomPositions.DebugTickets) /*&&*/ if (!debugTickets.done)
-      AnalyzePositions.DebugTickets(false, tickets, -1);
+   if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
+      AnalyzePositions.LogTickets(false, tickets, -1);
 
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
       return(false);
 
-   debugTickets.done = true;
+   logTickets.done   = true;
    positionsAnalyzed = true;
    return(!catch("AnalyzePositions(2)"));
 }
 
 
 /**
- * Schickt die Tickets einer jeden CustomPosition zur Debug-Ausgabe.
+ * Loggt die Tickets einer jeden CustomPosition.
  *
  * @return bool - Erfolgsstatus
  */
-bool AnalyzePositions.DebugTickets(bool isVirtual, int tickets[], int commentIndex) {
-   if (CustomPositions.DebugTickets) {
+bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
+   if (CustomPositions.LogTickets) {
       if (!isVirtual && ArraySize(tickets)) {
          int copy[];
          ArrayCopy(copy, tickets);
          ArrayDropInt(copy, 0);
 
          if (ArraySize(copy) > 0) {
-            if (commentIndex == -1) debug("DebugTickets()  conf(none) = "                                                                  + TicketsToStr(copy, NULL));
-            else                    debug("DebugTickets()  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr(copy, NULL));
+            if (commentIndex == -1) log("DebugTickets()  conf(none) = "                                                                  + TicketsToStr(copy, NULL));
+            else                    log("DebugTickets()  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr(copy, NULL));
          }
       }
    }
@@ -3963,7 +3963,7 @@ bool QC.HandleLfxTerminalMessages() {
    // (2) Channel auf neue Messages prüfen
    int result = QC_CheckChannel(qc.TradeToLfxChannel);
    if (result < QC_CHECK_CHANNEL_EMPTY) {
-      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
       if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
                                             return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
    }
@@ -3973,7 +3973,7 @@ bool QC.HandleLfxTerminalMessages() {
    // (3) neue Messages abholen
    result = QC_GetMessages3(hQC.TradeToLfxReceiver, qc.TradeToLfxBuffer, QC_MAX_BUFFER_SIZE);
    if (result != QC_GET_MSG3_SUCCESS) {
-      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
+      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
       if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleLfxTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
                                                return(!catch("QC.HandleLfxTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
    }
@@ -4169,7 +4169,7 @@ bool QC.HandleTradeCommands() {
    // (2) Channel auf neue Messages prüfen
    int result = QC_CheckChannel(qc.TradeCmdChannel);
    if (result < QC_CHECK_CHANNEL_EMPTY) {
-      if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
       if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
                                                return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
    }
@@ -4179,7 +4179,7 @@ bool QC.HandleTradeCommands() {
    // (3) neue Messages abholen
    result = QC_GetMessages3(hQC.TradeCmdReceiver, qc.TradeCmdBuffer, QC_MAX_BUFFER_SIZE);
    if (result != QC_GET_MSG3_SUCCESS) {
-      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch error",     ERR_WIN32_ERROR));
+      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
       if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
                                                return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
    }
