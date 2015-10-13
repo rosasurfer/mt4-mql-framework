@@ -1,23 +1,26 @@
 
 =================================================================================================================================
- Allgemein 
+ Allgemeine Offline-Chart-Infos  
 =================================================================================================================================
 
  • Neue MetaTrader-Versionen setzen die Variablen Digits und Point in Offline-Charts permanent falsch, bei alten Versionen reicht 
    es, das Charttemplate neuzuladen.
 
+ • EA's führen die start()-Funktion bei künstlichen Ticks in Offline- (und in regulären) Charts nur mit Serververbindung, 
+   Indikatoren in jedem Fall auch ohne Serververbindung aus.
+
  • Charting synthetischer Instrumente:
    - Um die Chartperiode dynamisch umschalten zu können, muß das Instrument in "symbols.raw" eingetragen und eine Verbindung zum 
-     Trade-Server verhindert werden. Für das Terminal sieht das synthetische Instrument dann wie ein reguläres Instrument aus.
+     Tradeserver verhindert werden. Für das Terminal sieht das synthetische Instrument dann wie ein reguläres Instrument aus.
 
-   - Bei Verbindung zum Trade-Server wird eine modifizierte Datei "symbols.raw" überschrieben und dort eingetragene synthetische
+   - Bei Verbindung zum Tradeserver wird eine modifizierte Datei "symbols.raw" überschrieben und dort eingetragene synthetische
      Instrumente gehen verloren.
 
    - Ohne Serververbindung muß eine modifizierte Datei "symbols.raw" nicht zusätzlich geschützt werden.
 
    - Dynamische Charts können wie Offline-Charts durch das Command ID_CHART_REFRESH aktualisiert werden, wenn der erste Chart 
-     dieses Instruments und dieser Periode während der gesamten Terminal-Laufzeit ein Offline-Chart war. Dies wird vom Offline-
-     QuotesProvider genutzt, um dynamische Charts synthetischer Instrumente wie reguläre Offline-Charts zu aktualisieren.
+     dieses Instruments dieser Periode während der gesamten Terminal-Laufzeit ein Offline-Chart war. Dies wird vom Offline-
+     QuoteServer genutzt, um dynamische Charts synthetischer Instrumente wie reguläre Offline-Charts zu aktualisieren.
 
 
  TODO: Das Wechseln der SuperBar-Timeframes funktioniert in Offline-Charts noch nicht.
@@ -28,75 +31,89 @@
  Automatische Aktualisierung von Offline-Charts 
 =================================================================================================================================
 
-  Subscription-Prozeß: Informationsfluß zwischen Quote-Provider und Subscribern
-  -----------------------------------------------------------------------------
-  Beliebige Clients (z.B. Charts in beliebigen Terminals) können sich per Subscription-Modell beim Quote-Provider anmelden.
-  Auch ein weiterer, parallel laufender Quote-Provider kann sich als Subscriber anmelden, um benachrichtigt zu werden, wenn der 
-  aktuelle Provider herunterfährt oder offline geht. In diesem Fall kann der zusätzliche Provider den Subscription-Channel des 
-  herunterfahrenden Providers inkl. dort auflaufender Messages nahtlos übernehmen und die Subscriber können sich sofort und ohne 
-  Unterbrechung erneut anmelden. Aus Sicht des Subscribers erfolgt ein Resubscribe, ohne den Wechsel der Quote-Provider-Instanz 
+  Subscription-Prozeß: Informationsfluß zwischen QuoteServer und QuoteClient (Subscribern)
+  ----------------------------------------------------------------------------------------
+  Beliebige Clients (z.B. Charts in beliebigen Terminals) können sich per Subscription-Modell beim QuoteServer anmelden. Auch ein 
+  weiterer, parallel laufender QuoteServer kann sich als Subscriber anmelden, um benachrichtigt zu werden, wenn der momentan  
+  laufende QuoteServer herunterfährt oder offline geht. In diesem Fall kann der zusätzliche QuoteServer den Subscription-Channel 
+  des herunterfahrenden QuoteServers inkl. dort auflaufender Messages nahtlos übernehmen und die Subscriber können sich sofort und 
+  ohne Unterbrechung erneut anmelden. Aus Sicht des Subscribers erfolgt ein Resubscribe, ohne den Wechsel der QuoteServer-Instanz 
   zu bemerken.
   
-  Subscription-Channel: "MetaTrader::QuoteServer::{Symbol}"             - ein Channel für jedes vom Provider angebotene Symbol 
-  Back-Channel:         "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" - ein Channel für jeden Subscriber
+  Subscription-Channel: "MetaTrader::QuoteServer::{Symbol}"             - ein Channel für jedes vom QuoteServer angebotene Symbol 
+  Backchannel:          "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" - ein Channel für jeden Subscriber
 
 
-(1) Chart meldet sich beim Quote-Provider an
-    • Subscription-Ausgangsstatus des Charts: "offline"
-    • Chart als Sender auf Subscription-Channel registrieren
-    • Chart als Receiver auf Back-Channel registrieren
+(1) QuoteClient des Charts meldet sich beim QuoteServer an
+    • Subscription-Ausgangsstatus des QuoteClients: "offline"
+    • QuoteClient als Sender auf Subscription-Channel registrieren
+    • QuoteClient als Receiver auf Backchannel registrieren
 
-    • Subscribe-Message schicken:       >> "Subscribe|{HWND_CHART}|{BackChannelName}"
-      - Subscriptionstatus des Charts:  "connecting"
+    • Subscribe-Message schicken: >> "Subscribe|{HWND_CHART}|{BackChannelName}|{ChannelMsgId}"
+      - Subscriptionstatus des QuoteClients: "connecting"
 
-    • Online-Status des Providers prüfen: Test mit QC_ChannelHasReceiver("{SubscriptionChannel}")
-      - Provider online:  
-        • auf Bestätigung warten:       << "Subscribe|{HWND_CHART}|{BackChannelName}|ACK" 
-
-      - Provider offline:
-        • Subscriptionstatus des Charts: "offline"     
-        • auf Bestätigung warten 
-        • regelmäßig Online-Status des Providers prüfen (nur in DLL möglich) 
+    • Online-Status des QuoteServers prüfen: Test mit QC_ChannelHasReceiver("{SubscriptionChannel}")
+      - QuoteServer online:  fortfahren        
+      - QuoteServer offline: Subscriptionstatus des QuoteClients: "offline"     
+        
+    • auf Bestätigung warten:     << "{ChannelMsgId}|ACK"
+    • regelmäßig Online-Status des QuoteServers prüfen (nur in DLL möglich) 
 
 
 
-(2) Chart meldet sich beim Quote-Provider ab
+(2) QuoteClient des Charts läuft
+    • im Backchannel eingehende Messages verarbeiten:
+      - Subscribe- und Unsubscribe-Bestätigungen:   << "{ChannelMsgId}|ACK"
+      - vom QuoteServer initiiertes Unsubscribe:    << "QuoteServer|{HWND_CHART}|Unsubscribed"
+      - Shutdown-Benachrichtigung des QuoteServers: << "QuoteServer|Shutdown"
+
+
+
+(3) QuoteClient des Charts meldet sich beim QuoteServer ab
+    • QuoteClient muß als Sender auf Subscription-Channel registriert sein
+
     • Unsubscription
-      - ein aktiver Provider hört auf dem Channel "MetaTrader::QuoteServer::{Symbol}" (ist Receiver)
-      - Test, ob Quote-Provider online ist: QC_ChannelHasReceiver() ?
-        • nein: Abbruch (Quote-Provider offline, Abmeldung nicht notwendig)
-        • ja:   fortfahren
-      - Chart als Sender   auf "MetaTrader::QuoteServer::{Symbol}"             registrieren (Channel sollte bereits offen sein)
-      - Chart als Receiver auf "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" registrieren (Channel sollte bereits offen sein)
-      - Unsubscribe-Message schicken:                   >> "Unsubscribe|{HWND_CHART}|{BackChannelName}"
-      - Bestätigung braucht nicht abgewartet zu werden: << "Unsubscribe|{HWND_CHART}|ACK"
+      - Unsubscribe-Message schicken: >> "Unsubscribe|{HWND_CHART}|{ChannelMsgId}"
+      - eine Bestätigung:             << "{ChannelMsgId}|ACK"
+        wird mit den nächsten Ticks kommen, muß jedoch nicht abgewartet werden                                      
+
+    • Da die Unsubscribe-Bestätigung nicht abgewartet werden braucht, muß der Backchannel nicht zwangsläufig offen sein. 
 
 
 
-(3) Quote-Provider startet oder geht online
-    • Provider als Receiver auf "MetaTrader::QuoteServer::{Symbol}" registrieren (jeweils ein Channel je Symbol)
-    • prüfen, ob in den Channels Subscribe-Messages von wartenden Clients existieren
-      - nein: Abbruch
-      - ja:   fortfahren
-    • für jeden wartenden Client:
-      - Subscribe-Message parsen:                              << "Subscribe|{HWND_CHART}|{BackChannelName}"
-      - ChartHandle HWND_CHART validieren
-      - prüfen, ob auf "{BackChannelName}" ein Receiver online ist: QC_ChannelHasReceiver() ?
-        • nein: Abbruch
-        • ja:   fortfahren
-      - Provider als Sender auf "{BackChannelName}" registrieren
-      - Subscribe-Bestätigung auf "{BackChannelName}" schicken: >> "Subscribe|{HWND_CHART}|ACK"
-    • bei neuem Tick Command ID_CHART_REFRESH an den jeweiligen Subscriber schicken
-    • regelmäßig prüfen, ob Subscriber noch online ist (PostMessage(), Fensterhandle oder Back-Channel)
+(4) QuoteServer startet oder geht online
+    • QuoteServer als Receiver auf "MetaTrader::QuoteServer::{Symbol}" registrieren (jeweils ein Channel je angebotenem Symbol)
 
 
 
-(4) Quote-Provider endet oder geht offline
-    • Provider muß als Receiver auf "MetaTrader::QuoteServer::{Symbol}" registriert sein (jeweils ein Channel je Symbol)
-    • Provider muß als Sender auf allen BackChannels der Subscriber registriert sein
+(5) QuoteServer ist online bzw. läuft
+    • Preis-Updates an die jeweiligen Subscriber schicken (Command ID_CHART_REFRESH)
 
-    • für jedes angebotene Symbol:
-      - Messages im Channel "MetaTrader::QuoteServer::{Symbol}" verarbeiten
+    • in den Subscription-Channels eingehende Messages verarbeiten:
+      - einhehende Subscribes verarbeiten
+        • Subscribe-Message parsen:                                    << "Subscribe|{HWND}|{BackChannelName}|{ChannelMsgId}"
+        • ChartHandle HWND_CHART validieren
+        • prüfen, ob auf "{BackChannelName}" ein Receiver online ist: QC_ChannelHasReceiver() ?
+          - nein: Abbruch
+          - ja:   fortfahren
+        • QuoteServer als Sender auf "{BackChannelName}" registrieren
+        • Subscribe-Bestätigung auf "{BackChannelName}" verschicken:   >> "{ChannelMsgId}|ACK"
+        • Subscriber speichern        
+      
+      - eingehende Unsubscribes verarbeiten
+        • Unsubscribe-Message parsen:                                  << "Unsubscribe|{HWND}|{ChannelMsgId}"
+        • entsprechenden Subscriber ermitteln        
+        • Unsubscribe-Bestätigung auf "{BackChannelName}" verschicken: >> "{ChannelMsgId}|ACK"
+        • Backchannel schließen
+        • Subscriber löschen        
+
+    • regelmäßig prüfen, ob die Subscriber noch online sind (PostMessage(), Fensterhandle, Back-Channel)
+
+
+
+(6) QuoteServer endet oder geht offline
+    • QuoteServer muß als Receiver auf "MetaTrader::QuoteServer::{Symbol}" registriert sein (jeweils ein Channel je Symbol)
+    • QuoteServer muß als Sender auf allen Backchannels der Subscriber registriert sein
 
     • für jedes angebotene Symbol:
       - Channel "MetaTrader::QuoteServer::{Symbol}" verlassen
@@ -105,9 +122,9 @@
       - prüfen, ob der Subscriber noch online ist (Fensterhandle und Back-Channel)
         • nein: Abbruch
         • ja:   fortfahren
-      - auf "{BackChannelName}" Ende der Subscription signalisieren: >> "QuoteServer|{Symbol}|SubscriptionCancelled"
+      - auf "{BackChannelName}" Ende der Subscription signalisieren: >> "QuoteServer|{HWND}|Unsubscribed"
       - auf "{BackChannelName}" Shutdown-Benachrichtigung schicken:  >> "QuoteServer|Shutdown"
-      - es wird keine Bestätigung durch den Subscriber abgewartet
+      - eine Bestätigung durch den Subscriber ist nicht notwendig
 
 
 
