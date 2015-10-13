@@ -1784,7 +1784,7 @@ bool UpdatePositions() {
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), sLotSize +" lot",                                                     positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                                positions.fontSize, positions.fontName, fontColor);
                if (!positions.ddata[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
-               else                                        sBreakeven = NumberToStr(RoundEx(positions.ddata[i][I_BREAKEVEN_PRICE], Digits), PriceFormat);
+               else                                        sBreakeven = NumberToStr(positions.ddata[i][I_BREAKEVEN_PRICE], PriceFormat);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sBreakeven,                                                           positions.fontSize, positions.fontName, fontColor);
          }
 
@@ -3850,7 +3850,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       pipValue = PipValue(totalPosition, true);                      // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.ddata[size][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pips, 8);
+         positions.ddata[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pips, Digits);
       return(!catch("StorePosition(5)"));
    }
 
@@ -3914,7 +3914,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       pipValue = PipValue(-totalPosition, true);                     // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.ddata[size][I_BREAKEVEN_PRICE] = NormalizeDouble((fullProfit-floatingProfit)/pipValue*Pips - openPrice/totalPosition, 8);
+         positions.ddata[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pips - openPrice/totalPosition, Digits);
       return(!catch("StorePosition(7)"));
    }
 
