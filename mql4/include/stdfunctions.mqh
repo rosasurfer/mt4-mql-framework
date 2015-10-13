@@ -3555,6 +3555,7 @@ void __DummyCalls() {
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    Chart.Expert.Properties();
+   Chart.SendTick(NULL);
    CharToHexStr(NULL);
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
