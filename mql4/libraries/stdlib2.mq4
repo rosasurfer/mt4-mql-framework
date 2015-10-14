@@ -600,7 +600,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
 /**
  * Konvertiert ein Array mit Ordertickets in einen lesbaren String.
  *
- * @param  int    tickets[]
+ * @param  int    tickets[] - für Tickets ungültige Werte werden entsprechend dargestellt
  * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
@@ -609,20 +609,30 @@ string TicketsToStr(int tickets[], string separator=", ") {
    if (ArrayDimension(tickets) != 1)
       return(_EMPTY_STR(catch("TicketsToStr(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
-   if (ArraySize(tickets) == 0)
+   int size = ArraySize(tickets);
+   if (!size)
       return("{}");
 
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
-   return(StringConcatenate("{#", JoinInts(tickets, separator +"#"), "}"));
+   string result, sValue;
+
+   for (int i=0; i < size; i++) {
+      if   (tickets[i] > 0) sValue = StringConcatenate("#", tickets[i]);
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   return(StringConcatenate("{", StringRight(result, -StringLen(separator)), "}"));
 }
 
 
 /**
  * Konvertiert ein Array mit Ordertickets in einen lesbaren String, der zusätzlich die Lotsize des jeweiligen Tickets enthält.
  *
- * @param  int    tickets[]
+ * @param  int    tickets[] - für Tickets ungültige Werte werden entsprechend dargestellt
  * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
@@ -631,46 +641,42 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
    if (ArrayDimension(tickets) != 1)
       return(_EMPTY_STR(catch("TicketsToStr.Lots(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
-   int ticketsSize = ArraySize(tickets);
-   if (!ticketsSize)
+   int size = ArraySize(tickets);
+   if (!size)
       return("{}");
 
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
-   string strings[]; ArrayResize(strings, ticketsSize);
+   string result, sValue;
 
    OrderPush("TicketsToStr.Lots(2)");
 
-   for (int i=0; i < ticketsSize; i++) {
+   for (int i=0; i < size; i++) {
       if (tickets[i] > 0) {
          if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if (IsLongTradeOperation(OrderType())) {
-               strings[i] = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
-               continue;
-            }
-            if (IsShortTradeOperation(OrderType())) {
-               strings[i] = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
-               continue;
-            }
+            if      (IsLongTradeOperation (OrderType())) sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
+            else if (IsShortTradeOperation(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
+            else                                         sValue = StringConcatenate("#", tickets[i], ":none");
          }
-         else GetLastError();
+         else                                            sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
       }
-      strings[i] = StringConcatenate("#", tickets[i], ":error");
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+
+      result = StringConcatenate(result, separator, sValue);
    }
 
    OrderPop("TicketsToStr.Lots(3)");
 
-   string result = StringConcatenate("{", JoinStrings(strings, separator), "}");
-   ArrayResize(strings, 0);
-   return(result);
+   return(StringConcatenate("{", StringRight(result, -StringLen(separator)), "}"));
 }
 
 
 /**
  * Konvertiert ein Array mit Ordertickets in einen lesbaren String, der zusätzlich die Lotsize und das Symbol des jeweiligen Tickets enthält.
  *
- * @param  int    tickets[]
+ * @param  int    tickets[] - für Tickets ungültige Werte werden entsprechend dargestellt
  * @param  string separator - Separator (default: NULL = ", ")
  *
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
@@ -679,39 +685,35 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
    if (ArrayDimension(tickets) != 1)
       return(_EMPTY_STR(catch("TicketsToStr.LotsSymbols(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
-   int ticketsSize = ArraySize(tickets);
-   if (!ticketsSize)
+   int size = ArraySize(tickets);
+   if (!size)
       return("{}");
 
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
-   string strings[]; ArrayResize(strings, ticketsSize);
+   string result, sValue;
 
    OrderPush("TicketsToStr.LotsSymbols(2)");
 
-   for (int i=0; i < ticketsSize; i++) {
+   for (int i=0; i < size; i++) {
       if (tickets[i] > 0) {
          if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if (IsLongTradeOperation(OrderType())) {
-               strings[i] = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
-               continue;
-            }
-            if (IsShortTradeOperation(OrderType())) {
-               strings[i] = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
-               continue;
-            }
+            if      (IsLongTradeOperation (OrderType())) sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else if (IsShortTradeOperation(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else                                         sValue = StringConcatenate("#", tickets[i], ":none");
          }
-         else GetLastError();
+         else                                            sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
       }
-      strings[i] = StringConcatenate("#", tickets[i], ":error");
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+
+      result = StringConcatenate(result, separator, sValue);
    }
 
    OrderPop("TicketsToStr.LotsSymbols(3)");
 
-   string result = StringConcatenate("{", JoinStrings(strings, separator), "}");
-   ArrayResize(strings, 0);
-   return(result);
+   return(StringConcatenate("{", StringRight(result, -StringLen(separator)), "}"));
 }
 
 
