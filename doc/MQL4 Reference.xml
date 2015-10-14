@@ -9985,47 +9985,51 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       type=bool
       keywords=;SELECT_BY_POS;SELECT_BY_TICKET;MODE_TRADES;MODE_HISTORY;
       <content>
-The function selects an order for further processing. It returns <span class="const">true</span> if the function succeeds.
-It returns <span class="const">false</span> if the function fails.
-To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-The <i>pool</i> parameter is ignored if the order is selected by the ticket number. The ticket number is a unique order identifier.
-To find out from what list the order has been selected, its <a href="help://trading_OrderCloseTime">close time</a> must be analyzed. If the order close time
-equals to 0, the order is open or pending and taken from the terminal open positions list. One can distinguish an open position from a pending order
-by the <a href="help://trading_OrderType">order type</a>. If the order <a href="help://trading_OrderCloseTime">close time</a> does not equal to 0, the order is
-a <a href="help://trading_OrderClose">closed</a> order or a <a href="help://trading_OrderDelete">deleted</a> pending order and was selected from the terminal history.
-They also differ from each other by their <a href="help://trading_OrderType">order types</a>.
+			Selects an order for further processing and returns <span class="const">true</span> on success or <span class="const">false</span> otherwise. For detailed error information 
+			call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+			If the order is selected by ticket number the parameter <i>origin</i> is ignored.<br/>
+			To find out the origin of an order its <a href="help://trading_OrderCloseTime">close time</a> needs to be analyzed. If the <a href="help://trading_OrderCloseTime">close time</a> 
+			equals to 0 the order is a pending order or an open position and originates from the terminal's open orders list. If the order <a href="help://trading_OrderCloseTime">close time</a> 
+			does not equal to 0 the order is a cancelled pending order or a closed position and was selected from the terminal's trade history list.<br/>
+			The <a href="help://trading_OrderType">order type</a> of an open order distinguishes a pending order from an open position.<br/>
+         <br/>
+         <span style="color:red">Bug:</span>
+         <br/>
+		   <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ungültiger Ticket-Nummer <span class="const">false</span> zurück, setzt jedoch keinen Fehler-Code.<br/>
+		   Workaround: <span class="function">OrderSelectByTicket</span>() verwenden<br/>
+			<br/>
       </content>
       <example>
-  if(OrderSelect(12470, SELECT_BY_TICKET)==true)
-    {
-     Print(&quot;order #12470 open price is &quot;, OrderOpenPrice());
-     Print(&quot;order #12470 close price is &quot;, OrderClosePrice());
-    }
-  else
-    Print(&quot;OrderSelect returned the error of &quot;,GetLastError());
+  if (OrderSelect(12470, <span class="const">SELECT_BY_TICKET</span>)) {
+     Print(<span class="string">&quot;order #12470 open price is &quot;</span>, OrderOpenPrice());
+     Print(<span class="string">&quot;order #12470 close price is &quot;</span>, OrderClosePrice());
+  }
+  else {
+    Print(<span class="string">&quot;OrderSelect returned error &quot;</span>, GetLastError());
+  }
       </example>
       <parameter>
         type=int
         name=index
-        description=Order index or order ticket depending on the second parameter.
+        description=List index or order ticket depending on the second parameter.
       </parameter>
       <parameter>
         type=int
-        name=select
+        name=selectMode
         <description>
-Selecting flags. It can be any of the following values:<br/>
-<span class="const">SELECT_BY_POS</span> - index in the order pool,<br/>
-<span class="const">SELECT_BY_TICKET</span> - index is order ticket.
+Selection flag, can be one of the following values:<br/>
+<span class="const">SELECT_BY_POS</span> - parameter <i>index</i> is an order list index<br/>
+<span class="const">SELECT_BY_TICKET</span> - parameter <i>index</i> is an order ticket number
         </description>
       </parameter>
       <parameter>
         type=int
-        name=pool
+        name=origin
         def_value=<span class="const">MODE_TRADES</span>
         <description>
-Optional order pool index. Used when the selected parameter is <span class="const">SELECT_BY_POS</span>. It can be any of the following values:<br/>
-<span class="const">MODE_TRADES</span> (default)- order selected from trading pool(opened and pending orders),<br/>
-<span class="const">MODE_HISTORY</span> - order selected from history pool (closed and canceled order).
+Optional origin identifier. Used when the parameter <i>selectMode</i> is <span class="const">SELECT_BY_POS</span>. Can be one of the following values:<br/>
+<span class="const">MODE_TRADES</span> - the order is selected from the terminal's open orders list (pending orders and open positions) (default),<br/>
+<span class="const">MODE_HISTORY</span> - the order is selected from the terminal's trade history list (cancelled orders and closed positions).
         </description>
       </parameter>
     </function>
