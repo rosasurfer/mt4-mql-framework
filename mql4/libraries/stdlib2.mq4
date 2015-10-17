@@ -76,7 +76,8 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
    if (dimensions == 1) {
       if (dim1 == 0)
          return("{}");
-      string copy[]; ArrayCopy(copy, values2);
+      string copy[]; ArrayResize(copy, 0);
+      ArrayCopy(copy, values2);
       DoubleQuoteStrings(copy);
 
       result = StringConcatenate("{", JoinStrings(copy, separator), "}");
@@ -1067,6 +1068,8 @@ privat*/bool _SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int r
       i                = rowsToSort[n][1];
       ticketData[i][1] = rows.copy [n][0];
    }
+
+   ArrayResize(rows.copy, 0);
    return(!catch("_SOT.SameOpenTimes(1)"));
 }
 
@@ -1186,6 +1189,7 @@ bool _SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], i
       ticketData[i][2] = rows.copy [n][1];
    }
 
+   ArrayResize(rows.copy, 0);
    return(!catch("_SCT.SameCloseTimes()"));
 }
 
@@ -1214,6 +1218,8 @@ bool _SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], in
       i                = rowsToSort[n][1];
       ticketData[i][2] = rows.copy [n][0];
    }
+
+   ArrayResize(rows.copy, 0);
    return(!catch("_SCT.SameOpenTimes()"));
 }
 

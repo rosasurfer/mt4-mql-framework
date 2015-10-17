@@ -10175,7 +10175,10 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       if (!__OrderMultiClose.OneSymbol(tickets, slippage, markerColor, oeFlags, oes2))
          return(_false(oes.setError(oes, -1, last_error), OrderPop("OrderMultiClose(11)")));
       CopyMemory(GetIntsAddress(oes), GetIntsAddress(oes2), ArraySize(oes2)*4);
-      ArrayResize(oes2, 0);
+      ArrayResize(oes2,               0);
+      ArrayResize(symbols,            0);
+      ArrayResize(tickets.symbol,     0);
+      ArrayResize(symbols.lastTicket, 0);
       return(OrderPop("OrderMultiClose(12)") && !oes.setError(oes, -1, last_error));
    }
 
@@ -10284,7 +10287,12 @@ bool OrderMultiClose(int tickets[], double slippage, color markerColor, int oeFl
       }
    }
 
-   ArrayResize(oes2, 0);
+   ArrayResize(oes2,               0);
+   ArrayResize(symbols,            0);
+   ArrayResize(tickets.symbol,     0);
+   ArrayResize(symbols.lastTicket, 0);
+   ArrayResize(tickets.copy,       0);
+   ArrayResize(flatSymbols,        0);
    return(!oes.setError(oes, -1, catch("OrderMultiClose(16)")));
 }
 
@@ -10400,7 +10408,8 @@ bool __OrderMultiClose.OneSymbol(int tickets[], double slippage, color markerCol
       oes.addProfit    (oes, pos, oes.Profit    (oes2, i));
    }
 
-   ArrayResize(oes2, 0);
+   ArrayResize(oes2,         0);
+   ArrayResize(tickets.copy, 0);
    return(!oes.setError(oes, -1, catch("__OrderMultiClose.OneSymbol(7)", NULL, O_POP)));
 }
 
@@ -10487,6 +10496,7 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
       }
       if (!OrderPop("__OrderMultiClose.Flatten(6)"))
          return(_NULL(oes.setError(oes, -1, last_error)));
+      ArrayResize(tickets.copy, 0);
    }
    else {
       if (!OrderPop("__OrderMultiClose.Flatten(7)"))
@@ -10565,6 +10575,7 @@ int __OrderMultiClose.Flatten(int tickets[], double slippage, int oeFlags, /*ORD
       }
       ArrayResize(oe, 0);
    }
+
    ArrayResize(lots, 0);
 
    if (!catch("__OrderMultiClose.Flatten(9)"))
@@ -10683,7 +10694,8 @@ bool __OrderMultiClose.Flattened(int tickets[], color markerColor, int oeFlags, 
       SortTicketsChronological(tickets.copy);
    }
 
-   ArrayResize(oe, 0);
+   ArrayResize(oe,           0);
+   ArrayResize(tickets.copy, 0);
    return(!oes.setError(oes, -1, catch("__OrderMultiClose.Flattened(10)", NULL, O_POP)));
 }
 
