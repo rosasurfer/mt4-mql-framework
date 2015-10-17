@@ -1868,7 +1868,7 @@ string ArrayShiftString(string array[]) {
 
 
 /**
- * Entfernt alle Vorkommen eines Elements aus einem Boolean-Array.
+ * Entfernt aus einem Boolean-Array alle Vorkommen eines Elements.
  *
  * @param  bool array[] - Boolean-Array
  * @param  bool value   - zu entfernendes Element
@@ -1897,7 +1897,7 @@ int ArrayDropBool(bool array[], bool value) {
 
 
 /**
- * Entfernt alle Vorkommen eines Elements aus einem Integer-Array.
+ * Entfernt aus einem Integer-Array alle Vorkommen eines Elements.
  *
  * @param  int array[] - Integer-Array
  * @param  int value   - zu entfernendes Element
@@ -1924,7 +1924,7 @@ int ArrayDropInt(int array[], int value) {
 
 
 /**
- * Entfernt alle Vorkommen eines Elements aus einem Double-Array.
+ * Entfernt aus einem Double-Array alle Vorkommen eines Elements.
  *
  * @param  double array[] - Double-Array
  * @param  double value   - zu entfernendes Element
@@ -1951,7 +1951,7 @@ int ArrayDropDouble(double array[], double value) {
 
 
 /**
- * Entfernt alle Vorkommen eines Elements aus einem String-Array.
+ * Entfernt aus einem String-Array alle Vorkommen eines Elements.
  *
  * @param  string array[] - String-Array
  * @param  string value   - zu entfernendes Element
