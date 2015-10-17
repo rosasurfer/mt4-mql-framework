@@ -3671,13 +3671,17 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopy()
       type=int
       <content>
-Copies an array to another one. Arrays must be of the same type but arrays of type double[], int[], datetime[], color[] and bool[] can be treated of the same type.<br/>
-Returns the amount of copied elements.
+			Copies an array to another one. Both arrays must either be <span class="type">string</span> arrays or numeric arrays (arrays of type <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>, <span class="type">color</span> and <span class="type">double</span> are treated as of the same type).<br/>
+			Returns the number of copied elements.<br/>
+			<br/>
+			<span style="color:red">Achtung:</span>
+			<br/>
+			Das Zielarray wird bei Bedarf automatisch vergrößert. Es wird jedoch nicht automatisch verkleinert, wenn es bereits existiert und größer als das Ausgangsarray ist.<br/>
+			<br/>
       </content>
       <example>
    double array1[][6];
    double array2[10][6];
-
    // array1 is filled with some data
    ArrayCopyRates(array1);
 
@@ -3699,21 +3703,21 @@ Returns the amount of copied elements.
       </parameter>
       <parameter>
         type=int
-        name=start_dest
-        def_value=0
-        description=Starting index for the destination array. By default, start index is 0.
+        name=destFrom
+        def_value=<span class="number">0</span>
+        description=Start index of the destination array (default = 0).
       </parameter>
       <parameter>
         type=int
-        name=start_source
-        def_value=0
-        description=Starting index for the source array. By default, start index is 0.
+        name=sourceFrom
+        def_value=<span class="number">0</span>
+        description=Start index of the source array (default = 0).
       </parameter>
       <parameter>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=The count of elements that should be copied. By default, it is <span class="const">WHOLE_ARRAY</span>.
+        description=The number of elements to be copied (default = <span class="const">WHOLE_ARRAY</span>).
       </parameter>
     </function>
 
