@@ -806,7 +806,7 @@ int HistoryFile.FindBar(int hFile, datetime time, int flags, bool &lpBarExists[]
 
    // (7) Zeitpunkt liegt irgendwo innerhalb der Zeitreihe
    int offset;
-   return(_EMPTY(catch("HistoryFile.FindBar(6:symbol="+ hf.symbol[hFile]+", period="+ PeriodDescription(hf.period[hFile]) +", size="+ hf.size[hFile] +", bars="+ hf.bars[hFile] +", from='"+ TimeToStr(hf.from[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.to[hFile], TIME_FULL) +"')  Suche nach time='"+ TimeToStr(time, TIME_FULL) +"' innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
+   return(_EMPTY(catch("HistoryFile.FindBar(6|symbol="+ hf.symbol[hFile]+", period="+ PeriodDescription(hf.period[hFile]) +", bars="+ hf.bars[hFile] +", from='"+ TimeToStr(hf.from[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.to[hFile], TIME_FULL) +"')  Suche nach time='"+ TimeToStr(time, TIME_FULL) +"' innerhalb der Zeitreihe noch nicht implementiert", ERR_NOT_IMPLEMENTED)));
 
    if (!catch("HistoryFile.FindBar(7)"))
       return(offset);
