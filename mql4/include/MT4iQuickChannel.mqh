@@ -1,7 +1,6 @@
 /**
  * MT4i QuickChannel
  *
- *
  *  - Je Channel kann es mehrere Sender, jedoch max. einen Receiver geben.
  *  - QuickChannel benachrichtigt den Receiver per Windows-Message (z.B. Tick ans Chartfenster) von neuen Channel-Messages.
  *  - Der Receiver kann diese Messages aus dem Channel abholen.
@@ -9,8 +8,8 @@
  *    geprüft werden, ob neue Messages eingetroffen sind.
  *
  *
- * TODO: - Prüfen, ob der QuickChannel-Tick die Funktion start() auch in Offline- und Online-Charts ohne Connection triggert.
- *       - Prüfen, ob der QuickChannel-Tick die Funktion start() sowohl für Indikatoren als auch für EA's triggert.
+ * TODO: - Prüfen, ob der QuickChannel-Tick die start()-Funktion auch in Offline- und Online-Charts ohne Connection triggert.
+ *       - Prüfen, ob der QuickChannel-Tick die start()-Funktion sowohl für Indikatoren als auch für EA's triggert.
  *
  *
  * API as of version 4.0.0
