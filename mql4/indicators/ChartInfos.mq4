@@ -2196,34 +2196,12 @@ bool AnalyzePositions() {
  * @return bool - Erfolgsstatus
  */
 bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
-   if (CustomPositions.LogTickets && !isVirtual && ArraySize(tickets)) {
-      // (1) zurückgesetzte Tickets entfernen
-      int copy[];
-      ArrayCopy(copy, tickets);
-      ArrayDropInt(copy, 0);
+   isVirtual = isVirtual!=0;
 
-      double long, short, total, hedged;
-      int size = ArraySize(copy);
-
-      if (size > 0) {
-         // (2) sicherheitshalber nochmal Gesamtposition ermitteln und mitloggen
-         for (int i=0; i < size; i++) {
-            if (!SelectTicket(copy[i], "LogTickets(1)"))
-               return(false);
-            if (OrderType() == OP_BUY) long  += OrderLots();
-            else                       short += OrderLots();
-         }
-         long   = NormalizeDouble(long,  2);
-         short  = NormalizeDouble(short, 2);
-         total  = NormalizeDouble(long - short, 2);
-         hedged = MathMin(long, short);
-
-         string strPosition;
-         if (!total) strPosition = "±"+ NumberToStr(long,  ".+")                                                         +" lots (hedged)";
-         else        strPosition =      NumberToStr(total, ".+") + ifString(hedged, " ±"+ NumberToStr(hedged, ".+"), "") +" lots";
-
-         if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ strPosition +" = "+ TicketsToStr(copy, NULL));
-         else                   log("LogTickets(3)  conf(none) = "                                                                  + strPosition +" = "+ TicketsToStr(copy, NULL));
+   if (CustomPositions.LogTickets) /*&&*/ if (!isVirtual) {
+      if (ArraySize(tickets) > 0) {
+         if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+         else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
       }
    }
    return(true);
@@ -4758,9 +4736,11 @@ string InputsToStr() {
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
    int      ChartInfos.CopyLfxStatus(bool direction, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]);
    bool     SortClosedTickets(int keys[][]);
-   bool     SortOpenTickets(int keys[][]);
+   bool     SortOpenTickets  (int keys[][]);
 
-   string   DoublesToStr(double array[], string separator);
-   string   StringsToStr(string array[], string separator);
-   string   TicketsToStr(int    array[], string separator);
+   string   DoublesToStr         (double array[], string separator);
+   string   StringsToStr         (string array[], string separator);
+   string   TicketsToStr         (int    array[], string separator);
+   string   TicketsToStr.Lots    (int    array[], string separator);
+   string   TicketsToStr.Position(int    array[]);
 #import
