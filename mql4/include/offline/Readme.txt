@@ -56,16 +56,15 @@
       - QuoteServer online:  fortfahren        
       - QuoteServer offline: Subscriptionstatus des QuoteClients: "offline"     
         
-    • auf Bestätigung warten:     << "{ChannelMsgId}|ACK"
+    • auf Bestätigung warten:     << "{ChannelMsgId}|OK"
     • regelmäßig Online-Status des QuoteServers prüfen (nur in DLL möglich) 
 
 
 
 (2) QuoteClient des Charts läuft
     • im Backchannel eingehende Messages verarbeiten:
-      - Subscribe- und Unsubscribe-Bestätigungen:   << "{ChannelMsgId}|ACK"
-      - vom QuoteServer initiiertes Unsubscribe:    << "QuoteServer|{HWND_CHART}|Unsubscribed"
-      - Shutdown-Benachrichtigung des QuoteServers: << "QuoteServer|Shutdown"
+      - Messagebestätigungen:                    << "{ChannelMsgId}|OK"
+      - vom QuoteServer initiiertes Unsubscribe: << "QuoteServer|{HWND_CHART}|Unsubscribed|Shutdown"
 
 
 
@@ -74,11 +73,9 @@
 
     • Unsubscription
       - Unsubscribe-Message schicken: >> "Unsubscribe|{HWND_CHART}|{ChannelMsgId}"
-      - eine Bestätigung:             << "{ChannelMsgId}|ACK"
-        wird mit den nächsten Ticks kommen, muß jedoch nicht abgewartet werden                                      
-
-    • Da die Unsubscribe-Bestätigung nicht abgewartet werden braucht, muß der Backchannel nicht zwangsläufig offen sein. 
-
+      - Serverbestätigung:            << "{ChannelMsgId}|OK"
+      - Die Serverbestätigung kann, muß aber nicht abgewartet werden. Der Backchannel muß also nicht zwangsläufig offen sein. 
+        Die Bestätigung bedeutet für den QuoteClient nur, daß der QuoteServer tatsächlich aufgehört hat, Updates zu schicken.    
 
 
 (4) QuoteServer startet oder geht online
@@ -97,13 +94,13 @@
           - nein: Abbruch
           - ja:   fortfahren
         • QuoteServer als Sender auf "{BackChannelName}" registrieren
-        • Subscribe-Bestätigung auf "{BackChannelName}" verschicken:   >> "{ChannelMsgId}|ACK"
+        • Subscribe-Bestätigung auf "{BackChannelName}" verschicken:   >> "{ChannelMsgId}|OK"
         • Subscriber speichern        
       
       - eingehende Unsubscribes verarbeiten
         • Unsubscribe-Message parsen:                                  << "Unsubscribe|{HWND}|{ChannelMsgId}"
         • entsprechenden Subscriber ermitteln        
-        • Unsubscribe-Bestätigung auf "{BackChannelName}" verschicken: >> "{ChannelMsgId}|ACK"
+        • Unsubscribe-Bestätigung auf "{BackChannelName}" verschicken: >> "{ChannelMsgId}|OK"
         • Backchannel schließen
         • Subscriber löschen        
 
