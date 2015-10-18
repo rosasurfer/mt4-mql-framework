@@ -36,9 +36,11 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
+   debug("onTick()");
+   return(last_error);
+
    //RecordEquity();
    RecordEquity(HST_COLLECT_TICKS);
-   return(last_error);
 }
 
 
