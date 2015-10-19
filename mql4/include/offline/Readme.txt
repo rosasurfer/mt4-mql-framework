@@ -126,11 +126,10 @@
 
     • für jeden registrierten Subscriber:
       - prüfen, ob der Subscriber noch online ist (Fensterhandle und Back-Channel)
-        • nein: Abbruch
-        • ja:   fortfahren
-      - auf "{BackChannelName}" Ende der Subscription signalisieren: >> "QuoteServer|{HWND}|Unsubscribed"
-      - auf "{BackChannelName}" Shutdown-Benachrichtigung schicken:  >> "QuoteServer|Shutdown"
-      - eine Bestätigung durch den Subscriber ist nicht notwendig
+        • wenn ja:   
+          - auf "{BackChannelName}" Ende der Subscription signalisieren: >> "QuoteServer|{HWND}|Unsubscribed|{Reason}"
+          - eine Bestätigung durch den Subscriber ist nicht notwendig
+      - Backchannel verlassen
 
 
 
