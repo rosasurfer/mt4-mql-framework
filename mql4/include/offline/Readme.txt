@@ -44,6 +44,15 @@
   Backchannel:          "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" - ein Channel für jeden Subscriber
 
 
+  TODO: MQL kann in deinit() einen UninitReason noch nicht eindeutig erkennen, sondern erst im folgenden init(). Daher ist es nicht 
+        möglich, externe Resourcen (z.B. ein QuickChannel-Handle) abhängig vom UninitReason korrekt zu speichern oder freizugeben. 
+        Dies kann erst mit einer UninitReason-Erkennung via DLL zuverlässig erreicht werden. Externe Resourcen müssen daher bei jedem 
+        deinit() freigegeben und ein komplettes Unsubscribe-Subscribe durchgeführt werden. 
+       
+        Wegen dieses unnötigen Mehraufwandes wurde vorläufig die Bestätigung jeder einzelnen Message entfernt. Dementsprechend ist der 
+        Subscriber statuslos.       
+
+
 (1) QuoteClient des Charts meldet sich beim QuoteServer an
     • Subscription-Ausgangsstatus des QuoteClients: "offline"
     • QuoteClient als Sender auf Subscription-Channel registrieren
