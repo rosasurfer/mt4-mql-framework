@@ -19,10 +19,10 @@ int __DEINIT_FLAGS__[];
 
 
 string qc.quotes.SubscribeChannel;                    // Subscribe-Channel: "MetaTrader::QuoteServer::{Symbol}"             (Chart -> QuoteServer)
-string qc.quotes.BackChannel;                         // Back-Channel:      "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" (QuoteServer -> Chart)
+string qc.quotes.BackChannel;                         // Backchannel:       "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" (QuoteServer -> Chart)
 
 int    hQC.quotes.Sender;                             // Sender-Handle (Subscribe-Channel)
-int    hQC.quotes.Receiver;                           // Receiver-Handle (Back-Channel)
+int    hQC.quotes.Receiver;                           // Receiver-Handle (Backchannel)
 
 
 /**
@@ -34,9 +34,9 @@ int onInit() {
    if (!This.IsTesting()) {
       // Chart ggf. für Offline-Quote-Updates anmelden
       if (true || GetServerName()=="MyFX-Synthetic" /*|| isOfflineChart*/)
-         if (!QC.StartSender())   return(last_error);                // qc.quotes.SubscribeChannel initialisieren
-         if (!QC.StartReceiver()) return(last_error);                // qc.quotes.BackChannel initialisieren
-         if (!Subscribe())        return(last_error);
+         if (!StartSender())   return(last_error);                   // qc.quotes.SubscribeChannel initialisieren
+         if (!StartReceiver()) return(last_error);                   // qc.quotes.BackChannel initialisieren
+         if (!Subscribe())     return(last_error);
    }
    return(last_error);
 }
@@ -68,7 +68,7 @@ int onDeinit() {
       }
 
       // alle aktiven Channel stoppen
-      QC.StopChannels();
+      StopChannels();
    }
    return(last_error);
 }
@@ -85,7 +85,7 @@ bool Subscribe() {
    string msg    = "Subscribe|"+ hWndChart +"|"+ qc.quotes.BackChannel;
 
    // Subscribe-Message verschicken
-   if (!QC.StartSender())
+   if (!StartSender())
       return(false);
    int result = QC_SendMessage(hQC.quotes.Sender, msg, NULL);
    if (!result) return(!catch("Subscribe(1)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.quotes.SubscribeChannel +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
@@ -106,7 +106,7 @@ bool Unsubscribe() {
    string msg    = "Unsubscribe|"+ hWndChart;
 
    // Unsubscribe-Message verschicken
-   if (!QC.StartSender())
+   if (!StartSender())
       return(false);
    int result = QC_SendMessage(hQC.quotes.Sender, msg, NULL);
    if (!result) return(!catch("Unsubscribe(1)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.quotes.SubscribeChannel +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
@@ -123,7 +123,7 @@ bool Unsubscribe() {
  */
 bool ProcessMessages() {
    // (1) ggf. Receiver starten
-   if (!hQC.quotes.Receiver) /*&&*/ if (!QC.StartReceiver())
+   if (!hQC.quotes.Receiver) /*&&*/ if (!StartReceiver())
       return(false);
 
    // (2) Channel auf neue Messages prüfen
@@ -160,18 +160,21 @@ bool ProcessMessages() {
 
       termsSize = Explode(msgs[i], "|", terms, 4);
 
-      // (4.1) vom QuoteServer initiiertes Unsubscribe: "QuoteServer|{HWND}|Unsubscribed|Shutdown"
+      // (4.1) vom QuoteServer initiiertes Unsubscribe: "QuoteServer|{HWND}|Unsubscribed|{Reason}"
       if (terms[0] == "QuoteServer") {
          if (termsSize < 3)            { warn("ProcessMessages(8)  invalid message \""+ msgs[i] +"\" (missing parameters)");                      continue; }
+         // HWND
          sValue = terms[1];
          if (!StringIsDigit(sValue))   { warn("ProcessMessages(9)  invalid HWND value in message \""+ msgs[i] +"\" (non-digits)");                continue; }
          hWnd = StrToInteger(sValue);
          if (hWnd != hWndChart)        { warn("ProcessMessages(10)  invalid HWND in message \""+ msgs[i] +"\" (not my window)");                  continue; }
+         // Unsubscribed
          sValue = terms[2];
          if (sValue != "Unsubscribed") { warn("ProcessMessages(11)  unsupported message \""+ msgs[i] +"\" (unknown parameter \""+ sValue +"\")"); continue; }
+         // Reason
          sReason = terms[3];
 
-         debug("ProcessMessages(12)  disconnected ("+ sReason +"), reconnecting...");
+         debug("ProcessMessages(12)  disconnected (reason="+ sReason +"), reconnecting...");
          if (!Subscribe()) return(false);
          continue;
       }
@@ -190,14 +193,14 @@ bool ProcessMessages() {
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StartSender() {
+bool StartSender() {
    if (!hQC.quotes.Sender) {
       qc.quotes.SubscribeChannel = "MetaTrader::QuoteServer::"+ Symbol();
 
       hQC.quotes.Sender = QC_StartSender(qc.quotes.SubscribeChannel);
-      if (!hQC.quotes.Sender) return(!catch("QC.StartSender(1)->MT4iQuickChannel::QC_StartSender(ch=\""+ qc.quotes.SubscribeChannel +"\")", ERR_WIN32_ERROR));
+      if (!hQC.quotes.Sender) return(!catch("StartSender(1)->MT4iQuickChannel::QC_StartSender(ch=\""+ qc.quotes.SubscribeChannel +"\")", ERR_WIN32_ERROR));
 
-      debug("QC.StartSender(2)  sender on \""+ qc.quotes.SubscribeChannel +"\" started");
+      debug("StartSender(2)  sender on \""+ qc.quotes.SubscribeChannel +"\" started");
    }
    return(true);
 }
@@ -208,32 +211,32 @@ bool QC.StartSender() {
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StopSender() {
+bool StopSender() {
    if (hQC.quotes.Sender != NULL) {
       int hTmp = hQC.quotes.Sender;
                  hQC.quotes.Sender = NULL;                           // Handle zurücksetzen, um mehrfache Stopversuche bei Fehlern zu verhindern
       if (!QC_ReleaseSender(hTmp))
-         return(!catch("QC.StopSender(1)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.quotes.SubscribeChannel +"\")  error stopping sender", ERR_WIN32_ERROR));
-      debug("QC.StopSender(2)  sender on \""+ qc.quotes.SubscribeChannel +"\" stopped");
+         return(!catch("StopSender(1)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.quotes.SubscribeChannel +"\")  error stopping sender", ERR_WIN32_ERROR));
+      debug("StopSender(2)  sender on \""+ qc.quotes.SubscribeChannel +"\" stopped");
    }
    return(true);
 }
 
 
 /**
- * Startet den QuickChannel-Receiver auf dem Back-Channel: "MetaTrader::QuoteClient::{Symbol}::{UniqueId}"
+ * Startet den QuickChannel-Receiver auf dem Backchannel: "MetaTrader::QuoteClient::{Symbol}::{UniqueId}"
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StartReceiver() {
+bool StartReceiver() {
    if (!hQC.quotes.Receiver) {
       int hWndChart = WindowHandleEx(NULL); if (!hWndChart) return(false);       // das ChartHandle wird als {UniqueId} benutzt
       qc.quotes.BackChannel = "MetaTrader::QuoteClient::"+ Symbol() +"::"+ IntToHexStr(hWndChart);
 
       hQC.quotes.Receiver = QC_StartReceiver(qc.quotes.BackChannel, hWndChart);
-      if (!hQC.quotes.Receiver) return(!catch("QC.StartReceiver(1)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.quotes.BackChannel +"\", hWnd=0x"+ IntToHexStr(hWndChart) +") => 0", ERR_WIN32_ERROR));
+      if (!hQC.quotes.Receiver) return(!catch("StartReceiver(1)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.quotes.BackChannel +"\", hWnd=0x"+ IntToHexStr(hWndChart) +") => 0", ERR_WIN32_ERROR));
 
-      debug("QC.StartReceiver(2)  receiver on \""+ qc.quotes.BackChannel +"\" started");
+      debug("StartReceiver(2)  receiver on \""+ qc.quotes.BackChannel +"\" started");
    }
    return(true);
 }
@@ -244,13 +247,13 @@ bool QC.StartReceiver() {
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StopReceiver() {
+bool StopReceiver() {
    if (hQC.quotes.Receiver != NULL) {
       int hTmp = hQC.quotes.Receiver;
                  hQC.quotes.Receiver = NULL;                         // Handle zurücksetzen, um mehrfache Stopversuche bei Fehlern zu verhindern
       if (!QC_ReleaseReceiver(hTmp))
-         return(!catch("QC.StopReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(ch=\""+ qc.quotes.BackChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
-      debug("QC.StopReceiver(2)  receiver on \""+ qc.quotes.BackChannel +"\" stopped");
+         return(!catch("StopReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(ch=\""+ qc.quotes.BackChannel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+      debug("StopReceiver(2)  receiver on \""+ qc.quotes.BackChannel +"\" stopped");
    }
    return(true);
 }
@@ -261,8 +264,8 @@ bool QC.StopReceiver() {
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StopChannels() {
-   if (!QC.StopSender())   return(false);
-   if (!QC.StopReceiver()) return(false);
+bool StopChannels() {
+   if (!StopSender())   return(false);
+   if (!StopReceiver()) return(false);
    return(true);
 }

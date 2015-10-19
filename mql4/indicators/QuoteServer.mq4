@@ -16,15 +16,15 @@ int __DEINIT_FLAGS__[];
 #define SERVER_STATUS_STOPPED    0
 #define SERVER_STATUS_STARTED    1
 
-int       status;
 
-string    symbols             [];                                    // die angebotenen Symbole
+string offeredSymbols         [];                                    // die angebotenen Symbole
 string qc.SubscriptionChannels[];                                    // die dazugehörenden Subscription-Channels
 int   hQC.Receivers           [];                                    // die zu den Channels gehörenden Receiver-Handles
 
-string qc.Subscribers[];                                             // die Back-Channel der aktuellen Subscriber
-int   hQC.Senders    [];                                             // die zu den Back-Channels gehörenden Sender-Handles
-int   hQC.hWnds      [];                                             // die zu den Subscribern gehörenden Fenster-Handles (für Quote-Updates)
+string  qc.Subscribers  [];                                          // die Backchannel der aktuellen Subscriber
+int    hQC.Senders      [];                                          // die zu den Backchanneln gehörenden Sender-Handles
+int    hQC.hWnds        [];                                          // die zu den Subscribern gehörenden Fenster-Handles (für Quote-Updates)
+int    subscribedSymbols[];                                          // Index des registrierten Symbol in symbols.offered[]
 
 
 /**
@@ -34,20 +34,17 @@ int   hQC.hWnds      [];                                             // die zu d
  */
 int onInit() {
    if (!This.IsTesting()) {
-      // ggf. QuoteServer starten
-      if (status != SERVER_STATUS_STARTED) {
+      // Subscription-Daten initialisieren: "MetaTrader::QuoteServer::{Symbol}"
+      ArrayPushString(    offeredSymbols,       Symbol()                             );
+      ArrayPushString( qc.SubscriptionChannels, "MetaTrader::QuoteServer::"+ Symbol());
+      ArrayPushInt   (hQC.Receivers,            NULL                                 );
 
-         // Subscription-Channels initialisieren: "MetaTrader::QuoteServer::{Symbol}"
-         ArrayPushString(    symbols,              Symbol()                             );
-         ArrayPushString( qc.SubscriptionChannels, "MetaTrader::QuoteServer::"+ Symbol());
-         ArrayPushInt   (hQC.Receivers,            NULL                                 );
+      ArrayPushString(    offeredSymbols,       "AUDLFX"                             );
+      ArrayPushString( qc.SubscriptionChannels, "MetaTrader::QuoteServer::AUDLFX"    );
+      ArrayPushInt   (hQC.Receivers,            NULL                                 );
 
-         ArrayPushString(    symbols,              "AUDLFX"                             );
-         ArrayPushString( qc.SubscriptionChannels, "MetaTrader::QuoteServer::AUDLFX"    );
-         ArrayPushInt   (hQC.Receivers,            NULL                                 );
-
-         if (!QuoteServer.Start()) return(last_error);
-      }
+      // TODO: (1) Receiver erst starten, wenn neue Kurse vorliegen, damit ein alternativer QuoteServer den Feed übernehmen kann.
+      // TODO: (2) Ist bereits ein anderer QuoteServer online, diesen QuoteServer dort als QuoteClient registrieren.
    }
    return(last_error);
 }
@@ -59,14 +56,12 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   if (status == SERVER_STATUS_STARTED) {
-      // (1) Preis-Updates an die jeweiligen Subscriber schicken
+   // (1) Preis-Updates an alle aktiven Subscriber schicken
 
-      // (2) eingehende Messages in den Subscription-Channels verarbeiten
-      if (!ProcessMessages()) return(last_error);
+   // (2) eingehende Messages in den Subscription-Channels verarbeiten
+   if (!ProcessMessages()) return(last_error);
 
-      // (3) regelmäßig prüfen, ob die Subscriber noch online sind
-   }
+   // (3) regelmäßig prüfen, ob die Subscriber noch online sind
    return(last_error);
 }
 
@@ -77,27 +72,15 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
+   // (1) alle Subscription-Channels verlassen
+   StopReceivers();
+
+   // (2) allen aktiven Subscribern Unsubscribe-Benachrichtigung schicken (löscht sie)
+   UnsubscribeAll();
+
+   // (3) alle Backchannel verlassen (sofern nicht schon geschehen)
+   StopSenders();
    return(last_error);
-}
-
-
-/**
- * Startet den QuoteServer.
- *
- * @return bool - Erfolgsstatus
- */
-bool QuoteServer.Start() {
-   if (status == SERVER_STATUS_STARTED)
-      return(false);
-
-   // TODO: (1) Receiver erst starten, wenn neue Kurse vorliegen, damit ein alternativer QuoteServer den Feed übernehmen kann.
-   // TODO: (2) Ist bereits ein anderer QuoteServer online, diesen QuoteServer dort als QuoteClient registrieren.
-
-   if (!QC.StartReceivers())
-      return(false);
-
-   status = SERVER_STATUS_STARTED;
-   return(true);
 }
 
 
@@ -107,13 +90,13 @@ bool QuoteServer.Start() {
  * @return bool - Erfolgsstatus
  */
 bool ProcessMessages() {
-   int size = ArraySize(symbols);
-
-   // Messagebuffer initialisieren
+   // (1) Messagebuffer initialisieren
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
 
 
-   // auf den Subscription-Channels eingehende Messages verarbeiten
+   // (2) auf den Subscription-Channels eingehende Messages verarbeiten
+   int size = ArraySize(hQC.Receivers);
+
    for (int i=0; i < size; i++) {
       // (1) ggf. Receiver starten
       if (!hQC.Receivers[i]) /*&&*/ if (!StartReceiver(i))
@@ -139,76 +122,65 @@ bool ProcessMessages() {
 
       // (4) Messages verarbeiten
       string msgs[], terms[], sValue, backChannel, msgId, msg;
-      int    msgsSize=Explode(messageBuffer[0], TAB, msgs, NULL), termsSize, hWnd, n;
+      int    msgsSize=Explode(messageBuffer[0], TAB, msgs, NULL), termsSize, hWndSubscriber;
 
       for (int j=0; j < msgsSize; j++) {
          if (!StringLen(msgs[j]))
             continue;
-         debug("ProcessMessages(7)  received "+ symbols[i] +" msg \""+ msgs[j] +"\"");
+         debug("ProcessMessages(7)  received "+ offeredSymbols[i] +" msg \""+ msgs[j] +"\"");
 
          termsSize = Explode(msgs[j], "|", terms, 5);
 
-         // (4.1) "Subscribe|{HWND}|{BackChannelName}|{ChannelMsgId}"
+         // (4.1) "Subscribe|{HWND}|{BackChannelName}"
          if (terms[0] == "Subscribe") {
-            if (termsSize < 4)           { warn("ProcessMessages(8)  received invalid "+ symbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
-            sValue      = terms[1];
-            if (!StringIsDigit(sValue))  { warn("ProcessMessages(9)  invalid HWND value in "+ symbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
-            hWnd = StrToInteger(sValue);
-            if (!IsWindow(hWnd))         { warn("ProcessMessages(10)  invalid HWND in "+ symbols[i] +" message \""+ msgs[j] +"\" (not a window)");       continue; }
+            if (termsSize < 3)             { warn("ProcessMessages(8)  received invalid "+ offeredSymbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
+            // HWND
+            sValue = terms[1];
+            if (!StringIsDigit(sValue))    { warn("ProcessMessages(9)  invalid HWND value in "+ offeredSymbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
+            hWndSubscriber = StrToInteger(sValue);
+            if (!IsWindow(hWndSubscriber)) { warn("ProcessMessages(10)  invalid HWND in "+ offeredSymbols[i] +" message \""+ msgs[j] +"\" (not a window)");       continue; }
+            // BackChannelName
             backChannel = terms[2];
-            if (!StringLen(backChannel)) { warn("ProcessMessages(11)  invalid backchannel name in "+ symbols[i] +" message \""+ msgs[j] +"\" (empty)");  continue; }
-            msgId       = terms[3];
-            if (!StringLen(msgId))       { warn("ProcessMessages(12)  invalid message id in "+ symbols[i] +" message \""+ msgs[j] +"\" (empty)");        continue; }
+            if (!StringLen(backChannel))   { warn("ProcessMessages(11)  invalid backchannel name in "+ offeredSymbols[i] +" message \""+ msgs[j] +"\" (empty)");  continue; }
 
-            // prüfen, ob auf dem angegebenen BackChannel ein Receiver online ist
+            // prüfen, ob auf dem angegebenen Backchannel ein Receiver online ist
             result = QC_ChannelHasReceiver(backChannel);
-            if (result < 0) return(!catch("ProcessMessages(13)->MT4iQuickChannel::QC_ChannelHasReceiver(ch=\""+ backChannel +"\") => "+ ifString(result==QC_CHECK_CHANNEL_ERROR, "QC_CHECK_CHANNEL_ERROR", result), ERR_WIN32_ERROR));
+            if (result < 0) return(!catch("ProcessMessages(12)->MT4iQuickChannel::QC_ChannelHasReceiver(ch=\""+ backChannel +"\") => "+ ifString(result==QC_CHECK_CHANNEL_ERROR, "QC_CHECK_CHANNEL_ERROR", result), ERR_WIN32_ERROR));
             if (result != QC_CHECK_RECEIVER_OK) {
-               debug("ProcessMessages(14)  no receiver auf backchannel \""+ backChannel +"\", ignoring message \""+ msgs[j] +"\"");
+               debug("ProcessMessages(13)  no receiver auf backchannel \""+ backChannel +"\", ignoring message \""+ msgs[j] +"\"");
                continue;
             }
 
-            // Subscriber speichern und Bestätigung auf BackChannel verschicken: "{ChannelMsgId}|OK"
-            n = ArraySize(qc.Subscribers);
-            ArrayPushString( qc.Subscribers, backChannel);
-            ArrayPushInt   (hQC.Senders    , NULL       ); if (!StartSender(n)) return(false);
-            ArrayPushInt   (hQC.hWnds      , hWnd       );
-
-            msg    = msgId +"|OK";
-            result = QC_SendMessage(hQC.Senders[n], msg, NULL);
-            if (!result) return(!catch("ProcessMessages(15)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.Subscribers[n] +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
-            debug("ProcessMessages(16)  subscribe confirmation \""+ msg +"\" sent");
-
+            // Subscriber speichern
+            ArrayPushString( qc.Subscribers  , backChannel   );
+            ArrayPushInt   (hQC.Senders      , NULL          );
+            ArrayPushInt   (hQC.hWnds        , hWndSubscriber);
+            ArrayPushInt   (subscribedSymbols, i             );
+            debug("ProcessMessages(14)  added "+ offeredSymbols[i] +" subscription for 0x"+ IntToHexStr(hWndSubscriber));
             continue;
          }
 
-         // (4.2) "Unsubscribe|{HWND}|{ChannelMsgId}"
+         // (4.2) "Unsubscribe|{HWND}"
          if (terms[0] == "Unsubscribe") {
-            if (termsSize < 3)          { warn("ProcessMessages(17)  received invalid "+ symbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
+            if (termsSize < 2)          { warn("ProcessMessages(15)  received invalid "+ offeredSymbols[i] +" message \""+ msgs[j] +"\" (missing parameters)"); continue; }
+            // HWND
             sValue = terms[1];
-            if (!StringIsDigit(sValue)) { warn("ProcessMessages(18)  invalid HWND value in "+ symbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
-            hWnd = StrToInteger(sValue);
-            msgId  = terms[2];
-            if (!StringLen(msgId))      { warn("ProcessMessages(19)  invalid message id in "+ symbols[i] +" message \""+ msgs[j] +"\" (empty)");         continue; }
+            if (!StringIsDigit(sValue)) { warn("ProcessMessages(16)  invalid HWND value in "+ offeredSymbols[i] +" message \""+ msgs[j] +"\" (non-digits)");    continue; }
+            hWndSubscriber = StrToInteger(sValue);
 
-            n = SearchIntArray(hQC.hWnds, hWnd);
-            if (n == -1)                { warn("ProcessMessages(20)  unknown subscriber in "+ symbols[i] +" unsubscribe message \""+ msgs[j] +"\"");     continue; }
+            int n = SearchIntArray(hQC.hWnds, hWndSubscriber);
+            if (n == -1)                { warn("ProcessMessages(17)  unknown subscriber in "+ offeredSymbols[i] +" unsubscribe message \""+ msgs[j] +"\"");     continue; }
 
-            // Bestätigung verschicken, BackChannel schließen und Subscriber löschen
-            if (!hQC.Senders[n]) /*&&*/ if (!StartSender(n)) return(false);
-            msg    = msgId +"|OK";
-            result = QC_SendMessage(hQC.Senders[n], msg, NULL);
-            if (!result) return(!catch("ProcessMessages(21)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.Subscribers[n] +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
-            debug("ProcessMessages(22)  unsubscribe confirmation \""+ msg +"\" sent");
-
+            // Backchannel schließen und Subscriber löschen
             if (!StopSender(n)) return(false);
-            ArraySpliceStrings( qc.Subscribers, n, 1);
-            ArraySpliceInts   (hQC.Senders    , n, 1);
-            ArraySpliceInts   (hQC.hWnds      , n, 1);
-
+            ArraySpliceStrings( qc.Subscribers  , n, 1);
+            ArraySpliceInts   (hQC.Senders      , n, 1);
+            ArraySpliceInts   (hQC.hWnds        , n, 1);
+            ArraySpliceInts   (subscribedSymbols, n, 1);
+            debug("ProcessMessages(18)  removed "+ offeredSymbols[i] +" subscription for 0x"+ IntToHexStr(hWndSubscriber));
             continue;
          }
-         warn("ProcessMessages(23)  received unsupported "+ symbols[i] +" message \""+ msgs[j] +"\"");
+         warn("ProcessMessages(19)  received unsupported "+ offeredSymbols[i] +" message \""+ msgs[j] +"\"");
       }
 
       ArrayResize(msgs,  0);
@@ -219,38 +191,7 @@ bool ProcessMessages() {
 
 
 /**
- * Started einen Receiver für den angegebenen Suscription-Channel.
- *
- * @param  int i - Index des vom QuoteServer angebotenen Symbols bzw. dessen Channels
- *
- * @return bool - Erfolgsstatus
- */
-bool StartReceiver(int i) {
-   int size = ArraySize(symbols);
-   if (i < 0)     return(!catch("StartReceiver(1)  invalid parameter i = "+ i, ERR_INVALID_PARAMETER));
-   if (i >= size) return(!catch("StartReceiver(2)  invalid parameter i = "+ i +" (max. "+ (size-1) +")", ERR_INVALID_PARAMETER));
-
-   int hWndChart = WindowHandleEx(NULL);
-   if (!hWndChart) return(false);
-
-   if (!hQC.Receivers[i]) {
-      qc.SubscriptionChannels[i] = "MetaTrader::QuoteServer::"+ symbols[i];
-
-      // TODO: Prüfen, ob bereits ein Receiver (= alternativer QuoteServer) existiert und in diesem Fall nach "waiting" verzweigen
-
-      hQC.Receivers[i] = QC_StartReceiver(qc.SubscriptionChannels[i], hWndChart);
-      if (!hQC.Receivers[i]) return(!catch("StartReceiver(3)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\", hWnd=0x"+ IntToHexStr(hWndChart) +") => 0", ERR_WIN32_ERROR));
-      debug("StartReceiver()  receiver on \""+ qc.SubscriptionChannels[i] +"\" started");
-   }
-   else {
-      // Receiver-Handle testen
-   }
-   return(true);
-}
-
-
-/**
- * Started den Sender für den BackChannel des angegebenen Suscribers.
+ * Started den Sender für den Backchannel des angegebenen Suscribers.
  *
  * @param  int i - Index des Subscribers
  *
@@ -264,15 +205,14 @@ bool StartSender(int i) {
    if (!hQC.Senders[i]) {
       hQC.Senders[i] = QC_StartSender(qc.Subscribers[i]);
       if (!hQC.Senders[i]) return(!catch("StartSender(3)->MT4iQuickChannel::QC_StartSender(ch=\""+ qc.Subscribers[i] +"\")", ERR_WIN32_ERROR));
-
-      debug("StartSender(4)  sender on \""+ qc.Subscribers[i] +"\" started");
+      debug("StartSender(4)  sender on \""+ qc.Subscribers[i] +"\" for "+ offeredSymbols[subscribedSymbols[i]] +" started");
    }
    return(true);
 }
 
 
 /**
- * Stoppt den Sender für den BackChannel des angegebenen Suscribers.
+ * Stoppt den Sender für den Backchannel des angegebenen Suscribers.
  *
  * @param  int i - Index des Subscribers
  *
@@ -286,38 +226,122 @@ bool StopSender(int i) {
    if (hQC.Senders[i] != NULL) {
       int hTmp = hQC.Senders[i];
                  hQC.Senders[i] = NULL;                              // Handle zurücksetzen, um mehrfache Stopversuche bei Fehlern zu verhindern
-      if (!QC_ReleaseSender(hTmp))
-         return(!catch("StopSender(3)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.Subscribers[i] +"\")  error stopping sender", ERR_WIN32_ERROR));
-      debug("StopSender()  sender on \""+ qc.Subscribers[i] +"\" stopped");
+      if (!QC_ReleaseSender(hTmp)) return(!catch("StopSender(3)->MT4iQuickChannel::QC_ReleaseSender(ch=\""+ qc.Subscribers[i] +"\")  error stopping sender", ERR_WIN32_ERROR));
+      debug("StopSender(4)  sender on \""+ qc.Subscribers[i] +"\" for "+ offeredSymbols[subscribedSymbols[i]] +" stopped");
    }
    return(true);
 }
 
 
 /**
- * Stellt sicher, daß für jedes angebotene Symbol auf dem dazugehörenden Subscription-Channel ein Receiver läuft.
+ * Started den Receiver für den Suscription-Channel des angegebenen Symbols.
+ *
+ * @param  int i - Index des vom QuoteServer angebotenen Symbols
  *
  * @return bool - Erfolgsstatus
  */
-bool QC.StartReceivers() {
-   int hWndChart = WindowHandleEx(NULL);
-   if (!hWndChart) return(false);
+bool StartReceiver(int i) {
+   int size = ArraySize(hQC.Receivers);
+   if (i < 0)     return(!catch("StartReceiver(1)  invalid parameter i = "+ i, ERR_INVALID_PARAMETER));
+   if (i >= size) return(!catch("StartReceiver(2)  invalid parameter i = "+ i +" (max. "+ (size-1) +")", ERR_INVALID_PARAMETER));
 
-   int size = ArraySize(symbols);
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(false);
 
+   if (!hQC.Receivers[i]) {
+      // TODO: Prüfen, ob bereits ein Receiver (= alternativer QuoteServer) auf dem Channel existiert und in diesem Fall nach "waiting" verzweigen
+
+      hQC.Receivers[i] = QC_StartReceiver(qc.SubscriptionChannels[i], hWnd);
+      if (!hQC.Receivers[i]) return(!catch("StartReceiver(3)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\", hWnd=0x"+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+      debug("StartReceiver(4)  receiver on \""+ qc.SubscriptionChannels[i] +"\" started");
+   }
+   return(true);
+}
+
+
+/**
+ * Stopped den Receiver für den Suscription-Channel des angegebenen Symbols.
+ *
+ * @param  int i - Index des vom QuoteServer angebotenen Symbols
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StopReceiver(int i) {
+   int size = ArraySize(hQC.Receivers);
+   if (i < 0)     return(!catch("StopReceiver(1)  invalid parameter i = "+ i, ERR_INVALID_PARAMETER));
+   if (i >= size) return(!catch("StopReceiver(2)  invalid parameter i = "+ i +" (max. "+ (size-1) +")", ERR_INVALID_PARAMETER));
+
+   if (hQC.Receivers[i] != NULL) {
+      int hTmp = hQC.Receivers[i];
+                 hQC.Receivers[i] = NULL;                            // Handle zurücksetzen, um mehrfache Stopversuche bei Fehlern zu verhindern
+      if (!QC_ReleaseReceiver(hTmp)) return(!catch("StopReceiver(3)->MT4iQuickChannel::QC_ReleaseReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\")  error stopping receiver", ERR_WIN32_ERROR));
+      debug("StopReceiver(4)  receiver on \""+ qc.SubscriptionChannels[i] +"\" stopped");
+   }
+   return(true);
+}
+
+
+/**
+ * Stoppt alle aktiven Sender.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StopSenders() {
+   int size = ArraySize(hQC.Senders);
    for (int i=0; i < size; i++) {
-      if (!hQC.Receivers[i]) {
-         qc.SubscriptionChannels[i] = "MetaTrader::QuoteServer::"+ symbols[i];
+      if (!StopSender(i)) return(false);
+   }
+   return(true);
+}
 
-         hQC.Receivers[i] = QC_StartReceiver(qc.SubscriptionChannels[i], hWndChart);
-         if (!hQC.Receivers[i])
-            return(!catch("QC.StartReceivers(1)->MT4iQuickChannel::QC_StartReceiver(ch=\""+ qc.SubscriptionChannels[i] +"\", hWnd=0x"+ IntToHexStr(hWndChart) +") => 0", ERR_WIN32_ERROR));
 
-         debug("StartReceivers()  receiver on \""+ qc.SubscriptionChannels[i] +"\" started");
+/**
+ * Stoppt alle aktiven Receiver.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool StopReceivers() {
+   int size = ArraySize(hQC.Receivers);
+   for (int i=0; i < size; i++) {
+      if (!StopReceiver(i)) return(false);
+   }
+   return(true);
+}
+
+
+/**
+ * Schickt allen aktiven Subscribern eine Unsubscribe-Benachrichtigung und löscht sie.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UnsubscribeAll() {
+   int size = ArraySize(qc.Subscribers);
+
+   for (int i=size-1; i>=0; i--) {                                   // RÜCKWÄRTS, da die Arrays beim Löschen des Subscribers modifiziert werden.
+      // prüfen, ob der Subscriber noch online ist
+      int result = QC_ChannelHasReceiver(qc.Subscribers[i]);
+      if (result < 0) return(!catch("UnsubscribeAll(1)->MT4iQuickChannel::QC_ChannelHasReceiver(ch=\""+ qc.Subscribers[i] +"\") => "+ ifString(result==QC_CHECK_CHANNEL_ERROR, "QC_CHECK_CHANNEL_ERROR", result), ERR_WIN32_ERROR));
+
+      if (result == QC_CHECK_RECEIVER_OK) {
+         // Unsubscribe-Message zusammenstellen: "QuoteServer|{HWND}|Unsubscribed|{Reason}"
+         int hWndSubscriber = hQC.hWnds[i];
+         string msg = "QuoteServer|"+ hWndSubscriber +"|Unsubscribed|deinit";
+
+         // Unsubscribe-Message verschicken
+         if (!StartSender(i)) return(false);
+         result = QC_SendMessage(hQC.Senders[i], msg, NULL);
+         if (!result) return(!catch("UnsubscribeAll(2)->MT4iQuickChannel::QC_SendMessage(ch=\""+ qc.Subscribers[i] +"\", msg=\""+ msg +"\", flags=NULL) => QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+         debug("UnsubscribeAll(3)  message \""+ msg +"\" sent");
       }
-      else {
-         // Receiver-Handle testen
-      }
+
+      // Backchannel schließen und Subscriber löschen
+      int iSymbol = subscribedSymbols[i];
+      if (!StopSender(i)) return(false);
+      ArraySpliceStrings( qc.Subscribers  , i, 1);
+      ArraySpliceInts   (hQC.Senders      , i, 1);
+      ArraySpliceInts   (hQC.hWnds        , i, 1);
+      ArraySpliceInts   (subscribedSymbols, i, 1);
+      debug("UnsubscribeAll(4)  removed "+ offeredSymbols[iSymbol] +" subscription for 0x"+ IntToHexStr(hWndSubscriber));
    }
    return(true);
 }
