@@ -2048,26 +2048,6 @@ int CountDecimals(double number) {
 
 
 /**
- * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (NULL-Pointer) ist.
- *
- * @param  string value - zu prüfende Stringvariable
- *
- * @return bool
- */
-bool StringIsNull(string value) {
-   int error = GetLastError();
-
-   if (error == ERR_NOT_INITIALIZED_STRING)
-      return(true);
-
-   if (error != NO_ERROR)
-      catch("StringIsNull(1)", error);
-
-   return(false);
-}
-
-
-/**
  * Gibt einen linken Teilstring eines Strings zurück.
  *
  * Ist N positiv, gibt StringLeft() die N am meisten links stehenden Zeichen des Strings zurück.
@@ -2227,6 +2207,163 @@ bool StringEndsWithI(string object, string suffix) {
 
    int start = lenObject-lenSuffix;
    return(StringFind(object, suffix, start) == start);
+}
+
+
+/**
+ * Prüft, ob ein String nur Ziffern enthält.
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsDigit(string value) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(value)) return(false);
+      }
+      catch("StringIsDigit(1)", error);
+   }
+
+   int chr, len=StringLen(value);
+
+   if (len == 0)
+      return(false);
+
+   for (int i=0; i < len; i++) {
+      chr = StringGetChar(value, i);
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);       // Conditions für MQL optimiert
+   }
+   return(true);
+}
+
+
+/**
+ * Prüft, ob ein String einen gültigen Integer darstellt.
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsInteger(string value) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(value)) return(false);
+      }
+      catch("StringIsInteger(1)", error);
+   }
+   return(value == StringConcatenate("", StrToInteger(value)));
+}
+
+
+/**
+ * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (NULL-Pointer) ist.
+ *
+ * @param  string value - zu prüfende Stringvariable
+ *
+ * @return bool
+ */
+bool StringIsNull(string value) {
+   int error = GetLastError();
+
+   if (error == ERR_NOT_INITIALIZED_STRING)
+      return(true);
+
+   if (error != NO_ERROR)
+      catch("StringIsNull(1)", error);
+
+   return(false);
+}
+
+
+/**
+ * Prüft, ob ein String einen gültigen numerischen Wert darstellt (Zeichen 0123456789.-)
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsNumeric(string value) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(value)) return(false);
+      }
+      catch("StringIsNumeric(1)", error);
+   }
+
+   int chr, len=StringLen(value);
+   if (len == 0)
+      return(false);
+
+   bool period = false;
+
+   for (int i=0; i < len; i++) {
+      chr = StringGetChar(value, i);
+
+      if (chr == '-') {
+         if (i != 0) return(false);
+         continue;
+      }
+      if (chr == '.') {
+         if (period) return(false);
+         period = true;
+         continue;
+      }
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);       // Conditions für MQL optimiert
+   }
+   return(true);
+}
+
+
+/**
+ * Ob ein String eine gültige Telefonnummer darstellt.
+ *
+ * @param  string value - zu prüfender String
+ *
+ * @return bool
+ */
+bool StringIsPhoneNumber(string value) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(value)) return(false);
+      }
+      catch("StringIsPhoneNumber(1)", error);
+   }
+
+   string s = StringReplace(StringTrim(value), " ", "");
+   int char, length=StringLen(s);
+
+   // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
+   int pos = StringFind(s, "-");
+   while (pos != -1) {
+      if (pos   == 0     ) return(false);
+      if (pos+1 == length) return(false);
+
+      char = StringGetChar(s, pos-1);           // left char
+      if (char < '0') return(false);
+      if (char > '9') return(false);
+
+      char = StringGetChar(s, pos+1);           // right char
+      if (char < '0') return(false);
+      if (char > '9') return(false);
+
+      pos = StringFind(s, "-", pos+1);
+   }
+   if (char != 0) s = StringReplace(s, "-", "");
+
+   // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
+   if (StringStartsWith(s, "+" )) {
+      s = StringRight(s, -1);
+      if (StringStartsWith(s, "0")) return(false);
+   }
+
+   return(StringIsDigit(s));
 }
 
 
@@ -3651,7 +3788,11 @@ void __DummyCalls() {
    start.RelaunchInputDialog();
    StringEndsWith(NULL, NULL);
    StringEndsWithI(NULL, NULL);
+   StringIsDigit(NULL);
+   StringIsInteger(NULL);
    StringIsNull(NULL);
+   StringIsNumeric(NULL);
+   StringIsPhoneNumber(NULL);
    StringLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);
    StringPadLeft(NULL, NULL);
@@ -3748,7 +3889,6 @@ void __DummyCalls() {
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
    bool     StringContains(string object, string substring);
-   bool     StringIsDigit(string value);
    string   StringRepeat(string input, int times);
 
 #import "Expander.dll"

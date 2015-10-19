@@ -663,9 +663,6 @@ void DummyCalls() {
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
-   bool     StringIsDigit(string value);
-   bool     StringIsInteger(string value);
-   bool     StringIsNumeric(string value);
    string   StringReplace.Recursive(string object, string search, string replace);
    int      StrToOperationType(string value);
 

@@ -269,11 +269,6 @@
 
 
    // Strings
-   bool     StringIsDigit(string value);
-   bool     StringIsInteger(string value);
-   bool     StringIsNumeric(string value);
-   bool     StringIsPhoneNumber(string value);
-
    bool     StringContains(string object, string substring);
    bool     StringContainsI(string object, string substring);
 
