@@ -2061,7 +2061,7 @@ bool StringIsNull(string value) {
       return(true);
 
    if (error != NO_ERROR)
-      catch("StringIsNull()", error);
+      catch("StringIsNull(1)", error);
 
    return(false);
 }
@@ -2118,8 +2118,17 @@ string StringRight(string value, int n) {
  * @return bool
  */
 bool StringStartsWith(string object, string prefix) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(object)) return(false);
+         if (StringIsNull(prefix)) return(!catch("StringStartsWith(1)  invalid parameter prefix = NULL", error));
+      }
+      catch("StringStartsWith(2)", error);
+   }
+
    if (!StringLen(prefix))
-      return(!catch("StringStartsWith(1)  empty prefix \"\"", ERR_INVALID_PARAMETER));
+      return(!catch("StringStartsWith(3)  empty prefix \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(object, prefix) == 0);
 }
 
@@ -2133,8 +2142,17 @@ bool StringStartsWith(string object, string prefix) {
  * @return bool
  */
 bool StringStartsWithI(string object, string prefix) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(object)) return(false);
+         if (StringIsNull(prefix)) return(!catch("StringStartsWithI(1)  invalid parameter prefix = NULL", error));
+      }
+      catch("StringStartsWithI(2)", error);
+   }
+
    if (!StringLen(prefix))
-      return(!catch("StringStartsWithI()  empty prefix \"\"", ERR_INVALID_PARAMETER));
+      return(!catch("StringStartsWithI(3)  empty prefix \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
 
@@ -2148,11 +2166,20 @@ bool StringStartsWithI(string object, string prefix) {
  * @return bool
  */
 bool StringEndsWith(string object, string suffix) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(object)) return(false);
+         if (StringIsNull(suffix)) return(!catch("StringEndsWith(1)  invalid parameter suffix = NULL", error));
+      }
+      catch("StringEndsWith(2)", error);
+   }
+
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
    if (lenSuffix == 0)
-      return(!catch("StringEndsWith()  empty suffix \"\"", ERR_INVALID_PARAMETER));
+      return(!catch("StringEndsWith(3)  empty suffix \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
@@ -2174,11 +2201,20 @@ bool StringEndsWith(string object, string suffix) {
  * @return bool
  */
 bool StringEndsWithI(string object, string suffix) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(object)) return(false);
+         if (StringIsNull(suffix)) return(!catch("StringEndsWithI(1)  invalid parameter suffix = NULL", error));
+      }
+      catch("StringEndsWithI(2)", error);
+   }
+
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
    if (lenSuffix == 0)
-      return(!catch("StringEndsWithI()  empty suffix \"\"", ERR_INVALID_PARAMETER));
+      return(!catch("StringEndsWithI(3)  empty suffix \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
@@ -2342,8 +2378,6 @@ int StrToMovingAverageMethod(string value, int execFlags=NULL) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string QuoteStr(string value) {
-   string tmp = value;                                               // ERR_NOT_INITIALIZED_STRING provozieren
-
    int error = GetLastError();
    if (!error)                              return(StringConcatenate("'", value, "'"));
    if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
@@ -2361,8 +2395,6 @@ string QuoteStr(string value) {
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string DoubleQuoteStr(string value) {
-   string tmp = value;                                               // ERR_NOT_INITIALIZED_STRING provozieren
-
    int error = GetLastError();
    if (!error)                              return(StringConcatenate("\"", value, "\""));
    if (error == ERR_NOT_INITIALIZED_STRING) return("NULL");
