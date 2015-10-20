@@ -5,16 +5,19 @@
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
+
+////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
+
+extern string Offered.Symbols = "LFX";                               // die anzubietenden Symbole (kommagetrennt): LFX = alle LFX-Symbole
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <offline/QuoteServer.mqh>
-
-
-#define SERVER_STATUS_STOPPED    0
-#define SERVER_STATUS_STARTED    1
 
 
 string offeredSymbols         [];                                    // die angebotenen Symbole
@@ -33,20 +36,58 @@ int    subscribedSymbols[];                                          // Index de
  * @return int - Fehlerstatus
  */
 int onInit() {
+   // TODO: (1) Receiver erst starten, wenn neue Kurse vorliegen, damit ein alternativer QuoteServer den Feed übernehmen kann.
+   // TODO: (2) Ist bereits ein anderer QuoteServer online, diesen QuoteServer dort als QuoteClient registrieren.
+
    if (!This.IsTesting()) {
-      // Subscription-Daten initialisieren: "MetaTrader::QuoteServer::{Symbol}"
-      ArrayPushString(    offeredSymbols,       Symbol()                             );
-      ArrayPushString( qc.SubscriptionChannels, "MetaTrader::QuoteServer::"+ Symbol());
-      ArrayPushInt   (hQC.Receivers,            NULL                                 );
+      // Parameter-Validierung
+      // Offered.Symbols                                    // "LFX, USDX, EURX"
+      string values[], value;
+      int size = Explode(StringToUpper(Offered.Symbols), ",", values, NULL);
 
-      ArrayPushString(    offeredSymbols,       "AUDLFX"                             );
-      ArrayPushString( qc.SubscriptionChannels, "MetaTrader::QuoteServer::AUDLFX"    );
-      ArrayPushInt   (hQC.Receivers,            NULL                                 );
-
-      // TODO: (1) Receiver erst starten, wenn neue Kurse vorliegen, damit ein alternativer QuoteServer den Feed übernehmen kann.
-      // TODO: (2) Ist bereits ein anderer QuoteServer online, diesen QuoteServer dort als QuoteClient registrieren.
+      for (int i=0; i < size; i++) {
+         value = StringTrim(values[i]);
+         if (StringLen(value) > 0) {
+            if (value=="AUDLFX" || value=="CADLFX" || value=="CHFLFX" || value=="EURLFX" || value=="GBPLFX" || value=="JPYLFX" || value=="LFXJPY" || value=="NZDLFX" || value=="USDLFX"
+             || value=="USDX"   || value=="EURX") {
+               AddSymbol(value);
+               continue;
+            }
+            if (value == "LFX") {
+               AddSymbol("AUDLFX");
+               AddSymbol("CADLFX");
+               AddSymbol("CHFLFX");
+               AddSymbol("EURLFX");
+               AddSymbol("GBPLFX");
+               AddSymbol("LFXJPY");
+               AddSymbol("NZDLFX");
+               AddSymbol("USDLFX");
+               continue;
+            }
+            return(catch("onInit(1)  unsupported symbol = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         }
+      }
+      ArrayResize(values, 0);
    }
    return(last_error);
+}
+
+
+/**
+ * Fügt das angegebene Symbol zur Liste der vom QuoteServer angebotenen Symbole hinzu.
+ *
+ * @param  string symbol
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool AddSymbol(string symbol) {
+   if (!StringInArray(offeredSymbols, symbol)) {
+      // Subscription-Daten initialisieren: "MetaTrader::QuoteServer::{Symbol}"
+      ArrayPushString(offeredSymbols,          symbol                             );
+      ArrayPushString(qc.SubscriptionChannels, "MetaTrader::QuoteServer::"+ symbol);
+      ArrayPushInt   (hQC.Receivers,           NULL                               );
+   }
+   return(true);
 }
 
 
