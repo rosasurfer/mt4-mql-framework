@@ -13,11 +13,6 @@ int __DEINIT_FLAGS__[];
 #include <offline/QuoteClient.mqh>
 
 
-#define CLIENT_STATUS_OFFLINE       0
-#define CLIENT_STATUS_PENDING       1                 // während Connect oder Disconnect
-#define CLIENT_STATUS_CONNECTED     2
-
-
 string qc.quotes.SubscribeChannel;                    // Subscribe-Channel: "MetaTrader::QuoteServer::{Symbol}"             (Chart -> QuoteServer)
 string qc.quotes.BackChannel;                         // Backchannel:       "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" (QuoteServer -> Chart)
 
