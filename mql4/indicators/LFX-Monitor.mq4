@@ -58,6 +58,8 @@ int    fontSize  = 10;
 color  fontColor = Blue;
 color  bgColor   = C'212,208,200';
 
+int    hTickTimer;                                                   // Timer-Handle des Chart-Tickers
+
 
 /**
  * Initialisierung
@@ -65,7 +67,7 @@ color  bgColor   = C'212,208,200';
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Parameterauswertung
+   // (1) Parameterauswertung
    if (Recording.Enabled) {
       lfx.record[I_USD] = USD.Enabled;
       lfx.record[I_AUD] = AUD.Enabled;
@@ -81,9 +83,20 @@ int onInit() {
    }
    CreateLabels();
 
-   // Datenanzeige ausschalten
+
+   // (2) Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-   return(catch("onInit(1)"));
+
+
+   // (3) Chart-Ticker aktivieren
+   int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+   int millis = 500;
+
+   int result = SetupTimedTicks(hWnd, Round(millis/1.56));
+   if (result <= 0) return(catch("onInit(1)->SetupTimedTicks(hWnd=0x"+ IntToHexStr(hWnd) +", millis="+ millis +") returned "+ result, ERR_RUNTIME_ERROR));
+   hTickTimer = result;
+
+   return(catch("onInit(2)"));
 }
 
 
@@ -102,7 +115,14 @@ int onDeinit() {
          lfx.hSet[i] = NULL;
       }
    }
-   return(catch("onDeinit(1)"));
+
+   // Chart-Ticker deaktivieren
+   if (hTickTimer > NULL) {
+      int result = RemoveTimedTicks(hTickTimer);
+      hTickTimer = NULL;
+      if (result != 1) return(catch("onDeinit(1)->RemoveTimedTicks(hTimer=0x"+ IntToHexStr(hTickTimer) +") returned "+ result, ERR_RUNTIME_ERROR));
+   }
+   return(catch("onDeinit(2)"));
 }
 
 
