@@ -3909,7 +3909,7 @@ void __DummyCalls() {
 
 #import "MT4iQuickChannel.dll"
    int      SetupTimedTicks(int hWnd, int millis);                            // für korrekte Zeiten millis durch 1.56 teilen
-   bool     RemoveTimedTicks(int hWnd);                                       // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
+   bool     RemoveTimedTicks(int hTimer);                                     // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

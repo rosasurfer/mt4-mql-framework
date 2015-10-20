@@ -32,8 +32,8 @@
    /*
    undocumented:
    -------------
-   int  SetupTimedTicks(int hWnd, int millis);                       // für korrekte Zeiten millis durch 1.56 teilen
-   bool RemoveTimedTicks(int hWnd);                                  // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
+   int  hTimer  = SetupTimedTicks(int hWnd, int millis);                      // für korrekte Zeiten millis durch 1.56 teilen
+   bool success = RemoveTimedTicks(int hTimer);                               // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
 
    CreateHelper2();
    RemoveHelper();
