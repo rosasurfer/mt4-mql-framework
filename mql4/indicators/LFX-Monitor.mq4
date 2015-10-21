@@ -551,8 +551,8 @@ int UpdateInfos() {
 
    // Fehlerbehandlung
    int error = GetLastError();                                       // TODO: ERS_HISTORY_UPDATE für welches Symbol,Timeframe ???
-   if (error == ERS_HISTORY_UPDATE)                 return(SetLastError(error));
-   if (IsError(error) && error!=ERR_UNKNOWN_SYMBOL) return(catch("UpdateInfos(1)", error));
+   if (error == ERS_HISTORY_UPDATE)                       return(SetLastError(error));
+   if (IsError(error) && error!=ERR_SYMBOL_NOT_AVAILABLE) return(catch("UpdateInfos(1)", error));
 
    string sValue;
 

@@ -1863,7 +1863,7 @@ bool UpdateStopoutLevel() {
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
       if (!tickSize || !tickValue)
-         return(!SetLastError(ERR_UNKNOWN_SYMBOL));                                    // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+         return(!SetLastError(ERR_SYMBOL_NOT_AVAILABLE));                              // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
    if (totalPosition > 0) soPrice = NormalizeDouble(Bid - soDistance, Digits);
@@ -1905,7 +1905,7 @@ bool UpdateOHLC() {
    datetime lastTickTime = MarketInfo(Symbol(), MODE_TIME);
    if (!lastTickTime) {                                                          // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
       if (!SetLastError(GetLastError()))
-         SetLastError(ERR_UNKNOWN_SYMBOL);
+         SetLastError(ERR_SYMBOL_NOT_AVAILABLE);
       return(false);
    }
 
@@ -2239,7 +2239,7 @@ bool UpdateMoneyManagement() {
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
       int error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL) return(false);
+         if (error == ERR_SYMBOL_NOT_AVAILABLE) return(false);
          return(!catch("UpdateMoneyManagement(2)", error));
       }
 

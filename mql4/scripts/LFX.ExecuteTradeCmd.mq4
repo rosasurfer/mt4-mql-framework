@@ -213,7 +213,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    for (int retry, i=0; i < symbolsSize; i++) {
       // (3.1) notwendige Daten ermitteln
-      double bid           = MarketInfo(symbols[i], MODE_BID      );                   // TODO: bei ERR_UNKNOWN_SYMBOL Symbole laden
+      double bid           = MarketInfo(symbols[i], MODE_BID      );                   // TODO: bei ERR_SYMBOL_NOT_AVAILABLE Symbole laden
       double tickSize      = MarketInfo(symbols[i], MODE_TICKSIZE );
       double tickValue     = MarketInfo(symbols[i], MODE_TICKVALUE);
       double minLot        = MarketInfo(symbols[i], MODE_MINLOT   );

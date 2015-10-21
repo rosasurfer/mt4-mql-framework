@@ -120,7 +120,7 @@ int start() {
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {            // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {      // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          UpdateProgramStatus(catch("start(2)", error));                       // nicht sicher detektiert werden kann
          if (__STATUS_OFF) return(last_error);
       }

@@ -84,8 +84,8 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                          // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                            // - synthetisches Symbol im Offline-Chart
-            return(debug("stdlib.init()  MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetisches Symbol im Offline-Chart
+            return(debug("stdlib.init()  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("stdlib.init(1)", error));
       }
       if (!TickSize) return(debug("stdlib.init()  MarketInfo(MODE_TICKSIZE) = "+ NumberToStr(TickSize, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));
@@ -93,8 +93,8 @@ int stdlib.init(/*EXECUTION_CONTEXT*/int ec[], int &tickData[]) {
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_UNKNOWN_SYMBOL)                            // siehe oben bei MODE_TICKSIZE
-            return(debug("stdlib.init()  MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // siehe oben bei MODE_TICKSIZE
+            return(debug("stdlib.init()  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          return(catch("stdlib.init(2)", error));
       }
       if (!tickValue) return(debug("stdlib.init()  MarketInfo(MODE_TICKVALUE) = "+ NumberToStr(tickValue, ".+"), SetLastError(ERS_TERMINAL_NOT_YET_READY)));

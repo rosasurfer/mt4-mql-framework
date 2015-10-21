@@ -126,7 +126,7 @@ int onStart() {
       double maxLot        = MarketInfo(symbols[i], MODE_MAXLOT   );
       double lotStep       = MarketInfo(symbols[i], MODE_LOTSTEP  );
       int    lotStepDigits = CountDecimals(lotStep);
-      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                         // TODO: auf ERR_UNKNOWN_SYMBOL prüfen
+      if (IsError(catch("onStart(1)  \""+ symbols[i] +"\"")))                         // TODO: auf ERR_SYMBOL_NOT_AVAILABLE prüfen
          return(last_error);
 
       // (2.2) Werte auf ungültige MarketInfo()-Daten prüfen
