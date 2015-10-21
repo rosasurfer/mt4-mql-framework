@@ -20,14 +20,16 @@ extern string Offered.Symbols = "LFX";                               // die anzu
 #include <offline/QuoteServer.mqh>
 
 
+// Serverdaten
 string offeredSymbols         [];                                    // die angebotenen Symbole
 string qc.SubscriptionChannels[];                                    // die dazugehörenden Subscription-Channels
 int   hQC.Receivers           [];                                    // die zu den Channels gehörenden Receiver-Handles
 
-string  qc.Subscribers  [];                                          // die Backchannel der aktuellen Subscriber
+// Subscriberdaten
+string  qc.Subscribers  [];                                          // die Backchannel der Subscriber
 int    hQC.Senders      [];                                          // die zu den Backchanneln gehörenden Sender-Handles
 int    hQC.hWnds        [];                                          // die zu den Subscribern gehörenden Fenster-Handles (für Quote-Updates)
-int    subscribedSymbols[];                                          // Index des registrierten Symbol in symbols.offered[]
+int    subscribedSymbols[];                                          // Indizes des jeweils registrierten Symbols in offeredSymbols[]
 
 
 /**
