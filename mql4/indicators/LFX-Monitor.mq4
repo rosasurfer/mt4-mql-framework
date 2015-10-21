@@ -59,6 +59,9 @@ color  bgColor   = C'212,208,200';
 
 int    hTickTimer;                                                   // Timer-Handle des Chart-Tickers
 
+string lfx.label.animation;
+string lfx.label.animation.chars[] = {"|", "/", "—", "\\"};
+
 
 /**
  * Initialisierung
@@ -156,7 +159,7 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int CreateLabels() {
-   int c = 10;                               // Zählervariable für Label, zweistellig
+   int c = 10;                               // Zählervariable für Label, mindestens zweistellig
 
    // Backgrounds
    c++;
@@ -189,6 +192,19 @@ int CreateLabels() {
    int col3width = 110;
    int yCoord    =  58;
    c++;
+   label = StringConcatenate(__NAME__, ".", c, ".Header.animation");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 132+col3width);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+      ObjectSetText(label, lfx.label.animation.chars[0], fontSize, fontName, fontColor);
+      ObjectRegister(label);
+      lfx.label.animation = label;
+   }
+   else GetLastError();
+
    label = StringConcatenate(__NAME__, ".", c, ".Header.crosses");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -623,6 +639,11 @@ bool UpdateInfos() {
    if (!JPY.Enabled || !isLfx.usd[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.usd_Ask-jpylfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_JPY] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!JPY.Enabled || !isLfx.usd[I_YPJ]) sValue = " "; else sValue = "("+ DoubleToStr((lfxjpy.usd_Ask-lfxjpy.usd_Bid)*  100, 1) +")";              ObjectSetText(lfx.labels[I_YPJ] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled || !isLfx.usd[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.usd_Ask-nzdlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_NZD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+
+   // Animation
+   static int size, char=-1; if (char == -1) size = ArraySize(lfx.label.animation.chars);
+   char = Tick % size;
+   ObjectSetText(lfx.label.animation, lfx.label.animation.chars[char], fontSize, fontName, fontColor);
 
 
    // LFX-Indizes aufzeichnen
