@@ -3804,10 +3804,8 @@ string GetStandardSymbolOrAlt(string symbol, string altValue="") {
       return(_EMPTY_STR(catch("GetStandardSymbolOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    string value = GetStandardSymbolStrict(symbol);
-
    if (!StringLen(value))
       value = altValue;
-
    return(value);
 }
 
@@ -3939,8 +3937,11 @@ string GetStandardSymbolStrict(string symbol) {
       case 'H': if (StringStartsWith(symbol, "HKDJPY"))     return("HKDJPY");
                 break;
 
-      case 'I':
-      case 'J':
+      case 'I': break;
+
+      case 'J': if (StringStartsWith(symbol, "JPYLFX"))     return("JPYLFX");
+                break;
+
       case 'K': break;
 
       case 'L': if (StringStartsWith(symbol, "LFXJPY"))     return("LFXJPY");
@@ -4069,10 +4070,8 @@ string GetSymbolNameOrAlt(string symbol, string altValue="") {
       return(_EMPTY_STR(catch("GetSymbolNameOrAlt()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
    string value = GetSymbolNameStrict(symbol);
-
    if (!StringLen(value))
       value = altValue;
-
    return(value);
 }
 
@@ -4098,7 +4097,7 @@ string GetSymbolNameStrict(string symbol) {
                 if (symbol == "AUDCHF" ) return("AUD/CHF"  );
                 if (symbol == "AUDDKK" ) return("AUD/DKK"  );
                 if (symbol == "AUDJPY" ) return("AUD/JPY"  );
-                if (symbol == "AUDLFX" ) return("AUD"      );
+                if (symbol == "AUDLFX" ) return("AUD-LFX"  );
                 if (symbol == "AUDNZD" ) return("AUD/NZD"  );
                 if (symbol == "AUDPLN" ) return("AUD/PLN"  );
                 if (symbol == "AUDSGD" ) return("AUD/SGD"  );
@@ -4109,10 +4108,10 @@ string GetSymbolNameStrict(string symbol) {
 
       case 'C': if (symbol == "CADCHF" ) return("CAD/CHF"  );
                 if (symbol == "CADJPY" ) return("CAD/JPY"  );
-                if (symbol == "CADLFX" ) return("CAD"      );
+                if (symbol == "CADLFX" ) return("CAD-LFX"  );
                 if (symbol == "CADSGD" ) return("CAD/SGD"  );
                 if (symbol == "CHFJPY" ) return("CHF/JPY"  );
-                if (symbol == "CHFLFX" ) return("CHF"      );
+                if (symbol == "CHFLFX" ) return("CHF-LFX"  );
                 if (symbol == "CHFPLN" ) return("CHF/PLN"  );
                 if (symbol == "CHFSGD" ) return("CHF/SGD"  );
                 if (symbol == "CHFZAR" ) return("CHF/ZAR"  );
@@ -4132,7 +4131,7 @@ string GetSymbolNameStrict(string symbol) {
                 if (symbol == "EURHKD" ) return("EUR/HKD"  );
                 if (symbol == "EURHUF" ) return("EUR/HUF"  );
                 if (symbol == "EURJPY" ) return("EUR/JPY"  );
-                if (symbol == "EURLFX" ) return("EUR"      );
+                if (symbol == "EURLFX" ) return("EUR-LFX"  );
                 if (symbol == "EURLVL" ) return("EUR/LVL"  );
                 if (symbol == "EURMXN" ) return("EUR/MXN"  );
                 if (symbol == "EURNOK" ) return("EUR/NOK"  );
@@ -4154,7 +4153,7 @@ string GetSymbolNameStrict(string symbol) {
                 if (symbol == "GBPCHF" ) return("GBP/CHF"  );
                 if (symbol == "GBPDKK" ) return("GBP/DKK"  );
                 if (symbol == "GBPJPY" ) return("GBP/JPY"  );
-                if (symbol == "GBPLFX" ) return("GBP"      );
+                if (symbol == "GBPLFX" ) return("GBP-LFX"  );
                 if (symbol == "GBPNOK" ) return("GBP/NOK"  );
                 if (symbol == "GBPNZD" ) return("GBP/NZD"  );
                 if (symbol == "GBPPLN" ) return("GBP/PLN"  );
@@ -4167,11 +4166,14 @@ string GetSymbolNameStrict(string symbol) {
       case 'H': if (symbol == "HKDJPY" ) return("HKD/JPY"  );
                 break;
 
-      case 'I':
-      case 'J':
+      case 'I': break;
+
+      case 'J': if (symbol == "JPYLFX" ) return("JPY-LFX"  );
+                break;
+
       case 'K': break;
 
-      case 'L': if (symbol == "LFXJPY" ) return("JPY"      );
+      case 'L': if (symbol == "LFXJPY" ) return("1/JPY-LFX");
                 break;
 
       case 'M': if (symbol == "MXNJPY" ) return("MXN/JPY"  );
@@ -4185,7 +4187,7 @@ string GetSymbolNameStrict(string symbol) {
                 if (symbol == "NZDCAD" ) return("NZD/CAD"  );
                 if (symbol == "NZDCHF" ) return("NZD/CHF"  );
                 if (symbol == "NZDJPY" ) return("NZD/JPY"  );
-                if (symbol == "NZDLFX" ) return("NZD"      );
+                if (symbol == "NZDLFX" ) return("NZD-LFX"  );
                 if (symbol == "NZDSGD" ) return("NZD/SGD"  );
                 if (symbol == "NZDUSD" ) return("NZD/USD"  );
                 break;
@@ -4218,7 +4220,7 @@ string GetSymbolNameStrict(string symbol) {
                 if (symbol == "USDHUF" ) return("USD/HUF"  );
                 if (symbol == "USDINR" ) return("USD/INR"  );
                 if (symbol == "USDJPY" ) return("USD/JPY"  );
-                if (symbol == "USDLFX" ) return("USD"      );
+                if (symbol == "USDLFX" ) return("USD-LFX"  );
                 if (symbol == "USDLTL" ) return("USD/LTL"  );
                 if (symbol == "USDLVL" ) return("USD/LVL"  );
                 if (symbol == "USDMXN" ) return("USD/MXN"  );
