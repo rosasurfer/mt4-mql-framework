@@ -4320,8 +4320,9 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "DJIA"    ) return("Dow Jones Industrial"    );
    if (symbol == "DJTA"    ) return("Dow Jones Transportation");
    if (symbol == "EURLFX"  ) return("EUR (LFX)"               );
-   if (symbol == "EURX"    ) return("EUR-Index"               );
+   if (symbol == "EURX"    ) return("EUR Index (ICE)"         );
    if (symbol == "GBPLFX"  ) return("GBP (LFX)"               );
+   if (symbol == "JPYLFX"  ) return("JPY (LFX)"               );
    if (symbol == "LFXJPY"  ) return("1/JPY (LFX)"             );
    if (symbol == "NAS100"  ) return("Nasdaq 100"              );
    if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
@@ -4330,7 +4331,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "RUS2000" ) return("Russel 2000"             );
    if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "USDLFX"  ) return("USD (LFX)"               );
-   if (symbol == "USDX"    ) return("USD-Index"               );
+   if (symbol == "USDX"    ) return("USD Index (ICE)"         );
    if (symbol == "XAGEUR"  ) return("Silver/EUR"              );
    if (symbol == "XAGJPY"  ) return("Silver/JPY"              );
    if (symbol == "XAGUSD"  ) return("Silver/USD"              );
