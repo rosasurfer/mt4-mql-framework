@@ -63,8 +63,8 @@ int init() {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                      // schlägt fehl, wenn kein Tick vorhanden ist
       error = GetLastError();
       if (IsError(error)) {                                                // - Symbol nicht subscribed (Start, Account-/Templatewechsel), Symbol kann noch "auftauchen"
-         if (error == ERR_UNKNOWN_SYMBOL)                                  // - synthetisches Symbol im Offline-Chart
-                           return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_UNKNOWN_SYMBOL", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                            // - synthetisches Symbol im Offline-Chart
+                           return(UpdateProgramStatus(debug("init(1)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
          UpdateProgramStatus(catch("init(2)", error));
          if (__STATUS_OFF) return(last_error);
       }
@@ -172,7 +172,7 @@ int start() {
 
    if (!Tick.Time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_UNKNOWN_SYMBOL) {                  // ERR_UNKNOWN_SYMBOL vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) {            // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          UpdateProgramStatus(catch("start(1)", error));                             // nicht sicher detektiert werden kann
          if (__STATUS_OFF) return(last_error);
       }

@@ -43,29 +43,22 @@ int onInit() {
       // Parameter-Validierung
       // Offered.Symbols                                    // "LFX, USDX, EURX"
       string values[], value;
-      int size = Explode(StringToUpper(Offered.Symbols), ",", values, NULL);
+      int size = Explode(Offered.Symbols, ",", values, NULL);
 
       for (int i=0; i < size; i++) {
          value = StringTrim(values[i]);
-         if (StringLen(value) > 0) {
-            if (value=="AUDLFX" || value=="CADLFX" || value=="CHFLFX" || value=="EURLFX" || value=="GBPLFX" || value=="JPYLFX" || value=="LFXJPY" || value=="NZDLFX" || value=="USDLFX"
-             || value=="USDX"   || value=="EURX") {
-               AddSymbol(value);
-               continue;
-            }
-            if (value == "LFX") {
-               AddSymbol("AUDLFX");
-               AddSymbol("CADLFX");
-               AddSymbol("CHFLFX");
-               AddSymbol("EURLFX");
-               AddSymbol("GBPLFX");
-               AddSymbol("LFXJPY");
-               AddSymbol("NZDLFX");
-               AddSymbol("USDLFX");
-               continue;
-            }
-            return(catch("onInit(1)  unsupported symbol = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (value == "LFX") {
+            if (!AddSymbol("AUDLFX")) return(last_error);
+            if (!AddSymbol("CADLFX")) return(last_error);
+            if (!AddSymbol("CHFLFX")) return(last_error);
+            if (!AddSymbol("EURLFX")) return(last_error);
+            if (!AddSymbol("GBPLFX")) return(last_error);
+            if (!AddSymbol("JPYLFX")) return(last_error);
+            if (!AddSymbol("LFXJPY")) return(last_error);
+            if (!AddSymbol("NZDLFX")) return(last_error);
+            if (!AddSymbol("USDLFX")) return(last_error);
          }
+         else if (!AddSymbol(value))  return(last_error);
       }
       ArrayResize(values, 0);
    }
@@ -74,19 +67,66 @@ int onInit() {
 
 
 /**
- * Fügt das angegebene Symbol zur Liste der vom QuoteServer angebotenen Symbole hinzu.
+ * Prüft, ob die für das angegebene Symbol notwendigen Instrumente geladen sind und fügt es zur Liste der vom QuoteServer angebotenen Symbole hinzu.
  *
  * @param  string symbol
  *
  * @return bool - Erfolgsstatus
  */
 bool AddSymbol(string symbol) {
-   if (!StringInArray(offeredSymbols, symbol)) {
-      // Subscription-Daten initialisieren: "MetaTrader::QuoteServer::{Symbol}"
-      ArrayPushString(offeredSymbols,          symbol                             );
-      ArrayPushString(qc.SubscriptionChannels, "MetaTrader::QuoteServer::"+ symbol);
-      ArrayPushInt   (hQC.Receivers,           NULL                               );
+   if (!StringLen(symbol))
+      return(catch("AddSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+
+   if (StringInArray(offeredSymbols, symbol))
+      return(true);
+
+   string lfx.symbols[] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "LFXJPY", "NZDLFX", "USDLFX" };
+   string lfx.pairs  [] = { "AUDUSD", "USDCAD", "USDCHF", "EURUSD", "GBPUSD", "USDJPY" };
+
+   string ice.symbols[] = { "EURX", "USDX" };
+   string eurx.pairs [] = { "EURUSD", "EURCHF", "EURGBP", "EURJPY", "EURSEK" };
+   string usdx.pairs [] = { "EURUSD", "GBPUSD", "USDCAD", "USDCHF", "USDJPY", "USDSEK" };
+
+   int error;
+
+
+   // (1) LFX-Indizes
+   if (StringInArray(lfx.symbols, symbol)) {
+      int size = ArraySize(lfx.pairs);
+      for (int i=0; i < size; i++) {
+         MarketInfo(lfx.pairs[i], MODE_TICKSIZE);
+         error = GetLastError(); if (IsError(error)) return(!catch("AddSymbol(2)  "+ symbol +" requires "+ lfx.pairs[i] +" data", error));
+      }
+      if (symbol == "NZDLFX") {
+         MarketInfo("NZDUSD", MODE_TICKSIZE);
+         error = GetLastError(); if (IsError(error)) return(!catch("AddSymbol(3)  "+ symbol +" requires NZDUSD data", error));
+      }
    }
+
+
+   // (2) ICE-Indizes
+   else if (symbol == "EURX") {
+      size = ArraySize(eurx.pairs);
+      for (i=0; i < size; i++) {
+         MarketInfo(eurx.pairs[i], MODE_TIME);
+         error = GetLastError(); if (IsError(error)) return(!catch("AddSymbol(4)  "+ symbol +" requires "+ eurx.pairs[i] +" data", error));
+      }
+   }
+   else if (symbol == "USDX") {
+      size = ArraySize(usdx.pairs);
+      for (i=0; i < size; i++) {
+         MarketInfo(usdx.pairs[i], MODE_TICKSIZE);
+         error = GetLastError(); if (IsError(error)) return(!catch("AddSymbol(5)  "+ symbol +" requires "+ usdx.pairs[i] +" data", error));
+      }
+   }
+   else return(!catch("AddSymbol(6)  unsupported symbol = \""+ symbol +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+
+
+   // (3) Subscription-Daten initialisieren, Channel: "MetaTrader::QuoteServer::{Symbol}"
+   ArrayPushString(offeredSymbols,          symbol                             );
+   ArrayPushString(qc.SubscriptionChannels, "MetaTrader::QuoteServer::"+ symbol);
+   ArrayPushInt   (hQC.Receivers,           NULL                               );
+
    return(true);
 }
 

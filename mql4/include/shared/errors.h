@@ -112,7 +112,7 @@
 #define ERR_CANNOT_OPEN_FILE                                       4103
 #define ERR_INCOMPATIBLE_FILEACCESS                                4104
 #define ERR_NO_TICKET_SELECTED                                     4105
-#define ERR_UNKNOWN_SYMBOL                                         4106
+#define ERR_SYMBOL_NOT_AVAILABLE                                   4106
 #define ERR_INVALID_PRICE_PARAM                                    4107
 #define ERR_INVALID_TICKET                                         4108
 #define ERR_TRADE_NOT_ALLOWED                                      4109
