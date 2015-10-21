@@ -283,9 +283,8 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (4) Directions der Teilpositionen bestimmen
    for (i=0; i < symbolsSize; i++) {
-      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = direction;
-      else                                           directions[i]  = direction ^ 1;   // 0=>1, 1=>0
-      if (lfxCurrency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
+      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i] = direction;
+      else                                           directions[i] = direction ^ 1;    // 0=>1, 1=>0
    }
 
 

@@ -43,7 +43,7 @@ int onInit() {
    // (1.1) Parametervalidierung: LFX.Currency
    string value = StringToUpper(StringTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
-   if (!StringInArray(currencies, value))        return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency = \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency = \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
    lfxCurrency   = value;
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
@@ -51,21 +51,21 @@ int onInit() {
    value = StringToUpper(StringTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
-   else                                          return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // (1.3) Units
-   if (NE(MathModFix(Units, 0.1), 0))            return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
-   if (Units < 0.1 || Units > 1)                 return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMETER));
+   if (NE(MathModFix(Units, 0.1), 0))     return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
+   if (Units < 0.1 || Units > 1)          return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMETER));
    Units = NormalizeDouble(Units, 1);
 
 
    // (2) Leverage-Konfiguration einlesen und validieren
    if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
-                                                 return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
+                                          return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
    value = GetGlobalConfigString("MoneyManagement", "BasketLeverage", "");
-   if (!StringIsNumeric(value))                  return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+   if (!StringIsNumeric(value))           return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ value +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
    leverage = StrToDouble(value);
-   if (leverage < 1)                             return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
+   if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
 
    // (3) offene Orders einlesen
@@ -201,9 +201,8 @@ int onStart() {
 
    // (3) Directions der Teilpositionen bestimmen
    for (i=0; i < symbolsSize; i++) {
-      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i]  = direction;
-      else                                           directions[i]  = direction ^ 1;   // 0=>1, 1=>0
-      if (lfxCurrency == "JPY")                      directions[i] ^= 1;               // JPY ist invers notiert
+      if (StringStartsWith(symbols[i], lfxCurrency)) directions[i] = direction;
+      else                                           directions[i] = direction ^ 1;    // 0=>1, 1=>0
    }
 
 
