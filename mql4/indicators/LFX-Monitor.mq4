@@ -11,10 +11,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
 extern bool   Recording.Enabled = false;                             // default: kein Recording
-
 extern string __________________________;
-
-extern bool   USD.Enabled       = true;
 extern bool   AUD.Enabled       = true;
 extern bool   CAD.Enabled       = true;
 extern bool   CHF.Enabled       = true;
@@ -22,6 +19,7 @@ extern bool   EUR.Enabled       = true;
 extern bool   GBP.Enabled       = true;
 extern bool   JPY.Enabled       = true;
 extern bool   NZD.Enabled       = true;
+extern bool   USD.Enabled       = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,23 +32,24 @@ extern bool   NZD.Enabled       = true;
 #property indicator_chart_window
 
 
-string lfx.labels    [8];
-string lfx.currencies[ ] = { "USD"   , "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"    };
-string lfx.symbols   [ ] = { "USDLFX", "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX" };
-int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5 };
-bool   lfx.record    [8];                                            // default: alle FALSE
-double lfx.usd       [8];                                            // über den USD-Index berechneter LFX-Index je Währung
-bool   isLfx.usd     [8];                                            // ob der über den USD-Index berechnete LFX-Index einer Währung verfügbar ist
-int    lfx.hSet      [8];                                            // HistorySet-Handles der LFX-Indizes
+string lfx.labels    [9];
+string lfx.currencies[ ] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "1/JPY" , "NZD"   , "USD"    };
+string lfx.symbols   [ ] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "LFXJPY", "NZDLFX", "USDLFX" };
+int    lfx.digits    [ ] = {        5,        5,        5,        5,        5,        5,        3,        5,        5 };
+bool   lfx.record    [9];                                            // default: alle FALSE
+double lfx.usd       [9];                                            // über USD-Pairs berechneter LFX-Index je Währung
+bool   isLfx.usd     [9];                                            // ob der über USD-Pairs berechnete LFX-Index einer Währung verfügbar ist
+int    lfx.hSet      [9];                                            // HistorySet-Handles der LFX-Indizes
 
-#define I_USD  0                                                     // Array-Indizes
-#define I_AUD  1
-#define I_CAD  2
-#define I_CHF  3
-#define I_EUR  4
-#define I_GBP  5
-#define I_JPY  6
+#define I_AUD  0                                                     // Array-Indizes
+#define I_CAD  1
+#define I_CHF  2
+#define I_EUR  3
+#define I_GBP  4
+#define I_JPY  5
+#define I_YPJ  6                                                     // JPYLFX Reverse-Index (LFXJPY)
 #define I_NZD  7
+#define I_USD  8
 
 
 string fontName  = "Tahoma";
@@ -69,29 +68,43 @@ int    hTickTimer;                                                   // Timer-Ha
 int onInit() {
    // (1) Parameterauswertung
    if (Recording.Enabled) {
-      lfx.record[I_USD] = USD.Enabled;
-      lfx.record[I_AUD] = AUD.Enabled;
-      lfx.record[I_CAD] = CAD.Enabled;
-      lfx.record[I_CHF] = CHF.Enabled;
-      lfx.record[I_EUR] = EUR.Enabled;
-      lfx.record[I_GBP] = GBP.Enabled;
-      lfx.record[I_JPY] = JPY.Enabled;
-      lfx.record[I_NZD] = NZD.Enabled;
+      int count;
+      lfx.record[I_AUD] = AUD.Enabled; count += AUD.Enabled;
+      lfx.record[I_CAD] = CAD.Enabled; count += CAD.Enabled;
+      lfx.record[I_CHF] = CHF.Enabled; count += CHF.Enabled;
+      lfx.record[I_EUR] = EUR.Enabled; count += EUR.Enabled;
+      lfx.record[I_GBP] = GBP.Enabled; count += GBP.Enabled;
+      lfx.record[I_JPY] = JPY.Enabled; count += JPY.Enabled;
+      lfx.record[I_YPJ] = JPY.Enabled; count += JPY.Enabled;
+      lfx.record[I_NZD] = NZD.Enabled; count += NZD.Enabled;
+      lfx.record[I_USD] = USD.Enabled; count += USD.Enabled;
 
-      if (!BoolInArray(lfx.record, false))                           // Je MQL-Module können maximal 64 Dateien gleichzeitig offen sein (entspricht 7 Instrumenten).
-         lfx.record[I_NZD] = false;
+      if (count == 9) {                                               // Je MQL-Modul können maximal 64 Dateien gleichzeitig offen sein (entspricht 7 Instrumenten).
+         lfx.record[I_JPY] = false;
+         lfx.record[I_YPJ] = false;
+         count -= 2;
+      }
+      else if (count == 8) {
+         for (int i=ArraySize(lfx.record)-1; i >= 0; i--) {
+            if (i == I_JPY) continue;
+            if (i == I_YPJ) continue;
+
+            if (lfx.record[i]) {
+               lfx.record[i] = false;
+               count--;
+               if (count <= 7) break;
+            }
+         }
+      }
    }
+
+   // (2) Anzeige erzeugen und Datenanzeige ausschalten
    CreateLabels();
-
-
-   // (2) Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-
 
    // (3) Chart-Ticker aktivieren
    int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
    int millis = 500;
-
    int result = SetupTimedTicks(hWnd, Round(millis/1.56));
    if (result <= 0) return(catch("onInit(1)->SetupTimedTicks(hWnd=0x"+ IntToHexStr(hWnd) +", millis="+ millis +") returned "+ result, ERR_RUNTIME_ERROR));
    hTickTimer = result;
@@ -152,9 +165,9 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 114);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 104);
       ObjectSet    (label, OBJPROP_YDISTANCE,  55);
-      ObjectSetText(label, "g", 114, "Webdings", bgColor);
+      ObjectSetText(label, "g", 124, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -167,7 +180,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 13);
       ObjectSet    (label, OBJPROP_YDISTANCE, 55);
-      ObjectSetText(label, "g", 114, "Webdings", bgColor);
+      ObjectSetText(label, "g", 124, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -176,27 +189,27 @@ int CreateLabels() {
    int col3width = 110;
    int yCoord    =  58;
    c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Header.cross");
+   label = StringConcatenate(__NAME__, ".", c, ".Header.crosses");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 44+col3width);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "via crosses", fontSize, fontName, fontColor);
+      ObjectSetText(label, "crosses", fontSize, fontName, fontColor);
       ObjectRegister(label);
    }
    else GetLastError();
 
    c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Header.viaUSD");
+   label = StringConcatenate(__NAME__, ".", c, ".Header.direct");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 44);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "via USDLFX", fontSize, fontName, fontColor);
+      ObjectSetText(label, "direct", fontSize, fontName, fontColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -245,7 +258,7 @@ int CreateLabels() {
       }
       else GetLastError();
 
-      // Index via USDLFX
+      // Index direct
       label = StringConcatenate(lfx.labels[i], ".quote.viaUSD");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
@@ -258,7 +271,7 @@ int CreateLabels() {
       }
       else GetLastError();
 
-      // Spread via USD
+      // Spread direct
       label = StringConcatenate(lfx.labels[i], ".spread.viaUSD");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
@@ -277,11 +290,11 @@ int CreateLabels() {
 
 
 /**
- * Berechnet die Indizes über die beteiligten Crosses (???lfx.crs-Variablen) und über den USD-Index (???lfx.usd-Variablen) und zeigt sie an.
+ * Berechnet die konfigurierten Indizes und zeigt sie an.
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int UpdateInfos() {
+bool UpdateInfos() {
    double usdlfx.crs, usdlfx.crs_Bid, usdlfx.crs_Ask, usdlfx.usd_Bid, usdlfx.usd_Ask;
    double audlfx.crs, audlfx.crs_Bid, audlfx.crs_Ask, audlfx.usd_Bid, audlfx.usd_Ask;
    double cadlfx.crs, cadlfx.crs_Bid, cadlfx.crs_Ask, cadlfx.usd_Bid, cadlfx.usd_Ask;
@@ -289,6 +302,7 @@ int UpdateInfos() {
    double eurlfx.crs, eurlfx.crs_Bid, eurlfx.crs_Ask, eurlfx.usd_Bid, eurlfx.usd_Ask;
    double gbplfx.crs, gbplfx.crs_Bid, gbplfx.crs_Ask, gbplfx.usd_Bid, gbplfx.usd_Ask;
    double jpylfx.crs, jpylfx.crs_Bid, jpylfx.crs_Ask, jpylfx.usd_Bid, jpylfx.usd_Ask;
+   double lfxjpy.crs, lfxjpy.crs_Bid, lfxjpy.crs_Ask, lfxjpy.usd_Bid, lfxjpy.usd_Ask;
    double nzdlfx.crs, nzdlfx.crs_Bid, nzdlfx.crs_Ask, nzdlfx.usd_Bid, nzdlfx.usd_Ask;
 
    // USDLFX
@@ -457,7 +471,7 @@ int UpdateInfos() {
    }
    isLfx.usd[I_GBP] = is_usd.crs;
 
-   // JPYLFX
+   // JPYLFX + LFXJPY
    //     audjpy_Bid = ...
    //     cadjpy_Bid = ...
    //     chfjpy_Bid = ...
@@ -466,16 +480,25 @@ int UpdateInfos() {
    //     usdjpy_Bid = ...
    bool is_jpy.crs = (audjpy_Bid && cadjpy_Bid && chfjpy_Bid && eurjpy_Bid && gbpjpy_Bid && usdjpy_Bid);
    if (is_jpy.crs) {
-      jpylfx.crs     = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
-      jpylfx.crs_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
-      jpylfx.crs_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
+      lfxjpy.crs     = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
+      lfxjpy.crs_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
+      lfxjpy.crs_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
+
+      jpylfx.crs     = 1/lfxjpy.crs     * 100;
+      jpylfx.crs_Bid = 1/lfxjpy.crs_Ask * 100;
+      jpylfx.crs_Ask = 1/lfxjpy.crs_Bid * 100;
    }
    if (is_usd.crs) {
-      lfx.usd[I_JPY] = usdjpy / lfx.usd[I_USD];
-      jpylfx.usd_Bid = usdjpy_Bid / MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
-      jpylfx.usd_Ask = usdjpy_Ask / MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+      lfx.usd[I_YPJ] = usdjpy / lfx.usd[I_USD];
+      lfxjpy.usd_Bid = usdjpy_Bid / MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+      lfxjpy.usd_Ask = usdjpy_Ask / MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+
+      lfx.usd[I_JPY] = 1/lfx.usd[I_YPJ] * 100;
+      jpylfx.usd_Bid = 1/lfxjpy.usd_Ask * 100;
+      jpylfx.usd_Ask = 1/lfxjpy.usd_Bid * 100;
    }
    isLfx.usd[I_JPY] = is_usd.crs;
+   isLfx.usd[I_YPJ] = is_usd.crs;
 
    // NZDLFX
    double audnzd_Bid = MarketInfo("AUDNZD", MODE_BID), audnzd_Ask = MarketInfo("AUDNZD", MODE_ASK), audnzd = (audnzd_Bid + audnzd_Ask)/2;
@@ -550,9 +573,9 @@ int UpdateInfos() {
 
 
    // Fehlerbehandlung
-   int error = GetLastError();                                       // TODO: ERS_HISTORY_UPDATE für welches Symbol,Timeframe ???
-   if (error == ERS_HISTORY_UPDATE)                       return(SetLastError(error));
-   if (IsError(error) && error!=ERR_SYMBOL_NOT_AVAILABLE) return(catch("UpdateInfos(1)", error));
+   int error = GetLastError();                                     // TODO: ERS_HISTORY_UPDATE für welches Symbol,Timeframe ???
+   if (error == ERS_HISTORY_UPDATE)                                return(!SetLastError(error));
+   if (IsError(error)) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) return(!catch("UpdateInfos(1)", error));
 
    string sValue;
 
@@ -564,7 +587,8 @@ int UpdateInfos() {
    if (!CHF.Enabled) sValue = "off"; else if (is_chf.crs) sValue = NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_CHF] +".quote.cross",   sValue, fontSize, fontName, fontColor);
    if (!EUR.Enabled) sValue = "off"; else if (is_eur.crs) sValue = NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_EUR] +".quote.cross",   sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled) sValue = "off"; else if (is_gbp.crs) sValue = NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_GBP] +".quote.cross",   sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled) sValue = "off"; else if (is_jpy.crs) sValue = NumberToStr(NormalizeDouble(jpylfx.crs, 3), ".2'"); else sValue = " ";           ObjectSetText(lfx.labels[I_JPY] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled) sValue = "off"; else if (is_jpy.crs) sValue = NumberToStr(NormalizeDouble(jpylfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_JPY] +".quote.cross",   sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled) sValue = "off"; else if (is_jpy.crs) sValue = NumberToStr(NormalizeDouble(lfxjpy.crs, 3), ".2'"); else sValue = " ";           ObjectSetText(lfx.labels[I_YPJ] +".quote.cross",   sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled) sValue = "off"; else if (is_nzd.crs) sValue = NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"); else sValue = " ";           ObjectSetText(lfx.labels[I_NZD] +".quote.cross",   sValue, fontSize, fontName, fontColor);
 
    // Spread-Anzeige: via Crosses
@@ -574,35 +598,38 @@ int UpdateInfos() {
    if (!CHF.Enabled || !is_chf.crs) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_CHF] +".spread.cross",  sValue, fontSize, fontName, fontColor);
    if (!EUR.Enabled || !is_eur.crs) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_EUR] +".spread.cross",  sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled || !is_gbp.crs) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_GBP] +".spread.cross",  sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled || !is_jpy.crs) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*  100, 1) +")";                    ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled || !is_jpy.crs) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_JPY] +".spread.cross",  sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled || !is_jpy.crs) sValue = " "; else sValue = "("+ DoubleToStr((lfxjpy.crs_Ask-lfxjpy.crs_Bid)*  100, 1) +")";                    ObjectSetText(lfx.labels[I_YPJ] +".spread.cross",  sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled || !is_nzd.crs) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(lfx.labels[I_NZD] +".spread.cross",  sValue, fontSize, fontName, fontColor);
 
-   // Index-Anzeige: via USDLFX
+   // Index-Anzeige: direct
    if (!USD.Enabled) sValue = "off"; else if (isLfx.usd[I_USD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_USD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_USD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
    if (!AUD.Enabled) sValue = "off"; else if (isLfx.usd[I_AUD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_AUD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_AUD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
    if (!CAD.Enabled) sValue = "off"; else if (isLfx.usd[I_CAD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_CAD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_CAD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
    if (!CHF.Enabled) sValue = "off"; else if (isLfx.usd[I_CHF]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_CHF], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_CHF] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
    if (!EUR.Enabled) sValue = "off"; else if (isLfx.usd[I_EUR]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_EUR], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_EUR] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled) sValue = "off"; else if (isLfx.usd[I_GBP]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_GBP], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_GBP] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled) sValue = "off"; else if (isLfx.usd[I_JPY]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_JPY], 3), ".2'"); else sValue = " "; ObjectSetText(lfx.labels[I_JPY] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled) sValue = "off"; else if (isLfx.usd[I_JPY]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_JPY], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_JPY] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled) sValue = "off"; else if (isLfx.usd[I_YPJ]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_YPJ], 3), ".2'"); else sValue = " "; ObjectSetText(lfx.labels[I_YPJ] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled) sValue = "off"; else if (isLfx.usd[I_NZD]) sValue = NumberToStr(NormalizeDouble(lfx.usd[I_NZD], 5), ".4'"); else sValue = " "; ObjectSetText(lfx.labels[I_NZD] +".quote.viaUSD",  sValue, fontSize, fontName, fontColor);
 
-   // Spread-Anzeige: via USDLFX
+   // Spread-Anzeige: direct
    if (!USD.Enabled || !isLfx.usd[I_USD]) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.usd_Ask-usdlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_USD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!AUD.Enabled || !isLfx.usd[I_AUD]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.usd_Ask-audlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_AUD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!CAD.Enabled || !isLfx.usd[I_CAD]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.usd_Ask-cadlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_CAD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!CHF.Enabled || !isLfx.usd[I_CHF]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.usd_Ask-chflfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_CHF] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!EUR.Enabled || !isLfx.usd[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.usd_Ask-eurlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_EUR] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled || !isLfx.usd[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.usd_Ask-gbplfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_GBP] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled || !isLfx.usd[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.usd_Ask-jpylfx.usd_Bid)*  100, 1) +")";              ObjectSetText(lfx.labels[I_JPY] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled || !isLfx.usd[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.usd_Ask-jpylfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_JPY] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
+   if (!JPY.Enabled || !isLfx.usd[I_YPJ]) sValue = " "; else sValue = "("+ DoubleToStr((lfxjpy.usd_Ask-lfxjpy.usd_Bid)*  100, 1) +")";              ObjectSetText(lfx.labels[I_YPJ] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled || !isLfx.usd[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.usd_Ask-nzdlfx.usd_Bid)*10000, 1) +")";              ObjectSetText(lfx.labels[I_NZD] +".spread.viaUSD", sValue, fontSize, fontName, fontColor);
 
 
    // LFX-Indizes aufzeichnen
    if (!RecordLfxIndices())
-      return(last_error);
+      return(false);
 
-   return(catch("UpdateInfos(2)"));
+   return(!catch("UpdateInfos(2)"));
 }
 
 
@@ -621,7 +648,7 @@ bool RecordLfxIndices() {
       if (lfx.record[i]) /*&&*/ if (isLfx.usd[i]) {
          if (!lfx.hSet[i]) {
             string symbol      = lfx.symbols   [i];
-            string description = lfx.currencies[i] +" Index (LiteForex)";
+            string description = lfx.currencies[i] +" Index (LiteForex)"; if (StringStartsWith(symbol, "LFX")) description = "1/"+ description;
             int    digits      = lfx.digits    [i];
             int    format      = 400;
             bool   synthetic   = true;
