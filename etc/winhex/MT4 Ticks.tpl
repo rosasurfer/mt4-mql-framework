@@ -29,5 +29,5 @@ begin
    double       "Ask"
    uint32       "Counter"
    move 4
-   }[unlimited]
+   }[128]
 end
