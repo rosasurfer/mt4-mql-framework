@@ -20,7 +20,8 @@ fixed_start 0
 multiple
 
 begin
-   { endsection
+   { 
+   endsection
 
    char[12]     "Symbol"
    UNIXDateTime "Time"
@@ -28,5 +29,5 @@ begin
    double       "Ask"
    uint32       "Counter"
    move 4
-   }[128]
+   }[unlimited]
 end
