@@ -2016,7 +2016,10 @@ bool AnalyzePositions() {
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
          if (OrderType() > OP_SELL) continue;
-         if (LFX.IsMyOrder()) {                                         // nebenbei P/L gefundener LFX-Positionen aufaddieren
+
+         // LFX-Reporting vorübergehend wegen QuickChannel-Fehler (volle Message-Queue) deaktiviert
+
+         if (false /*LFX.IsMyOrder()*/) {                               // nebenbei P/L gefundener LFX-Positionen aufaddieren
             if (OrderMagicNumber() != lfxMagics[pos]) {                 // Zeile (1.1.1): Quickcheck mit dem letzten verwendeten Index, erst dann Suche (schnellste Variante)
                pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
                if (pos == -1)
