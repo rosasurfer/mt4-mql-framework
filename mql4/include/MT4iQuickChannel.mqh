@@ -32,18 +32,15 @@
    /*
    undocumented:
    -------------
-   int  hTimer  = SetupTimedTicks(int hWnd, int millis);                      // für korrekte Zeiten millis durch 1.56 teilen
-   bool success = RemoveTimedTicks(int hTimer);                               // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
+   int  hTimer  = SetupTimedTicks(int hWnd, int millis);             // für korrekte Zeiten millis durch 1.56 teilen
+   bool success = RemoveTimedTicks(int hTimer);                      // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
 
    CreateHelper2();
    RemoveHelper();
 
-   TimeUTC();
-
    QC_GetMessages();
    QC_GetMessages4();
    QC_ClearMessages();
-   QC_FreeString();
 
    QC_StartSendInternetMessages();
    QC_SendInternetMessage();
@@ -58,6 +55,10 @@
 
    QC_GetLastInternetSendError();
    QC_GetLastInternetReceiveError();
+
+   QC_FreeString();
+
+   TimeUTC();
    */
 #import
 
