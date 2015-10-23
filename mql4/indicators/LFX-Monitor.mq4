@@ -362,12 +362,12 @@ bool UpdateInfos() {
       audlfx.crs_Bid = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.);
       audlfx.crs_Ask = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.);
    }
-   if (is_usdlfx.crs) {
+   if (isMainIndex[I_USD]) {
       mainIndex[I_AUD] = mainIndex[I_USD] * audusd;
       audlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
       audlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
    }
-   isMainIndex[I_AUD] = is_usdlfx.crs;
+   isMainIndex[I_AUD] = isMainIndex[I_USD];
 
    // CADLFX
    double cadchf_Bid = MarketInfo("CADCHF", MODE_BID), cadchf_Ask = MarketInfo("CADCHF", MODE_ASK), cadchf = (cadchf_Bid + cadchf_Ask)/2;
@@ -383,12 +383,12 @@ bool UpdateInfos() {
       cadlfx.crs_Bid   = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.);
       cadlfx.crs_Ask   = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.);
    }
-   if (is_usdlfx.crs) {
+   if (isMainIndex[I_USD]) {
       mainIndex[I_CAD] = mainIndex[I_USD] / usdcad;
       cadlfx.main_Bid  = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
       cadlfx.main_Ask  = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
    }
-   isMainIndex[I_CAD] = is_usdlfx.crs;
+   isMainIndex[I_CAD] = isMainIndex[I_USD];
 
    // CHFLFX
    double chfjpy_Bid = MarketInfo("CHFJPY", MODE_BID), chfjpy_Ask = MarketInfo("CHFJPY", MODE_ASK), chfjpy = (chfjpy_Bid + chfjpy_Ask)/2;
@@ -403,12 +403,12 @@ bool UpdateInfos() {
       chflfx.crs_Bid = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.);
       chflfx.crs_Ask = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.);
    }
-   if (is_usdlfx.crs) {
+   if (isMainIndex[I_USD]) {
       mainIndex[I_CHF] = mainIndex[I_USD] / usdchf;
       chflfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
       chflfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
    }
-   isMainIndex[I_CHF] = is_usdlfx.crs;
+   isMainIndex[I_CHF] = isMainIndex[I_USD];
    /*
    chfjpy = usdjpy / usdchf
    audchf = audusd * usdchf
@@ -467,12 +467,12 @@ bool UpdateInfos() {
       eurlfx.crs_Bid = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.);
       eurlfx.crs_Ask = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.);
    }
-   if (is_usdlfx.crs) {
+   if (isMainIndex[I_USD]) {
       mainIndex[I_EUR] = mainIndex[I_USD] * eurusd;
       eurlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
       eurlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
    }
-   isMainIndex[I_EUR] = is_usdlfx.crs;
+   isMainIndex[I_EUR] = isMainIndex[I_USD];
 
    // GBPLFX
    //     gbpaud_Bid = ...
@@ -487,12 +487,12 @@ bool UpdateInfos() {
       gbplfx.crs_Bid = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.);
       gbplfx.crs_Ask = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.);
    }
-   if (is_usdlfx.crs) {
+   if (isMainIndex[I_USD]) {
       mainIndex[I_GBP] = mainIndex[I_USD] * gbpusd;
       gbplfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
       gbplfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
    }
-   isMainIndex[I_GBP] = is_usdlfx.crs;
+   isMainIndex[I_GBP] = isMainIndex[I_USD];
 
    // JPYLFX + LFXJPY
    //     audjpy_Bid = ...
@@ -503,25 +503,25 @@ bool UpdateInfos() {
    //     usdjpy_Bid = ...
    bool is_jpylfx.crs = (audjpy_Bid && cadjpy_Bid && chfjpy_Bid && eurjpy_Bid && gbpjpy_Bid && usdjpy_Bid);
    if (is_jpylfx.crs) {
-      lfxjpy.crs     = MathPow((audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
-      lfxjpy.crs_Bid = MathPow((audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
-      lfxjpy.crs_Ask = MathPow((audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
+      jpylfx.crs     = 100 * MathPow(1 / (audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
+      jpylfx.crs_Bid = 100 * MathPow(1 / (audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
+      jpylfx.crs_Ask = 100 * MathPow(1 / (audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
 
-      jpylfx.crs     = 1/lfxjpy.crs     * 100;
-      jpylfx.crs_Bid = 1/lfxjpy.crs_Ask * 100;
-      jpylfx.crs_Ask = 1/lfxjpy.crs_Bid * 100;
+      lfxjpy.crs     = 100 / jpylfx.crs;
+      lfxjpy.crs_Bid = 100 / jpylfx.crs_Ask;
+      lfxjpy.crs_Ask = 100 / jpylfx.crs_Bid;
    }
-   if (is_usdlfx.crs) {
-      mainIndex[I_YPJ] = usdjpy / mainIndex[I_USD];
-      lfxjpy.main_Bid  = usdjpy_Bid / MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
-      lfxjpy.main_Ask  = usdjpy_Ask / MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+   if (isMainIndex[I_USD]) {
+      mainIndex[I_JPY] = 100 * mainIndex[I_USD] / usdjpy;
+      jpylfx.main_Bid  = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
+      jpylfx.main_Ask  = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
 
-      mainIndex[I_JPY] = 1/mainIndex[I_YPJ] * 100;
-      jpylfx.main_Bid  = 1/lfxjpy.main_Ask * 100;
-      jpylfx.main_Ask  = 1/lfxjpy.main_Bid * 100;
+      mainIndex[I_YPJ] = 100 / mainIndex[I_JPY];
+      lfxjpy.main_Bid  = 100 / jpylfx.main_Ask;
+      lfxjpy.main_Ask  = 100 / jpylfx.main_Bid;
    }
-   isMainIndex[I_JPY] = is_usdlfx.crs;
-   isMainIndex[I_YPJ] = is_usdlfx.crs;
+   isMainIndex[I_JPY] = isMainIndex[I_USD];
+   isMainIndex[I_YPJ] = isMainIndex[I_USD];
 
    // NZDLFX
    double audnzd_Bid = MarketInfo("AUDNZD", MODE_BID), audnzd_Ask = MarketInfo("AUDNZD", MODE_ASK), audnzd = (audnzd_Bid + audnzd_Ask)/2;
@@ -537,12 +537,12 @@ bool UpdateInfos() {
       nzdlfx.crs_Bid = MathPow((nzdcad_Bid * nzdchf_Bid * nzdjpy_Bid * nzdusd_Bid) / (audnzd_Ask * eurnzd_Ask * gbpnzd_Ask), 1/7.);
       nzdlfx.crs_Ask = MathPow((nzdcad_Ask * nzdchf_Ask * nzdjpy_Ask * nzdusd_Ask) / (audnzd_Bid * eurnzd_Bid * gbpnzd_Bid), 1/7.);
    }
-   if (is_usdlfx.crs && nzdusd_Bid) {
+   if (isMainIndex[I_USD] && nzdusd_Bid) {
       mainIndex[I_NZD] = mainIndex[I_USD] * nzdusd;
       nzdlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
       nzdlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
    }
-   isMainIndex[I_NZD] = (is_usdlfx.crs && nzdusd_Bid);
+   isMainIndex[I_NZD] = (isMainIndex[I_USD] && nzdusd_Bid);
    /*
    usdcad = nzdcad / nzdusd
    usdchf = nzdchf / nzdusd
@@ -614,7 +614,7 @@ bool UpdateInfos() {
 
                         USDCAD^0.091 * USDCHF^0.036 * USDJPY^0.136 * USDSEK^0.042
    USDX = 50.14348112 * ---------------------------------------------------------
-                                       EURUSD^0.576 * GBPUSD^0.119
+                                        EURUSD^0.576 * GBPUSD^0.119
    */
 
    // EURX
