@@ -3352,8 +3352,8 @@ int Chart.SendTick(bool sound=false) {
    if (!hWnd) return(last_error);
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 0);
-   }
+      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 1);             // letzter Parameter: 0 - EA::start() in Offline-Charts wird nicht getriggert
+   }                                                                 //                    1 - EA::start() in Offline-Charts wird getriggert
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
