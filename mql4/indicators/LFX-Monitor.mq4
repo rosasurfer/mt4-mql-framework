@@ -54,7 +54,7 @@ int    fontSize  = 10;
 color  fontColor = Blue;
 color  bgColor   = C'212,208,200';
 
-int    hTickTimer;                                                   // Timer-Handle des Chart-Tickers
+int    tickTimerId;                                                  // ID des TickTimers des Charts
 
 
 #define I_AUD   0                                                    // Array-Indizes
@@ -110,12 +110,13 @@ int onInit() {
    SetIndexLabel(0, NULL);
 
    // (3) Chart-Ticker aktivieren
-   int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-   int millis = 500;
-   int result = SetupTimedTicks(hWnd, Round(millis/1.56));
-   if (result <= 0) return(catch("onInit(1)->SetupTimedTicks(hWnd=0x"+ IntToHexStr(hWnd) +", millis="+ millis +") returned "+ result, ERR_RUNTIME_ERROR));
-   hTickTimer = result;
-
+   if (!This.IsTesting() && GetServerName()!="MyFX-Synthetic") {
+      int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis = 500;
+      int result = SetupTickTimer(hWnd, millis, NULL);
+      if (!result) return(catch("onInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags=NULL) failed", ERR_RUNTIME_ERROR));
+      tickTimerId = result;
+   }
    return(catch("onInit(2)"));
 }
 
@@ -136,11 +137,11 @@ int onDeinit() {
       }
    }
 
-   // Chart-Ticker deaktivieren
-   if (hTickTimer > NULL) {
-      int result = RemoveTimedTicks(hTickTimer);
-      hTickTimer = NULL;
-      if (result != 1) return(catch("onDeinit(1)->RemoveTimedTicks(hTimer=0x"+ IntToHexStr(hTickTimer) +") returned "+ result, ERR_RUNTIME_ERROR));
+   // einen laufenden Chart-Ticker wieder deaktivieren
+   if (tickTimerId > NULL) {
+      bool success = RemoveTickTimer(tickTimerId);
+      tickTimerId = NULL;
+      if (!success) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ tickTimerId +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }

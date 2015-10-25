@@ -238,6 +238,9 @@ color  positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSE                Orange
 
 
+int tickTimerId;                                                  // ID des TickTimers des Charts (falls installiert)
+
+
 #include <ChartInfos/init.mqh>
 #include <ChartInfos/deinit.mqh>
 
@@ -4721,6 +4724,7 @@ string InputsToStr() {
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
    string   GetRawIniString(string file, string section, string key, string defaultValue);
+   string   GetServerName();
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();

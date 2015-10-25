@@ -177,5 +177,13 @@ int onInit.Recompile() {
  * @return int - Fehlerstatus
  */
 int afterInit() {
-   return(catch("afterInit(1)"));
+   // ggf. Chart-Ticker aktivieren
+   if (!This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
+      int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis = 700;
+      int result = SetupTickTimer(hWnd, millis, TICK_OFFLINE_REFRESH);
+      if (!result) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags=TICK_OFFLINE_REFRESH) failed", ERR_RUNTIME_ERROR));
+      tickTimerId = result;
+   }
+   return(catch("afterInit(2)"));
 }
