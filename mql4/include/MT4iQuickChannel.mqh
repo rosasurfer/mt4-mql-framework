@@ -32,8 +32,8 @@
    /*
    undocumented:
    -------------
-   int  hTimer  = SetupTimedTicks(int hWnd, int millis);             // für korrekte Zeiten millis durch 1.56 teilen
-   bool success = RemoveTimedTicks(int hTimer);                      // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
+   int  timerId = SetupTimedTicks(int hWnd, int millis);             // für korrekte Zeiten muß der Parameter 'millis' durch 1.56 geteilt werden
+   bool success = RemoveTimedTicks(int timerId);                     // Ticks funktionieren nicht in Offline-Charts, Workaround: MT4Expander::SetupTickTimer()
 
    CreateHelper2();
    RemoveHelper();
