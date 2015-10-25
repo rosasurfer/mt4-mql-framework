@@ -3938,9 +3938,13 @@ void __DummyCalls() {
    string   IntToHexStr(int integer);
    bool     IsStandardTimeframe(int timeframe);
    bool     IsUIThread();
-   bool     RemoveTickTimer(int timerId);
    void     SetLogLevel(int level);
-   int      SetupTickTimer(int hWnd, int millis, int flags);
+ //int      SetupTickTimer(int hWnd, int millis, int flags);
+ //bool     RemoveTickTimer(int timerId);
+
+#import "MT4iQuickChannel.dll"
+   int      SetupTimedTicks(int hWnd, int millis);                            // für korrekte Zeiten muß der Parameter 'millis' durch 1.56 geteilt werden
+   bool     RemoveTimedTicks(int timerId);                                    // Ticks funktionieren nicht in Offline-Charts, Workaround: MT4Expander::SetupTickTimer()
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

@@ -9,7 +9,13 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 
-int tickTimer;
+#import "Expander.dll"
+   int  SetupTickTimer(int hWnd, int millis, int flags);
+   bool RemoveTickTimer(int timerId);
+#import
+
+
+int tickTimerId;
 
 
 /**
@@ -22,11 +28,11 @@ int onInit() {
    int timerId = SetupTickTimer(hWnd, 4000, NULL);
    if (timerId > 0) {
       debug("onInit(1)  SetupTickTimer() success, result="+ timerId);
-      tickTimer = timerId;
+      tickTimerId = timerId;
    }
    else {
       catch("onInit(2)  SetupTickTimer() failed, result="+ timerId, ERR_RUNTIME_ERROR);
-      tickTimer = NULL;
+      tickTimerId = NULL;
    }
    return(last_error);
 }
@@ -46,10 +52,10 @@ int onStart() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   if (tickTimer != NULL) {
-      bool result = RemoveTickTimer(tickTimer);
-      catch("onDeinit(1)  RemoveTickTimer("+ tickTimer +")  result="+ result);
-      tickTimer = NULL;
+   if (tickTimerId != NULL) {
+      bool result = RemoveTickTimer(tickTimerId);
+      catch("onDeinit(1)  RemoveTickTimer(timerId="+ tickTimerId +")  result="+ result);
+      tickTimerId = NULL;
    }
    return(last_error);
 }

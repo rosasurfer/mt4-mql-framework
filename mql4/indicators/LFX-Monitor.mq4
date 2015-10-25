@@ -113,9 +113,14 @@ int onInit() {
    if (!This.IsTesting() && GetServerName()!="MyFX-Synthetic") {
       int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis = 500;
-      int result = SetupTickTimer(hWnd, millis, NULL);
-      if (!result) return(catch("onInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags=NULL) failed", ERR_RUNTIME_ERROR));
-      tickTimerId = result;
+
+    //int timerId = SetupTickTimer(hWnd, millis, NULL);
+    //if (!timerId) return(catch("onInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags=NULL) failed", ERR_RUNTIME_ERROR));
+
+      int timerId = SetupTimedTicks(hWnd, Round(millis/1.56));
+      if (!timerId) return(catch("onInit(1)->SetupTimedTicks(hWnd="+ hWnd +", millis="+ millis +") failed", ERR_RUNTIME_ERROR));
+
+      tickTimerId = timerId;
    }
    return(catch("onInit(2)"));
 }
@@ -139,9 +144,9 @@ int onDeinit() {
 
    // einen laufenden Chart-Ticker wieder deaktivieren
    if (tickTimerId > NULL) {
-      bool success = RemoveTickTimer(tickTimerId);
-      tickTimerId = NULL;
-      if (!success) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ tickTimerId +") failed", ERR_RUNTIME_ERROR));
+      int id = tickTimerId; tickTimerId = NULL;
+    //if (!RemoveTickTimer(id))  return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+      if (!RemoveTimedTicks(id)) return(catch("onDeinit(1)->RemoveTimedTicks(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }

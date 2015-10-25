@@ -9,9 +9,11 @@ int onDeinit() {
 
    // einen laufenden Chart-Ticker wieder deaktivieren
    if (tickTimerId > NULL) {
-      bool success = RemoveTickTimer(tickTimerId);
-      tickTimerId = NULL;
-      if (!success) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ tickTimerId +") failed", ERR_RUNTIME_ERROR));
+      /*
+      int id = tickTimerId; tickTimerId = NULL;
+      if (!RemoveTickTimer(id))
+         return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+      */
    }
 
    // in allen deinit()-Szenarien Fensterstatus  speichern
