@@ -3399,34 +3399,6 @@ string GetWindowsShortcutTarget(string lnkFilename) {
 
 
 /**
- * Ruft den Hauptmenü-Befehl Charts->Objects-Unselect All auf.
- *
- * @return int - Fehlerstatus
- */
-int Chart.Objects.UnselectAll() {
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(last_error);
-
-   PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
-   return(NO_ERROR);
-}
-
-
-/**
- * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
- *
- * @return int - Fehlerstatus
- */
-int Chart.Refresh() {
-   int hWnd = WindowHandleEx(NULL);
-   if (!hWnd) return(last_error);
-
-   PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
-   return(NO_ERROR);
-}
-
-
-/**
  * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
  * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
  *

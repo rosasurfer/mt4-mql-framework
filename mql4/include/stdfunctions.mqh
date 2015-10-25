@@ -3352,8 +3352,8 @@ int Chart.SendTick(bool sound=false) {
    if (!hWnd) return(last_error);
 
    if (!This.IsTesting()) {
-      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, 1);             // letzter Parameter: 0 - EA::start() in Offline-Charts wird nicht getriggert
-   }                                                                 //                    1 - EA::start() in Offline-Charts wird getriggert
+      PostMessageA(hWnd, MT4InternalMsg(), MT4_TICK, TICK_OFFLINE_EA);  // LPARAM lParam: 0 - EA::start() wird in Offline-Charts *NICHT* getriggert
+   }                                                                    //                1 - EA::start() wird in Offline-Charts getriggert
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
@@ -3361,6 +3361,34 @@ int Chart.SendTick(bool sound=false) {
    if (sound)
       PlaySoundEx("Tick.wav");
 
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ruft den Hauptmenü-Befehl Charts->Objects-Unselect All auf.
+ *
+ * @return int - Fehlerstatus
+ */
+int Chart.Objects.UnselectAll() {
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
+
+   PostMessageA(hWnd, WM_COMMAND, ID_CHART_OBJECTS_UNSELECTALL, 0);
+   return(NO_ERROR);
+}
+
+
+/**
+ * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
+ *
+ * @return int - Fehlerstatus
+ */
+int Chart.Refresh() {
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(last_error);
+
+   PostMessageA(hWnd, WM_COMMAND, ID_CHART_REFRESH, 0);
    return(NO_ERROR);
 }
 
@@ -3727,6 +3755,8 @@ void __DummyCalls() {
    catch(NULL, NULL, NULL);
    Ceil(NULL);
    Chart.Expert.Properties();
+   Chart.Objects.UnselectAll();
+   Chart.Refresh();
    Chart.SendTick(NULL);
    CharToHexStr(NULL);
    CompareDoubles(NULL, NULL);
@@ -3908,11 +3938,9 @@ void __DummyCalls() {
    string   IntToHexStr(int integer);
    bool     IsStandardTimeframe(int timeframe);
    bool     IsUIThread();
+   bool     RemoveTickTimer(int timerId);
    void     SetLogLevel(int level);
-
-#import "MT4iQuickChannel.dll"
-   int      SetupTimedTicks(int hWnd, int millis);                            // für korrekte Zeiten millis durch 1.56 teilen
-   bool     RemoveTimedTicks(int hTimer);                                     // Ticks funktionieren nicht in Offline-Charts (Workaround: Messages per DLL übersetzen)
+   int      SetupTickTimer(int hWnd, int millis, int flags);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

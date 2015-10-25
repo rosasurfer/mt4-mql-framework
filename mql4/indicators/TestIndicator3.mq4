@@ -28,7 +28,7 @@ int onTick() {
    static int lastTickCount;
 
    int tickCount = GetTickCount();
-   debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  after "+ (tickCount-lastTickCount) +" msec");
+   debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  ChangedBars="+ ChangedBars +"  after "+ (tickCount-lastTickCount) +" msec");
 
    lastTickCount = tickCount;
    return(last_error);

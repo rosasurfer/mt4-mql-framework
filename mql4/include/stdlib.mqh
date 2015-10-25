@@ -31,11 +31,6 @@
    double   GetCommission();
 
 
-   // Terminal-Interaktionen
-   int      Chart.Objects.UnselectAll();
-   int      Chart.Refresh();
-
-
    // Arrays
    int      ArraySetInts        (int array[][], int i, int values[]);
 

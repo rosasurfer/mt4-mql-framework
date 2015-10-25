@@ -8,12 +8,9 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <history.mqh>
-#include <test/testlibrary.mqh>
 
 
-#import "Expander.Release.dll"
-#import
+int tickTimerId;
 
 
 /**
@@ -21,6 +18,8 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+   tickTimerId = SetupTickTimer(hWnd, 500, TICK_OFFLINE_REFRESH);
    return(last_error);
 }
 
@@ -31,14 +30,13 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   //EXECUTION_CONTEXT.toStr(__ExecutionContext, true);
+   static int lastTickCount;
 
-   testlibrary();
-   debug("onTick()->testlibrary()");
+   int tickCount = GetTickCount();
+   debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  ChangedBars="+ ChangedBars +"  after "+ (tickCount-lastTickCount) +" msec");
 
+   lastTickCount = tickCount;
    return(last_error);
-
-   int iNull[];
 }
 
 
@@ -47,6 +45,9 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   //int error = test_context(); if (IsError(error)) return(catch("onStart(2)->test_context() failed", error));
+   if (tickTimerId != NULL) {
+      RemoveTickTimer(tickTimerId);
+      tickTimerId = NULL;
+   }
    return(last_error);
 }

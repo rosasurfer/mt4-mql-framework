@@ -7,10 +7,29 @@ int __DEINIT_FLAGS__[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
-#include <history.mqh>
 
 
-int equity.hSet;
+int tickTimer;
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+
+   int timerId = SetupTickTimer(hWnd, 4000, NULL);
+   if (timerId > 0) {
+      debug("onInit(1)  SetupTickTimer() success, result="+ timerId);
+      tickTimer = timerId;
+   }
+   else {
+      catch("onInit(2)  SetupTickTimer() failed, result="+ timerId, ERR_RUNTIME_ERROR);
+      tickTimer = NULL;
+   }
+   return(last_error);
+}
 
 
 /**
@@ -19,38 +38,7 @@ int equity.hSet;
  * @return int - Fehlerstatus
  */
 int onStart() {
-   RecordEquity();
-   return(last_error);
-
-   RecordEquity(HST_COLLECT_TICKS);
-   return(last_error);
-}
-
-
-/**
- * Zeichnet die Equity-Kurve des Accounts auf.
- *
- * @param  int flags - das Schreiben steuernde Flags (default: keine)
- *                     HST_COLLECT_TICKS: sammelt aufeinanderfolgende Ticks und schreibt die Daten erst beim jeweils nächsten BarOpen-Event
- *                     HST_FILL_GAPS:     füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
- *
- * @return bool - Erfolgsstatus
- */
-bool RecordEquity(int flags=NULL) {
-   if (!equity.hSet) {
-      string symbol      = ifString(IsTesting(), "_", "") + GetAccountNumber() +".EQ";
-      string description = "Account Equity #"+ GetAccountNumber();
-      int    digits      = 2;
-      int    format      = 400;
-      bool   synthetic   = true;
-      equity.hSet = HistorySet.Create(symbol, description, digits, format, synthetic);
-      if (!equity.hSet) return(!SetLastError(history.GetLastError()));
-   }
-
-   double equity = AccountEquity()-AccountCredit();
-   if (!HistorySet.AddTick(equity.hSet, Tick.Time, equity, flags)) return(!SetLastError(history.GetLastError()));
-
-   return(true);
+   return(NO_ERROR);
 }
 
 
@@ -58,9 +46,10 @@ bool RecordEquity(int flags=NULL) {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   if (equity.hSet != 0) {
-      if (!HistorySet.Close(equity.hSet)) return(!SetLastError(history.GetLastError()));
-      equity.hSet = NULL;
+   if (tickTimer != NULL) {
+      bool result = RemoveTickTimer(tickTimer);
+      catch("onDeinit(1)  RemoveTickTimer("+ tickTimer +")  result="+ result);
+      tickTimer = NULL;
    }
-   return(NO_ERROR);
+   return(last_error);
 }
