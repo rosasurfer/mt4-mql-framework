@@ -25,7 +25,7 @@ int tickTimerId;
  */
 int onInit() {
    int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-   tickTimerId = SetupTickTimer(hWnd, 500, TICK_OFFLINE_REFRESH);
+   tickTimerId = SetupTickTimer(hWnd, 1000, TICK_OFFLINE_REFRESH);
    return(last_error);
 }
 
