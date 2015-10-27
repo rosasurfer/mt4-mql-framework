@@ -620,7 +620,7 @@ bool UpdateInfos() {
 
                         USDCAD^0.091 * USDCHF^0.036 * USDJPY^0.136 * USDSEK^0.042
    USDX = 50.14348112 * ---------------------------------------------------------
-                                        EURUSD^0.576 * GBPUSD^0.119
+                                       EURUSD^0.576 * GBPUSD^0.119
    */
 
    // EURX
