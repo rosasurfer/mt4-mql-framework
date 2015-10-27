@@ -1888,11 +1888,8 @@ int Round(double value) {
  * @return double - rounded value
  */
 double RoundEx(double number, int decimals=0) {
-   if (decimals > 0)
-      return(NormalizeDouble(number, decimals));
-
-   if (decimals == 0)
-      return(MathRound(number));
+   if (decimals > 0) return(NormalizeDouble(number, decimals));
+   if (!decimals)    return(      MathRound(number));
 
    // decimals < 0
    double factor = MathPow(10, decimals);                            // -1:  1234.5678 => 1230
