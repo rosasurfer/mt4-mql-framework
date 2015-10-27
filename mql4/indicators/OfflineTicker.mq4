@@ -38,7 +38,6 @@ int onInit() {
 
    // Datenanzeige ausschalten
    SetIndexLabel(0, NULL);
-
    return(last_error);
 }
 
@@ -64,7 +63,7 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   // Chart-Ticker deinstallieren
+   // Ticker ggf. deinstallieren
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;
       if (!RemoveTickTimer(id))  return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
