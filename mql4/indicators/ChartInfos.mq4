@@ -1605,13 +1605,13 @@ bool UpdatePrice() {
    double price;
 
    if (!Bid) {                                                                // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
-      price = Close[0];
-   }
+      price = RoundEx(Close[0], Digits);                                      // Bar-Daten in der History können u.U. unnormalisiert sein
+   }                                                                          // (z.B. wenn sie nicht von MetaTrader erstellt wurden)
    else {
       switch (appliedPrice) {
-         case PRICE_BID   : price =  Bid;          break;
-         case PRICE_ASK   : price =  Ask;          break;
-         case PRICE_MEDIAN: price = (Bid + Ask)/2; break;
+         case PRICE_BID   : price =  Bid;                           break;
+         case PRICE_ASK   : price =  Ask;                           break;
+         case PRICE_MEDIAN: price = RoundEx((Bid + Ask)/2, Digits); break;    // NormalizeDouble() kann u.U. falsche Werte zurückgeben
       }
    }
    ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
@@ -1620,7 +1620,7 @@ bool UpdatePrice() {
    if (!error)                             return(true);
    if (error == ERR_OBJECT_DOES_NOT_EXIST) return(true);                      // bei offenem Properties-Dialog oder Object::onDrag()
 
-   return(!catch("UpdatePrice(2)", error));
+   return(!catch("UpdatePrice(1)", error));
 }
 
 
