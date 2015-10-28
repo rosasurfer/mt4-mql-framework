@@ -141,7 +141,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       label  = StringConcatenate(labelBase, " stoploss at ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrentFix(), slPrice)) {
+      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrder(2)"), slPrice)) {
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR    , Red             );
       }
@@ -149,7 +149,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       label = StringConcatenate(labelBase, " -> sl ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrentFix(), slPrice)) {
+      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrentEx("ShowOpenOrder(3)"), slPrice)) {
          ObjectSet(label, OBJPROP_RAY  , false      );
          ObjectSet(label, OBJPROP_STYLE, STYLE_DOT  );
          ObjectSet(label, OBJPROP_COLOR, DeepSkyBlue);
@@ -165,7 +165,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       label  = StringConcatenate(labelBase, " takeprofit at ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrentFix(), tpPrice)) {
+      if (ObjectCreate(label, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrder(4)"), tpPrice)) {
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR    , LimeGreen       );
       }
@@ -173,7 +173,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
       label = StringConcatenate(labelBase, " -> tp ", sPrice);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrentFix(), tpPrice)) {
+      if (ObjectCreate(label, OBJ_TREND, 0, openTime, openPrice, TimeCurrentEx("ShowOpenOrder(5)"), tpPrice)) {
          ObjectSet(label, OBJPROP_RAY  , false      );
          ObjectSet(label, OBJPROP_STYLE, STYLE_DOT  );
          ObjectSet(label, OBJPROP_COLOR, DeepSkyBlue);

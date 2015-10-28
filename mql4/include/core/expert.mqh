@@ -133,7 +133,7 @@ int init() {
 
    // (7) Außer bei REASON_CHARTCHANGE nicht auf den nächsten echten Tick warten, sondern sofort selbst einen Tick schicken.
    if (IsTesting()) {
-      Test.fromDate    = TimeCurrentFix();                                    // für Teststatistiken
+      Test.fromDate    = TimeCurrentEx("init(7)");                            // für Teststatistiken
       Test.startMillis = GetTickCount();
    }
    else if (UninitializeReason() != REASON_CHARTCHANGE) {                     // Ganz zum Schluß, da Ticks verloren gehen, wenn die entsprechende Windows-Message
@@ -144,7 +144,7 @@ int init() {
       }
    }
 
-   UpdateProgramStatus(catch("init(7)"));
+   UpdateProgramStatus(catch("init(8)"));
    return(last_error);
 }
 
@@ -259,7 +259,7 @@ int deinit() {
 
 
    if (IsTesting()) {
-      Test.toDate     = TimeCurrentFix();
+      Test.toDate     = TimeCurrentEx("deinit(1)");
       Test.stopMillis = GetTickCount();
    }
 
@@ -285,7 +285,7 @@ int deinit() {
          case REASON_INITFAILED : error = onDeinitFailed();          break;      //
          case REASON_CLOSE      : error = onDeinitClose();           break;      //
                                                                                  //
-         default: return(UpdateProgramStatus(catch("deinit(1)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
+         default: return(UpdateProgramStatus(catch("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR)));
       }                                                                          //
    }                                                                             //
    UpdateProgramStatus();                                                        //
@@ -308,7 +308,7 @@ int deinit() {
       SetLastError(error);
 
 
-   UpdateProgramStatus(catch("deinit(2)"));
+   UpdateProgramStatus(catch("deinit(3)"));
    return(last_error); __DummyCalls();
 }
 
@@ -319,7 +319,7 @@ int deinit() {
  * @return int - ID oder NULL, falls ein Fehler auftrat
  */
 int InitReason() {
-   return(_NULL(catch("InitReason()", ERR_NOT_IMPLEMENTED)));
+   return(_NULL(catch("InitReason(1)", ERR_NOT_IMPLEMENTED)));
 }
 
 

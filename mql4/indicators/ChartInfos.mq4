@@ -421,7 +421,7 @@ int ShowOpenOrders() {
             // Order anzeigen
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrentFix(), openPrice)) {
+            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(1)"), openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
             }
@@ -436,7 +436,7 @@ int ShowOpenOrders() {
                label2 = StringConcatenate(label1, ",  ", sTP);
                if (ObjectFind(label2) == 0)
                   ObjectDelete(label2);
-               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentFix(), takeProfit)) {
+               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(2)"), takeProfit)) {
                   ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                   ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
                }
@@ -449,7 +449,7 @@ int ShowOpenOrders() {
                label3 = StringConcatenate(label1, ",  ", sSL);
                if (ObjectFind(label3) == 0)
                   ObjectDelete(label3);
-               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentFix(), stopLoss)) {
+               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(3)"), stopLoss)) {
                   ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                   ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
                }
@@ -494,7 +494,7 @@ int ShowOpenOrders() {
             label2 = StringConcatenate(label1, ",  ", sTP);
             if (ObjectFind(label2) == 0)
                ObjectDelete(label2);
-            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentFix(), takeProfit)) {
+            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(4)"), takeProfit)) {
                ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
             }
@@ -507,7 +507,7 @@ int ShowOpenOrders() {
             label3 = StringConcatenate(label1, ",  ", sSL);
             if (ObjectFind(label3) == 0)
                ObjectDelete(label3);
-            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentFix(), stopLoss)) {
+            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(5)"), stopLoss)) {
                ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
             }
@@ -529,10 +529,10 @@ int ShowOpenOrders() {
 
    // (3) mode.remote
    if (mode.remote) {
-      return(_EMPTY(catch("ShowOpenOrders(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+      return(_EMPTY(catch("ShowOpenOrders(6)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
 
-   return(_EMPTY(catch("ShowOpenOrders(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY(catch("ShowOpenOrders(7)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -696,7 +696,7 @@ int ShowStandardTargets() {
    lotsize = MathMax(lotsize, minLotSize);
    double pipValue = PipValue(lotsize, true);
    if (!pipValue)   return(0);                                       // falls MarketInfo()-Daten noch nicht verfügbar sind
-   debug("ShowStandardTargets(0.1)  pipValue("+ NumberToStr(lotsize, ".1+") +")="+ NumberToStr(pipValue, ".+"));
+   debug("ShowStandardTargets(1)  pipValue("+ NumberToStr(lotsize, ".1+") +")="+ NumberToStr(pipValue, ".+"));
 
 
    // (2) StopLoss- und TakeProfit-Konfiguration einlesen und Absolutwerte und Pips berechnen
@@ -704,7 +704,7 @@ int ShowStandardTargets() {
    double slWeeklyPct  =  8, slWeeklyAbs  = mm.tradableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
    double slMonthlyPct = 12, slMonthlyAbs = mm.tradableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
    double tpDailyPct   =  1, tpDailyAbs   = mm.tradableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
-   debug("ShowStandardTargets(0.2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
+   debug("ShowStandardTargets(2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
 
 
    // (3) StopLoss- und TakeProfit-Preise berechnen
@@ -722,8 +722,8 @@ int ShowStandardTargets() {
 
 
    // (4) Levelanzeige
-   datetime from = TimeCurrentFix() + 12*HOURS;
-   datetime to   = TimeCurrentFix() +  2*DAYS;
+   datetime from = TimeCurrentEx("ShowStandardTargets(3)") + 12*HOURS;
+   datetime to   = TimeCurrentEx("ShowStandardTargets(4)") +  2*DAYS;
 
    string label = StringConcatenate(__NAME__, ".Target.Entry");
    if (ObjectFind(label) == 0)
@@ -788,7 +788,7 @@ int ShowStandardTargets() {
    Comment(StringConcatenate(NL, NL, NL, msg));                                     // 3 Zeilen Abstand nach oben für evt. vorhandene andere Anzeigen
    */
 
-   if (!catch("ShowStandardTargets(1)"))
+   if (!catch("ShowStandardTargets(5)"))
       return(1);
    return(EMPTY);
 }
@@ -1962,7 +1962,7 @@ bool UpdateTime() {
 
    static datetime lastTime;
 
-   datetime now = TimeCurrentFix();
+   datetime now = TimeCurrentEx("UpdateTime(1)");
    if (now == lastTime)
       return(true);
 
@@ -1978,7 +1978,7 @@ bool UpdateTime() {
 
    int error = GetLastError();
    if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateTime()", error));
+      return(!catch("UpdateTime(2)", error));
    return(true);
 }
 
@@ -2936,7 +2936,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       //
 
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
-      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentFix();
+      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentEx("CustomPositions.ParseHstTerm(6)");
       if      (groupByMonth) groupFrom = DateTime(TimeYearFix(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekFix(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
@@ -3082,7 +3082,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
    if (!StringLen(hstComments)) hstComments = comment;
    else                         hstComments = hstComments +", "+ comment;
-   return(!catch("CustomPositions.ParseHstTerm(6)"));
+   return(!catch("CustomPositions.ParseHstTerm(7)"));
 }
 
 
