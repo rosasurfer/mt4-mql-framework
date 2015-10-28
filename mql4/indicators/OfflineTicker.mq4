@@ -24,16 +24,27 @@ int tickTimerId;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // Ticker installieren
    if (!This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
+      // Ticker installieren
       int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis = 1000;
       int flags  = TICK_OFFLINE_REFRESH;
 
       int timerId = SetupTickTimer(hWnd, millis, flags);
       if (!timerId) return(catch("onInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags="+ flags +") failed", ERR_RUNTIME_ERROR));
-
       tickTimerId = timerId;
+
+      // Chart-Markierung anzeigen
+      string label = __NAME__+".Status";
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);
+         ObjectRegister(label);
+      }
    }
 
    // Datenanzeige ausschalten
@@ -68,5 +79,7 @@ int onDeinit() {
       int id = tickTimerId; tickTimerId = NULL;
       if (!RemoveTickTimer(id))  return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
+
+   DeleteRegisteredObjects(NULL);
    return(last_error);
 }
