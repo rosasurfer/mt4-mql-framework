@@ -29,15 +29,15 @@ extern color Color.CloseMarker  = C'164,164,164';                    // Close-Ma
 
 
 int    superBars.timeframe;
-bool   eth.likeFuture;                                               // ob die Handelssession des Instruments nach RTH und ETH getrennt werden kann (wie Globex-Derivate)
-bool   showOHLData;                                                  // ob die aktuellen OHL-Daten angezeigt werden sollen
+bool   eth.likeFuture;                                                  // ob die Handelssession des Instruments nach RTH und ETH getrennt werden kann (wie Globex-Derivate)
+bool   showOHLData;                                                     // ob die aktuellen OHL-Daten angezeigt werden sollen
 
-string label.description = "Description";                            // Label für Chartanzeige
+string label.description = "Description";                               // Label für Chartanzeige
 
 
 #define STF_UP             1
 #define STF_DOWN          -1
-#define PERIOD_D1_ETH   1439                                         // PERIOD_D1 - 1
+#define PERIOD_D1_ETH   1439                                            // PERIOD_D1 - 1
 
 
 /**
@@ -58,11 +58,11 @@ int onInit() {
    string futures[] = {
       "BRENT"  , "WTI"    ,
       "DJIA"   , "DJTA"   ,
-      "NAS100" , "NASCOMP",
-      "RUS2000",
       "SP500"  ,
-      "EURX"   , "USDX"   ,
-    //"AUDLFX" , "CADLFX" , "CHFLFX", "EURLFX", "GBPLFX", "LFXJPY", "NZDLFX", "USDLFX",   // ERROR: EURLFX,M1  SuperBars::TimeCurrentFix(1)->TimeCurrent() => 0  [ERR_RUNTIME_ERROR]
+      "RUS2000",
+      "NAS100" , "NASCOMP",
+    //"EURX"   , "EURLFX" ,                                             // der EURX-Future wurde 2011 aus dem Handel genommen (ICE)
+      "USDX"   , "USDLFX" ,
       "XAGEUR" , "XAGJPY" , "XAGUSD",
       "XAUEUR" , "XAUJPY" , "XAUUSD"
    };
@@ -369,7 +369,7 @@ bool UpdateSuperBars() {
  * @param  int      closeBar     - Chartoffset der Close-Bar der Superbar
  * @param  datetime openTime.fxt - FXT-Startzeit der Supersession
  * @param  datetime openTime.srv - Server-Startzeit der Supersession
- * @param  bool    &drawETH      - Variable, die anzeigt, ob die ETH-Session der aktuellen D1-Superbar gezeichnet werden kann. Sind alle verfügbaren
+ * @param  bool    &drawETH      - Variable, die anzeigt, ob die ETH-Session der D1-Superbar gezeichnet werden kann. Sind alle verfügbaren
  *                                 M15-Daten verarbeitet, wechselt diese Variable auf OFF, auch wenn noch weitere D1-Superbars gezeichnet werden.
  * @return bool - Erfolgsstatus
  */
@@ -443,7 +443,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
 
 
    // (2) Extended-Hours markieren (falls M15-Daten vorhanden)
-   while (drawETH) {                                                                   // die Schleife dient nur dem einfacheren Verlassen des ETH-Blocks
+   while (drawETH) {                                                                   // die Schleife ersetzt ein if() und dient nur dem einfacheren Verlassen des Blocks
       // (2.1) High und Low ermitteln
       datetime eth.openTime.srv  = openTime.srv;                                       // wie reguläre Starttime der 24h-Session (00:00 FXT)
       datetime eth.closeTime.srv = openTime.srv + 16*HOURS + 30*MINUTES;               // Handelsbeginn Globex Chicago           (16:30 FXT)
@@ -495,7 +495,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
       // (2.5) ETH-Rahmen zeichnen
 
       // (2.6) ETH-Close-Marker zeichnen, wenn die Extended-Hours beendet sind
-      if (TimeCurrentFix() > eth.closeTime.srv) {
+      if (TimeServer() >= eth.closeTime.srv) {
          int eth.centerBar = (eth.openBar+eth.closeBar)/2;
 
          if (eth.centerBar > eth.closeBar) {
@@ -541,7 +541,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTime.fxt, datetime ope
 
    Die für das Shape zu verwendende Farbe ist rgb(7,210,45).
    */
-   return(!catch("DrawSuperBar(3)"));
+   return(!catch("DrawSuperBar(2)"));
 }
 
 

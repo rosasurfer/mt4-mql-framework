@@ -97,7 +97,7 @@ int onTick() {
    int signal;
 
    if (IsStartSignal(signal)) {
-      //debug("IsStartSignal(0.1)  "+ TimeToStr(TimeCurrentFix()) +"   signal "+ ifString(signal>0, "up", "down"));
+      //debug("onTick(1)  "+ TimeToStr(TimeCurrentEx("onTick(2)")) +"   signal "+ ifString(signal>0, "up", "down"));
       Strategy.CreateSequence(ifInt(signal>0, D_LONG, D_SHORT));
    }
    return(last_error);
@@ -169,7 +169,7 @@ bool StartSequence(int hSeq) {
 
 
    // (1) Startvariablen setzen
-   datetime startTime  = TimeCurrentFix();
+   datetime startTime  = TimeCurrentEx("StartSequence(5)");
    double   startPrice = ifDouble(sequence.direction[hSeq]==D_SHORT, Bid, Ask);
 
    ArrayPushInt   (sequence.start.event,  CreateEventId());
@@ -190,7 +190,7 @@ bool StartSequence(int hSeq) {
    if (start.level.condition) {
       sequence.level   [hSeq] = ifInt(sequence.direction[hSeq]==D_LONG, start.level.value, -start.level.value);
       sequence.maxLevel[hSeq] = sequence.level[hSeq];
-      gridBase            = NormalizeDouble(startPrice - sequence.level[hSeq]*grid.size[hSeq]*Pips, Digits);
+      gridBase                = NormalizeDouble(startPrice - sequence.level[hSeq]*grid.size[hSeq]*Pips, Digits);
    }
    GridBase.Reset(hSeq, startTime, gridBase);
 
@@ -200,7 +200,7 @@ bool StartSequence(int hSeq) {
       int iNull;
       if (!UpdateOpenPositions(hSeq, iNull, startPrice))
          return(false);
-      return(!catch("StartSequence(5)", ERR_NOT_IMPLEMENTED));
+      return(!catch("StartSequence(6)", ERR_NOT_IMPLEMENTED));
       sequence.start.price[ArraySize(sequence.start.price)-1] = startPrice;
    }
 
@@ -219,8 +219,8 @@ bool StartSequence(int hSeq) {
 
 
    RedrawStartStop(hSeq);
-   if (__LOG) log(StringConcatenate("StartSequence(6)  sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
-   return(!last_error|catch("StartSequence(7)"));
+   if (__LOG) log(StringConcatenate("StartSequence(7)  sequence started at ", NumberToStr(startPrice, PriceFormat), ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], "")));
+   return(!last_error|catch("StartSequence(8)"));
 }
 
 
@@ -246,7 +246,7 @@ void RedrawStartStop(int hSeq) {
 bool UpdateWeekendStop() {
    if (IsLastError()) return(false);
 
-   datetime friday, now=ServerToFxtTime(TimeCurrentFix());
+   datetime friday, now=ServerToFxtTime(TimeCurrentEx("UpdateWeekendStop(1)"));
 
    switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -259,7 +259,7 @@ bool UpdateWeekendStop() {
    }
    weekend.stop.time = FxtToServerTime((friday/DAYS)*DAYS + weekend.stop.condition%DAYS);
 
-   return(!last_error|catch("UpdateWeekendStop()"));
+   return(!last_error|catch("UpdateWeekendStop(2)"));
 }
 
 

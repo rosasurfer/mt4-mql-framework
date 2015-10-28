@@ -808,21 +808,21 @@ bool onOrderFail(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Order failed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx("onOrderFail(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Order einzeln)
       if (alert.sms) {
          if (!SendSMS(alert.sms.receiver, message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onOrderFail(2)  "+ message);
+      else if (__LOG) log("onOrderFail(3)  "+ message);
    }
 
    // Sound abspielen (für alle Orders gemeinsam)
    if (alert.sound)
       PlaySoundEx(alert.sound.orderFailed);
 
-   return(!catch("onOrderFail(3)"));
+   return(!catch("onOrderFail(4)"));
 }
 
 
@@ -849,21 +849,21 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position opened: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx("onPositionOpen(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
          if (!SendSMS(alert.sms.receiver, message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onPositionOpen(2)  "+ message);
+      else if (__LOG) log("onPositionOpen(3)  "+ message);
    }
 
    // Sound abspielen (für alle Positionen gemeinsam)
    if (alert.sound)
       PlaySoundEx(alert.sound.positionOpened);
 
-   return(!catch("onPositionOpen(3)"));
+   return(!catch("onPositionOpen(4)"));
 }
 
 
@@ -895,21 +895,21 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position closed: "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx("onPositionClose(2)"), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       // SMS verschicken (für jede Position einzeln)
       if (alert.sms) {
          if (!SendSMS(alert.sms.receiver, message))
             return(!SetLastError(stdlib.GetLastError()));
       }
-      else if (__LOG) log("onPositionClose(2)  "+ message);
+      else if (__LOG) log("onPositionClose(3)  "+ message);
    }
 
    // Sound abspielen (für alle Positionen gemeinsam)
    if (alert.sound)
       PlaySoundEx(alert.sound.positionClosed);
 
-   return(!catch("onPositionClose(3)"));
+   return(!catch("onPositionClose(4)"));
 }
 
 
@@ -1351,7 +1351,7 @@ bool CheckBarBreakoutSignal(int index) {
          if (GE(price, signalLevelH)) {
             if (GT(price, signalLevelH)) {
                //debug("CheckBarBreakoutSignal(0.5)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-               onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrentFix());
+               onBarBreakoutSignal(index, SD_UP, signalLevelH, price, TimeCurrentEx("CheckBarBreakoutSignal(2)"));
                signalLevelH                       = NULL;
                signal.data [index][I_SBB_LEVEL_H] = NULL;
                signal.descr[index]                = BarBreakoutSignalToStr(index);
@@ -1364,7 +1364,7 @@ bool CheckBarBreakoutSignal(int index) {
          if (LE(price, signalLevelL)) {
             if (LT(price, signalLevelL)) {
                //debug("CheckBarBreakoutSignal(0.7)       sidx="+ index +"  breakout signal: price="+ NumberToStr(price, PriceFormat) +"  changedBars="+ changedBars);
-               onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrentFix());
+               onBarBreakoutSignal(index, SD_DOWN, signalLevelL, price, TimeCurrentEx("CheckBarBreakoutSignal(3)"));
                signalLevelL                       = NULL;
                signal.data [index][I_SBB_LEVEL_L] = NULL;
                signal.descr[index]                = BarBreakoutSignalToStr(index);
@@ -1379,7 +1379,7 @@ bool CheckBarBreakoutSignal(int index) {
    }
 
    signal.data[index][I_SBB_LAST_CHANGED_BARS] = changedBars;
-   return(!catch("CheckBarBreakoutSignal(2)"));
+   return(!catch("CheckBarBreakoutSignal(4)"));
 }
 
 
@@ -1401,8 +1401,8 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    int signal.timeframe = signal.config[index][I_SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][I_SIGNAL_CONFIG_BAR      ];
 
-   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocalFix(), TIME_MINUTES|TIME_SECONDS) +")";
-   if (__LOG) log("onBarBreakoutSignal(2)  "+ message);
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SD_UP, "high", "low") + NL +" ("+ TimeToStr(TimeLocalEx("onBarBreakoutSignal(2)"), TIME_MINUTES|TIME_SECONDS) +")";
+   if (__LOG) log("onBarBreakoutSignal(3)  "+ message);
 
 
    // (1) Sound abspielen
@@ -1429,7 +1429,7 @@ bool onBarBreakoutSignal(int index, int direction, double level, double price, d
    if (alert.icq) {
    }
 
-   return(!catch("onBarBreakoutSignal(3)"));
+   return(!catch("onBarBreakoutSignal(4)"));
 }
 
 

@@ -166,8 +166,6 @@
 
 
    // Date/Time
-   datetime GetFxtTime();                       // immer aktuelle FXT-Zeit
-
    datetime FxtToGmtTime   (datetime fxtTime);
    datetime FxtToServerTime(datetime fxtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
 

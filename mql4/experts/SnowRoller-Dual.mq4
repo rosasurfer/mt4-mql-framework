@@ -264,7 +264,7 @@ bool IsWeekendResumeSignal(int hSeq) {
    if (!sequence.weResumeTime[hSeq])
       UpdateWeekendResumeTime(hSeq);
 
-   int now=TimeCurrentFix(), dayNow=now/DAYS, dayResume=sequence.weResumeTime[hSeq]/DAYS;
+   int now=TimeCurrentEx("IsWeekendResumeSignal(1)"), dayNow=now/DAYS, dayResume=sequence.weResumeTime[hSeq]/DAYS;
 
 
    // (1) Resume-Bedingung wird erst ab Resume-Session oder deren Premarket getestet (ist u.U. der vorherige Wochentag)
@@ -279,14 +279,14 @@ bool IsWeekendResumeSignal(int hSeq) {
    if (sequence.direction[hSeq] == D_LONG) result = (Ask <= stopPrice);
    else                                    result = (Bid >= stopPrice);
    if (result) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(1)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  weekend stop price \"", NumberToStr(stopPrice, PriceFormat), "\" met"));
       return(true);
    }
 
 
    // (3) Bedingung ist spätestens zur konfigurierten Resume-Zeit erfüllt
    if (sequence.weResumeTime[hSeq] <= now) {
-      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(2)  resume condition '", DateToStr(sequence.weResumeTime[hSeq], "w, Y.M.D H:I:S"), "' met"));
+      if (__LOG) log(StringConcatenate("IsWeekendResumeSignal(3)  resume condition '", DateToStr(sequence.weResumeTime[hSeq], "w, Y.M.D H:I:S"), "' met"));
       return(true);
    }
    return(false);
@@ -360,11 +360,11 @@ bool IsWeekendStopSignal() {
    if (IsLastError())      return(false);
    if (!weekend.stop.time) return(false);
 
-   datetime now = TimeCurrentFix();
+   datetime now = TimeCurrentEx("IsWeekendStopSignal(1)");
 
    if (weekend.stop.time <= now) {
       if (weekend.stop.time/DAYS == now/DAYS) {                               // stellt sicher, daß Signal nicht von altem Datum getriggert wird: MQL hat kein day(datetime)
-         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(1)  stop condition '", DateToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
+         if (__LOG) log(StringConcatenate("IsWeekendStopSignal(2)  stop condition '", DateToStr(weekend.stop.time, "w, Y.M.D H:I:S"), "' met"));
          return(true);
       }
    }
@@ -392,7 +392,7 @@ bool StartSequence(int hSeq) {
 
    // (1) Startvariablen setzen
    sequence.startEquity[hSeq] = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
-   datetime startTime   = TimeCurrentFix();
+   datetime startTime   = TimeCurrentEx("StartSequence(2)");
    double   startPrice  = ifDouble(hSeq==D_SHORT, Bid, Ask);
    double   startProfit = 0;
    AddStartEvent(hSeq, startTime, startPrice, startProfit);
@@ -414,8 +414,8 @@ bool StartSequence(int hSeq) {
 
    RedrawStartStop(hSeq);
 
-   if (__LOG) log("StartSequence(2)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], ""));
-   return(!last_error|catch("StartSequence(3)"));
+   if (__LOG) log("StartSequence(3)  sequence started at "+ NumberToStr(startPrice, PriceFormat) + ifString(sequence.level[hSeq], " and level "+ sequence.level[hSeq], ""));
+   return(!last_error|catch("StartSequence(4)"));
 }
 
 
@@ -485,7 +485,7 @@ void RedrawStartStop(int hSeq) {
  * Aktualisiert die Stopbedingung für die nächste Wochenend-Pause.
  */
 void UpdateWeekendStop() {
-   datetime friday, now=ServerToFxtTime(TimeCurrentFix());
+   datetime friday, now=ServerToFxtTime(TimeCurrentEx("UpdateWeekendStop(1)"));
 
    switch (TimeDayOfWeekFix(now)) {
       case SUNDAY   : friday = now + 5*DAYS; break;
@@ -954,7 +954,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    // (3.1) keine offenen Positionen
    else if (sequence.status[hSeq] != STATUS_STOPPED) {
       sequence.stop.event[n] = CreateEventId();
-      sequence.stop.time [n] = TimeCurrentFix();
+      sequence.stop.time [n] = TimeCurrentEx("StopSequence(5)");
       sequence.stop.price[n] = ifDouble(sequence.direction[hSeq]==D_LONG, Bid, Ask);
    }
 
@@ -966,7 +966,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
 
    if (sequence.status[hSeq] != STATUS_STOPPED) {
       sequence.status[hSeq] = STATUS_STOPPED;
-      if (__LOG) log(StringConcatenate("StopSequence(5)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level[hSeq]));
+      if (__LOG) log(StringConcatenate("StopSequence(6)  sequence stopped at ", NumberToStr(sequence.stop.price[n], PriceFormat), ", level ", sequence.level[hSeq]));
    }
 
 
@@ -990,7 +990,7 @@ bool StopSequence(int hSeq, bool takeProfitStop, bool weekendStop) {
    if (takeProfitStop)
       ResetSequence(hSeq);
 
-   return(!last_error|catch("StopSequence(6)"));
+   return(!last_error|catch("StopSequence(7)"));
 }
 
 
@@ -1070,7 +1070,7 @@ bool ResumeSequence(int hSeq) {
 
    // (2) Gridbasis neu setzen, wenn in (1) keine offenen Positionen gefunden wurden.
    if (EQ(foundGridbase, 0)) {
-      startTime  = TimeCurrentFix();
+      startTime  = TimeCurrentEx("ResumeSequence(4)");
       startPrice = ifDouble(sequence.direction[hSeq]==D_SHORT, Bid, Ask);
       stopPrice  = sequence.stop.price[sequence.ss.events[hSeq][I_TO]];
       GridBase.Change(hSeq, startTime, gridbase[hSeq] + startPrice - stopPrice);
@@ -1117,8 +1117,8 @@ bool ResumeSequence(int hSeq) {
    // (8) Anzeige aktualisieren
    RedrawStartStop(hSeq);
 
-   if (__LOG) log(StringConcatenate("ResumeSequence(4)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level[hSeq]));
-   return(!last_error|catch("ResumeSequence(5)"));
+   if (__LOG) log(StringConcatenate("ResumeSequence(5)  sequence resumed at ", NumberToStr(startPrice, PriceFormat), ", level ", sequence.level[hSeq]));
+   return(!last_error|catch("ResumeSequence(6)"));
 }
 
 
@@ -1225,7 +1225,7 @@ bool Grid.AddPosition(int hSeq, int type, int level) {
       if (ticket == -1) {
          ticket   = -2;                                              // Pseudo-Ticket "öffnen" (wird beim nächsten UpdateStatus() mit P/L=0.00 "geschlossen")
          clientSL = true;
-         oe.setOpenTime(oe, TimeCurrentFix());
+         oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(4.1)"));
          if (__LOG) log(StringConcatenate("Grid.AddPosition(5)  pseudo ticket #", ticket, " opened for spread violation (", NumberToStr(oe.Bid(oe), PriceFormat), "/", NumberToStr(oe.Ask(oe), PriceFormat), ") by ", OperationTypeDescription(type), " at ", NumberToStr(oe.OpenPrice(oe), PriceFormat), ", sl=", NumberToStr(stopLoss, PriceFormat), " (level ", level, ")"));
       }
 
@@ -1416,7 +1416,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             // (1.2) Pseudo-SL-Tickets prüfen (werden sofort hier "geschlossen")
             if (orders.ticket[i] == -2) {
                orders.closeEvent[i] = CreateEventId();                              // Event-ID kann sofort vergeben werden.
-               orders.closeTime [i] = TimeCurrentFix();
+               orders.closeTime [i] = TimeCurrentEx("UpdateStatus(1)");
                orders.closePrice[i] = orders.openPrice[i];
                orders.closedBySL[i] = true;
                ChartMarker.PositionClosed(i);
@@ -1430,7 +1430,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             }
 
             // (1.3) reguläre server-seitige Tickets
-            if (!SelectTicket(orders.ticket[i], "UpdateStatus(1)"))
+            if (!SelectTicket(orders.ticket[i], "UpdateStatus(2)"))
                return(false);
 
             if (wasPending) {
@@ -1518,7 +1518,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
       for (i=0; i < sizeOfClosed; i++) {
          int n = SearchIntArray(orders.ticket, closed[i][1]);
          if (n == -1)
-            return(!catch("UpdateStatus(2)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR));
+            return(!catch("UpdateStatus(3)  closed ticket #"+ closed[i][1] +" not found in order arrays", ERR_RUNTIME_ERROR));
          orders.closeEvent[n] = CreateEventId();
       }
       ArrayResize(closed, 0);
@@ -1545,7 +1545,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
             return(false);
 
          sequence.status[hSeq] = STATUS_STOPPED;
-         if (__LOG) log("UpdateStatus(3)  STATUS_STOPPED");
+         if (__LOG) log("UpdateStatus(4)  STATUS_STOPPED");
          RedrawStartStop(hSeq);
       }
    }
@@ -1560,7 +1560,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
          else                                    gridbase[hSeq] = MathMax(gridbase[hSeq], NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase[hSeq], tmp.gridbase)) {
-            GridBase.Change(hSeq, TimeCurrentFix(), gridbase[hSeq]);
+            GridBase.Change(hSeq, TimeCurrentEx("UpdateStatus(5)"), gridbase[hSeq]);
             lpChange = true;
          }
       }
@@ -1571,7 +1571,7 @@ bool UpdateStatus(int hSeq, bool &lpChange, int stops[]) {
    if (updateStatusLocation)
       UpdateStatusLocation(hSeq);
 
-   return(!last_error|catch("UpdateStatus(4)"));
+   return(!last_error|catch("UpdateStatus(6)"));
 }
 
 
@@ -2096,11 +2096,11 @@ bool Grid.TrailPendingOrder(int hSeq, int i) {
    }
 
    orders.gridBase    [i] = gridbase[hSeq];
-   orders.pendingTime [i] = TimeCurrentFix();
+   orders.pendingTime [i] = TimeCurrentEx("Grid.TrailPendingOrder(6)");
    orders.pendingPrice[i] = stopPrice;
    orders.stopLoss    [i] = stopLoss;
 
-   return(!last_error|catch("Grid.TrailPendingOrder(6)"));
+   return(!last_error|catch("Grid.TrailPendingOrder(7)"));
 }
 
 
@@ -2185,7 +2185,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
    //double gridbase     = ...                                          // unverändert
 
    int      pendingType  = type;
-   datetime pendingTime  = oe.OpenTime(oe);  if (ticket < 0) pendingTime = TimeCurrentFix();
+   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddOrder(6)");
    //double pendingPrice = ...                                          // unverändert
 
    /*int*/  type         = OP_UNDEFINED;
@@ -2207,7 +2207,7 @@ bool Grid.AddOrder(int hSeq, int type, int level) {
 
    if (!Grid.PushData(hSeq, ticket, level, gridbase[hSeq], pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, clientSL, closedBySL, swap, commission, profit))
       return(false);
-   return(!last_error|catch("Grid.AddOrder(6)"));
+   return(!last_error|catch("Grid.AddOrder(7)"));
 }
 
 

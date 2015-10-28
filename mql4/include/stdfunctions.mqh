@@ -71,7 +71,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
 
    if (error != NO_ERROR) {
       if (recursive)                                                          // rekursive Fehler abfangen
-         return(debug("catch()  recursive error: "+ location, error));
+         return(debug("catch(1)  recursive error: "+ location, error));
       recursive = true;
 
       // (1) Fehler immer auch an Debug-Ausgabe schicken
@@ -114,7 +114,7 @@ int catch(string location, int error=NO_ERROR, bool orderPop=false) {
          pos = StringFind(message, ") ");
          if (pos == -1) message = StringConcatenate("ERROR in ", message);    // Message am ersten Leerzeichen nach der ersten schlieﬂenden Klammer umbrechen
          else           message = StringConcatenate("ERROR in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
-                        message = StringConcatenate(TimeToStr(TimeCurrentFix(), TIME_FULL), NL, message);
+                        message = StringConcatenate(TimeToStr(TimeCurrentEx("catch(2)"), TIME_FULL), NL, message);
 
          PlaySoundEx("alert.wav");
          ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
@@ -188,7 +188,7 @@ int warn(string message, int error=NO_ERROR) {
       pos = StringFind(message, ") ");
       if (pos == -1) message = StringConcatenate("WARN in ", message);                       // Message am ersten Leerzeichen nach der ersten schlieﬂenden Klammer umbrechen
       else           message = StringConcatenate("WARN in ", StringLeft(message, pos+1), NL, StringTrimLeft(StringRight(message, -pos-2)));
-                     message = StringConcatenate(TimeToStr(TimeCurrentFix(), TIME_FULL), NL, message);
+                     message = StringConcatenate(TimeToStr(TimeCurrentEx("warn(1)"), TIME_FULL), NL, message);
 
       PlaySoundEx("alert.wav");
       ForceMessageBox(caption, message, MB_ICONERROR|MB_OK);
@@ -235,7 +235,7 @@ int warnSMS(string message, int error=NO_ERROR) {
          message = StringConcatenate("WARN:   ", Symbol(), ",", PeriodDescription(NULL), "  ", name_wId, "::", message);
 
          // SMS verschicken
-         SendSMS(__SMS.receiver, TimeToStr(TimeLocalFix(), TIME_MINUTES) +" "+ message);
+         SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("warnSMS(1)"), TIME_MINUTES) +" "+ message);
       }
    }
    return(_error);
@@ -305,24 +305,24 @@ bool __log.custom(string message) {
    if (logId == NULL)
       return(false);
 
-   message = StringConcatenate(TimeToStr(TimeLocalFix(), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", StringReplace(message, NL, " "));
+   message = StringConcatenate(TimeToStr(TimeLocalEx("__log.custom(1)"), TIME_FULL), "  ", StdSymbol(), ",", StringPadRight(PeriodDescription(NULL), 3, " "), "  ", StringReplace(message, NL, " "));
 
    string fileName = StringConcatenate(logId, ".log");
 
    int hFile = FileOpen(fileName, FILE_READ|FILE_WRITE);
    if (hFile < 0) {
-      __LOG_CUSTOM = false; catch("__log.custom(1)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__log.custom(2)->FileOpen(\""+ fileName +"\")"); __LOG_CUSTOM = old.LOG_CUSTOM;
       return(false);
    }
 
    if (!FileSeek(hFile, 0, SEEK_END)) {
-      __LOG_CUSTOM = false; catch("__log.custom(2)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__log.custom(3)->FileSeek()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
 
    if (FileWrite(hFile, message) < 0) {
-      __LOG_CUSTOM = false; catch("__log.custom(3)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
+      __LOG_CUSTOM = false; catch("__log.custom(4)->FileWrite()"); __LOG_CUSTOM = old.LOG_CUSTOM;
       FileClose(hFile);
       return(_false(GetLastError()));
    }
@@ -3591,7 +3591,29 @@ bool EventListener.NewTick(int results[], int flags=NULL) {
 
 
 /**
- * Gibt die lokale Zeit in GMT zur¸ck. Im Tester wird die GMT-Zeit der vom Tester modellierten lokalen Zeit (= Server-Zeit) zur¸ckgegeben.
+ * Gibt die aktuelle Server-Zeit des Terminals zur¸ck (im Tester entsprechend der im Tester modellierten Zeit). Diese Zeit muﬂ nicht mit der Zeit des
+ * letzten Ticks ¸bereinstimmen (z.B. am Wochenende oder wenn keine Ticks existieren).
+ *
+ * @return datetime - Server-Zeit oder NULL, falls ein Fehler auftrat
+ */
+datetime TimeServer() {
+   datetime serverTime;
+
+   if (This.IsTesting()) {
+      // im Tester entspricht die Serverzeit immer der Zeit des letzten Ticks
+      serverTime = TimeCurrentEx("TimeServer(1)"); if (!serverTime) return(NULL);
+   }
+   else {
+      // Auﬂerhalb des Testers darf TimeCurrent() nicht verwendet werden. Der R¸ckgabewert ist in Kurspausen bzw. am Wochenende oder wenn keine
+      // Ticks existieren (in Offline-Charts) falsch.
+      serverTime = GmtToServerTime(GetGmtTime()); if (serverTime == NaT) return(NULL);
+   }
+   return(serverTime);
+}
+
+
+/**
+ * Gibt die aktuelle GMT-Zeit des Terminals zur¸ck (im Tester entsprechend der im Tester modellierten Zeit).
  *
  * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -3600,8 +3622,8 @@ datetime TimeGMT() {
 
    if (This.IsTesting()) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime now.local = TimeLocalFix(); if (!now.local) return(NULL);
-      gmt = ServerToGmtTime(now.local);                              // TimeLocal() entspricht im Tester der Serverzeit
+      datetime localTime = TimeLocalEx("TimeGMT(1)"); if (!localTime) return(NULL);
+      gmt = ServerToGmtTime(localTime);                              // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
       gmt = GetGmtTime();
@@ -3611,7 +3633,15 @@ datetime TimeGMT() {
 
 
 /**
- * Gibt die lokale Zeit in FXT zur¸ck. Im Tester wird die FXT-Zeit der vom Tester modellierten lokalen Zeit (= Server-Zeit) zur¸ckgegeben.
+ * Gibt die aktuelle GMT-Zeit des Systems zur¸ck (auch im Tester).
+ *
+ * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
+ */
+//datetime GetGmtTime();                                             // @see Expander::GetGmtTime()
+
+
+/**
+ * Gibt die aktuelle FXT-Zeit des Terminals zur¸ck (im Tester entsprechend der im Tester modellierten Zeit).
  *
  * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
  */
@@ -3623,26 +3653,49 @@ datetime TimeFXT() {
 
 
 /**
- * Gibt die lokale Zeit des Terminals zur¸ck. Im Tester entspricht die lokale Zeit der Serverzeit.
+ * Gibt die aktuelle FXT-Zeit des Systems zur¸ck (auch im Tester).
  *
- * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
+ * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
  */
-datetime TimeLocalFix() {
-   datetime now.local = TimeLocal();
-      if (!now.local) return(!catch("TimeLocalFix(1)->TimeLocal() => 0", ERR_RUNTIME_ERROR));
-   return(now.local);
+datetime GetFxtTime() {
+   datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
+   return(fxt);
 }
 
 
 /**
- * Gibt die letzte bekannte Serverzeit zur¸ck. Im Tester wird die Serverzeit modelliert.
+ * Gibt die aktuelle lokale Zeit des Terminals zur¸ck. Im Tester entspricht diese Zeit dem Zeitpunkt des letzten Ticks.
+ * Dies bedeutet, daﬂ das Terminal w‰hrend des Testens die lokale Zeitzone auf die Serverzeitzone setzt.
+ *
+ * @param  string location - Bezeichner f¸r eine evt. Fehlermeldung
  *
  * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
+ *
+ *
+ * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn TimeLocal() einen falschen Wert (NULL) zur¸ckgibt.
  */
-datetime TimeCurrentFix() {
-   datetime now.server = TimeCurrent();
-      if (!now.server) return(!catch("TimeCurrentFix(1)->TimeCurrent() => 0", ERR_RUNTIME_ERROR));
-   return(now.server);
+datetime TimeLocalEx(string location="") {
+   datetime time = TimeLocal();
+   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
+   return(time);
+}
+
+
+/**
+ * Gibt *NICHT* die Serverzeit, sondern den Zeitpunkt des letzten Ticks der selektierten Symbole zur¸ck. Im Tester wird diese Zeit modelliert.
+ *
+ * @param  string location - Bezeichner f¸r eine evt. Fehlermeldung
+ *
+ * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
+ *
+ *
+ * NOTE: Diese Funktion meldet im Unterschied zur Originalfunktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht bekannt ist.
+ */
+datetime TimeCurrentEx(string location="") {
+   datetime time = TimeCurrent();
+   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR));
+   return(time);
 }
 
 
@@ -3770,6 +3823,7 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);
+   GetFxtTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
@@ -3844,14 +3898,15 @@ void __DummyCalls() {
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
-   TimeCurrentFix();
+   TimeCurrentEx();
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
    TimeframeDescription(NULL);
    TimeframeToStr(NULL);
    TimeFXT();
    TimeGMT();
-   TimeLocalFix();
+   TimeLocalEx();
+   TimeServer();
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
    UninitializeReasonToStr(NULL);
@@ -3909,6 +3964,7 @@ void __DummyCalls() {
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);
+   datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     IsDirectory(string filename);
    bool     IsFile(string filename);
