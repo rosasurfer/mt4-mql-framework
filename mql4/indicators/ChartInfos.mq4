@@ -16,7 +16,7 @@
  *
  * TODO: MetaTrader berechnet den Equity-Wert nicht korrekt (Spread und Commission gehedgter Positionen werden doppelt berechnet). Geht der Spread
  *       z.B. nachts in die Höhe, kann sich der Fehler je nach Anzahl der gehedgten Positionen dramatisch auf die P/L-Anzeige auswirken. Zusätzlich
- *       verringert es die verfügbare Margin und kann sogar bis zum Margin Call führen.
+ *       verringert es die verfügbare Margin und hat dadurch schon zum Margin Call geführt.
  */
 #property indicator_chart_window
 
@@ -26,7 +26,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool CustomPositions.LogTickets = false;                   // ob die Tickets der CustomPositions geloggt werden sollen
+extern bool Positions.LogTickets = false;                         // ob die Tickets der CustomPositions geloggt werden sollen
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2151,7 +2151,7 @@ bool AnalyzePositions() {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                               // termType=NULL => "Zeilenende"
-         if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
+         if (Positions.LogTickets) /*&&*/ if (!logTickets.done)
             AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
 
          // (2.3) individuell konfigurierte Position speichern
@@ -2184,7 +2184,7 @@ bool AnalyzePositions() {
    }
 
    // (2.4) verbleibende Position(en) speichern
-   if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
+   if (Positions.LogTickets) /*&&*/ if (!logTickets.done)
       AnalyzePositions.LogTickets(false, tickets, -1);
 
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
@@ -2197,14 +2197,14 @@ bool AnalyzePositions() {
 
 
 /**
- * Loggt die Tickets einer jeden CustomPosition.
+ * Loggt die Tickets jeder Zeile der Positionsanzeige.
  *
  * @return bool - Erfolgsstatus
  */
 bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
    isVirtual = isVirtual!=0;
 
-   if (CustomPositions.LogTickets) /*&&*/ if (!isVirtual) {
+   if (Positions.LogTickets) /*&&*/ if (!isVirtual) {
       if (ArraySize(tickets) > 0) {
          if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
          else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
