@@ -96,7 +96,6 @@ double mm.customLots;                                             // resultieren
 bool   mm.done;                                                   // Flag
 
 double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
-string aum.currency = "";
 
 
 // Status
@@ -1102,7 +1101,11 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      if (!RefreshExternalAssets())
+      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
+      else             {        companyId = external.provider;            accountId = external.signal;    }
+
+      aum.value = RefreshExternalAssets(companyId, accountId);
+      if (IsEmptyValue(aum.value))
          return(false);
       string strAum = " ";
 
@@ -1110,7 +1113,7 @@ bool ToggleAuM() {
          strAum = ifString(!aum.value, "Balance:  ", "Assets:  ") + DoubleToStr(AccountBalance() + aum.value, 2) +" "+ AccountCurrency();
       }
       else if (mode.extern) {
-         strAum = "Assets:  " + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ aum.currency);
+         strAum = "Assets:  " + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ AccountCurrency());
       }
       else /*mode.remote*/{
          status = false;                                             // not implemented
@@ -1134,57 +1137,6 @@ bool ToggleAuM() {
    if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleAuM(2)"));
-}
-
-
-/**
- * Gibt den Wert der extern verwalteten Assets zurück.
- *
- * @return double - Wert oder NULL, falls keine AuM konfiguriert sind
- */
-double GetExternalAssets() {
-   static bool refreshed;
-   if (!refreshed) {
-      if (!RefreshExternalAssets())
-         return(NULL);
-      refreshed = true;
-   }
-   return(aum.value);
-}
-
-
-/**
- * Liest die Konfiguration der extern verwalteten Assets ernuet ein.
- *
- * @return bool - Erfolgsstatus
- */
-bool RefreshExternalAssets() {
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\";
-      if (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
-      else             file = file + external.provider     +"\\"+ external.signal    +"_config.ini";
-   string section  = "General";
-   string key      = "AuM.Value";
-
-   double value = GetIniDouble(file, section, key, 0);
-   if (!value) {
-      aum.value    = 0;
-      aum.currency = "";
-      return(!catch("RefreshExternalAssets(1)"));
-   }
-   if (value < 0) return(!catch("RefreshExternalAssets(2)  invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
-
-
-   key = "AuM.Currency";
-   string currency = GetIniString(file, section, key, "");
-   if (!StringLen(currency)) {
-      if (!IsIniKey(file, section, key)) return(!catch("RefreshExternalAssets(3)  missing ini entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-                                         return(!catch("RefreshExternalAssets(4)  invalid ini entry ["+ section +"]->"+ key +"=\"\" (empty value) in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   }
-   aum.value    = value;
-   aum.currency = StringToUpper(currency);
-
-   return(!catch("RefreshExternalAssets(5)"));
 }
 
 
@@ -1271,7 +1223,9 @@ bool TrackSignal(string signalId) {
       ArrayResize(positions.config,          0);
       ArrayResize(positions.config.comments, 0);
       if (!UpdateExternalAccount()) return(false);
-      if (!RefreshExternalAssets()) return(false);
+         if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
+         else             {        companyId = external.provider;            accountId = external.signal;    }
+      if (IsEmptyValue(RefreshExternalAssets(companyId, accountId))) return(false);
    }
    return(!catch("TrackSignal(4)"));
 }
@@ -2248,8 +2202,10 @@ bool UpdateMoneyManagement() {
          if (error == ERR_SYMBOL_NOT_AVAILABLE) return(false);
          return(!catch("UpdateMoneyManagement(2)", error));
       }
+      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
+      else             {        companyId = external.provider;            accountId = external.signal;    }
 
-   double externalAssets = GetExternalAssets();
+   double externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
    if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
       mm.tradableEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
       if (mm.tradableEquity < 0)                                              // kann bei negativer AccountBalance negativ sein
@@ -3449,7 +3405,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
    else if (type == TERM_OPEN_ALL) {
       // offene Positionen aller Symbole eines Zeitraumes
-      debug("ExtractPosition(0.1)  type=TERM_OPEN_ALL not implemented");
+      warn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
    }
 
    else if (type==TERM_HISTORY_SYMBOL || type==TERM_HISTORY_ALL) {
@@ -3517,7 +3473,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          string   hst.comments   []; ArrayResize(hst.comments   , 0);
 
          for (i=0; i < orders; i++) {
-            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(1)"))
+            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(2)"))
                return(false);
             ArrayPushInt   (hst.tickets    , OrderTicket()    );
             ArrayPushInt   (hst.types      , OrderType()      );
@@ -3538,7 +3494,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
 
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
                if (!StringStartsWithI(hst.comments[i], "close hedge by #"))
-                  return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+                  return(!catch("ExtractPosition(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
                // Gegenstück suchen
                hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
@@ -3546,8 +3502,8 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
                   if (hst.tickets[n] == hst.ticket)
                      break;
                }
-               if (n == orders) return(!catch("ExtractPosition(3)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
-               if (i == n     ) return(!catch("ExtractPosition(4)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               if (n == orders) return(!catch("ExtractPosition(4)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               if (i == n     ) return(!catch("ExtractPosition(5)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
                int first  = Min(i, n);
                int second = Max(i, n);
@@ -3577,7 +3533,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          lastProfit = NormalizeDouble(lastProfit, 2);
          cache1     = lastProfit;
          cache2     = _orders;
-         //debug("ExtractPosition(0.1)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
+         //debug("ExtractPosition(6)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
       }
       // Betrag zu closedProfit hinzufügen (Ausgangsdaten bleiben unverändert)
       closedProfit += lastProfit;
@@ -3625,7 +3581,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          // partielles Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == type) {
-               if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(5)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
+               if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(7)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotsize, lots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(type, EMPTY, value2, cache1, cache2,
@@ -3658,7 +3614,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          }
       }
    }
-   return(!catch("ExtractPosition(6)"));
+   return(!catch("ExtractPosition(8)"));
 }
 
 
@@ -3696,8 +3652,15 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (!closedProfit)       // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets
       return(true);                                                                                         // in tickets[] bereits auf NULL gesetzt worden sein können.
 
+   static double externalAssets = EMPTY_VALUE;
+   if (IsEmptyValue(externalAssets)) {
+      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
+      else             {        companyId = external.provider;            accountId = external.signal;    }
+      externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
+   }
+
    if (customEquity != NULL) equity  = customEquity;                 // TODO: tatsächlichen Wert von openEquity ermitteln
-   else                    { equity  = GetExternalAssets();
+   else                    { equity  = externalAssets;
       if (mode.intern)       equity += (AccountEquity()-AccountCredit());
    }
 
@@ -3782,10 +3745,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.ddata[size][I_HEDGED_LOTS     ] = hedgedLots;
          positions.ddata[size][I_PIP_DISTANCE    ] = pipDistance;
 
-         positions.ddata[size][I_OPEN_EQUITY     ] = equity;            openProfit = hedgedProfit;
+         positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit;
          positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
          positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-         positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit;    fullProfit = openProfit + closedProfit + adjustedProfit;
+         positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
          positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
          positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
          return(!catch("StorePosition(3)"));
@@ -3843,10 +3806,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.ddata[size][I_HEDGED_LOTS     ] = hedgedLots;
       positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
 
-      positions.ddata[size][I_OPEN_EQUITY     ] = equity;            openProfit = hedgedProfit + commission + swap + floatingProfit;
+      positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit + commission + swap + floatingProfit;
       positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
       positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit;    fullProfit = openProfit + closedProfit + adjustedProfit;
+      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
       positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
 
@@ -3906,10 +3869,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.ddata[size][I_HEDGED_LOTS     ] = hedgedLots;
       positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
 
-      positions.ddata[size][I_OPEN_EQUITY     ] = equity;            openProfit = hedgedProfit + commission + swap + floatingProfit;
+      positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = hedgedProfit + commission + swap + floatingProfit;
       positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
       positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit;    fullProfit = openProfit + closedProfit + adjustedProfit;
+      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
       positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
 
@@ -3936,10 +3899,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.ddata[size][I_HEDGED_LOTS     ] = NULL;
       positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
 
-      positions.ddata[size][I_OPEN_EQUITY     ] = equity;            openProfit = 0;
+      positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = 0;
       positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
       positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit;    fullProfit = openProfit + closedProfit + adjustedProfit;
+      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
       positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
       return(!catch("StorePosition(8)"));
