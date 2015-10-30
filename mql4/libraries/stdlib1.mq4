@@ -820,6 +820,10 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
       if (serverTime < D'2012.04.01 00:00:00') serverTimezone = "Europe/Berlin";
       else                                     serverTimezone = "Europe/Kiev";
    }
+   else if (serverTimezone == "GlobalPrime") {
+      if (serverTime < D'2015.10.25 00:00:00') serverTimezone = "FXT";
+      else                                     serverTimezone = "Europe/Kiev";
+   }
 
    int offset, year=TimeYearFix(serverTime)-1970;
 
@@ -5810,6 +5814,10 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       if (gmtTime < D'2012.04.01 00:00:00') serverTimezone = "Europe/Berlin";
       else                                  serverTimezone = "Europe/Kiev";
    }
+   else if (serverTimezone == "GlobalPrime") {
+      if (gmtTime < D'2015.10.25 00:00:00') serverTimezone = "FXT";
+      else                                  serverTimezone = "Europe/Kiev";
+   }
 
    int offset, year=TimeYearFix(gmtTime)-1970;
 
@@ -6746,7 +6754,7 @@ string FileAccessModeToStr(int mode) {
 
 
 /**
- * Gibt die Zeitzone des aktuellen MT-Servers zurück (nach Olson Timezone Database).
+ * Gibt die Zeitzone des aktuellen MetaTrader-Servers zurück (nach Olson Timezone Database).
  *
  * @return string - Zeitzonen-Identifier oder Leerstring, falls ein Fehler auftrat
  *
@@ -6776,7 +6784,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    if (!StringLen(directory))
       return("");
    else if (StringStartsWith(directory, "alpari-"            )) timezone = "Alpari";               // Alpari: bis 31.03.2012 "Europe/Berlin" (History wurde nicht aktualisiert)
-   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //         ab  01.04.2012 "Europe/Kiev"
+   else if (StringStartsWith(directory, "alparibroker-"      )) timezone = "Alpari";               //                 danach "Europe/Kiev"
    else if (StringStartsWith(directory, "alpariuk-"          )) timezone = "Alpari";
    else if (StringStartsWith(directory, "alparius-"          )) timezone = "Alpari";
    else if (StringStartsWith(directory, "apbgtrading-"       )) timezone = "Europe/Berlin";
@@ -6800,7 +6808,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "gci-"               )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "gcmfx-"             )) timezone = "GMT";
    else if (StringStartsWith(directory, "gftforex-"          )) timezone = "GMT";
-   else if (StringStartsWith(directory, "globalprime-"       )) timezone = "FXT";
+   else if (StringStartsWith(directory, "globalprime-"       )) timezone = "GlobalPrime";          // GlobalPrime: bis 24.10.2015 "FXT", dann "Europe/Kiev" (hoffentlich einmaliger Bug)
    else if (StringStartsWith(directory, "icmarkets-"         )) timezone = "FXT";
    else if (StringStartsWith(directory, "inovatrade-"        )) timezone = "Europe/Berlin";
    else if (StringStartsWith(directory, "integral-"          )) timezone = "GMT";                  // Global Prime demo
