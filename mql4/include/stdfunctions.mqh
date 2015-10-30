@@ -4062,6 +4062,8 @@ void __DummyCalls() {
    void     DummyCalls();                                                     // Library-Stub: *kann* lokal überschrieben werden
    bool     GetConfigBool(string section, string key, bool defaultValue);
    int      GetCustomLogID();
+   double   GetIniDouble(string fileName, string section, string key, double defaultValue);
+   string   GetIniString(string fileName, string section, string key, string defaultValue);
    bool     GetLocalConfigBool(string section, string key, bool defaultValue);
    int      GetTerminalBuild();
    int      GetTesterWindow();
