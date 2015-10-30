@@ -1313,7 +1313,7 @@ bool WaitForTicket(int ticket, bool orderKeep=true) {
 
 
 /**
- * Gibt den PipValue des aktuellen Instrument für die angegebene Lotsize zurück.
+ * Gibt den PipValue des aktuellen Symbols für die angegebene Lotsize zurück.
  *
  * @param  double lots           - Lotsize (default: 1 lot)
  * @param  bool   suppressErrors - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
@@ -1326,7 +1326,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    if (!TickSize) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                   // schlägt fehl, wenn kein Tick vorhanden ist
       int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-      if (IsError(error)) {                                             // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+      if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
          if (!suppressErrors) catch("PipValue(1)", error);
          return(0);
       }
@@ -1348,6 +1348,56 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
    if (!suppressErrors) catch("PipValue(4)", error);
    return(0);
+}
+
+
+/**
+ * Gibt den PipValue eines Symbol für die angegebene Lotsize zurück. Das Symbol muß nicht das aktuelle Symbol sein.
+ *
+ * @param  string symbol         - Symbol
+ * @param  double lots           - Lotsize (default: 1 lot)
+ * @param  bool   suppressErrors - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
+ *
+ * @return double - PipValue oder 0, falls ein Fehler auftrat
+ */
+double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
+   suppressErrors = suppressErrors!=0;
+   if (symbol == Symbol())
+      return(PipValue(lots, suppressErrors));
+
+   double tickSize = MarketInfo(symbol, MODE_TICKSIZE);              // schlägt fehl, wenn kein Tick vorhanden ist
+   int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+   if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+      if (!suppressErrors) catch("PipValueEx(1)", error);
+      return(0);
+   }
+   if (!tickSize) {
+      if (!suppressErrors) catch("PipValueEx(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
+      return(0);
+   }
+
+   double tickValue = MarketInfo(symbol, MODE_TICKVALUE);            // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      if (!suppressErrors) catch("PipValueEx(3)", error);
+      return(0);
+   }
+   if (!tickValue) {
+      if (!suppressErrors) catch("PipValueEx(4)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
+      return(0);
+   }
+
+   int digits = MarketInfo(symbol, MODE_DIGITS);                     // TODO: !!! digits ist u.U. falsch gesetzt !!!
+   error = GetLastError();
+   if (error != NO_ERROR) {
+      if (!suppressErrors) catch("PipValueEx(5)", error);
+      return(0);
+   }
+
+   int    pipDigits = digits & (~1);
+   double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
+
+   return(pipSize/tickSize * tickValue * lots);
 }
 
 
@@ -3762,6 +3812,56 @@ string UninitializeReasonToStr(int reason) {
 
 
 /**
+ * Gibt den Wert der extern verwalteten Assets eines Accounts zurück.
+ *
+ * @param  string companyId - AccountCompany-Identifier (für den aktuellen Account wie von ShortAccountCompany() zurückgegeben)
+ * @param  string accountId - Account-Identifier (für den aktuellen Account wie von GetAccountNumber() zurückgegeben)
+ *
+ * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+double GetExternalAssets(string companyId, string accountId) {
+   static string lastCompanyId;
+   static string lastAccountId;
+   static double lastAuM;
+
+   if (companyId!=lastCompanyId || accountId!=lastAccountId) {
+      double aum = RefreshExternalAssets(companyId, accountId);
+      if (IsEmptyValue(aum))
+         return(aum);
+
+      lastCompanyId = companyId;
+      lastAccountId = accountId;
+      lastAuM       = aum;
+   }
+   return(lastAuM);
+}
+
+
+/**
+ * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.
+ *
+ * @param  string companyId - AccountCompany-Identifier (für den aktuellen Account wie von ShortAccountCompany() zurückgegeben)
+ * @param  string accountId - Account-Identifier (für den aktuellen Account wie von GetAccountNumber() zurückgegeben)
+ *
+ * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
+ */
+double RefreshExternalAssets(string companyId, string accountId) {
+   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ companyId +"\\"+ accountId +"_config.ini";
+   string section = "General";
+   string key     = "AuM.Value";
+
+   double value = GetIniDouble(file, section, key, 0);
+   if (value < 0) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR)));
+
+   return(ifDouble(!catch("RefreshExternalAssets(2)"), value, EMPTY_VALUE));
+
+   //if (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
+   //else             file = file + external.provider     +"\\"+ external.signal    +"_config.ini";
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3823,6 +3923,7 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);
+   GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GT(NULL, NULL);
    HandleEvent(NULL);
@@ -3859,7 +3960,9 @@ void __DummyCalls() {
    OrderPush(NULL);
    PeriodToStr(NULL);
    PipValue();
+   PipValueEx(NULL);
    QuoteStr(NULL);
+   RefreshExternalAssets(NULL, NULL);
    ResetLastError();
    RootFunctionName(NULL);
    RootFunctionToStr(NULL);
