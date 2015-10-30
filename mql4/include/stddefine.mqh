@@ -26,7 +26,7 @@ string   __SMS.receiver;                                    // Empfänger-Nr. für
 
 bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
 bool     __STATUS_HISTORY_INSUFFICIENT;                     // History ist oder war nicht ausreichend
-bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu laden
+bool     __STATUS_RELAUNCH_INPUT;                           // Anforderung, Input-Dialog erneut zu öffnen
 bool     __STATUS_INVALID_INPUT;                            // ungültige Parametereingabe im Input-Dialog
 bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
 int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
@@ -56,6 +56,7 @@ string   __Timezones[] = {
    /*TIMEZONE_ID_EUROPE_MINSK    =>*/ TIMEZONE_EUROPE_MINSK,
    /*TIMEZONE_ID_FXT             =>*/ TIMEZONE_FXT,
    /*TIMEZONE_ID_FXT_MINUS_0200  =>*/ TIMEZONE_FXT_MINUS_0200,
+   /*TIMEZONE_ID_GLOBALPRIME     =>*/ TIMEZONE_GLOBALPRIME
    /*TIMEZONE_ID_GMT             =>*/ TIMEZONE_GMT
 };
 
