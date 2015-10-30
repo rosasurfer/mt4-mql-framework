@@ -653,7 +653,6 @@ void DummyCalls() {
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
    string   GetGlobalConfigString(string section, string key, string defaultValue);
-   string   GetIniString(string fileName, string section, string key, string defaultValue);
    int      GetLocalConfigInt(string section, string key, int defaultValue);
    string   GetLocalConfigString(string section, string key, string defaultValue);
    bool     IsIniKey(string fileName, string section, string key);

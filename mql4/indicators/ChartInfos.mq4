@@ -4682,7 +4682,6 @@ string InputsToStr() {
    double   GetCommission();
    string   GetConfigString(string section, string key, string defaultValue);
    double   GetGlobalConfigDouble(string section, string key, double defaultValue);
-   double   GetIniDouble(string fileName, string section, string key, double defaultValue);
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
