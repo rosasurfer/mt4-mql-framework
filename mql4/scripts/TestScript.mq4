@@ -14,10 +14,6 @@ int __DEINIT_FLAGS__[];
 //#include <iFunctions/iPreviousPeriodTimes.mqh>
 
 
-#import "Expander.Release.dll"
-   int   Test();
-#import
-
 
 /**
  * Main-Funktion
@@ -25,8 +21,29 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   double a;
+   int digits;
 
-   //Test();
+   a      = 1.49999991;
+   digits = 0;
+ //debug("onStart(1)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+   debug("onStart(1)  NormalizeDouble(a="+ a +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+ //debug("onStart()  MathRound      ("+ NumberToStr(a, ".+")            +")    = "+ DoubleToStrEx(MathRound(a), 16));
+
+   a      = 1.54999999;
+   digits = 1;
+ //debug("onStart(2)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+   debug("onStart(2)  NormalizeDouble(a="+ a +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+
+   a      = 0.15499999;
+   digits = 2;
+   debug("onStart(3)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+
+   a++;
+   digits = 2;
+   debug("onStart(4)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+
+
    return(last_error);
 
 

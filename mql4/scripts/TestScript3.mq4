@@ -1,11 +1,10 @@
 /**
- *
+ * TestScript2
  */
-#property indicator_chart_window
 #include <stddefine.mqh>
-int   __INIT_FLAGS__[];
+int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
 int __DEINIT_FLAGS__[];
-#include <core/indicator.mqh>
+#include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
 
@@ -21,8 +20,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-   SubclassWindow(hWnd);
    return(last_error);
 }
 
@@ -32,17 +29,19 @@ int onInit() {
  *
  * @return int - Fehlerstatus
  */
-int onTick() {
-   return(last_error);
+int onStart() {
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+
+   debug("onStart(1)  SubclassWindow()   => "+ SubclassWindow(hWnd));
+   debug("onStart(2)  UnsubclassWindow() => "+ UnsubclassWindow(hWnd));
+
+   return(NO_ERROR);
 }
 
 
 /**
- *
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-   UnsubclassWindow(hWnd);
    return(last_error);
 }
