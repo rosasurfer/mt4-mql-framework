@@ -40,6 +40,7 @@ string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des 
 int      Tick, zTick;                                       // Tick: überlebt Timeframewechsel, zTick: wird bei Timeframewechsel auf 0 (zero) zurückgesetzt
 datetime Tick.Time;
 datetime Tick.prevTime;
+bool     Tick.isVirtual;
 int      ValidBars;
 int      ChangedBars;
 

@@ -39,13 +39,14 @@ string symbols    [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYL
 string names      [] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "1/JPY" , "NZD"   , "USD"   , "EURX", "USDX" };
 int    digits     [] = {        5,        5,        5,        5,        5,        5,        3,        5,        5,      3,      3 };
 
-double mainIndex  [11];                                              // über die Haupt-Pairs berechneter Index einer Währung
-bool   isMainIndex[11];                                              // ob der über die Haupt-Pairs berechnete Index einer Währung verfügbar ist
+bool   isMainIndex   [11];                                           // ob der über die Haupt-Pairs berechnete Index einer Währung verfügbar ist
+double mainIndex     [11];                                           // aktueller Indexwert
+double mainIndex.last[11];                                           // vorheriger Indexwert für RecordLfxIndices()
 
-bool   recording  [11];                                              // default: FALSE
-int    hSet       [11];                                              // HistorySet-Handles der Indizes
+bool   recording     [11];                                           // default: FALSE
+int    hSet          [11];                                           // HistorySet-Handles der Indizes
 
-string labels     [11];                                              // Label für Visualisierung
+string labels        [11];                                           // Label für Visualisierung
 string label.animation;
 string label.animation.chars[] = {"|", "/", "—", "\\"};
 
@@ -727,20 +728,36 @@ bool RecordLfxIndices() {
 
    for (int i=0; i < size; i++) {
       if (recording[i]) /*&&*/ if (isMainIndex[i]) {
-         if (!hSet[i]) {
-            string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
-            int    format      = 400;
-            bool   synthetic   = true;
+         double tickValue     = mainIndex     [i];
+         double lastTickValue = mainIndex.last[i];
 
-            hSet[i] = HistorySet.Get(symbols[i], synthetic);
-            if (hSet[i] == -1)
-               hSet[i] = HistorySet.Create(symbols[i], description, digits[i], format, synthetic);
-            if (!hSet[i]) return(!SetLastError(history.GetLastError()));
+         // Virtuelle Ticks werden nur aufgezeichnet, wenn sich der Indexwert geändert hat.
+         bool skipTick = false;
+         if (Tick.isVirtual)
+            skipTick = (!lastTickValue || EQ(tickValue, lastTickValue, digits[i]));
+
+         if (skipTick) {
+            //debug("RecordLfxIndices(1)  skipping "+ names[i] +" tick "+ DoubleToStr(tickValue, digits[i]));
+         }
+         else {
+            //debug("RecordLfxIndices(2)  recording "+ names[i] +" tick "+ DoubleToStr(tickValue, digits[i]));
+
+            if (!hSet[i]) {
+               string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
+               int    format      = 400;
+               bool   synthetic   = true;
+
+               hSet[i] = HistorySet.Get(symbols[i], synthetic);
+               if (hSet[i] == -1)
+                  hSet[i] = HistorySet.Create(symbols[i], description, digits[i], format, synthetic);
+               if (!hSet[i]) return(!SetLastError(history.GetLastError()));
+            }
+
+            int flags;// = HST_COLLECT_TICKS;
+            if (!HistorySet.AddTick(hSet[i], Tick.Time, tickValue, flags)) return(!SetLastError(history.GetLastError()));
          }
 
-         int flags;
-         //flags = HST_COLLECT_TICKS;
-         if (!HistorySet.AddTick(hSet[i], Tick.Time, mainIndex[i], flags)) return(!SetLastError(history.GetLastError()));
+         mainIndex.last[i] = tickValue;
       }
    }
    return(true);

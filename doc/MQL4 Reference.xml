@@ -33,12 +33,13 @@
   .docenums th  { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   .docenums td  { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
-  .const        { font-weight:normal; color:#980000; }
-  .type         { font-weight:normal; color:#0000FF; }
-  .function     { font-weight:normal; color:#42639C; }  <!-- wie a -->
-  .number       { font-weight:normal; color:#7070FF; }
-  .string       { font-weight:normal; color:#008080; }
-  .char         { font-weight:normal; color:#008080; }  <!-- wie string -->
+  .const        { font-weight:normal; color:#980000;                    }
+  .globalvar    { font-weight:normal; color:#980000; font-style:italic; }
+  .type         { font-weight:normal; color:#0000FF;                    }
+  .function     { font-weight:normal; color:#42639C;                    }  <!-- wie a -->
+  .number       { font-weight:normal; color:#7070FF;                    }
+  .string       { font-weight:normal; color:#008080;                    }
+  .char         { font-weight:normal; color:#008080;                    }  <!-- wie string -->
   </styles>
 
 
@@ -3671,13 +3672,13 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopy()
       type=int
       <content>
-			Copies an array to another one. Both arrays must either be <span class="type">string</span> arrays or numeric arrays (arrays of type <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>, <span class="type">color</span> and <span class="type">double</span> are treated as of the same type).<br/>
-			Returns the number of copied elements.<br/>
-			<br/>
-			<span style="color:red">Achtung:</span>
-			<br/>
-			Das Zielarray wird bei Bedarf automatisch vergrößert. Es wird jedoch nicht automatisch verkleinert, wenn es bereits existiert und größer als das Ausgangsarray ist.<br/>
-			<br/>
+         Copies an array to another one. Both arrays must either be <span class="type">string</span> arrays or numeric arrays (arrays of type <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>, <span class="type">color</span> and <span class="type">double</span> are treated as of the same type).<br/>
+         Returns the number of copied elements.<br/>
+         <br/>
+         <span style="color:red">Achtung:</span>
+         <br/>
+         Das Zielarray wird bei Bedarf automatisch vergrößert. Es wird jedoch nicht automatisch verkleinert, wenn es bereits existiert und größer als das Ausgangsarray ist.<br/>
+         <br/>
       </content>
       <example>
    double array1[][6];
@@ -4529,17 +4530,19 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       tag=convert_NormalizeDouble
       caption=NormalizeDouble()
       <content>
-      Rounds the floating point value to the given precision and returns a normalized value.<br/>
-      Price values for order functions must be normalized with a precision of the value of the variable <a href="help://predefined_variables_Digits">Digits</a>.<br/>
+      Rounds the floating point value to the given precision and returns a normalized value. Price values for order functions need to be normalized with a precision of <a href="help://predefined_variables_Digits">Digits</a>.<br/>
 
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-		Die Funktion rundet falsch, wenn <i>digits</i> < 2 ist und der übergebene Wert mehr als 7 Nachkommastellen hat, z.B:<br/>
-		<span class="function">NormalizeDouble</span>(<span class="number">1.49999991</span>, <span class="number">0</span>) = <span class="number">2.0</span><br/>
-		<span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
+      Die Funktion rundet falsch, wenn <i>digits</i> < 2 ist und der übergebene Wert mehr als 7 Nachkommastellen hat, z.B:<br/>
+      <span class="function">NormalizeDouble</span>(<span class="number">1.49999991</span>, <span class="number">0</span>) = <span class="number">2.0</span><br/>
+      <span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
+      <br/>
+      Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>() verwenden<br/>
 		<br/>
-		Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>() verwenden
+		<i>@see</i> <a href="http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c">http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c</a><br/>
+						letzte Antwort (evt. wird intern <span class="type">float</span> statt <span class="type">double</span> benutzt)
       </content>
       <example>
   double var1 = 0.123456789;
@@ -4713,35 +4716,55 @@ int init()
       caption=IndicatorCounted()
       type=int
       <content>
-The function returns the amount of bars not changed after the indicator had been launched last. The most calculated bars do not need any recalculation.
-In most cases, same count of index values do not need for recalculation. The function is used to optimize calculating.<br/><br/>
-Note: The latest bar is not considered to be calculated and, in the most cases, it is necessary to recalculate only this bar. However, there occur
-some boundary cases where custom indicator is called from the expert at the first tick of the new bar. It is possible that the last tick of the previous bar
-had not been processed (because the last-but-one tick <a href="help://runtime_start">was being processed</a> when this last tick came), the custom
-indicator was not called and it was not calculated because of this. To avoid indicator calculation errors in such situations, the IndicatorCounted()
-function returns the count of bars minus one.
+      Returns the number of unmodified bars after the last execution of Indicator::<span class="function">start</span>(). The latest bar is always considered modified.<br>
+      <br>
+      <br>
+      Notes:<br>
+
+      (1) <span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zurück, deren Status seit dem letzten Tick unverändert ist. Abhängig vom konkreten Indikator
+          brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen <span class="globalvar">ValidBars</span>
+          und <span class="globalvar">ChangedBars</span> definiert:<br>
+          <br>
+          • <span class="globalvar">ValidBars</span> bezeichnet die Anzahl der unveränderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br>
+          • <span class="globalvar">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br>
+          <br>
+          Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="globalvar">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
+          BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
+          (<span class="globalvar">ChangedBars</span> ist dann <span class="number">2</span>).<br>
+          Es gilt: <span class="globalvar">Bars</span> = <span class="globalvar">ValidBars</span> + <span class="globalvar">ChangedBars</span>.<br/>
+          <br/>
+          <br/>
+
+      (2) Data-Pumping (Laden von Historydaten) erfolgt in Blöcken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
+          Indicator::<span class="function">start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
+          <span class="globalvar">ChangedBars</span> = <span class="globalvar">Bars</span>). Während des Pumpings können die Bars immer noch Lücken enthalten, da
+          Indicator::<span class="function">start</span>() auch zwischen dem Laden mehrerer Blöcke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
+          <span class="number">0</span> (alle Bars modifiziert).<br>
+          Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zurück (alle Bars modifiziert), wenn mehr als die nächste neue Bar
+          (BarOpen-Event) im Chart erscheint.<br>
+          <br/>
+          <br/>
+
+      (3) <span class="function">IndicatorCounted</span>() kann nur in Indikatoren verwendet werden, nicht in Scripten, Experts oder Libraries. Dort gibt die Funktion
+          <span class="number">-1</span> zurück.<br>
+          siehe auch <span class="function">stdlib_onStart</span>()<br/>
+          <br/>
+          <br/>
+
       </content>
       <example>
-  int start()
-    {
-     int limit;
-     int counted_bars=IndicatorCounted();
-  //---- check for possible errors
-     if(counted_bars&lt;0) return(-1);
-  //---- the last counted bar will be recounted
-     if(counted_bars&gt;0) counted_bars--;
-     limit=Bars-counted_bars;
-  //---- main loop
-     for(int i=0; i&lt;limit; i++)
-       {
-        //---- ma_shift set to 0 because SetIndexShift called abowe
-        ExtBlueBuffer[i]=iMA(NULL,0,JawsPeriod,0,MODE_SMMA,PRICE_MEDIAN,i);
-        ExtRedBuffer[i]=iMA(NULL,0,TeethPeriod,0,MODE_SMMA,PRICE_MEDIAN,i);
-        ExtLimeBuffer[i]=iMA(NULL,0,LipsPeriod,0,MODE_SMMA,PRICE_MEDIAN,i);
-       }
-  //---- done
-     return(0);
-    }
+int start() {
+   int ValidBars = IndicatorCounted();
+   int ChangedBars = Bars - ValidBars;
+
+   // main loop
+   for (int i=ChangedBars-1; i &gt;= 0; i--) {
+      ExtBlueBuffer[i] = iMA(NULL, 0, JawsPeriod,  0, MODE_SMMA, PRICE_MEDIAN, i);
+      ExtRedBuffer [i] = iMA(NULL, 0, TeethPeriod, 0, MODE_SMMA, PRICE_MEDIAN, i);
+      ExtLimeBuffer[i] = iMA(NULL, 0, LipsPeriod,  0, MODE_SMMA, PRICE_MEDIAN, i);
+   }
+   return(last_error);
+}
       </example>
     </function>
 
@@ -5296,31 +5319,31 @@ SetLevelValue(1,3.14);
       caption=TimeCurrent()
       type=datetime
       <content>
-      Opposite to the original documentation this function doesn't return the last known server time. It returns the time of the last tick of the selected symbols 
+      Opposite to the original documentation this function doesn't return the last known server time. It returns the time of the last tick of the selected symbols
       as seconds since 00:00 January 1, 1970.<br/>
       At testing this time is modelled.<br/>
 
       <br/>
       <span style="color:red">Bugs:</span><br/>
-      (1) Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und 
+      (1) Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
           <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zurück.<br/>
-		(2) Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zurück, ohne einen Fehler zu melden.<br/>
+      (2) Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zurück, ohne einen Fehler zu melden.<br/>
 
       <br/>
       <span style="color:green">Note:</span><br/>
-      Diese Funktion sollte niemals verwendet werden. Um bei Rückgabe von <span class="const">NULL</span> einen Fehler zu melden, kann <span class="function">TimeCurrentEx</span>() 
-      verwendet werden. Um den Zeitpunkt des letzten Ticks zu ermitteln, sollte 
-      <nobr><span class="function">MarketInfo</span>(<span class="function">Symbol</span>(), <span class="const">MODE_TIME</span>)</nobr> verwendet werden. Um die Serverzeit 
+      Diese Funktion sollte niemals verwendet werden. Um bei Rückgabe von <span class="const">NULL</span> einen Fehler zu melden, kann <span class="function">TimeCurrentEx</span>()
+      verwendet werden. Um den Zeitpunkt des letzten Ticks zu ermitteln, sollte
+      <nobr><span class="function">MarketInfo</span>(<span class="function">Symbol</span>(), <span class="const">MODE_TIME</span>)</nobr> verwendet werden. Um die Serverzeit
       zu ermitteln, sollte <span class="function">GetServerTime</span>() bzw. <span class="function">TimeServer</span>() verwendet werden.<br/>
 
-		<br/>
+      <br/>
       <span style="color:red">TODO:</span><br/>
-      Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler 
+      Standalone-Indikatoren müssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert übernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
       in Standalone-Indikatoren unter Test).<br/>
       </content>
       <example>
-if (TimeCurrent()-OrderOpenTime()&lt;360) 
-	return(0);
+if (TimeCurrent()-OrderOpenTime()&lt;360)
+   return(0);
       </example>
     </function>
 
@@ -5417,7 +5440,7 @@ if (TimeCurrent()-OrderOpenTime()&lt;360)
       At testing local time is modelled and is the same as the modelled server time.<br/>
 
       <br/>
-      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zurück, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On). 
+      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zurück, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On).
       Je nach Terminalversion wird entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch übernommener Wert
       (<span class="const">NULL</span>) zurückgegeben.<br/>
       Workaround: noch nicht implementiert (siehe Notes)<br/>
@@ -5718,8 +5741,8 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileOpenHistory()
       type=int
       <content>
-         Opens the file with the specified name in the current history directory <span class="string">"{terminal_directory}\history\{server_name}"</span> 
-         <strike>or its subdirectories</strike> and returns a handle for it. If the function fails the returned value is -1. To get detailed error information 
+         Opens the file with the specified name in the current history directory <span class="string">"{terminal_directory}\history\{server_name}"</span>
+         <strike>or its subdirectories</strike> and returns a handle for it. If the function fails the returned value is -1. To get detailed error information
          call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
 
          <br/>
@@ -5736,7 +5759,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          (1) Ab Build 810 ist die Funktion im Tester blockiert.<br>
          <br/>
          (2) Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.<br/>
-			<br/>
+         <br/>
          Workaround: Dateifunktionen des MT4Expanders verwenden.
       </content>
       <example>
@@ -10010,19 +10033,19 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       type=bool
       keywords=;SELECT_BY_POS;SELECT_BY_TICKET;MODE_TRADES;MODE_HISTORY;
       <content>
-			Selects an order for further processing and returns <span class="const">true</span> on success or <span class="const">false</span> otherwise. For detailed error information 
-			call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-			If the order is selected by ticket number the parameter <i>origin</i> is ignored.<br/>
-			To find out the origin of an order its <a href="help://trading_OrderCloseTime">close time</a> needs to be analyzed. If the <a href="help://trading_OrderCloseTime">close time</a> 
-			equals to 0 the order is a pending order or an open position and originates from the terminal's open orders list. If the order <a href="help://trading_OrderCloseTime">close time</a> 
-			does not equal to 0 the order is a cancelled pending order or a closed position and was selected from the terminal's trade history list.<br/>
-			The <a href="help://trading_OrderType">order type</a> of an open order distinguishes a pending order from an open position.<br/>
+         Selects an order for further processing and returns <span class="const">true</span> on success or <span class="const">false</span> otherwise. For detailed error information
+         call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+         If the order is selected by ticket number the parameter <i>origin</i> is ignored.<br/>
+         To find out the origin of an order its <a href="help://trading_OrderCloseTime">close time</a> needs to be analyzed. If the <a href="help://trading_OrderCloseTime">close time</a>
+         equals to 0 the order is a pending order or an open position and originates from the terminal's open orders list. If the order <a href="help://trading_OrderCloseTime">close time</a>
+         does not equal to 0 the order is a cancelled pending order or a closed position and was selected from the terminal's trade history list.<br/>
+         The <a href="help://trading_OrderType">order type</a> of an open order distinguishes a pending order from an open position.<br/>
          <br/>
          <span style="color:red">Bug:</span>
          <br/>
-		   <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ungültiger Ticket-Nummer <span class="const">false</span> zurück, setzt jedoch keinen Fehler-Code.<br/>
-		   Workaround: <span class="function">OrderSelectByTicket</span>() verwenden<br/>
-			<br/>
+         <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ungültiger Ticket-Nummer <span class="const">false</span> zurück, setzt jedoch keinen Fehler-Code.<br/>
+         Workaround: <span class="function">OrderSelectByTicket</span>() verwenden<br/>
+         <br/>
       </content>
       <example>
   if (OrderSelect(12470, <span class="const">SELECT_BY_TICKET</span>)) {
@@ -10867,24 +10890,24 @@ The value will be <span class="const">true</span> only if the expert or script w
 
 
   <group>
-     tag=mt4_1
-     caption=MetaTrader 4.1
+     tag=mt4_600
+     caption=MetaTrader 4.600+
      <content>
-     <p>MetaTrader 4.1 (ab Build 510)</p>
-  	  </content>
+     <p>MetaTrader 4.600+ (ab Build 510)</p>
+     </content>
 
-	  <group>
-		  tag=mt4_1_historyformat
-		  caption=Neues Historyformat
-		  <content>
-		  <p>Neues History-Format</p>
+     <group>
+        tag=mt4_600_historyformat
+        caption=Neues Historyformat
+        <content>
+        <p>Neues History-Format</p>
 
-		  <ul>
-			  <li>Alte MetaTrader-Versionen (bis Build 509), die auf eine Historydatei im neuen Format stoßen, löschen diese Datei beim Beenden.</li>
-		  </ul>
-		  </content>
-		</group>
-	</group>
+        <ul>
+           <li>Alte MetaTrader-Versionen (bis Build 509), die auf eine Historydatei im neuen Format stoßen, löschen diese Datei beim Beenden.</li>
+        </ul>
+        </content>
+      </group>
+   </group>
 
 </group>
 </dictionary>

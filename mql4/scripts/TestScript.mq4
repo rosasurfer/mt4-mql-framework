@@ -15,37 +15,34 @@ int __DEINIT_FLAGS__[];
 
 
 
+#import "Expander.Release.dll"
+   int Test();
+#import
+
+
+
 /**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onStart() {
-   double a;
-   int digits;
 
-   a      = 1.49999991;
-   digits = 0;
- //debug("onStart(1)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
-   debug("onStart(1)  NormalizeDouble(a="+ a +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
- //debug("onStart()  MathRound      ("+ NumberToStr(a, ".+")            +")    = "+ DoubleToStrEx(MathRound(a), 16));
-
-   a      = 1.54999999;
-   digits = 1;
- //debug("onStart(2)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
-   debug("onStart(2)  NormalizeDouble(a="+ a +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
-
-   a      = 0.15499999;
-   digits = 2;
-   debug("onStart(3)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
-
-   a++;
-   digits = 2;
-   debug("onStart(4)  NormalizeDouble("+ NumberToStr(a, ".8+") +", "+ digits +") = "+ DoubleToStrEx(NormalizeDouble(a, digits), 16));
+   double a = (1/3.) + 0.75; a -= 1;
+   double b = 1/12.;
 
 
+   if (NormalizeDouble(a, 8) == NormalizeDouble(b, 8)) {
+    debug("onStart()  a == b");
+   }
+   else {
+    debug("onStart()  a != b");
+   }
    return(last_error);
 
+
+   Test();
+   return(last_error);
 
 
    int cb1, cb2;

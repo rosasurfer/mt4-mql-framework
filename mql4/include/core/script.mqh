@@ -112,11 +112,11 @@ int start() {
 
 
    Tick++; zTick++;                                                           // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
-   ValidBars     = -1;
-   ChangedBars   = -1;
-
+   Tick.prevTime  = Tick.Time;
+   Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
+   Tick.isVirtual = true;
+   ValidBars      = -1;
+   ChangedBars    = -1;
 
    if (!Tick.Time) {
       int error = GetLastError();
