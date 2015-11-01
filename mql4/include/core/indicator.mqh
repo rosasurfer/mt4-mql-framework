@@ -229,24 +229,32 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
+   // (5) Tickstatus bestimmen
+   int vol = Volume[0];
+   static int lastVol;
+   if      (!vol || !lastVol) Tick.isVirtual = true;
+   else if ( vol ==  lastVol) Tick.isVirtual = true;
+   else                       Tick.isVirtual = (ChangedBars > 2);
+
+
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
 
 
-   // (5) stdLib benachrichtigen
+   // (6) stdLib benachrichtigen
    if (stdlib.start(__ExecutionContext, Tick, Tick.Time, ValidBars, ChangedBars) != NO_ERROR) {
       UpdateProgramStatus(SetLastError(stdlib.GetLastError()));
       if (__STATUS_OFF) return(last_error);
    }
 
 
-   // (6) bei Bedarf Input-Dialog aufrufen
+   // (7) bei Bedarf Input-Dialog aufrufen
    if (__STATUS_RELAUNCH_INPUT) {
       __STATUS_RELAUNCH_INPUT = false;
       return(UpdateProgramStatus(start.RelaunchInputDialog()));
    }
 
 
-   // (7) Main-Funktion aufrufen und auswerten
+   // (8) Main-Funktion aufrufen und auswerten
    onTick();
 
    error = GetLastError();

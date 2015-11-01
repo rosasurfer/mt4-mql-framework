@@ -89,12 +89,11 @@ double   hf.collectedBar.data         [][6];       // Bar-Daten (T-OHLCV)
  * @param  __IN__ string symbol    - Symbol
  * @param  __IN__ bool   synthetic - ob das Instrument synthetisch ist und die History im Serververzeichnis ".\history\XTrade-Synthetic\" gespeichert wird (default: FALSE)
  *
- * @return int - • Set-Handle oder -1, falls weder ein HistorySet noch ein HistoryFile dieses Symbols existieren. In diesem Fall kann
- *                 mit HistorySet.Create() ein neues Set erzeugt werden.
+ * @return int - • Set-Handle oder -1, falls noch kein einziges HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet.Create() ein neues Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
  *
  *
- * TODO: Parameter int fTimeframes - Timeframe-Flags implementieren
+ * NOTE: evt. Timeframe-Flags für selektive Sets implementieren (z.B. alles außer W1 und MN1)
  */
 int HistorySet.Get(string symbol, bool synthetic=false) {
    synthetic = synthetic!=0;
@@ -1036,7 +1035,7 @@ bool HistoryFile.WriteBar(int hFile, int offset, double bar[], int flags=NULL) {
    if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile.WriteBar(7)"));
 
 
-   // (3) Bardaten normalisieren und dabei Funktionsparameter unverändert lassen
+   // (3) Bardaten normalisieren (Funktionsparameter nicht modifizieren)
    int digits = hf.digits[hFile];
    double O = NormalizeDouble(bar[BAR_O], digits);
    double H = NormalizeDouble(bar[BAR_H], digits);

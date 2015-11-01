@@ -18,8 +18,9 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-double  account.data[4];                                             // Accountdaten
-int     account.hSet[4];                                             // HistorySet-Handles der Accountdaten
+double  account.data     [4];                                        // Accountdaten
+double  account.data.last[4];                                        // vorheriger Datenwert für RecordAccountData()
+int     account.hSet     [4];                                        // HistorySet-Handles der Accountdaten
 
 string  account.symbols     [] = { "{AccountNumber}.AB", "{AccountNumber}.BX", "{AccountNumber}.AE", "{AccountNumber}.EX" };
 string  account.descriptions[] = { "Account Balance #{AccountNumber}",
@@ -320,7 +321,7 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
 
 
 /**
- * Zeichnet die History der Accountdaten auf.
+ * Zeichnet Balance und Equity des Accounts auf.
  *
  * @return bool - Erfolgsstatus
  */
@@ -331,23 +332,40 @@ bool RecordAccountData() {
    int size = ArraySize(account.hSet);
 
    for (int i=0; i < size; i++) {
-      if (!account.hSet[i]) {
-         string symbol      = StringReplace(account.symbols     [i], "{AccountNumber}", GetAccountNumber());
-         if (StringLen(symbol) > MAX_SYMBOL_LENGTH)
-                symbol      = StringReplace(account.symbols     [i], "{AccountNumber}", StringLeft(GetAccountNumber(), MAX_SYMBOL_LENGTH-StringLen(symbol)));
-         string description = StringReplace(account.descriptions[i], "{AccountNumber}", GetAccountNumber());
-         int    digits      = 2;
-         int    format      = 400;
-         bool   synthetic   = true;
+      double tickValue     = account.data     [i];
+      double lastTickValue = account.data.last[i];
 
-         account.hSet[i] = HistorySet.Get(symbol, synthetic);
-         if (account.hSet[i] == -1)
-            account.hSet[i] = HistorySet.Create(symbol, description, digits, format, synthetic);
-         if (!account.hSet[i]) return(!SetLastError(history.GetLastError()));
+      // Virtuelle Ticks werden nur aufgezeichnet, wenn sich der Datenwert geändert hat.
+      bool skipTick = false;
+      if (Tick.isVirtual)
+         skipTick = (!lastTickValue || EQ(tickValue, lastTickValue, 2));
+
+      if (skipTick) {
+         debug("RecordAccountData(1)  skipping "+ account.symbols[i] +" tick "+ DoubleToStr(tickValue, 2));
+      }
+      else {
+         //debug("RecordAccountData(2)  recording "+ account.symbols[i] +" tick "+ DoubleToStr(tickValue, 2));
+
+         if (!account.hSet[i]) {                                                                                  // Bei exotischen Brokern gibt es Account-Nummern mit mehr als 8
+            string symbol      = StringReplace(account.symbols     [i], "{AccountNumber}", GetAccountNumber());   // Ziffern, die zusammen mit dem Symbol-Suffix (3 Zeichen) zu lange
+            if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                                                            // Symbole ergeben. Diese Account-Nummern werden vorerst gekürzt.
+                   symbol      = StringReplace(account.symbols     [i], "{AccountNumber}", StringLeft(GetAccountNumber(), MAX_SYMBOL_LENGTH-StringLen(symbol)));
+            string description = StringReplace(account.descriptions[i], "{AccountNumber}", GetAccountNumber());
+            int    digits      = 2;
+            int    format      = 400;
+            bool   synthetic   = true;
+
+            account.hSet[i] = HistorySet.Get(symbol, synthetic);
+            if (account.hSet[i] == -1)
+               account.hSet[i] = HistorySet.Create(symbol, description, digits, format, synthetic);
+            if (!account.hSet[i]) return(!SetLastError(history.GetLastError()));
+         }
+
+         int flags;// = HST_COLLECT_TICKS;
+         if (!HistorySet.AddTick(account.hSet[i], Tick.Time, tickValue, flags)) return(!SetLastError(history.GetLastError()));
       }
 
-      int flags;// = HST_COLLECT_TICKS;
-      if (!HistorySet.AddTick(account.hSet[i], Tick.Time, account.data[i], flags)) return(!SetLastError(history.GetLastError()));
+      account.data.last[i] = tickValue;
    }
    return(true);
 }

@@ -166,11 +166,12 @@ int start() {
       return(last_error);
    }
 
-   Tick++;         zTick++;                                                         // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.prevTime = Tick.Time;
-   Tick.Time     = MarketInfo(Symbol(), MODE_TIME);
-   ValidBars     = -1;
-   ChangedBars   = -1;
+   Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Tick.prevTime  = Tick.Time;
+   Tick.Time      = MarketInfo(Symbol(), MODE_TIME);
+   Tick.isVirtual = true;
+   ValidBars      = -1;
+   ChangedBars    = -1;
 
 
    // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
