@@ -865,7 +865,7 @@ int ForceMessageBox(string caption, string message, int flags=MB_OK) {
 
 
 /**
- * Dropin-Ersatz für und Workaround um sämtliche Bugs von WindowHandle(). Kann zusätzlich bei der Suche ausdrücklich nur das eigene oder ausdrücklich nur ein fremdes
+ * Dropin-Ersatz für und Workaround um die Bugs von WindowHandle(). Kann zusätzlich bei der Suche ausdrücklich nur das eigene oder ausdrücklich nur ein fremdes
  * Fenster berücksichtigen.
  *
  * @param string symbol    - Symbol des Charts, dessen Handle ermittelt werden soll.

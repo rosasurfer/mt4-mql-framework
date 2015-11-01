@@ -728,15 +728,13 @@ bool RecordLfxIndices() {
    for (int i=0; i < size; i++) {
       if (recording[i]) /*&&*/ if (isMainIndex[i]) {
          if (!hSet[i]) {
-            string symbol      = symbols[i];
-            string description = names  [i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
-            int   _digits      = digits [i];
+            string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
             int    format      = 400;
             bool   synthetic   = true;
 
-            hSet[i] = HistorySet.Get(symbol, synthetic);
+            hSet[i] = HistorySet.Get(symbols[i], synthetic);
             if (hSet[i] == -1)
-               hSet[i] = HistorySet.Create(symbol, description, _digits, format, synthetic);
+               hSet[i] = HistorySet.Create(symbols[i], description, digits[i], format, synthetic);
             if (!hSet[i]) return(!SetLastError(history.GetLastError()));
          }
 
