@@ -4529,13 +4529,21 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       tag=convert_NormalizeDouble
       caption=NormalizeDouble()
       <content>
-      Rounds the floating point value to the given precision. Returns normalized value of the double type.<br/>
-      The calculated StopLoss and TakeProfit values, as well as <a href="help://trading_OrderSend">open</a> price of pending orders
-      must be normalized with a precision the value of which is stored in the pre-defined variable of <a href="help://predefined_variables_Digits">Digits</a>.
+      Rounds the floating point value to the given precision and returns a normalized value.<br/>
+      Price values for order functions must be normalized with a precision of the value of the variable <a href="help://predefined_variables_Digits">Digits</a>.<br/>
+
+      <br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+		Die Funktion rundet falsch, wenn <i>digits</i> < 2 ist und der übergebene Wert mehr als 7 Nachkommastellen hat, z.B:<br/>
+		<span class="function">NormalizeDouble</span>(<span class="number">1.49999991</span>, <span class="number">0</span>) = <span class="number">2.0</span><br/>
+		<span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
+		<br/>
+		Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>() verwenden
       </content>
       <example>
-  double var1=0.123456789;
-  Print(DoubleToStr(NormalizeDouble(var1,5),8));
+  double var1 = 0.123456789;
+  Print(DoubleToStr(NormalizeDouble(var1, 5), 8));
   // output: 0.12346000
       </example>
       <parameter>
