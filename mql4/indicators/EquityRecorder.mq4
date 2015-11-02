@@ -22,13 +22,11 @@ double  account.data     [4];                                        // Accountd
 double  account.data.last[4];                                        // vorheriger Datenwert für RecordAccountData()
 int     account.hSet     [4];                                        // HistorySet-Handles der Accountdaten
 
-string  account.symbols     [] = { "{AccountNumber}.AB", "{AccountNumber}.BX", "{AccountNumber}.AE", "{AccountNumber}.EX" };
-string  account.descriptions[] = { "Account Balance #{AccountNumber}",
-                                   "Account Balance #{AccountNumber} + AuM",
-                                   "Account Equity #{AccountNumber}",
-                                   "Account Equity #{AccountNumber} + AuM" };
+string  account.symbolSuffixes    [] = { ".AB", ".BX", ".AE", ".EX" };
+string  account.symbolDescriptions[] = { "Account Balance #{AccountNumber}", "Account Balance #{AccountNumber} + AuM", "Account Equity #{AccountNumber}", "Account Equity #{AccountNumber} + AuM" };
+
 // Array-Indizes
-#define I_ACCOUNT_BALANCE              0                             // vom Broker sichtbare Balance
+#define I_ACCOUNT_BALANCE              0                             // für den Broker sichtbare Balance
 #define I_ACCOUNT_BALANCE_WITH_AUM     1                             // Balance inklusive externer Assets
 #define I_ACCOUNT_EQUITY               2                             // echter Equity-Wert (nicht wie vom Broker berechnet)
 #define I_ACCOUNT_EQUITY_WITH_AUM      3                             // echter Equity-Wert inklusive externer Assets
@@ -159,11 +157,9 @@ bool CollectAccountData() {
    account.data[I_ACCOUNT_EQUITY_WITH_AUM ] = NormalizeDouble(account.data[I_ACCOUNT_EQUITY ] + externalAssets, 2);
 
 
-   static bool done;
-   if (!done) {
-      debug("CollectAccountData(2)  equity="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY], 2) +"  withAuM="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY_WITH_AUM], 2));
-      done = true;
-   }
+   //static bool done;
+   //if (!done) done = !debug("CollectAccountData(2)  equity="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY], 2) +"  withAuM="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY_WITH_AUM], 2));
+
    return(!catch("CollectAccountData(3)"));
 }
 
@@ -341,16 +337,16 @@ bool RecordAccountData() {
          skipTick = (!lastTickValue || EQ(tickValue, lastTickValue, 2));
 
       if (skipTick) {
-         debug("RecordAccountData(1)  skipping "+ account.symbols[i] +" tick "+ DoubleToStr(tickValue, 2));
+         //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(1)  Tick.isVirtual="+ Tick.isVirtual +"  skipping "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
       }
       else {
-         //debug("RecordAccountData(2)  recording "+ account.symbols[i] +" tick "+ DoubleToStr(tickValue, 2));
+         //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(2)  Tick.isVirtual="+ Tick.isVirtual +"  recording "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
 
-         if (!account.hSet[i]) {                                                                                  // Bei exotischen Brokern gibt es Account-Nummern mit mehr als 8
-            string symbol      = StringReplace(account.symbols     [i], "{AccountNumber}", GetAccountNumber());   // Ziffern, die zusammen mit dem Symbol-Suffix (3 Zeichen) zu lange
-            if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                                                            // Symbole ergeben. Diese Account-Nummern werden vorerst gekürzt.
-                   symbol      = StringReplace(account.symbols     [i], "{AccountNumber}", StringLeft(GetAccountNumber(), MAX_SYMBOL_LENGTH-StringLen(symbol)));
-            string description = StringReplace(account.descriptions[i], "{AccountNumber}", GetAccountNumber());
+         if (!account.hSet[i]) {                                                                // Bei exotischen Brokern gibt es Account-Nummern mit mehr als 8 Ziffern, die
+            string symbol      = GetAccountNumber() + account.symbolSuffixes[i];                // zusammen mit dem Symbol-Suffix (3 Zeichen) ein zu langes Symbol ergeben.
+               if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                                       // Solche exotischen Account-Nummern werden vorerst einfach gekürzt.
+                   symbol      = StringLeft(GetAccountNumber(), MAX_SYMBOL_LENGTH-StringLen(symbol)) + account.symbolSuffixes[i];
+            string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
             int    digits      = 2;
             int    format      = 400;
             bool   synthetic   = true;
