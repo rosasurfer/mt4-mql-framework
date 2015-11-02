@@ -229,12 +229,13 @@ int start() {
    ChangedBars = Bars - ValidBars;
 
 
-   // (5) Tickstatus bestimmen
+   // (5) Tickstatus bestimmen      !!! TODO !!! muß vor eigene Modifikation von ChangedBars gesetzt werden
    int vol = Volume[0];
    static int lastVol;
    if      (!vol || !lastVol) Tick.isVirtual = true;
    else if ( vol ==  lastVol) Tick.isVirtual = true;
    else                       Tick.isVirtual = (ChangedBars > 2);
+   lastVol = vol;
 
 
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
