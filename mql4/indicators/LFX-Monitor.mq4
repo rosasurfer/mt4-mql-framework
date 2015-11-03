@@ -1,8 +1,22 @@
 /**
- * Berechnet die Kurse der momentan verfügbaren LFX-Indizes und zeigt sie an. Ein Währungs-Index kann über die Kurse seiner beteiligten Crosses oder
- * über das Verhältnis des USDLFX-Indexes zum USD-Kurs der Währung berechnet werden, beide Werte unterscheiden sich nur im resultierenden Spread.
- * Wird eine Indexposition nicht über seine Crosses (im Durchschnitt höherer Spread), sondern über den USDLFX-Index abgebildet, sind die Anzahl der
- * Teilpositionen und entsprechend die Margin-Requirements höher.
+ * Berechnet die Kurse der verfügbaren LFX-Indizes, zeigt sie an und zeichnet ggf. deren History auf.
+ *
+ * Die mathematische Formel für den Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. LiteForex benutzt sieben Vergleichs-
+ * währungen, wovon eine imaginär und ihr Kurs immer 1.0 ist. Das vereinfacht die (fehlerhafte) Berechnung zusätzlicher Indizes, macht ihre Abbildung als Handelsposition
+ * jedoch komplizierter. Letztlich dienen sie der Trendanalyse, weder können noch sollen sie für absolute oder Vergleiche untereinander geeignet sein.
+ *
+ *  • Korrekt:   USD-Index = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP)          ^ 1/6
+ *               NZD-Index = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
+ *
+ *  • LiteForex: USD-Index = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY *  0.68 * USDNZD ) ^ 1/7
+ *               NZD-Index = USD-Index * USDNZD                                                    // einfach, jedoch nicht korrekt (obwohl einfach zu korrigieren)
+ *               ...
+ *
+ * - Wird eine Handelsposition statt über die direkten über die USD-Crosses abgebildet (niedrigerer Spread), sind die Anzahl der Teilpositionen und entsprechend die
+ *   Margin-Requirements höher.
+ *
+ * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen werden vom Position-Sizing (MinLotStep) und bei längerfristigem Handel vom
+ *   fehlenden Index-Rebalancing verursacht.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
