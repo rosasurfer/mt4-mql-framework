@@ -2158,7 +2158,7 @@ bool AnalyzePositions() {
 bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
    isVirtual = isVirtual!=0;
 
-   if (Positions.LogTickets) /*&&*/ if (!isVirtual) {
+   if (Positions.LogTickets) {
       if (ArraySize(tickets) > 0) {
          if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
          else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
