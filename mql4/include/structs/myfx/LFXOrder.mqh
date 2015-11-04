@@ -361,7 +361,6 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 
 #import "stdlib1.ex4"
    string GetCurrency(int id);
-   string JoinStrings(string array[], string separator);
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 

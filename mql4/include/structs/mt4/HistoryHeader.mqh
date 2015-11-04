@@ -158,11 +158,8 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
-   string JoinStrings(string array[], string separator);
-
 #import "Expander.dll"
-   int    GetStringAddress(string value);
+   int GetStringAddress(string value);
 #import
 
 

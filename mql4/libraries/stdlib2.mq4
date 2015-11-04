@@ -10,6 +10,11 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <functions/ExplodeStrings.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinBools.mqh>
+#include <functions/JoinInts.mqh>
+#include <functions/JoinDoubles.mqh>
+#include <functions/JoinDoublesEx.mqh>
+#include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
 
 
@@ -72,6 +77,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
    string result;
 
+
    // 1-dimensionales Array
    if (dimensions == 1) {
       if (dim1 == 0)
@@ -89,36 +95,45 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
 
    // 2-dimensionales Array
    if (dimensions == 2) {
-      string strValuesX[]; ArrayResize(strValuesX, dim1);
-      string    valuesY[]; ArrayResize(   valuesY, dim2);
+      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
+      string    values2.Y[]; ArrayResize(   values2.Y, dim2);
 
       for (int x=0; x < dim1; x++) {
          for (int y=0; y < dim2; y++) {
-            valuesY[y] = values2[x][y];            // TODO: NPE abfangen
+            values2.Y[y] = values2[x][y];             // TODO: NPE abfangen
          }
-         strValuesX[x] = StringsToStr(valuesY, separator);
+         strValues2.X[x] = StringsToStr(values2.Y, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
+      ArrayResize(strValues2.X, 0);
+      ArrayResize(   values2.Y, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
 
    // 3-dimensionales Array
    if (dimensions == 3) {
-                           ArrayResize(strValuesX, dim1);
-      string strValuesY[]; ArrayResize(strValuesY, dim2);
-      string    valuesZ[]; ArrayResize(   valuesZ, dim3);
+      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
+      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
+      string    values3.Z[]; ArrayResize(   values3.Z, dim3);
 
       for (x=0; x < dim1; x++) {
          for (y=0; y < dim2; y++) {
             for (int z=0; z < dim3; z++) {
-               valuesZ[z] = values3[x][y][z];      // TODO: NPE abfangen
+               values3.Z[z] = values3[x][y][z];      // TODO: NPE abfangen
             }
-            strValuesY[y] = StringsToStr(valuesZ, separator);
+            strValues3.Y[y] = StringsToStr(values3.Z, separator);
          }
-         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
+      ArrayResize(strValues3.X, 0);
+      ArrayResize(strValues3.Y, 0);
+      ArrayResize(   values3.Z, 0);
+      return(result);
    }
 
    return(_EMPTY_STR(catch("__StringsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -300,6 +315,8 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result;
+
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -312,36 +329,45 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
 
    // 2-dimensionales Array
    if (dimensions == 2) {
-      string strValuesX[]; ArrayResize(strValuesX, dim1);
-      double    valuesY[]; ArrayResize(   valuesY, dim2);
+      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
+      double    values2.Y[]; ArrayResize(   values2.Y, dim2);
 
       for (int x=0; x < dim1; x++) {
          for (int y=0; y < dim2; y++) {
-            valuesY[y] = values2[x][y];
+            values2.Y[y] = values2[x][y];
          }
-         strValuesX[x] = DoublesToStr(valuesY, separator);
+         strValues2.X[x] = DoublesToStr(values2.Y, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
+      ArrayResize(strValues2.X, 0);
+      ArrayResize(   values2.Y, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
 
    // 3-dimensionales Array
    if (dimensions == 3) {
-                           ArrayResize(strValuesX, dim1);
-      string strValuesY[]; ArrayResize(strValuesY, dim2);
-      double    valuesZ[]; ArrayResize(   valuesZ, dim3);
+      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
+      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
+      double    values3.Z[]; ArrayResize(   values3.Z, dim3);
 
       for (x=0; x < dim1; x++) {
          for (y=0; y < dim2; y++) {
             for (int z=0; z < dim3; z++) {
-               valuesZ[z] = values3[x][y][z];
+               values3.Z[z] = values3[x][y][z];
             }
-            strValuesY[y] = DoublesToStr(valuesZ, separator);
+            strValues3.Y[y] = DoublesToStr(values3.Z, separator);
          }
-         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
+      ArrayResize(strValues3.X, 0);
+      ArrayResize(strValues3.Y, 0);
+      ArrayResize(   values3.Z, 0);
+      return(result);
    }
 
    return(_EMPTY_STR(catch("__DoublesToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -375,6 +401,8 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result;
+
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -387,36 +415,45 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
 
    // 2-dimensionales Array
    if (dimensions == 2) {
-      string strValuesX[]; ArrayResize(strValuesX, dim1);
-      double    valuesY[]; ArrayResize(   valuesY, dim2);
+      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
+      double    values2.Y[]; ArrayResize(   values2.Y, dim2);
 
       for (int x=0; x < dim1; x++) {
          for (int y=0; y < dim2; y++) {
-            valuesY[y] = values2[x][y];
+            values2.Y[y] = values2[x][y];
          }
-         strValuesX[x] = DoublesToStrEx(valuesY, separator, digits);
+         strValues2.X[x] = DoublesToStrEx(values2.Y, separator, digits);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
+      ArrayResize(strValues2.X, 0);
+      ArrayResize(   values2.Y, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
 
    // 3-dimensionales Array
    if (dimensions == 3) {
-                           ArrayResize(strValuesX, dim1);
-      string strValuesY[]; ArrayResize(strValuesY, dim2);
-      double    valuesZ[]; ArrayResize(   valuesZ, dim3);
+      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
+      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
+      double    values3.Z[]; ArrayResize(   values3.Z, dim3);
 
       for (x=0; x < dim1; x++) {
          for (y=0; y < dim2; y++) {
             for (int z=0; z < dim3; z++) {
-               valuesZ[z] = values3[x][y][z];
+               values3.Z[z] = values3[x][y][z];
             }
-            strValuesY[y] = DoublesToStrEx(valuesZ, separator, digits);
+            strValues3.Y[y] = DoublesToStrEx(values3.Z, separator, digits);
          }
-         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
+      ArrayResize(strValues3.X, 0);
+      ArrayResize(strValues3.Y, 0);
+      ArrayResize(   values3.Z, 0);
+      return(result);
    }
 
    return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
@@ -562,39 +599,48 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
 
    // 2-dimensionales Array
    if (dimensions == 2) {
-      string strValuesX[]; ArrayResize(strValuesX, dim1);
-      int       valuesY[]; ArrayResize(   valuesY, dim2);
+      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
+      int       values2.Y[]; ArrayResize(   values2.Y, dim2);
 
       for (int x=0; x < dim1; x++) {
          for (int y=0; y < dim2; y++) {
-            valuesY[y] = values2[x][y];
+            values2.Y[y] = values2[x][y];
          }
-         strValuesX[x] = IntsToStr(valuesY, separator);
+         strValues2.X[x] = IntsToStr(values2.Y, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
+      ArrayResize(strValues2.X, 0);
+      ArrayResize(   values2.Y, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
 
    // 3-dimensionales Array
    if (dimensions == 3) {
-                           ArrayResize(strValuesX, dim1);
-      string strValuesY[]; ArrayResize(strValuesY, dim2);
-      int       valuesZ[]; ArrayResize(   valuesZ, dim3);
+      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
+      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
+      int       values3.Z[]; ArrayResize(   values3.Z, dim3);
 
       for (x=0; x < dim1; x++) {
          for (y=0; y < dim2; y++) {
             for (int z=0; z < dim3; z++) {
-               valuesZ[z] = values3[x][y][z];
+               values3.Z[z] = values3[x][y][z];
             }
-            strValuesY[y] = IntsToStr(valuesZ, separator);
+            strValues3.Y[y] = IntsToStr(values3.Z, separator);
          }
-         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
+      ArrayResize(strValues3.X, 0);
+      ArrayResize(strValues3.Y, 0);
+      ArrayResize(   values3.Z, 0);
+      return(result);
    }
 
-   return(_EMPTY_STR(catch("__IntsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -787,6 +833,8 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result;
+
 
    // 1-dimensionales Array
    if (dimensions == 1) {
@@ -799,36 +847,45 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
 
    // 2-dimensionales Array
    if (dimensions == 2) {
-      string strValuesX[]; ArrayResize(strValuesX, dim1);
-      bool      valuesY[]; ArrayResize(   valuesY, dim2);
+      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
+      bool      values2.Y[]; ArrayResize(   values2.Y, dim2);
 
       for (int x=0; x < dim1; x++) {
          for (int y=0; y < dim2; y++) {
-            valuesY[y] = values2[x][y];
+            values2.Y[y] = values2[x][y];
          }
-         strValuesX[x] = BoolsToStr(valuesY, separator);
+         strValues2.X[x] = BoolsToStr(values2.Y, separator);
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
+      ArrayResize(strValues2.X, 0);
+      ArrayResize(   values2.Y, 0);
+      return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
 
    // 3-dimensionales Array
    if (dimensions == 3) {
-                           ArrayResize(strValuesX, dim1);
-      string strValuesY[]; ArrayResize(strValuesY, dim2);
-      bool      valuesZ[]; ArrayResize(   valuesZ, dim3);
+      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
+      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
+      bool      values3.Z[]; ArrayResize(   values3.Z, dim3);
 
       for (x=0; x < dim1; x++) {
          for (y=0; y < dim2; y++) {
             for (int z=0; z < dim3; z++) {
-               valuesZ[z] = values3[x][y][z];
+               values3.Z[z] = values3[x][y][z];
             }
-            strValuesY[y] = BoolsToStr(valuesZ, separator);
+            strValues3.Y[y] = BoolsToStr(values3.Z, separator);
          }
-         strValuesX[x] = StringConcatenate("{", JoinStrings(strValuesY, separator), "}");
+         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
       }
-      return(StringConcatenate("{", JoinStrings(strValuesX, separator), "}"));
+
+      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
+      ArrayResize(strValues3.X, 0);
+      ArrayResize(strValues3.Y, 0);
+      ArrayResize(   values3.Z, 0);
+      return(result);
    }
 
    return(_EMPTY_STR(catch("__BoolsToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));

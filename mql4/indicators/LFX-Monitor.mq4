@@ -784,4 +784,11 @@ bool RecordLfxIndices() {
       }
    }
    return(true);
+
+
+   // Ablauf
+   int hSet = HistorySet.Get(symbols[i], synthetic);
+   HistorySet.AddTick(hSet, Tick.Time, tickValue, flags);
+   HistorySet.Close(hSet);
 }
+

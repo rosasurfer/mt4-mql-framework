@@ -104,12 +104,6 @@
    int      MergeDoubleArrays(double array1[], double array2[], double merged[]);
    int      MergeStringArrays(string array1[], string array2[], string merged[]);
 
-   string   JoinBools    (bool   array[], string separator);
-   string   JoinInts     (int    array[], string separator);
-   string   JoinDoubles  (double array[], string separator);
-   string   JoinDoublesEx(double array[], string separator, int digits);
-   string   JoinStrings  (string array[], string separator);
-
    double   SumDoubles(double array[]);
 
 

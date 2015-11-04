@@ -28,6 +28,7 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <functions/ExplodeStrings.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinStrings.mqh>
 #include <timezones.mqh>
 #include <win32api.mqh>
 
@@ -1025,6 +1026,84 @@ int GetTerminalBuild() {
 
    static.result = build;
    return(static.result);
+}
+
+
+/**
+ * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
+ * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
+ *
+ * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
+ */
+string GetServerName() {
+   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
+   // die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im alten Serververzeichnis.
+   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Serververzeichnis befinden.
+
+   static string static.result[1];
+   static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
+
+   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
+   if (!ValidBars) /*&&*/ if (Tick != lastTick)
+      static.result[0] = "";
+   lastTick = Tick;
+
+   // 2) wenn Wert im Cache, gecachten Wert zurückgeben
+   if (StringLen(static.result[0]) > 0)
+      return(static.result[0]);
+
+   // 3.1) Wert ermitteln
+   string directory = AccountServer();
+
+   // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
+   if (!StringLen(directory)) {
+      // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
+      string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
+      int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
+      if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
+         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory(\""+ fileName +"\")")));
+      FileClose(hFile);
+
+      // Datei suchen und Verzeichnisnamen auslesen
+      string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
+      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
+      int hFindDir=FindFirstFileA(pattern, wfd), next=hFindDir;
+
+      while (next > 0) {
+         if (wfd_FileAttribute_Directory(wfd)) {
+            string name = wfd_FileName(wfd);
+            if (name != ".") /*&&*/ if (name != "..") {
+               pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
+               int hFindFile = FindFirstFileA(pattern, wfd);
+               if (hFindFile != INVALID_HANDLE_VALUE) {
+                  //debug("GetServerName(2)  file = "+ pattern +"   found");
+                  FindClose(hFindFile);
+                  directory = name;
+                  if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
+                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
+                  break;
+               }
+            }
+         }
+         next = FindNextFileA(hFindDir, wfd);
+      }
+      if (hFindDir == INVALID_HANDLE_VALUE)
+         return(_EMPTY_STR(catch("GetServerName(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
+
+      FindClose(hFindDir);
+      ArrayResize(wfd, 0);
+      //debug("GetServerName(5)  resolved directory = \""+ directory +"\"");
+   }
+
+   int error = GetLastError();
+   if (IsError(error))
+      return(_EMPTY_STR(catch("GetServerName(6)", error)));
+
+   if (!StringLen(directory))
+      return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
+
+   static.result[0] = directory;
+   return(static.result[0]);
 }
 
 
@@ -2752,162 +2831,6 @@ int MergeStringArrays(string array1[], string array2[], string merged[]) {
 
 
 /**
- * Verbindet die Werte eines Boolean-Arrays unter Verwendung des angegebenen Separators.
- *
- * @param  bool   values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinBools(bool values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinBools()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      if (values[i]) strings[i] = "true";
-      else           strings[i] = "false";
-   }
-
-   string result = JoinStrings(strings, separator);
-
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-
-   return(result);
-}
-
-
-/**
- * Verbindet die Werte eines Integer-Arrays unter Verwendung des angegebenen Separators.
- *
- * @param  int    values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinInts(int values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinInts()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = values[i];
-   }
-
-   string result = JoinStrings(strings, separator);
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-   return(result);
-}
-
-
-/**
- * Verbindet die Werte eines Double-Arrays unter Verwendung des angegebenen Separators.
- *
- * @param  double values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinDoubles(double values[], string separator) {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoubles()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = NumberToStr(values[i], ".1+");
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string result = JoinStrings(strings, separator);
-
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-
-   return(result);
-}
-
-
-/**
- * Verbindet die Werte eines Double-Arrays mit bis zu 16 Nachkommastellen unter Verwendung des angegebenen Separators.
- *
- * @param  double values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- * @param  int    digits    - Anzahl der Nachkommastellen (0-16)
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinDoublesEx(double values[], string separator, int digits) {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoubles(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-   if (digits < 0 || digits > 16)  return(_EMPTY_STR(catch("JoinDoubles(2)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
-
-   string strings[];
-
-   int size = ArraySize(values);
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = DoubleToStrEx(values[i], digits);
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string result = JoinStrings(strings, separator);
-
-   if (ArraySize(strings) > 0)
-      ArrayResize(strings, 0);
-
-   return(result);
-}
-
-
-/**
- * Verbindet die Werte eines Stringarrays unter Verwendung des angegebenen Separators.
- *
- * @param  string values[]  - Array mit Ausgangswerten
- * @param  string separator - zu verwendender Separator
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string JoinStrings(string values[], string separator) {
-   if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("JoinStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   string value, result="";
-   int    error, size=ArraySize(values);
-
-   for (int i=0; i < size; i++) {
-      value = values[i];                                             // NPE provozieren
-
-      error = GetLastError();
-      if (!error) {
-         result = StringConcatenate(result, value, separator);
-         continue;
-      }
-      if (error != ERR_NOT_INITIALIZED_ARRAYSTRING)
-         return(_EMPTY_STR(catch("JoinStrings(2)", error)));
-
-      result = StringConcatenate(result, "NULL", separator);         // NULL
-   }
-   if (size > 0)
-      result = StringLeft(result, -StringLen(separator));
-
-   return(result);
-}
-
-
-/**
  * Addiert die Werte eines Double-Arrays.
  *
  * @param  double values[]  - Array mit Ausgangswerten
@@ -3381,84 +3304,6 @@ string GetWindowsShortcutTarget(string lnkFilename) {
    if (!catch("GetWindowsShortcutTarget(15)"))
       return(target);
    return("");
-}
-
-
-/**
- * Gibt den Namen des aktuellen History-Verzeichnisses zurück.  Der Name ist bei bestehender Verbindung identisch mit dem Rückgabewert von AccountServer(),
- * läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel ermitteln.
- *
- * @return string - Verzeichnisname oder Leerstring, falls ein Fehler auftrat
- */
-string GetServerName() {
-   // Der Verzeichnisname wird zwischengespeichert und erst mit Auftreten von ValidBars = 0 verworfen und neu ermittelt.  Bei Accountwechsel zeigen
-   // die MQL-Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im alten Serververzeichnis.
-   // Erst ValidBars = 0 stellt sicher, daß wir uns tatsächlich im neuen Serververzeichnis befinden.
-
-   static string static.result[1];
-   static int    lastTick;                                           // hilft bei der Erkennung von Mehrfachaufrufen während desselben Ticks
-
-   // 1) wenn ValidBars==0 && neuer Tick, Cache verwerfen
-   if (!ValidBars) /*&&*/ if (Tick != lastTick)
-      static.result[0] = "";
-   lastTick = Tick;
-
-   // 2) wenn Wert im Cache, gecachten Wert zurückgeben
-   if (StringLen(static.result[0]) > 0)
-      return(static.result[0]);
-
-   // 3.1) Wert ermitteln
-   string directory = AccountServer();
-
-   // 3.2) wenn AccountServer() == "", Verzeichnis manuell ermitteln
-   if (!StringLen(directory)) {
-      // eindeutigen Dateinamen erzeugen und temporäre Datei anlegen
-      string fileName = StringConcatenate("_t", GetCurrentThreadId(), ".tmp");
-      int hFile = FileOpenHistory(fileName, FILE_BIN|FILE_WRITE);
-      if (hFile < 0)                                                 // u.a. wenn das Serververzeichnis noch nicht existiert
-         return(_EMPTY_STR(catch("GetServerName(1)->FileOpenHistory(\""+ fileName +"\")")));
-      FileClose(hFile);
-
-      // Datei suchen und Verzeichnisnamen auslesen
-      string pattern = StringConcatenate(TerminalPath(), "\\history\\*");
-      /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
-      int hFindDir=FindFirstFileA(pattern, wfd), next=hFindDir;
-
-      while (next > 0) {
-         if (wfd_FileAttribute_Directory(wfd)) {
-            string name = wfd_FileName(wfd);
-            if (name != ".") /*&&*/ if (name != "..") {
-               pattern = StringConcatenate(TerminalPath(), "\\history\\", name, "\\", fileName);
-               int hFindFile = FindFirstFileA(pattern, wfd);
-               if (hFindFile != INVALID_HANDLE_VALUE) {
-                  //debug("GetServerName(2)  file = "+ pattern +"   found");
-                  FindClose(hFindFile);
-                  directory = name;
-                  if (!DeleteFileA(pattern))                         // tmp. Datei per Win-API löschen (MQL kann es im History-Verzeichnis nicht)
-                     return(_EMPTY_STR(catch("GetServerName(3)->kernel32::DeleteFileA(filename=\""+ pattern +"\")", ERR_WIN32_ERROR), FindClose(hFindDir)));
-                  break;
-               }
-            }
-         }
-         next = FindNextFileA(hFindDir, wfd);
-      }
-      if (hFindDir == INVALID_HANDLE_VALUE)
-         return(_EMPTY_STR(catch("GetServerName(4) directory \""+ TerminalPath() +"\\history\\\" not found", ERR_FILE_NOT_FOUND)));
-
-      FindClose(hFindDir);
-      ArrayResize(wfd, 0);
-      //debug("GetServerName(5)  resolved directory = \""+ directory +"\"");
-   }
-
-   int error = GetLastError();
-   if (IsError(error))
-      return(_EMPTY_STR(catch("GetServerName(6)", error)));
-
-   if (!StringLen(directory))
-      return(_EMPTY_STR(catch("GetServerName(7)  cannot find trade server directory", ERR_RUNTIME_ERROR)));
-
-   static.result[0] = directory;
-   return(static.result[0]);
 }
 
 

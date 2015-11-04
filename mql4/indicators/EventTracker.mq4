@@ -69,11 +69,12 @@ extern string Alert.ICQ.UserID    = "system | account | auto* | off | user-id"; 
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+#include <functions/JoinStrings.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
 #include <iFunctions/iChangedBars.mqh>
 #include <iFunctions/iPreviousPeriodTimes.mqh>
+#include <stdlib.mqh>
 
 
 bool   track.orders;
