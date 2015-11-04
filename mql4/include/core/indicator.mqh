@@ -90,14 +90,14 @@ int init() {
 
    Init-Szenario                   User-Routine                Beschreibung
    -------------                   ------------                ------------
-   INIT_REASON_USER              - onInit.User()             - bei Laden durch den User                               -      Input-Dialog
-   INIT_REASON_TEMPLATE          - onInit.Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-   INIT_REASON_PROGRAM           - onInit.Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
-   INIT_REASON_PROGRAM_CLEARTEST - onInit.ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-   INIT_REASON_PARAMETERS        - onInit.Parameters()       - nach ƒnderung der Indikatorparameter                   -      Input-Dialog
-   INIT_REASON_TIMEFRAMECHANGE   - onInit.TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
-   INIT_REASON_SYMBOLCHANGE      - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
-   INIT_REASON_RECOMPILE         - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+   INIT_REASON_USER              - onInit_User()             - bei Laden durch den User                               -      Input-Dialog
+   INIT_REASON_TEMPLATE          - onInit_Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+   INIT_REASON_PROGRAM           - onInit_Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
+   INIT_REASON_PROGRAM_CLEARTEST - onInit_ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+   INIT_REASON_PARAMETERS        - onInit_Parameters()       - nach ƒnderung der Indikatorparameter                   -      Input-Dialog
+   INIT_REASON_TIMEFRAMECHANGE   - onInit_TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
+   INIT_REASON_SYMBOLCHANGE      - onInit_SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
+   INIT_REASON_RECOMPILE         - onInit_Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
 
    Die User-Routinen werden ausgef¸hrt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zur¸ckkehrt.
    Der Postprocessing-Hook wird ausgef¸hrt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
@@ -110,14 +110,14 @@ int init() {
       if (!initReason) { UpdateProgramStatus(); if (__STATUS_OFF) return(last_error); }                           //
                                                                                                                   //
       switch (initReason) {                                                                                       //
-         case INIT_REASON_USER             : error = onInit.User();             break;                            //
-         case INIT_REASON_TEMPLATE         : error = onInit.Template();         break;                            // TODO: in neuem Chartfenster falsche Werte f¸r Point und Digits
-         case INIT_REASON_PROGRAM          : error = onInit.Program();          break;                            //
-         case INIT_REASON_PROGRAM_CLEARTEST: error = onInit.ProgramClearTest(); break;                            //
-         case INIT_REASON_PARAMETERS       : error = onInit.Parameters();       break;                            //
-         case INIT_REASON_TIMEFRAMECHANGE  : error = onInit.TimeframeChange();  break;                            //
-         case INIT_REASON_SYMBOLCHANGE     : error = onInit.SymbolChange();     break;                            //
-         case INIT_REASON_RECOMPILE        : error = onInit.Recompile();        break;                            //
+         case INIT_REASON_USER             : error = onInit_User();             break;                            //
+         case INIT_REASON_TEMPLATE         : error = onInit_Template();         break;                            // TODO: in neuem Chartfenster falsche Werte f¸r Point und Digits
+         case INIT_REASON_PROGRAM          : error = onInit_Program();          break;                            //
+         case INIT_REASON_PROGRAM_CLEARTEST: error = onInit_ProgramClearTest(); break;                            //
+         case INIT_REASON_PARAMETERS       : error = onInit_Parameters();       break;                            //
+         case INIT_REASON_TIMEFRAMECHANGE  : error = onInit_TimeframeChange();  break;                            //
+         case INIT_REASON_SYMBOLCHANGE     : error = onInit_SymbolChange();     break;                            //
+         case INIT_REASON_RECOMPILE        : error = onInit_Recompile();        break;                            //
          default:                                                                                                 //
             return(UpdateProgramStatus(catch("init(7)  unknown initReason = "+ initReason, ERR_RUNTIME_ERROR)));  //
       }                                                                                                           //
@@ -383,34 +383,34 @@ int InitReason() {
    /*
    Init-Szenarien:
    ---------------
-   - onInit.User()             - bei Laden durch den User                               -      Input-Dialog
-   - onInit.Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
-   - onInit.Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
-   - onInit.ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
-   - onInit.Parameters()       - nach ƒnderung der Indikatorparameter                   -      Input-Dialog
-   - onInit.TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
-   - onInit.SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
-   - onInit.Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
+   - onInit_User()             - bei Laden durch den User                               -      Input-Dialog
+   - onInit_Template()         - bei Laden durch ein Template (auch bei Terminal-Start) - kein Input-Dialog
+   - onInit_Program()          - bei Laden durch iCustom()                              - kein Input-Dialog
+   - onInit_ProgramClearTest() - bei Laden durch iCustom() nach Testende                - kein Input-Dialog
+   - onInit_Parameters()       - nach ƒnderung der Indikatorparameter                   -      Input-Dialog
+   - onInit_TimeframeChange()  - nach Timeframewechsel des Charts                       - kein Input-Dialog
+   - onInit_SymbolChange()     - nach Symbolwechsel des Charts                          - kein Input-Dialog
+   - onInit_Recompile()        - bei Reload nach Recompilation                          - kein Input-Dialog
 
    History:
    --------------------------------------------------------------------------------------------------------------------------------------------------
-   - Build 547-551: onInit.User()             - Broken: Wird zwei mal aufgerufen, beim zweiten mal ist der EXECUTION_CONTEXT ung¸ltig.
-   - Build  >= 654: onInit.User()             - UninitializeReason() ist REASON_UNDEFINED.
+   - Build 547-551: onInit_User()             - Broken: Wird zwei mal aufgerufen, beim zweiten mal ist der EXECUTION_CONTEXT ung¸ltig.
+   - Build  >= 654: onInit_User()             - UninitializeReason() ist REASON_UNDEFINED.
    --------------------------------------------------------------------------------------------------------------------------------------------------
-   - Build 577-583: onInit.Template()         - Broken: Kein Aufruf bei Terminal-Start, der Indikator wird aber geladen.
+   - Build 577-583: onInit_Template()         - Broken: Kein Aufruf bei Terminal-Start, der Indikator wird aber geladen.
    --------------------------------------------------------------------------------------------------------------------------------------------------
-   - Build 556-569: onInit.Program()          - Broken: Wird in- und auﬂerhalb des Testers bei jedem Tick aufgerufen.
+   - Build 556-569: onInit_Program()          - Broken: Wird in- und auﬂerhalb des Testers bei jedem Tick aufgerufen.
    --------------------------------------------------------------------------------------------------------------------------------------------------
-   - Build  <= 229: onInit.ProgramClearTest() - UninitializeReason() ist REASON_UNDEFINED.
-   - Build     387: onInit.ProgramClearTest() - Broken: Wird nie aufgerufen.
-   - Build 388-628: onInit.ProgramClearTest() - UninitializeReason() ist REASON_REMOVE.
-   - Build  <= 577: onInit.ProgramClearTest() - Wird nur nach einem automatisiertem Test aufgerufen (VisualMode=Off), der Aufruf erfolgt vorm Start
+   - Build  <= 229: onInit_ProgramClearTest() - UninitializeReason() ist REASON_UNDEFINED.
+   - Build     387: onInit_ProgramClearTest() - Broken: Wird nie aufgerufen.
+   - Build 388-628: onInit_ProgramClearTest() - UninitializeReason() ist REASON_REMOVE.
+   - Build  <= 577: onInit_ProgramClearTest() - Wird nur nach einem automatisiertem Test aufgerufen (VisualMode=Off), der Aufruf erfolgt vorm Start
                                                 des n‰chsten Tests.
-   - Build  >= 578: onInit.ProgramClearTest() - Wird auch nach einem manuellen Test aufgerufen (VisualMode=On), nur in diesem Fall erfolgt der Aufruf
+   - Build  >= 578: onInit_ProgramClearTest() - Wird auch nach einem manuellen Test aufgerufen (VisualMode=On), nur in diesem Fall erfolgt der Aufruf
                                                 sofort nach Testende.
-   - Build  >= 633: onInit.ProgramClearTest() - UninitializeReason() ist REASON_CHARTCLOSE.
+   - Build  >= 633: onInit_ProgramClearTest() - UninitializeReason() ist REASON_CHARTCLOSE.
    --------------------------------------------------------------------------------------------------------------------------------------------------
-   - Build 577:     onInit.TimeframeChange()  - Broken: Bricht mit der Logmessage "WARN: expert stopped" ab.
+   - Build 577:     onInit_TimeframeChange()  - Broken: Bricht mit der Logmessage "WARN: expert stopped" ab.
    --------------------------------------------------------------------------------------------------------------------------------------------------
    */
 
@@ -718,18 +718,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
    int    stdlib.GetLastError();
 
-   int    onInit();
-   int    onInit.User();
-   int    onInit.Template();
-   int    onInit.Program();
-   int    onInit.ProgramClearTest();
-   int    onInit.Parameters();
-   int    onInit.TimeframeChange();
-   int    onInit.SymbolChange();
-   int    onInit.Recompile();
-   int    afterInit();
-
-   int    onDeinit();
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -741,7 +729,6 @@ bool EventListener.ChartCommand(string &commands[], int flags=NULL) {
    int    onDeinitTemplate();
    int    onDeinitFailed();
    int    onDeinitClose();
-   int    afterDeinit();
 
    bool   Init.IsNoTick();
    bool   Init.IsNewSymbol(string symbol);
@@ -802,7 +789,7 @@ int onInit() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.User() {
+int onInit_User() {
    return(NO_ERROR);
 }
 
@@ -814,7 +801,7 @@ int onInit.User() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.Template() {
+int onInit_Template() {
    return(NO_ERROR);
 }
 
@@ -824,7 +811,7 @@ int onInit.Template() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.Program() {
+int onInit_Program() {
    return(NO_ERROR);
 }
 
@@ -835,7 +822,7 @@ int onInit.Program() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.ProgramClearTest() {
+int onInit_ProgramClearTest() {
    return(NO_ERROR);
 }
 
@@ -845,7 +832,7 @@ int onInit.ProgramClearTest() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.Parameters() {
+int onInit_Parameters() {
    return(NO_ERROR);
 }
 
@@ -855,7 +842,7 @@ int onInit.Parameters() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.TimeframeChange() {
+int onInit_TimeframeChange() {
    return(NO_ERROR);
 }
 
@@ -865,7 +852,7 @@ int onInit.TimeframeChange() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.SymbolChange() {
+int onInit_SymbolChange() {
    return(NO_ERROR);
 }
 
@@ -875,7 +862,7 @@ int onInit.SymbolChange() {
  *
  * @return int - Fehlerstatus
  *
-int onInit.Recompile() {
+int onInit_Recompile() {
    return(NO_ERROR);
 }
 

@@ -408,46 +408,6 @@
    int      WinExecAndWait(string cmdLine, int cmdShow);
 
 
-   // leere Library-Stubs, können wenn nötig im Hauptmodul "überschrieben" werden
-   int      onInit();
-   int      onInit.User();
-   int      onInit.Template();
-   int      onInit.Program();
-   int      onInit.ProgramClearTest();
-   int      onInit.Parameters();
-   int      onInit.TimeframeChange();
-   int      onInit.SymbolChange();
-   int      onInit.Recompile();
-   int      afterInit();
-
-   int      onStart();                                               // Scripte
-   int      onTick();                                                // EA's + Indikatoren
-
-   // alt
-   int      onInitParameterChange();
-   int      onInitChartChange();
-   int      onInitAccountChange();
-   int      onInitChartClose();
-   int      onInitUndefined();
-   int      onInitRemove();
-   int      onInitRecompile();
-   int      onInitTemplate();                                        // build > 509
-   int      onInitFailed();                                          // build > 509
-   int      onInitClose();                                           // build > 509
-
-   int      onDeinit();
-   int      onDeinitParameterChange();
-   int      onDeinitChartChange();
-   int      onDeinitAccountChange();
-   int      onDeinitChartClose();
-   int      onDeinitUndefined();
-   int      onDeinitRemove();
-   int      onDeinitRecompile();
-   int      onDeinitTemplate();                                      // build > 509
-   int      onDeinitFailed();                                        // build > 509
-   int      onDeinitClose();                                         // build > 509
-   int      afterDeinit();
-
    string   InputsToStr();
    int      ShowStatus(int error);
    void     DummyCalls();

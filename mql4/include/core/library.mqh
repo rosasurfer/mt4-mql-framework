@@ -22,8 +22,10 @@ int init() {
 
    // (1) lokalen Context mit dem Hauptmodulkontext synchronisieren
    bool result = SyncExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
-   if (StringEndsWith(WindowExpertName(), "testlibrary"))
-      debug("init()->SyncExecutionContext() => "+ result);
+   if (WindowExpertName() == "test/testlibrary") {
+      debug("init(1)");
+      //debug("init(1)->SyncExecutionContext() => "+ result);
+   }
 
 
    // (2) globale Variablen (re-)initialisieren                                     // !!! Ist der Hauptmodulkontext noch nicht finalisiert, sind diese Werte falsch !!!
@@ -47,7 +49,8 @@ int init() {
    if (IsTesting())
       Tester.ResetGlobalArrays();                                                // Workaround für die ansonsten im Speicher verbleibenden Variablen des vorherigen Tests.
 
-   return(catch("init(1)"));
+   onInit();
+   return(catch("init(2)"));
 }
 
 
@@ -69,16 +72,17 @@ int start() {
  *
  *
  * NOTE: 1) Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere EA-deinit()-Funktionen verfrüht und nicht
- *          erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. auch nicht mehr ausgeführt.
+ *          erst nach 2.5 Sekunden ab. In diesem Fall wird diese deinit()-Funktion u.U. nicht mehr ausgeführt.
  *
  *       2) Bei Testende wird diese deinit()-Funktion u.U. zweimal aufgerufen. Beim zweiten Mal ist die Library zurückgesetzt, der Variablen-Status also
  *          undefiniert.
  */
 int deinit() {
-   if (StringEndsWith(WindowExpertName(), "testlibrary")) {
-      debug("deinit()");
+   if (WindowExpertName() == "test/testlibrary") {
+      debug("deinit(1)");
    }
-   return(catch("deinit(1)")); __DummyCalls();
+   onDeinit();
+   return(catch("deinit(2)")); __DummyCalls();
 }
 
 
@@ -194,20 +198,13 @@ int UpdateProgramStatus(int value=NULL) {
 
 
 #import "Expander.dll"
-   bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
+  bool   SyncExecutionContext(int ec[], string name, string symbol, int period);
 
-   int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
-   bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
-   string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_ProgramType   (/*EXECUTION_CONTEXT*/int ec[]);
-   int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
+  int    ec_InitFlags     (/*EXECUTION_CONTEXT*/int ec[]);
+  bool   ec_Logging       (/*EXECUTION_CONTEXT*/int ec[]);
+  int    ec_lpSuperContext(/*EXECUTION_CONTEXT*/int ec[]);
+  string ec_ProgramName   (/*EXECUTION_CONTEXT*/int ec[]);
+  int    ec_RootFunction  (/*EXECUTION_CONTEXT*/int ec[]);
 
-   int    ec_setLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
-
-#import "kernel32.dll"
-   int    GetCurrentThreadId();
-
-#import "user32.dll"
-   int    GetParent(int hWnd);
+  int    ec_setLastError  (/*EXECUTION_CONTEXT*/int ec[], int lastError);
 #import

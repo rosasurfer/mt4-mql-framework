@@ -415,7 +415,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
    int    stdlib.GetLastError();
 
-   int    onInit();
    int    onInitAccountChange();
    int    onInitChartChange();
    int    onInitChartClose();
@@ -427,9 +426,7 @@ int UpdateProgramStatus(int value=NULL) {
    int    onInitTemplate();
    int    onInitFailed();
    int    onInitClose();
-   int    afterInit();
 
-   int    onDeinit();
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -441,7 +438,6 @@ int UpdateProgramStatus(int value=NULL) {
    int    onDeinitTemplate();
    int    onDeinitFailed();
    int    onDeinitClose();
-   int    afterDeinit();
 
    string GetWindowText(int hWnd);
 

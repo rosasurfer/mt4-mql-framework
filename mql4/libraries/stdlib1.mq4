@@ -248,23 +248,7 @@ bool Init.IsNewSymbol(string symbol) {
 }
 
 
-// virtuelle Init/Deinit-Handler und Main-Funktionen, können je nach Bedarf überschrieben werden
-int    onInit()                  { return(NO_ERROR); }
-int    onInit.User()             { return(NO_ERROR); }
-int    onInit.Template()         { return(NO_ERROR); }
-int    onInit.Program()          { return(NO_ERROR); }
-int    onInit.ProgramClearTest() { return(      -1); }               // default: weitere Ausführung sofort abbrechen
-int    onInit.Parameters()       { return(NO_ERROR); }
-int    onInit.TimeframeChange()  { return(NO_ERROR); }
-int    onInit.SymbolChange()     { return(NO_ERROR); }
-int    onInit.Recompile()        { return(NO_ERROR); }
-int    afterInit()               { return(NO_ERROR); }
-
-int    onStart()                 { return(NO_ERROR); }
-int    onTick()                  { return(NO_ERROR); }
-
-
-// alt
+// alt: Globale Init/Deinit-Stubs, können bei Bedarf durch lokale Versionen überschrieben werden.
 int    onInitParameterChange()   {                                                                                                            return(NO_ERROR);  }
 int    onInitChartChange()       {                                                                                                            return(NO_ERROR);  }
 int    onInitAccountChange()     {                                   return(catch("onInitAccountChange()  unexpected UninitializeReason",   ERR_RUNTIME_ERROR)); }
@@ -276,7 +260,6 @@ int    onInitTemplate()          { /*build > 509*/                   return(catc
 int    onInitFailed()            { /*build > 509*/                   return(catch("onInitFailed()  unexpected UninitializeReason",          ERR_RUNTIME_ERROR)); }
 int    onInitClose()             { /*build > 509*/                   return(catch("onInitClose()  unexpected UninitializeReason",           ERR_RUNTIME_ERROR)); }
 
-int    onDeinit()                {                                                                                                            return(NO_ERROR);  }
 int    onDeinitParameterChange() {                                                                                                            return(NO_ERROR);  }
 int    onDeinitChartChange()     {                                                                                                            return(NO_ERROR);  }
 int    onDeinitAccountChange()   { if (IsExpert())                   return(catch("onDeinitAccountChange()  unexpected UninitializeReason", ERR_RUNTIME_ERROR));
@@ -289,7 +272,6 @@ int    onDeinitRecompile()       {                                              
 int    onDeinitTemplate()        { /*build > 509*/                     /*_warn("onDeinitTemplate()  unexpected UninitializeReason");*/        return(NO_ERROR);  }
 int    onDeinitFailed()          { /*build > 509*/                     /*_warn("onDeinitFailed()  unexpected UninitializeReason");  */        return(NO_ERROR);  }
 int    onDeinitClose()           { /*build > 509*/                     /*_warn("onDeinitClose()  unexpected UninitializeReason");   */        return(NO_ERROR);  }
-int    afterDeinit()             {                                                                                                            return(NO_ERROR);  }
 
 string InputsToStr()             {                                                  return("InputsToStr()  function not implemented"); }
 int    ShowStatus(int error)     { Comment("\n\n\n\nShowStatus() not implemented"); return(error); }

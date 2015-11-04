@@ -578,7 +578,6 @@ int Tester.Stop() {
    int    stdlib.deinit(/*EXECUTION_CONTEXT*/int ec[]);
    int    stdlib.GetLastError();
 
-   int    onInit();
    int    onInitAccountChange();
    int    onInitChartChange();
    int    onInitChartClose();
@@ -590,9 +589,7 @@ int Tester.Stop() {
    int    onInitTemplate();
    int    onInitFailed();
    int    onInitClose();
-   int    afterInit();
 
-   int    onDeinit();
    int    onDeinitAccountChange();
    int    onDeinitChartChange();
    int    onDeinitChartClose();
@@ -604,7 +601,6 @@ int Tester.Stop() {
    int    onDeinitTemplate();
    int    onDeinitFailed();
    int    onDeinitClose();
-   int    afterDeinit();
 
    int    ShowStatus(int error);
 

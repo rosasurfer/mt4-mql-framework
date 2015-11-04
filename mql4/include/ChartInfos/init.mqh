@@ -85,7 +85,7 @@ int onInit() {
  *
  * @return int - Fehlerstatus
  */
-int onInit.User() {
+int onInit_User() {
    if (isLfxInstrument) {
       // LFX-Status einlesen
       if (!RestoreLfxStatusFromFile())
@@ -100,7 +100,7 @@ int onInit.User() {
  *
  * @return int - Fehlerstatus
  */
-int onInit.Template() {
+int onInit_Template() {
    if (isLfxInstrument) {
       // LFX-Status neu einlesen
       if (!RestoreLfxStatusFromFile())
@@ -115,7 +115,7 @@ int onInit.Template() {
  *
  * @return int - Fehlerstatus
  */
-int onInit.Parameters() {
+int onInit_Parameters() {
    if (isLfxInstrument) {
       // in Library gespeicherten LFX-Status restaurieren
       if (!RestoreLfxStatusFromLib())
@@ -130,7 +130,7 @@ int onInit.Parameters() {
  *
  * @return int - Fehlerstatus
  */
-int onInit.TimeframeChange() {
+int onInit_TimeframeChange() {
    if (isLfxInstrument) {
       // in Library gespeicherten LFX-Status restaurieren
       if (!RestoreLfxStatusFromLib())
@@ -145,7 +145,7 @@ int onInit.TimeframeChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit.SymbolChange() {
+int onInit_SymbolChange() {
    if (isLfxInstrument) {
       // LFX-Status des alten Symbols speichern (liegt noch in Library)
       if (!RestoreLfxStatusFromLib())  return(last_error);
@@ -163,7 +163,7 @@ int onInit.SymbolChange() {
  *
  * @return int - Fehlerstatus
  */
-int onInit.Recompile() {
+int onInit_Recompile() {
    if (isLfxInstrument) {
       // LFX-Status neu einlesen
       if (!RestoreLfxStatusFromFile())

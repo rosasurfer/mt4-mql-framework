@@ -8,7 +8,27 @@ int   __INIT_FLAGS__[];
 int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-#include <stdlib.mqh>
+//#include <stdlib.mqh>
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   //debug("onInit(1)");
+   return(last_error);
+}
+
+
+/**
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   //debug("onDeinit(1)");
+   return(last_error);
+}
 
 
 /**
@@ -32,6 +52,7 @@ int ex4_GetIntValue(int value) {
  *
  */
 void testlibrary() {
+   debug("testlibrary(1)");
 }
 
 
