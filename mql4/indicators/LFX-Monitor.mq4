@@ -742,20 +742,29 @@ bool RecordLfxIndices() {
 
    for (int i=0; i < size; i++) {
       if (recording[i]) /*&&*/ if (isMainIndex[i]) {
-         double tickValue     = mainIndex     [i];
-         double lastTickValue = mainIndex.last[i];
+         double tickValue     = NormalizeDouble(mainIndex     [i], digits[i]);
+         double lastTickValue =                 mainIndex.last[i];
 
          // Virtuelle Ticks werden nur aufgezeichnet, wenn sich der Indexwert geändert hat.
          bool skipTick = false;
-         if (Tick.isVirtual)
+         if (Tick.isVirtual) {
             skipTick = (!lastTickValue || EQ(tickValue, lastTickValue, digits[i]));
-
-         if (skipTick) {
-            //debug("RecordLfxIndices(1)  skipping "+ names[i] +" tick "+ DoubleToStr(tickValue, digits[i]));
+            //if (skipTick) debug("RecordLfxIndices(1)  "+ zTick +"  skipping virtual "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +"  lastTick="+ NumberToStr(lastTickValue, "."+ (digits[i]-1) +"'") +"  tick"+ ifString(EQ(tickValue, lastTickValue, digits[i]), "==", "!=") +"lastTick");
          }
-         else {
-            //debug("RecordLfxIndices(2)  recording "+ names[i] +" tick "+ DoubleToStr(tickValue, digits[i]));
 
+         if (!skipTick) {
+            if (!lastTickValue) {
+               skipTick = true;
+               //debug("RecordLfxIndices(2)  "+ zTick +"  skipping first "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +" (no last tick)");
+            }
+            else if (MathAbs(tickValue/lastTickValue - 1.0) > 0.005) {
+               skipTick = true;
+               warn("RecordLfxIndices(3)  "+ zTick +"  skipping supposed "+ names[i] +" mis-tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +" (lastTick: "+ NumberToStr(lastTickValue, "."+ (digits[i]-1) +"'") +")");
+            }
+         }
+
+         if (!skipTick) {
+            //debug("RecordLfxIndices(5)  "+ zTick +"  recording "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'"));
             if (!hSet[i]) {
                string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
                int    format      = 400;
