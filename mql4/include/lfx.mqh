@@ -658,7 +658,6 @@ void DummyCalls() {
    bool     IsIniKey(string fileName, string section, string key);
    bool     IsPendingTradeOperation(int value);
    bool     IsTradeOperation(int value);
-   string   JoinStrings(string array[], string separator);
    string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);

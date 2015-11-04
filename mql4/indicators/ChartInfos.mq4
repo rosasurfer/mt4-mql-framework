@@ -33,6 +33,7 @@ extern bool Positions.LogTickets = false;                         // ob die Tick
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinStrings.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <win32api.mqh>

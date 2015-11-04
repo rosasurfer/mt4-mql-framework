@@ -21,6 +21,7 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
 #include <structs/mt4/HISTORY_HEADER.mqh>
 
@@ -82,9 +83,10 @@ double   hf.collectedBar.data         [][6];       // Bar-Daten (T-OHLCV)
 /**
  * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet.Create() erzeugt,
  * muß mindestens ein HistoryFile des Symbols existieren. Nicht existierende HistoryFiles werden dann beim Speichern der ersten hinzugefügten
- * Daten automatisch erstellt (altes Datenformat).
+ * Daten automatisch im alten Datenformat (400) erstellt.
  *
- * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
+ * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
+ * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.
  *
  * @param  __IN__ string symbol    - Symbol
  * @param  __IN__ bool   synthetic - ob das Instrument synthetisch ist und die History im Serververzeichnis ".\history\XTrade-Synthetic\" gespeichert wird (default: FALSE)
@@ -116,7 +118,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
    for (i=0; i < size; i++) {                                        // Das Handle muß offen sein.
       if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (hf.synthetic[i]==synthetic) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         hs.__ResizeInternalArrays(size);
+         hs.__ResizeArrays(size);
          iH   = size-1;
          hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
@@ -145,7 +147,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
       fullName = hstDirectory + baseName;
 
       if (IsFile(fullName)) {                                        // wenn Datei existiert
-         hFile = FileOpen(mqlName, FILE_BIN|FILE_READ);              // Datei öffnen: FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink)
+         hFile = FileOpen(mqlName, FILE_BIN|FILE_READ);              // Datei öffnen: FileOpenHistory() kann nicht mit Unterverzeichnissen umgehen => FileOpen(symlink) benutzen
          if (hFile <= 0) return(!catch("HistorySet.Get(3)  hFile(\""+ mqlName +"\") = "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR)));
 
          fileSize = FileSize(hFile);                                 // Datei geöffnet
@@ -160,7 +162,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
          FileClose(hFile);
 
          size = Max(ArraySize(hs.hSet), 1) + 1;                      // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         hs.__ResizeInternalArrays(size);
+         hs.__ResizeArrays(size);
          iH   = size-1;
          hSet = iH;                                                  // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
@@ -170,11 +172,11 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
          hs.description[iH] = hh.Description(hh);
          hs.digits     [iH] = hh.Digits     (hh);
          hs.synthetic  [iH] = synthetic;
-         hs.format     [iH] = 400;                                // Default für neu zu erstellende HistoryFiles
+         hs.format     [iH] = 400;                                   // Default für neu zu erstellende HistoryFiles
 
          //debug("HistorySet.Get(0.3)  file=\""+ mqlName +"\"  symbol=\""+ hs.symbol[iH] +"\"  description=\""+ hs.description[iH] +"\"  digits="+ hs.digits[iH]);
          ArrayResize(hh, 0);
-         return(hSet);
+         return(hSet);                                               // Rückkehr nach der ersten ausgewerteten Datei
       }
    }
 
@@ -284,7 +286,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
 
    // (4) neues HistorySet erzeugen
    size = Max(ArraySize(hs.hSet), 1) + 1;                            // minSize=2: auf Index[0] kann kein gültiges Handle liegen
-   hs.__ResizeInternalArrays(size);
+   hs.__ResizeArrays(size);
    int iH   = size-1;
    int hSet = iH;                                                    // das Set-Handle entspricht jeweils dem Index in hs.*[]
 
@@ -353,7 +355,9 @@ bool HistorySet.Close(int hSet) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
       if (hs.hSet[hSet] == 0)         return(!catch("HistorySet.Close(3)  unknown set handle "+ hSet, ERR_INVALID_PARAMETER));
    }
-   else hs.hSet.lastValid = NULL;
+   else {
+      hs.hSet.lastValid = NULL;
+   }
    if (hs.hSet[hSet] < 0) return(true);                              // Handle wurde bereits geschlossen (kann ignoriert werden)
 
    int sizeOfPeriods = ArraySize(periods);
@@ -391,15 +395,6 @@ bool HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL) {
       hs.hSet.lastValid = hSet;
    }
    if (time <= 0)                     return(!catch("HistorySet.AddTick(5)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER));
-
-   /*
-   static double lastTick = 0;
-   if (hs.symbolU[hSet] == "USDLFX") {
-      if (EQ(value, lastTick, hs.digits[hSet])) debug("HistorySet.AddTick(0.1)  duplicate tick "+ NumberToStr(value, ".4'"));
-      else                                      debug("HistorySet.AddTick(0.2)  different tick "+ NumberToStr(value, ".4'"));
-      lastTick = value;
-   }
-   */
 
    // Dateihandles holen und jeweils Tick hinzufügen
    int hFile, sizeOfPeriods=ArraySize(periods);
@@ -521,27 +516,49 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 
 
    // (4) Daten zwischenspeichern
-   if (hFile >= ArraySize(hf.hFile))
-      hf.__ResizeInternalArrays(hFile+1);
+   if (hFile >= ArraySize(hf.hFile))                                 // neues Datei-Handle: Arrays vergrößer
+      hf.__ResizeArrays(hFile+1);                                    // andererseits von FileOpen() wiederverwendetes Handle
 
-                hf.hFile      [hFile] = hFile;
-                hf.name       [hFile] = baseName;
-                hf.readAccess [hFile] = !write_only;
-                hf.writeAccess[hFile] = !read_only;
-                hf.size       [hFile] = fileSize;
+   hf.hFile                     [hFile]        = hFile;
+   hf.name                      [hFile]        = baseName;
+   hf.readAccess                [hFile]        = !write_only;
+   hf.writeAccess               [hFile]        = !read_only;
+   hf.size                      [hFile]        = fileSize;
 
-   ArraySetInts(hf.header,     hFile, hh);                           // entspricht: hf.header[hFile] = hh;
-                hf.format     [hFile] = hh.Format(hh);
-                hf.symbol     [hFile] = hh.Symbol(hh);
-                hf.symbolU    [hFile] = symbolU;
-                hf.period     [hFile] = timeframe;
-                hf.periodSecs [hFile] = timeframe * MINUTES;
-                hf.digits     [hFile] = hh.Digits(hh);
-                hf.synthetic  [hFile] = synthetic;
+   ArraySetInts(hf.header,       hFile,          hh);                // entspricht: hf.header[hFile] = hh;
+   hf.format                    [hFile]        = hh.Format(hh);
+   hf.symbol                    [hFile]        = hh.Symbol(hh);
+   hf.symbolU                   [hFile]        = symbolU;
+   hf.period                    [hFile]        = timeframe;
+   hf.periodSecs                [hFile]        = timeframe * MINUTES;
+   hf.digits                    [hFile]        = hh.Digits(hh);
+   hf.synthetic                 [hFile]        = synthetic;
 
-                hf.bars       [hFile] = bars;
-                hf.from       [hFile] = from;
-                hf.to         [hFile] = to;
+   hf.bars                      [hFile]        = bars;
+   hf.from                      [hFile]        = from;
+   hf.to                        [hFile]        = to;
+
+   hf.currentBar.offset         [hFile]        = -1;                 // vorhandene Bardaten zurücksetzen (vor allem bei wiederverwendetem Handle)
+   hf.currentBar.openTime       [hFile]        =  0;
+   hf.currentBar.closeTime      [hFile]        =  0;
+   hf.currentBar.nextCloseTime  [hFile]        =  0;
+   hf.currentBar.data           [hFile][BAR_T] =  0;
+   hf.currentBar.data           [hFile][BAR_O] =  0;
+   hf.currentBar.data           [hFile][BAR_H] =  0;
+   hf.currentBar.data           [hFile][BAR_L] =  0;
+   hf.currentBar.data           [hFile][BAR_C] =  0;
+   hf.currentBar.data           [hFile][BAR_V] =  0;
+
+   hf.collectedBar.offset       [hFile]        = -1;
+   hf.collectedBar.openTime     [hFile]        =  0;
+   hf.collectedBar.closeTime    [hFile]        =  0;
+   hf.collectedBar.nextCloseTime[hFile]        =  0;
+   hf.collectedBar.data         [hFile][BAR_T] =  0;
+   hf.collectedBar.data         [hFile][BAR_O] =  0;
+   hf.collectedBar.data         [hFile][BAR_H] =  0;
+   hf.collectedBar.data         [hFile][BAR_L] =  0;
+   hf.collectedBar.data         [hFile][BAR_C] =  0;
+   hf.collectedBar.data         [hFile][BAR_V] =  0;
 
    ArrayResize(hh, 0);
 
@@ -1259,6 +1276,30 @@ bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
 
 
 /**
+ * Setzt die Größe der internen HistorySet-Datenarrays auf den angegebenen Wert.
+ *
+ * @param  int size - neue Größe
+ *
+ * @return int - neue Größe der Arrays
+ *
+ * @private
+ */
+int hs.__ResizeArrays(int size) {
+   if (size != ArraySize(hs.hSet)) {
+      ArrayResize(hs.hSet,        size);
+      ArrayResize(hs.symbol,      size);
+      ArrayResize(hs.symbolU,     size);
+      ArrayResize(hs.description, size);
+      ArrayResize(hs.digits,      size);
+      ArrayResize(hs.synthetic,   size);
+      ArrayResize(hs.hFile,       size);
+      ArrayResize(hs.format,      size);
+   }
+   return(size);
+}
+
+
+/**
  * Setzt die Größe der internen HistoryFile-Datenarrays auf den angegebenen Wert.
  *
  * @param  int size - neue Größe
@@ -1267,7 +1308,7 @@ bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
  *
  * @private
  */
-int hf.__ResizeInternalArrays(int size) {
+int hf.__ResizeArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {
@@ -1306,30 +1347,6 @@ int hf.__ResizeInternalArrays(int size) {
          hf.currentBar.offset  [i] = -1;
          hf.collectedBar.offset[i] = -1;
       }
-   }
-   return(size);
-}
-
-
-/**
- * Setzt die Größe der internen HistorySet-Datenarrays auf den angegebenen Wert.
- *
- * @param  int size - neue Größe
- *
- * @return int - neue Größe der Arrays
- *
- * @private
- */
-int hs.__ResizeInternalArrays(int size) {
-   if (size != ArraySize(hs.hSet)) {
-      ArrayResize(hs.hSet,        size);
-      ArrayResize(hs.symbol,      size);
-      ArrayResize(hs.symbolU,     size);
-      ArrayResize(hs.description, size);
-      ArrayResize(hs.digits,      size);
-      ArrayResize(hs.synthetic,   size);
-      ArrayResize(hs.hFile,       size);
-      ArrayResize(hs.format,      size);
    }
    return(size);
 }
@@ -1687,13 +1704,13 @@ int hf.LastSync(int hFile) {
  * @return bool - Erfolgsstatus
  */
 bool history.CloseFiles(bool warn=false) {
-   warn = warn!=0;
+   bool _warn = warn!=0;
 
    int error, size=ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         if (warn) warn("history.CloseFiles(1)  open file handle "+ hf.hFile[i] +" found: "+ DoubleQuoteStr(hf.name[i]));
+         if (_warn) warn("history.CloseFiles(1)  open file handle "+ hf.hFile[i] +" found: "+ DoubleQuoteStr(hf.name[i]));
 
          if (!HistoryFile.Close(hf.hFile[i]))
             error = last_error;
@@ -1719,8 +1736,8 @@ int history.GetLastError() {
 void Tester.ResetGlobalArrays() {
    ArrayResize(stack.orderSelections, 0);
 
-   hs.__ResizeInternalArrays(0);
-   hf.__ResizeInternalArrays(0);
+   hs.__ResizeArrays(0);
+   hf.__ResizeArrays(0);
 }
 
 
@@ -1730,7 +1747,6 @@ void Tester.ResetGlobalArrays() {
  * @return int - Fehlerstatus
  */
 int onInit() {
-   debug("onInit()  hf.hFile="+ IntsToStr(hf.hFile, NULL));
    return(last_error);
 }
 
@@ -1741,7 +1757,6 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   bool _warn = true;
-   history.CloseFiles(_warn);
+   history.CloseFiles(true);
    return(last_error);
 }

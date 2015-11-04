@@ -357,7 +357,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
 
 
 #import "stdlib1.ex4"
-   string JoinStrings(string array[], string separator);
    string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 
