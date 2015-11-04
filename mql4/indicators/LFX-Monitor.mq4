@@ -49,18 +49,18 @@ extern bool   USDX.Enabled      = true;
 #property indicator_chart_window
 
 
-string symbols    [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "LFXJPY", "NZDLFX", "USDLFX", "EURX", "USDX" };
-string names      [] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "1/JPY" , "NZD"   , "USD"   , "EURX", "USDX" };
-int    digits     [] = {        5,        5,        5,        5,        5,        5,        3,        5,        5,      3,      3 };
+string symbols    [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "EURX", "USDX" };
+string names      [] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"   , "USD"   , "EURX", "USDX" };
+int    digits     [] = {        5,        5,        5,        5,        5,        5,        5,        5,      3,      3 };
 
-bool   isMainIndex   [11];                                           // ob der über die Haupt-Pairs berechnete Index einer Währung verfügbar ist
-double mainIndex     [11];                                           // aktueller Indexwert
-double mainIndex.last[11];                                           // vorheriger Indexwert für RecordLfxIndices()
+bool   isMainIndex   [10];                                           // ob der über die Haupt-Pairs berechnete Index einer Währung verfügbar ist
+double mainIndex     [10];                                           // aktueller Indexwert
+double mainIndex.last[10];                                           // vorheriger Indexwert für RecordLfxIndices()
 
-bool   recording     [11];                                           // default: FALSE
-int    hSet          [11];                                           // HistorySet-Handles der Indizes
+bool   recording     [10];                                           // default: FALSE
+int    hSet          [10];                                           // HistorySet-Handles der Indizes
 
-string labels        [11];                                           // Label für Visualisierung
+string labels        [10];                                           // Label für Visualisierung
 string label.animation;
 string label.animation.chars[] = {"|", "/", "—", "\\"};
 
@@ -78,11 +78,10 @@ int    tickTimerId;                                                  // ID des T
 #define I_EUR   3
 #define I_GBP   4
 #define I_JPY   5
-#define I_YPJ   6                                                    // JPYLFX Reverse-Index (LFXJPY)
-#define I_NZD   7
-#define I_USD   8
-#define I_EUX   9
-#define I_USX  10
+#define I_NZD   6
+#define I_USD   7
+#define I_EUX   8
+#define I_USX   9
 
 
 /**
@@ -100,7 +99,6 @@ int onInit() {
       recording[I_EUR] = EUR.Enabled;  count += EUR.Enabled;
       recording[I_GBP] = GBP.Enabled;  count += GBP.Enabled;
       recording[I_JPY] = JPY.Enabled;  count += JPY.Enabled;
-      recording[I_YPJ] = JPY.Enabled;  count += JPY.Enabled;
       recording[I_NZD] = NZD.Enabled;  count += NZD.Enabled;
       recording[I_USD] = USD.Enabled;  count += USD.Enabled;
       recording[I_EUX] = EURX.Enabled; count += EURX.Enabled;
@@ -108,13 +106,11 @@ int onInit() {
 
       if (count > 7) {                                               // Je MQL-Modul können maximal 64 Dateien gleichzeitig offen sein (entspricht 7 Instrumenten).
          for (int i=ArraySize(recording)-1; i >= 0; i--) {
-            if (i == I_JPY) continue;
-            if (i == I_YPJ) continue;
-
             if (recording[i]) {
                recording[i] = false;
                count--;
-               if (count <= 7) break;
+               if (count <= 7)
+                  break;
             }
          }
       }
@@ -193,9 +189,9 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 74);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 90);
       ObjectSet    (label, OBJPROP_YDISTANCE, 56);
-      ObjectSetText(label, "g", 148, "Webdings", bgColor);
+      ObjectSetText(label, "g", 136, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -208,7 +204,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 13);
       ObjectSet    (label, OBJPROP_YDISTANCE, 56);
-      ObjectSetText(label, "g", 148, "Webdings", bgColor);
+      ObjectSetText(label, "g", 136, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -343,7 +339,6 @@ bool UpdateInfos() {
    double eurlfx.crs, eurlfx.crs_Bid, eurlfx.crs_Ask, eurlfx.main_Bid, eurlfx.main_Ask;
    double gbplfx.crs, gbplfx.crs_Bid, gbplfx.crs_Ask, gbplfx.main_Bid, gbplfx.main_Ask;
    double jpylfx.crs, jpylfx.crs_Bid, jpylfx.crs_Ask, jpylfx.main_Bid, jpylfx.main_Ask;
-   double lfxjpy.crs, lfxjpy.crs_Bid, lfxjpy.crs_Ask, lfxjpy.main_Bid, lfxjpy.main_Ask;
    double nzdlfx.crs, nzdlfx.crs_Bid, nzdlfx.crs_Ask, nzdlfx.main_Bid, nzdlfx.main_Ask;
    double                                             usdx.main_Bid,   usdx.main_Ask;
    double                                             eurx.main_Bid,   eurx.main_Ask;
@@ -515,7 +510,7 @@ bool UpdateInfos() {
    }
    isMainIndex[I_GBP] = isMainIndex[I_USD];
 
-   // JPYLFX + LFXJPY
+   // JPYLFX
    //     audjpy_Bid = ...
    //     cadjpy_Bid = ...
    //     chfjpy_Bid = ...
@@ -527,22 +522,13 @@ bool UpdateInfos() {
       jpylfx.crs     = 100 * MathPow(1 / (audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
       jpylfx.crs_Bid = 100 * MathPow(1 / (audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
       jpylfx.crs_Ask = 100 * MathPow(1 / (audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
-
-      lfxjpy.crs     = 100 / jpylfx.crs;
-      lfxjpy.crs_Bid = 100 / jpylfx.crs_Ask;
-      lfxjpy.crs_Ask = 100 / jpylfx.crs_Bid;
    }
    if (isMainIndex[I_USD]) {
       mainIndex[I_JPY] = 100 * mainIndex[I_USD] / usdjpy;
       jpylfx.main_Bid  = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
       jpylfx.main_Ask  = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
-
-      mainIndex[I_YPJ] = 100 / mainIndex[I_JPY];
-      lfxjpy.main_Bid  = 100 / jpylfx.main_Ask;
-      lfxjpy.main_Ask  = 100 / jpylfx.main_Bid;
    }
    isMainIndex[I_JPY] = isMainIndex[I_USD];
-   isMainIndex[I_YPJ] = isMainIndex[I_USD];
 
    // NZDLFX
    double audnzd_Bid = MarketInfo("AUDNZD", MODE_BID), audnzd_Ask = MarketInfo("AUDNZD", MODE_ASK), audnzd = (audnzd_Bid + audnzd_Ask)/2;
@@ -671,7 +657,6 @@ bool UpdateInfos() {
    if (!EUR.Enabled) sValue = "off"; else if (is_eurlfx.crs) sValue = NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_EUR] +".quote.cross",  sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled) sValue = "off"; else if (is_gbplfx.crs) sValue = NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_GBP] +".quote.cross",  sValue, fontSize, fontName, fontColor);
    if (!JPY.Enabled) sValue = "off"; else if (is_jpylfx.crs) sValue = NumberToStr(NormalizeDouble(jpylfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_JPY] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled) sValue = "off"; else if (is_jpylfx.crs) sValue = NumberToStr(NormalizeDouble(lfxjpy.crs, 3), ".2'"); else sValue = " ";             ObjectSetText(labels[I_YPJ] +".quote.cross",  sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled) sValue = "off"; else if (is_nzdlfx.crs) sValue = NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_NZD] +".quote.cross",  sValue, fontSize, fontName, fontColor);
                      sValue = "-";                                                                                                                       ObjectSetText(labels[I_USX] +".quote.cross",  sValue, fontSize, fontName, fontColor);
                      sValue = "-";                                                                                                                       ObjectSetText(labels[I_EUX] +".quote.cross",  sValue, fontSize, fontName, fontColor);
@@ -684,7 +669,6 @@ bool UpdateInfos() {
    if (!EUR.Enabled || !is_eurlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_EUR] +".spread.cross", sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled || !is_gbplfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_GBP] +".spread.cross", sValue, fontSize, fontName, fontColor);
    if (!JPY.Enabled || !is_jpylfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_JPY] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled || !is_jpylfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((lfxjpy.crs_Ask-lfxjpy.crs_Bid)*  100, 1) +")";                      ObjectSetText(labels[I_YPJ] +".spread.cross", sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled || !is_nzdlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_NZD] +".spread.cross", sValue, fontSize, fontName, fontColor);
                                        sValue = " ";                                                                                                     ObjectSetText(labels[I_USX] +".spread.cross", sValue, fontSize, fontName, fontColor);
                                        sValue = " ";                                                                                                     ObjectSetText(labels[I_EUX] +".spread.cross", sValue, fontSize, fontName, fontColor);
@@ -697,7 +681,6 @@ bool UpdateInfos() {
    if (!EUR.Enabled ) sValue = "off"; else if (isMainIndex[I_EUR]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUR], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_EUR] +".quote.main",   sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled ) sValue = "off"; else if (isMainIndex[I_GBP]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_GBP], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_GBP] +".quote.main",   sValue, fontSize, fontName, fontColor);
    if (!JPY.Enabled ) sValue = "off"; else if (isMainIndex[I_JPY]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_JPY], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_JPY] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled ) sValue = "off"; else if (isMainIndex[I_YPJ]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_YPJ], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_YPJ] +".quote.main",   sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled ) sValue = "off"; else if (isMainIndex[I_NZD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_NZD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_NZD] +".quote.main",   sValue, fontSize, fontName, fontColor);
    if (!USDX.Enabled) sValue = "off"; else if (isMainIndex[I_USX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_USX] +".quote.main",   sValue, fontSize, fontName, fontColor);
    if (!EURX.Enabled) sValue = "off"; else if (isMainIndex[I_EUX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_EUX] +".quote.main",   sValue, fontSize, fontName, fontColor);
@@ -710,7 +693,6 @@ bool UpdateInfos() {
    if (!EUR.Enabled  || !isMainIndex[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.main_Ask-eurlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_EUR] +".spread.main",  sValue, fontSize, fontName, fontColor);
    if (!GBP.Enabled  || !isMainIndex[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.main_Ask-gbplfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_GBP] +".spread.main",  sValue, fontSize, fontName, fontColor);
    if (!JPY.Enabled  || !isMainIndex[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.main_Ask-jpylfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_JPY] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled  || !isMainIndex[I_YPJ]) sValue = " "; else sValue = "("+ DoubleToStr((lfxjpy.main_Ask-lfxjpy.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_YPJ] +".spread.main",  sValue, fontSize, fontName, fontColor);
    if (!NZD.Enabled  || !isMainIndex[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.main_Ask-nzdlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_NZD] +".spread.main",  sValue, fontSize, fontName, fontColor);
    if (!USDX.Enabled || !isMainIndex[I_USX]) sValue = " "; else sValue = "("+ DoubleToStr((  usdx.main_Ask-  usdx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_USX] +".spread.main",  sValue, fontSize, fontName, fontColor);
    if (!EURX.Enabled || !isMainIndex[I_EUX]) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.main_Ask-  eurx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_EUX] +".spread.main",  sValue, fontSize, fontName, fontColor);
@@ -784,11 +766,5 @@ bool RecordLfxIndices() {
       }
    }
    return(true);
-
-
-   // Ablauf
-   int hSet = HistorySet.Get(symbols[i], synthetic);
-   HistorySet.AddTick(hSet, Tick.Time, tickValue, flags);
-   HistorySet.Close(hSet);
 }
 
