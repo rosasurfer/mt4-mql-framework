@@ -56,7 +56,6 @@ int onInit() {
             if (!AddSymbol("EURLFX")) return(last_error);
             if (!AddSymbol("GBPLFX")) return(last_error);
             if (!AddSymbol("JPYLFX")) return(last_error);
-            if (!AddSymbol("LFXJPY")) return(last_error);
             if (!AddSymbol("NZDLFX")) return(last_error);
             if (!AddSymbol("USDLFX")) return(last_error);
          }
@@ -82,7 +81,7 @@ bool AddSymbol(string symbol) {
    if (StringInArray(servedSymbols, symbol))
       return(true);
 
-   string lfx.symbols[] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "LFXJPY", "NZDLFX", "USDLFX" };
+   string lfx.symbols[] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX" };
    string lfx.pairs  [] = { "AUDUSD", "USDCAD", "USDCHF", "EURUSD", "GBPUSD", "USDJPY" };
 
    string ice.symbols[] = { "EURX", "USDX" };

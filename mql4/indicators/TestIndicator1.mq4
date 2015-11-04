@@ -21,7 +21,7 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   debug("onInit(1)");
+   //debug("onInit(1)");
    return(last_error);
 }
 
@@ -32,8 +32,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   debug("onTick(1)");
-   testlibrary();
+   debug("onTick()  Tick="+ Tick +"  Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    return(last_error);
 }
 
@@ -43,6 +42,6 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   debug("onDeinit(1)");
+   //debug("onDeinit(1)");
    return(last_error);
 }

@@ -8753,9 +8753,9 @@ CAD.Enabled=0
 CHF.Enabled=0
 EUR.Enabled=0
 GBP.Enabled=0
-JPY.Enabled=1
+JPY.Enabled=0
 NZD.Enabled=0
-USD.Enabled=0
+USD.Enabled=1
 USDX.Enabled=1
 EURX.Enabled=1
 </inputs>
