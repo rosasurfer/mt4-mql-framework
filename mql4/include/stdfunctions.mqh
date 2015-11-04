@@ -4026,7 +4026,7 @@ void __DummyCalls() {
 
 
 /*
-#import "this-library-does-not-exist.ex4"                                     // zum Testen von stdfunctions.mqh ohne core-Dateien
+#import "library-does-not-exist.ex4"                                       // zum Testen von stdfunctions.mqh ohne core-Dateien
    bool     IsExpert();
    bool     IsScript();
    bool     IsIndicator();
@@ -4059,7 +4059,7 @@ void __DummyCalls() {
    int      ArrayPushString(string array[], string value);
    string   ByteToHexStr(int byte);
    string   DoubleToStrEx(double value, int digits);
-   void     DummyCalls();                                                     // Library-Stub: *kann* lokal überschrieben werden
+   void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    bool     GetConfigBool(string section, string key, bool defaultValue);
    int      GetCustomLogID();
    double   GetIniDouble(string fileName, string section, string key, double defaultValue);
@@ -4087,6 +4087,23 @@ void __DummyCalls() {
    int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
 
+   int      onInit();                                                      // Stubs, können bei Bedarf im Modul durch konkrete Versionen "überschrieben" werden.
+   int      onInit_User();
+   int      onInit_Template();
+   int      onInit_Program();
+   int      onInit_ProgramClearTest();
+   int      onInit_Parameters();
+   int      onInit_TimeframeChange();
+   int      onInit_SymbolChange();
+   int      onInit_Recompile();
+   int      afterInit();
+
+   int      onStart();                                                     // Scripte
+   int      onTick();                                                      // EA's + Indikatoren
+
+   int      onDeinit();
+   int      afterDeinit();
+
    int      GetApplicationWindow();
    datetime GetGmtTime();
    int      GetIntsAddress(int buffer[]);
@@ -4101,13 +4118,13 @@ void __DummyCalls() {
  //bool     RemoveTickTimer(int timerId);
 
 #import "MT4iQuickChannel.dll"
-   int      SetupTimedTicks(int hWnd, int millis);                            // für korrekte Zeiten muß der Parameter 'millis' durch 1.56 geteilt werden
-   bool     RemoveTimedTicks(int timerId);                                    // Ticks funktionieren nicht in Offline-Charts, Workaround: MT4Expander::SetupTickTimer()
+   int      SetupTimedTicks(int hWnd, int millis);                         // für korrekte Zeiten muß der Parameter 'millis' durch 1.56 geteilt werden
+   bool     RemoveTimedTicks(int timerId);                                 // Ticks funktionieren nicht in Offline-Charts, Workaround: MT4Expander::SetupTickTimer()
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
-   void     OutputDebugStringA(string lpMessage);                             // funktioniert nur für Admins
+   void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
 
 #import "user32.dll"

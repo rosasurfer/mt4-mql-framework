@@ -1301,11 +1301,11 @@ int hf.__ResizeInternalArrays(int size) {
       ArrayResize(hf.collectedBar.closeTime,     size);
       ArrayResize(hf.collectedBar.nextCloseTime, size);
       ArrayResize(hf.collectedBar.data,          size);
-   }
 
-   for (int i=size-1; i >= oldSize; i--) {                           // falls Arrays vergrößert werden, neue Offsets initialisieren
-      hf.currentBar.offset  [i] = -1;
-      hf.collectedBar.offset[i] = -1;
+      for (int i=size-1; i >= oldSize; i--) {                        // falls Arrays vergrößert werden, neue Offsets initialisieren
+         hf.currentBar.offset  [i] = -1;
+         hf.collectedBar.offset[i] = -1;
+      }
    }
    return(size);
 }
@@ -1721,4 +1721,27 @@ void Tester.ResetGlobalArrays() {
 
    hs.__ResizeInternalArrays(0);
    hf.__ResizeInternalArrays(0);
+}
+
+
+/**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   debug("onInit()  hf.hFile="+ IntsToStr(hf.hFile, NULL));
+   return(last_error);
+}
+
+
+/**
+ * Deinitialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onDeinit() {
+   bool _warn = true;
+   history.CloseFiles(_warn);
+   return(last_error);
 }
