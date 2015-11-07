@@ -303,7 +303,7 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    if (false && synthetic) {
       // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
       string groupName, prefix=StringLeft(symbolU, 3), suffix=StringRight(symbolU, 3);
-      string accountDataSuffixes[] = {".AB", ".EQ", ".FM", ".LV", ".PL", ".UM"};
+      string accountDataSuffixes[] = {".BA", ".BX", ".EA", ".EX", ".LA", ".PL"};
 
       // Gruppe bestimmen und deren Index ermitteln
       bool isAccountData   =  StringInArray(accountDataSuffixes, suffix);
@@ -321,16 +321,13 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
 
 
       /*
-      if      (suffix == ".AB") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix)); }
-      else if (suffix == ".EQ") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix)); }
-      else if (suffix == ".LV") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Leverage", " #", prefix)); }
-      else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Profit/Loss"     , " #", prefix)); }
-      else if (suffix == ".FM") { if (StringIsDigit(prefix)) return(StringConcatenate("Free Margin"     , " #", prefix)); }
-      else if (suffix == ".UM") { if (StringIsDigit(prefix)) return(StringConcatenate("Used Margin"     , " #", prefix)); }
+      if      (suffix == ".BA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix          )); }
+      else if (suffix == ".BX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix, " + AuM")); }
+      else if (suffix == ".EA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix          )); }
+      else if (suffix == ".EX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix, " + AuM")); }
+      else if (suffix == ".LA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Leverage", " #", prefix          )); }
+      else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Profit/Loss"     , " #", prefix          )); }
       */
-
-
-
 
       // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben
 
