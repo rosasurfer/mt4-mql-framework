@@ -16874,6 +16874,6 @@ weight_4=4
 period_flags=15
 show_data=1
 </indicator>
+
 </window>
 </chart>
-

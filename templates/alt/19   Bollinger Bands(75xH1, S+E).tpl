@@ -8792,5 +8792,6 @@ Color.Bands=14772545
 period_flags=30
 show_data=1
 </indicator>
+
 </window>
 </chart>
