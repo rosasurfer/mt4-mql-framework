@@ -1,5 +1,5 @@
 /**
- * Zeichnet die Balance- und Equity-Kurven des Accounts auf.
+ * Zeichnet die Equity-Kurven des Accounts auf.
  */
 #include  <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -18,18 +18,16 @@ int __DEINIT_FLAGS__[];
 #property indicator_chart_window
 
 
-double  account.data     [4];                                        // Accountdaten
-double  account.data.last[4];                                        // vorheriger Datenwert für RecordAccountData()
-int     account.hSet     [4];                                        // HistorySet-Handles der Accountdaten
+double  account.data     [2];                                        // Accountdaten
+double  account.data.last[2];                                        // vorheriger Datenwert für RecordAccountData()
+int     account.hSet     [2];                                        // HistorySet-Handles der Accountdaten
 
-string  account.symbolSuffixes    [] = { ".AB", ".BX", ".AE", ".EX" };
-string  account.symbolDescriptions[] = { "Account Balance #{AccountNumber}", "Account Balance #{AccountNumber} + AuM", "Account Equity #{AccountNumber}", "Account Equity #{AccountNumber} + AuM" };
+string  account.symbolSuffixes    [] = { ".EA", ".EX" };
+string  account.symbolDescriptions[] = { "Equity account #{AccountNumber}", "Equity account #{AccountNumber} with external assets" };
 
 // Array-Indizes
-#define I_ACCOUNT_BALANCE              0                             // für den Broker sichtbare Balance
-#define I_ACCOUNT_BALANCE_WITH_AUM     1                             // Balance inklusive externer Assets
-#define I_ACCOUNT_EQUITY               2                             // echter Equity-Wert (nicht wie vom Broker berechnet)
-#define I_ACCOUNT_EQUITY_WITH_AUM      3                             // echter Equity-Wert inklusive externer Assets
+#define I_ACCOUNT_EQUITY            0                                // echter Equity-Wert des Accounts (nicht wie vom Broker berechnet)
+#define I_ACCOUNT_EQUITY_WITH_AUM   1                                // echter Equity-Wert inklusive externer Assets
 
 
 /**
@@ -142,7 +140,6 @@ bool CollectAccountData() {
       if (IsEmptyValue(symbols.profit[i]))
          return(false);
       symbols.profit[i] = NormalizeDouble(symbols.profit[i], 2);
-      //debug("CollectAccountData(1)  "+ symbols[i] +"  profit="+ DoubleToStr(symbols.profit[i], 2));
    }
 
 
@@ -150,12 +147,8 @@ bool CollectAccountData() {
    double fullPL          = SumDoubles(symbols.profit);
    double externalAssets  = GetExternalAssets(ShortAccountCompany(), GetAccountNumber()); if (IsEmptyValue(externalAssets)) return(false);
 
-   account.data[I_ACCOUNT_BALANCE         ] = NormalizeDouble(AccountBalance()                                , 2);
-   account.data[I_ACCOUNT_BALANCE_WITH_AUM] = NormalizeDouble(account.data[I_ACCOUNT_BALANCE] + externalAssets, 2);
-
-   account.data[I_ACCOUNT_EQUITY          ] = NormalizeDouble(account.data[I_ACCOUNT_BALANCE] + fullPL        , 2);
-   account.data[I_ACCOUNT_EQUITY_WITH_AUM ] = NormalizeDouble(account.data[I_ACCOUNT_EQUITY ] + externalAssets, 2);
-
+   account.data[I_ACCOUNT_EQUITY         ] = NormalizeDouble(AccountBalance()                + fullPL        , 2);
+   account.data[I_ACCOUNT_EQUITY_WITH_AUM] = NormalizeDouble(account.data[I_ACCOUNT_EQUITY ] + externalAssets, 2);
 
    //static bool done;
    //if (!done) done = !debug("CollectAccountData(2)  equity="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY], 2) +"  withAuM="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY_WITH_AUM], 2));
@@ -342,10 +335,8 @@ bool RecordAccountData() {
       else {
          //if (account.symbolSuffixes[i]==".AB") debug("RecordAccountData(2)  Tick.isVirtual="+ Tick.isVirtual +"  recording "+ account.symbolSuffixes[i] +" tick "+ DoubleToStr(tickValue, 2));
 
-         if (!account.hSet[i]) {                                                                // Bei exotischen Brokern gibt es Account-Nummern mit mehr als 8 Ziffern, die
-            string symbol      = GetAccountNumber() + account.symbolSuffixes[i];                // zusammen mit dem Symbol-Suffix (3 Zeichen) ein zu langes Symbol ergeben.
-               if (StringLen(symbol) > MAX_SYMBOL_LENGTH)                                       // Solche exotischen Account-Nummern werden vorerst einfach gekürzt.
-                   symbol      = StringLeft(GetAccountNumber(), MAX_SYMBOL_LENGTH-StringLen(symbol)) + account.symbolSuffixes[i];
+         if (!account.hSet[i]) {
+            string symbol      = GetAccountNumber() + account.symbolSuffixes[i];
             string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
             int    digits      = 2;
             int    format      = 400;
