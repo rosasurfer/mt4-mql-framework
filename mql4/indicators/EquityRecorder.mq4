@@ -23,7 +23,7 @@ double  account.data.last[2];                                        // vorherig
 int     account.hSet     [2];                                        // HistorySet-Handles der Accountdaten
 
 string  account.symbolSuffixes    [] = { ".EA", ".EX" };
-string  account.symbolDescriptions[] = { "Equity account #{AccountNumber}", "Equity account #{AccountNumber} with external assets" };
+string  account.symbolDescriptions[] = { "Equity of account #{AccountNumber}", "Equity of account #{AccountNumber} with external assets" };
 
 // Array-Indizes
 #define I_ACCOUNT_EQUITY            0                                // echter Equity-Wert des Accounts (nicht wie vom Broker berechnet)
