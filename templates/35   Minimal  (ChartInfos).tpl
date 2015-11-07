@@ -50,4 +50,6 @@ window_num=0
 period_flags=0
 show_data=0
 </indicator>
+
+</window>
 </chart>

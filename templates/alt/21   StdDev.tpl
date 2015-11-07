@@ -8812,6 +8812,6 @@ level_0=0.002
 period_flags=0
 show_data=1
 </indicator>
-
 </window>
+
 </chart>

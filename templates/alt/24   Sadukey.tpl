@@ -8811,5 +8811,6 @@ weight_1=5
 period_flags=0
 show_data=1
 </indicator>
+
 </window>
 </chart>

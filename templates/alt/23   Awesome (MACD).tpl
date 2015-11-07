@@ -8835,4 +8835,5 @@ period_flags=0
 show_data=1
 </indicator>
 </window>
+
 </chart>

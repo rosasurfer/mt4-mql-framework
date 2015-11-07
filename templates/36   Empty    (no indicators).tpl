@@ -8739,6 +8739,7 @@ background=1
 value_0=99.500000
 </object>
 </indicator>
+
 </window>
 </chart>
 
