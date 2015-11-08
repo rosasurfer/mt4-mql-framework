@@ -58,9 +58,20 @@ name=EventTracker
 flags=339
 window_num=0
 <inputs>
-Track.Orders=off
+Track.Orders=on
 Track.Signals=on
 </inputs>
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=DataRecorder
+flags=339
+window_num=0
 </expert>
 period_flags=0
 show_data=0
