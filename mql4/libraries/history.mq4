@@ -189,7 +189,7 @@ int HistorySet.Get(string symbol, bool synthetic=false) {
 
 /**
  * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der Funktion werden
- * bereits existierende HistoryFiles des Symbol zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
+ * bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
  * geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten automatisch erstellt.
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
@@ -320,8 +320,6 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
       }
 
       // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben
-
-      // (5.3) "symbols.sel": keine Änderungen
    }
 
    return(hSet);
@@ -1641,13 +1639,13 @@ bool hf.Synthetic(int hFile) {
 
 
 /**
- * Gibt den SyncMarker der zu einem Handle gehörenden Historydatei zurück.
+ * Gibt das Feld 'SyncMark' der zu einem Handle gehörenden Historydatei zurück.
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - SyncMarker oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - Feld 'SyncMark' oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int hf.SyncMark(int hFile) {
+datetime hf.SyncMark(int hFile) {
    if (hFile <= 0)                      return(_EMPTY(catch("hf.SyncMark(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("hf.SyncMark(2)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
@@ -1662,13 +1660,13 @@ int hf.SyncMark(int hFile) {
 
 
 /**
- * Gibt den Zeitpunkt der letzten Synchronisation der zu einem Handle gehörenden Historydatei zurück.
+ * Gibt das Feld 'LastSync' der zu einem Handle gehörenden Historydatei zurück.
  *
  * @param  int hFile - Dateihandle
  *
- * @return datetime - Zeitpunkt oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return datetime - Feld 'LastSync' oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int hf.LastSync(int hFile) {
+datetime hf.LastSync(int hFile) {
    // 2 oder mehr Tests
    if (hFile <= 0)                      return(_EMPTY(catch("hf.LastSync(1)  invalid or unknown file handle "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {

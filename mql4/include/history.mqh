@@ -1,7 +1,7 @@
 /**
  * Funktionen zur Verwaltung von Historydateien.
  *
- *  • Alte MetaTrader-Versionen (Format 400) löschen beim Beenden neuer Historydateien, wenn sie auf sie zugegriffen haben.
+ *  • Alte MetaTrader-Versionen (Format 400) löschen beim Beenden neue Historydateien, wenn sie auf sie zugegriffen haben.
  *  • Neue MetaTrader-Versionen (Format 401) konvertieren beim Beenden alte Historydateien ins neue Format, wenn sie auf sie zugegriffen haben.
  */
 #import "history.ex4"
@@ -37,8 +37,8 @@
    int      hf.Period     (int hFile);
    int      hf.Digits     (int hFile);
    bool     hf.Synthetic  (int hFile);
-   int      hf.SyncMark   (int hFile);
-   int      hf.LastSync   (int hFile);
+   datetime hf.SyncMark   (int hFile);
+   datetime hf.LastSync   (int hFile);
 
 
    // Library-Management
