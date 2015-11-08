@@ -14,8 +14,7 @@ requires    -4 "90 01"              // Version = 400
 multiple
 
 begin
-   {
-   endsection
+   { endsection
 
    char[12]     "Symbol"
    move 4

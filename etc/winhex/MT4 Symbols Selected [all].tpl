@@ -15,8 +15,7 @@ requires    -4 "90 01"              // Version = 400
 begin
    numbering 1
 
-   {
-   endsection
+   { endsection
 
    char[12]     "Symbol  ~"
    move 4
