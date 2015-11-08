@@ -4147,12 +4147,12 @@ string GetLongSymbolNameStrict(string symbol) {
    string prefix = StringLeft(symbol, -3);
    string suffix = StringRight(symbol, 3);
 
-   if      (suffix == ".BA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix          )); }
-   else if (suffix == ".BX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix, " + AuM")); }
-   else if (suffix == ".EA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix          )); }
-   else if (suffix == ".EX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix, " + AuM")); }
-   else if (suffix == ".LA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Leverage", " #", prefix          )); }
-   else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Profit/Loss"     , " #", prefix          )); }
+   if      (suffix == ".BA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
+   else if (suffix == ".BX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
+   else if (suffix == ".EA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
+   else if (suffix == ".EX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
+   else if (suffix == ".LA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
+   else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
 
    return("");
 }

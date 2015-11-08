@@ -319,16 +319,6 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
          else                      groupName = "Other";              // es kann etwas anderes sein
       }
 
-
-      /*
-      if      (suffix == ".BA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix          )); }
-      else if (suffix == ".BX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Balance" , " #", prefix, " + AuM")); }
-      else if (suffix == ".EA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix          )); }
-      else if (suffix == ".EX") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Equity"  , " #", prefix, " + AuM")); }
-      else if (suffix == ".LA") { if (StringIsDigit(prefix)) return(StringConcatenate("Account Leverage", " #", prefix          )); }
-      else if (suffix == ".PL") { if (StringIsDigit(prefix)) return(StringConcatenate("Profit/Loss"     , " #", prefix          )); }
-      */
-
       // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben
 
       // (5.3) "symbols.sel": keine Änderungen
