@@ -3838,7 +3838,8 @@ double GetExternalAssets(string companyId, string accountId) {
 
 
 /**
- * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.
+ * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.  Der konfigurierte Wert kann negativ sein,
+ * um die Accountgröße herunterzuskalieren (z.B. zum Testen einer Strategie im Real-Account).
  *
  * @param  string companyId - AccountCompany-Identifier (für den aktuellen Account wie von ShortAccountCompany() zurückgegeben)
  * @param  string accountId - Account-Identifier (für den aktuellen Account wie von GetAccountNumber() zurückgegeben)
@@ -3852,9 +3853,8 @@ double RefreshExternalAssets(string companyId, string accountId) {
    string key     = "AuM.Value";
 
    double value = GetIniDouble(file, section, key, 0);
-   if (value < 0) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid ini entry ["+ section +"]->"+ key +"=\""+ GetIniString(file, section, key, "") +"\" (negative value) in \""+ file +"\"", ERR_RUNTIME_ERROR)));
 
-   return(ifDouble(!catch("RefreshExternalAssets(2)"), value, EMPTY_VALUE));
+   return(ifDouble(!catch("RefreshExternalAssets(1)"), value, EMPTY_VALUE));
 
    //if (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
    //else             file = file + external.provider     +"\\"+ external.signal    +"_config.ini";
