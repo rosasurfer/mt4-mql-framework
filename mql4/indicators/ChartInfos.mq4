@@ -4690,7 +4690,6 @@ string InputsToStr() {
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
    double   GetCommission();
-   double   GetGlobalConfigDouble(string section, string key, double defaultValue);
    string   GetLocalConfigPath();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
@@ -4701,7 +4700,6 @@ string InputsToStr() {
    int      GetTerminalBuild();
    bool     IsCurrency(string value);
    bool     IsFile(string filename);
-   bool     IsGlobalConfigKey(string section, string key);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      ObjectRegister(string label);
    string   PriceTypeToStr(int type);

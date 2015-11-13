@@ -652,7 +652,6 @@ void DummyCalls() {
    int      GetAccountNumber();
    string   GetCurrency(int id);
    int      GetCurrencyId(string currency);
-   int      GetLocalConfigInt(string section, string key, int defaultValue);
    bool     IsIniKey(string fileName, string section, string key);
    bool     IsPendingTradeOperation(int value);
    bool     IsTradeOperation(int value);
