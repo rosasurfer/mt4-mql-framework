@@ -3862,6 +3862,138 @@ double RefreshExternalAssets(string companyId, string accountId) {
 
 
 /**
+ * Ob der angegebene Schlüssel in der globalen oder lokalen Konfigurationsdatei existiert oder nicht.
+ *
+ * @param  string section - Name des Konfigurationsabschnittes
+ * @param  string key     - Schlüssel
+ *
+ * @return bool
+ */
+bool IsConfigKey(string section, string key) {
+   if (IsGlobalConfigKey(section, key))
+      return(true);
+   return(IsLocalConfigKey(section, key));
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ */
+bool GetConfigBool(string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
+   bool result;
+   if      (IsLocalConfigKey (section, key)) result = GetLocalConfigBool (section, key, defaultValue);
+   else if (IsGlobalConfigKey(section, key)) result = GetGlobalConfigBool(section, key, defaultValue);
+   else                                      result = defaultValue;
+   return(result);
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Boolean zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ */
+bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
+   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(false);
+   string value            = StringToLower(GetIniString(globalConfigPath, section, key, defaultValue));
+
+   bool result;
+   if      (value == "1"   )        result = true;
+   else if (value == "true")        result = true;
+   else if (value == "yes" )        result = true;
+   else if (value == "on"  )        result = true;
+   else if (StringIsNumeric(value)) result = (StrToDouble(value) != 0);    // verwirft alles ab dem ersten Non-Digit
+   else                             result = false;
+   return(result);
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als Boolean zurück.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return bool - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ */
+bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
+   defaultValue = defaultValue!=0;
+
+   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(false);
+   string value           = StringToLower(GetIniString(localConfigPath, section, key, defaultValue));
+
+   bool result;
+   if      (value == "1"   )        result = true;
+   else if (value == "true")        result = true;
+   else if (value == "yes" )        result = true;
+   else if (value == "on"  )        result = true;
+   else if (StringIsNumeric(value)) result = (StrToDouble(value) != 0);    // verwirft alles ab dem ersten Non-Digit
+   else                             result = false;
+   return(result);
+}
+
+
+/**
+ * Gibt den Konfigurationswert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Abschnittsname
+ * @param  string key          - Schlüsselname
+ * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ *
+ * @return string - Konfigurationswert oder Leerstring, falls ein Fehler auftrat (der Konfiguration folgende Kommentare werden ignoriert)
+ */
+string GetIniString(string fileName, string section, string key, string defaultValue="") {
+   string marker = "~^o";                                            // very rarely found string
+   string value  = GetRawIniString(fileName, section, key, marker);
+
+   // Kommentar aus dem Config-Value, nicht jedoch aus dem übergebenen Default-Value entfernen (falls zutreffend)
+   if (value != marker) {
+      int pos = StringFind(value, ";");
+      if (pos >= 0)
+         value = StringTrimRight(StringLeft(value, pos));
+   }
+   else if (!IsIniKey(fileName, section, key)) {                     // der seltene Marker reduziert das zusätzliche Lookup auf ein absolutes Minimum
+      value = defaultValue;
+   }
+   return(value);
+}
+
+
+/**
+ * Löscht einen Schlüssel eines Abschnitts einer .ini-Datei.
+ *
+ * @param  string fileName - Name der .ini-Datei
+ * @param  string section  - Abschnitt des Schlüssels
+ * @param  string key      - zu löschender Schlüssel
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool DeleteIniKey(string fileName, string section, string key) {
+   string sNull;
+   if (!WritePrivateProfileStringA(section, key, sNull, fileName))
+      return(!catch("DeleteIniKey(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")", ERR_WIN32_ERROR));
+   return(true);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -3916,6 +4048,7 @@ void __DummyCalls() {
    DateTime(NULL);
    debug(NULL);
    DebugMarketInfo(NULL, NULL);
+   DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
    DoubleQuoteStr(NULL);
    DummyCalls();
@@ -3923,8 +4056,12 @@ void __DummyCalls() {
    EQ(NULL, NULL);
    Floor(NULL);
    GE(NULL, NULL);
+   GetConfigBool(NULL, NULL);
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
+   GetGlobalConfigBool(NULL, NULL);
+   GetIniString(NULL, NULL, NULL);
+   GetLocalConfigBool(NULL, NULL);
    GT(NULL, NULL);
    HandleEvent(NULL);
    HandleEvents(NULL);
@@ -3932,6 +4069,7 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   IsConfigKey(NULL, NULL);
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
@@ -4060,11 +4198,11 @@ void __DummyCalls() {
    string   ByteToHexStr(int byte);
    string   DoubleToStrEx(double value, int digits);
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
-   bool     GetConfigBool(string section, string key, bool defaultValue);
    int      GetCustomLogID();
+   string   GetGlobalConfigPath();
    double   GetIniDouble(string fileName, string section, string key, double defaultValue);
-   string   GetIniString(string fileName, string section, string key, string defaultValue);
-   bool     GetLocalConfigBool(string section, string key, bool defaultValue);
+   string   GetLocalConfigPath();
+   string   GetRawIniString(string fileName, string section, string key, string defaultValue);
    int      GetTerminalBuild();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);
@@ -4073,6 +4211,9 @@ void __DummyCalls() {
    int      InitializeStringBuffer(string buffer[], int length);
    bool     IsDirectory(string filename);
    bool     IsFile(string filename);
+   bool     IsGlobalConfigKey(string section, string key);
+   bool     IsIniKey(string fileName, string section, string key);
+   bool     IsLocalConfigKey (string section, string key);
    string   ModuleTypeDescription(int type);
    string   NumberToStr(double number, string format);
    bool     ReverseStringArray(string array[]);
@@ -4126,6 +4267,7 @@ void __DummyCalls() {
    int      GetCurrentThreadId();
    void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
+   bool     WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
 
 #import "user32.dll"
    int      GetAncestor(int hWnd, int cmd);

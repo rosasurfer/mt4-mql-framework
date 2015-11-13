@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator im aktuellen Chart die Nachricht, die Anzeige der geschlossenen Orders umzuschaltem.
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der Trade-History umzuschaltem.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };

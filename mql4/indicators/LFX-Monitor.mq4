@@ -731,22 +731,22 @@ bool RecordLfxIndices() {
          bool skipTick = false;
          if (Tick.isVirtual) {
             skipTick = (!lastTickValue || EQ(tickValue, lastTickValue, digits[i]));
-            //if (skipTick) debug("RecordLfxIndices(1)  "+ zTick +"  skipping virtual "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +"  lastTick="+ NumberToStr(lastTickValue, "."+ (digits[i]-1) +"'") +"  tick"+ ifString(EQ(tickValue, lastTickValue, digits[i]), "==", "!=") +"lastTick");
+            //if (skipTick) debug("RecordLfxIndices(1)  zTick="+ zTick +"  skipping virtual "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +"  lastTick="+ NumberToStr(lastTickValue, "."+ (digits[i]-1) +"'") +"  tick"+ ifString(EQ(tickValue, lastTickValue, digits[i]), "==", "!=") +"lastTick");
          }
 
          if (!skipTick) {
             if (!lastTickValue) {
                skipTick = true;
-               //debug("RecordLfxIndices(2)  "+ zTick +"  skipping first "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +" (no last tick)");
+               //debug("RecordLfxIndices(2)  zTick="+ zTick +"  skipping first "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +" (no last tick)");
             }
             else if (MathAbs(tickValue/lastTickValue - 1.0) > 0.005) {
                skipTick = true;
-               warn("RecordLfxIndices(3)  "+ zTick +"  skipping supposed "+ names[i] +" mis-tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +" (lastTick: "+ NumberToStr(lastTickValue, "."+ (digits[i]-1) +"'") +")");
+               warn("RecordLfxIndices(3)  zTick="+ zTick +"  skipping supposed "+ names[i] +" mis-tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'") +" (lastTick: "+ NumberToStr(lastTickValue, "."+ (digits[i]-1) +"'") +")");
             }
          }
 
          if (!skipTick) {
-            //debug("RecordLfxIndices(5)  "+ zTick +"  recording "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'"));
+            //debug("RecordLfxIndices(4)  zTick="+ zTick +"  recording "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'"));
             if (!hSet[i]) {
                string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
                int    format      = 400;

@@ -124,23 +124,19 @@
    string   GetLocalConfigPath();
    string   GetGlobalConfigPath();
 
-   bool     IsConfigKey      (string section, string key);
    bool     IsLocalConfigKey (string section, string key);
    bool     IsGlobalConfigKey(string section, string key);
 
-   bool     GetConfigBool     (string section, string key, bool   defaultValue);
    int      GetConfigInt      (string section, string key, int    defaultValue);
    double   GetConfigDouble   (string section, string key, double defaultValue);
    string   GetConfigString   (string section, string key, string defaultValue);
    string   GetRawConfigString(string section, string key, string defaultValue);
 
-   bool     GetLocalConfigBool     (string section, string key, bool   defaultValue);
    int      GetLocalConfigInt      (string section, string key, int    defaultValue);
    double   GetLocalConfigDouble   (string section, string key, double defaultValue);
    string   GetLocalConfigString   (string section, string key, string defaultValue);
    string   GetRawLocalConfigString(string section, string key, string defaultValue);
 
-   bool     GetGlobalConfigBool     (string section, string key, bool   defaultValue);
    int      GetGlobalConfigInt      (string section, string key, int    defaultValue);
    double   GetGlobalConfigDouble   (string section, string key, double defaultValue);
    string   GetGlobalConfigString   (string section, string key, string defaultValue);
@@ -150,12 +146,10 @@
    bool     IsIniSection   (string fileName, string section);
 
    bool     IsIniKey       (string fileName, string section, string key);
-   bool     DeleteIniKey   (string fileName, string section, string key);
 
    bool     GetIniBool     (string fileName, string section, string key, bool   defaultValue);
    int      GetIniInt      (string fileName, string section, string key, int    defaultValue);
    double   GetIniDouble   (string fileName, string section, string key, double defaultValue);
-   string   GetIniString   (string fileName, string section, string key, string defaultValue);
    string   GetRawIniString(string fileName, string section, string key, string defaultValue);
 
 
