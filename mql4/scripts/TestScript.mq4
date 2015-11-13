@@ -28,21 +28,22 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   double a = (1/3.) + 0.75; a -= 1;
-   double b = 1/12.;
+   //string value = GetIniString(GetLocalConfigPath(), "Logging", "TestKey", "~^o");
+   //debug("onStart()  TestKey="+ DoubleQuoteStr(value));
 
+   string value;
 
-   if (NormalizeDouble(a, 8) == NormalizeDouble(b, 8)) {
-    debug("onStart()  a == b");
-   }
-   else {
-    debug("onStart()  a != b");
-   }
+   value = "";      debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value =   "0.2"; debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value =  "-0.2"; debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value = "- 0.2"; debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value =  "1.";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value = "-1.";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value =  ".3";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   value = "-.3";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+
    return(last_error);
 
-
-   Test();
-   return(last_error);
 
 
    int cb1, cb2;
@@ -57,6 +58,7 @@ int onStart() {
 
    iChangedBars(NULL, NULL);
 }
+
 
 /*
 TODO Build 600+:

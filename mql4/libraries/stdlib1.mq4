@@ -5248,46 +5248,6 @@ double GetConfigDouble(string section, string key, double defaultValue=0) {
 
 
 /**
- * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
- * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
- */
-string GetConfigString(string section, string key, string defaultValue="") {
-   string result;
-   if      (IsLocalConfigKey (section, key)) result = GetLocalConfigString (section, key, defaultValue);
-   else if (IsGlobalConfigKey(section, key)) result = GetGlobalConfigString(section, key, defaultValue);
-   else                                      result = defaultValue;
-   return(result);
-}
-
-
-/**
- * Gibt einen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.  Dabei werden die globale als auch die lokale
- * Konfiguration der MetaTrader-Installation durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert
- */
-string GetRawConfigString(string section, string key, string defaultValue="") {
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
-   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return("");
-
-   // zuerst globale, dann lokale Config auslesen
-   string value = GetRawIniString(globalConfigPath, section, key, defaultValue);
-          value = GetRawIniString(localConfigPath , section, key, value       );
-   return(value);
-}
-
-
-/**
  * Ob der angegebene Schlüssel in der lokalen Konfigurationsdatei existiert.
  *
  * @param  string section - Name des Konfigurationsabschnittes
@@ -5460,38 +5420,6 @@ int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
 
 
 /**
- * Gibt einen globalen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert
- */
-string GetGlobalConfigString(string section, string key, string defaultValue="") {
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
-
-   return(GetIniString(globalConfigPath, section, key, defaultValue));
-}
-
-
-/**
- * Gibt einen globalen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert
- */
-string GetRawGlobalConfigString(string section, string key, string defaultValue="") {
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
-
-   return(GetRawIniString(globalConfigPath, section, key, defaultValue));
-}
-
-
-/**
  * Gibt den Offset der angegebenen GMT-Zeit zur Serverzeit zurück.
  *
  * @param  datetime gmtTime - GMT-Zeit
@@ -5564,34 +5492,6 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt einen Konfigurationswert einer .ini-Datei als Boolean zurück.
- *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  bool   defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
- *
- * @return bool - Konfigurationswert
- */
-bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
-   defaultValue = defaultValue!=0;
-
-   string sValue = StringToLower(GetIniString(fileName, section, key, defaultValue));
-
-   bool result = false;
-   if      (sValue == ""    ) result = defaultValue;
-   else if (sValue == "1"   ) result = true;
-   else if (sValue == "true") result = true;
-   else if (sValue == "yes" ) result = true;
-   else if (sValue == "on"  ) result = true;
-
-   if (!catch("GetIniBool(1)"))
-      return(result);
-   return(false);
-}
-
-
-/**
  * Gibt einen Konfigurationswert einer .ini-Datei als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
  * @param  string fileName     - Name der .ini-Datei
@@ -5636,19 +5536,22 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
 
 
 /**
- * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei unverändert (mit eventuell vorhandenen Kommentar) zurück.
+ * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
  * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert. Ein leerer Wert eines existierenden Schlüssels wird
+ *                               als Leerstring zurückgegeben und nicht mit diesem Default-Value überschrieben.
  *
- * @return string - Wert des Schlüssels oder Leerstring, falls ein Fehler auftrat
+ * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
  */
 string GetRawIniString(string fileName, string section, string key, string defaultValue="") {
    int    bufferSize = 255;
    string buffer[]; InitializeStringBuffer(buffer, bufferSize);
 
+   // GetPrivateProfileString() kopiert den Default-Value nur dann in den Targetbuffer, wenn der Schlüssel nicht existiert.
+   // Ein Leervalue eines Schlüssels wird korrekt als Leerstring zurückgegeben.
    int chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
 
    // zu kleinen Buffer abfangen
@@ -5657,8 +5560,6 @@ string GetRawIniString(string fileName, string section, string key, string defau
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetPrivateProfileStringA(section, key, defaultValue, buffer[0], bufferSize, fileName);
    }
-   if (!StringLen(buffer[0]))
-      buffer[0] = defaultValue;
 
    if (!catch("GetRawIniString(1)"))
       return(buffer[0]);
@@ -5707,38 +5608,6 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
    if (!catch("GetLocalConfigDouble(1)"))
       return(result);
    return(NULL);
-}
-
-
-/**
- * Gibt einen lokalen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return string - Konfigurationswert
- */
-string GetLocalConfigString(string section, string key, string defaultValue="") {
-   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return("");
-
-   return(GetIniString(localConfigPath, section, key, defaultValue));
-}
-
-
-/**
- * Gibt einen lokalen Konfigurationswert als String mit eventuell vorhandenem Kommentar zurück.
- *
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
- *
- * @return string - Konfigurationswert
- */
-string GetRawLocalConfigString(string section, string key, string defaultValue="") {
-   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return("");
-
-   return(GetRawIniString(localConfigPath, section, key, defaultValue));
 }
 
 
