@@ -27,20 +27,11 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
+   int defaultValue = 999;
 
-   //string value = GetIniString(GetLocalConfigPath(), "Logging", "TestKey", "~^o");
-   //debug("onStart()  TestKey="+ DoubleQuoteStr(value));
+   int value = GetLocalConfigInt("Logging", "TestKey", defaultValue);
 
-   string value;
-
-   value = "";      debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value =   "0.2"; debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value =  "-0.2"; debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value = "- 0.2"; debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value =  "1.";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value = "-1.";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value =  ".3";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
-   value = "-.3";   debug("onStart()  StringIsNumeric(\""+ value +"\") = "+ StringIsNumeric(value) +"  StrToDouble(\""+ value +"\") = "+ NumberToStr(StrToDouble(value), ".1+"));
+   debug("onStart()  TestKey = "+ value);
 
    return(last_error);
 

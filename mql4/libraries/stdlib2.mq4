@@ -41,7 +41,7 @@ int GetIniKeys(string fileName, string section, string keys[]) {
       chars = GetPrivateProfileStringA(section, sNull, "", buffer, bufferSize, fileName);
    }
 
-   if (!chars) int size = ArrayResize(keys, 0);                      // keine Schlüssel gefunden (File/Section nicht gefunden oder Section ist leer)
+   if (!chars) int size = ArrayResize(keys, 0);                      // keine Schlüssel gefunden (Datei/Abschnitt nicht gefunden oder Abschnitt ist leer)
    else            size = ExplodeStrings(buffer, keys);
 
    ArrayResize(buffer, 0);

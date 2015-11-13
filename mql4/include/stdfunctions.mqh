@@ -2327,7 +2327,7 @@ bool StringIsNull(string value) {
 
 
 /**
- * Prüft, ob ein String einen gültigen numerischen Wert darstellt (Zeichen 0123456789.-)
+ * Prüft, ob ein String einen gültigen numerischen Wert darstellt (Zeichen 0123456789.+-)
  *
  * @param  string value - zu prüfender String
  *
@@ -2342,18 +2342,18 @@ bool StringIsNumeric(string value) {
       catch("StringIsNumeric(1)", error);
    }
 
-   int chr, len=StringLen(value);
-   if (len == 0)
+   int len = StringLen(value);
+   if (!len)
       return(false);
 
    bool period = false;
 
    for (int i=0; i < len; i++) {
-      chr = StringGetChar(value, i);
+      int chr = StringGetChar(value, i);
 
-      if (chr == '-') {
-         if (i != 0) return(false);
-         continue;
+      if (i == 0) {
+         if (chr == '+') continue;
+         if (chr == '-') continue;
       }
       if (chr == '.') {
          if (period) return(false);
@@ -3877,6 +3877,36 @@ bool IsConfigKey(string section, string key) {
 
 
 /**
+ * Ob der angegebene Schlüssel in der lokalen Konfigurationsdatei existiert.
+ *
+ * @param  string section - Name des Konfigurationsabschnittes
+ * @param  string key     - Schlüssel
+ *
+ * @return bool
+ */
+bool IsLocalConfigKey(string section, string key) {
+   string localConfig = GetLocalConfigPath();
+      if (localConfig == "") return(false);
+   return(IsIniKey(localConfig, section, key));
+}
+
+
+/**
+ * Ob der angegebene Schlüssel in der globalen Konfigurationsdatei existiert.
+ *
+ * @param  string section - Name des Konfigurationsabschnittes
+ * @param  string key     - Schlüssel
+ *
+ * @return bool
+ */
+bool IsGlobalConfigKey(string section, string key) {
+   string globalConfig = GetGlobalConfigPath();
+      if (globalConfig == "") return(false);
+   return(IsIniKey(globalConfig, section, key));
+}
+
+
+/**
  * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
  * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
  *
@@ -3979,13 +4009,151 @@ bool GetIniBool(string fileName, string section, string key, bool defaultValue=f
 
 
 /**
- * Gibt den Konfigurationswert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück.
- * Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
+ * Gibt einen Konfigurationswert einer .ini-Datei als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert.
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
+ */
+int GetIniInt(string fileName, string section, string key, int defaultValue=0) {
+   int marker = -1234567890;                                         // rarely found value
+   int value  = GetPrivateProfileIntA(section, key, marker, fileName);
+
+   if (value != marker)
+      return(value);
+                                                                     // GetPrivateProfileInt() übernimmt auch dann den angegebenen Default-Value, wenn der Schlüssel existiert,
+   if (IsIniKey(fileName, section, key))                             // der Konfigurationswert jedoch leer (ein Leerstring) ist. Dies wird hier korrigiert.
+      return(0);
+   return(defaultValue);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert einer .ini-Datei als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return double - Konfigurationswert (der Konfiguration folgende nicht-numerische Zeichen werden ignoriert)
+ */
+double GetIniDouble(string fileName, string section, string key, double defaultValue=0) {
+   string value = GetRawIniString(fileName, section, key, DoubleToStr(defaultValue, 8));
+   return(StrToDouble(value));
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als Double zurück. Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return double - Konfigurationswert (der Konfiguration folgende nicht-numerische Zeichen werden ignoriert)
+ */
+double GetConfigDouble(string section, string key, double defaultValue=0) {
+   // Es ist schneller, immer globale und lokale Konfiguration auszuwerten (intern jeweils nur ein Aufruf von GetPrivateProfileString()).
+   double value = GetGlobalConfigDouble(section, key, defaultValue);
+          value = GetLocalConfigDouble (section, key, value       );
+   return(value);
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return double - Konfigurationswert (der Konfiguration folgende nicht-numerische Zeichen werden ignoriert)
+ */
+double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
+   string localConfig = GetLocalConfigPath();
+      if (localConfig == "") return(NULL);
+   return(GetIniDouble(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Double zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return double - Konfigurationswert (der Konfiguration folgende nicht-numerische Zeichen werden ignoriert)
+ */
+double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
+   string globalConfig = GetGlobalConfigPath();
+      if (globalConfig == "") return(NULL);
+   return(GetIniDouble(globalConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
+ */
+int GetConfigInt(string section, string key, int defaultValue=0) {
+   // Es ist schneller, immer globale und lokale Konfiguration auszuwerten (intern jeweils nur ein Aufruf von GetPrivateProfileInt()).
+   int value = GetGlobalConfigInt(section, key, defaultValue);
+       value = GetLocalConfigInt (section, key, value       );
+   return(value);
+}
+
+
+/**
+ * Gibt einen lokalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
+ */
+int GetLocalConfigInt(string section, string key, int defaultValue=0) {
+   string localConfig = GetLocalConfigPath();
+      if (localConfig == "") return(NULL);
+   return(GetIniInt(localConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Gibt einen globalen Konfigurationswert als Integer zurück. Ein leerer Wert eines existierenden Schlüssels wird als 0 (zero) zurückgegeben.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
+ *
+ * @return int - Konfigurationswert (der Konfiguration folgende Nicht-Digits werden ignoriert)
+ */
+int GetGlobalConfigInt(string section, string key, int defaultValue=0) {
+   string globalConfig = GetGlobalConfigPath();
+      if (globalConfig == "") return(NULL);
+   return(GetIniInt(globalConfig, section, key, defaultValue));
+}
+
+
+/**
+ * Gibt einen Konfigurationswert einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
+ *
+ * @param  string fileName     - Name der .ini-Datei
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
  * @return string - Konfigurationswert oder Leerstring, falls ein Fehler auftrat (der Konfiguration folgende Kommentare werden ignoriert)
  */
@@ -4187,14 +4355,22 @@ void __DummyCalls() {
    Floor(NULL);
    GE(NULL, NULL);
    GetConfigBool(NULL, NULL);
+   GetConfigDouble(NULL, NULL);
+   GetConfigInt(NULL, NULL);
    GetConfigString(NULL, NULL);
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GetGlobalConfigBool(NULL, NULL);
+   GetGlobalConfigDouble(NULL, NULL);
+   GetGlobalConfigInt(NULL, NULL);
    GetGlobalConfigString(NULL, NULL);
    GetIniBool(NULL, NULL, NULL);
+   GetIniDouble(NULL, NULL, NULL);
+   GetIniInt(NULL, NULL, NULL);
    GetIniString(NULL, NULL, NULL);
    GetLocalConfigBool(NULL, NULL);
+   GetLocalConfigDouble(NULL, NULL);
+   GetLocalConfigInt(NULL, NULL);
    GetLocalConfigString(NULL, NULL);
    GetRawConfigString(NULL, NULL);
    GetRawGlobalConfigString(NULL, NULL);
@@ -4211,9 +4387,11 @@ void __DummyCalls() {
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
    IsError(NULL);
+   IsGlobalConfigKey(NULL, NULL);
    IsInfinity(NULL);
    IsLastError();
    IsLeapYear(NULL);
+   IsLocalConfigKey(NULL, NULL);
    IsLogging();
    IsMqlDirectory(NULL);
    IsMqlFile(NULL);
@@ -4337,7 +4515,6 @@ void __DummyCalls() {
    void     DummyCalls();                                                  // Stub: kann lokal überschrieben werden
    int      GetCustomLogID();
    string   GetGlobalConfigPath();
-   double   GetIniDouble(string fileName, string section, string key, double defaultValue);
    string   GetLocalConfigPath();
    string   GetRawIniString(string fileName, string section, string key, string defaultValue);
    int      GetTerminalBuild();
@@ -4348,9 +4525,7 @@ void __DummyCalls() {
    int      InitializeStringBuffer(string buffer[], int length);
    bool     IsDirectory(string filename);
    bool     IsFile(string filename);
-   bool     IsGlobalConfigKey(string section, string key);
    bool     IsIniKey(string fileName, string section, string key);
-   bool     IsLocalConfigKey (string section, string key);
    string   ModuleTypeDescription(int type);
    string   NumberToStr(double number, string format);
    bool     ReverseStringArray(string array[]);
@@ -4402,6 +4577,7 @@ void __DummyCalls() {
 #import "kernel32.dll"
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
+   int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
    void     OutputDebugStringA(string lpMessage);                          // funktioniert nur für Admins
    void     RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    bool     WritePrivateProfileStringA(string lpSection, string lpKey, string lpValue, string lpFileName);
