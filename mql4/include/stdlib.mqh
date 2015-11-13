@@ -120,7 +120,7 @@
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // Alias
 
 
-   // Configuration
+   // Configuration (for complete listing @see api-overview.mqh)
    string   GetLocalConfigPath();
    string   GetGlobalConfigPath();
 
@@ -129,25 +129,18 @@
 
    int      GetConfigInt      (string section, string key, int    defaultValue);
    double   GetConfigDouble   (string section, string key, double defaultValue);
-   string   GetConfigString   (string section, string key, string defaultValue);
-   string   GetRawConfigString(string section, string key, string defaultValue);
 
    int      GetLocalConfigInt      (string section, string key, int    defaultValue);
    double   GetLocalConfigDouble   (string section, string key, double defaultValue);
-   string   GetLocalConfigString   (string section, string key, string defaultValue);
-   string   GetRawLocalConfigString(string section, string key, string defaultValue);
 
    int      GetGlobalConfigInt      (string section, string key, int    defaultValue);
    double   GetGlobalConfigDouble   (string section, string key, double defaultValue);
-   string   GetGlobalConfigString   (string section, string key, string defaultValue);
-   string   GetRawGlobalConfigString(string section, string key, string defaultValue);
 
    int      GetIniSections (string fileName, string names[]);
    bool     IsIniSection   (string fileName, string section);
 
    bool     IsIniKey       (string fileName, string section, string key);
 
-   bool     GetIniBool     (string fileName, string section, string key, bool   defaultValue);
    int      GetIniInt      (string fileName, string section, string key, int    defaultValue);
    double   GetIniDouble   (string fileName, string section, string key, double defaultValue);
    string   GetRawIniString(string fileName, string section, string key, string defaultValue);
