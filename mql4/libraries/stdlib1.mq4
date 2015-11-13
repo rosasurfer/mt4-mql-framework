@@ -917,23 +917,6 @@ bool IsIniKey(string fileName, string section, string key) {
 
 
 /**
- * Löscht einen Schlüssel eines Abschnitts einer .ini-Datei.
- *
- * @param  string fileName - Name der .ini-Datei
- * @param  string section  - Abschnitt des Schlüssels
- * @param  string key      - zu löschender Schlüssel
- *
- * @return bool - Erfolgsstatus
- */
-bool DeleteIniKey(string fileName, string section, string key) {
-   string sNull;
-   if (!WritePrivateProfileStringA(section, key, sNull, fileName))
-      return(!catch("DeleteIniKey()->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=NULL, fileName=\""+ fileName +"\")", ERR_WIN32_ERROR));
-   return(true);
-}
-
-
-/**
  * Gibt den Versionsstring des Terminals zurück.
  *
  * @return string - Version oder Leerstring, falls ein Fehler auftrat
@@ -5227,116 +5210,59 @@ string GetComputerName() {
 
 
 /**
- * Gibt einen Konfigurationswert als Boolean zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
- * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return bool - Konfigurationswert
- */
-bool GetConfigBool(string section, string key, bool defaultValue=false) {
-   defaultValue = defaultValue!=0;
-
-   string strDefault = defaultValue;
-
-   int bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(false);
-   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return(false);
-
-   // zuerst globale, dann lokale Config auslesen                             // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, globalConfigPath);
-   GetPrivateProfileStringA(section, key, buffer[0],  buffer[0], bufferSize, localConfigPath );
-
-   buffer[0] = StringToLower(buffer[0]);
-
-   bool result;
-   if      (buffer[0] == ""    ) result = defaultValue;
-   else if (buffer[0] == "1"   ) result = true;
-   else if (buffer[0] == "true") result = true;
-   else if (buffer[0] == "yes" ) result = true;
-   else if (buffer[0] == "on"  ) result = true;
-
-   if (!catch("GetConfigBool()"))
-      return(result);
-   return(false);
-}
-
-
-/**
- * Gibt einen Konfigurationswert als Double zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
- * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Die Zeilen der Werte abschließende Kommentare werden ignoriert.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return double - Konfigurationswert
- */
-double GetConfigDouble(string section, string key, double defaultValue=0) {
-   int bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(NULL);
-   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return(NULL);
-
-   // zuerst globale, dann lokale Config auslesen                    // zu kleiner Buffer ist hier nicht möglich
-   GetPrivateProfileStringA(section, key, DoubleToStr(defaultValue, 8), buffer[0], bufferSize, globalConfigPath);
-   GetPrivateProfileStringA(section, key, buffer[0],                    buffer[0], bufferSize, localConfigPath );
-
-   double result = StrToDouble(buffer[0]);                           // verwirft alles ab dem ersten Non-Digit
-
-   if (!catch("GetConfigDouble()"))
-      return(result);
-   return(NULL);
-}
-
-
-/**
- * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation durchsucht.
- * Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Die Zeilen der Werte abschließende Kommentare werden ignoriert.
+ * Gibt einen Konfigurationswert als Integer zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
- * @return int - Konfigurationswert
+ * @return int - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
  */
 int GetConfigInt(string section, string key, int defaultValue=0) {
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(NULL);
-   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return(NULL);
-
-   // zuerst globale, dann lokale Config auslesen
-   int result = GetPrivateProfileIntA(section, key, defaultValue, globalConfigPath);      // gibt auch negative Werte richtig zurück
-       result = GetPrivateProfileIntA(section, key, result,       localConfigPath );
-
-   if (!catch("GetConfigInt()"))
-      return(result);
-   return(NULL);
+   int result;
+   if      (IsLocalConfigKey (section, key)) result = GetLocalConfigInt (section, key, defaultValue);
+   else if (IsGlobalConfigKey(section, key)) result = GetGlobalConfigInt(section, key, defaultValue);
+   else                                      result = defaultValue;
+   return(result);
 }
 
 
 /**
- * Gibt einen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.  Dabei werden die globale als auch die lokale
- * Konfiguration der MetaTrader-Installation durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ * Gibt einen Konfigurationswert als Double zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
+ *
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
+ *
+ * @return double - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
+ */
+double GetConfigDouble(string section, string key, double defaultValue=0) {
+   double result;
+   if      (IsLocalConfigKey (section, key)) result = GetLocalConfigDouble (section, key, defaultValue);
+   else if (IsGlobalConfigKey(section, key)) result = GetGlobalConfigDouble(section, key, defaultValue);
+   else                                      result = defaultValue;
+   return(result);
+}
+
+
+/**
+ * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
- * @return string - Konfigurationswert
+ * @return string - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
  */
 string GetConfigString(string section, string key, string defaultValue="") {
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return("");
-   string localConfigPath  = GetLocalConfigPath();  if (localConfigPath =="") return("");
-
-   // zuerst globale, dann lokale Config auslesen
-   string value = GetIniString(globalConfigPath, section, key, defaultValue);
-          value = GetIniString(localConfigPath , section, key, value       );
-   return(value);
+   string result;
+   if      (IsLocalConfigKey (section, key)) result = GetLocalConfigString (section, key, defaultValue);
+   else if (IsGlobalConfigKey(section, key)) result = GetGlobalConfigString(section, key, defaultValue);
+   else                                      result = defaultValue;
+   return(result);
 }
 
 
@@ -5362,7 +5288,7 @@ string GetRawConfigString(string section, string key, string defaultValue="") {
 
 
 /**
- * Ob der angegebene Schlüssel in der lokalen Konfigurationsdatei existiert oder nicht.
+ * Ob der angegebene Schlüssel in der lokalen Konfigurationsdatei existiert.
  *
  * @param  string section - Name des Konfigurationsabschnittes
  * @param  string key     - Schlüssel
@@ -5396,7 +5322,7 @@ bool IsLocalConfigKey(string section, string key) {
 
 
 /**
- * Ob der angegebene Schlüssel in der globalen Konfigurationsdatei existiert oder nicht.
+ * Ob der angegebene Schlüssel in der globalen Konfigurationsdatei existiert.
  *
  * @param  string section - Name des Konfigurationsabschnittes
  * @param  string key     - Schlüssel
@@ -5426,21 +5352,6 @@ bool IsGlobalConfigKey(string section, string key) {
    if (ArraySize(keys) > 0)
       ArrayResize(keys, 0);
    return(result);
-}
-
-
-/**
- * Ob der angegebene Schlüssel in der globalen oder lokalen Konfigurationsdatei existiert oder nicht.
- *
- * @param  string section - Name des Konfigurationsabschnittes
- * @param  string key     - Schlüssel
- *
- * @return bool
- */
-bool IsConfigKey(string section, string key) {
-   if (IsGlobalConfigKey(section, key))
-      return(true);
-   return(IsLocalConfigKey(section, key));
 }
 
 
@@ -5505,48 +5416,13 @@ int GetFxtToServerTimeOffset(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Boolean zurück.
- *
- * @param  string section      - Name des Konfigurationsabschnittes
- * @param  string key          - Konfigurationsschlüssel
- * @param  bool   defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
- *
- * @return bool - Konfigurationswert
- */
-bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
-   defaultValue = defaultValue!=0;
-
-   string strDefault = defaultValue;
-
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-   string globalConfigPath = GetGlobalConfigPath(); if (globalConfigPath=="") return(false);
-
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, globalConfigPath);
-
-   buffer[0] = StringToLower(buffer[0]);
-
-   bool result;
-   if      (buffer[0] == ""    ) result = defaultValue;
-   else if (buffer[0] == "1"   ) result = true;
-   else if (buffer[0] == "true") result = true;
-   else if (buffer[0] == "yes" ) result = true;
-   else if (buffer[0] == "on"  ) result = true;
-
-   if (!catch("GetGlobalConfigBool(1)"))
-      return(result);
-   return(false);
-}
-
-
-/**
- * Gibt einen globalen Konfigurationswert als Double zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
+ * Gibt einen globalen Konfigurationswert als Double zurück.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
  * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
- * @return double - Konfigurationswert
+ * @return double - Konfigurationswert (der Konfiguration folgende Kommentare werden ignoriert)
  */
 double GetGlobalConfigDouble(string section, string key, double defaultValue=0) {
    int    bufferSize = 255;
@@ -5564,7 +5440,7 @@ double GetGlobalConfigDouble(string section, string key, double defaultValue=0) 
 
 
 /**
- * Gibt einen globalen Konfigurationswert als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
+ * Gibt einen globalen Konfigurationswert als Integer zurück. Dem Konfigurationswert folgende Kommentare werden ignoriert.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -5760,31 +5636,6 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
 
 
 /**
- * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei ohne eventuell vorhandenen Kommentar zurück.
- *
- * @param  string fileName     - Name der .ini-Datei
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
- *
- * @return string - Wert des Schlüssels oder Leerstring, falls ein Fehler auftrat
- */
-string GetIniString(string fileName, string section, string key, string defaultValue="") {
-   string value = GetRawIniString(fileName, section, key, defaultValue);
-
-   // evt. vorhandenen Kommentar entfernen
-   int pos = StringFind(value, ";");
-   if (pos >= 0) {
-      value = StringTrimRight(StringSubstrFix(value, 0, pos));
-      if (!StringLen(value))
-         value = defaultValue;
-   }
-
-   return(value);
-}
-
-
-/**
  * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei unverändert (mit eventuell vorhandenen Kommentar) zurück.
  *
  * @param  string fileName     - Name der .ini-Datei
@@ -5816,46 +5667,11 @@ string GetRawIniString(string fileName, string section, string key, string defau
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als Boolean zurück.
+ * Gibt einen lokalen Konfigurationswert als Integer zurück. Dem Konfigurationswert folgende Kommentare werden ignoriert.
  *
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  bool   defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
- *
- * @return bool - Konfigurationswert
- */
-bool GetLocalConfigBool(string section, string key, bool defaultValue=false) {
-   defaultValue = defaultValue!=0;
-
-   string strDefault = defaultValue;
-
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-   string localConfigPath = GetLocalConfigPath(); if (localConfigPath=="") return(false);
-
-   GetPrivateProfileStringA(section, key, strDefault, buffer[0], bufferSize, localConfigPath);
-
-   buffer[0] = StringToLower(buffer[0]);
-
-   bool result;
-   if      (buffer[0] == ""    ) result = defaultValue;
-   else if (buffer[0] == "1"   ) result = true;
-   else if (buffer[0] == "true") result = true;
-   else if (buffer[0] == "yes" ) result = true;
-   else if (buffer[0] == "on"  ) result = true;
-
-   if (!catch("GetLocalConfigBool(1)"))
-      return(result);
-   return(false);
-}
-
-
-/**
- * Gibt einen lokalen Konfigurationswert als Integer zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
- *
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  int    defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  int    defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return int - Konfigurationswert
  */
@@ -5873,9 +5689,9 @@ int GetLocalConfigInt(string section, string key, int defaultValue=0) {
 /**
  * Gibt einen lokalen Konfigurationswert als Double zurück. Die Zeile des Wertes abschließende Kommentare werden ignoriert.
  *
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  double defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  double defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return double - Konfigurationswert
  */
@@ -5897,9 +5713,9 @@ double GetLocalConfigDouble(string section, string key, double defaultValue=0) {
 /**
  * Gibt einen lokalen Konfigurationswert als String ohne eventuell vorhandenen Kommentar zurück.
  *
- * @param  string section      - Abschnittsname
- * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls kein konfigurierter Wert gefunden wurde
+ * @param  string section      - Name des Konfigurationsabschnittes
+ * @param  string key          - Konfigurationsschlüssel
+ * @param  string defaultValue - Wert, der zurückgegeben wird, wenn unter diesem Schlüssel kein Konfigurationswert gefunden wird
  *
  * @return string - Konfigurationswert
  */

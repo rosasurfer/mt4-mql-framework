@@ -14,6 +14,8 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   log("onStart()  open orders="+ OrdersTotal());
+   string msg = OrdersTotal() +" open orders";
+   log("onStart()  "+ msg);
+   Comment(NL + NL + NL + msg);
    return(last_error);
 }

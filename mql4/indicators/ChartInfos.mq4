@@ -573,7 +573,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
 
 
 /**
- * Schaltet die Anzeige der Trade-History (geschlossene Positionen) ein/aus.
+ * Schaltet die Anzeige der Trade-History ein/aus.
  *
  * @return bool - Erfolgsstatus
  */
@@ -581,18 +581,18 @@ bool ToggleTradeHistory() {
    // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
    bool status = !GetTradeHistoryDisplayStatus();
 
-   // Status ON: Trade-History anzeigen
+   // neuer Status ON: Trade-History anzeigen
    if (status) {
       int trades = ShowTradeHistory();
       if (trades == -1)
          return(false);
-      if (!trades) {                                                 // ohne Trade-History bleibt die Anzeige unverändert
+      if (!trades) {                                                 // ohne Trade-History bleiben Anzeige und Status unverändert
          status = false;
          PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
    }
 
-   // Status OFF: Chartobjekte der Trade-History löschen
+   // neuer Status OFF: Chartobjekte der Trade-History löschen
    else {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
@@ -615,7 +615,7 @@ bool ToggleTradeHistory() {
       }
    }
 
-   // Anzeigestatus im Chart speichern
+   // neuen Anzeigestatus im Chart speichern
    SetTradeHistoryDisplayStatus(status);
 
    if (This.IsTesting())
@@ -867,7 +867,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 
 
 /**
- * Zeigt die Trade-History an.
+ * Zeigt die verfügbare Trade-History an.
  *
  * @return int - Anzahl der angezeigten geschlossenen Positionen oder -1 (EMPTY), falls ein Fehler auftrat.
  */
@@ -878,9 +878,19 @@ int ShowTradeHistory() {
    string   sOpenPrice, sClosePrice, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
 
-   // (1) mode.intern
+   /*
+   // (1) Anzeigekonfiguration auslesen
+   bool showConnectors =
+
+   bool GetConfigBool      (string section, string key, bool defaultValue);
+   bool GetLocalConfigBool (string section, string key, bool defaultValue);
+   bool GetGlobalConfigBool(string section, string key, bool defaultValue);
+   */
+
+
+   // (2) mode.intern
    if (mode.intern) {
-      // (1.1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
+      // (2.1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
       orders = OrdersHistoryTotal();
       int sortKeys[][3];                                                // {CloseTime, OpenTime, Ticket}
       ArrayResize(sortKeys, orders);
@@ -902,7 +912,7 @@ int ShowTradeHistory() {
       ArrayResize(sortKeys, orders);
       SortClosedTickets(sortKeys);
 
-      // (1.2) Tickets sortiert einlesen
+      // (2.2) Tickets sortiert einlesen
       int      tickets    []; ArrayResize(tickets    , 0);
       int      types      []; ArrayResize(types      , 0);
       double   lotSizes   []; ArrayResize(lotSizes   , 0);
@@ -931,7 +941,7 @@ int ShowTradeHistory() {
          ArrayPushString(comments   , OrderComment()   );
       }
 
-      // (1.3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
+      // (2.3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
       for (i=0; i < orders; i++) {
          if (tickets[i] && EQ(lotSizes[i], 0)) {                     // lotSize = 0: Hedge-Position
 
@@ -964,7 +974,7 @@ int ShowTradeHistory() {
          }
       }
 
-      // (1.4) Orders anzeigen
+      // (2.4) Orders anzeigen
       for (i=0; i < orders; i++) {
          if (!tickets[i])                                            // verworfene Hedges überspringen
             continue;
@@ -1005,7 +1015,7 @@ int ShowTradeHistory() {
    }
 
 
-   // (2) mode.extern
+   // (3) mode.extern
    if (mode.extern) {
       orders = ArraySize(external.closed.ticket);
 
@@ -1052,7 +1062,7 @@ int ShowTradeHistory() {
    }
 
 
-   // (3) mode.remote
+   // (4) mode.remote
    if (mode.remote) {
       return(_EMPTY(catch("ShowTradeHistory(8)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
@@ -4676,7 +4686,6 @@ string InputsToStr() {
    int      ArrayInsertDoubles(double array[], int offset, double values[]);
    int      ArrayPushDouble   (double array[], double value);
    string   DateToStr(datetime time, string mask);
-   bool     DeleteIniKey(string file, string section, string key);
    int      DeleteRegisteredObjects(string prefix);
    bool     EditFiles(string filenames[]);
    datetime FxtToServerTime(datetime fxtTime);
