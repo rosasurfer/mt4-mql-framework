@@ -5536,13 +5536,13 @@ double GetIniDouble(string fileName, string section, string key, double defaultV
 
 
 /**
- * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück.
+ * Gibt den Wert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück. Ein leerer Wert eines existierenden Schlüssels wird
+ * als Leerstring zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
  * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert. Ein leerer Wert eines existierenden Schlüssels wird
- *                               als Leerstring zurückgegeben und nicht mit diesem Default-Value überschrieben.
+ * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert
  *
  * @return string - unveränderter Konfigurationswert oder Leerstring, falls ein Fehler auftrat (ggf. mit Konfigurationskommentar)
  */
