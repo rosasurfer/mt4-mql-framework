@@ -3957,26 +3957,35 @@ bool GetGlobalConfigBool(string section, string key, bool defaultValue=false) {
 bool GetIniBool(string fileName, string section, string key, bool defaultValue=false) {
    defaultValue = defaultValue!=0;
 
-   string value = StringToLower(GetIniString(fileName, section, key, defaultValue));
+   string value = GetIniString(fileName, section, key, defaultValue);
+   if (value == "" )     return(false);
+   if (value == "0")     return(false);
+   if (value == "1")     return(true );
 
-   if (value == ""    )        return(false);
-   if (value == "1"   )        return(true);
-   if (value == "on"  )        return(true);
-   if (value == "true")        return(true);
-   if (value == "yes" )        return(true);
-   if (StringIsNumeric(value)) return(StrToDouble(value) != 0);
+   value = StringToLower(value);
+   if (value == "on"   ) return(true );
+   if (value == "off"  ) return(false);
+
+   if (value == "true" ) return(true );
+   if (value == "false") return(false);
+
+   if (value == "yes"  ) return(true );
+   if (value == "no"   ) return(false);
+
+   if (StringIsNumeric(value))
+      return(StrToDouble(value) != 0);
    return(false);
 }
 
 
 /**
  * Gibt den Konfigurationswert eines Schlüssels des angegebenen Abschnitts einer .ini-Datei als String zurück.
+ * Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string fileName     - Name der .ini-Datei
  * @param  string section      - Abschnittsname
  * @param  string key          - Schlüsselname
- * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert. Ein leerer Wert eines existierenden Schlüssels wird
- *                               als Leerstring zurückgegeben und nicht mit diesem Default-Value überschrieben.
+ * @param  string defaultValue - Rückgabewert, falls der angegebene Schlüssel nicht existiert.
  *
  * @return string - Konfigurationswert oder Leerstring, falls ein Fehler auftrat (der Konfiguration folgende Kommentare werden ignoriert)
  */
@@ -3998,7 +4007,7 @@ string GetIniString(string fileName, string section, string key, string defaultV
 
 /**
  * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale und die lokale Konfiguration der MetaTrader-Installation durchsucht,
- * wobei die lokale eine höhere Priorität als die globale Konfiguration hat.
+ * wobei die lokale eine höhere Priorität als die globale Konfiguration hat. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -4015,7 +4024,7 @@ string GetConfigString(string section, string key, string defaultValue="") {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als String zurück.
+ * Gibt einen lokalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -4031,7 +4040,7 @@ string GetLocalConfigString(string section, string key, string defaultValue="") 
 
 
 /**
- * Gibt einen globalen Konfigurationswert als String zurück.
+ * Gibt einen globalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -4047,8 +4056,9 @@ string GetGlobalConfigString(string section, string key, string defaultValue="")
 
 
 /**
- * Gibt einen Konfigurationswert als String zurück.  Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation
- * durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte.
+ * Gibt einen Konfigurationswert als String zurück. Dabei werden die globale als auch die lokale Konfiguration der MetaTrader-Installation
+ * durchsucht. Lokale Konfigurationswerte haben eine höhere Priorität als globale Werte. Ein leerer Wert eines existierenden Schlüssels wird
+ * als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -4065,7 +4075,7 @@ string GetRawConfigString(string section, string key, string defaultValue="") {
 
 
 /**
- * Gibt einen lokalen Konfigurationswert als String zurück.
+ * Gibt einen lokalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
@@ -4081,7 +4091,7 @@ string GetRawLocalConfigString(string section, string key, string defaultValue="
 
 
 /**
- * Gibt einen globalen Konfigurationswert als String zurück.
+ * Gibt einen globalen Konfigurationswert als String zurück. Ein leerer Wert eines existierenden Schlüssels wird als Leerstring zurückgegeben.
  *
  * @param  string section      - Name des Konfigurationsabschnittes
  * @param  string key          - Konfigurationsschlüssel
