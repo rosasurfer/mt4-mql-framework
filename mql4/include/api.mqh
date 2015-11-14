@@ -3,13 +3,13 @@
  *
  *
  * @note  Diese Datei soll und kann nicht inkludiert werden.
- * @note  Das den Deklarationen folgende doppelte Semikolon aktiviert den UEStudio-Funktionbrowser, der im Normalfall Imports nicht mit anzeigt.
+ * @note  Das der Deklaration folgende doppelte Semikolon aktiviert den UEStudio-Function-Browser, der Imports im Normalfall nicht mitanzeigt.
  */
 
                         // Konfiguration
 /*stdlib1.ex4     */    string   GetLocalConfigPath();;
 /*stdlib1.ex4     */    string   GetGlobalConfigPath();;
-  TODO                  string   GetAccountConfigPath();;
+  TODO                  string   GetAccountConfigPath(string companyId, string accountId);;
 
 /*stdfunctions.mqh*/    bool     IsConfigKey             (string section, string key);;
 /*stdfunctions.mqh*/    bool     IsLocalConfigKey        (string section, string key);;

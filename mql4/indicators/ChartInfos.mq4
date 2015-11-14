@@ -210,6 +210,7 @@ string label.spread          = "{__NAME__}.Spread";
 string label.aum             = "{__NAME__}.AuM";
 string label.position        = "{__NAME__}.Position";
 string label.unitSize        = "{__NAME__}.UnitSize";
+string label.orderCounter    = "{__NAME__}.OrderCounter";
 string label.externalAccount = "{__NAME__}.ExternalAccount";
 string label.lfxTradeAccount = "{__NAME__}.LfxTradeAccount";
 string label.stopoutLevel    = "{__NAME__}.StopoutLevel";
@@ -270,6 +271,7 @@ int onTick() {
       if (!UpdateUnitSize())               return(last_error);       // akualisiert die UnitSize-Anzeige unten rechts
       if (!UpdatePositions())              return(last_error);       // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
       if (!UpdateStopoutLevel())           return(last_error);       // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           return(last_error);       // aktualisiert die Anzeige der Anzahl der offenen Orders
    }
 
    if (IsVisualModeFix())                                            // nur im Tester:
@@ -878,14 +880,13 @@ int ShowTradeHistory() {
    string   sOpenPrice, sClosePrice, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
 
-   /*
    // (1) Anzeigekonfiguration auslesen
-   bool showConnectors =
+   string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.provider +"\\"+ external.signal) +"_config.ini";
+   string section = "Charts";
+   string key     = "TradeHistory.ConnectOrders";
 
-   bool GetConfigBool      (string section, string key, bool defaultValue);
-   bool GetLocalConfigBool (string section, string key, bool defaultValue);
-   bool GetGlobalConfigBool(string section, string key, bool defaultValue);
-   */
+   bool drawConnectors = GetIniBool(file, section, key, GetLocalConfigBool(section, key, true));  // Terminal- und Account-Konfiguration (default = true)
 
 
    // (2) mode.intern
@@ -991,14 +992,16 @@ int ShowTradeHistory() {
          }
 
          // Trendlinie anzeigen
-         lineLabel = StringConcatenate("#", tickets[i], " ", sOpenPrice, " -> ", sClosePrice);
-         if (ObjectFind(lineLabel) == 0)
-            ObjectDelete(lineLabel);
-         if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i])) {
-            ObjectSet(lineLabel, OBJPROP_RAY  , false               );
-            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT           );
-            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
-            ObjectSet(lineLabel, OBJPROP_BACK , true                );
+         if (drawConnectors) {
+            lineLabel = StringConcatenate("#", tickets[i], " ", sOpenPrice, " -> ", sClosePrice);
+            if (ObjectFind(lineLabel) == 0)
+               ObjectDelete(lineLabel);
+            if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i])) {
+               ObjectSet(lineLabel, OBJPROP_RAY  , false               );
+               ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT           );
+               ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
+               ObjectSet(lineLabel, OBJPROP_BACK , true                );
+            }
          }
 
          // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
@@ -1039,14 +1042,16 @@ int ShowTradeHistory() {
          }
 
          // Trendlinie anzeigen
-         lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
-         if (ObjectFind(lineLabel) == 0)
-            ObjectDelete(lineLabel);
-         if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-            ObjectSet(lineLabel, OBJPROP_RAY  , false           );
-            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT       );
-            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
-            ObjectSet(lineLabel, OBJPROP_BACK , true            );
+         if (drawConnectors) {
+            lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+            if (ObjectFind(lineLabel) == 0)
+               ObjectDelete(lineLabel);
+            if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+               ObjectSet(lineLabel, OBJPROP_RAY  , false           );
+               ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT       );
+               ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
+               ObjectSet(lineLabel, OBJPROP_BACK , true            );
+            }
          }
 
          // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
@@ -1410,13 +1415,14 @@ bool CreateLabels() {
    label.aum             = StringReplace(label.aum            , "{__NAME__}", __NAME__);
    label.position        = StringReplace(label.position       , "{__NAME__}", __NAME__);
    label.unitSize        = StringReplace(label.unitSize       , "{__NAME__}", __NAME__);
+   label.orderCounter    = StringReplace(label.orderCounter   , "{__NAME__}", __NAME__);
    label.externalAccount = StringReplace(label.externalAccount, "{__NAME__}", __NAME__);
    label.lfxTradeAccount = StringReplace(label.lfxTradeAccount, "{__NAME__}", __NAME__);
    label.time            = StringReplace(label.time           , "{__NAME__}", __NAME__);
    label.stopoutLevel    = StringReplace(label.stopoutLevel   , "{__NAME__}", __NAME__);
 
 
-   // nur Instrument-Label: Anzeige wird sofort (und nur) hier gesetzt
+   // Instrument-Label: Anzeige wird sofort (und nur) hier gesetzt
    int build = GetTerminalBuild();
    if (build <= 509) {                                                                    // Builds größer 509 haben oben links eine {Symbol,Period}-Anzeige, die das
       if (ObjectFind(label.instrument) == 0)                                              // Label überlagert und sich nicht ohne weiteres ausblenden läßt.
@@ -1470,6 +1476,19 @@ bool CreateLabels() {
       ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
       ObjectSetText(label.spread, " ", 1);
       ObjectRegister(label.spread);
+   }
+   else GetLastError();
+
+
+   // OrderCounter-Label
+   if (ObjectFind(label.orderCounter) == 0)
+      ObjectDelete(label.orderCounter);
+   if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 380);
+      ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
+      ObjectSetText(label.orderCounter, " ", 1);
+      ObjectRegister(label.orderCounter);
    }
    else GetLastError();
 
@@ -1781,6 +1800,38 @@ bool UpdatePositions() {
       }
    }
    return(!catch("UpdatePositions(3)"));
+}
+
+
+/**
+ * Aktualisiert die Anzeige der aktuellen Anzahl und des Limits der offenen Orders.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool UpdateOrderCounter() {
+   static int   showLimit   =INT_MAX,   warnLimit=INT_MAX,    alertLimit=INT_MAX, maxOpenOrders;
+   static color defaultColor=SlateGray, warnColor=DarkOrange, alertColor=Red;
+
+   if (!maxOpenOrders) {
+      maxOpenOrders = GetGlobalConfigInt("Accounts", GetAccountNumber() +".maxOpenTickets.total", -1);
+      if (!maxOpenOrders)
+         maxOpenOrders = -1;
+      if (maxOpenOrders > 0) {
+         alertLimit = Min(Round(0.9  * maxOpenOrders), maxOpenOrders-5);
+         warnLimit  = Min(Round(0.75 * maxOpenOrders), alertLimit   -5);
+         showLimit  = Min(Round(0.5  * maxOpenOrders), warnLimit    -5);
+      }
+   }
+
+   int orders = OrdersTotal();
+
+   if (orders >= showLimit) {
+      if      (orders >= alertLimit) color objectColor = alertColor;
+      else if (orders >= warnLimit )       objectColor = warnColor;
+      else                                 objectColor = defaultColor;
+      ObjectSetText(label.orderCounter, StringConcatenate(orders, " open orders (max. ", maxOpenOrders, ")"), 8, "Tahoma Fett", objectColor);
+   }
+   return(true);
 }
 
 

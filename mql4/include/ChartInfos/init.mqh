@@ -19,7 +19,7 @@ int onInit() {
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    if (StringLen(lfxCurrency) > 0) {
       lfxCurrencyId     = GetCurrencyId(lfxCurrency);
-      lfxChartDeviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
+      lfxChartDeviation = GetGlobalConfigDouble("Charts", "LFXDeviation."+ lfxCurrency, 0);
       isLfxInstrument   = true;
       mode.remote       = true;                                      // TODO: LFX/mode.remote muﬂ in Abh‰ngigkeit einer Konfiguration gesetzt werden
       /*
@@ -39,8 +39,9 @@ int onInit() {
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";
    if (!IsVisualModeFix()) {                                         // im Tester wird immer das Bid angezeigt (ist ausreichend und schneller)
-      section="AppliedPrice"; key=stdSymbol;
-      price = StringToLower(GetGlobalConfigString(section, key, "median"));
+      section = "Charts";
+      key     = "AppliedPrice."+ stdSymbol;
+      price   = StringToLower(GetGlobalConfigString(section, key, "median"));
    }
    if      (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;

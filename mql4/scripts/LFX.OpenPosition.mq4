@@ -255,7 +255,7 @@ int onStart() {
 
 
    // (7) neue LFX-Order erzeugen und speichern
-   double deviation = GetGlobalConfigDouble("LfxChartDeviation", lfxCurrency, 0);
+   double deviation = GetGlobalConfigDouble("Charts", "LFXDeviation."+ lfxCurrency, 0);
    datetime now.gmt = TimeGMT(); if (!now.gmt) return(last_error);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
