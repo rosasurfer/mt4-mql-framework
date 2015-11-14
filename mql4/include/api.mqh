@@ -1,14 +1,17 @@
 /**
- * Nach Funktionalität gruppierter Überblick aller in MQL zusätzlich zur Verfügung stehenden Funktionen und der jeweils benötigten Library.
+ * Nach Funktionalität gruppierter Überblick aller in MQL zusätzlich zur Verfügung stehenden globalen Funktionen und der jeweils benötigten Library.
+ *
+ * @note  Diese Datei soll und kann nicht inkludiert werden.
  */
 
                         // Konfiguration
 /*stdlib1.ex4     */    string   GetLocalConfigPath();
 /*stdlib1.ex4     */    string   GetGlobalConfigPath();
+  TODO                  string   GetAccountConfigPath();
 
-/*stdfunctions.mqh*/    bool     IsConfigKey      (string section, string key);
-/*stdfunctions.mqh*/    bool     IsLocalConfigKey (string section, string key);
-/*stdfunctions.mqh*/    bool     IsGlobalConfigKey(string section, string key);
+/*stdfunctions.mqh*/    bool     IsConfigKey             (string section, string key);
+/*stdfunctions.mqh*/    bool     IsLocalConfigKey        (string section, string key);
+/*stdfunctions.mqh*/    bool     IsGlobalConfigKey       (string section, string key);
 
 /*stdfunctions.mqh*/    bool     GetConfigBool           (string section, string key, bool   defaultValue);
 /*stdfunctions.mqh*/    int      GetConfigInt            (string section, string key, int    defaultValue);
