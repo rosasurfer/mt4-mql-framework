@@ -1,6 +1,9 @@
 /**
  *
  */
+#import "gdi32.dll"
+   int  GetClipBox(int hDC, int lpRect[]);
+
 #import "kernel32.dll"
    int  _lclose(int hFile);
    int  _lcreat(string lpPathName, int attributes);
@@ -65,6 +68,7 @@
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);                            // @see stdlib::GetClassName()
+   int  GetDC(int hWnd);
    int  GetDesktopWindow();
    int  GetDlgCtrlID(int hWndCtl);
    int  GetDlgItem(int hDlg, int nIDDlgItem);
@@ -74,12 +78,15 @@
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
+   bool IsIconic(int hWnd);
    bool IsWindow(int hWnd);
+   bool IsWindowVisible(int hWnd);
    int  MessageBoxA(int hWnd, string lpText, string lpCaption, int style);
    int  MessageBoxExA(int hWnd, string lpText, string lpCaption, int style, int wLanguageId);
    bool PostMessageA(int hWnd, int msg, int wParam, int lParam);
    bool RedrawWindow(int hWnd, int lpRectUpdate, int hRgnUpdate, int flags);
    int  RegisterWindowMessageA(string lpString);
+   int  ReleaseDC(int hWnd, int hDC);
    int  RemovePropA(int hWnd, string lpKey);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    bool SetPropA(int hWnd, string lpKey, int value);
@@ -213,6 +220,14 @@
 
 #define HFILE_ERROR                          0xFFFFFFFF     // -1
 #define INVALID_FILE_SIZE                    0xFFFFFFFF     // -1
+
+
+// GDI region codes, @see GetClipBox()
+#define ERROR                                         0
+#define NULLREGION                                    1
+#define SIMPLEREGION                                  2
+#define COMPLEXREGION                                 3
+#define RGN_ERROR                                 ERROR
 
 
 // GetAncestor() constants
