@@ -8,6 +8,7 @@ int __DEINIT_FLAGS__[];
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 
 #import "Expander.dll"
@@ -59,12 +60,25 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-   static int lastTickCount;
 
-   int tickCount = GetTickCount();
-   //debug("onTick()  Tick="+ Tick +"  vol="+ _int(Volume[0]) +"  ChangedBars="+ ChangedBars +"  after "+ (tickCount-lastTickCount) +" msec");
+   /*
+   int rect[4];
+   int hChart = WindowHandleEx(NULL); if (!hChart) return(last_error);
+   int hDC    = GetDC(hChart);
+   int region = GetClipBox(hDC, rect);
+   ReleaseDC(hChart, hDC);
 
-   lastTickCount = tickCount;
+   if (region != NULLREGION)
+      // Ticker aktivieren
+   }
+   else {
+      // Ticker deaktivieren
+   }
+
+   string rgnCodes[] = {"RGN_ERROR", "NULLREGION", "SIMPLEREGION", "COMPLEXREGION"};
+   debug("onTick()  Rgn(hChart)="+ rgnCodes[region]);
+   */
+
    return(last_error);
 }
 
