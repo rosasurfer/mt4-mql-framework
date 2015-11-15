@@ -48,8 +48,8 @@ string label.description = "Description";                               // Label
 int onInit() {
    // (1) Parametervalidierung
    // Colors
-   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // aus CLR_NONE = 0xFFFFFFFF macht das Terminal nach Recompilation oder Deserialisierung
-   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // u.U. 0xFF000000 (entspricht Schwarz)
+   if (Color.BarUp        == 0xFF000000) Color.BarUp       = CLR_NONE;  // Aus CLR_NONE (0xFFFFFFFF) macht das Terminal nach Recompilation oder Deserialisierung u.U. 0xFF000000.
+   if (Color.BarDown      == 0xFF000000) Color.BarDown     = CLR_NONE;  // Das ist Schwarz, wenn beim Neuzeichnen das höchstwertige Byte wie vom Terminal nicht ausgewertet wird.
    if (Color.BarUnchanged == 0xFF000000) Color.BarDown     = CLR_NONE;
    if (Color.ETH          == 0xFF000000) Color.ETH         = CLR_NONE;
    if (Color.CloseMarker  == 0xFF000000) Color.CloseMarker = CLR_NONE;
@@ -61,7 +61,6 @@ int onInit() {
       "SP500"  ,
       "RUS2000",
       "NAS100" , "NASCOMP",
-    //"EURX"   , "EURLFX" ,                                             // der EURX-Future wurde 2011 aus dem Handel genommen (ICE)
       "USDX"   , "USDLFX" ,
       "XAGEUR" , "XAGJPY" , "XAGUSD",
       "XAUEUR" , "XAUJPY" , "XAUUSD"
@@ -620,8 +619,7 @@ int CreateDescriptionLabel() {
 
 
 /**
- * Speichert die Fenster-relevanten Konfigurationsdaten im Chart und in der lokalen Terminalkonfiguration.
- * Dadurch gehen sie auch beim Laden eines neuen Chart-Templates nicht verloren.
+ * Speichert die SuperBars-Konfiguration im Chart-Fenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
  *
  * @return bool - Erfolgsstatus
  */
@@ -630,7 +628,11 @@ bool StoreWindowStatus() {
    if (!superBars.timeframe)
       return(true);
 
-   // Konfiguration im Chart speichern
+   // Konfiguration im Chartfenster speichern
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
+   SetPropA(hWnd, "xtrade.SuperBars.Timeframe", superBars.timeframe);  // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
+
+   // Konfiguration in Chartkonfiguration speichern                  // TODO: nur bei Terminal-Shutdown
    string label = __NAME__ +".sticky.timeframe";
    string value = superBars.timeframe;                               // (string) int
    if (ObjectFind(label) == 0)
@@ -639,47 +641,34 @@ bool StoreWindowStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, value);
 
-   // Konfiguration in Terminalkonfiguration speichern
-   string file    = GetLocalConfigPath();
-   string section = "WindowStatus";
-      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
-   string key     = "SuperBars.Timeframe.0x"+ IntToHexStr(hWnd);
-   if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
-
-   return(catch("StoreWindowStatus(2)"));
+   return(catch("StoreWindowStatus(1)"));
 }
 
 
 /**
- * Restauriert die Fenster-relevanten Konfigurationsdaten aus dem Chart oder der Terminalkonfiguration.
+ * Restauriert die SuperBars-Konfiguration aus dem Chartfenster oder der Chartkonfiguration.
  *
  *  - Superbar-Timeframe
  *
  * @return bool - Erfolgsstatus
  */
 bool RestoreWindowStatus() {
-   bool success = false;
-   int  timeframe;
+   // Konfiguration im Chartfenster suchen
+   int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(false);
+   int result = RemovePropA(hWnd, "xtrade.SuperBars.Timeframe");       // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
-   // Versuchen, die Konfiguration aus dem Chart zu restaurieren (ist dort nach Laden eines neuen Templates nicht vorhanden).
-   string label = __NAME__ +".sticky.timeframe", empty="";
-   if (ObjectFind(label) == 0) {
-      string sValue = ObjectDescription(label);
-      success       = StringIsInteger(sValue);
-      timeframe     = StrToInteger(sValue);
+   if (!result) {
+      // Konfiguration in Chartkonfiguration suchen
+      string label = __NAME__ +".sticky.timeframe";
+      if (ObjectFind(label) == 0) {
+         string value = ObjectDescription(label);
+         if (StringIsInteger(value))
+            result = StrToInteger(value);
+         ObjectDelete(label);
+      }
    }
 
-   // Bei Mißerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
-   if (!success) {
-      int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
-      string section = "WindowStatus";
-      string key     = "SuperBars.Timeframe.0x"+ IntToHexStr(hWnd);
-      sValue         = GetLocalConfigString(section, key, "");
-      success        = StringIsInteger(sValue);
-      timeframe      = StrToInteger(sValue);
-   }
-
-   if (success)
-      superBars.timeframe = timeframe;
+   if (result != 0)
+      superBars.timeframe = result;
    return(!catch("RestoreWindowStatus(1)"));
 }
