@@ -120,17 +120,12 @@ int onInit() {
    CreateLabels();
    SetIndexLabel(0, NULL);
 
-   // (3) Chart-Ticker aktivieren
+   // (3) Chart-Ticker installieren
    if (!This.IsTesting() && GetServerName()!="MyFX-Synthetic") {
-      int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-      int millis = 500;
-
-    //int timerId = SetupTickTimer(hWnd, millis, NULL);
-    //if (!timerId) return(catch("onInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags=NULL) failed", ERR_RUNTIME_ERROR));
-
-      int timerId = SetupTimedTicks(hWnd, Round(millis/1.56));
-      if (!timerId) return(catch("onInit(1)->SetupTimedTicks(hWnd="+ hWnd +", millis="+ millis +") failed", ERR_RUNTIME_ERROR));
-
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis  = 500;
+      int timerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!timerId) return(catch("onInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
    return(catch("onInit(2)"));
@@ -153,11 +148,10 @@ int onDeinit() {
       }
    }
 
-   // einen laufenden Chart-Ticker wieder deaktivieren
+   // Chart-Ticker deinstallieren
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;
-    //if (!RemoveTickTimer(id))  return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
-      if (!RemoveTimedTicks(id)) return(catch("onDeinit(1)->RemoveTimedTicks(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }

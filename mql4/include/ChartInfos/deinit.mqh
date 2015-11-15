@@ -7,13 +7,10 @@ int onDeinit() {
    DeleteRegisteredObjects(NULL);
    QC.StopChannels();
 
-   // einen laufenden Chart-Ticker wieder deaktivieren
+   // ggf. OfflineTicker deinstallieren
    if (tickTimerId > NULL) {
-      /*
       int id = tickTimerId; tickTimerId = NULL;
-      if (!RemoveTickTimer(id))
-         return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
-      */
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
 
    // in allen deinit()-Szenarien Fensterstatus  speichern

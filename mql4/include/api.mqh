@@ -46,3 +46,9 @@
 /*stdlib1.ex4     */    bool     IsIniKey       (string fileName, string section, string key);;
 
 /*stdfunctions.mqh*/    bool     DeleteIniKey   (string fileName, string section, string key);;
+
+
+                        // Chart-Ticker
+/*Expander.dll    */    int      SetupTickTimer(int hWnd, int millis, int flags);;
+/*Expander.dll    */    bool     RemoveTickTimer(int timerId);;
+

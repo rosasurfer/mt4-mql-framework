@@ -60,27 +60,6 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onTick() {
-
-   /*
-   int rect[4];
-   int hChart = WindowHandleEx(NULL); if (!hChart) return(last_error);
-   int hDC    = GetDC(hChart);
-   int region = GetClipBox(hDC, rect);
-   ReleaseDC(hChart, hDC);
-
-   if (region != NULLREGION)
-      // Ticker aktivieren
-   }
-   else {
-      // Ticker deaktivieren
-   }
-
-   string rgnCodes[] = {"RGN_ERROR", "NULLREGION", "SIMPLEREGION", "COMPLEXREGION"};
-   debug("onTick()  Rgn(hChart)="+ rgnCodes[region]);
-   */
-
-   //debug("onTick()  Tick="+ Tick);
-
    return(last_error);
 }
 
