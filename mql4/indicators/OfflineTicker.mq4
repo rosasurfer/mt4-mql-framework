@@ -42,7 +42,7 @@ int onInit() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE, 38);
          ObjectSet    (label, OBJPROP_YDISTANCE, 38);
-         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder "Online"-Marker
          ObjectRegister(label);
       }
    }
