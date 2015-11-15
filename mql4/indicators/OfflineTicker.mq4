@@ -79,6 +79,8 @@ int onTick() {
    debug("onTick()  Rgn(hChart)="+ rgnCodes[region]);
    */
 
+   //debug("onTick()  Tick="+ Tick);
+
    return(last_error);
 }
 
