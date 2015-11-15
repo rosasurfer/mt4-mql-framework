@@ -4,7 +4,7 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Textlabel sofort erzeugen, RestoreWindowStatus() benötigt sie bereits
+   // (1) Textlabel zuerst erzeugen, RestoreWindowStatus() benötigt sie bereits
    if (!CreateLabels())
       return(last_error);
 
@@ -46,7 +46,7 @@ int onInit() {
    if      (price == "bid"   ) appliedPrice = PRICE_BID;
    else if (price == "ask"   ) appliedPrice = PRICE_ASK;
    else if (price == "median") appliedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
+   else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Moneymanagement
    if (!isLfxInstrument) {
@@ -54,9 +54,9 @@ int onInit() {
       section="Moneymanagement"; key=stdSymbol +".Leverage";
       string sValue = GetLocalConfigString(section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StringIsNumeric(sValue)) return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);
-         if (dValue < 0.1)             return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue < 0.1)             return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.customLeverage   = dValue;
          mm.isCustomUnitSize = true;
       }
@@ -69,15 +69,15 @@ int onInit() {
       if (!mm.isCustomUnitSize) {
          key    = "Volatility";
          sValue = GetLocalConfigString(section, key, DoubleToStr(STANDARD_VOLATILITY, 2));
-         if (!StringIsNumeric(sValue)) return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (!StringIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          dValue = StrToDouble(sValue);
-         if (dValue <= 0)              return(catch("onInit(6)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
+         if (dValue <= 0)              return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +" = "+ sValue +" (too low)", ERR_INVALID_CONFIG_PARAMVALUE));
          mm.stdVola = dValue;
       }
    }
 
    SetIndexLabel(0, NULL);                                           // Datenanzeige ausschalten
-   return(catch("onInit(10)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -180,15 +180,25 @@ int onInit_Recompile() {
  * @return int - Fehlerstatus
  */
 int afterInit() {
-   // ggf. Chart-Ticker aktivieren
+   // ggf. OfflineTicker installieren
    if (!This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
-      /*
-      int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(last_error);
-      int millis = 700;
-      if (!SetupTickTimer(hWnd, millis, TICK_OFFLINE_REFRESH))
-         return(catch("afterInit(1)->SetupTickTimer(hWnd="+ hWnd +", millis="+ millis +", flags=TICK_OFFLINE_REFRESH) failed", ERR_RUNTIME_ERROR));
-      tickTimerId = result;
-      */
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
+      int millis  = 1000;
+      int timerId = SetupTickTimer(hWnd, millis, TICK_OFFLINE_REFRESH);
+      if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      tickTimerId = timerId;
+
+      // Chart-Markierung anzeigen
+      string label = __NAME__+".Status";
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder "Online"-Marker
+         ObjectRegister(label);
+      }
    }
    return(catch("afterInit(2)"));
 }

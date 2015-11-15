@@ -239,7 +239,7 @@ color  positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSE                Orange
 
 
-int tickTimerId;                                                  // ID des TickTimers des Charts (falls installiert)
+int tickTimerId;                                                  // ID eines ggf.installierten OfflineTickers
 
 
 #include <ChartInfos/init.mqh>
@@ -4770,4 +4770,5 @@ string InputsToStr() {
    string   TicketsToStr         (int    array[], string separator);
    string   TicketsToStr.Lots    (int    array[], string separator);
    string   TicketsToStr.Position(int    array[]);
+
 #import
