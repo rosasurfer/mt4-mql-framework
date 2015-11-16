@@ -692,9 +692,8 @@ bool UpdateInfos() {
    if (!EURX.Enabled || !isMainIndex[I_EUX]) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.main_Ask-  eurx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_EUX] +".spread.main",  sValue, fontSize, fontName, fontColor);
 
    // Animation
-   static int size, char=-1; if (char == -1) size = ArraySize(label.animation.chars);
-   char = Tick % size;
-   ObjectSetText(label.animation, label.animation.chars[char], fontSize, fontName, fontColor);
+   static int size = -1; if (size==-1) size = ArraySize(label.animation.chars);
+   ObjectSetText(label.animation, label.animation.chars[Tick % size], fontSize, fontName, fontColor);
 
 
    // LFX-Indizes aufzeichnen
