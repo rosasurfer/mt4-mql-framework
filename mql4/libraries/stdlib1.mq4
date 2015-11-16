@@ -5138,16 +5138,15 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
        */
       ArrayCopy(times,  static.times);
       ArrayCopy(values, static.values);
-      if (__LOG) log("GetBalanceHistory(1)  delivering "+ ArraySize(times) +" balance values for account "+ account +" from cache");
-      return(catch("GetBalanceHistory(2)"));
+      return(catch("GetBalanceHistory(1)"));
    }
 
    // Cache-Miss, Balance-Daten aus Account-History auslesen
    string data[][AH_COLUMNS]; ArrayResize(data, 0);
    int error = GetAccountHistory(account, data);
    if (IsError(error)) {
-      if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(3)", error));
-                                         return(catch("GetBalanceHistory(4)"));
+      if (error == ERR_CANNOT_OPEN_FILE) return(catch("GetBalanceHistory(2", error));
+                                         return(catch("GetBalanceHistory(3)"));
    }
 
    // Balancedatensätze einlesen und auswerten (History ist nach CloseTime sortiert)
@@ -5156,7 +5155,7 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
    int n, size=ArrayRange(data, 0);
 
    if (size == 0)
-      return(catch("GetBalanceHistory(5)"));
+      return(catch("GetBalanceHistory(4)"));
 
    for (int i=0; i<size; i++) {
       balance = StrToDouble (data[i][I_AH_BALANCE       ]);
@@ -5191,10 +5190,9 @@ int GetBalanceHistory(int account, datetime &times[], double &values[]) {
    static.account[0] = account;
    ArrayResize(static.times,  0); ArrayCopy(static.times,  times );
    ArrayResize(static.values, 0); ArrayCopy(static.values, values);
-   if (__LOG) log("GetBalanceHistory(6)  caching "+ ArraySize(times) +" balance values for account "+ account);
 
    ArrayResize(data, 0);
-   return(catch("GetBalanceHistory(7)"));
+   return(catch("GetBalanceHistory(5)"));
 }
 
 
