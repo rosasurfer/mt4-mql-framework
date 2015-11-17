@@ -8,8 +8,8 @@
  *  • Korrekt:   USD-Index = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP)          ^ 1/6
  *               NZD-Index = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
  *
- *  • LiteForex: USD-Index = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY *  0.68 * USDNZD ) ^ 1/7
- *               NZD-Index = USD-Index * USDNZD                                                    // einfach, jedoch nicht korrekt (obwohl einfach zu korrigieren)
+ *  • LiteForex: USD-Index = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1     ) ^ 1/7
+ *               NZD-Index = USD-Index * USDNZD                                                    // einfach, jedoch nicht korrekt
  *               ...
  *
  * - Wird eine Handelsposition statt über die direkten über die USD-Crosses abgebildet (niedrigerer Spread), sind die Anzahl der Teilpositionen und entsprechend die
