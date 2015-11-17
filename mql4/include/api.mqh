@@ -2,7 +2,7 @@
  * Nach Funktionalität gruppierter Überblick aller in MQL zusätzlich zur Verfügung stehenden globalen Funktionen und der jeweils benötigten Library.
  *
  *
- * @note  Diese Datei soll und kann nicht inkludiert werden.
+ * @note  Diese Datei kann nicht inkludiert werden.
  * @note  Das der Deklaration folgende doppelte Semikolon aktiviert den UEStudio-Function-Browser, der Imports im Normalfall nicht mitanzeigt.
  */
 
