@@ -1,22 +1,23 @@
 /**
- * Berechnet die Kurse der verfügbaren LFX-Indizes, zeigt sie an und zeichnet ggf. deren History auf.
+ * Berechnet die Kurse der verfügbaren FX-Indizes, zeigt sie an und kann deren History aufzeichnen.
  *
- * Die mathematische Formel für den Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. LiteForex benutzt sieben Vergleichs-
- * währungen, wovon eine imaginär und ihr Kurs immer 1.0 ist. Das vereinfacht die (fehlerhafte) Berechnung zusätzlicher Indizes, macht ihre Abbildung als Handelsposition
- * jedoch komplizierter. Letztlich dienen sie der Trendanalyse, weder können noch sollen sie für absolute oder Vergleiche untereinander geeignet sein.
+ * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen, ggf. mittels eines Multiplikators normalisiert. LiteForex benutzt
+ * eine einfachere jedoch fehlerhafte Formel (vermutlich wegen einer nicht ausreichenden NZDUSD-History), was die Abbildung von LFX-Handelspositionen verkompliziert.
+ * Letztlich sind die FX-Indizes zur Trenderkenneung, nicht jedoch für absolute oder Vergleiche untereinander geeignet. Ihre Berechnung ist willkürlich.
  *
- *  • Korrekt:   USD-Index = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP)          ^ 1/6
- *               NZD-Index = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
+ *  • Korrekt:   USD-FX5 = (USDCAD          * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/5
+ *               USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
+ *               USD-FX7 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP * USDNZD) ^ 1/7
+ *               NZD-FX7 = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
  *
- *  • LiteForex: USD-Index = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1     ) ^ 1/7
- *               NZD-Index = USD-Index * USDNZD                                                    // einfach, jedoch nicht korrekt
- *               ...
+ *  • LiteForex: USD-LFX = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1     ) ^ 1/7    // nicht korrekt
+ *               NZD-LFX = USD-LFX * USDNZD                                                        // nicht korrekt
  *
  * - Wird eine Handelsposition statt über die direkten über die USD-Crosses abgebildet (niedrigerer Spread), sind die Anzahl der Teilpositionen und entsprechend die
  *   Margin-Requirements höher.
  *
  * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen werden vom Position-Sizing (MinLotStep) und bei längerfristigem Handel vom
- *   fehlenden Index-Rebalancing verursacht.
+ *   fehlenden Rebalancing der Teilpositionen verursacht.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
