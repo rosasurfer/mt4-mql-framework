@@ -1,22 +1,17 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum Instrument und den Positionen einer der folgenden Typen an:
+ * Zeigt im Chart verschiedene Informationen zum aktuellen Instrument und den Positionen einer der folgenden Typen an:
  *
- * (1) interne Positionen: - Positionen, die im aktuellen Account gehalten werden
+ * (1) interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
  *                         - Order- und P/L-Daten stammen vom Terminal
  *
- * (2) externe Positionen: - Positionen, die in einem anderen Account gehalten werden
- *                         - Orderdaten stammen aus einer externen Quelle
+ * (2) externe Positionen: - Positionen, die in einem externem Account gehalten werden (z.B. in SimpleTrader-Accounts)
+ *                         - Orderdaten stammen aus der externen Quelle
  *                         - P/L-Daten werden anhand der aktuellen Kurse selbst berechnet
  *
- * (3) Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (typischerweise synthetische Positionen)
- *                         - Orderdaten stammen aus einer externen Quelle
- *                         - P/L-Daten stammen ebenfalls aus einer externen Quelle
- *                         - Orderlimits können überwacht und die externe Quelle vom Erreichen benachrichtigt werden
- *
- *
- * TODO: MetaTrader berechnet den Equity-Wert nicht korrekt (Spread und Commission gehedgter Positionen werden doppelt berechnet). Geht der Spread
- *       z.B. nachts in die Höhe, kann sich der Fehler je nach Anzahl der gehedgten Positionen dramatisch auf die P/L-Anzeige auswirken. Zusätzlich
- *       verringert es die verfügbare Margin und hat dadurch schon zum Margin Call geführt.
+ * (3) Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (i.d.R. synthetische Positionen)
+ *                         - Orderdaten stammen aus der externen Quelle
+ *                         - P/L-Daten stammen ebenfalls aus der externen Quelle
+ *                         - Orderlimits können überwacht und die externe Quelle bei Erreichen benachrichtigt werden
  */
 #property indicator_chart_window
 
@@ -94,7 +89,7 @@ double mm.stdLots;                                                // resultieren
 double mm.customVola;                                             // benutzerdefinierte Volatilität einer Unit je Woche
 double mm.customLeverage;                                         // benutzerdefinierter Hebel einer Unit
 double mm.customLots;                                             // resultierende Lotsize
-bool   mm.done;                                                   // Flag
+bool   mm.ready;                                                  // Flag
 
 double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
 
@@ -252,31 +247,47 @@ int tickTimerId;                                                  // ID eines gg
  * @return int - Fehlerstatus
  */
 int onTick() {
-   mm.done           = false;
+   mm.ready          = false;
    positionsAnalyzed = false;
 
-   HandleEvent(EVENT_CHART_CMD);                                     // ChartCommands verarbeiten
+   HandleEvent(EVENT_CHART_CMD);                                                                   // ChartCommands verarbeiten
 
-   if (!UpdatePrice())                     return(last_error);       // aktualisiert die Kursanzeige oben rechts
-   if (!UpdateOHLC())                      return(last_error);       // aktualisiert die OHLC-Anzeige oben links                 // TODO: unvollständig
+   if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
+   if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
 
    if (isLfxInstrument) {
-      if (!QC.HandleLfxTerminalMessages()) return(last_error);       // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
-      if (!UpdatePositions())              return(last_error);       // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!CheckLfxLimits())               return(last_error);       // prüft alle Pending-LFX-Limits und verschickt ggf. entsprechende Trade-Commands
+      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
+      if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!CheckLfxLimits())               if (CheckLastError("onTick(5)"))  return(last_error);   // prüft alle Pending-LFX-Limits und verschickt ggf. entsprechende Trade-Commands
    }
    else {
-      if (!QC.HandleTradeCommands())       return(last_error);       // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
-      if (!UpdateSpread())                 return(last_error);
-      if (!UpdateUnitSize())               return(last_error);       // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              return(last_error);       // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           return(last_error);       // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           return(last_error);       // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(6)"))  return(last_error);   // Quick-Channel: bei einem Trade-Terminal eingehende Messages verarbeiten
+      if (!UpdateSpread())                 if (CheckLastError("onTick(7)"))  return(last_error);
+      if (!UpdateUnitSize())               if (CheckLastError("onTick(8)"))  return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              if (CheckLastError("onTick(9)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(10)")) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           if (CheckLastError("onTick(11)")) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
    }
 
-   if (IsVisualModeFix())                                            // nur im Tester:
-      UpdateTime();                                                  // aktualisiert die Anzeige der Serverzeit unten rechts
+   if (IsVisualModeFix()) {                                                                        // nur im Tester:
+      if (!UpdateTime())                   if (CheckLastError("onTick(12)")) return(last_error);   // aktualisiert die Anzeige der Serverzeit unten rechts
+   }
    return(last_error);
+}
+
+
+/**
+ * Prüft, ob ein Fehler gesetzt ist und gibt eine Warnung aus, wenn das nicht der Fall ist. Zum Debugging in onTick()
+ *
+ * @param  string location - Ort der Prüfung
+ *
+ * @return bool - ob ein Fehler gesetzt ist
+ */
+bool CheckLastError(string location) {
+   if (IsLastError())
+      return(true);
+   //debug(location +"  returned FALSE but set no error");
+   return(false);
 }
 
 
@@ -687,8 +698,9 @@ bool ToggleStandardTargets() {
  * @return int - Anzahl der verarbeiteten Positionen oder -1 (EMPTY), falls ein Fehler auftrat.
  */
 int ShowStandardTargets() {
-   if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(EMPTY);
-   if (!mode.intern)                                  return(0);     // TargetLevel werden zur Zeit nur mit internem Account unterstützt
+   if (!mm.ready) /*&&*/ if (!UpdateMoneyManagement()) return(EMPTY);
+   if (!mm.ready)                                      return(0);
+   if (!mode.intern)                                   return(0);    // TargetLevel werden zur Zeit nur mit internem Account unterstützt
 
    // (1) Default-UnitSize ermitteln und auf MinLotSize aufrunden
    double lotsize    = mm.normalizedDefaultLots;
@@ -1593,17 +1605,16 @@ bool UpdatePrice() {
    }                                                                          // (z.B. wenn sie nicht von MetaTrader erstellt wurden)
    else {
       switch (appliedPrice) {
-         case PRICE_BID   : price =  Bid;                           break;
-         case PRICE_ASK   : price =  Ask;                           break;
-         case PRICE_MEDIAN: price = RoundEx((Bid + Ask)/2, Digits); break;    // NormalizeDouble() kann u.U. falsche Werte zurückgeben
+         case PRICE_BID   : price =  Bid;                                   break;
+         case PRICE_ASK   : price =  Ask;                                   break;
+         case PRICE_MEDIAN: price = NormalizeDouble((Bid + Ask)/2, Digits); break;
       }
    }
    ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error)                             return(true);
-   if (error == ERR_OBJECT_DOES_NOT_EXIST) return(true);                      // bei offenem Properties-Dialog oder Object::onDrag()
-
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
    return(!catch("UpdatePrice(1)", error));
 }
 
@@ -1622,9 +1633,9 @@ bool UpdateSpread() {
    ObjectSetText(label.spread, strSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateSpread()", error));
-   return(true);
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateSpread(1)", error));
 }
 
 
@@ -1634,8 +1645,9 @@ bool UpdateSpread() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                                   return(true );          // Anzeige wird im Tester nicht benötigt
-   if (!mm.done) /*&&*/ if (!UpdateMoneyManagement()) return(false);
+   if (IsTesting())                                    return(true);          // Anzeige wird im Tester nicht benötigt
+   if (!mm.ready) /*&&*/ if (!UpdateMoneyManagement()) return(_false(CheckLastError("UpdateUnitSize(1)->UpdateMoneyManagement()")));
+   if (!mm.ready)                                      return(true);
 
    string strUnitSize;
 
@@ -1647,9 +1659,9 @@ bool UpdateUnitSize() {
    ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateUnitSize(1)", error));
-   return(true);
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateUnitSize(1)", error));
 }
 
 
@@ -1660,7 +1672,8 @@ bool UpdateUnitSize() {
  */
 bool UpdatePositions() {
    if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions()     ) return(false);
-   if (!mm.done          ) /*&&*/ if (!UpdateMoneyManagement()) return(false);
+   if (!mm.ready         ) /*&&*/ if (!UpdateMoneyManagement()) return(false);
+   if (!mm.ready         )                                      return(true);
 
 
    // (1) Gesamtpositionsanzeige unten rechts
@@ -1823,15 +1836,21 @@ bool UpdateOrderCounter() {
       }
    }
 
-   int orders = OrdersTotal();
+   string sText = " ";
+   color  objectColor = defaultColor;
 
+   int orders = OrdersTotal();
    if (orders >= showLimit) {
-      if      (orders >= alertLimit) color objectColor = alertColor;
-      else if (orders >= warnLimit )       objectColor = warnColor;
-      else                                 objectColor = defaultColor;
-      ObjectSetText(label.orderCounter, StringConcatenate(orders, " open orders (max. ", maxOpenOrders, ")"), 8, "Tahoma Fett", objectColor);
+      if      (orders >= alertLimit) objectColor = alertColor;
+      else if (orders >= warnLimit ) objectColor = warnColor;
+      sText = StringConcatenate(orders, " open orders (max. ", maxOpenOrders, ")");
    }
-   return(true);
+   ObjectSetText(label.orderCounter, sText, 8, "Tahoma Fett", objectColor);
+
+   int error = GetLastError();
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateOrderCounter(1)", error));
 }
 
 
@@ -1850,9 +1869,9 @@ bool UpdateExternalAccount() {
    }
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)           // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateExternalAccount(1)", error));
-   return(true);
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateExternalAccount(1)", error));
 }
 
 
@@ -1904,9 +1923,9 @@ bool UpdateStopoutLevel() {
 
 
    error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                    // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateStopoutLevel(2)", error));
-   return(true);
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateStopoutLevel(2)", error));
 }
 
 
@@ -1959,11 +1978,10 @@ bool UpdateOHLC() {
    string strOHLC = "O="+ NumberToStr(Open[openBar], PriceFormat) +"   H="+ NumberToStr(High[highBar], PriceFormat) +"   L="+ NumberToStr(Low[lowBar], PriceFormat);
    ObjectSetText(label.ohlc, strOHLC, 8, "", Black);
 
-
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateOHLC(2)", error));
-   return(true);
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateOHLC(2)", error));
 }
 
 
@@ -1993,9 +2011,9 @@ bool UpdateTime() {
    lastTime = now;
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // bei offenem Properties-Dialog oder Object::onDrag()
-      return(!catch("UpdateTime(2)", error));
-   return(true);
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                      // bei offenem Properties-Dialog oder Object::onDrag()
+      return(true);
+   return(!catch("UpdateTime(2)", error));
 }
 
 
@@ -2236,10 +2254,9 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
  * @return bool - Erfolgsstatus
  */
 bool UpdateMoneyManagement() {
-   if (mm.done    ) return(true );
-   if (mode.remote) return(false);
- //if (mode.remote) return(_false(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
- //if (mode.remote) return(_false(catch("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+   if (mm.ready   ) return(true);
+   if (mode.remote) return(true);
+ //if (mode.remote) return(_true(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
 
    mm.tradableEquity        = 0;
    mm.lotValue              = 0;
@@ -2261,8 +2278,12 @@ bool UpdateMoneyManagement() {
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
       int error = GetLastError();
       if (IsError(error)) {
-         if (error == ERR_SYMBOL_NOT_AVAILABLE) return(false);
-         return(!catch("UpdateMoneyManagement(2)", error));
+         if (error == ERR_SYMBOL_NOT_AVAILABLE) {
+            SetLastError(ERS_TERMINAL_NOT_YET_READY);
+            //debug("UpdateMoneyManagement(2)  MarketInfo(\""+ Symbol() +"\") => ERR_SYMBOL_NOT_AVAILABLE", last_error);
+            return(false);
+         }
+         return(!catch("UpdateMoneyManagement(3)", error));
       }
       if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
       else             {        companyId = external.provider;            accountId = external.signal;    }
@@ -2277,16 +2298,19 @@ bool UpdateMoneyManagement() {
       mm.tradableEquity = externalAssets;                                     // ebenfalls falsch (nur Näherungswert)
    }
 
-   if (!Close[0] || !tickSize || !tickValue || !marginRequired)               // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   if (!Close[0] || !tickSize || !tickValue || !marginRequired) {             // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+      SetLastError(ERS_TERMINAL_NOT_YET_READY);
+      //debug("UpdateMoneyManagement(5)  Tick="+ Tick + ifString(!Close[0], "  Close=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
       return(false);
+   }
 
    mm.lotValue        = Close[0]/tickSize * tickValue;                        // Value eines Lots in Account-Currency
    mm.unleveragedLots = mm.tradableEquity/mm.lotValue;                        // ungehebelte Lotsize (Leverage 1:1)
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
-   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(false);    // ATR(14xW)
-      if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);//throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+   double a = @ATR(NULL, PERIOD_W1, 14, 1); if (a == EMPTY) return(false);    // ATR(14xW):  throws ERS_HISTORY_UPDATE (wenn, dann nur einmal)
+      if (last_error == ERS_HISTORY_UPDATE) /*&&*/ if (Period()!=PERIOD_W1) SetLastError(NO_ERROR);
       if (!a)                                               return(false);
    double b = @ATR(NULL, PERIOD_W1,  1, 1); if (b == EMPTY) return(false);    // TrueRange letzte Woche
       if (!b)                                               return(false);
@@ -2341,8 +2365,8 @@ bool UpdateMoneyManagement() {
       else                                mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/100    ) * 100       );  //   1200-...: Vielfaches von 100
    }
 
-   mm.done = true;
-   return(!catch("UpdateMoneyManagement(3)"));
+   mm.ready = true;
+   return(!catch("UpdateMoneyManagement(16)"));
 }
 
 
