@@ -723,7 +723,7 @@ bool ReleaseLocks(bool warn=false) {
  *
  * @param  datetime gmtTime - GMT-Zeit
  *
- * @return int - Offset in Sekunden, es gilt: FXT + Offset = GMT (immer negative Werte)
+ * @return int - Offset in Sekunden (immer negativ), es gilt: FXT + Offset = GMT
  *               EMPTY_VALUE, falls ein Fehler auftrat
  */
 int GetGmtToFxtTimeOffset(datetime gmtTime) {
