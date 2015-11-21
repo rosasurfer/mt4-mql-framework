@@ -31,5 +31,5 @@ begin
       uint32   "Close"
       move  8
       uint32   "Volume"
-   }[64]
+   }[32]
 end
