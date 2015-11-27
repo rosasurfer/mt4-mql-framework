@@ -523,8 +523,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    hf.from                      [hFile]        = from;
    hf.to                        [hFile]        = to;
 
-   hf.currentBar.offset         [hFile]        = -1;                 // vorhandene Bardaten zurücksetzen (vor allem bei wiederverwendetem Handle)
-   hf.currentBar.openTime       [hFile]        =  0;
+   hf.currentBar.offset         [hFile]        = -1;                 // ggf. vorhandene Bardaten zurücksetzen: wichtig, da MQL die ID eines vorher geschlossenen Dateihandles
+   hf.currentBar.openTime       [hFile]        =  0;                 // wiederverwenden kann
    hf.currentBar.closeTime      [hFile]        =  0;
    hf.currentBar.nextCloseTime  [hFile]        =  0;
    hf.currentBar.data           [hFile][BAR_T] =  0;
