@@ -76,9 +76,9 @@
 #define TIMEZONE_EUROPE_KIEV              "Europe/Kiev"
 #define TIMEZONE_EUROPE_LONDON            "Europe/London"
 #define TIMEZONE_EUROPE_MINSK             "Europe/Minsk"
-#define TIMEZONE_FXT                      "FXT"                // Europe/Kiev   (GMT+0200/+0300) mit DST-Wechseln von America/New_York
-#define TIMEZONE_FXT_MINUS_0200           "FXT-0200"           // Europe/London (GMT+0000/+0100) mit DST-Wechseln von America/New_York
-#define TIMEZONE_GLOBALPRIME              "GlobalPrime"        // bis 24.10.2015 "FXT", dann durch Fehler "Europe/Kiev" (hoffentlich einmalig)
+#define TIMEZONE_FXT                      "FXT"                // "Europe/Kiev"   mit DST-Wechseln von "America/New_York"
+#define TIMEZONE_FXT_MINUS_0200           "FXT-0200"           // "Europe/London" mit DST-Wechseln von "America/New_York"
+#define TIMEZONE_GLOBALPRIME              "GlobalPrime"        // bis 24.10.2015 "FXT", dann durch Fehler "Europe/Kiev" (einmalig?)
 #define TIMEZONE_GMT                      "GMT"
 
 
