@@ -3352,6 +3352,7 @@ string ShortAccountCompany() {
    else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
    else if (StringStartsWith(server, "metaquotes-"        )) return("MetaQuotes"      );
    else if (StringStartsWith(server, "migbank-"           )) return("MIG"             );
+   else if (StringStartsWith(server, "myfx-dukascopy"     )) return("MyFX Dukascopy"  );
    else if (StringStartsWith(server, "myfx-synthetic"     )) return("MyFX Synthetic"  );
    else if (StringStartsWith(server, "oanda-"             )) return("Oanda"           );
    else if (StringStartsWith(server, "pepperstone-"       )) return("Pepperstone"     );
@@ -6105,7 +6106,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "metaquotes-"        )) timezone = "GMT";                  // Dummy-Wert
    else if (StringStartsWith(directory, "migbank-"           )) timezone = "Europe/Berlin";
-   else if (StringStartsWith(directory, "myfx-synthetic"     )) timezone = "FXT";                  // XTrade
+   else if (StringStartsWith(directory, "myfx-"              )) timezone = "FXT";                  // XTrade
    else if (StringStartsWith(directory, "oanda-"             )) timezone = "America/New_York";
    else if (StringStartsWith(directory, "pepperstone-"       )) timezone = "FXT";
    else if (StringStartsWith(directory, "primexm-"           )) timezone = "GMT";
