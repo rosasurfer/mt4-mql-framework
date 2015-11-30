@@ -27,5 +27,5 @@ begin
    uint32       "Low"
    uint32       "Close"
    uint32       "Volume"
-   }[32]
+   }[1]
 end
