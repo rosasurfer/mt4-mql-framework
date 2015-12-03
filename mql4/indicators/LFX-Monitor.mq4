@@ -5,8 +5,7 @@
  * eine einfachere jedoch fehlerhafte Formel (vermutlich wegen einer nicht ausreichenden NZDUSD-History), was die Abbildung von LFX-Handelspositionen verkompliziert.
  * Letztlich sind die FX-Indizes zur Trenderkenneung, nicht jedoch für absolute oder Vergleiche untereinander geeignet. Ihre Berechnung ist willkürlich.
  *
- *  • Korrekt:   USD-FX5 = (USDCAD          * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/5
- *               USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
+ *  • Korrekt:   USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
  *               USD-FX7 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP * USDNZD) ^ 1/7
  *               NZD-FX7 = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
  *
