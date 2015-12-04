@@ -1,16 +1,23 @@
 /**
  * Berechnet die Kurse der verfügbaren FX-Indizes, zeigt sie an und kann deren History aufzeichnen.
  *
- * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen, ggf. mittels eines Multiplikators normalisiert. LiteForex benutzt
- * eine einfachere jedoch fehlerhafte Formel (vermutlich wegen einer nicht ausreichenden NZDUSD-History), was die Abbildung von LFX-Handelspositionen verkompliziert.
- * Letztlich sind die FX-Indizes zur Trenderkenneung, nicht jedoch für absolute oder Vergleiche untereinander geeignet. Ihre Berechnung ist willkürlich.
+ * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. Wird er mit einem Multiplikator normalisiert, ändert das nur den Wert,
+ * nicht aber die Form der Indexkurve (z.B. sind USDX und EURX auf 100 und die SierraChart-Indizes auf 1000 normalisiert).
  *
- *  • Korrekt:   USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
- *               USD-FX7 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP * USDNZD) ^ 1/7
- *               NZD-FX7 = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
+ * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante (1) hinzu, was die resultierende Indexkurve staucht (alle Werte sind niedriger), die Kurvenform und die
+ * Relationen von Hochs und Tiefs jedoch nicht ändert. Da Indexwerte ohnehin nicht verglichen werden können, bleibt die Aussagekraft des Charts erhalten.
+ * Durch diese Konstante wird es jedoch möglich, den Index einer Währung auch über den USD-Index und den USD-Kurs der Währung zu berechnen (schneller und Resourcen sparender).
  *
- *  • LiteForex: USD-LFX = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1     ) ^ 1/7    // nicht korrekt
- *               NZD-LFX = USD-LFX * USDNZD                                                        // nicht korrekt
+ *  • geometrisches Mittel: USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
+ *                          USD-FX7 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP * USDNZD) ^ 1/7
+ *                          NZD-FX7 = (NZDAUD * NZDCAD * NZDCHF * NZDEUR * NZDGBP * NZDJPY * NZDUSD) ^ 1/7
+ *
+ *  • LiteForex:            USD-LFX = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1) ^ 1/7
+ *                          CHF-LFX = (CHFAUD * CHFCAD * CHFEUR * CHFGBP * CHFJPY * CHFUSD * 1) ^ 1/7
+ *                     oder CHF-LFX = USD-LFX / USDCHF
+
+ * Der von LiteForex berechnete NZD-Index ist falsch:
+ *                          NZD-LFX = USD-LFX * USDNZD               // USDLFX enthält keine NZD-Komponente
  *
  * - Wird eine Handelsposition statt über die direkten über die USD-Crosses abgebildet (niedrigerer Spread), sind die Anzahl der Teilpositionen und entsprechend die
  *   Margin-Requirements höher.
@@ -426,14 +433,18 @@ bool UpdateInfos() {
    eurchf = eurusd * usdchf
    gbpchf = gbpusd * usdchf
 
-            |                       chfjpy                        |
-   CHFLFX = | --------------------------------------------------- | ^ 1/7
-            |     audchf * cadchf * eurchf * gbpchf * usdchf      |
+
+   CHFLFX: Herleitung der Gleichheit der Berechnung des Index über USDLFX und über die beteiligten Crosses
+   =======================================================================================================
+
+            |                   chfjpy                   |
+   CHFLFX = | ------------------------------------------ | ^ 1/7
+            | audchf * cadchf * eurchf * gbpchf * usdchf |
 
 
-            |                                  (usdjpy/usdchf)                                     |
-          = | ------------------------------------------------------------------------------------ | ^ 1/7
-            | (audusd * usdchf) * (usdchf/usdcad) * (eurusd * usdchf) * (gbpusd * usdchf) * usdchf |
+            |                                (usdjpy/usdchf)                                 |
+          = | ------------------------------------------------------------------------------ | ^ 1/7
+            | (audusd*usdchf) * (usdchf/usdcad) * (eurusd*usdchf) * (gbpusd*usdchf) * usdchf |
 
 
             |                                         usdjpy                                          |
@@ -441,12 +452,17 @@ bool UpdateInfos() {
             | usdchf * audusd * usdchf * (usdchf/usdcad) * eurusd * usdchf * gbpusd * usdchf * usdchf |
 
 
+            |                                 usdjpy * usdcad                                 |
+          = | ------------------------------------------------------------------------------- | ^ 1/7
+            | usdchf * audusd * usdchf * usdchf * eurusd * usdchf * gbpusd * usdchf * usdchf  |
+
+
             |    1           usdcad * usdjpy      |
           = | -------- * ------------------------ | ^ 1/7
             | usdchf^6   audusd * eurusd * gbpusd |
 
 
-            |      usdcad * usdchf * usdjpy       |
+            |      usdchf * usdcad * usdjpy       |
           = | ----------------------------------- | ^ 1/7
             | usdchf^7 * audusd * eurusd * gbpusd |
 
@@ -457,7 +473,7 @@ bool UpdateInfos() {
 
 
             | usdcad * usdchf * usdjpy |
-          = | ------------------------ | ^ 1/7 / usdchf
+          = | ------------------------ | ^ 1/7 / usdchf              // der erste Term entspricht dem USDLFX
             | audusd * eurusd * gbpusd |
 
 

@@ -8760,6 +8760,9 @@ name=Custom Indicator
 name=ChartInfos
 flags=347
 window_num=0
+<inputs>
+Offline.Ticker=0
+</inputs>
 </expert>
 period_flags=0
 show_data=0
@@ -8771,8 +8774,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
