@@ -11,7 +11,7 @@ volume=0
 scroll=0
 shift=1
 ohlc=0
-askline=1
+askline=0
 days=0
 descriptions=1
 shift_size=50
@@ -8758,6 +8758,9 @@ name=Custom Indicator
 name=ChartInfos
 flags=347
 window_num=0
+<inputs>
+Offline.Ticker=0
+</inputs>
 </expert>
 period_flags=0
 show_data=0
@@ -8769,8 +8772,6 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0

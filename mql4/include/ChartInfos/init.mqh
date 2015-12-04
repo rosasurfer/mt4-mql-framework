@@ -181,7 +181,7 @@ int onInit_Recompile() {
  */
 int afterInit() {
    // ggf. OfflineTicker installieren
-   if (!This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
+   if (Offline.Ticker && !This.IsTesting() && GetServerName()=="MyFX-Synthetic") {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 900;
       int timerId = SetupTickTimer(hWnd, millis, TICK_OFFLINE_REFRESH);
