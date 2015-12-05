@@ -914,7 +914,7 @@ int WindowHandleEx(string symbol, int timeframe=NULL) {
          if (IsIndicator()) {
             // Ein Indikator im SuperContext übernimmt das ChartHandle von dort.
             if (IsSuperContext()) {
-               if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
+               if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("WindowHandleEx(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
                int superContext[EXECUTION_CONTEXT.intSize];
                CopyMemory(GetIntsAddress(superContext), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms
                static.hWndSelf = ec_hChart(superContext);                                             // u.U. noch nicht endgültig initialisiert ist.
@@ -2696,8 +2696,8 @@ int TimeYearFix(datetime time) {
  * @return int - Fehlerstatus
  */
 void CopyMemory(int destination, int source, int bytes) {
-   if (destination < MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination = 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
-   if (source      < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source = 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination = 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (source     >=0 && source    < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source = 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
 
    RtlMoveMemory(destination, source, bytes);
    return(NO_ERROR);
@@ -3049,7 +3049,7 @@ bool Indicator.IsTesting() {
    //     - Teststatus des SuperContexts übernehmen
    //
    if (IsSuperContext()) {
-      if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
+      if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
       int superCopy[EXECUTION_CONTEXT.intSize];
       CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);       // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
                                                                                              // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() benutzt wird.
