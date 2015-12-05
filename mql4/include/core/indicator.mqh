@@ -553,7 +553,7 @@ bool InitExecutionContext() {
 
       // (3.1) Gibt es einen SuperContext, die in (1) definierten lokalen Variablen mit denen aus dem SuperContext überschreiben
       if (__lpSuperContext != NULL) {
-         if (__lpSuperContext < MIN_VALID_POINTER) return(!catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
+         if (__lpSuperContext>0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("InitExecutionContext(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
          int superCopy[EXECUTION_CONTEXT.intSize];
          CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);
 

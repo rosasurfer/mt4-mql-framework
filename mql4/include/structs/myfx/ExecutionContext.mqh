@@ -83,7 +83,7 @@ string ec.setProgramName       (/*EXECUTION_CONTEXT*/int &ec[], string name     
 int    ec.setLaunchType        (/*EXECUTION_CONTEXT*/int &ec[], int    type              ) { ec[I_EC.launchType        ] = type;                        return(type              ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setSuperContext      (/*EXECUTION_CONTEXT*/int  ec[], int    sec[]             ) { int lpSec = ec.setLpSuperContext(ec, GetIntsAddress(sec)); return(lpSec             ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setLpSuperContext    (/*EXECUTION_CONTEXT*/int &ec[], int    lpSuperContext    ) {
-   if (lpSuperContext && lpSuperContext < MIN_VALID_POINTER) return(!catch("ec.setLpSuperContext(1)  invalid parameter lpSuperContext = 0x"+ IntToHexStr(lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (lpSuperContext && lpSuperContext>=0 && lpSuperContext<MIN_VALID_POINTER) return(!catch("ec.setLpSuperContext(1)  invalid parameter lpSuperContext = 0x"+ IntToHexStr(lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
                                                                                              ec[I_EC.lpSuperContext    ] = lpSuperContext;              return(lpSuperContext    ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setInitFlags         (/*EXECUTION_CONTEXT*/int &ec[], int    initFlags         ) { ec[I_EC.initFlags         ] = initFlags;                   return(initFlags         ); EXECUTION_CONTEXT.toStr(ec); }
 int    ec.setDeinitFlags       (/*EXECUTION_CONTEXT*/int &ec[], int    deinitFlags       ) { ec[I_EC.deinitFlags       ] = deinitFlags;                 return(deinitFlags       ); EXECUTION_CONTEXT.toStr(ec); }
@@ -168,7 +168,7 @@ string EXECUTION_CONTEXT.toStr(/*EXECUTION_CONTEXT*/int ec[], bool outputDebug=f
 string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    outputDebug = outputDebug!=0;
 
-   if (lpContext < MIN_VALID_POINTER) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
+   if (lpContext>=0 && lpContext<MIN_VALID_POINTER) return(_EMPTY_STR(catch("lpEXECUTION_CONTEXT.toStr(1)  invalid parameter lpContext = 0x"+ IntToHexStr(lpContext) +" (not a valid pointer)", ERR_INVALID_POINTER)));
 
    int tmp[EXECUTION_CONTEXT.intSize];
    CopyMemory(GetIntsAddress(tmp), lpContext, EXECUTION_CONTEXT.size);
