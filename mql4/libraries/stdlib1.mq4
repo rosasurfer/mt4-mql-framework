@@ -1066,7 +1066,7 @@ string GetServerName() {
       /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
       int hFindDir=FindFirstFileA(pattern, wfd), next=hFindDir;
 
-      while (next > 0) {
+      while (next != 0) {
          if (wfd_FileAttribute_Directory(wfd)) {
             string name = wfd_FileName(wfd);
             if (name != ".") /*&&*/ if (name != "..") {
