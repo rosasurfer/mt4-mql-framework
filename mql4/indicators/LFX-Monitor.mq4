@@ -4,10 +4,10 @@
  * Der Index einer Währung ist das geometrische Mittel der Kurse der jeweiligen Vergleichswährungen. Wird er mit einem Multiplikator normalisiert, ändert das nur den Wert,
  * nicht aber die Form der Indexkurve (z.B. sind USDX und EURX auf 100 und die SierraChart-FX-Indizes auf 1000 normalisiert).
  *
- * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht und verzerrt (Werte in Richtung 1 werden mehr gestaucht
- * als Werte von 1 weg). Die Relationen von Hochs und Tiefs werden nicht verändert. Durch die Konstante ist es möglich, den Index einer Währung über den USD-Index und den
- * USD-Kurs einer Währung zu berechnen, was schneller und Resourcen sparender ist.
- * Die LiteForex-Indizes sind bis auf den NZDLFX also verzerrte FX6-Indizes. Der NZDLFX ist ein unverzerrter FX7-Index.
+ * LiteForex fügt den Vergleichswährungen eine zusätzliche Konstante 1 hinzu, was die resultierende Indexkurve staucht, der Chart und die Relationen von Hochs und Tiefs sind
+ * jedoch völlig identisch. Durch die Konstante ist es möglich, den Index einer Währung über den USD-Index und den USD-Kurs einer Währung zu berechnen, was u.U. schneller und
+ * Resourcen sparender sein kann.
+ * Die LiteForex-Indizes sind bis auf den NZDLFX also gestauchte FX6-Indizes. Der NZDLFX ist ein reiner FX7-Index.
  *
  *  • geometrisches Mittel: USD-FX6 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP         ) ^ 1/6
  *                          USD-FX7 = (USDCAD * USDCHF * USDJPY * USDAUD * USDEUR * USDGBP * USDNZD) ^ 1/7
