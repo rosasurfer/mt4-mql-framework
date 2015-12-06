@@ -7,16 +7,16 @@
 // @see  Definition in MT4Expander::Expander.h
 //
 
-template    "MT4 Symbols [all]"
+template    "MT4 Symbols [1]"
 description "File 'symbols.raw'"
 
 applies_to  file
-fixed_start 0
+multiple
 
 begin
    { endsection
                                  // -------------- offset -
-   char[12] "Symbol  ~"          //                     0
+   char[12] "Symbol"             //                     0
    char[58] "Description"        //                    64
    char[ 6] "was"                //                    70
    char[12] "Standard Symbol"    //                    76
@@ -53,5 +53,5 @@ begin
 
    move 104                      //                  1828
    uint32   "?"                  //                  1932
-   }[unlimited]                  // sizeof(SYMBOL) = 1936
+   }                             // sizeof(SYMBOL) = 1936
 end

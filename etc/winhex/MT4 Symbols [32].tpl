@@ -18,7 +18,8 @@ begin
    { endsection
                                  // -------------- offset -
    char[12] "Symbol"             //                     0
-   char[64] "Description"        //                    64
+   char[58] "Description"        //                    64
+   char[ 6] "was"                //                    70
    char[12] "Standard Symbol"    //                    76
    char[12] "Base Currency"      //                    88
    uint32   "Group Index"        //                   100
