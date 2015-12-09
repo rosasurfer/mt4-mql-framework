@@ -24,7 +24,10 @@ begin
    uint32   "Group Index"        //                   100
    uint32   "Digits"             //                   104
 
-   move 1532                     //                   108
+   uint32   "?"                  //                   108
+   hex 4    "Background Color"   //                   112
+
+   move 1524                     //                   116
    double   "?"                  //                  1640
 
    move 12                       //                  1648
