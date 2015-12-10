@@ -27,8 +27,9 @@ begin
 
    uint32   "?"                  //                   108
    hex 4    "Background Color"   //                   112
+   uint32   "ID"                 //                   116
 
-   move 1524                     //                   116
+   move 1520                     //                   120
    double   "?"                  //                  1640
 
    move 12                       //                  1648
