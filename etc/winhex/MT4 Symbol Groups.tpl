@@ -15,6 +15,7 @@ begin
    { endsection
 
    char[16] "Name  ~"
-   char[64] "Description"
+   char[60] "Description"
+   hex 4    "Background Color"      // custom
    }[unlimited]
 end
