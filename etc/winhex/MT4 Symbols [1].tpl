@@ -18,6 +18,11 @@ begin
                                  // -------------- offset -
    char[12] "Symbol"             //                     0
    char[54] "Description"        //                    12
+
+   move 50                       //                    66
+   uint32   "ID"                 //                   116
+   move -54                      //                   120
+
    char[10] "was"                //                    66
    char[12] "Standard Symbol"    //                    76
    char[12] "Base Currency"      //                    88
@@ -26,9 +31,8 @@ begin
 
    uint32   "?"                  //                   108
    hex 4    "Background Color"   //                   112
-   uint32   "ID"                 //                   116
 
-   move 1520                     //                   120
+   move 1524                     //                   116
    double   "?"                  //                  1640
 
    move 12                       //                  1648
