@@ -3632,12 +3632,14 @@ string GetStandardSymbolStrict(string symbol) {
    else if (StringEndsWith(symbol, "_AVG")) symbol = StringLeft(symbol, -4);
 
    switch (StringGetChar(symbol, 0)) {
-      case '_': if                  (symbol=="_DJI"   )     return("DJIA"   );
+      case '_': if                  (symbol=="_BRENT" )     return("BRENT"  );
+                if                  (symbol=="_DJI"   )     return("DJIA"   );
                 if                  (symbol=="_DJT"   )     return("DJTA"   );
                 if                  (symbol=="_N225"  )     return("NIK225" );
                 if                  (symbol=="_NQ100" )     return("NAS100" );
                 if                  (symbol=="_NQCOMP")     return("NASCOMP");
                 if                  (symbol=="_SP500" )     return("SP500"  );
+                if                  (symbol=="_WTI"   )     return("WTI"    );
                 break;
 
       case '#': if                  (symbol=="#DAX.XEI" )   return("DAX"  );
