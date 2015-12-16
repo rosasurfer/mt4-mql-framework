@@ -9,9 +9,9 @@
  * @param  _OUT_ double &upTrend2 [] - steigende Indikatorwerte für Trendlängen von einer einzigen Bar (liegt im Chart über der DownTrend-Line)
  */
 void @MA.UpdateTrend(double ma[], int bar, double &trend[], double &upTrend1[], double &downTrend[], double &upTrend2[]) {
-   // (1) Trend: Reversal-Glättung um 0.01 pip durch Normalisierung
-   double currentValue  = NormalizeDouble(ma[bar  ], SubPipDigits+1);
-   double previousValue = NormalizeDouble(ma[bar+1], SubPipDigits+1);
+   // (1) Trend: Reversal-Glättung um 0.1 pip durch Normalisierung
+   double currentValue  = NormalizeDouble(ma[bar  ], SubPipDigits);
+   double previousValue = NormalizeDouble(ma[bar+1], SubPipDigits);
 
    if      (currentValue > previousValue) trend[bar] =       Max(trend[bar+1], 0) + 1;
    else if (currentValue < previousValue) trend[bar] =       Min(trend[bar+1], 0) - 1;
