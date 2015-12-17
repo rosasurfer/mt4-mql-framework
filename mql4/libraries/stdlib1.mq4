@@ -6102,7 +6102,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "investorseurope-"   )) timezone = "Europe/London";
    else if (StringStartsWith(directory, "jfd-demo"           )) timezone = "Europe/London";
    else if (StringStartsWith(directory, "jfd-live"           )) timezone = "Europe/London";
-   else if (StringStartsWith(directory, "liteforex-"         )) timezone = "Europe/Minsk";
+   else if (StringStartsWith(directory, "liteforex-"         )) timezone = "FXT";                  // TODO: Hat *wann* 2014/2015 von "Europe/Minsk" auf FXT *oder* Athen umgestellt?
    else if (StringStartsWith(directory, "londoncapitalgr-"   )) timezone = "GMT";
    else if (StringStartsWith(directory, "londoncapitalgroup-")) timezone = "GMT";
    else if (StringStartsWith(directory, "mbtrading-"         )) timezone = "America/New_York";
