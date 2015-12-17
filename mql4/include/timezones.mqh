@@ -160,7 +160,7 @@ int transitions.Europe_Kiev[68][6] = {
 };
 
 
-// Europe/Minsk: GMT+0200/+0300 (ab Sommer 2011 durchgehend Sommerzeit)
+// Europe/Minsk: GMT+0200/+0300 (seit Sommer 2011 durchgehend Sommerzeit)
 int transitions.Europe_Minsk[68][6] = {
    // Wechsel zu DST                                               DST-Offset   // Wechsel zu Normalzeit                                        Std-Offset
            -1,                             -1,                     PLUS_3_H,            -1,                             -1,                     PLUS_3_H,   // durchgehend Normalzeit
