@@ -26,18 +26,8 @@ string  account.symbolSuffixes    [] = { ".EA", ".EX" };
 string  account.symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity with external assets" };
 
 // Array-Indizes
-#define I_ACCOUNT_EQUITY            0                                 // echter Equity-Wert des Accounts (nicht wie vom Broker berechnet)
-#define I_ACCOUNT_EQUITY_WITH_AUM   1                                 // echter Equity-Wert inklusive externer Assets
-
-
-/**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   return(catch("onInit(1)"));
-}
+#define I_ACCOUNT_EQUITY            0                                // echter Equity-Wert des Accounts (nicht wie vom Broker berechnet)
+#define I_ACCOUNT_EQUITY_WITH_AUM   1                                // echter Equity-Wert inklusive externer Assets
 
 
 /**
@@ -76,7 +66,7 @@ int onTick() {
 
 
 /**
- * Ermittelt die aktuellen Accountdaten: Account-Balance und Account-Equity jeweils mit und ohne externen Assets
+ * Ermittelt die aktuellen Accountdaten: Account-Balance und Account-Equity jeweils mit und ohne externe Assets
  *
  * @return bool - Erfolgsstatus
  */
@@ -147,8 +137,8 @@ bool CollectAccountData() {
    double fullPL          = SumDoubles(symbols.profit);
    double externalAssets  = GetExternalAssets(ShortAccountCompany(), GetAccountNumber()); if (IsEmptyValue(externalAssets)) return(false);
 
-   account.data[I_ACCOUNT_EQUITY         ] = NormalizeDouble(AccountBalance()                + fullPL        , 2);
-   account.data[I_ACCOUNT_EQUITY_WITH_AUM] = NormalizeDouble(account.data[I_ACCOUNT_EQUITY ] + externalAssets, 2);
+   account.data[I_ACCOUNT_EQUITY         ] = NormalizeDouble(AccountBalance()               + fullPL        , 2);
+   account.data[I_ACCOUNT_EQUITY_WITH_AUM] = NormalizeDouble(account.data[I_ACCOUNT_EQUITY] + externalAssets, 2);
 
    //static bool done;
    //if (!done) done = !debug("CollectAccountData(2)  equity="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY], 2) +"  withAuM="+ DoubleToStr(account.data[I_ACCOUNT_EQUITY_WITH_AUM], 2));

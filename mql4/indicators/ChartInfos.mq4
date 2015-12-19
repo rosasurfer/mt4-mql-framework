@@ -1933,8 +1933,8 @@ bool UpdateStopoutLevel() {
    double soEquity   = AccountStopoutLevel(); if (soMode != ASM_ABSOLUTE) soEquity /= (100/usedMargin);
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
-      if (!tickSize || !tickValue)
-         return(!SetLastError(ERR_SYMBOL_NOT_AVAILABLE));                              // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+   if (!tickSize || !tickValue)
+      return(!SetLastError(ERR_SYMBOL_NOT_AVAILABLE));                                 // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
    if (totalPosition > 0) soPrice = NormalizeDouble(Bid - soDistance, Digits);
@@ -1947,9 +1947,9 @@ bool UpdateStopoutLevel() {
       ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed  );
       ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true       );
-         if (soMode == ASM_PERCENT) string description = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%");
-         else                              description = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency());
-      ObjectSetText(label.stopoutLevel, description);
+         if (soMode == ASM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
+         else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
+      ObjectSetText(label.stopoutLevel, text);
       ObjectRegister(label.stopoutLevel);
    }
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
