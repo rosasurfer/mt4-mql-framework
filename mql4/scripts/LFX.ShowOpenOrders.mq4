@@ -16,22 +16,6 @@ int __DEINIT_FLAGS__[];
 
 
 /**
- * Initialisierung
- *
- * @return int - Fehlerstatus
- */
-int onInit() {
-   // Prüfen, ob wir auf einem LFX-Instrument laufen
-   lfxCurrency = "";
-   if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
-   else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   isLfxInstrument = StringLen(lfxCurrency) > 0;
-
-   return(catch("onInit()"));
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
@@ -43,6 +27,10 @@ int onStart() {
 
    // (1) Status ON: offene Orders einlesen und anzeigen
    if (status) {
+      string lfxCurrency = "";
+      if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
+      else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
+
       /*LFX_ORDER*/int los[][LFX_ORDER.intSize];
       int orders = LFX.GetOrders(lfxCurrency, OF_OPEN, los);
 
