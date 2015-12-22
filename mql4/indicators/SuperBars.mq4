@@ -619,7 +619,7 @@ int CreateDescriptionLabel() {
 
 
 /**
- * Speichert die SuperBars-Konfiguration im Chart-Fenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
+ * Speichert die SuperBars-Konfiguration im Chartfenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
  *
  * @return bool - Erfolgsstatus
  */
@@ -632,7 +632,7 @@ bool StoreWindowStatus() {
    int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
    SetPropA(hWnd, "xtrade.SuperBars.Timeframe", superBars.timeframe);  // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
-   // Konfiguration in Chartkonfiguration speichern                  // TODO: nur bei Terminal-Shutdown
+   // Konfiguration im Chart speichern                               // TODO: nur bei Terminal-Shutdown
    string label = __NAME__ +".sticky.timeframe";
    string value = superBars.timeframe;                               // (string) int
    if (ObjectFind(label) == 0)
@@ -646,9 +646,7 @@ bool StoreWindowStatus() {
 
 
 /**
- * Restauriert die SuperBars-Konfiguration aus dem Chartfenster oder der Chartkonfiguration.
- *
- *  - Superbar-Timeframe
+ * Restauriert die SuperBars-Konfiguration aus dem Chartfenster oder dem Chart.
  *
  * @return bool - Erfolgsstatus
  */
@@ -658,7 +656,7 @@ bool RestoreWindowStatus() {
    int result = RemovePropA(hWnd, "xtrade.SuperBars.Timeframe");       // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    if (!result) {
-      // Konfiguration in Chartkonfiguration suchen
+      // Konfiguration im Chart suchen
       string label = __NAME__ +".sticky.timeframe";
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);

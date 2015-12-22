@@ -123,13 +123,13 @@ bool ProcessMessages() {
 
    // (2) Channel auf neue Messages prüfen
    int result = QC_CheckChannel(qc.quotes.BackChannel);
+   if (result == QC_CHECK_CHANNEL_EMPTY)
+      return(true);
    if (result < QC_CHECK_CHANNEL_EMPTY) {
       if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("ProcessMessages(1)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.quotes.BackChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
       if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("ProcessMessages(2)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.quotes.BackChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
                                                return(!catch("ProcessMessages(3)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.quotes.BackChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
    }
-   if (result == QC_CHECK_CHANNEL_EMPTY)
-      return(true);
 
    // (3) neue Messages abholen
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);

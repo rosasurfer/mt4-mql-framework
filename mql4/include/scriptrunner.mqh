@@ -8,8 +8,7 @@
 #import
 
 
-string qc.ScriptParameterChannel;
-string qc.ScriptParameterBuffer[];
+string  qc.ScriptParameterChannel;
 int    hQC.ScriptParameterSender;
 
 
@@ -105,14 +104,15 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
    }
    else if (result > QC_CHECK_CHANNEL_EMPTY) {
       // get messages
-      result = QC_GetMessages3(hQC.ScriptParameterSender, qc.ScriptParameterBuffer, QC_MAX_BUFFER_SIZE);
+      string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
+      result = QC_GetMessages3(hQC.ScriptParameterSender, messageBuffer, QC_MAX_BUFFER_SIZE);
       if (result != QC_GET_MSG3_SUCCESS) {
          if      (result == QC_GET_MSG3_CHANNEL_EMPTY) catch("GetScriptParameters(5)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR);
          else if (result == QC_GET_MSG3_INSUF_BUFFER ) catch("GetScriptParameters(6)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR);
          else                                          catch("GetScriptParameters(7)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR);
       }
       else {
-         parameters = qc.ScriptParameterBuffer[0];
+         parameters = messageBuffer[0];
       }
    }
 
@@ -169,9 +169,6 @@ bool QC.StartScriptParameterSender() {
          if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartScriptParameterSender(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\") => QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR  ));
                                                return(!catch("QC.StartScriptParameterSender(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.ScriptParameterChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR  ));
       }
-      // Messagebuffer initialisieren (Sender-Handle wird auch zum Lesen benutzt)
-      if (!ArraySize(qc.ScriptParameterBuffer))
-         InitializeStringBuffer(qc.ScriptParameterBuffer, QC_MAX_BUFFER_SIZE);
    }
 
    hQC.ScriptParameterSender = QC_StartSender(qc.ScriptParameterChannel);

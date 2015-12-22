@@ -303,20 +303,18 @@ int HistorySet.Create(string symbol, string description, int digits, int format,
    if (false && synthetic) {
       // (5.1) "symgroups.raw": Symbolgruppe finden (ggf. anlegen)
       string groupName, prefix=StringLeft(symbolU, 3), suffix=StringRight(symbolU, 3);
-      string accountDataSuffixes[] = {".BA", ".BX", ".EA", ".EX", ".LA", ".PL"};
+      string accountStatSuffixes[] = {".EA", ".EX", ".LA", ".PL"};
 
       // Gruppe bestimmen und deren Index ermitteln
-      bool isAccountData   =  StringInArray(accountDataSuffixes, suffix);
-      bool isLfxInstrument = (StringLen(symbolU)==6) && (prefix=="LFX" || suffix=="LFX");
+      bool isAccountStat = StringInArray(accountStatSuffixes, suffix);
 
       if (This.IsTesting()) {
-         if (isAccountData) groupName = "Tester Results";            // es können nur Testdaten sein
+         if (isAccountStat) groupName = "Tester Results";            // es können nur Testdaten sein
          else               groupName = "Tester Other";
       }
       else {
-         if      (isAccountData  ) groupName = "Account Statistics"; // es können Accountdaten sein
-         else if (isLfxInstrument) groupName = "Currency Indices";   // es kann ein LFX-Instrument sein
-         else                      groupName = "Other";              // es kann etwas anderes sein
+         if (isAccountStat) groupName = "Account Statistics";        // es können Accountdaten sein
+         else               groupName = "Other";                     // es kann etwas anderes sein
       }
 
       // (5.2) "symbols.raw": Symboldatensatz über- bzw. neuschreiben

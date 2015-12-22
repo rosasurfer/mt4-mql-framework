@@ -183,22 +183,21 @@ bool ProcessQuoteUpdates() {
  * @return bool - Erfolgsstatus
  */
 bool ProcessMessages() {
-   string messageBuffer[];
+   string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
    int    size = ArraySize(hQC.Receivers);
 
    for (int i=0; i < size; i++) {
       // (1) Channel auf neue Messages prüfen
       int result = QC_CheckChannel(qc.SubscriptionChannels[i]);
-      if (!result)
+      if (result == QC_CHECK_CHANNEL_EMPTY)
          continue;
-      if (result < 0) {
+      if (result < QC_CHECK_CHANNEL_EMPTY) {
          if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("ProcessMessages(1)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
          if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("ProcessMessages(2)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
                                                   return(!catch("ProcessMessages(3)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
       }
 
       if (!hQC.Receivers[i]) /*&&*/ if (!StartReceiver(i)) return(false);
-      if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
 
       // (2) neue Messages abholen
       result = QC_GetMessages3(hQC.Receivers[i], messageBuffer, QC_MAX_BUFFER_SIZE);

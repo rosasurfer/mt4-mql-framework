@@ -1,16 +1,16 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum aktuellen Instrument und den Positionen einer der folgenden Typen an:
+ * Zeigt im Chart verschiedene Informationen zum aktuellen Instrument und einer der folgenden Positionen an:
  *
  * (1) interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
  *                         - Order- und P/L-Daten stammen vom Terminal
  *
- * (2) externe Positionen: - Positionen, die in einem externem Account gehalten werden (z.B. in SimpleTrader-Accounts)
- *                         - Orderdaten stammen aus der externen Quelle
- *                         - P/L-Daten werden anhand der aktuellen Kurse selbst berechnet
+ * (2) externe Positionen: - Positionen, die in einem externen Account gehalten werden (z.B. in SimpleTrader-Accounts)
+ *                         - Orderdaten stammen aus einer externen Quelle
+ *                         - P/L-Daten werden anhand der aktuellen Kurse des Terminals selbst berechnet
  *
- * (3) Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (i.d.R. synthetische Positionen)
- *                         - Orderdaten stammen aus der externen Quelle
- *                         - P/L-Daten stammen ebenfalls aus der externen Quelle
+ * (3) Remote-Positionen:  - Positionen, die in einem anderen Account gehalten werden (in der Regel synthetische Positionen)
+ *                         - Orderdaten stammen aus einer externen Quelle
+ *                         - P/L-Daten stammen ebenfalls aus einer externen Quelle
  *                         - Orderlimits können überwacht und die externe Quelle bei Erreichen benachrichtigt werden
  */
 #property indicator_chart_window
@@ -21,9 +21,9 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool Positions.AbsoluteAmounts = true;                     // ob die Einzelpositionsanzeige auch absolute Beträge beinhaltet oder nur prozentuale Werte anzeigt
-extern bool Positions.LogTickets      = false;                    // ob die Tickets der Einzelpositionsanzeige geloggt werden sollen
-extern bool Offline.Ticker            = true;                     // ob der Ticker in Offline-Charts standardmäßig aktiviert wird
+extern bool CustomPositions.AbsoluteAmounts = true;               // ob die Einzelpositionsanzeige auch absolute Beträge beinhaltet oder nur prozentuale Werte anzeigt
+extern bool CustomPositions.LogTickets      = false;              // ob die Tickets der Einzelpositionsanzeige geloggt werden sollen
+extern bool Offline.Ticker                  = true;               // ob der Ticker in Offline-Charts standardmäßig aktiviert wird
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -49,60 +49,45 @@ int appliedPrice = PRICE_MEDIAN;                                  // Preis: Bid 
 
 
 // Moneymanagement
-#define STANDARD_VOLATILITY  10                                   // Standard-Volatilität einer Unit in Prozent Equity je Woche (discretionary)
+#define STANDARD_VOLATILITY  10                                   // Standard-Volatilität einer Unit in Prozent Equity je Woche (willkürlich gewählt)
 
-//double mm.brokerEquity;                                         // vom Broker verwendeter Equity-Betrag: entspricht Wert von AccountEquity()
-                                                                  //  - inkl. Credits
-                                                                  //  - inkl. unrealiserter P/L
-                                                                  //  - inkl. doppelte Spreads und Commissions gehedgter Positionen
-
-double mm.tradableEquity;                                         // realer zum Traden verfügbarer Equity-Betrag:
+double mm.realEquity;                                             // real verwendeter Equity-Betrag; nicht der vom Broker berechnete = AccountEquity()
                                                                   //  - enthält externe Assets                                                           !!! doppelte Spreads und      !!!
                                                                   //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)      !!! Commissions herausrechnen !!!
                                                                   //  - enthält offene Verluste ungehedgter Positionen
                                                                   //  - enthält NICHT offene Gewinne ungehedgter Positionen (ungehedgt = unrealisiert)
-                                                                  //
-                                                                  //  Schreibzugriff:
-                                                                  //  ---------------
-                                                                  //  • UpdateMoneyManagement()
-                                                                  //
-                                                                  //  Lesezugriff:
-                                                                  //  ------------
-                                                                  //  • UpdatePositions()              Test auf 0 zur Berechnung von 'currentLeverage'
-                                                                  //  • ShowStandardTargets()          Berechnung der prozentualen TP/SL-Level einer Standard-Unit
 
 double mm.lotValue;                                               // Value eines Lots in Account-Currency
 double mm.unleveragedLots;                                        // Lotsize bei Hebel von 1:1
 
 double mm.defaultVola;
 double mm.defaultLeverage;
-double mm.defaultLots;                                            // Default-UnitSize
-double mm.normalizedDefaultLots;
+double mm.defaultLots;                                            // Default-UnitSize: exakter Wert
+double mm.defaultLots.normalized;                                 //                   auf MODE_LOTSTEP normalisierter Wert
 
 double mm.ATRwAbs;                                                // wöchentliche ATR: absoluter Wert
 double mm.ATRwPct;                                                // wöchentliche ATR: prozentualer Wert
 
-bool   mm.isCustomUnitSize;                                       // ob die Default-UnitSize (mm.defaultLots) nach Std.-Werten oder benutzerdefiniert berechnet wird
-
-double mm.stdVola = STANDARD_VOLATILITY;                          // kann per Konfiguration überschrieben werden
-double mm.stdLeverage;                                            // Hebel für wöchentliche Volatilität einer Unit von {mm.stdVola} Prozent
+double mm.stdVola = STANDARD_VOLATILITY;                          // Standard-Volatilität einer Unit in Prozent je Woche (kann per Konfiguration überschrieben werden)
+double mm.stdLeverage;                                            // Hebel für Standard-Volatilität
 double mm.stdLots;                                                // resultierende Lotsize
 
-double mm.customVola;                                             // benutzerdefinierte Volatilität einer Unit je Woche
-double mm.customLeverage;                                         // benutzerdefinierter Hebel einer Unit
+double mm.customVola;                                             // benutzerdefinierte Volatilität einer Unit in Prozent je Woche
+double mm.customLeverage;                                         // benutzerdefinierter Hebel
 double mm.customLots;                                             // resultierende Lotsize
+
+bool   mm.isCustomUnitSize;                                       // ob die Default-UnitSize (mm.defaultLots) nach Std.-Werten oder benutzerdefiniert berechnet wird
 bool   mm.ready;                                                  // Flag
 
 double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
 
 
 // Status
-bool   positionsAnalyzed;                                         // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
-bool   mode.intern;                                               //   eingelesen, Orderänderungen werden automatisch erkannt.
-bool   mode.extern;                                               // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
-bool   mode.remote;                                               //   oder nach Eintreffen einer entsprechenden Nachricht zurückgesetzt und aus der Quelle neu eingelesen,
-                                                                  //   Orderänderungen werden nicht automatisch erkannt.
-
+bool   mode.intern;                                               // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
+bool   mode.extern;                                               //   eingelesen. Orderänderungen werden automatisch erkannt.
+bool   mode.remote;                                               // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
+                                                                  //   oder nach Eintreffen eines entsprechenden Events zurückgesetzt und neu eingelesen. Orderänderungen werden
+                                                                  //   nicht automatisch erkannt.
 // Konfiguration individueller Positionen
 #define POSITION_CONFIG_TERM.size        40
 #define POSITION_CONFIG_TERM.doubleSize   5
@@ -127,6 +112,7 @@ double longPosition;
 double shortPosition;
 int    positions.idata[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
 double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolut, FullProfitPercent]
+bool   positionsAnalyzed;
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
 #define CONFIG_REAL                     1                         //                   individuell konfigurierte reale Position
@@ -200,18 +186,18 @@ int    lfxOrders.openPositions;                                   // Anzahl der 
 
 
 // Textlabel für die einzelnen Anzeigen
-string label.instrument      = "{__NAME__}.Instrument";
-string label.ohlc            = "{__NAME__}.OHLC";
-string label.price           = "{__NAME__}.Price";
-string label.spread          = "{__NAME__}.Spread";
-string label.aum             = "{__NAME__}.AuM";
-string label.position        = "{__NAME__}.Position";
-string label.unitSize        = "{__NAME__}.UnitSize";
-string label.orderCounter    = "{__NAME__}.OrderCounter";
-string label.externalAccount = "{__NAME__}.ExternalAccount";
-string label.lfxTradeAccount = "{__NAME__}.LfxTradeAccount";
-string label.stopoutLevel    = "{__NAME__}.StopoutLevel";
-string label.time            = "{__NAME__}.Time";
+string label.instrument      = "${__NAME__}.Instrument";
+string label.ohlc            = "${__NAME__}.OHLC";
+string label.price           = "${__NAME__}.Price";
+string label.spread          = "${__NAME__}.Spread";
+string label.aum             = "${__NAME__}.AuM";
+string label.position        = "${__NAME__}.Position";
+string label.unitSize        = "${__NAME__}.UnitSize";
+string label.orderCounter    = "${__NAME__}.OrderCounter";
+string label.externalAccount = "${__NAME__}.ExternalAccount";
+string label.lfxTradeAccount = "${__NAME__}.LfxTradeAccount";
+string label.stopoutLevel    = "${__NAME__}.StopoutLevel";
+string label.time            = "${__NAME__}.Time";
 
 
 // Font-Settings der CustomPositions-Anzeige
@@ -257,7 +243,7 @@ int onTick() {
    if (!UpdatePrice())                     if (CheckLastError("onTick(1)"))  return(last_error);   // aktualisiert die Kursanzeige oben rechts
    if (!UpdateOHLC())                      if (CheckLastError("onTick(2)"))  return(last_error);   // aktualisiert die OHLC-Anzeige oben links           // TODO: unvollständig
 
-   if (isLfxInstrument) {
+   if (mode.remote) {
       if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(3)"))  return(last_error);   // Quick-Channel: bei einem LFX-Terminal eingehende Messages verarbeiten
       if (!UpdatePositions())              if (CheckLastError("onTick(4)"))  return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
       if (!CheckLfxLimits())               if (CheckLastError("onTick(5)"))  return(last_error);   // prüft alle Pending-LFX-Limits und verschickt ggf. entsprechende Trade-Commands
@@ -304,7 +290,6 @@ bool CheckLastError(string location) {
  * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
  *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleStandardTargets"  - Schaltet die Anzeige der Standard-TP-/SL-Level ein/aus.
  *                "cmd=ToggleAuM"              - Schaltet die Assets-under-Management-Anzeige ein/aus.
  *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
  *                                               da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
@@ -326,11 +311,6 @@ bool onChartCommand(string commands[]) {
       }
       if (commands[i] == "cmd=ToggleTradeHistory") {
          if (!ToggleTradeHistory())
-            return(false);
-         continue;
-      }
-      if (commands[i] == "cmd=ToggleStandardTargets") {
-         if (!ToggleStandardTargets())
             return(false);
          continue;
       }
@@ -636,213 +616,6 @@ bool ToggleTradeHistory() {
    if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
-}
-
-
-/**
- * Schaltet die Anzeige der TP-/SL-Level einer Position in Standard-UnitSize ein/aus.
- *
- * @return bool - Erfolgsstatus
- */
-bool ToggleStandardTargets() {
-   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetStandardTargetsDisplayStatus();
-   status = true;
-
-   // Status ON: Standard-Targets anzeigen
-   if (status) {
-      int positions = ShowStandardTargets();
-      if (positions == -1)
-         return(false);
-      if (!positions) {                                              // ohne Target-Level bleibt die Anzeige unverändert (wenn Equity und Std.-UnitSize zu klein sind)
-         status = false;
-         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
-      }
-   }
-
-   // Status OFF: Chartobjekte der Target-Level löschen
-   else {
-      /*
-      for (int i=ObjectsTotal()-1; i >= 0; i--) {
-         string name = ObjectName(i);
-         if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name) == OBJ_ARROW) {
-               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR    );
-               if (arrow == SYMBOL_ORDEROPEN)
-                  if (clr!=CLR_CLOSED_LONG) if (clr!=CLR_CLOSED_SHORT)
-                     continue;
-               if (arrow == SYMBOL_ORDERCLOSE)
-                  if (clr!=CLR_CLOSE)
-                     continue;
-               ObjectDelete(name);
-            }
-            else if (ObjectType(name) == OBJ_TREND) {
-               ObjectDelete(name);
-            }
-         }
-      }
-      */
-   }
-
-   // Anzeigestatus im Chart speichern
-   SetStandardTargetsDisplayStatus(status);
-
-   if (This.IsTesting())
-      WindowRedraw();
-   return(!catch("ToggleStandardTargets(1)"));
-}
-
-
-/**
- * Zeigt die TP-/SL-Targets einer Position in Standard-UnitSize an.
- *
- * @return int - Anzahl der verarbeiteten Positionen oder -1 (EMPTY), falls ein Fehler auftrat.
- */
-int ShowStandardTargets() {
-   if (!mm.ready) /*&&*/ if (!UpdateMoneyManagement()) return(EMPTY);
-   if (!mm.ready)                                      return(0);
-   if (!mode.intern)                                   return(0);    // TargetLevel werden zur Zeit nur mit internem Account unterstützt
-
-   // (1) Default-UnitSize ermitteln und auf MinLotSize aufrunden
-   double lotsize    = mm.normalizedDefaultLots;
-   double minLotSize = MarketInfo(Symbol(), MODE_MINLOT);
-   if (!lotsize)    return(0);
-   if (!minLotSize) return(0);                                       // falls MarketInfo()-Daten noch nicht verfügbar sind
-   lotsize = MathMax(lotsize, minLotSize);
-   double pipValue = PipValue(lotsize, true);
-   if (!pipValue)   return(0);                                       // falls MarketInfo()-Daten noch nicht verfügbar sind
-   debug("ShowStandardTargets(1)  pipValue("+ NumberToStr(lotsize, ".1+") +")="+ NumberToStr(pipValue, ".+"));
-
-
-   // (2) StopLoss- und TakeProfit-Konfiguration einlesen und Absolutwerte und Pips berechnen
-   double slDailyPct   =  4, slDailyAbs   = mm.tradableEquity * slDailyPct  /100, slDailyPips   = slDailyAbs  /pipValue;
-   double slWeeklyPct  =  8, slWeeklyAbs  = mm.tradableEquity * slWeeklyPct /100, slWeeklyPips  = slWeeklyAbs /pipValue;
-   double slMonthlyPct = 12, slMonthlyAbs = mm.tradableEquity * slMonthlyPct/100, slMonthlyPips = slMonthlyAbs/pipValue;
-   double tpDailyPct   =  1, tpDailyAbs   = mm.tradableEquity * tpDailyPct  /100, tpDailyPips   = tpDailyAbs  /pipValue;
-   debug("ShowStandardTargets(2)  TP("+ NumberToStr(tpDailyPct, ".+") +"%)="+ DoubleToStr(tpDailyPips, 1) +" pip  SL("+ NumberToStr(slDailyPct, ".+") +"%)="+ DoubleToStr(slDailyPips, 1) +" pip");
-
-
-   // (3) StopLoss- und TakeProfit-Preise berechnen
-   double slPriceDailyLong    = Ask -   slDailyPips * Pips;
-   double slPriceDailyShort   = Bid +   slDailyPips * Pips;
-
-   double slPriceWeeklyLong   = Ask -  slWeeklyPips * Pips;
-   double slPriceWeeklyShort  = Bid +  slWeeklyPips * Pips;
-
-   double slPriceMonthlyLong  = Ask - slMonthlyPips * Pips;
-   double slPriceMonthlyShort = Bid + slMonthlyPips * Pips;
-
-   double tpPriceDailyLong    = Ask +   tpDailyPips * Pips;
-   double tpPriceDailyShort   = Bid -   tpDailyPips * Pips;
-
-
-   // (4) Levelanzeige
-   datetime from = TimeCurrentEx("ShowStandardTargets(3)") + 12*HOURS;
-   datetime to   = TimeCurrentEx("ShowStandardTargets(4)") +  2*DAYS;
-
-   string label = StringConcatenate(__NAME__, ".Target.Entry");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_TREND, 0, from, Close[0], to, Close[0])) {
-      ObjectSet(label, OBJPROP_RAY  , false      );
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, Blue       );
-      ObjectSet(label, OBJPROP_BACK , false      );
-      ObjectRegister(label);
-   }
-   label = StringConcatenate(__NAME__, ".Target.TakeProfit.Daily.Long");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_TREND, 0, from, tpPriceDailyLong, to, tpPriceDailyLong)) {
-      ObjectSet(label, OBJPROP_RAY  , false      );
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, LimeGreen  );
-      ObjectSet(label, OBJPROP_BACK , true       );
-      ObjectRegister(label);
-   }
-   label = StringConcatenate(__NAME__, ".Target.TakeProfit.Daily.Short");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_TREND, 0, from, tpPriceDailyShort, to, tpPriceDailyShort)) {
-      ObjectSet(label, OBJPROP_RAY  , false      );
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, LimeGreen  );
-      ObjectSet(label, OBJPROP_BACK , true       );
-      ObjectRegister(label);
-   }
-   label = StringConcatenate(__NAME__, ".Target.StopLoss.Daily.Long");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_TREND, 0, from, slPriceDailyLong, to, slPriceDailyLong)) {
-      ObjectSet(label, OBJPROP_RAY  , false      );
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, Red        );
-      ObjectSet(label, OBJPROP_BACK , true       );
-      ObjectRegister(label);
-   }
-   label = StringConcatenate(__NAME__, ".Target.StopLoss.Daily.Short");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_TREND, 0, from, slPriceDailyShort, to, slPriceDailyShort)) {
-      ObjectSet(label, OBJPROP_RAY  , false      );
-      ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet(label, OBJPROP_COLOR, Red        );
-      ObjectSet(label, OBJPROP_BACK , true       );
-      ObjectRegister(label);
-   }
-
-   /*
-   // (7) Parameteranzeige
-   string msg = StringConcatenate(__NAME__, "  for weekly volatility of "+ DoubleToStr(weeklyVola, 1) +"%",                                                       NL,
-                                                                                                                                                                  NL,
-                                 "ETR:        ",  DoubleToStr(ETRwAbs       /Pips, 1) +" pip = "+ NumberToStr(ETRwPct*100, "R.2") +"%",                           NL,
-                                 "Gridsize:   ",  DoubleToStr(gridSize      /Pips, 1) +" pip  =  1.0%",                                                           NL,
-                                 "TP:          ", DoubleToStr(takeProfitDist/Pips, 1) +" pip  =  0.5%",                                                           NL,
-                                 "SL:          ", DoubleToStr(stopLossDist  /Pips, 1) +" pip  =  3.0%  =  ", DoubleToStr(0.03*equity, 2), " ", AccountCurrency(), NL,
-                                 "");
-   Comment(StringConcatenate(NL, NL, NL, msg));                                     // 3 Zeilen Abstand nach oben für evt. vorhandene andere Anzeigen
-   */
-
-   if (!catch("ShowStandardTargets(5)"))
-      return(1);
-   return(EMPTY);
-}
-
-
-/**
- * Liest den im Chart gespeicherten aktuellen StandardTargets-Anzeigestatus aus.
- *
- * @return bool - Status: ON/OFF
- */
-bool GetStandardTargetsDisplayStatus() {
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".TargetLevelsDisplay.status";
-   if (ObjectFind(label) != -1)
-      return(StrToInteger(ObjectDescription(label)) != 0);
-   return(false);
-}
-
-
-/**
- * Speichert den angegebenen TargetLevels-Anzeigestatus im Chart.
- *
- * @param  bool status - Status
- *
- * @return bool - Erfolgsstatus
- */
-bool SetStandardTargetsDisplayStatus(bool status) {
-   status = status!=0;
-
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = __NAME__ +".TargetLevelsDisplay.status";
-   if (ObjectFind(label) == -1)
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
-   ObjectSetText(label, ""+ status, 0);
-
-   return(!catch("SetStandardTargetsDisplayStatus(1)"));
 }
 
 
@@ -1422,18 +1195,18 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
  */
 bool CreateLabels() {
    // Label definieren
-   label.instrument      = StringReplace(label.instrument     , "{__NAME__}", __NAME__);
-   label.ohlc            = StringReplace(label.ohlc           , "{__NAME__}", __NAME__);
-   label.price           = StringReplace(label.price          , "{__NAME__}", __NAME__);
-   label.spread          = StringReplace(label.spread         , "{__NAME__}", __NAME__);
-   label.aum             = StringReplace(label.aum            , "{__NAME__}", __NAME__);
-   label.position        = StringReplace(label.position       , "{__NAME__}", __NAME__);
-   label.unitSize        = StringReplace(label.unitSize       , "{__NAME__}", __NAME__);
-   label.orderCounter    = StringReplace(label.orderCounter   , "{__NAME__}", __NAME__);
-   label.externalAccount = StringReplace(label.externalAccount, "{__NAME__}", __NAME__);
-   label.lfxTradeAccount = StringReplace(label.lfxTradeAccount, "{__NAME__}", __NAME__);
-   label.time            = StringReplace(label.time           , "{__NAME__}", __NAME__);
-   label.stopoutLevel    = StringReplace(label.stopoutLevel   , "{__NAME__}", __NAME__);
+   label.instrument      = StringReplace(label.instrument     , "${__NAME__}", __NAME__);
+   label.ohlc            = StringReplace(label.ohlc           , "${__NAME__}", __NAME__);
+   label.price           = StringReplace(label.price          , "${__NAME__}", __NAME__);
+   label.spread          = StringReplace(label.spread         , "${__NAME__}", __NAME__);
+   label.aum             = StringReplace(label.aum            , "${__NAME__}", __NAME__);
+   label.position        = StringReplace(label.position       , "${__NAME__}", __NAME__);
+   label.unitSize        = StringReplace(label.unitSize       , "${__NAME__}", __NAME__);
+   label.orderCounter    = StringReplace(label.orderCounter   , "${__NAME__}", __NAME__);
+   label.externalAccount = StringReplace(label.externalAccount, "${__NAME__}", __NAME__);
+   label.lfxTradeAccount = StringReplace(label.lfxTradeAccount, "${__NAME__}", __NAME__);
+   label.time            = StringReplace(label.time           , "${__NAME__}", __NAME__);
+   label.stopoutLevel    = StringReplace(label.stopoutLevel   , "${__NAME__}", __NAME__);
 
 
    // Instrument-Label: Anzeige wird sofort (und nur) hier gesetzt
@@ -1654,7 +1427,7 @@ bool UpdateUnitSize() {
    string strUnitSize;
 
    // Anzeige nur bei internem Account:              V - Volatilität/Woche                      L - Leverage                                     Unitsize
-   if (mode.intern) strUnitSize = StringConcatenate("V", DoubleToStr(mm.defaultVola, 1), "%     L", DoubleToStr(mm.defaultLeverage, 1), "  =  ", NumberToStr(mm.normalizedDefaultLots, ", .+"), " lot");
+   if (mode.intern) strUnitSize = StringConcatenate("V", DoubleToStr(mm.defaultVola, 1), "%     L", DoubleToStr(mm.defaultLeverage, 1), "  =  ", NumberToStr(mm.defaultLots.normalized, ", .+"), " lot");
    else             strUnitSize = "";
 
    // Anzeige aktualisieren (!!! max. 63 Zeichen !!!)
@@ -1685,8 +1458,8 @@ bool UpdatePositions() {
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
-      if (!mm.tradableEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);    // Workaround bei negativer AccountBalance:
-      else                    currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                                 // die unrealisierten Gewinne werden mit einbezogen !!!
+      if (!mm.realEquity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
+      else                currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
       strCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "      ");
 
       // Volatilität/Woche der aktuellen Position = aktueller Leverage * ATRwPct
@@ -1705,7 +1478,7 @@ bool UpdatePositions() {
    // (2) Einzelpositionsanzeige unten links
    static int col.xShifts[], cols, percentCol, commentCol, yDist=3;
    if (!ArraySize(col.xShifts)) {
-      if (Positions.AbsoluteAmounts) {
+      if (CustomPositions.AbsoluteAmounts) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
          // col.xShifts[] = {20,   59,    135, 160,      226,    258,   345,      406};
          ArrayResize(col.xShifts, 8);
@@ -1790,7 +1563,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (Positions.AbsoluteAmounts)
+         if (CustomPositions.AbsoluteAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1822,7 +1595,7 @@ bool UpdatePositions() {
 
          // Hedged und Not-Hedged
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (Positions.AbsoluteAmounts)
+         if (CustomPositions.AbsoluteAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -2218,7 +1991,7 @@ bool AnalyzePositions() {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                               // termType=NULL => "Zeilenende"
-         if (Positions.LogTickets) /*&&*/ if (!logTickets.done)
+         if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
             AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
 
          // (2.3) individuell konfigurierte Position speichern
@@ -2251,7 +2024,7 @@ bool AnalyzePositions() {
    }
 
    // (2.4) verbleibende Position(en) speichern
-   if (Positions.LogTickets) /*&&*/ if (!logTickets.done)
+   if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
       AnalyzePositions.LogTickets(false, tickets, -1);
 
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
@@ -2271,7 +2044,7 @@ bool AnalyzePositions() {
 bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
    isVirtual = isVirtual!=0;
 
-   if (Positions.LogTickets) {
+   if (CustomPositions.LogTickets) {
       if (ArraySize(tickets) > 0) {
          if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
          else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
@@ -2291,19 +2064,19 @@ bool UpdateMoneyManagement() {
    if (mode.remote) return(true);
  //if (mode.remote) return(_true(debug("UpdateMoneyManagement(1)  feature not implemented for mode.remote=1")));
 
-   mm.tradableEquity        = 0;
-   mm.lotValue              = 0;
-   mm.unleveragedLots       = 0;                                              // Lotsize bei Hebel 1:1
-   mm.ATRwAbs               = 0;                                              // wöchentliche ATR, absolut
-   mm.ATRwPct               = 0;                                              // wöchentliche ATR, prozentual
-   mm.stdLeverage           = 0;                                              // Hebel bei wöchentlicher Volatilität einer Unit von {mm.stdVola} Prozent
-   mm.stdLots               = 0;                                              // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdVola} Prozent
-   mm.customVola            = 0;                                              // Volatilität/Woche bei benutzerdefiniertem Hebel
-   mm.customLots            = 0;                                              // Lotsize bei benutzerdefiniertem Hebel
-   mm.defaultVola           = 0;
-   mm.defaultLeverage       = 0;
-   mm.defaultLots           = 0;
-   mm.normalizedDefaultLots = 0;
+   mm.realEquity             = 0;
+   mm.lotValue               = 0;
+   mm.unleveragedLots        = 0;                                             // Lotsize bei Hebel 1:1
+   mm.ATRwAbs                = 0;                                             // wöchentliche ATR, absolut
+   mm.ATRwPct                = 0;                                             // wöchentliche ATR, prozentual
+   mm.stdLeverage            = 0;                                             // Hebel bei wöchentlicher Volatilität einer Unit von {mm.stdVola} Prozent
+   mm.stdLots                = 0;                                             // Lotsize für wöchentliche Volatilität einer Unit von {mm.stdVola} Prozent
+   mm.customVola             = 0;                                             // Volatilität/Woche bei benutzerdefiniertem Hebel
+   mm.customLots             = 0;                                             // Lotsize bei benutzerdefiniertem Hebel
+   mm.defaultVola            = 0;
+   mm.defaultLeverage        = 0;
+   mm.defaultLots            = 0;
+   mm.defaultLots.normalized = 0;
 
    // (1) unleveraged Lots
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
@@ -2323,12 +2096,12 @@ bool UpdateMoneyManagement() {
 
    double externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
    if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
-      mm.tradableEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
-      if (mm.tradableEquity < 0)                                              // kann bei negativer AccountBalance negativ sein
-         mm.tradableEquity = 0;
+      mm.realEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
+      if (mm.realEquity < 0)                                                  // kann bei negativer AccountBalance negativ sein
+         mm.realEquity = 0;
    }
    else {
-      mm.tradableEquity = externalAssets;                                     // ebenfalls falsch (nur Näherungswert)
+      mm.realEquity = externalAssets;                                         // ebenfalls falsch (nur Näherungswert)
    }
 
    if (!Close[0] || !tickSize || !tickValue || !marginRequired) {             // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
@@ -2338,7 +2111,7 @@ bool UpdateMoneyManagement() {
    }
 
    mm.lotValue        = Close[0]/tickSize * tickValue;                        // Value eines Lots in Account-Currency
-   mm.unleveragedLots = mm.tradableEquity/mm.lotValue;                        // ungehebelte Lotsize (Leverage 1:1)
+   mm.unleveragedLots = mm.realEquity/mm.lotValue;                            // ungehebelte Lotsize (Leverage 1:1)
 
 
    // (2) Expected TrueRange als Maximalwert von ATR und den letzten beiden Einzelwerten: ATR, TR[1] und TR[0]
@@ -2379,23 +2152,23 @@ bool UpdateMoneyManagement() {
 
 
    // (5) Lotsize runden
-   if (mm.defaultLots > 0) {                                                                                                           // Abstufung max. 6.7% je Schritt
-      if      (mm.defaultLots <=    0.03) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.001) *   0.001, 3);  //     0-0.03: Vielfaches von   0.001
-      else if (mm.defaultLots <=   0.075) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.002) *   0.002, 3);  // 0.03-0.075: Vielfaches von   0.002
-      else if (mm.defaultLots <=    0.1 ) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.005) *   0.005, 3);  //  0.075-0.1: Vielfaches von   0.005
-      else if (mm.defaultLots <=    0.3 ) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.01 ) *   0.01 , 2);  //    0.1-0.3: Vielfaches von   0.01
-      else if (mm.defaultLots <=    0.75) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.02 ) *   0.02 , 2);  //   0.3-0.75: Vielfaches von   0.02
-      else if (mm.defaultLots <=    1.2 ) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.05 ) *   0.05 , 2);  //   0.75-1.2: Vielfaches von   0.05
-      else if (mm.defaultLots <=    3.  ) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.1  ) *   0.1  , 1);  //      1.2-3: Vielfaches von   0.1
-      else if (mm.defaultLots <=    7.5 ) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.2  ) *   0.2  , 1);  //      3-7.5: Vielfaches von   0.2
-      else if (mm.defaultLots <=   12.  ) mm.normalizedDefaultLots = NormalizeDouble(MathRound(mm.defaultLots/  0.5  ) *   0.5  , 1);  //     7.5-12: Vielfaches von   0.5
-      else if (mm.defaultLots <=   30.  ) mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/  1    ) *   1       );  //      12-30: Vielfaches von   1
-      else if (mm.defaultLots <=   75.  ) mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/  2    ) *   2       );  //      30-75: Vielfaches von   2
-      else if (mm.defaultLots <=  120.  ) mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/  5    ) *   5       );  //     75-120: Vielfaches von   5
-      else if (mm.defaultLots <=  300.  ) mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/ 10    ) *  10       );  //    120-300: Vielfaches von  10
-      else if (mm.defaultLots <=  750.  ) mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/ 20    ) *  20       );  //    300-750: Vielfaches von  20
-      else if (mm.defaultLots <= 1200.  ) mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/ 50    ) *  50       );  //   750-1200: Vielfaches von  50
-      else                                mm.normalizedDefaultLots =       MathRound(MathRound(mm.defaultLots/100    ) * 100       );  //   1200-...: Vielfaches von 100
+   if (mm.defaultLots > 0) {                                                                                                              // Abstufung max. 6.7% je Schritt
+      if      (mm.defaultLots <=    0.03) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.001) *   0.001, 3);    //     0-0.03: Vielfaches von   0.001
+      else if (mm.defaultLots <=   0.075) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.002) *   0.002, 3);    // 0.03-0.075: Vielfaches von   0.002
+      else if (mm.defaultLots <=    0.1 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.005) *   0.005, 3);    //  0.075-0.1: Vielfaches von   0.005
+      else if (mm.defaultLots <=    0.3 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.01 ) *   0.01 , 2);    //    0.1-0.3: Vielfaches von   0.01
+      else if (mm.defaultLots <=    0.75) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.02 ) *   0.02 , 2);    //   0.3-0.75: Vielfaches von   0.02
+      else if (mm.defaultLots <=    1.2 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.05 ) *   0.05 , 2);    //   0.75-1.2: Vielfaches von   0.05
+      else if (mm.defaultLots <=    3.  ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.1  ) *   0.1  , 1);    //      1.2-3: Vielfaches von   0.1
+      else if (mm.defaultLots <=    7.5 ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.2  ) *   0.2  , 1);    //      3-7.5: Vielfaches von   0.2
+      else if (mm.defaultLots <=   12.  ) mm.defaultLots.normalized = NormalizeDouble(MathRound(mm.defaultLots/  0.5  ) *   0.5  , 1);    //     7.5-12: Vielfaches von   0.5
+      else if (mm.defaultLots <=   30.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/  1    ) *   1       );    //      12-30: Vielfaches von   1
+      else if (mm.defaultLots <=   75.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/  2    ) *   2       );    //      30-75: Vielfaches von   2
+      else if (mm.defaultLots <=  120.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/  5    ) *   5       );    //     75-120: Vielfaches von   5
+      else if (mm.defaultLots <=  300.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/ 10    ) *  10       );    //    120-300: Vielfaches von  10
+      else if (mm.defaultLots <=  750.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/ 20    ) *  20       );    //    300-750: Vielfaches von  20
+      else if (mm.defaultLots <= 1200.  ) mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/ 50    ) *  50       );    //   750-1200: Vielfaches von  50
+      else                                mm.defaultLots.normalized =       MathRound(MathRound(mm.defaultLots/100    ) * 100       );    //   1200-...: Vielfaches von 100
    }
 
    mm.ready = true;
@@ -4041,29 +3814,30 @@ bool QC.HandleLfxTerminalMessages() {
       return(true);
 
    // (1) ggf. Receiver starten
-   if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartTradeToLfxReceiver())
+   if (!hQC.TradeToLfxReceiver) /*&&*/ if (!QC.StartLfxReceiver())
       return(false);
 
    // (2) Channel auf neue Messages prüfen
    int result = QC_CheckChannel(qc.TradeToLfxChannel);
-   if (result < QC_CHECK_CHANNEL_EMPTY) {
-      if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
-      if (result == QC_CHECK_CHANNEL_NONE ) return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
-                                            return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
-   }
    if (result == QC_CHECK_CHANNEL_EMPTY)
       return(true);
+   if (result < QC_CHECK_CHANNEL_EMPTY) {
+      if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
+      if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
+                                               return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
+   }
 
    // (3) neue Messages abholen
-   result = QC_GetMessages3(hQC.TradeToLfxReceiver, qc.TradeToLfxBuffer, QC_MAX_BUFFER_SIZE);
+   string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
+   result = QC_GetMessages3(hQC.TradeToLfxReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
    if (result != QC_GET_MSG3_SUCCESS) {
       if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
       if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleLfxTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
                                                return(!catch("QC.HandleLfxTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
    }
 
-   // (4) Messages verarbeiten: Da hier sehr viele Messages eingehen, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
-   string msgs = qc.TradeToLfxBuffer[0];
+   // (4) Messages verarbeiten: Da hier sehr viele Messages in kurzer Zeit eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
+   string msgs = messageBuffer[0];
    int from=0, to=StringFind(msgs, TAB, from);
    while (to != -1) {                                                            // mind. ein TAB gefunden
       if (to != from)
@@ -4086,16 +3860,16 @@ bool QC.HandleLfxTerminalMessages() {
  * @param  string message - QuickChannel-Message, siehe Formatbeschreibung
  *
  * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende Order sind kein Fehler,
- *                               ein Programmabbruch von außen durch Schicken einer falschen Message ist nicht möglich. Für unerkannte Messages wird eine
- *                               Warnung ausgegeben.
+ *                               das Auslösen eines Fehlers durch Schicken einer falschen Message ist so nicht möglich. Für nicht unterstützte Messages wird
+ *                               stattdessen eine Warnung ausgegeben.
  *
  *  Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
  *                 "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
- *                 "LFX:{iTicket]:close={0|1}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
- *                 "LFX:{iTicket]:profit={dValue}" - der P/L-Wert der angegebenen Position hat sich geändert
+ *                 "LFX:{iTicket]:close={1|0}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
+ *                 "LFX:{iTicket]:profit={dValue}" - der P/L der angegebenen Position hat sich geändert
  */
 bool ProcessLfxTerminalMessage(string message) {
-   // Da hier sehr viele Messages eingehen, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
+   // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
    if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(1)  unknown message format \""+ message +"\"")));
    // LFX-Ticket
@@ -4238,7 +4012,7 @@ bool SaveVolatileLfxStatus() {
 
 
 /**
- * Listener + Handler für beim Terminal eingehende Trade-Commands.
+ * Handler für beim Terminal eingehende Trade-Commands.
  *
  * @return bool - Erfolgsstatus
  */
@@ -4252,16 +4026,17 @@ bool QC.HandleTradeCommands() {
 
    // (2) Channel auf neue Messages prüfen
    int result = QC_CheckChannel(qc.TradeCmdChannel);
+   if (result == QC_CHECK_CHANNEL_EMPTY)
+      return(true);
    if (result < QC_CHECK_CHANNEL_EMPTY) {
       if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
       if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
                                                return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
    }
-   if (result == QC_CHECK_CHANNEL_EMPTY)
-      return(true);
 
    // (3) neue Messages abholen
-   result = QC_GetMessages3(hQC.TradeCmdReceiver, qc.TradeCmdBuffer, QC_MAX_BUFFER_SIZE);
+   string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
+   result = QC_GetMessages3(hQC.TradeCmdReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
    if (result != QC_GET_MSG3_SUCCESS) {
       if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
       if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
@@ -4270,13 +4045,13 @@ bool QC.HandleTradeCommands() {
 
    // (4) Messages verarbeiten
    string msgs[];
-   int msgsSize = Explode(qc.TradeCmdBuffer[0], TAB, msgs, NULL);
+   int msgsSize = Explode(messageBuffer[0], TAB, msgs, NULL);
 
    for (int i=0; i < msgsSize; i++) {
       if (!StringLen(msgs[i]))
          continue;
       log("QC.HandleTradeCommands(7)  received \""+ msgs[i] +"\"");
-      if (!RunScript("LFX.ExecuteTradeCmd", "command="+ msgs[i]))    // TODO: Scripte dürfen nicht in Schleife gestartet werden
+      if (!RunScript("LFX.ExecuteTradeCmd", "command="+ msgs[i]))    // TODO: Scripte müssen entweder synchron oder parallel ausgeführt werden
          return(false);
    }
    return(true);
@@ -4321,7 +4096,7 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
    // (3) angesammelte Messages verschicken: Messages je Channel werden gemeinsam, nicht einzeln verschickt, um beim Empfänger unnötige Ticks zu vermeiden
    for (i=ArraySize(lfxMessages)-1; i > 0; i--) {                    // Index 0 ist unbenutzt
       if (StringLen(lfxMessages[i]) > 0) {
-         if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartTradeToLfxSender(i))
+         if (!hQC.TradeToLfxSenders[i]) /*&&*/ if (!QC.StartLfxSender(i))
             return(false);
          if (!QC_SendMessage(hQC.TradeToLfxSenders[i], lfxMessages[i], QC_FLAG_SEND_MSG_IF_RECEIVER))
             return(!catch("LFX.ProcessProfits(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
@@ -4345,16 +4120,24 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
 
 
 /**
- * Speichert die Fenster-relevanten Konfigurationsdaten im Chart und in der lokalen Terminalkonfiguration.
- * Dadurch gehen sie auch beim Laden eines neuen Chart-Templates nicht verloren.
+ * Speichert die SignalTracking-Konfiguration im Chartfenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
  *
  * @return bool - Erfolgsstatus
  */
 bool StoreWindowStatus() {
-   // (1) Signaltracking
-   // Konfiguration im Chart speichern (oder löschen)
+   // Konfiguration in Terminalkonfiguration speichern bzw. löschen
+   string file    = GetLocalConfigPath();
+   string section = "WindowStatus";
+      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
+   string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
+   string value   = external.provider +"."+ external.signal;
+   if (mode.extern) {
+      if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+   }
+   else if (!DeleteIniKey(file, section, key))                    return(!SetLastError(stdlib.GetLastError()));
+
+   // Konfiguration im Chart speichern bzw. löschen
    string label = __NAME__ +".sticky.TrackSignal";
-   string value = external.provider +"."+ external.signal;
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (mode.extern) {
@@ -4362,47 +4145,36 @@ bool StoreWindowStatus() {
       ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(label, value);
    }
-   // Konfiguration in Terminalkonfiguration speichern (oder löschen)
-   string file    = GetLocalConfigPath();
-   string section = "WindowStatus";
-      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
-   string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
-   if (mode.extern) {
-      if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
-   }
-   else if (!DeleteIniKey(file, section, key))                    return(!SetLastError(stdlib.GetLastError()));
-
    return(!catch("StoreWindowStatus(2)"));
 }
 
 
 /**
- * Restauriert die Fenster-relevanten Konfigurationsdaten aus dem Chart oder der Terminalkonfiguration.
- *
- *  - SignalTracking
+ * Restauriert die SignalTracking-Konfiguration aus dem Chartfenster oder dem Chart.
  *
  * @return bool - Erfolgsstatus
  */
 bool RestoreWindowStatus() {
-   // (1) Signaltracking
-   bool restoreSignal.success = false;
+   bool success = false;
+
    // Versuchen, die Konfiguration aus dem Chart zu restaurieren (kann nach Laden eines neuen Templates fehlschlagen).
-   string label = __NAME__ +".sticky.TrackSignal", empty="";
+   string label = __NAME__ +".sticky.TrackSignal", sEmpty="";
    if (ObjectFind(label) == 0) {
       string signal = ObjectDescription(label);
-      restoreSignal.success = (signal=="" || ParseSignal(signal, empty, empty));
+      success = (signal=="" || ParseSignal(signal, sEmpty, sEmpty));
    }
+
    // Bei Mißerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
-   if (!restoreSignal.success) {
+   if (!success) {
       int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
       string section = "WindowStatus";
       string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
-      signal = GetLocalConfigString(section, key, "");
-      restoreSignal.success = (signal=="" || ParseSignal(signal, empty, empty));
+      signal  = GetLocalConfigString(section, key, "");
+      success = (signal=="" || ParseSignal(signal, sEmpty, sEmpty));
    }
-   if (restoreSignal.success)
-      TrackSignal(signal);
 
+   if (success)
+      TrackSignal(signal);
    return(!catch("RestoreWindowStatus(1)"));
 }
 

@@ -83,7 +83,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   QC.StopTradeToLfxSenders();
+   QC.StopLfxSenders();
    return(last_error);
 }
 
@@ -209,7 +209,7 @@ int onStart() {
 
    // (4) finale Sicherheitsabfrage
    PlaySoundEx("Windows Notify.wav");
-   button = MessageBox(ifString(!IsDemo(), "- Real Money Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not realizable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
+   button = MessageBox(ifString(!IsDemo(), "- Real Account -\n\n", "") +"Do you really want to "+ StringToLower(OperationTypeDescription(direction)) +" "+ NumberToStr(realUnits, ".+") + ifString(realUnits==1, " unit ", " units ") + lfxCurrency +"?"+ ifString(LT(realUnits, Units), "\n("+ DoubleToStr(Units, 1) +" is not realizable)", ""), __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
    if (button != IDOK)
       return(catch("onStart(5)"));
 
