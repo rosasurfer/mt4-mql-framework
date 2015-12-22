@@ -21,7 +21,7 @@ int __DEINIT_FLAGS__[];
 
 #include <structs/pewa/LFX_ORDER.mqh>
 
-//////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QickChannel)  ///////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////  Scriptparameter (Übergabe per QuickChannel)  //////////////////////////////////////////////////////////////////////
 
 string command = "";
 
@@ -104,7 +104,7 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onStart() {
-   // Order holen
+   // Order holen (initialisiert TradeAccount-Variablen)
    int result = LFX.GetOrder(lfxTicket, lfxOrder);
    if (result < 1) { if (!result) return(last_error); return(catch("onStart(1)  LFX order "+ lfxTicket +" not found (command = \""+ command +"\")", ERR_INVALID_INPUT_PARAMETER)); }
 
@@ -290,7 +290,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
-   if (__LOG) log("OpenOrder.Execute(6)  "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+   if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccountCompany +": "+ tradeAccountName +" ("+ tradeAccountNumber +"), "+ tradeAccountCurrency);
 
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
@@ -417,7 +417,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       int    counter     = StrToInteger(comment);
       string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
-      string message = lfxAccountAlias +": ";
+      string message = tradeAccountAlias +": ";
       if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
       else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
 
@@ -458,7 +458,7 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    double slippage    = 0.1;
    color  markerColor = CLR_NONE;
    int    oeFlags     = NULL;
-   if (__LOG) log("ClosePosition.Execute(3)  "+ lfxAccountCompany +": "+ lfxAccountName +" ("+ lfxAccount +"), "+ lfxAccountCurrency);
+   if (__LOG) log("ClosePosition.Execute(3)  "+ tradeAccountCompany +": "+ tradeAccountName +" ("+ tradeAccountNumber +"), "+ tradeAccountCurrency);
 
    /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
    if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
@@ -577,7 +577,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       int    counter     = StrToInteger(comment);
       string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
-      string message = lfxAccountAlias +": ";
+      string message = tradeAccountAlias +": ";
       if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
       else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
 

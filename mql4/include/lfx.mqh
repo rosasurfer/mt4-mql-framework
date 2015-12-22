@@ -3,108 +3,104 @@
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
  *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15               entspricht stdlib::GetCurrencyId()
- *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // nicht mehr verwendet, alle Referenzen gelöscht
+ *  Units:         4 bit (Bit 15-18) => Bereich   1-15               Vielfaches von 0.1 von 1 bis 10           // wird nicht mehr verwendet, alle Referenzen gelöscht
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
- *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // nicht mehr verwendet, alle Referenzen gelöscht
+ *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                         // wird nicht mehr verwendet, alle Referenzen gelöscht
  */
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
-
-int    lfxAccount;                                                   // LFX-Account: im LFX-Terminal ein TradeAccount, im Trading-Terminal der aktuelle Account
-string lfxAccountCurrency;
-int    lfxAccountType;
-string lfxAccountName;
-string lfxAccountCompany;
-string lfxAccountAlias;
-
-bool   isLfxInstrument;
 string lfxCurrency;
 int    lfxCurrencyId;
 double lfxChartDeviation;                                            // RealPrice + Deviation = LFX-ChartPrice
-int    lfxOrder   [LFX_ORDER.intSize];                               // LFX_ORDER
-int    lfxOrders[][LFX_ORDER.intSize];                               // LFX_ORDER[]
+int    lfxOrder   [LFX_ORDER.intSize];                               // struct LFX_ORDER
+int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]
+
+
+int    tradeAccountNumber;                                           // mode.intern: der aktuelle Account
+string tradeAccountCurrency;                                         // mode.remote: ein anderer, konfigurierter Account
+int    tradeAccountType;                                             // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
+string tradeAccountCompany;
+string tradeAccountName;                                             // Inhaber
+string tradeAccountAlias;                                            // Alias für Logs, SMS etc.
 
 
 /**
- * Initialisiert die internen Variablen zum Zugriff auf den LFX-TradeAccount.
+ * Initialisiert die Variablen des aktuellen TradeAccounts.
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.InitAccountData() {
-   if (lfxAccount > 0)
+bool InitTradeAccountVars() {
+   if (tradeAccountNumber > 0)
       return(true);
 
-   int    _account;
+   int    _accountNumber;
    string _accountCurrency;
    int    _accountType;
-   string _accountName;
    string _accountCompany;
+   string _accountName;
    string _accountAlias;
 
-   bool isLfxInstrument = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
+   bool mode.remote = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
 
-   if (isLfxInstrument) {
-
-      // Daten des TradeAccounts
+   if (mode.remote) {
+      // Daten eines konfigurierten TradeAccounts
       string section = "LFX";
-      string key     = "MRUTradeAccount";
-      if (This.IsTesting())
-         key = key + ".Tester";
-      _account = GetLocalConfigInt(section, key, 0);
-      if (_account <= 0) {
+      string key     = "MRUTradeAccount" + ifString(This.IsTesting(), ".Tester", "");
+      _accountNumber = GetLocalConfigInt(section, key, 0);
+      if (_accountNumber <= 0) {
          string value = GetLocalConfigString(section, key, "");
-         if (!StringLen(value)) return(!catch("LFX.InitAccountData(1)  missing account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
-                                return(!catch("LFX.InitAccountData(2)  invalid account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+         if (!StringLen(value)) return(!catch("InitTradeAccountVars(1)  missing account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
+                                return(!catch("InitTradeAccountVars(2)  invalid account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
       }
    }
    else {
       // Daten des aktuellen Accounts
-      _account = GetAccountNumber();
-      if (!_account) return(!SetLastError(stdlib.GetLastError()));
+      _accountNumber = GetAccountNumber();
+      if (!_accountNumber) return(!SetLastError(stdlib.GetLastError()));
    }
 
    // AccountCurrency
    section = "Accounts";
-   key     = _account +".currency";
+   key     = _accountNumber +".currency";
    _accountCurrency = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCurrency))  return(!catch("LFX.InitAccountData(3)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   if (!IsCurrency(_accountCurrency)) return(!catch("LFX.InitAccountData(4)  invalid account setting ["+ section +"]->"+ key +" = \""+ _accountCurrency +"\"", ERR_RUNTIME_ERROR));
+   if (!StringLen(_accountCurrency))  return(!catch("InitTradeAccountVars(3)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!IsCurrency(_accountCurrency)) return(!catch("InitTradeAccountVars(4)  invalid account setting ["+ section +"]->"+ key +" = \""+ _accountCurrency +"\"", ERR_RUNTIME_ERROR));
    _accountCurrency = StringToUpper(_accountCurrency);
 
    // AccountType
-   key   = _account +".type";
+   key   = _accountNumber +".type";
    value = StringToLower(GetGlobalConfigString(section, key, ""));
-   if (!StringLen(value))             return(!catch("LFX.InitAccountData(5)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(value))             return(!catch("InitTradeAccountVars(5)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
    if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
    else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
-   else                               return(!catch("LFX.InitAccountData(6)  invalid account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
-
-   // AccountName
-   section = "Accounts";
-   key     = _account +".name";
-   _accountName = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountName))      return(!catch("LFX.InitAccountData(7)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   else                               return(!catch("InitTradeAccountVars(6)  invalid account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
 
    // AccountCompany
    section = "Accounts";
-   key     = _account +".company";
+   key     = _accountNumber +".company";
    _accountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCompany))   return(!catch("LFX.InitAccountData(8)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(_accountCompany))   return(!catch("InitTradeAccountVars(7)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+
+   // AccountName
+   section = "Accounts";
+   key     = _accountNumber +".name";
+   _accountName = GetGlobalConfigString(section, key, "");
+   if (!StringLen(_accountName))      return(!catch("InitTradeAccountVars(8)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // AccountAlias
    section = "Accounts";
-   key     = _account +".alias";
+   key     = _accountNumber +".alias";
    _accountAlias = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountAlias))     return(!catch("LFX.InitAccountData(7)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!StringLen(_accountAlias))     return(!catch("InitTradeAccountVars(9)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
 
    // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   lfxAccount         = _account;
-   lfxAccountCurrency = _accountCurrency;
-   lfxAccountType     = _accountType;
-   lfxAccountName     = _accountName;
-   lfxAccountCompany  = _accountCompany;
-   lfxAccountAlias    = _accountAlias;
+   tradeAccountNumber   = _accountNumber;
+   tradeAccountCurrency = _accountCurrency;
+   tradeAccountType     = _accountType;
+   tradeAccountCompany  = _accountCompany;
+   tradeAccountName     = _accountName;
+   tradeAccountAlias    = _accountAlias;
 
    return(true);
 }
@@ -150,7 +146,7 @@ int LFX.InstanceId(int magicNumber) {
  * @param  int ticket - Ticket der zurückzugebenden Order
  * @param  int lo[]   - LFX_ORDER-Struct zur Aufnahme der gelesenen Daten
  *
- * @return int - Erfolgsstatus: +1, wenn die Order erfolgreich gelesen wurden
+ * @return int - Erfolgsstatus: +1, wenn die Order erfolgreich gelesen wurde
  *                              -1, wenn die Order nicht gefunden wurde
  *                               0, falls ein anderer Fehler auftrat
  */
@@ -162,11 +158,11 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (1) Orderdaten lesen
-   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+   if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccountVars())
       return(NULL);
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\LiteForex\\remote_positions.ini";
-   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
+   string section = StringConcatenate(tradeAccountCompany, ".", tradeAccountNumber);
    string key     = ticket;
    string value   = GetIniString(file, section, key, "");
    if (!StringLen(value)) {
@@ -393,11 +389,11 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
 
    // (2) alle Tickets einlesen
-   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+   if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccountVars())
       return(EMPTY);
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\LiteForex\\remote_positions.ini";
-   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
+   string section = StringConcatenate(tradeAccountCompany, ".", tradeAccountNumber);
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
 
@@ -525,11 +521,11 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (4) Daten schreiben
-   if (!lfxAccount) /*&&*/ if (!LFX.InitAccountData())
+   if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccountVars())
       return(false);
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\LiteForex\\remote_positions.ini";
-   string section = StringConcatenate(lfxAccountCompany, ".", lfxAccount);
+   string section = StringConcatenate(tradeAccountCompany, ".", tradeAccountNumber);
    string key     = ticket;
    string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPriceLfx, ", ", sOpenTriggerTime, ", ", sStopLossLfx, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfitLfx, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePriceLfx, ", ", sProfit, ", ", sDeviation, ", ", sModificationTime, ", ", sVersion);
 
@@ -592,55 +588,18 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen Anzeigestatus aus.
- *
- * @return bool - Status: ON/OFF
- */
-bool LFX.ReadDisplayStatus() {
-   string label = __NAME__ +".status";
-   if (ObjectFind(label) != -1)
-      return(StrToInteger(ObjectDescription(label)) != 0);
-   return(false);
-}
-
-
-/**
- * Speichert den angegebenen Anzeigestatus im Chart.
- *
- * @param  bool status - Status
- *
- * @return int - Fehlerstatus
- */
-int LFX.SaveDisplayStatus(bool status) {
-   status = status!=0;
-
-   string label = __NAME__ +".status";
-
-   if (ObjectFind(label) == -1)
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
-   ObjectSetText(label, ""+ status, 0);
-
-   return(catch("LFX.SaveDisplayStatus()"));
-}
-
-
-/**
  * Dummy-Calls: unterdrücken unnütze Compilerwarnungen
  */
 void DummyCalls() {
    int    iNull, iNulls[];
    double dNull;
    string sNull;
+   InitTradeAccountVars();
    LFX.CurrencyId(NULL);
    LFX.GetOrder(NULL, iNulls);
    LFX.GetOrders(NULL, NULL, iNulls);
-   LFX.InitAccountData();
    LFX.InstanceId(NULL);
    LFX.IsMyOrder();
-   LFX.ReadDisplayStatus();
-   LFX.SaveDisplayStatus(NULL);
    LFX.SaveOrder(iNulls, NULL);
    LFX.SaveOrders(iNulls);
    LFX_ORDER.toStr(iNulls);

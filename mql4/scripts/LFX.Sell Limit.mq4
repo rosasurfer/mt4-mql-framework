@@ -1,6 +1,6 @@
 /**
  * Erzeugt eine neue LFX-"Sell Limit"-Order, die überwacht und bei Erreichen des Limit-Preises ausgeführt wird.
- *
+ * Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
  *
  *  TODO: Fehler in Counter, wenn gleichzeitig zwei Orders erzeugt werden (2 x CHF.3)
  */
@@ -40,7 +40,7 @@ extern double TakeProfitPrice;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) LFX-Currency und ID bestimmen
+   // (1) LFX-Currency und -ID bestimmen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else                                  return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
@@ -72,7 +72,7 @@ int onInit() {
    }
 
 
-   // (3) offene Orders einlesen
+   // (3) offene Orders einlesen (initialisiert TradeAccount-Variablen)
    int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);
@@ -86,7 +86,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   QC.StopTradeToLfxSenders();
+   QC.StopLfxSenders();
    return(last_error);
 }
 
@@ -102,19 +102,19 @@ int onStart() {
    // (1) Sicherheitsabfrage
    if (LimitPrice <= Bid) {
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
+      button = MessageBox(ifString(tradeAccountType==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" is already triggered (current price "+ NumberToStr(Bid, SubPipPriceFormat) +").\n\n"
-                        +"Do you really want the order to immediately get executed?",
+                        +"Do you really want the order to get executed immediately?",
                         __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(1)"));
       if (StopLossPrice   && StopLossPrice   <= Bid) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
       if (TakeProfitPrice && TakeProfitPrice >= Bid) return(HandleScriptError("onStart(3)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
-      // TODO: Statt PendingOrder Order sofort hier ausführen, da sie sonst erst bei der nächsten Preisänderung ausgeführt wird (und evt. auch eben nicht).
+      // TODO: Statt eine PendingOrder zu erzeugen Order sofort ausführen, da sie sonst erst beim nächsten Tick geprüft und ggf. nicht ausgeführt wird.
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
+      button = MessageBox(ifString(tradeAccountType==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"Do you really want to place a Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                         +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                         + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
@@ -152,7 +152,7 @@ int onStart() {
 
    // (4) Bestätigungsmeldung
    PlaySoundEx("OrderOk.wav");
-   MessageBox(ifString(lfxAccountType==ACCOUNT_TYPE_REAL, "- Real Money Account -\n\n", "")
+   MessageBox(ifString(tradeAccountType==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
             +"Sell Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
             + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))

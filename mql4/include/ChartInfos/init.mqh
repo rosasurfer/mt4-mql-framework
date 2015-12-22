@@ -9,24 +9,23 @@ int onInit() {
       return(last_error);
 
 
-   // (2) Status restaurieren
-   mode.intern     = true;                                           // Default-Status
-   mode.extern     = false;
-   mode.remote     = false;
-   isLfxInstrument = false;
+   // (2) Status definieren
+   mode.intern = true;                                               // Default-Status
+   mode.extern = false;
+   mode.remote = false;
 
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    if (StringLen(lfxCurrency) > 0) {
       lfxCurrencyId     = GetCurrencyId(lfxCurrency);
       lfxChartDeviation = GetGlobalConfigDouble("Charts", "LFXDeviation."+ lfxCurrency, 0);
-      isLfxInstrument   = true;
+      mode.intern       = false;
       mode.remote       = true;                                      // TODO: LFX/mode.remote muß in Abhängigkeit einer Konfiguration gesetzt werden
       /*
-      if (!lfxAccount) if (!LFX.InitAccountData())
+      if (!tradeAccountNumber) if (!InitTradeAccountVars())
          return(last_error);
-      string name = lfxAccountName +": "+ lfxAccountCompany +", "+ lfxAccount +", "+ lfxAccountCurrency;
-      ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(lfxAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
+      string name = tradeAccountName +": "+ tradeAccountCompany +", "+ tradeAccountNumber +", "+ tradeAccountCurrency;
+      ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(tradeAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
       */
    }
    else if (!RestoreWindowStatus()) {                                // restauriert mode.intern/extern
@@ -49,7 +48,7 @@ int onInit() {
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = \""+ price +"\" (unknown)", ERR_INVALID_CONFIG_PARAMVALUE));
 
    // Moneymanagement
-   if (!isLfxInstrument) {
+   if (!mode.remote) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
       section="Moneymanagement"; key=stdSymbol +".Leverage";
       string sValue = GetLocalConfigString(section, key, "");
@@ -87,7 +86,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInit_User() {
-   if (isLfxInstrument) {
+   if (mode.remote) {
       // LFX-Status einlesen
       if (!RestoreLfxStatusFromFile())
          return(last_error);
@@ -102,7 +101,7 @@ int onInit_User() {
  * @return int - Fehlerstatus
  */
 int onInit_Template() {
-   if (isLfxInstrument) {
+   if (mode.remote) {
       // LFX-Status neu einlesen
       if (!RestoreLfxStatusFromFile())
          return(last_error);
@@ -117,7 +116,7 @@ int onInit_Template() {
  * @return int - Fehlerstatus
  */
 int onInit_Parameters() {
-   if (isLfxInstrument) {
+   if (mode.remote) {
       // in Library gespeicherten LFX-Status restaurieren
       if (!RestoreLfxStatusFromLib())
          return(last_error);
@@ -132,7 +131,7 @@ int onInit_Parameters() {
  * @return int - Fehlerstatus
  */
 int onInit_TimeframeChange() {
-   if (isLfxInstrument) {
+   if (mode.remote) {
       // in Library gespeicherten LFX-Status restaurieren
       if (!RestoreLfxStatusFromLib())
          return(last_error);
@@ -147,7 +146,7 @@ int onInit_TimeframeChange() {
  * @return int - Fehlerstatus
  */
 int onInit_SymbolChange() {
-   if (isLfxInstrument) {
+   if (mode.remote) {
       // LFX-Status des alten Symbols speichern (liegt noch in Library)
       if (!RestoreLfxStatusFromLib())  return(last_error);
       if (!SaveVolatileLfxStatus())    return(last_error);
@@ -165,7 +164,7 @@ int onInit_SymbolChange() {
  * @return int - Fehlerstatus
  */
 int onInit_Recompile() {
-   if (isLfxInstrument) {
+   if (mode.remote) {
       // LFX-Status neu einlesen
       if (!RestoreLfxStatusFromFile())
          return(last_error);

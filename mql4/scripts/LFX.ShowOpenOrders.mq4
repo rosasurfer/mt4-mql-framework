@@ -22,7 +22,7 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
    // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !LFX.ReadDisplayStatus();
+   bool status = true; status = !status;  // war vorher Statusfunktion
 
 
    // (1) Status ON: offene Orders einlesen und anzeigen
@@ -50,9 +50,6 @@ int onStart() {
             ObjectDelete(name);
       }
    }
-
-   // aktuellen Status im Chart speichern
-   LFX.SaveDisplayStatus(status);
 
    if (This.IsTesting())
       WindowRedraw();
