@@ -787,3 +787,43 @@ double  N_INF;                                              // -1.#INF: negative
 #define BAR_L                                   3
 #define BAR_C                                   4
 #define BAR_V                                   5
+
+
+// SimpleTrader-Signale
+#define ST_SIGNAL.ALEXPROFIT           "simpletrader.alexprofit"
+#define ST_SIGNAL.ASTA                 "simpletrader.asta"
+#define ST_SIGNAL.CAESAR2              "simpletrader.caesar2"
+#define ST_SIGNAL.CAESAR21             "simpletrader.caesar21"
+#define ST_SIGNAL.CONSISTENT           "simpletrader.consistent"
+#define ST_SIGNAL.DAYFOX               "simpletrader.dayfox"
+#define ST_SIGNAL.FXVIPER              "simpletrader.fxviper"
+#define ST_SIGNAL.GCEDGE               "simpletrader.gcedge"
+#define ST_SIGNAL.GOLDSTAR             "simpletrader.goldstar"
+#define ST_SIGNAL.KILIMANJARO          "simpletrader.kilimanjaro"
+#define ST_SIGNAL.NOVOLR               "simpletrader.novolr"
+#define ST_SIGNAL.OVERTRADER           "simpletrader.overtrader"
+#define ST_SIGNAL.SMARTSCALPER         "simpletrader.smartscalper"
+#define ST_SIGNAL.SMARTTRADER          "simpletrader.smarttrader"
+#define ST_SIGNAL.STEADYCAPTURE        "simpletrader.steadycapture"
+#define ST_SIGNAL.YENFORTRESS          "simpletrader.yenfortress"
+#define ST_SIGNAL.TWILIGHT             "simpletrader.twilight"
+
+
+// SimpleTrader-Signal-ID's (entsprechen den ID's der SimpleTrader-URLs)
+#define ST_SIGNAL.ID_ALEXPROFIT        2474
+#define ST_SIGNAL.ID_ASTA              2370
+#define ST_SIGNAL.ID_CAESAR2           1619
+#define ST_SIGNAL.ID_CAESAR21          1803
+#define ST_SIGNAL.ID_CONSISTENT        4351
+#define ST_SIGNAL.ID_DAYFOX            2465
+#define ST_SIGNAL.ID_FXVIPER            633
+#define ST_SIGNAL.ID_GCEDGE             998
+#define ST_SIGNAL.ID_GOLDSTAR          2622
+#define ST_SIGNAL.ID_KILIMANJARO       2905
+#define ST_SIGNAL.ID_NOVOLR            4322
+#define ST_SIGNAL.ID_OVERTRADER        2973
+#define ST_SIGNAL.ID_SMARTSCALPER      1086
+#define ST_SIGNAL.ID_SMARTTRADER       1081
+#define ST_SIGNAL.ID_STEADYCAPTURE     4023
+#define ST_SIGNAL.ID_TWILIGHT          3913
+#define ST_SIGNAL.ID_YENFORTRESS       2877
