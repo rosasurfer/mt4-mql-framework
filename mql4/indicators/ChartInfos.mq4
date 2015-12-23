@@ -991,6 +991,11 @@ bool TrackSignal(string signal) {
    bool signalChanged = false;
 
    if (signal == "") {                                               // Leerstring bedeutet: Signaltracking/mode.extern = OFF
+      external.signalProvider = "";
+      external.signalAlias    = "";
+      external.signalName     = "";
+      external.signalId       = -1;
+
       if (!mode.intern) {
          mode.intern   = true;
          mode.extern   = false;
