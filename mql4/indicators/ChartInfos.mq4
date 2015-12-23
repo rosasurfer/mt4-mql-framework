@@ -141,9 +141,10 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
 
 // externe Positionen
-string   external.provider = "";
-string   external.signal   = "";
-string   external.name     = "";
+string   external.signalProvider = "";          // simpletrader
+string   external.signalName     = "";          // FX Viper
+string   external.signalAlias    = "";          // fxviper
+int      external.signalId       = -1;          // 1234
 
 // externe Positionen: open
 int      external.open.ticket    [];
@@ -669,7 +670,7 @@ int ShowTradeHistory() {
 
    // (1) Anzeigekonfiguration auslesen
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.provider +"\\"+ external.signal) +"_config.ini";
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.signalProvider +"\\"+ external.signalAlias) +"_config.ini";
    string section = "Charts";
    string key     = "TradeHistory.ConnectOrders";
 
@@ -904,8 +905,8 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
-      else             {        companyId = external.provider;            accountId = external.signal;    }
+      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
+      else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
 
       aum.value = RefreshExternalAssets(companyId, accountId);
       if (IsEmptyValue(aum.value))
@@ -982,14 +983,14 @@ bool SetAuMDisplayStatus(bool status) {
 /**
  * Schaltet das Signaltracking um.
  *
- * @param  string signalId - das anzuzeigende Signal
+ * @param  string signal - das anzuzeigende Signal
  *
  * @return bool - Erfolgsstatus
  */
-bool TrackSignal(string signalId) {
+bool TrackSignal(string signal) {
    bool signalChanged = false;
 
-   if (signalId == "") {                                             // Leerstring bedeutet: Signaltracking/mode.extern = OFF
+   if (signal == "") {                                               // Leerstring bedeutet: Signaltracking/mode.extern = OFF
       if (!mode.intern) {
          mode.intern   = true;
          mode.extern   = false;
@@ -998,25 +999,27 @@ bool TrackSignal(string signalId) {
       }
    }
    else {
-      string provider="", signal="";
-      if (!ParseSignal(signalId, provider, signal)) return(_true(warn("TrackSignal(1)  invalid or unknown parameter signalId=\""+ signalId +"\"")));
+      string signalProvider="", signalAlias="";
+      if (!ParseSignalStr(signal, signalProvider, signalAlias)) return(_true(warn("TrackSignal(1)  invalid or unknown parameter signal=\""+ signal +"\"")));
+      int signalId = SignalId(signal);
 
-      if (!mode.extern || provider!=external.provider || signal!=external.signal) {
+      if (!mode.extern || signalProvider!=external.signalProvider || signalAlias!=external.signalAlias) {
          mode.intern = false;
          mode.extern = true;
          mode.remote = false;
 
-         external.provider = provider;
-         external.signal   = signal;
+         external.signalProvider = signalProvider;
+         external.signalAlias    = signalAlias;
+         external.signalId       = signalId;
             string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-            string file    = TerminalPath() + mqlDir +"\\files\\"+ provider +"\\"+ signal +"_config.ini"; if (!IsFile(file)) return(!catch("TrackSignal(2)  file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
+            string file    = TerminalPath() + mqlDir +"\\files\\"+ signalProvider +"\\"+ signalAlias +"_config.ini"; if (!IsFile(file)) return(!catch("TrackSignal(2)  file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
             string section = "General";
             string key     = "Name";
-            string value   = GetIniString(file, section, key, ""); if (!StringLen(value))                                    return(!catch("TrackSignal(3)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty value)", ERR_RUNTIME_ERROR));
-         external.name     = value;
+            string value   = GetIniString(file, section, key, ""); if (!StringLen(value))                                               return(!catch("TrackSignal(3)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty value)", ERR_RUNTIME_ERROR));
+         external.signalName = value;
 
          external.open.lots.checked = false;
-         if (-1 == ReadExternalPositions(provider, signal))
+         if (-1 == ReadExternalPositions(signalProvider, signalAlias))
             return(false);
          signalChanged = true;
       }
@@ -1026,8 +1029,8 @@ bool TrackSignal(string signalId) {
       ArrayResize(positions.config,          0);
       ArrayResize(positions.config.comments, 0);
       if (!UpdateExternalAccount()) return(false);
-         if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
-         else             {        companyId = external.provider;            accountId = external.signal;    }
+         if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
+         else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
       if (IsEmptyValue(RefreshExternalAssets(companyId, accountId))) return(false);
    }
    return(!catch("TrackSignal(4)"));
@@ -1671,7 +1674,7 @@ bool UpdateExternalAccount() {
    }
    else {
       ObjectSetText(label.unitSize, " ", 1);
-      ObjectSetText(label.externalAccount, external.name, 8, "Arial Fett", Red);
+      ObjectSetText(label.externalAccount, external.signalName, 8, "Arial Fett", Red);
    }
 
    int error = GetLastError();
@@ -2091,8 +2094,8 @@ bool UpdateMoneyManagement() {
          }
          return(!catch("UpdateMoneyManagement(3)", error));
       }
-      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
-      else             {        companyId = external.provider;            accountId = external.signal;    }
+      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
+      else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
 
    double externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
    if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
@@ -2270,7 +2273,7 @@ bool CustomPositions.ReadConfig() {
    if (mode.remote) return(!catch("CustomPositions.ReadConfig(1)  feature for mode.remote=1 not yet implemented", ERR_NOT_IMPLEMENTED));
 
    string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.provider +"\\"+ external.signal) +"_config.ini";
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.signalProvider +"\\"+ external.signalAlias) +"_config.ini";
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -3546,8 +3549,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) {
-      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber(); }
-      else             {        companyId = external.provider;            accountId = external.signal;    }
+      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
+      else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
       externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
    }
 
@@ -4120,21 +4123,19 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
 
 
 /**
- * Speichert die SignalTracking-Konfiguration im Chartfenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
+ * Speichert die mode.extern-Konfiguration im Chartfenster (für Init-Cycle und Laden eines neuen Templates) und im Chart selbst (für Restart des Terminals).
  *
  * @return bool - Erfolgsstatus
  */
 bool StoreWindowStatus() {
-   // Konfiguration in Terminalkonfiguration speichern bzw. löschen
-   string file    = GetLocalConfigPath();
-   string section = "WindowStatus";
-      int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
-   string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
-   string value   = external.provider +"."+ external.signal;
+   // Konfiguration im Chartfenster speichern bzw. löschen
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
    if (mode.extern) {
-      if (!WritePrivateProfileStringA(section, key, value, file)) return(!catch("StoreWindowStatus(1)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+      SetPropA(hWnd, "xtrade.ChartInfos.TrackSignal", external.signalId);    // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
    }
-   else if (!DeleteIniKey(file, section, key))                    return(!SetLastError(stdlib.GetLastError()));
+   else {
+      RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");
+   }
 
    // Konfiguration im Chart speichern bzw. löschen
    string label = __NAME__ +".sticky.TrackSignal";
@@ -4143,34 +4144,41 @@ bool StoreWindowStatus() {
    if (mode.extern) {
       ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
       ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, value);
+      ObjectSetText(label, external.signalProvider +"."+ external.signalAlias);
    }
-   return(!catch("StoreWindowStatus(2)"));
+   return(!catch("StoreWindowStatus(1)"));
 }
 
 
 /**
- * Restauriert die SignalTracking-Konfiguration aus dem Chartfenster oder dem Chart.
+ * Restauriert die mode.extern-Konfiguration aus dem Chartfenster oder dem Chart.
  *
  * @return bool - Erfolgsstatus
  */
 bool RestoreWindowStatus() {
-   bool success = false;
+   bool   success = false;
+   string signal="", providerName="", signalName="";
 
-   // Versuchen, die Konfiguration aus dem Chart zu restaurieren (kann nach Laden eines neuen Templates fehlschlagen).
-   string label = __NAME__ +".sticky.TrackSignal", sEmpty="";
-   if (ObjectFind(label) == 0) {
-      string signal = ObjectDescription(label);
-      success = (signal=="" || ParseSignal(signal, sEmpty, sEmpty));
+   // Konfiguration im Chartfenster suchen
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
+   int id   = RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");      // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
+   if (id != NULL) {
+      if (id == -1) {
+         success = true;
+      }
+      else if (ParseSignalId(id, providerName, signalName)) {
+         signal  = providerName +"."+ signalName;
+         success = true;
+      }
    }
 
-   // Bei Mißerfolg Konfiguration aus der Terminalkonfiguration restaurieren.
+   // Bei Mißerfolg Konfiguration im Chart suchen
    if (!success) {
-      int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
-      string section = "WindowStatus";
-      string key     = "TrackSignal.0x"+ IntToHexStr(hWnd);
-      signal  = GetLocalConfigString(section, key, "");
-      success = (signal=="" || ParseSignal(signal, sEmpty, sEmpty));
+      string label = __NAME__ +".sticky.TrackSignal";
+      if (ObjectFind(label) == 0) {
+         signal  = ObjectDescription(label);
+         success = (signal=="" || ParseSignalStr(signal, providerName, signalName));
+      }
    }
 
    if (success)
@@ -4180,34 +4188,103 @@ bool RestoreWindowStatus() {
 
 
 /**
- * Parst einen Signalbezeichner.
+ * Gibt die Signal-ID eines Signalbezeichners zurück.
  *
- * @param  string  value    - zu parsender String
- * @param  string &provider - Zeiger auf Variable zur Aufnahme des Signalproviders
- * @param  string &signal   - Zeiger auf Variable zur Aufnahme des Signalnamens
+ * @param  string signal - Signalbezeichner
  *
- * @return bool - TRUE, wenn der Bezeichner ein bekanntes Signal darstellt;
+ * @return int - Signal-ID der NULL, wenn der Bezeichner unbekannt oder ungültig ist
+ */
+int SignalId(string signal) {
+   signal = StringToLower(signal);
+
+   if (signal == ST_SIGNAL.ALEXPROFIT   ) return(ST_SIGNAL.ID_ALEXPROFIT   );
+   if (signal == ST_SIGNAL.ASTA         ) return(ST_SIGNAL.ID_ASTA         );
+   if (signal == ST_SIGNAL.CAESAR2      ) return(ST_SIGNAL.ID_CAESAR2      );
+   if (signal == ST_SIGNAL.CAESAR21     ) return(ST_SIGNAL.ID_CAESAR21     );
+   if (signal == ST_SIGNAL.CONSISTENT   ) return(ST_SIGNAL.ID_CONSISTENT   );
+   if (signal == ST_SIGNAL.DAYFOX       ) return(ST_SIGNAL.ID_DAYFOX       );
+   if (signal == ST_SIGNAL.FXVIPER      ) return(ST_SIGNAL.ID_FXVIPER      );
+   if (signal == ST_SIGNAL.GCEDGE       ) return(ST_SIGNAL.ID_GCEDGE       );
+   if (signal == ST_SIGNAL.GOLDSTAR     ) return(ST_SIGNAL.ID_GOLDSTAR     );
+   if (signal == ST_SIGNAL.KILIMANJARO  ) return(ST_SIGNAL.ID_KILIMANJARO  );
+   if (signal == ST_SIGNAL.NOVOLR       ) return(ST_SIGNAL.ID_NOVOLR       );
+   if (signal == ST_SIGNAL.OVERTRADER   ) return(ST_SIGNAL.ID_OVERTRADER   );
+   if (signal == ST_SIGNAL.SMARTSCALPER ) return(ST_SIGNAL.ID_SMARTSCALPER );
+   if (signal == ST_SIGNAL.SMARTTRADER  ) return(ST_SIGNAL.ID_SMARTTRADER  );
+   if (signal == ST_SIGNAL.STEADYCAPTURE) return(ST_SIGNAL.ID_STEADYCAPTURE);
+   if (signal == ST_SIGNAL.TWILIGHT     ) return(ST_SIGNAL.ID_TWILIGHT     );
+   if (signal == ST_SIGNAL.YENFORTRESS  ) return(ST_SIGNAL.ID_YENFORTRESS  );
+
+   warn("SignalId(1)  invalid or unknown parameter signal=\""+ signal +"\"");
+   return(NULL);
+}
+
+
+/**
+ * Parst einen Signalbezeichner (Integer).
+ *
+ * @param  _IN_  int     id         - zu parsender Bezeichner
+ * @param  _OUT_ string &lpProvider - Zeiger auf Variable zur Aufnahme des Signalproviders
+ * @param  _OUT_ string &lpSignal   - Zeiger auf Variable zur Aufnahme des Signalnamens
+ *
+ * @return bool - TRUE, wenn der Bezeichner ein gültiges Signal darstellt;
  *                FALSE andererseits
  */
-bool ParseSignal(string value, string &provider, string &signal) {
+bool ParseSignalId(int id, string &lpProvider, string &lpSignal) {
+   if      (id == ST_SIGNAL.ID_ALEXPROFIT   ) { lpProvider="simpletrader"; lpSignal="alexprofit"   ; }
+   else if (id == ST_SIGNAL.ID_ASTA         ) { lpProvider="simpletrader"; lpSignal="asta"         ; }
+   else if (id == ST_SIGNAL.ID_CAESAR2      ) { lpProvider="simpletrader"; lpSignal="caesar2"      ; }
+   else if (id == ST_SIGNAL.ID_CAESAR21     ) { lpProvider="simpletrader"; lpSignal="caesar21"     ; }
+   else if (id == ST_SIGNAL.ID_CONSISTENT   ) { lpProvider="simpletrader"; lpSignal="consistent"   ; }
+   else if (id == ST_SIGNAL.ID_DAYFOX       ) { lpProvider="simpletrader"; lpSignal="dayfox"       ; }
+   else if (id == ST_SIGNAL.ID_FXVIPER      ) { lpProvider="simpletrader"; lpSignal="fxviper"      ; }
+   else if (id == ST_SIGNAL.ID_GCEDGE       ) { lpProvider="simpletrader"; lpSignal="gcedge"       ; }
+   else if (id == ST_SIGNAL.ID_GOLDSTAR     ) { lpProvider="simpletrader"; lpSignal="goldstar"     ; }
+   else if (id == ST_SIGNAL.ID_KILIMANJARO  ) { lpProvider="simpletrader"; lpSignal="kilimanjaro"  ; }
+   else if (id == ST_SIGNAL.ID_NOVOLR       ) { lpProvider="simpletrader"; lpSignal="novolr"       ; }
+   else if (id == ST_SIGNAL.ID_OVERTRADER   ) { lpProvider="simpletrader"; lpSignal="overtrader"   ; }
+   else if (id == ST_SIGNAL.ID_SMARTSCALPER ) { lpProvider="simpletrader"; lpSignal="smartscalper" ; }
+   else if (id == ST_SIGNAL.ID_SMARTTRADER  ) { lpProvider="simpletrader"; lpSignal="smarttrader"  ; }
+   else if (id == ST_SIGNAL.ID_STEADYCAPTURE) { lpProvider="simpletrader"; lpSignal="steadycapture"; }
+   else if (id == ST_SIGNAL.ID_TWILIGHT     ) { lpProvider="simpletrader"; lpSignal="twilight"     ; }
+   else if (id == ST_SIGNAL.ID_YENFORTRESS  ) { lpProvider="simpletrader"; lpSignal="yenfortress"  ; }
+   else {
+      return(false);
+   }
+   return(true);
+}
+
+
+/**
+ * Parst einen Signalbezeichner (String).
+ *
+ * @param  _IN_  string  value      - zu parsender Bezeichner
+ * @param  _OUT_ string &lpProvider - Zeiger auf Variable zur Aufnahme des Signalproviders
+ * @param  _OUT_ string &lpSignal   - Zeiger auf Variable zur Aufnahme des Signalnamens
+ *
+ * @return bool - TRUE, wenn der Bezeichner ein gültiges Signal darstellt;
+ *                FALSE andererseits
+ */
+bool ParseSignalStr(string value, string &lpProvider, string &lpSignal) {
    value = StringToLower(value);
 
-   if      (value == "simpletrader.alexprofit"   ) { provider="simpletrader"; signal="alexprofit"   ; }
-   if      (value == "simpletrader.asta"         ) { provider="simpletrader"; signal="asta"         ; }
-   else if (value == "simpletrader.caesar2"      ) { provider="simpletrader"; signal="caesar2"      ; }
-   else if (value == "simpletrader.caesar21"     ) { provider="simpletrader"; signal="caesar21"     ; }
-   else if (value == "simpletrader.consistent"   ) { provider="simpletrader"; signal="consistent"   ; }
-   else if (value == "simpletrader.dayfox"       ) { provider="simpletrader"; signal="dayfox"       ; }
-   else if (value == "simpletrader.fxviper"      ) { provider="simpletrader"; signal="fxviper"      ; }
-   else if (value == "simpletrader.gcedge"       ) { provider="simpletrader"; signal="gcedge"       ; }
-   else if (value == "simpletrader.goldstar"     ) { provider="simpletrader"; signal="goldstar"     ; }
-   else if (value == "simpletrader.kilimanjaro"  ) { provider="simpletrader"; signal="kilimanjaro"  ; }
-   else if (value == "simpletrader.novolr"       ) { provider="simpletrader"; signal="novolr"       ; }
-   else if (value == "simpletrader.overtrader"   ) { provider="simpletrader"; signal="overtrader"   ; }
-   else if (value == "simpletrader.smartscalper" ) { provider="simpletrader"; signal="smartscalper" ; }
-   else if (value == "simpletrader.smarttrader"  ) { provider="simpletrader"; signal="smarttrader"  ; }
-   else if (value == "simpletrader.steadycapture") { provider="simpletrader"; signal="steadycapture"; }
-   else if (value == "simpletrader.yenfortress"  ) { provider="simpletrader"; signal="yenfortress"  ; }
+   if      (value == ST_SIGNAL.ALEXPROFIT   ) { lpProvider="simpletrader"; lpSignal="alexprofit"   ; }
+   else if (value == ST_SIGNAL.ASTA         ) { lpProvider="simpletrader"; lpSignal="asta"         ; }
+   else if (value == ST_SIGNAL.CAESAR2      ) { lpProvider="simpletrader"; lpSignal="caesar2"      ; }
+   else if (value == ST_SIGNAL.CAESAR21     ) { lpProvider="simpletrader"; lpSignal="caesar21"     ; }
+   else if (value == ST_SIGNAL.CONSISTENT   ) { lpProvider="simpletrader"; lpSignal="consistent"   ; }
+   else if (value == ST_SIGNAL.DAYFOX       ) { lpProvider="simpletrader"; lpSignal="dayfox"       ; }
+   else if (value == ST_SIGNAL.FXVIPER      ) { lpProvider="simpletrader"; lpSignal="fxviper"      ; }
+   else if (value == ST_SIGNAL.GCEDGE       ) { lpProvider="simpletrader"; lpSignal="gcedge"       ; }
+   else if (value == ST_SIGNAL.GOLDSTAR     ) { lpProvider="simpletrader"; lpSignal="goldstar"     ; }
+   else if (value == ST_SIGNAL.KILIMANJARO  ) { lpProvider="simpletrader"; lpSignal="kilimanjaro"  ; }
+   else if (value == ST_SIGNAL.NOVOLR       ) { lpProvider="simpletrader"; lpSignal="novolr"       ; }
+   else if (value == ST_SIGNAL.OVERTRADER   ) { lpProvider="simpletrader"; lpSignal="overtrader"   ; }
+   else if (value == ST_SIGNAL.SMARTSCALPER ) { lpProvider="simpletrader"; lpSignal="smartscalper" ; }
+   else if (value == ST_SIGNAL.SMARTTRADER  ) { lpProvider="simpletrader"; lpSignal="smarttrader"  ; }
+   else if (value == ST_SIGNAL.STEADYCAPTURE) { lpProvider="simpletrader"; lpSignal="steadycapture"; }
+   else if (value == ST_SIGNAL.TWILIGHT     ) { lpProvider="simpletrader"; lpSignal="twilight"     ; }
+   else if (value == ST_SIGNAL.YENFORTRESS  ) { lpProvider="simpletrader"; lpSignal="yenfortress"  ; }
    else {
       return(false);
    }
@@ -4528,9 +4605,9 @@ bool EditAccountConfig() {
       ArrayPushString(files, baseDir + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
    }
    else if (mode.extern) {
-      ArrayPushString(files, baseDir + external.provider +"\\"+ external.signal +"_open.ini"  );
-      ArrayPushString(files, baseDir + external.provider +"\\"+ external.signal +"_closed.ini");
-      ArrayPushString(files, baseDir + external.provider +"\\"+ external.signal +"_config.ini");
+      ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_open.ini"  );
+      ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_closed.ini");
+      ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
    }
    else if (mode.remote) {
       ArrayPushString(files, baseDir +"LiteForex\\remote_positions.ini");
