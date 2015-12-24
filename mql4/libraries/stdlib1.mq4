@@ -3305,68 +3305,6 @@ string GetWindowsShortcutTarget(string lnkFilename) {
 
 
 /**
- * Gibt den Kurznamen der Firma des aktuellen Accounts zurück. Der Name wird aus dem Namen des Account-Servers und
- * nicht aus dem Rückgabewert von AccountCompany() ermittelt.
- *
- * @return string - Kurzname
- */
-string ShortAccountCompany() {
-   string server=StringToLower(GetServerName());
-
-   if      (StringStartsWith(server, "alpari-"            )) return("Alpari"          );
-   else if (StringStartsWith(server, "alparibroker-"      )) return("Alpari"          );
-   else if (StringStartsWith(server, "alpariuk-"          )) return("Alpari"          );
-   else if (StringStartsWith(server, "alparius-"          )) return("Alpari"          );
-   else if (StringStartsWith(server, "apbgtrading-"       )) return("APBG"            );
-   else if (StringStartsWith(server, "atcbrokers-"        )) return("ATC"             );
-   else if (StringStartsWith(server, "atcbrokersest-"     )) return("ATC"             );
-   else if (StringStartsWith(server, "atcbrokersliq1-"    )) return("ATC"             );
-   else if (StringStartsWith(server, "axitrader-"         )) return("AxiTrader"       );
-   else if (StringStartsWith(server, "axitraderusa-"      )) return("AxiTrader"       );
-   else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
-   else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
-   else if (StringStartsWith(server, "cmap-"              )) return("IC Markets"      );     // demo
-   else if (StringStartsWith(server, "collectivefx-"      )) return("CollectiveFX"    );
-   else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
-   else if (StringStartsWith(server, "easyforex-"         )) return("EasyForex"       );
-   else if (StringStartsWith(server, "finfx-"             )) return("FinFX"           );
-   else if (StringStartsWith(server, "forex-"             )) return("Forex Ltd"       );
-   else if (StringStartsWith(server, "forexbaltic-"       )) return("FB Capital"      );
-   else if (StringStartsWith(server, "fxopen-"            )) return("FXOpen"          );
-   else if (StringStartsWith(server, "fxprimus-"          )) return("FX Primus"       );
-   else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
-   else if (StringStartsWith(server, "fxdd-"              )) return("FXDD"            );
-   else if (StringStartsWith(server, "gci-"               )) return("GCI"             );
-   else if (StringStartsWith(server, "gcmfx-"             )) return("Gallant"         );
-   else if (StringStartsWith(server, "gftforex-"          )) return("GFT"             );
-   else if (StringStartsWith(server, "globalprime-"       )) return("Global Prime"    );
-   else if (StringStartsWith(server, "icmarkets-"         )) return("IC Markets"      );
-   else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
-   else if (StringStartsWith(server, "integral-"          )) return("Global Prime"    );     // demo
-   else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
-   else if (StringStartsWith(server, "jfd-demo"           )) return("JFD Brokers"     );
-   else if (StringStartsWith(server, "jfd-live"           )) return("JFD Brokers"     );
-   else if (StringStartsWith(server, "liteforex-"         )) return("LiteForex"       );
-   else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
-   else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
-   else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
-   else if (StringStartsWith(server, "metaquotes-"        )) return("MetaQuotes"      );
-   else if (StringStartsWith(server, "migbank-"           )) return("MIG"             );
-   else if (StringStartsWith(server, "myfx-dukascopy"     )) return("MyFX Dukascopy"  );
-   else if (StringStartsWith(server, "myfx-synthetic"     )) return("MyFX Synthetic"  );
-   else if (StringStartsWith(server, "oanda-"             )) return("Oanda"           );
-   else if (StringStartsWith(server, "pepperstone-"       )) return("Pepperstone"     );
-   else if (StringStartsWith(server, "primexm-"           )) return("PrimeXM"         );
-   else if (StringStartsWith(server, "sig-"               )) return("LiteForex"       );
-   else if (StringStartsWith(server, "sts-"               )) return("STS"             );
-   else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
-   else if (StringStartsWith(server, "teletradecy-"       )) return("TeleTrade"       );
-
-   return(AccountCompany());
-}
-
-
-/**
  * Führt eine Anwendung aus und wartet, bis sie beendet ist.
  *
  * @param  string cmdLine - Befehlszeile

@@ -4580,6 +4580,7 @@ void __DummyCalls() {
    string   GetGlobalConfigPath();
    string   GetLocalConfigPath();
    string   GetRawIniString(string fileName, string section, string key, string defaultValue);
+   string   GetServerName();
    int      GetTerminalBuild();
    int      GetTesterWindow();
    string   GetWindowText(int hWnd);

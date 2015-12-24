@@ -20,7 +20,6 @@
    int      GetTerminalRuntime();
 #import "stdlib1.ex4"
    int      GetTesterWindow();
-   string   GetServerName();
    string   GetComputerName();
 
 

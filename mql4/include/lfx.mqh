@@ -177,8 +177,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (1) Orderdaten lesen
-   string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
-   string file    = baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
+   string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
    string key     = ticket;
    string value   = GetIniString(file, section, key, "");
@@ -399,8 +399,8 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
 
    // (2) alle Tickets einlesen
-   string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
-   string file    = baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
+   string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
@@ -528,8 +528,8 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (4) Daten schreiben
-   string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
-   string file    = baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
+   string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
    string key     = ticket;
    string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPrice, ", ", sOpenTriggerTime, ", ", sStopLoss, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfit, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
