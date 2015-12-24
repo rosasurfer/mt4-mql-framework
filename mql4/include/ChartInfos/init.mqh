@@ -17,12 +17,11 @@ int onInit() {
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    if (StringLen(lfxCurrency) > 0) {
-      lfxCurrencyId     = GetCurrencyId(lfxCurrency);
-      lfxChartDeviation = GetGlobalConfigDouble("Charts", "LFXDeviation."+ lfxCurrency, 0);
-      mode.intern       = false;
-      mode.remote       = true;                                      // TODO: LFX/mode.remote muﬂ in Abh‰ngigkeit einer Konfiguration gesetzt werden
+      lfxCurrencyId = GetCurrencyId(lfxCurrency);
+      mode.intern   = false;
+      mode.remote   = true;                                          // TODO: LFX/mode.remote muﬂ in Abh‰ngigkeit einer Konfiguration gesetzt werden
       /*
-      if (!tradeAccountNumber) if (!InitTradeAccountVars())
+      if (!tradeAccountNumber) if (!InitTradeAccount())
          return(last_error);
       string name = tradeAccountName +": "+ tradeAccountCompany +", "+ tradeAccountNumber +", "+ tradeAccountCurrency;
       ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(tradeAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
