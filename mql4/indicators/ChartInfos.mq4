@@ -1,5 +1,5 @@
 /**
- * Zeigt im Chart verschiedene Informationen zum aktuellen Instrument und einer der folgenden Positionen an:
+ * Zeigt im Chart verschiedene Informationen zum aktuellen Instrument und zu Positionen eines der folgenden Typen an:
  *
  * (1) interne Positionen: - Positionen, die im aktuellen Account des Terminals gehalten werden
  *                         - Order- und P/L-Daten stammen vom Terminal
@@ -82,12 +82,6 @@ bool   mm.ready;                                                  // Flag
 double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
 
 
-// Status
-bool   mode.intern;                                               // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
-bool   mode.extern;                                               //   eingelesen. Orderänderungen werden automatisch erkannt.
-bool   mode.remote;                                               // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
-                                                                  //   oder nach Eintreffen eines entsprechenden Events zurückgesetzt und neu eingelesen. Orderänderungen werden
-                                                                  //   nicht automatisch erkannt.
 // Konfiguration individueller Positionen
 #define POSITION_CONFIG_TERM.size        40
 #define POSITION_CONFIG_TERM.doubleSize   5
@@ -4615,8 +4609,6 @@ bool EditAccountConfig() {
       ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
    }
    else if (mode.remote) {
-      if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccount())
-         return(NULL);
       ArrayPushString(files, baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini");
    }
    else {
@@ -4669,7 +4661,6 @@ string InputsToStr() {
    string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
-   string   ShortAccountCompany();
    bool     StringCompareI(string a, string b);
 
 #import "stdlib2.ex4"

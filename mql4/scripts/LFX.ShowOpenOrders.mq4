@@ -16,6 +16,19 @@ int __DEINIT_FLAGS__[];
 
 
 /**
+ * Initialisierung
+ *
+ * @return int - Fehlerstatus
+ */
+int onInit() {
+   // TradeAccount und Status initialisieren
+   if (!InitTradeAccount())
+      return(last_error);
+   return(catch("onInit(1)"));
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
