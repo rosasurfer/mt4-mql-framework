@@ -40,14 +40,19 @@ extern double TakeProfitPrice;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) LFX-Currency und -ID bestimmen
+   // (1) TradeAccount und Status initialisieren
+   if (!InitTradeAccount())
+      return(last_error);
+
+
+   // (2) LFX-Currency und -ID bestimmen
    if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
    else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
    else                                  return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
-   // (2) Parametervalidierung
+   // (3) Parametervalidierung
    // Units
    if (NE(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(2)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
    if (Units < 0.1 || Units > 1)         return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMETER));
@@ -72,7 +77,7 @@ int onInit() {
    }
 
 
-   // (3) offene Orders einlesen (initialisiert TradeAccount-Variablen)
+   // (4) offene Orders einlesen (initialisiert TradeAccount-Variablen)
    int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);

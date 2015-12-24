@@ -38,7 +38,12 @@ double leverage;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Scriptparameter einlesen
+   // (1) TradeAccount und Status initialisieren
+   if (!InitTradeAccount())
+      return(last_error);
+
+
+   // (2) Scriptparameter einlesen
    string names[], values[];
    int size = GetScriptParameters(names, values);
    if (size == -1) return(last_error);
@@ -51,7 +56,7 @@ int onInit() {
    if (i >= size) return(catch("onInit(1)  missing script parameter (command)", ERR_INVALID_INPUT_PARAMETER));
 
 
-   // (2) Scriptparameter validieren, Format: "LFX:{iTicket}:{sAction}", z.B. "LFX:428371265:open"
+   // (3) Scriptparameter validieren, Format: "LFX:{iTicket}:{sAction}", z.B. "LFX:428371265:open"
    if (StringLeft(command, 4) != "LFX:")            return(catch("onInit(2)  invalid parameter command = \""+ command +"\" (prefix)", ERR_INVALID_INPUT_PARAMETER));
    int pos = StringFind(command, ":", 4);
    if (pos == -1)                                   return(catch("onInit(3)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMETER));
@@ -63,7 +68,7 @@ int onInit() {
    if (action!="open" && action!="close")           return(catch("onInit(6)  invalid parameter command = \""+ command +"\" (action)", ERR_INVALID_INPUT_PARAMETER));
 
 
-   // (3) ggf. Leverage-Konfiguration einlesen und validieren
+   // (4) ggf. Leverage-Konfiguration einlesen und validieren
    if (action == "open") {
       if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
                                                     return(catch("onInit(7)  Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -74,7 +79,7 @@ int onInit() {
    }
 
 
-   // (4) SMS-Konfiguration einlesen
+   // (5) SMS-Konfiguration einlesen
    __SMS.alerts = GetLocalConfigBool("EventTracker", "SMS.Alerts", false);
    if (__SMS.alerts) {
       __SMS.receiver = GetConfigString("SMS", "Receiver", "");

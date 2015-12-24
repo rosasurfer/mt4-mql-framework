@@ -9,14 +9,18 @@
  */
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
-string lfxCurrency;
+string lfxCurrency = "";
 int    lfxCurrencyId;
 int    lfxOrder   [LFX_ORDER.intSize];                               // struct LFX_ORDER
 int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]
 
 
-int    tradeAccountNumber;                                           // mode.intern: der aktuelle Account
-string tradeAccountCurrency;                                         // mode.remote: ein anderer, konfigurierter Account
+bool   mode.intern = true;    // Default                             // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
+bool   mode.extern;                                                  //   eingelesen. Orderänderungen werden automatisch erkannt.
+bool   mode.remote;                                                  // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
+                                                                     //   oder nach Eintreffen eines entsprechenden Events zurückgesetzt und neu eingelesen. Orderänderungen werden
+int    tradeAccountNumber;                                           //   nicht automatisch erkannt.
+string tradeAccountCurrency;
 int    tradeAccountType;                                             // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
 string tradeAccountCompany;
 string tradeAccountName;                                             // Inhaber
@@ -29,7 +33,7 @@ string tradeAccountAlias;                                            // Alias fü
  * @return bool - Erfolgsstatus
  */
 bool InitTradeAccount() {
-   if (tradeAccountNumber > 0)
+   if (tradeAccountNumber != 0)
       return(true);
 
    int    _accountNumber;
@@ -39,67 +43,83 @@ bool InitTradeAccount() {
    string _accountName;
    string _accountAlias;
 
-   bool mode.remote = (StringLeft(Symbol(), 3)=="LFX" || StringRight(Symbol(), 3)=="LFX");
 
-   if (mode.remote) {
-      // Daten eines konfigurierten TradeAccounts
-      string section = "LFX";
-      string key     = "MRUTradeAccount" + ifString(This.IsTesting(), ".Tester", "");
-      _accountNumber = GetLocalConfigInt(section, key, 0);
-      if (_accountNumber <= 0) {
-         string value = GetLocalConfigString(section, key, "");
-         if (!StringLen(value)) return(!catch("InitTradeAccount(1)  missing account setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
-                                return(!catch("InitTradeAccount(2)  invalid account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
-      }
+   // (1) AccountNumber bestimmen und dabei einen konfigurierten nicht-standardmäßigen Account berücksichtigen
+   _accountNumber = GetAccountNumber(); if (!_accountNumber) return(!SetLastError(stdlib.GetLastError()));
+
+   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
+   string section = "General";
+   string key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
+
+   int nonStdAccount = GetIniInt(file, section, key);
+   if (nonStdAccount <= 0) {
+      string value = GetIniString(file, section, key);
+      if (value != "")     return(!catch("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
    }
    else {
-      // Daten des aktuellen Accounts
-      _accountNumber = GetAccountNumber();
-      if (!_accountNumber) return(!SetLastError(stdlib.GetLastError()));
+      _accountNumber = nonStdAccount;
    }
 
+
+   // (2) anhand des Accounts die restlichen Variablen ermitteln
    // AccountCurrency
    section = "Accounts";
    key     = _accountNumber +".currency";
-   _accountCurrency = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCurrency))  return(!catch("InitTradeAccount(3)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   if (!IsCurrency(_accountCurrency)) return(!catch("InitTradeAccount(4)  invalid account setting ["+ section +"]->"+ key +" = \""+ _accountCurrency +"\"", ERR_RUNTIME_ERROR));
-   _accountCurrency = StringToUpper(_accountCurrency);
+   value   = GetGlobalConfigString(section, key);
+   if (!StringLen(value))  return(!catch("InitTradeAccount(2)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   if (!IsCurrency(value)) return(!catch("InitTradeAccount(3)  invalid account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+   _accountCurrency = StringToUpper(value);
 
    // AccountType
-   key   = _accountNumber +".type";
-   value = StringToLower(GetGlobalConfigString(section, key, ""));
-   if (!StringLen(value))             return(!catch("InitTradeAccount(5)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   section = "Accounts";
+   key     = _accountNumber +".type";
+   value   = StringToLower(GetGlobalConfigString(section, key));
+   if (!StringLen(value))  return(!catch("InitTradeAccount(4)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
    if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
    else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
-   else                               return(!catch("InitTradeAccount(6)  invalid account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key, "") +"\"", ERR_RUNTIME_ERROR));
+   else                    return(!catch("InitTradeAccount(5)  invalid account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"", ERR_RUNTIME_ERROR));
 
    // AccountCompany
    section = "Accounts";
    key     = _accountNumber +".company";
-   _accountCompany = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountCompany))   return(!catch("InitTradeAccount(7)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   value   = GetGlobalConfigString(section, key);
+   if (!StringLen(value))  return(!catch("InitTradeAccount(6)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   _accountCompany = value;
 
    // AccountName
    section = "Accounts";
    key     = _accountNumber +".name";
-   _accountName = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountName))      return(!catch("InitTradeAccount(8)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   value   = GetGlobalConfigString(section, key);
+   if (!StringLen(value))  return(!catch("InitTradeAccount(7)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   _accountName = value;
 
    // AccountAlias
    section = "Accounts";
    key     = _accountNumber +".alias";
-   _accountAlias = GetGlobalConfigString(section, key, "");
-   if (!StringLen(_accountAlias))     return(!catch("InitTradeAccount(9)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   value   = GetGlobalConfigString(section, key);
+   if (!StringLen(value))  return(!catch("InitTradeAccount(8)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
+   _accountAlias = value;
 
 
-   // globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
+   // (3) globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
+   mode.intern = (_accountNumber == GetAccountNumber());
+   mode.extern = false;                                              // Hier immer FALSE, wird ggf. später von RestoreWindowStatus() überschrieben
+   mode.remote = !mode.intern;
+
    tradeAccountNumber   = _accountNumber;
    tradeAccountCurrency = _accountCurrency;
    tradeAccountType     = _accountType;
    tradeAccountCompany  = _accountCompany;
    tradeAccountName     = _accountName;
    tradeAccountAlias    = _accountAlias;
+
+   if (mode.remote) {
+      if (StringEndsWith(Symbol(), "LFX")) {
+         lfxCurrency   = StringLeft (Symbol(), -3);                  // TODO: lfx-Variablen durch Symbol() ersetzen
+         lfxCurrencyId = GetCurrencyId(lfxCurrency);
+      }
+   }
 
    return(true);
 }
@@ -157,8 +177,6 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (1) Orderdaten lesen
-   if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccount())
-      return(NULL);
    string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
    string file    = baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
@@ -381,8 +399,6 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
 
    // (2) alle Tickets einlesen
-   if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccount())
-      return(EMPTY);
    string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
    string file    = baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
@@ -512,8 +528,6 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (4) Daten schreiben
-   if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccount())
-      return(false);
    string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
    string file    = baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
@@ -585,7 +599,6 @@ void DummyCalls() {
    int    iNull, iNulls[];
    double dNull;
    string sNull;
-   InitTradeAccount();
    LFX.CurrencyId(NULL);
    LFX.GetOrder(NULL, iNulls);
    LFX.GetOrders(NULL, NULL, iNulls);

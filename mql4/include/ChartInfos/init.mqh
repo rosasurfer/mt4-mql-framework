@@ -9,25 +9,14 @@ int onInit() {
       return(last_error);
 
 
-   // (2) Status definieren
-   mode.intern = true;                                               // Default-Status
-   mode.extern = false;
-   mode.remote = false;
-
-   if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
-   else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   if (StringLen(lfxCurrency) > 0) {
-      lfxCurrencyId = GetCurrencyId(lfxCurrency);
-      mode.intern   = false;
-      mode.remote   = true;                                          // TODO: LFX/mode.remote muß in Abhängigkeit einer Konfiguration gesetzt werden
-      /*
-      if (!tradeAccountNumber) if (!InitTradeAccount())
-         return(last_error);
-      string name = tradeAccountName +": "+ tradeAccountCompany +", "+ tradeAccountNumber +", "+ tradeAccountCurrency;
-      ObjectSetText(label.lfxTradeAccount, name, 8, "Arial Fett", ifInt(tradeAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
-      */
+   // (2) TradeAccount und Status initialisieren
+   if (!InitTradeAccount())
+      return(last_error);
+   if (mode.remote) {
+      string text = tradeAccountName +": "+ tradeAccountCompany +", "+ tradeAccountNumber +", "+ tradeAccountCurrency;
+      ObjectSetText(label.lfxTradeAccount, text, 8, "Arial Fett", ifInt(tradeAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
-   else if (!RestoreWindowStatus()) {                                // restauriert mode.intern/extern
+   else if (!RestoreWindowStatus()) {                                // restauriert mode.extern
       return(last_error);
    }
 
@@ -50,7 +39,7 @@ int onInit() {
    if (!mode.remote) {
       // Leverage: eine symbol-spezifische hat Vorrang vor einer allgemeinen Konfiguration
       section="Moneymanagement"; key=stdSymbol +".Leverage";
-      string sValue = GetLocalConfigString(section, key, "");
+      string sValue = GetLocalConfigString(section, key);
       if (StringLen(sValue) > 0) {
          if (!StringIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = \""+ sValue +"\" (not numeric)", ERR_INVALID_CONFIG_PARAMVALUE));
          double dValue = StrToDouble(sValue);

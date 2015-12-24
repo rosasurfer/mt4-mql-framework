@@ -39,6 +39,10 @@ string inputLabels[];
  * @return int - Fehlerstatus
  */
 int onInit() {
+   // TradeAccount und Status initialisieren
+   if (!InitTradeAccount())
+      return(last_error);
+
    // Parametervalidierung
    LFX.Labels = StringTrim(LFX.Labels);
    if (!StringLen(LFX.Labels))
