@@ -4650,7 +4650,6 @@ string InputsToStr() {
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    datetime GetPrevSessionStartTime.srv(datetime serverTime);
    string   GetRawIniString(string file, string section, string key, string defaultValue);
-   string   GetServerName();
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();
