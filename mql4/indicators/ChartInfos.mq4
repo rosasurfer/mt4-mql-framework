@@ -4597,19 +4597,19 @@ int ReadExternalPositions(string provider, string signal) {
  * @return bool - Erfolgsstatus
  */
 bool EditAccountConfig() {
-   string baseDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4") +"\\files\\";
+   string mqlDir = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string files[];
 
    if (mode.intern) {
-      ArrayPushString(files, baseDir + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
    }
    else if (mode.extern) {
-      ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_open.ini"  );
-      ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_closed.ini");
-      ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_open.ini"  );
+      ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_closed.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
    }
    else if (mode.remote) {
-      ArrayPushString(files, baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini");
    }
    else {
       return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
