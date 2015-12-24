@@ -868,14 +868,14 @@ int ShowTradeHistory() {
    int orders = LFX.GetOrders(Symbol(), OF_CLOSED, los);
 
    for (int i=0; i < orders; i++) {
-      int      ticket      =                     los.Ticket       (los, i);
-      int      type        =                     los.Type         (los, i);
-      double   units       =                     los.Units        (los, i);
-      datetime openTime    =     GmtToServerTime(los.OpenTime     (los, i));
-      double   openPrice   =                     los.OpenPriceLfx (los, i);
-      datetime closeTime   = GmtToServerTime(Abs(los.CloseTime    (los, i)));
-      double   closePrice  =                     los.ClosePriceLfx(los, i);
-      double   profit      =                     los.Profit       (los, i);
+      int      ticket      =                     los.Ticket    (los, i);
+      int      type        =                     los.Type      (los, i);
+      double   units       =                     los.Units     (los, i);
+      datetime openTime    =     GmtToServerTime(los.OpenTime  (los, i));
+      double   openPrice   =                     los.OpenPrice (los, i);
+      datetime closeTime   = GmtToServerTime(Abs(los.CloseTime (los, i)));
+      double   closePrice  =                     los.ClosePrice(los, i);
+      double   profit      =                     los.Profit    (los, i);
       color    markerColor = ifInt(type==OP_BUY, Blue, Red);
       string   comment     = "Profit: "+ DoubleToStr(profit, 2);
 
@@ -1068,9 +1068,9 @@ bool CheckLfxLimits() {
 
       if (!triggerTime) {
          // (2) ein Limit wurde genau jetzt getriggert
-         if (result == LIMIT_ENTRY     ) log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))         +" at "+ NumberToStr(los.OpenPriceLfx (lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
-         if (result == LIMIT_STOPLOSS  ) log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.StopLossLfx  (lfxOrders, i), " at "+ NumberToStr(los.StopLossLfx  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLossLfx  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
-         if (result == LIMIT_TAKEPROFIT) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.TakeProfitLfx(lfxOrders, i), " at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfitLfx(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
+         if (result == LIMIT_ENTRY     ) log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
+         if (result == LIMIT_STOPLOSS  ) log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
+         if (result == LIMIT_TAKEPROFIT) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
 
          // Auslösen speichern und TradeCommand verschicken
          if (result==LIMIT_ENTRY)       los.setOpenTriggerTime    (lfxOrders, i, now.gmt);
@@ -1092,13 +1092,13 @@ bool CheckLfxLimits() {
          // prüfen, ob inzwischen ein Open- bzw. Close-Error gesetzt wurde und ggf. Fehler melden und speichern
          if (result == LIMIT_ENTRY) {
             if (!lo.IsOpenError(stored)) {
-               warnSMS("CheckLfxLimits(5)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat));
+               warnSMS("CheckLfxLimits(5)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
                los.setOpenTime(lfxOrders, i, -now.gmt);
             }
          }
          else if (!lo.IsCloseError(stored)) {
-            if (result == LIMIT_STOPLOSS) warnSMS("CheckLfxLimits(6)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLossLfx  (lfxOrders, i), " at "+ NumberToStr(los.StopLossLfx  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLossLfx  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), ""));
-            else                          warnSMS("CheckLfxLimits(7)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfitLfx(lfxOrders, i), " at "+ NumberToStr(los.TakeProfitLfx(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfitLfx(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), ""));
+            if (result == LIMIT_STOPLOSS) warnSMS("CheckLfxLimits(6)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), ""));
+            else                          warnSMS("CheckLfxLimits(7)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), ""));
             los.setCloseTime(lfxOrders, i, -now.gmt);
          }
 
@@ -1162,16 +1162,16 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
    switch (type) {
       case OP_BUYLIMIT:
       case OP_SELLSTOP:
-         if (LE(Bid, los.OpenPriceLfx(lfxOrders, i))) return(LIMIT_ENTRY);
-                                                      return(LIMIT_NONE );
+         if (LE(Bid, los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
+                                                   return(LIMIT_NONE );
       case OP_SELLLIMIT:
       case OP_BUYSTOP  :
-         if (GE(Bid, los.OpenPriceLfx(lfxOrders, i))) return(LIMIT_ENTRY);
-                                                      return(LIMIT_NONE );
+         if (GE(Bid, los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
+                                                   return(LIMIT_NONE );
       default:
-         slPrice = los.StopLossLfx    (lfxOrders, i);
+         slPrice = los.StopLoss       (lfxOrders, i);
          slValue = los.StopLossValue  (lfxOrders, i);
-         tpPrice = los.TakeProfitLfx  (lfxOrders, i);
+         tpPrice = los.TakeProfit     (lfxOrders, i);
          tpValue = los.TakeProfitValue(lfxOrders, i);
          profit  = lfxOrders.dvolatile[i][I_VPROFIT];
    }
@@ -1616,14 +1616,14 @@ bool UpdatePositions() {
          line++;
          if (positions.idata[i][I_CONFIG_TYPE] == CONFIG_VIRTUAL) fontColor = positions.fontColor.virtual;
          else                                                     fontColor = positions.fontColor.remote;
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[los.Type   (lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), NumberToStr(los.Units       (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                          positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), NumberToStr(los.OpenPriceLfx(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "SL:",                                                          positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), NumberToStr(los.StopLossLfx(lfxOrders, i), SubPipPriceFormat),  positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), "Profit:",                                                      positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),              positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[los.Type(lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                       positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "SL:",                                                       positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), NumberToStr(los.StopLoss (lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), "Profit:",                                                   positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),           positions.fontSize, positions.fontName, fontColor);
       }
    }
    return(!catch("UpdatePositions(3)"));
@@ -4615,7 +4615,9 @@ bool EditAccountConfig() {
       ArrayPushString(files, baseDir + external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
    }
    else if (mode.remote) {
-      ArrayPushString(files, baseDir +"LiteForex\\remote_positions.ini");
+      if (!tradeAccountNumber) /*&&*/ if (!InitTradeAccount())
+         return(NULL);
+      ArrayPushString(files, baseDir + tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini");
    }
    else {
       return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));

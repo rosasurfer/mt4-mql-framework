@@ -334,7 +334,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
    // (7) Logmessage ausgeben
    string priceFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-   if (__LOG) log("OpenOrder.Execute(7)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.OpenPriceLfx(lo), priceFormat) +")");
+   if (__LOG) log("OpenOrder.Execute(7)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), priceFormat));
 
    return(!catch("OpenOrder.Execute(8)"));
 }
@@ -418,8 +418,8 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
       string priceFormat = ifString(currency=="JPY", ".2'", ".4'");
 
       string message = tradeAccountAlias +": ";
-      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
-      else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPriceLfx(lo), priceFormat));
+      if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPrice(lo), priceFormat), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
+      else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPrice(lo), priceFormat));
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("OpenOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));
@@ -494,7 +494,7 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    int    counter     = StrToInteger(oldComment);
    string priceFormat = ifString(lo.Currency(lo)=="JPY", ".2'", ".4'");
 
-   if (__LOG) log("ClosePosition.Execute(4)  "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), priceFormat) +" (LFX price: "+ NumberToStr(lo.ClosePriceLfx(lo), priceFormat) +"), profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   if (__LOG) log("ClosePosition.Execute(4)  "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), priceFormat) +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    return(true);
 }
@@ -579,7 +579,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
 
       string message = tradeAccountAlias +": ";
       if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
-      else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePriceLfx(lo), priceFormat));
+      else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePrice(lo), priceFormat));
 
       if (!SendSMS(__SMS.receiver, TimeToStr(TimeLocalEx("ClosePosition.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(!SetLastError(stdlib.GetLastError()));

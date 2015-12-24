@@ -55,8 +55,8 @@
 #define EXECUTION_CONTEXT.size          596
 #define EXECUTION_CONTEXT.intSize       149
 
-#define LFX_ORDER.size                  116
-#define LFX_ORDER.intSize                29
+#define LFX_ORDER.size                  112
+#define LFX_ORDER.intSize                28
 
 #define ORDER_EXECUTION.size            136
 #define ORDER_EXECUTION.intSize          34
