@@ -7,7 +7,7 @@
 // @see  Definition in MT4Expander::Expander.h
 //
 
-template    "MT4 Symbols [1]"
+template    "MT4 Symbols (1)"
 description "File 'symbols.raw'"
 
 applies_to  file
