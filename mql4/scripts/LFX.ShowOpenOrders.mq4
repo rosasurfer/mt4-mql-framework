@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 #include <win32api.mqh>
-#include <LFX/functions.mqh>
+#include <account/functions.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 

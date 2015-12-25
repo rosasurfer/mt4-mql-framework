@@ -39,8 +39,8 @@ extern bool Offline.Ticker                  = true;               // ob der Tick
 #include <iFunctions/@ATR.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
-#include <LFX/functions.mqh>
-#include <LFX/quickchannel.mqh>
+#include <account/functions.mqh>
+#include <account/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 
