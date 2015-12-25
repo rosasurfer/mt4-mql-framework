@@ -13,8 +13,8 @@ int __DEINIT_FLAGS__[];
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 
-#include <LFX/functions.mqh>
-#include <LFX/quickchannel.mqh>
+#include <account/functions.mqh>
+#include <account/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 
