@@ -169,17 +169,6 @@ double   external.closed.swap      [];
 double   external.closed.profit    [];
 
 
-// Remote-Positionsdaten
-int    lfxOrders.ivolatile[][3];                                  // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
-double lfxOrders.dvolatile[][1];                                  //                               = {Profit}
-int    lfxOrders.openPositions;                                   // Anzahl der offenen Positionen in den offenen Orders (IsOpen = 1)
-
-#define I_TICKET           0                                      // Arrayindizes von lfxOrders.~volatile[]
-#define I_ISOPEN           1
-#define I_ISLOCKED         2
-#define I_VPROFIT          0
-
-
 // Textlabel für die einzelnen Anzeigen
 string label.instrument      = "${__NAME__}.Instrument";
 string label.ohlc            = "${__NAME__}.OHLC";
@@ -382,7 +371,7 @@ bool ToggleOpenOrders() {
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
-   double   lots, openPrice, takeProfit, stopLoss;
+   double   lots, units, openPrice, takeProfit, stopLoss;
    string   label1, label2, label3, sTP, sSL, types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
 
 
@@ -519,10 +508,77 @@ int ShowOpenOrders() {
 
    // (3) mode.remote
    if (mode.remote) {
-      return(_NULL(warn("ShowOpenOrders(6)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+      orders = ArrayRange(lfxOrders.ivolatile, 0);
+
+      for (i=0, n=0; i < orders; i++) {
+         if (!lfxOrders.ivolatile[i][I_ISOPEN])
+            continue;
+         // Daten auslesen
+         ticket     = lfxOrders.ivolatile[i][I_TICKET];
+         type       =                     los.Type      (lfxOrders, i);
+         units      =                     los.Units     (lfxOrders, i);
+         openTime   = GmtToServerTime(Abs(los.OpenTime  (lfxOrders, i)));
+         openPrice  =                     los.OpenPrice (lfxOrders, i);
+         takeProfit =                     los.TakeProfit(lfxOrders, i);
+         stopLoss   =                     los.StopLoss  (lfxOrders, i);
+
+         if (type > OP_SELL) {
+            // Pending-Order
+            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
+
+            // Order anzeigen
+            if (ObjectFind(label1) == 0)
+               ObjectDelete(label1);
+            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(6)"), openPrice)) {
+               ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+            }
+         }
+         else {
+            // offene Position
+            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
+
+            // TakeProfit anzeigen
+            if (takeProfit != NULL) {
+               sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
+               label2 = StringConcatenate(label1, ",  ", sTP);
+               if (ObjectFind(label2) == 0)
+                  ObjectDelete(label2);
+               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(7)"), takeProfit)) {
+                  ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
+                  ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+               }
+            }
+            else sTP = "";
+
+            // StopLoss anzeigen
+            if (stopLoss != NULL) {
+               sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
+               label3 = StringConcatenate(label1, ",  ", sSL);
+               if (ObjectFind(label3) == 0)
+                  ObjectDelete(label3);
+               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(8)"), stopLoss)) {
+                  ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+                  ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+               }
+            }
+            else sSL = "";
+
+            // Order anzeigen
+            if (ObjectFind(label1) == 0)
+               ObjectDelete(label1);
+            if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
+               ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+               ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
+               ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
+            }
+         }
+         n++;
+      }
+      return(n);
    }
 
-   return(_EMPTY(catch("ShowOpenOrders(7)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY(catch("ShowOpenOrders(9)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -1167,7 +1223,7 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
          slValue = los.StopLossValue  (lfxOrders, i);
          tpPrice = los.TakeProfit     (lfxOrders, i);
          tpValue = los.TakeProfitValue(lfxOrders, i);
-         profit  = lfxOrders.dvolatile[i][I_VPROFIT];
+         profit  = lfxOrders.dvolatile[i][I_PROFIT];
    }
 
    switch (type) {
@@ -1617,7 +1673,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "SL:",                                                       positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), NumberToStr(los.StopLoss (lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), "Profit:",                                                   positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2),           positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2),            positions.fontSize, positions.fontName, fontColor);
       }
    }
    return(!catch("UpdatePositions(3)"));
@@ -3888,7 +3944,7 @@ bool ProcessLfxTerminalMessage(string message) {
       for (int i=0; i < size; i++) {
          if (lfxOrders.ivolatile[i][I_TICKET] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
             if (lfxOrders.ivolatile[i][I_ISOPEN] && !lfxOrders.ivolatile[i][I_ISLOCKED])
-               lfxOrders.dvolatile[i][I_VPROFIT] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
+               lfxOrders.dvolatile[i][I_PROFIT] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
             break;
          }
       }
@@ -3900,21 +3956,21 @@ bool ProcessLfxTerminalMessage(string message) {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
       if (success) { if (__LOG) log("ProcessLfxTerminalMessage(4)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
       else         {           warn("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
-      return(RestoreLfxStatusFromFile());                                     // LFX-Status neu einlesen (auch bei Fehler)
+      return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(6)  #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
-      return(RestoreLfxStatusFromFile());                                     // LFX-Status neu einlesen (auch bei Fehler)
+      return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
       if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
-      return(RestoreLfxStatusFromFile());                                     // LFX-Status neu einlesen (auch bei Fehler)
+      return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // ???
@@ -3923,12 +3979,39 @@ bool ProcessLfxTerminalMessage(string message) {
 
 
 /**
- * Liest den aktuellen LFX-Status komplett neu ein.
+ * Liest die RemoteOrder-Daten ein bzw. restauriert sie aus dem Cache.
+ *
+ * @param  bool fromCache - Ob die Orderdaten von zwischengespeicherten Daten restauriert werden sollen oder komplett neu eingelesen werden.
+ *
+ *                          TRUE:  Restauriert die Orderdaten aus in der Library zwischengespeicherten Daten.
+ *
+ *                          FALSE: Liest die offenen LFX-Orders des aktuellen Instruments neu ein. Für offene Positionen wird kein sich ständig ändernder
+ *                                 P/L gespeichert. Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischengespeichert (schneller) und von dort
+ *                                 restauriert.
  *
  * @return bool - Erfolgsstatus
  */
-bool RestoreLfxStatusFromFile() {
-   // Sind wir nicht in einem init()-Cycle, werden die vorhandenen volatilen Daten vorm Überschreiben gespeichert.
+bool RestoreRemoteOrders(bool fromCache) {
+   fromCache = fromCache!=0;
+
+   // (1) Orderdaten aus in der Library zwischengespeicherten Daten restaurieren
+   if (fromCache) {
+      int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile);
+      if (size == -1)
+         return(!SetLastError(ERR_RUNTIME_ERROR));
+
+      // Zähler der offenen Positionen aktualisieren
+      lfxOrders.openPositions = 0;
+
+      for (int i=0; i < size; i++) {
+         if (lfxOrders.ivolatile[i][I_ISOPEN] != 0)
+            lfxOrders.openPositions++;
+      }
+      return(true);
+   }
+
+
+   // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden die vorhandenen volatilen Daten vorm Überschreiben gespeichert.
    if (ArrayRange(lfxOrders.ivolatile, 0) > 0) {
       if (!SaveVolatileLfxStatus())
          return(false);
@@ -3937,54 +4020,27 @@ bool RestoreLfxStatusFromFile() {
    ArrayResize(lfxOrders.dvolatile, 0);
    lfxOrders.openPositions = 0;
 
-
    // offene Orders einlesen
-   int size = LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders);
+   size = LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders);
    if (size == -1)
       return(false);
    ArrayResize(lfxOrders.ivolatile, size);
    ArrayResize(lfxOrders.dvolatile, size);
 
-
    // Zähler der offenen Positionen und volatile P/L-Daten aktualisieren
-   for (int i=0; i < size; i++) {
-      lfxOrders.ivolatile[i][I_TICKET] = los.Ticket(lfxOrders, i);
-      lfxOrders.ivolatile[i][I_ISOPEN] = los.IsOpen(lfxOrders, i);
-      if (lfxOrders.ivolatile[i][I_ISOPEN] == 0) {
-         lfxOrders.dvolatile[i][I_VPROFIT] = 0;
-         continue;
-      }
+   for (i=0; i < size; i++) {
+      lfxOrders.ivolatile[i][I_TICKET  ] = los.Ticket(lfxOrders, i);
+      lfxOrders.ivolatile[i][I_ISOPEN  ] = true;
+      lfxOrders.ivolatile[i][I_ISLOCKED] = false;
+         string varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
+         double value   = GlobalVariableGet(varName);
+         if (!value) {                                                  // 0 oder Fehler
+            int error = GetLastError();
+            if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
+               return(!catch("RestoreRemoteOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
+         }
+      lfxOrders.dvolatile[i][I_PROFIT] = value;
       lfxOrders.openPositions++;
-
-      string varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
-      double value   = GlobalVariableGet(varName);
-      if (!value) {                                                  // 0 oder Fehler
-         int error = GetLastError();
-         if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
-            return(!catch("RestoreLfxStatusFromFile(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
-      }
-      lfxOrders.dvolatile[i][I_VPROFIT] = value;
-   }
-   return(true);
-}
-
-
-/**
- * Restauriert den LFX-Status aus den in der Library zwischengespeicherten Daten.
- *
- * @return bool - Erfolgsstatus
- */
-bool RestoreLfxStatusFromLib() {
-   int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile);
-   if (size == -1)
-      return(!SetLastError(ERR_RUNTIME_ERROR));
-
-   lfxOrders.openPositions = 0;
-
-   // Zähler der offenen Positionen aktualisieren
-   for (int i=0; i < size; i++) {
-      if (lfxOrders.ivolatile[i][I_ISOPEN] != 0)
-         lfxOrders.openPositions++;
    }
    return(true);
 }
@@ -4003,9 +4059,9 @@ bool SaveVolatileLfxStatus() {
       if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
          varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
 
-         if (!GlobalVariableSet(varName, lfxOrders.dvolatile[i][I_VPROFIT])) {
+         if (!GlobalVariableSet(varName, lfxOrders.dvolatile[i][I_PROFIT])) {
             int error = GetLastError();
-            return(!catch("SaveVolatileLfxStatus(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dvolatile[i][I_VPROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("SaveVolatileLfxStatus(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
       }
    }
@@ -4668,6 +4724,7 @@ string InputsToStr() {
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets  (int keys[][]);
 
+   string   IntsToStr            (int    array[], string separator);
    string   DoublesToStr         (double array[], string separator);
    string   StringsToStr         (string array[], string separator);
    string   TicketsToStr         (int    array[], string separator);

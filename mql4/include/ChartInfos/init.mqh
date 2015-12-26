@@ -74,25 +74,23 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInit_User() {
+   // LFX-Status einlesen
    if (mode.remote) {
-      // LFX-Status einlesen
-      if (!RestoreLfxStatusFromFile())
-         return(last_error);
+      if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Laden des Indikators innerhalb eines Templates, auch bei Terminal-Start (kein Input-Dialog).
+ * Nach Laden des Indikators durch ein Template, auch bei Terminal-Start (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit_Template() {
+   // LFX-Status neu einlesen
    if (mode.remote) {
-      // LFX-Status neu einlesen
-      if (!RestoreLfxStatusFromFile())
-         return(last_error);
+      if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
@@ -104,43 +102,44 @@ int onInit_Template() {
  * @return int - Fehlerstatus
  */
 int onInit_Parameters() {
+   // in Library gespeicherten LFX-Status restaurieren
    if (mode.remote) {
-      // in Library gespeicherten LFX-Status restaurieren
-      if (!RestoreLfxStatusFromLib())
-         return(last_error);
+      bool fromCache = true;
+      if (!RestoreRemoteOrders(fromCache)) return(last_error);
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Wechsel der aktuellen Chartperiode (kein Input-Dialog).
+ * Nach Wechsel der Chartperiode (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit_TimeframeChange() {
+   // in Library gespeicherten LFX-Status restaurieren
    if (mode.remote) {
-      // in Library gespeicherten LFX-Status restaurieren
-      if (!RestoreLfxStatusFromLib())
-         return(last_error);
+      bool fromCache = true;
+      if (!RestoreRemoteOrders(fromCache)) return(last_error);
    }
    return(NO_ERROR);
 }
 
 
 /**
- * Nach Änderung des aktuellen Chartsymbols (kein Input-Dialog).
+ * Nach Änderung des Chartsymbols (kein Input-Dialog).
  *
  * @return int - Fehlerstatus
  */
 int onInit_SymbolChange() {
    if (mode.remote) {
       // LFX-Status des alten Symbols speichern (liegt noch in Library)
-      if (!RestoreLfxStatusFromLib())  return(last_error);
-      if (!SaveVolatileLfxStatus())    return(last_error);
+      bool fromCache = true;
+      if (!RestoreRemoteOrders(fromCache)) return(last_error);
+      if (!SaveVolatileLfxStatus())        return(last_error);
 
       // LFX-Status des neuen Symbols einlesen
-      if (!RestoreLfxStatusFromFile()) return(last_error);
+      if (!RestoreRemoteOrders(false))     return(last_error);
    }
    return(NO_ERROR);
 }
@@ -152,10 +151,9 @@ int onInit_SymbolChange() {
  * @return int - Fehlerstatus
  */
 int onInit_Recompile() {
+   // LFX-Status neu einlesen
    if (mode.remote) {
-      // LFX-Status neu einlesen
-      if (!RestoreLfxStatusFromFile())
-         return(last_error);
+      if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
 }
