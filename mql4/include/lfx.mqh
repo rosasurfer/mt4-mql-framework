@@ -184,8 +184,6 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // Parametervaliderung
    if (ticket <= 0) return(!catch("LFX.GetOrder(1)  invalid parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
 
-   int digits = ifInt(LFX.CurrencyId(ticket)==CID_JPY, 3, 5);
-
 
    // (1) Orderdaten lesen
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
@@ -203,6 +201,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, (-)OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 20)    return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   int digits = 5;
 
    // Comment
    string _comment = StringTrim(values[1]);

@@ -160,7 +160,7 @@ int onStart() {
       }
       closePrice = MathPow(closePrice, 1/7.);
       if (currency == "JPY")
-         closePrice = 1/closePrice;                                  // JPY ist invers notiert
+         closePrice *= 100;                                          // JPY wird normalisiert
 
 
       // (7) LFX-Order aktualisieren und speichern
@@ -183,8 +183,7 @@ int onStart() {
 
 
       // (8) Logmessage ausgeben
-      string lfxFormat = ifString(lo.CurrencyId(lo)==CID_JPY, ".2'", ".4'");
-      if (__LOG) log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), lfxFormat) +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+      if (__LOG) log("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
 
       // (9) LFX-Terminal benachrichtigen
