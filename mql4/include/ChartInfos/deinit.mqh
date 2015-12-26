@@ -76,13 +76,3 @@ int onDeinitRecompile() {
       return(last_error);
    return(NO_ERROR);
 }
-
-
-/**
- * Deinitialisierung Postprocessing-Hook
- *
- * @return int - Fehlerstatus
- */
-int afterDeinit() {
-   return(NO_ERROR);
-}

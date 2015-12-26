@@ -893,14 +893,14 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
 
 
 /**
- * Speichert LFX-Orderdaten in der Library oder restauriert sie aus bereits in der Library gespeicherten Daten.
+ * Speichert LFX-Orderdaten in der Library oder restauriert sie aus in der Library gespeicherten Daten.
  *
  * @param  bool   store       - Richtung: TRUE = kopiert aus den Parametern in die Library; FALSE = kopiert aus der Library in die Parameter
  * @param  int    orders[]    - LFX-Orders
  * @param  int    iVolatile[] - volatile Integer-Daten
  * @param  double dVolatile[] - volatile Double-Daten
  *
- * @return int - Anzahl der kopierten Orderdatensätze oder -1 (EMPTY), falls ein Fehler auftrat
+ * @return int - Anzahl der kopierten Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */
 int ChartInfos.CopyLfxStatus(bool store, /*LFX_ORDER*/int orders[][], int iVolatile[][], double dVolatile[][]) {
    store = store!=0;

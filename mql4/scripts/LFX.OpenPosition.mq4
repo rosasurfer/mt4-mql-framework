@@ -345,11 +345,11 @@ int GetPositionCounter() {
       if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
          continue;
 
-      string label = los.Comment(lfxOrders, i);
-      if (StringStartsWith(label, lfxCurrency +".")) label = StringRight(label, -4);
-      if (StringStartsWith(label,              "#")) label = StringRight(label, -1);
+      string comment = los.Comment(lfxOrders, i);
+      if (StringStartsWith(comment, lfxCurrency +".")) comment = StringRight(comment, -4);
+      if (StringStartsWith(comment,              "#")) comment = StringRight(comment, -1);
 
-      counter = Max(counter, StrToInteger(label));
+      counter = Max(counter, StrToInteger(comment));
    }
    return(counter);
 }

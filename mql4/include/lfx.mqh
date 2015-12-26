@@ -9,11 +9,6 @@
  */
 #define STRATEGY_ID   102                                            // eindeutige ID der Strategie (Bereich 101-1023)
 
-string lfxCurrency = "";
-int    lfxCurrencyId;
-int    lfxOrder   [LFX_ORDER.intSize];                               // struct LFX_ORDER
-int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]
-
 
 bool   mode.intern = true;    // Default                             // - Interne Positionsdaten stammen aus dem Terminal selbst, sie werden bei jedem Tick zurückgesetzt und neu
 bool   mode.extern;                                                  //   eingelesen. Orderänderungen werden automatisch erkannt.
@@ -25,6 +20,22 @@ int    tradeAccountType;                                             // ACCOUNT_
 string tradeAccountCompany;
 string tradeAccountName;                                             // Inhaber
 string tradeAccountAlias;                                            // Alias für Logs, SMS etc.
+
+
+string lfxCurrency = "";
+int    lfxCurrencyId;
+
+int    lfxOrder   [LFX_ORDER.intSize];                               // struct LFX_ORDER
+int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]
+
+int    lfxOrders.ivolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
+double lfxOrders.dvolatile[][1];                                     //                               = {Profit}
+int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen in den offenen Orders (IsOpen = 1)
+
+#define I_TICKET           0                                         // Arrayindizes von lfxOrders.~volatile[]
+#define I_ISOPEN           1
+#define I_ISLOCKED         2
+#define I_PROFIT           0
 
 
 /**
