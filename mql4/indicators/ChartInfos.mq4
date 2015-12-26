@@ -4039,6 +4039,12 @@ bool RestoreRemoteOrders(bool fromCache) {
    ArrayResize(lfxOrders.dvolatile, 0);
    lfxOrders.openPositions = 0;
 
+
+   // solange noch lfxCurrency und lfxCurrencyId benutzt werden, bei Nicht-LFX-Instrumenten hier abbrechen
+   if (!StringEndsWith(Symbol(), "LFX"))
+      return(true);
+
+
    // Orders einlesen
    size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size == -1)

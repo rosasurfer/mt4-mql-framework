@@ -421,6 +421,9 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
    int /*LFX_ORDER*/lo[];
 
    for (int i=0; i < keysSize; i++) {
+      if (!StringIsDigit(keys[i]))
+         continue;
+
       int ticket = StrToInteger(keys[i]);
       if (currencyId != 0)
          if (LFX.CurrencyId(ticket) != currencyId)
