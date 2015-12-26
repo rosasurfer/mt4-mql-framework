@@ -16,8 +16,8 @@ int __DEINIT_FLAGS__[];
 #include <MT4iQuickChannel.mqh>
 
 #include <core/script.ParameterProvider.mqh>
-#include <account/functions.mqh>
-#include <account/quickchannel.mqh>
+#include <remote/functions.mqh>
+#include <remote/quickchannel.mqh>
 
 #include <structs/pewa/LFX_ORDER.mqh>
 

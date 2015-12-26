@@ -28,8 +28,8 @@ extern double TakeProfitPrice;
 #include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
 
-#include <account/functions.mqh>
-#include <account/quickchannel.mqh>
+#include <remote/functions.mqh>
+#include <remote/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 
