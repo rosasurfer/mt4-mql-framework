@@ -256,7 +256,7 @@ int onStart() {
    }
    openPrice = MathPow(openPrice, 1/7.);
    if (lfxCurrency == "JPY")
-      openPrice = 1/openPrice;                                       // JPY ist invers notiert
+      openPrice *= 100;                                              // JPY wird normalisiert
 
 
    // (7) neue LFX-Order erzeugen und speichern
@@ -277,8 +277,7 @@ int onStart() {
 
 
    // (8) Logmessage ausgeben
-   string lfxFormat = ifString(lfxCurrency=="JPY", ".2'", ".4'");
-   if (__LOG) log("onStart(7)  "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), lfxFormat));
+   if (__LOG) log("onStart(7)  "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    // (9) Order freigeben
