@@ -714,7 +714,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
-   double   lots, openPrice, closePrice;
+   double   lots, units, openPrice, closePrice;
    string   sOpenPrice, sClosePrice, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
 
@@ -907,40 +907,59 @@ int ShowTradeHistory() {
 
    // (4) mode.remote
    if (mode.remote) {
-      return(_NULL(warn("ShowTradeHistory(8)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+      orders = ArrayRange(lfxOrders.ivolatile, 0);
+
+      for (i=0, n=0; i < orders; i++) {
+         if (!los.IsOpened(lfxOrders, i)) continue;
+         if (!los.IsClosed(lfxOrders, i)) continue;
+
+         ticket      =                     los.Ticket    (lfxOrders, i);
+         type        =                     los.Type      (lfxOrders, i);
+         units       =                     los.Units     (lfxOrders, i);
+         openTime    =     GmtToServerTime(los.OpenTime  (lfxOrders, i));
+         openPrice   =                     los.OpenPrice (lfxOrders, i);
+         closeTime   = GmtToServerTime(Abs(los.CloseTime (lfxOrders, i)));
+         closePrice  =                     los.ClosePrice(lfxOrders, i);
+
+         sOpenPrice  = NumberToStr(openPrice,  PriceFormat);
+         sClosePrice = NumberToStr(closePrice, PriceFormat);
+
+         // Open-Marker anzeigen
+         openLabel = StringConcatenate("#", ticket, " ", sTypes[type], " ", DoubleToStr(units, 1), " at ", sOpenPrice);
+         if (ObjectFind(openLabel) == 0)
+            ObjectDelete(openLabel);
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
+            ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
+            ObjectSet(openLabel, OBJPROP_COLOR    , markerColors[type]);
+         }
+
+         // Trendlinie anzeigen
+         if (drawConnectors) {
+            lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+            if (ObjectFind(lineLabel) == 0)
+               ObjectDelete(lineLabel);
+            if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+               ObjectSet(lineLabel, OBJPROP_RAY  , false           );
+               ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT       );
+               ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
+               ObjectSet(lineLabel, OBJPROP_BACK , true            );
+            }
+         }
+
+         // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
+         closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+         if (ObjectFind(closeLabel) == 0)
+            ObjectDelete(closeLabel);
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
+            ObjectSet(closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet(closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
+         }
+         n++;
+      }
+      return(n);
    }
 
-   return(_EMPTY(catch("ShowTradeHistory(9)  unreachable code reached", ERR_RUNTIME_ERROR)));
-
-   /*
-   script ShowTradeHistory.onStart() [
-   /*LFX_ORDER int los[][LFX_ORDER.intSize];
-   int orders = LFX.GetOrders(lfxCurrency, OF_CLOSED, los);
-
-   for (int i=0; i < orders; i++) {
-      int      ticket      =                     los.Ticket    (los, i);
-      int      type        =                     los.Type      (los, i);
-      double   units       =                     los.Units     (los, i);
-      datetime openTime    =     GmtToServerTime(los.OpenTime  (los, i));
-      double   openPrice   =                     los.OpenPrice (los, i);
-      datetime closeTime   = GmtToServerTime(Abs(los.CloseTime (los, i)));
-      double   closePrice  =                     los.ClosePrice(los, i);
-      double   profit      =                     los.Profit    (los, i);
-      color    markerColor = ifInt(type==OP_BUY, Blue, Red);
-      string   comment     = "Profit: "+ DoubleToStr(profit, 2);
-
-      if (!ChartMarker.OrderSent_B(ticket, SubPipDigits, markerColor, type, units, Symbol(), openTime, openPrice, NULL, NULL, comment)) {
-         SetLastError(stdlib.GetLastError());
-         break;
-      }
-      if (!ChartMarker.PositionClosed_B(ticket, SubPipDigits, Orange, type, units, Symbol(), openTime, openPrice, closeTime, closePrice)) {
-         SetLastError(stdlib.GetLastError());
-         break;
-      }
-   }
-   ArrayResize(los, 0);
-   return(last_error);
-   */
+   return(_EMPTY(catch("ShowTradeHistory(6)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
@@ -3981,12 +4000,12 @@ bool ProcessLfxTerminalMessage(string message) {
 /**
  * Liest die RemoteOrder-Daten ein bzw. restauriert sie aus dem Cache.
  *
- * @param  bool fromCache - Ob die Orderdaten von zwischengespeicherten Daten restauriert werden sollen oder komplett neu eingelesen werden.
+ * @param  bool fromCache - Ob die Orderdaten aus zwischengespeicherten Daten restauriert oder komplett neu eingelesen werden.
  *
  *                          TRUE:  Restauriert die Orderdaten aus in der Library zwischengespeicherten Daten.
  *
- *                          FALSE: Liest die offenen LFX-Orders des aktuellen Instruments neu ein. Für offene Positionen wird kein sich ständig ändernder
- *                                 P/L gespeichert. Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischengespeichert (schneller) und von dort
+ *                          FALSE: Liest die Orderdaten des aktuellen Instruments neu ein. Für offene Positionen wird kein sich ständig ändernder P/L
+ *                                 gespeichert. Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischengespeichert (schneller) und von dort
  *                                 restauriert.
  *
  * @return bool - Erfolgsstatus
@@ -4020,8 +4039,8 @@ bool RestoreRemoteOrders(bool fromCache) {
    ArrayResize(lfxOrders.dvolatile, 0);
    lfxOrders.openPositions = 0;
 
-   // offene Orders einlesen
-   size = LFX.GetOrders(lfxCurrency, OF_OPEN, lfxOrders);
+   // Orders einlesen
+   size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size == -1)
       return(false);
    ArrayResize(lfxOrders.ivolatile, size);
@@ -4030,8 +4049,12 @@ bool RestoreRemoteOrders(bool fromCache) {
    // Zähler der offenen Positionen und volatile P/L-Daten aktualisieren
    for (i=0; i < size; i++) {
       lfxOrders.ivolatile[i][I_TICKET  ] = los.Ticket(lfxOrders, i);
-      lfxOrders.ivolatile[i][I_ISOPEN  ] = true;
+      lfxOrders.ivolatile[i][I_ISOPEN  ] = los.IsOpen(lfxOrders, i);
       lfxOrders.ivolatile[i][I_ISLOCKED] = false;
+      if (!lfxOrders.ivolatile[i][I_ISOPEN]) {
+         lfxOrders.dvolatile[i][I_PROFIT] = los.Profit(lfxOrders, i);
+      }
+      else {
          string varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
          double value   = GlobalVariableGet(varName);
          if (!value) {                                                  // 0 oder Fehler
@@ -4039,8 +4062,9 @@ bool RestoreRemoteOrders(bool fromCache) {
             if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
                return(!catch("RestoreRemoteOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
          }
-      lfxOrders.dvolatile[i][I_PROFIT] = value;
-      lfxOrders.openPositions++;
+         lfxOrders.dvolatile[i][I_PROFIT] = value;
+         lfxOrders.openPositions++;
+      }
    }
    return(true);
 }

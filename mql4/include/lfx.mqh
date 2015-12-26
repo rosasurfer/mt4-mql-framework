@@ -379,9 +379,9 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
  * @param  int    fSelection - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
  *                             OF_OPEN            - gibt alle offenen Tickets zurück: Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
  *                             OF_CLOSED          - gibt alle geschlossenen Tickets zurück: Trade History, analog zu OrderSelect(MODE_HISTORY)
- *                             OF_PENDINGORDER    - gibt alle herkömmlichen Pending-Orders zurück: OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
+ *                             OF_PENDINGORDER    - gibt alle Pending-Orders mit wartendem OpenLimit zurück: OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
  *                             OF_OPENPOSITION    - gibt alle offenen Positionen zurück
- *                             OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem StopLoss oder TakeProfit zurück
+ *                             OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem CloseLimit zurück: StopLoss oder TakeProfit
  * @param  int    los[]      - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
  *
  * @return int - Anzahl der zurückgegebenen Orders oder -1 (EMPTY), falls ein Fehler auftrat
