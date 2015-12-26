@@ -10005,11 +10005,9 @@ void Tester.ResetGlobalArrays() {
 
 #import "Expander.dll"
    int    GetBoolsAddress  (bool   array[]);
-   int    GetIntsAddress   (int    array[]);
    int    GetDoublesAddress(double array[]);
    int    GetStringAddress (string value  );
    int    GetStringsAddress(string array[]);
-   string GetString        (int    address);
 
    int    ec_LastError               (/*EXECUTION_CONTEXT*/int ec[]);
    int    ec_UninitializeReason      (/*EXECUTION_CONTEXT*/int ec[]);
