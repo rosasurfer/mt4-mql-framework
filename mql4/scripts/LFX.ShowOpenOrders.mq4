@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator im aktuellen Chart die Nachricht, die Anzeige der offenen Orders ein/auszuschaltem.
+ *
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
@@ -87,7 +87,7 @@ bool ShowOpenOrder(/*LFX_ORDER*/int los[], int index=NULL) {
 
 
    // (1) Daten auslesen
-   int dims = ArrayDimension(los); if (dims > 2)   return(!catch("ShowOpenOrder(1)  invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
+   int dims = ArrayDimension(los); if (dims > 2) return(!catch("ShowOpenOrder(1)  invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS));
    if (dims == 1) {
       // los[] ist einzelne Order
       comment   =                     lo.Comment        (los);
