@@ -105,7 +105,7 @@ double totalPosition;
 double longPosition;
 double shortPosition;
 int    positions.idata[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
-double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolut, FullProfitPercent]
+double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
 bool   positionsAnalyzed;
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
@@ -134,7 +134,7 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_FULL_PROFIT_PCT               8
 
 
-// externe Positionen
+// externer Account
 string   external.signalProvider = "";          // simpletrader
 string   external.signalName     = "";          // FX Viper
 string   external.signalAlias    = "";          // fxviper
@@ -169,7 +169,7 @@ double   external.closed.swap      [];
 double   external.closed.profit    [];
 
 
-// LFX-Positionensdaten (remote)
+// Remote-Positionsdaten
 int    lfxOrders.ivolatile[][3];                                  // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
 double lfxOrders.dvolatile[][1];                                  //                               = {Profit}
 int    lfxOrders.openPositions;                                   // Anzahl der offenen Positionen in den offenen Orders (IsOpen = 1)
@@ -217,7 +217,7 @@ color  positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSE                Orange
 
 
-int tickTimerId;                                                  // ID eines ggf.installierten OfflineTickers
+int tickTimerId;                                                  // ID eines ggf. installierten OfflineTickers
 
 
 #include <ChartInfos/init.mqh>
@@ -519,7 +519,7 @@ int ShowOpenOrders() {
 
    // (3) mode.remote
    if (mode.remote) {
-      return(_EMPTY(catch("ShowOpenOrders(6)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+      return(_NULL(warn("ShowOpenOrders(6)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
 
    return(_EMPTY(catch("ShowOpenOrders(7)  unreachable code reached", ERR_RUNTIME_ERROR)));
@@ -668,7 +668,7 @@ int ShowTradeHistory() {
    string section = "Charts";
    string key     = "TradeHistory.ConnectOrders";
 
-   bool drawConnectors = GetIniBool(file, section, key, GetLocalConfigBool(section, key, true));  // Terminal- und Account-Konfiguration (default = true)
+   bool drawConnectors = GetIniBool(file, section, key, GetLocalConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
 
 
    // (2) mode.intern
@@ -851,7 +851,7 @@ int ShowTradeHistory() {
 
    // (4) mode.remote
    if (mode.remote) {
-      return(_EMPTY(catch("ShowTradeHistory(8)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
+      return(_NULL(warn("ShowTradeHistory(8)  feature not implemented for mode.remote=1", ERR_NOT_IMPLEMENTED)));
    }
 
    return(_EMPTY(catch("ShowTradeHistory(9)  unreachable code reached", ERR_RUNTIME_ERROR)));
@@ -859,7 +859,7 @@ int ShowTradeHistory() {
    /*
    script ShowTradeHistory.onStart() [
    /*LFX_ORDER int los[][LFX_ORDER.intSize];
-   int orders = LFX.GetOrders(Symbol(), OF_CLOSED, los);
+   int orders = LFX.GetOrders(lfxCurrency, OF_CLOSED, los);
 
    for (int i=0; i < orders; i++) {
       int      ticket      =                     los.Ticket    (los, i);

@@ -7,21 +7,21 @@
  *    int    units;                 //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
  *    int    lots;                  //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
  *    int    openEquity;            //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
- *    int    openTime;              //   4         lo[ 5]      // OpenTime (GMT)
+ *    int    openTime;              //   4         lo[ 5]      // OpenTime in GMT (negativ: Zeitpunkt eines Fehlers beim Öffnen der Order)
  *    int    openPrice;             //   4         lo[ 6]      // OpenPrice in Points
- *    int    openTriggerTime        //   4         lo[ 7]      // Zeitpunkt des Erreichens des Open-Limits (GMT)
+ *    int    openTriggerTime        //   4         lo[ 7]      // Zeitpunkt des Erreichens eines Open-Limits in GMT
  *    int    stopLoss;              //   4         lo[ 8]      // StopLoss-Preis in Points
  *    int    stopLossValue;         //   4         lo[ 9]      // StopLoss-Value in Hundertsteln der Account-Währung
  *    BOOL   stopLossTriggered      //   4         lo[10]      // ob ein StopLoss-Limit ausgelöst wurde
  *    int    takeProfit;            //   4         lo[11]      // TakeProfit-Preis in Points
  *    int    takeProfitValue;       //   4         lo[12]      // TakeProfit-Value in Hundertsteln der Account-Währung
  *    BOOL   takeProfitTriggered    //   4         lo[13]      // ob ein TakeProfit-Limit ausgelöst wurde
- *    int    closeTriggerTime       //   4         lo[14]      // Zeitpunkt des Erreichens des Close-Limits (GMT)
- *    int    closeTime;             //   4         lo[15]      // CloseTime (GMT)
+ *    int    closeTriggerTime       //   4         lo[14]      // Zeitpunkt des Erreichens eines Close-Limits in GMT
+ *    int    closeTime;             //   4         lo[15]      // CloseTime in GMT (negativ: Zeitpunkt eines Fehlers beim Schließen der Order)
  *    int    closePrice;            //   4         lo[16]      // ClosePrice in Points
  *    int    profit;                //   4         lo[17]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
  *    szchar comment[32];           //  32         lo[18]      // Kommentar, <NUL>-terminiert
- *    int    modificationTime;      //   4         lo[26]      // Zeitpunkt der letzten Änderung (GMT)
+ *    int    modificationTime;      //   4         lo[26]      // Zeitpunkt der letzten Änderung in GMT
  *    int    version;               //   4         lo[27]      // Version (fortlaufender Zähler)
  * } lo;                            // 112 byte = int[28]
  *
@@ -333,11 +333,9 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 
 #import "stdlib1.ex4"
    string GetCurrency(int id);
-   string NumberToStr(double number, string format);
    string OperationTypeToStr(int type);
 
 #import "Expander.dll"
-   int    GetIntsAddress  (int buffer[]);
    int    GetStringAddress(string value);
 #import
 

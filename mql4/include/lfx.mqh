@@ -160,7 +160,7 @@ int LFX.InstanceId(int magicNumber) {
 
 
 /**
- * Gibt eine LFX-Order des aktuellen Accounts zurück.
+ * Gibt eine LFX-Order des TradeAccounts zurück.
  *
  * @param  int ticket - Ticket der zurückzugebenden Order
  * @param  int lo[]   - LFX_ORDER-Struct zur Aufnahme der gelesenen Daten
@@ -189,12 +189,12 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (2) Orderdaten validieren
-   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, (-)OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
+   //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, (-)OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 20)    return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
-   // Label
-   string _label = StringTrim(values[1]);
+   // Comment
+   string _comment = StringTrim(values[1]);
 
    // OrderType
    sValue = StringTrim(values[2]);
@@ -345,7 +345,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    lo.setCloseTime          (lo, _closeTime          );
    lo.setClosePrice         (lo, _closePrice         );
    lo.setProfit             (lo, _orderProfit        );
-   lo.setComment            (lo, _label              );
+   lo.setComment            (lo, _comment            );
    lo.setModificationTime   (lo, _modificationTime   );
    lo.setVersion            (lo, _version            );
 
@@ -362,7 +362,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
 /**
- * Gibt mehrere LFX-Orders des aktuellen Accounts zurück.
+ * Gibt mehrere LFX-Orders des TradeAccounts zurück.
  *
  * @param  string currency   - LFX-Währung der Orders (default: alle Währungen)
  * @param  int    fSelection - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
@@ -460,7 +460,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
 
 /**
- * Speichert eine LFX-Order in der .ini-Datei des aktuellen Accounts.
+ * Speichert eine LFX-Order in der .ini-Datei des TradeAccounts.
  *
  * @param  LFX_ORDER los[]  - ein einzelnes oder ein Array von LFX_ORDER-Structs
  * @param  int       index  - Arrayindex der zu speichernden Order, wenn los[] ein LFX_ORDER[]-Array ist.
@@ -500,9 +500,9 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (3) Daten formatieren
-   //Ticket = Symbol, Label, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, CloseTime, ClosePrice, Profit, ModificationTime, Version
+   //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sSymbol              =                          lo.Currency           (lo);
-   string sLabel               =                          lo.Comment            (lo);                                                                                               sLabel            = StringPadRight(sLabel           , 13, " ");
+   string sComment             =                          lo.Comment            (lo);                                                                                               sComment          = StringPadRight(sComment         , 13, " ");
    string sOperationType       = OperationTypeDescription(lo.Type               (lo));                                                                                              sOperationType    = StringPadRight(sOperationType   , 10, " ");
    string sUnits               =              NumberToStr(lo.Units              (lo), ".+");                                                                                        sUnits            = StringPadLeft (sUnits           ,  5, " ");
    string sOpenEquity          =                ifString(!lo.OpenEquity         (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity       = StringPadLeft (sOpenEquity      , 10, " ");
@@ -532,7 +532,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
    string section = "RemoteOrders";
    string key     = ticket;
-   string value   = StringConcatenate(sSymbol, ", ", sLabel, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPrice, ", ", sOpenTriggerTime, ", ", sStopLoss, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfit, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
+   string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPrice, ", ", sOpenTriggerTime, ", ", sStopLoss, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfit, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(6)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
@@ -546,7 +546,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
 /**
- * Speichert die übergebenen LFX-Orders in der .ini-Datei des aktuellen Accounts.
+ * Speichert die übergebenen LFX-Orders in der .ini-Datei des TradeAccounts.
  *
  * @param  LFX_ORDER los[] - Array von LFX_ORDER-Structs
  *
@@ -563,8 +563,8 @@ bool LFX.SaveOrders(/*LFX_ORDER*/int los[][]) {
 
 
 /**
- * "Exception"-Handler für in LFX.SaveOrder() aufgetretene Fehler. Abzufangende Fehler werden statt "laut" nur "leise" gesetzt,
- * was eine individuelle Behandlung durch den Aufrufer möglich macht.
+ * "Exception"-Handler für in LFX.SaveOrder() aufgetretene Fehler. Die angegebenen abzufangenden Fehler werden nur "leise" gesetzt,
+ * wodurch eine individuelle Behandlung durch den Aufrufer möglich wird.
  *
  * @param  string message - Fehlermeldung
  * @param  int    error   - der aufgetretene Fehler
@@ -579,7 +579,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
       return(NO_ERROR);
    SetLastError(error);
 
-   // (1) die angegebenen Laufzeitfehler abfangen
+   // (1) die angegebenen Fehler "leise" abfangen
    if (fCatch & MUTE_ERR_CONCUR_MODIFICATION && 1) {
       if (error == ERR_CONCURRENT_MODIFICATION) {
          if (__LOG) log(message, error);
@@ -587,7 +587,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
       }
    }
 
-   // (2) für alle restlichen Fehler Laufzeitfehler auslösen
+   // (2) für alle restlichen Fehler harten Laufzeitfehler auslösen
    return(catch(message, error));
 }
 
@@ -618,7 +618,6 @@ void DummyCalls() {
    bool     IsIniKey(string fileName, string section, string key);
    bool     IsPendingTradeOperation(int value);
    bool     IsTradeOperation(int value);
-   string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
    string   StringReplace.Recursive(string object, string search, string replace);
@@ -626,7 +625,4 @@ void DummyCalls() {
 
 #import "stdlib2.ex4"
    int      GetIniKeys(string fileName, string section, string names[]);
-
-#import "Expander.dll"
-   int      GetIntsAddress(int array[]);
 #import

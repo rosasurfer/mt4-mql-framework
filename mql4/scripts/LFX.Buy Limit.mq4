@@ -76,7 +76,7 @@ int onInit() {
    }
 
 
-   // (4) offene Orders einlesen (initialisiert TradeAccount-Variablen)
+   // (4) offene Orders einlesen
    int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);

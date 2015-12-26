@@ -233,9 +233,7 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
 
 
-   int    GetIntsAddress  (int values[]);
    int    GetStringAddress(string value);
-   string IntToHexStr(int integer);
 #import
 
 

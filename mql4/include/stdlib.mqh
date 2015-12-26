@@ -351,7 +351,6 @@
    string   ModuleTypeDescription(int type);
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
-   string   NumberToStr(double number, string format);
    string   OperationTypeDescription(int type);       string OrderTypeDescription(int type);                            // Alias
    string   OperationTypeToStr      (int type);       string OrderTypeToStr      (int type);                            // Alias
    string   PeriodFlagToStr(int flag);
