@@ -46,9 +46,8 @@ int onInit() {
 
 
    // (2) LFX-Currency und -ID bestimmen
-   if      (StringStartsWith(Symbol(), "LFX")) lfxCurrency = StringRight(Symbol(), -3);
-   else if (StringEndsWith  (Symbol(), "LFX")) lfxCurrency = StringLeft (Symbol(), -3);
-   else                                  return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
+   if (!StringEndsWith(Symbol(), "LFX")) return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
+   lfxCurrency   = StringLeft(Symbol(), -3);
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
