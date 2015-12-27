@@ -27,11 +27,20 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int defaultValue = 999;
 
-   int value = GetLocalConfigInt("Logging", "TestKey", defaultValue);
+   datetime times[] = {
+/*
+D'',
+*/
+};
 
-   debug("onStart()  TestKey = "+ value);
+
+   int size = ArraySize(times);
+
+   for (int i=0;i < size;i++) {
+      if (!times[i]) debug("onStart()  gmt='                  0'  fxt='                  0'");
+      else           debug("onStart()  gmt="+ QuoteStr(TimeToStr(times[i], TIME_FULL)) +"  fxt="+ QuoteStr(TimeToStr(GmtToFxtTime(times[i]), TIME_FULL)));
+   }
 
    return(last_error);
 

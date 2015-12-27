@@ -7,21 +7,21 @@
  *    int    units;                 //   4         lo[ 2]      // Order-Units in Zehnteln einer Unit
  *    int    lots;                  //   4         lo[ 3]      // Ordervolumen in Hundertsteln eines Lots USD
  *    int    openEquity;            //   4         lo[ 4]      // Equity zum Open-Zeitpunkt in Hundertsteln der Account-Währung (inkl. unrealisierter Verluste, exkl. unrealisierter Gewinne)
- *    int    openTime;              //   4         lo[ 5]      // OpenTime in GMT (negativ: Zeitpunkt eines Fehlers beim Öffnen der Order)
+ *    int    openTime;              //   4         lo[ 5]      // OpenTime in FXT (negativ: Zeitpunkt eines Fehlers beim Öffnen der Order)
  *    int    openPrice;             //   4         lo[ 6]      // OpenPrice in Points
- *    int    openTriggerTime        //   4         lo[ 7]      // Zeitpunkt des Erreichens eines Open-Limits in GMT
+ *    int    openTriggerTime        //   4         lo[ 7]      // Zeitpunkt des Erreichens eines Open-Limits in FXT
  *    int    stopLoss;              //   4         lo[ 8]      // StopLoss-Preis in Points
  *    int    stopLossValue;         //   4         lo[ 9]      // StopLoss-Value in Hundertsteln der Account-Währung
  *    BOOL   stopLossTriggered      //   4         lo[10]      // ob ein StopLoss-Limit ausgelöst wurde
  *    int    takeProfit;            //   4         lo[11]      // TakeProfit-Preis in Points
  *    int    takeProfitValue;       //   4         lo[12]      // TakeProfit-Value in Hundertsteln der Account-Währung
  *    BOOL   takeProfitTriggered    //   4         lo[13]      // ob ein TakeProfit-Limit ausgelöst wurde
- *    int    closeTriggerTime       //   4         lo[14]      // Zeitpunkt des Erreichens eines Close-Limits in GMT
- *    int    closeTime;             //   4         lo[15]      // CloseTime in GMT (negativ: Zeitpunkt eines Fehlers beim Schließen der Order)
+ *    int    closeTriggerTime       //   4         lo[14]      // Zeitpunkt des Erreichens eines Close-Limits in FXT
+ *    int    closeTime;             //   4         lo[15]      // CloseTime in FXT (negativ: Zeitpunkt eines Fehlers beim Schließen der Order)
  *    int    closePrice;            //   4         lo[16]      // ClosePrice in Points
  *    int    profit;                //   4         lo[17]      // Profit in Hundertsteln der Account-Währung (realisiert oder unrealisiert)
  *    szchar comment[32];           //  32         lo[18]      // Kommentar, <NUL>-terminiert
- *    int    modificationTime;      //   4         lo[26]      // Zeitpunkt der letzten Änderung in GMT
+ *    int    modificationTime;      //   4         lo[26]      // Zeitpunkt der letzten Änderung in FXT
  *    int    version;               //   4         lo[27]      // Version (fortlaufender Zähler)
  * } lo;                            // 112 byte = int[28]
  *
@@ -208,21 +208,21 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
                                      ", units="              ,        NumberToStr(lo.Units              (lo), ".+"),
                                      ", lots="               ,        NumberToStr(lo.Lots               (lo), ".+"),
                                      ", openEquity="         ,        DoubleToStr(lo.OpenEquity         (lo), 2),
-                                     ", openTime="           ,           ifString(lo.OpenTime           (lo), "'"+ TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL) +"'"+ ifString(lo.IsOpenError(lo), "(ERROR)", ""), "0"),
+                                     ", openTime="           ,           ifString(lo.OpenTime           (lo), "'"+ TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL) +" FXT'"+ ifString(lo.IsOpenError(lo), "(ERROR)", ""), "0"),
                                      ", openPrice="          ,        NumberToStr(lo.OpenPrice          (lo), priceFormat),
-                                     ", openTriggerTime="    ,           ifString(lo.OpenTriggerTime    (lo), "'"+ TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL) +"'", "0"),
+                                     ", openTriggerTime="    ,           ifString(lo.OpenTriggerTime    (lo), "'"+ TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL) +" FXT'", "0"),
                                      ", stopLoss="           ,           ifString(lo.StopLoss           (lo), NumberToStr(lo.StopLoss(lo), priceFormat), "0"),
                                      ", stopLossValue="      ,           ifString(lo.StopLossValue      (lo)==EMPTY_VALUE, "NULL", DoubleToStr(lo.StopLossValue(lo), 2)),
                                      ", stopLossTriggered="  ,          BoolToStr(lo.StopLossTriggered  (lo)),
                                      ", takeProfit="         ,           ifString(lo.TakeProfit         (lo), NumberToStr(lo.TakeProfit(lo), priceFormat), "0"),
                                      ", takeProfitValue="    ,           ifString(lo.TakeProfitValue    (lo)==EMPTY_VALUE, "NULL", DoubleToStr(lo.TakeProfitValue(lo), 2)),
                                      ", takeProfitTriggered=",          BoolToStr(lo.TakeProfitTriggered(lo)),
-                                     ", closeTriggerTime="   ,           ifString(lo.CloseTriggerTime   (lo), "'"+ TimeToStr(lo.CloseTriggerTime(lo), TIME_FULL) +"'", "0"),
-                                     ", closeTime="          ,           ifString(lo.CloseTime          (lo), "'"+ TimeToStr(lo.CloseTime(lo), TIME_FULL) +"'", "0"),
+                                     ", closeTriggerTime="   ,           ifString(lo.CloseTriggerTime   (lo), "'"+ TimeToStr(lo.CloseTriggerTime(lo), TIME_FULL) +" FXT'", "0"),
+                                     ", closeTime="          ,           ifString(lo.CloseTime          (lo), "'"+ TimeToStr(lo.CloseTime(lo), TIME_FULL) +" FXT'", "0"),
                                      ", closePrice="         ,           ifString(lo.ClosePrice         (lo), NumberToStr(lo.ClosePrice(lo), priceFormat), "0"),
                                      ", profit="             ,        DoubleToStr(lo.Profit             (lo), 2),
                                      ", comment=\""          ,                    lo.Comment            (lo), "\"",
-                                     ", modificationTime="   ,           ifString(lo.ModificationTime   (lo), "'"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"'", "0"),
+                                     ", modificationTime="   ,           ifString(lo.ModificationTime   (lo), "'"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT'", "0"),
                                      ", version="            ,                    lo.Version            (lo), "}");
       if (outputDebug)
          debug("LFX_ORDER.toStr()  "+ line);
@@ -242,21 +242,21 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
                                                   ", units="              ,        NumberToStr(los.Units              (lo, i), ".+"),
                                                   ", lots="               ,        NumberToStr(los.Lots               (lo, i), ".+"),
                                                   ", openEquity="         ,        DoubleToStr(los.OpenEquity         (lo, i), 2),
-                                                  ", openTime="           ,           ifString(los.OpenTime           (lo, i), "'"+ TimeToStr(Abs(los.OpenTime(lo, i)), TIME_FULL) +"'"+ ifString(los.IsOpenError(lo, i), "(ERROR)", ""), "0"),
+                                                  ", openTime="           ,           ifString(los.OpenTime           (lo, i), "'"+ TimeToStr(Abs(los.OpenTime(lo, i)), TIME_FULL) +" FXT'"+ ifString(los.IsOpenError(lo, i), "(ERROR)", ""), "0"),
                                                   ", openPrice="          ,        NumberToStr(los.OpenPrice          (lo, i), priceFormat),
-                                                  ", openTriggerTime="    ,           ifString(los.OpenTriggerTime    (lo, i), "'"+ TimeToStr(los.OpenTriggerTime(lo, i), TIME_FULL) +"'", "0"),
+                                                  ", openTriggerTime="    ,           ifString(los.OpenTriggerTime    (lo, i), "'"+ TimeToStr(los.OpenTriggerTime(lo, i), TIME_FULL) +" FXT'", "0"),
                                                   ", stopLoss="           ,           ifString(los.StopLoss           (lo, i), NumberToStr(los.StopLoss(lo, i), priceFormat), "0"),
                                                   ", stopLossValue="      ,           ifString(los.StopLossValue      (lo, i)==EMPTY_VALUE, "NULL", DoubleToStr(los.StopLossValue(lo, i), 2)),
                                                   ", stopLossTriggered="  ,          BoolToStr(los.StopLossTriggered  (lo, i)),
                                                   ", takeProfit="         ,           ifString(los.TakeProfit         (lo, i), NumberToStr(los.TakeProfit(lo, i), priceFormat), "0"),
                                                   ", takeProfitValue="    ,           ifString(los.TakeProfitValue    (lo, i)==EMPTY_VALUE, "NULL", DoubleToStr(los.TakeProfitValue(lo, i), 2)),
                                                   ", takeProfitTriggered=",          BoolToStr(los.TakeProfitTriggered(lo, i)),
-                                                  ", closeTriggerTime="   ,           ifString(los.CloseTriggerTime   (lo, i), "'"+ TimeToStr(los.CloseTriggerTime(lo, i), TIME_FULL) +"'", "0"),
-                                                  ", closeTime="          ,           ifString(los.CloseTime          (lo, i), "'"+ TimeToStr(los.CloseTime(lo, i), TIME_FULL) +"'", "0"),
+                                                  ", closeTriggerTime="   ,           ifString(los.CloseTriggerTime   (lo, i), "'"+ TimeToStr(los.CloseTriggerTime(lo, i), TIME_FULL) +" FXT'", "0"),
+                                                  ", closeTime="          ,           ifString(los.CloseTime          (lo, i), "'"+ TimeToStr(los.CloseTime(lo, i), TIME_FULL) +" FXT'", "0"),
                                                   ", closePrice="         ,           ifString(los.ClosePrice         (lo, i), NumberToStr(los.ClosePrice(lo, i), priceFormat), "0"),
                                                   ", profit="             ,        DoubleToStr(los.Profit             (lo, i), 2),
                                                   ", comment=\""          ,                    los.Comment            (lo, i), "\"",
-                                                  ", modificationTime="   ,           ifString(los.ModificationTime   (lo, i), "'"+ TimeToStr(los.ModificationTime(lo, i), TIME_FULL) +"'", "0"),
+                                                  ", modificationTime="   ,           ifString(los.ModificationTime   (lo, i), "'"+ TimeToStr(los.ModificationTime(lo, i), TIME_FULL) +" FXT'", "0"),
                                                   ", version="            ,                    los.Version            (lo, i), "}");
          if (outputDebug)
             debug("LFX_ORDER.toStr()  "+ line);

@@ -232,7 +232,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    else if (StringStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _openTime =  StrToTime(sValue);
    if (!_openTime)                                 return(!catch("LFX.GetOrder(9)  invalid open time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (Abs(_openTime) > GetGmtTime())              return(!catch("LFX.GetOrder(10)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_openTime) > GetFxtTime())              return(!catch("LFX.GetOrder(10)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenPrice
    sValue = StringTrim(values[6]);
@@ -247,7 +247,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    else                                _openTriggerTime =    StrToTime(sValue);
    if      (_openTriggerTime < 0)                  return(!catch("LFX.GetOrder(13)  invalid open-trigger time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_openTriggerTime > 0)
-      if (_openTriggerTime > GetGmtTime())         return(!catch("LFX.GetOrder(14)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_openTriggerTime > GetFxtTime())         return(!catch("LFX.GetOrder(14)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // StopLoss
    sValue = StringTrim(values[8]);
@@ -296,14 +296,14 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    else                                _closeTriggerTime =    StrToTime(sValue);
    if      (_closeTriggerTime < 0)                 return(!catch("LFX.GetOrder(24)  invalid close-trigger time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_closeTriggerTime > 0)
-      if (_closeTriggerTime > GetGmtTime())        return(!catch("LFX.GetOrder(25)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_closeTriggerTime > GetFxtTime())        return(!catch("LFX.GetOrder(25)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // CloseTime
    sValue = StringTrim(values[15]);
    if      (StringIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
    else if (StringStartsWith(sValue, "-"))    _closeTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _closeTime =  StrToTime(sValue);
-   if (Abs(_closeTime) > GetGmtTime())             return(!catch("LFX.GetOrder(26)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_closeTime) > GetFxtTime())             return(!catch("LFX.GetOrder(26)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // ClosePrice
    sValue = StringTrim(values[16]);
@@ -325,7 +325,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    if (StringIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
    else                                _modificationTime =    StrToTime(sValue);
    if (_modificationTime <= 0)                     return(!catch("LFX.GetOrder(32)  invalid modification time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_modificationTime > GetGmtTime())           return(!catch("LFX.GetOrder(33)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" GMT\" (current time \""+ TimeToStr(GetGmtTime(), TIME_FULL) +" GMT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_modificationTime > GetFxtTime())           return(!catch("LFX.GetOrder(33)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Version
    sValue = StringTrim(values[19]);
@@ -392,9 +392,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
       currency = "";
 
    if (StringLen(currency) > 0) {
-      currencyId = GetCurrencyId(currency);
-      if (!currencyId)
-         return(_EMPTY(SetLastError(stdlib.GetLastError())));
+      currencyId = GetCurrencyId(currency); if (!currencyId) return(_EMPTY(SetLastError(stdlib.GetLastError())));
    }
 
    if (!fSelection)                                                        // ohne Angabe wird alles zurückgeben
@@ -404,8 +402,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
    ArrayResize(los, 0);
    int error = InitializeByteBuffer(los, LFX_ORDER.size);                  // validiert Dimensionierung
-   if (IsError(error))
-      return(_EMPTY(SetLastError(error)));
+   if (IsError(error)) return(_EMPTY(SetLastError(error)));
 
 
    // (2) alle Tickets einlesen
@@ -508,7 +505,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    int result = LFX.GetOrder(ticket, stored);                        // +1, wenn die Order erfolgreich gelesen wurden
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
    if (result > 0) {                                                 //  0, falls ein anderer Fehler auftrat
-      if (lo.Version(stored) > lo.Version(lo))     return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(5)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION, fCatch));
+      if (lo.Version(stored) > lo.Version(lo))     return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(5)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION, fCatch));
    }
 
 
@@ -533,7 +530,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string sClosePrice          =                ifString(!lo.ClosePrice         (lo), "0", DoubleToStr(lo.ClosePrice(lo), lo.Digits(lo)));                                          sClosePrice       = StringPadLeft (sClosePrice      , 10, " ");
    string sProfit              =                ifString(!lo.Profit             (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit           = StringPadLeft (sProfit          ,  7, " ");
 
-     datetime modificationTime = TimeGMT(); if (!modificationTime) return(false);
+     datetime modificationTime = TimeFXT(); if (!modificationTime) return(false);
      int      version          = lo.Version(lo) + 1;
 
    string sModificationTime    = TimeToStr(modificationTime, TIME_FULL);

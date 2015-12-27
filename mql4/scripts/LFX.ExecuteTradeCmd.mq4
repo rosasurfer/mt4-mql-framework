@@ -328,11 +328,11 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (6) LFX-Order aktualisieren
-   datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
+   datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
 
    lo.setType      (lo, direction);
    lo.setUnits     (lo, realUnits);
-   lo.setOpenTime  (lo, now.gmt  );
+   lo.setOpenTime  (lo, now.fxt  );
    lo.setOpenPrice (lo, openPrice);
    lo.setOpenEquity(lo, equity   );
 
@@ -357,8 +357,8 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
 
    // (1) ggf. Open-Error setzen
    if (isOpenError) /*&&*/ if (!lo.IsOpenError(lo)) {
-      datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
-      lo.setOpenTime(lo, -now.gmt);
+      datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
+      lo.setOpenTime(lo, -now.fxt);
    }
 
 
@@ -376,7 +376,7 @@ bool OpenOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
       if (result != 1) { if (!result) return(last_error); return(!catch("OpenOrder.Save(1)->LFX.GetOrder()  order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+      if (!lo.IsOpenError(stored))                        return(!catch("OpenOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
@@ -481,9 +481,9 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
 
 
    // (4) LFX-Order aktualisieren
-   datetime now.gmt  = TimeGMT(); if (!now.gmt) return(false);
+   datetime now.fxt  = TimeFXT(); if (!now.fxt) return(false);
    string oldComment = lo.Comment(lo);
-   lo.setCloseTime (lo, now.gmt   );
+   lo.setCloseTime (lo, now.fxt   );
    lo.setClosePrice(lo, closePrice);
    lo.setProfit    (lo, profit    );
    lo.setComment   (lo, ""        );
@@ -514,8 +514,8 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 
    // (1) ggf. CloseError setzen
    if (isCloseError) /*&&*/ if (!lo.IsCloseError(lo)) {
-      datetime now.gmt = TimeGMT(); if (!now.gmt) return(false);
-      lo.setCloseTime(lo, -now.gmt);
+      datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
+      lo.setCloseTime(lo, -now.fxt);
    }
 
 
@@ -533,7 +533,7 @@ bool ClosePosition.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
       if (result != 1) { if (!result) return(last_error); return(!catch("ClosePosition.Save(1)->LFX.GetOrder()  order #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +"', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +"'", ERR_CONCURRENT_MODIFICATION));
+      if (!lo.IsCloseError(stored))                       return(!catch("ClosePosition.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) ERR_CONCURRENT_MODIFICATION immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausfürungsdetails nicht zu verlieren
