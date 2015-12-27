@@ -6960,51 +6960,51 @@ ObjectSet(&quot;label_object&quot;, OBJPROP_YDISTANCE, 100);
       <parameter>
         type=string
         name=name
-        description=Unique object name <span style="color:red">with a maximum length of 63 chars</span>.
+        description=unique object name with a <span style="color:red">maximum length of 63 chars</span> (may contain line breaks)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=Object type, can be any of the <a href="help://constants_objects">Object type enumeration</a> values.
+        description=object type, can be any of the <a href="help://constants_objects">object type enumeration</a> values
       </parameter>
       <parameter>
         type=int
         name=window
-        description=Index of the chart window to add the object to, the range is from 0 (main chart window) to one less than <a href="help://windows_WindowsTotal">WindowsTotal()</a>.
+        description=index of the chart window to add the object to, the range is from 0 (main chart window) to one less than <a href="help://windows_WindowsTotal">WindowsTotal()</a>
       </parameter>
       <parameter>
         type=datetime
         name=time1
-        description=Time value of the first coordinate pair.
+        description=time value of the first coordinate pair
       </parameter>
       <parameter>
         type=double
         name=price1
-        description=Price value of the first coordinate pair.
+        description=price value of the first coordinate pair
       </parameter>
       <parameter>
         type=datetime
         name=time2
         def_value=<span class="const">NULL</span>
-        description=Time value of the second coordinate pair.
+        description=time value of the second coordinate pair
       </parameter>
       <parameter>
         type=double
         name=price2
         def_value=<span class="const">NULL</span>
-        description=Price value of the second coordinate pair.
+        description=price value of the second coordinate pair
       </parameter>
       <parameter>
         type=datetime
         name=time3
         def_value=<span class="const">NULL</span>
-        description=Time value of the third coordinate pair.
+        description=time value of the third coordinate pair
       </parameter>
       <parameter>
         type=double
         name=price3
         def_value=<span class="const">NULL</span>
-        description=Price value of the third coordinate pair.
+        description=price value of the third coordinate pair
       </parameter>
     </function>
 
