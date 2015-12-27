@@ -130,13 +130,13 @@ int onStart() {
 
 
    // (2) neue Order erzeugen und speichern
-   datetime now.gmt = TimeGMT(); if (!now.gmt) return(last_error);
+   datetime now.fxt = TimeFXT(); if (!now.fxt) return(last_error);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
       lo.setTicket         (lo, CreateMagicNumber()          );      // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setType           (lo, OP_SELLLIMIT                 );
       lo.setUnits          (lo, Units                        );
-      lo.setOpenTime       (lo, now.gmt                      );
+      lo.setOpenTime       (lo, now.fxt                      );
       lo.setOpenPrice      (lo, LimitPrice                   );
       lo.setStopLoss       (lo, StopLossPrice                );
       lo.setStopLossValue  (lo, EMPTY_VALUE                  );
