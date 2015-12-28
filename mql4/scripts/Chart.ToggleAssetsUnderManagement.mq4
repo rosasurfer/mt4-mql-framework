@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator im aktuellen Chart die Nachricht, die Assets-under-Management-Anzeige ein/auszuschaltem.
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Assets-under-Management-Anzeige umzuschalten.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
