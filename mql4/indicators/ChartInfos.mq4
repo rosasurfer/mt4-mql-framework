@@ -511,8 +511,8 @@ int ShowOpenOrders() {
       orders = ArrayRange(lfxOrders.ivolatile, 0);
 
       for (i=0, n=0; i < orders; i++) {
-         if (!lfxOrders.ivolatile[i][I_ISOPEN])
-            continue;
+         if (!lfxOrders.ivolatile[i][I_ISOPEN]) continue;
+
          // Daten auslesen
          ticket     = lfxOrders.ivolatile[i][I_TICKET];
          type       =                     los.Type      (lfxOrders, i);
@@ -715,7 +715,7 @@ int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
    double   lots, units, openPrice, closePrice;
-   string   sOpenPrice, sClosePrice, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
+   string   sOpenPrice, sClosePrice, comment, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
 
    // (1) Anzeigekonfiguration auslesen
@@ -920,6 +920,7 @@ int ShowTradeHistory() {
          openPrice   =                     los.OpenPrice (lfxOrders, i);
          closeTime   = FxtToServerTime(Abs(los.CloseTime (lfxOrders, i)));
          closePrice  =                     los.ClosePrice(lfxOrders, i);
+         comment     =                     los.Comment   (lfxOrders, i);
 
          sOpenPrice  = NumberToStr(openPrice,  PriceFormat);
          sClosePrice = NumberToStr(closePrice, PriceFormat);
@@ -931,6 +932,11 @@ int ShowTradeHistory() {
          if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
             ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
             ObjectSet(openLabel, OBJPROP_COLOR    , markerColors[type]);
+            if (StringLen(comment) > 0) {
+               if (StringEndsWith(comment, "%"))
+                  comment = StringConcatenate("PL: ", comment);
+               ObjectSetText(openLabel, comment);
+            }
          }
 
          // Trendlinie anzeigen
@@ -953,6 +959,8 @@ int ShowTradeHistory() {
          if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
             ObjectSet(closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
+            if (StringLen(comment) > 0)
+               ObjectSetText(closeLabel, comment);
          }
          n++;
       }
@@ -4695,7 +4703,8 @@ bool EditAccountConfig() {
       ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
    }
    else if (mode.remote) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccountCompany   +"\\"+ tradeAccountNumber +"_config.ini");
    }
    else {
       return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));
