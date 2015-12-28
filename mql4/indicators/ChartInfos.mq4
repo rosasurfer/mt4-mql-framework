@@ -21,9 +21,7 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool CustomPositions.AbsoluteAmounts = true;               // ob die Einzelpositionsanzeige auch absolute Betr‰ge beinhaltet oder nur prozentuale Werte anzeigt
-extern bool CustomPositions.LogTickets      = false;              // ob die Tickets der Einzelpositionsanzeige geloggt werden sollen
-extern bool Offline.Ticker                  = true;               // ob der Ticker in Offline-Charts standardm‰ﬂig aktiviert wird
+extern bool Offline.Ticker = true;                                // ob der Ticker in Offline-Charts standardm‰ﬂig aktiviert wird
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -107,6 +105,8 @@ double shortPosition;
 int    positions.idata[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
 double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
 bool   positionsAnalyzed;
+bool   positions.ShowAbsoluteAmounts;                             // default: FALSE
+
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
 #define CONFIG_REAL                     1                         //                   individuell konfigurierte reale Position
@@ -283,8 +283,23 @@ bool onChartCommand(string commands[]) {
    if (!size) return(!warn("onChartCommand(1)  empty parameter commands = {}"));
 
    for (int i=0; i < size; i++) {
-      if (StringFind(commands[i], "cmd=TrackSignal,") == 0) {
-         if (!TrackSignal(StringSubstr(commands[i], 16)))
+      if (commands[i] == "cmd=EditAccountConfig") {
+         if (!EditAccountConfig())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=LogPositionTickets") {
+         if (!Positions.LogTickets())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=ToggleAbsPositionAmounts") {
+         if (!Positions.ToggleAbsAmounts())
+            return(false);
+         continue;
+      }
+      if (commands[i] == "cmd=ToggleAuM") {
+         if (!ToggleAuM())
             return(false);
          continue;
       }
@@ -298,13 +313,8 @@ bool onChartCommand(string commands[]) {
             return(false);
          continue;
       }
-      if (commands[i] == "cmd=ToggleAuM") {
-         if (!ToggleAuM())
-            return(false);
-         continue;
-      }
-      if (commands[i] == "cmd=EditAccountConfig") {
-         if (!EditAccountConfig())
+      if (StringStartsWith(commands[i], "cmd=TrackSignal,")) {
+         if (!TrackSignal(StringSubstr(commands[i], 16)))
             return(false);
          continue;
       }
@@ -972,6 +982,22 @@ int ShowTradeHistory() {
 
 
 /**
+ * Schaltet die Anzeige der absoluten Betr‰ge der Positionen ein/aus.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool Positions.ToggleAbsAmounts() {
+   // aktuellen Anzeigestatus umschalten
+   positions.ShowAbsoluteAmounts = !positions.ShowAbsoluteAmounts;
+
+   // Anzeige aktualisieren
+   if (!UpdatePositions()) return(false);
+
+   return(!catch("Positions.ToggleAbsAmounts(1)"));
+}
+
+
+/**
  * Schaltet die Assets-under-Management-Anzeige ein/aus.
  *
  * @return bool - Erfolgsstatus
@@ -1561,9 +1587,10 @@ bool UpdatePositions() {
 
 
    // (2) Einzelpositionsanzeige unten links
-   static int col.xShifts[], cols, percentCol, commentCol, yDist=3;
-   if (!ArraySize(col.xShifts)) {
-      if (CustomPositions.AbsoluteAmounts) {
+   static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
+   static bool lastShowAbsoluteAmounts;
+   if (!ArraySize(col.xShifts) || positions.ShowAbsoluteAmounts!=lastShowAbsoluteAmounts) {
+      if (positions.ShowAbsoluteAmounts) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
          // col.xShifts[] = {20,   59,    135, 160,      226,    258,   345,      406};
          ArrayResize(col.xShifts, 8);
@@ -1588,19 +1615,29 @@ bool UpdatePositions() {
          col.xShifts[5] = 258;
          col.xShifts[6] = 319;
       }
-      cols       = ArraySize(col.xShifts);
-      percentCol = cols - 2;
-      commentCol = cols - 1;
+      cols                    = ArraySize(col.xShifts);
+      percentCol              = cols - 2;
+      commentCol              = cols - 1;
+      lastShowAbsoluteAmounts = positions.ShowAbsoluteAmounts;
+
+      // nach (Re-)Initialisierung alle vorhandenen Zeilen lˆschen
+      while (lines > 0) {
+         for (int col=0; col < 8; col++) {                           // alle Spalten testen: mit und ohne absoluten Betr‰gen
+            string label = StringConcatenate(label.position, ".line", lines, "_col", col);
+            if (ObjectFind(label) != -1)
+               ObjectDelete(label);
+         }
+         lines--;
+      }
    }
    int iePositions = ArrayRange(positions.idata, 0);
    int positions   = iePositions + lfxOrders.openPositions;          // nur einer der beiden Werte kann ungleich 0 sein
 
    // (2.1) zus‰tzlich benˆtigte Zeilen hinzuf¸gen
-   static int lines;
    while (lines < positions) {
       lines++;
-      for (int col=0; col < cols; col++) {
-         string label = StringConcatenate(label.position, ".line", lines, "_col", col);
+      for (col=0; col < cols; col++) {
+         label = StringConcatenate(label.position, ".line", lines, "_col", col);
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
             ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
@@ -1648,7 +1685,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (CustomPositions.AbsoluteAmounts)
+         if (positions.ShowAbsoluteAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1680,7 +1717,7 @@ bool UpdatePositions() {
 
          // Hedged und Not-Hedged
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (CustomPositions.AbsoluteAmounts)
+         if (positions.ShowAbsoluteAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1909,11 +1946,26 @@ bool UpdateTime() {
 
 
 /**
- * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
+ * Wrapper f¸r AnalyzePositions(bool logTickets=TRUE) f¸r onChartCommand()-Handler.
  *
  * @return bool - Erfolgsstatus
  */
-bool AnalyzePositions() {
+bool Positions.LogTickets() {
+   return(AnalyzePositions(true));
+}
+
+
+/**
+ * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
+ *
+ * @param  bool logTickets - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: FALSE)
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool AnalyzePositions(bool logTickets=false) {
+   logTickets = logTickets!=0;
+   if (logTickets)                                                      // vorm Loggen werden die Positionen immer re-evaluiert
+      positionsAnalyzed = false;
    if (mode.remote      ) positionsAnalyzed = true;
    if (positionsAnalyzed) return(true);
 
@@ -2062,9 +2114,6 @@ bool AnalyzePositions() {
    double customSwaps      [];
    double customProfits    [];
 
-   static bool logTickets.done = false;
-
-
    // (2.2) individuell konfigurierte Positionen aus den offenen Positionen extrahieren
    int confSize = ArrayRange(positions.config, 0);
 
@@ -2076,8 +2125,7 @@ bool AnalyzePositions() {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                               // termType=NULL => "Zeilenende"
-         if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
-            AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
+         if (logTickets) AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
 
          // (2.3) individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -2108,14 +2156,12 @@ bool AnalyzePositions() {
       positions.config[i][4] = termCache2;
    }
 
-   // (2.4) verbleibende Position(en) speichern
-   if (CustomPositions.LogTickets) /*&&*/ if (!logTickets.done)
-      AnalyzePositions.LogTickets(false, tickets, -1);
+   if (logTickets) AnalyzePositions.LogTickets(false, tickets, -1);
 
+   // (2.4) verbleibende Position(en) speichern
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
       return(false);
 
-   logTickets.done   = true;
    positionsAnalyzed = true;
    return(!catch("AnalyzePositions(2)"));
 }
@@ -2129,11 +2175,9 @@ bool AnalyzePositions() {
 bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
    isVirtual = isVirtual!=0;
 
-   if (CustomPositions.LogTickets) {
-      if (ArraySize(tickets) > 0) {
-         if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-         else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-      }
+   if (ArraySize(tickets) > 0) {
+      if (commentIndex > -1) log("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      else                   log("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
    }
    return(true);
 }
@@ -4216,22 +4260,36 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
 
 
 /**
- * Speichert die mode.extern-Konfiguration im Chartfenster (f¸r Init-Cycle und Laden eines neuen Templates) und im Chart selbst (f¸r Restart des Terminals).
+ * Speichert die volatilen Konfigurationen im Chartfenster (f¸r Init-Cycle und neue Templates) oder im Chart (f¸r Terminal-Restart).
+ *
+ *  (1) bool positions.ShowAbsoluteAmounts
+ *  (2) mode.extern/TrackSignal
  *
  * @return bool - Erfolgsstatus
  */
 bool StoreWindowStatus() {
+   // (1) bool positions.ShowAbsoluteAmounts
+   // Konfiguration im Chartfenster speichern
+   int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(false);
+   int iValue = ifInt(positions.ShowAbsoluteAmounts, 1, -1);
+   SetPropA(hWnd, "xtrade.ChartInfos.Positions.AbsAmounts", iValue);         // TODO: Schl¸ssel muﬂ global verwaltet werden und Instanz-ID des Indikators enthalten
+
+   // Konfiguration im Chart speichern
+   string label = __NAME__ +".sticky.Positions.AbsAmounts";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ iValue);
+
+
+   // (2) mode.extern/TrackSignal
    // Konfiguration im Chartfenster speichern bzw. lˆschen
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
-   if (mode.extern) {
-      SetPropA(hWnd, "xtrade.ChartInfos.TrackSignal", external.signalId);    // TODO: Schl¸ssel muﬂ global verwaltet werden und Instanz-ID des Indikators enthalten
-   }
-   else {
-      RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");
-   }
+   if (mode.extern) SetPropA   (hWnd, "xtrade.ChartInfos.TrackSignal", external.signalId);
+   else             RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");      // TODO: Schl¸ssel muﬂ global verwaltet werden und Instanz-ID des Indikators enthalten
 
    // Konfiguration im Chart speichern bzw. lˆschen
-   string label = __NAME__ +".sticky.TrackSignal";
+   label = __NAME__ +".sticky.TrackSignal";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (mode.extern) {
@@ -4239,43 +4297,63 @@ bool StoreWindowStatus() {
       ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(label, external.signalProvider +"."+ external.signalAlias);
    }
+
    return(!catch("StoreWindowStatus(1)"));
 }
 
 
 /**
- * Restauriert die mode.extern-Konfiguration aus dem Chartfenster oder dem Chart.
+ * Restauriert die im Chartfenster oder im Chart gespeicherten Konfigurationen.
+ *
+ *  (1) bool positions.ShowAbsoluteAmounts
+ *  (2) mode.extern/TrackSignal
  *
  * @return bool - Erfolgsstatus
  */
 bool RestoreWindowStatus() {
-   bool   success = false;
+   // (1) positions.ShowAbsoluteAmounts
+   // Konfiguration im Chartfenster suchen
+   int  hWnd     = WindowHandleEx(NULL); if (!hWnd) return(false);
+   int  iSuccess = GetPropA(hWnd, "xtrade.ChartInfos.Positions.AbsAmounts");    // TODO: Schl¸ssel muﬂ global verwaltet werden und Instanz-ID des Indikators enthalten
+   bool status   = (iSuccess > 0);
+
+   // Bei Miﬂerfolg Konfiguration im Chart suchen
+   if (!iSuccess) {
+      string label = __NAME__ +".sticky.Positions.AbsAmounts";
+      if (ObjectFind(label) == 0) {
+         iSuccess = StrToInteger(ObjectDescription(label));
+         status  = (iSuccess > 0);
+      }
+   }
+   positions.ShowAbsoluteAmounts = status;
+
+
+   // (2) mode.extern/TrackSignal
+   bool   bSuccess = false;
    string signal="", providerName="", signalName="";
 
    // Konfiguration im Chartfenster suchen
-   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
-   int id   = RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");      // TODO: Schl¸ssel muﬂ global verwaltet werden und Instanz-ID des Indikators enthalten
+   int id = RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");                 // TODO: Schl¸ssel muﬂ global verwaltet werden und Instanz-ID des Indikators enthalten
    if (id != NULL) {
       if (id == -1) {
-         success = true;
+         bSuccess = true;
       }
       else if (ParseSignalId(id, providerName, signalName)) {
          signal  = providerName +"."+ signalName;
-         success = true;
+         bSuccess = true;
       }
    }
 
    // Bei Miﬂerfolg Konfiguration im Chart suchen
-   if (!success) {
-      string label = __NAME__ +".sticky.TrackSignal";
+   if (!bSuccess) {
+      label = __NAME__ +".sticky.TrackSignal";
       if (ObjectFind(label) == 0) {
          signal  = ObjectDescription(label);
-         success = (signal=="" || ParseSignalStr(signal, providerName, signalName));
+         bSuccess = (signal=="" || ParseSignalStr(signal, providerName, signalName));
       }
    }
+   if (bSuccess) TrackSignal(signal);                                         // Signal umschalten
 
-   if (success)
-      TrackSignal(signal);
    return(!catch("RestoreWindowStatus(1)"));
 }
 
