@@ -74,8 +74,8 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onInit_User() {
-   // LFX-Status einlesen
    if (mode.remote) {
+      // LFX-Status einlesen
       if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
@@ -88,8 +88,8 @@ int onInit_User() {
  * @return int - Fehlerstatus
  */
 int onInit_Template() {
-   // LFX-Status neu einlesen
    if (mode.remote) {
+      // LFX-Status neu einlesen
       if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
@@ -102,8 +102,8 @@ int onInit_Template() {
  * @return int - Fehlerstatus
  */
 int onInit_Parameters() {
-   // in Library gespeicherten LFX-Status restaurieren
    if (mode.remote) {
+      // in Library gespeicherten LFX-Status restaurieren
       bool fromCache = true;
       if (!RestoreRemoteOrders(fromCache)) return(last_error);
    }
@@ -117,8 +117,8 @@ int onInit_Parameters() {
  * @return int - Fehlerstatus
  */
 int onInit_TimeframeChange() {
-   // in Library gespeicherten LFX-Status restaurieren
    if (mode.remote) {
+      // in Library gespeicherten LFX-Status restaurieren
       bool fromCache = true;
       if (!RestoreRemoteOrders(fromCache)) return(last_error);
    }
@@ -151,8 +151,8 @@ int onInit_SymbolChange() {
  * @return int - Fehlerstatus
  */
 int onInit_Recompile() {
-   // LFX-Status neu einlesen
    if (mode.remote) {
+      // LFX-Status neu einlesen
       if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);

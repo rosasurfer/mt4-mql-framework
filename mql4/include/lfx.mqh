@@ -25,8 +25,7 @@ string tradeAccountAlias;                                            // Alias fü
 string lfxCurrency = "";
 int    lfxCurrencyId;
 
-int    lfxOrder   [LFX_ORDER.intSize];                               // struct LFX_ORDER
-int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]
+int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]: Array von RemoteOrders
 
 int    lfxOrders.ivolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
 double lfxOrders.dvolatile[][1];                                     //                               = {Profit}
@@ -500,7 +499,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    }
 
 
-   // (2) Aktuell gespeicherte Version der Order holen und konkurrierende Schreibzugriffe erkennen und behandeln
+   // (2) Aktuell gespeicherte Version der Order holen und konkurrierende Schreibzugriffe abfangen
    /*LFX_ORDER*/int stored[], ticket=lo.Ticket(lo);
    int result = LFX.GetOrder(ticket, stored);                        // +1, wenn die Order erfolgreich gelesen wurden
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
