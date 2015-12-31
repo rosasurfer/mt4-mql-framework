@@ -1557,9 +1557,11 @@ bool UpdateUnitSize() {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePositions() {
-   if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions()     ) return(false);
-   if (!mm.ready         ) /*&&*/ if (!UpdateMoneyManagement()) return(false);
-   if (!mm.ready         )                                      return(true);
+   if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions()) return(false);
+   if (!mode.remote && !mm.ready) {
+      if (!UpdateMoneyManagement())                        return(false);
+      if (!mm.ready )                                      return(true);
+   }
 
 
    // (1) Gesamtpositionsanzeige unten rechts
@@ -1659,12 +1661,13 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: {Amount} {Percent}   {Comment}"
+   // (2.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
    string sLotSize, sDistance, sBreakeven, sAdjustedProfit, sProfitPct, sComment;
    color  fontColor;
    int    line;
 
-   // interne/externe Positionsdaten
+
+   // (3.1) Anzeige interne/externe Positionsdaten
    for (int i=iePositions-1; i >= 0; i--) {
       line++;
       if      (positions.idata[i][I_CONFIG_TYPE  ] == CONFIG_VIRTUAL  ) fontColor = positions.fontColor.virtual;
@@ -1680,6 +1683,7 @@ bool UpdatePositions() {
 
       // Nur History
       if (positions.idata[i][I_POSITION_TYPE] == POSITION_HISTORY) {
+         // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[positions.idata[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
@@ -1693,6 +1697,7 @@ bool UpdatePositions() {
 
       // Directional oder Hedged
       else {
+         // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
          // Hedged
          if (positions.idata[i][I_POSITION_TYPE] == POSITION_HEDGE) {
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.idata[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
@@ -1724,22 +1729,27 @@ bool UpdatePositions() {
       }
    }
 
-   // LFX-Positionsdaten (mode.remote = TRUE)
+   // (3.2) Anzeige Remote-Positionsdaten (mode.remote = TRUE)
+   fontColor = positions.fontColor.remote;
    for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
       if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
          line++;
-         if (positions.idata[i][I_CONFIG_TYPE] == CONFIG_VIRTUAL) fontColor = positions.fontColor.virtual;
-         else                                                     fontColor = positions.fontColor.remote;
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[los.Type(lfxOrders, i)+1],                  positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",    positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                       positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"), "SL:",                                                       positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"), NumberToStr(los.StopLoss (lfxOrders, i), SubPipPriceFormat), positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col6"), "Profit:",                                                   positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col7"), DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2),            positions.fontSize, positions.fontName, fontColor);
+         // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+         if (positions.ShowAbsoluteAmounts)
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2),                        positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), "?%",                                                                    positions.fontSize, positions.fontName, fontColor);
+            sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
+            if (StringGetChar(sComment, 0) == '#')
+               sComment = StringConcatenate(lfxCurrency, ".", StringRight(sComment, -1));
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
       }
    }
+
    return(!catch("UpdatePositions(3)"));
 }
 
