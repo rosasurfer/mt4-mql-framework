@@ -13,7 +13,7 @@ extern     double LotSize              = 0.1;
 extern     string StartConditions      = "@trend(ALMA:3.5xD1)";
 extern     string StopConditions       = "@profit(500)";
 
-/*sticky*/ int    startStopDisplayMode = SDM_PRICE;                  // Sticky-Variablen werden im Chart zwischengespeichert, sie überleben dort
+/*sticky*/ int    startStopDisplayMode = SDM_PRICE;                  // "sticky" Runtime-Variablen werden im Chart zwischengespeichert, sie überleben dort
 /*sticky*/ int    orderDisplayMode     = ODM_NONE;                   // Terminal-Restart, Profilwechsel und Recompilation.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3007,46 +3007,46 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
  *
  * @return int - Fehlerstatus
  */
-int StoreStickyStatus() {
+int StoreRuntimeStatus() {
    if (!instance.id)
       return(NO_ERROR);                                                       // Rückkehr, falls die Instanz nicht initialisiert ist
 
-   string label = StringConcatenate(__NAME__, ".sticky.Instance.ID");
+   string label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate(ifString(IsTest(), "T", ""), instance.id), 1);
 
-   label = StringConcatenate(__NAME__, ".sticky.startStopDisplayMode");
+   label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", startStopDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".sticky.orderDisplayMode");
+   label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", orderDisplayMode), 1);
 
-   label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
+   label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
-   label = StringConcatenate(__NAME__, ".sticky.CANCELLED_BY_USER");
+   label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", last_error==ERR_CANCELLED_BY_USER), 1);
 
-   return(catch("StoreStickyStatus()"));
+   return(catch("StoreRuntimeStatus(1)"));
 }
 
 
@@ -3055,11 +3055,11 @@ int StoreStickyStatus() {
  *
  * @return bool - ob Daten einer Instanz gefunden wurden
  */
-bool RestoreStickyStatus() {
+bool RestoreRuntimeStatus() {
    string label, strValue;
    bool   idFound;
 
-   label = StringConcatenate(__NAME__, ".sticky.Instance.ID");
+   label = StringConcatenate(__NAME__, ".runtime.Instance.ID");
    if (ObjectFind(label) == 0) {
       strValue = StringToUpper(StringTrim(ObjectDescription(label)));
       if (StringLeft(strValue, 1) == "T") {
@@ -3067,55 +3067,55 @@ bool RestoreStickyStatus() {
          instance.isTest = true;
       }
       if (!StringIsDigit(strValue))
-         return(!catch("RestoreStickyStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         return(!catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       int iValue = StrToInteger(strValue);
       if (iValue <= 0)
-         return(!catch("RestoreStickyStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+         return(!catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       instance.id = iValue; SS.Instance.Id();
       idFound     = true;
       SetCustomLog(instance.id, NULL);
 
-      label = StringConcatenate(__NAME__, ".sticky.startStopDisplayMode");
+      label = StringConcatenate(__NAME__, ".runtime.startStopDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsInteger(strValue))
-            return(!catch("RestoreStickyStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(3)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (!IntInArray(startStopDisplayModes, iValue))
-            return(!catch("RestoreStickyStatus(4)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(4)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          startStopDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".sticky.orderDisplayMode");
+      label = StringConcatenate(__NAME__, ".runtime.orderDisplayMode");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsInteger(strValue))
-            return(!catch("RestoreStickyStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(5)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          iValue = StrToInteger(strValue);
          if (!IntInArray(orderDisplayModes, iValue))
-            return(!catch("RestoreStickyStatus(6)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(6)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          orderDisplayMode = iValue;
       }
 
-      label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
+      label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(!catch("RestoreStickyStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(7)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
-      label = StringConcatenate(__NAME__, ".sticky.CANCELLED_BY_USER");
+      label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(!catch("RestoreStickyStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(8)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
    }
 
-   return(idFound && !(last_error|catch("RestoreStickyStatus(9)")));
+   return(idFound && !(last_error|catch("RestoreRuntimeStatus(9)")));
 }
 
 
@@ -3124,15 +3124,15 @@ bool RestoreStickyStatus() {
  *
  * @return int - Fehlerstatus
  */
-int ClearStickyStatus() {
-   string label, prefix=StringConcatenate(__NAME__, ".sticky.");
+int ResetRuntimeStatus() {
+   string label, prefix=StringConcatenate(__NAME__, ".runtime.");
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
       if (StringStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
-   return(catch("ClearStickyStatus()"));
+   return(catch("ResetRuntimeStatus(1)"));
 }
 
 

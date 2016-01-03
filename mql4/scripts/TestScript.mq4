@@ -28,19 +28,13 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
-   datetime times[] = {
-/*
-D'',
-*/
-};
+   string value  = "abc.123.def.123";
+   string substr = ".";
+   int    count  = 5;
 
+   debug("onStart(0.1)  StringLeftTo ("+ QuoteStr(value) +", "+ QuoteStr(substr) +", count="+ count +") = "+ QuoteStr(StringLeftTo   (value, substr, count)));
+   debug("onStart(0.2)  StringRightTo("+ QuoteStr(value) +", "+ QuoteStr(substr) +", count="+ count +") = "+ QuoteStr(StringRightFrom(value, substr, count)));
 
-   int size = ArraySize(times);
-
-   for (int i=0;i < size;i++) {
-      if (!times[i]) debug("onStart()  gmt='                  0'  fxt='                  0'");
-      else           debug("onStart()  gmt="+ QuoteStr(TimeToStr(times[i], TIME_FULL)) +"  fxt="+ QuoteStr(TimeToStr(GmtToFxtTime(times[i]), TIME_FULL)));
-   }
 
    return(last_error);
 

@@ -672,29 +672,29 @@ int ValidateConfig.HandleError(string location, string message, bool interactive
  *
  * @return int - Fehlerstatus
  */
-int StoreStickyStatus() {
-   string label = StringConcatenate(__NAME__, ".sticky.StartConditions");
+int StoreRuntimeStatus() {
+   string label = StringConcatenate(__NAME__, ".runtime.StartConditions");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StartConditions, 1);
 
-   label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
+   label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", __STATUS_INVALID_INPUT), 1);
 
-   label = StringConcatenate(__NAME__, ".sticky.CANCELLED_BY_USER");
+   label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate("", (last_error==ERR_CANCELLED_BY_USER)), 1);
 
-   return(catch("StoreStickyStatus()"));
+   return(catch("StoreRuntimeStatus()"));
 }
 
 
@@ -703,34 +703,34 @@ int StoreStickyStatus() {
  *
  * @return bool - ob gespeicherte Daten gefunden wurden
  */
-bool RestoreStickyStatus() {
+bool RestoreRuntimeStatus() {
    string label, strValue;
    bool   statusFound;
 
-   label = StringConcatenate(__NAME__, ".sticky.StartConditions");
+   label = StringConcatenate(__NAME__, ".runtime.StartConditions");
    if (ObjectFind(label) == 0) {
       StartConditions = StringTrim(ObjectDescription(label));
       statusFound     = true;
 
-      label = StringConcatenate(__NAME__, ".sticky.__STATUS_INVALID_INPUT");
+      label = StringConcatenate(__NAME__, ".runtime.__STATUS_INVALID_INPUT");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(!catch("RestoreStickyStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(1)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          __STATUS_INVALID_INPUT = StrToInteger(strValue) != 0;
       }
 
-      label = StringConcatenate(__NAME__, ".sticky.CANCELLED_BY_USER");
+      label = StringConcatenate(__NAME__, ".runtime.CANCELLED_BY_USER");
       if (ObjectFind(label) == 0) {
          strValue = StringTrim(ObjectDescription(label));
          if (!StringIsDigit(strValue))
-            return(!catch("RestoreStickyStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
+            return(!catch("RestoreRuntimeStatus(2)  illegal chart value "+ label +" = \""+ ObjectDescription(label) +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          if (StrToInteger(strValue) != 0)
             SetLastError(ERR_CANCELLED_BY_USER);
       }
    }
 
-   return(statusFound && !(last_error|catch("RestoreStickyStatus(3)")));
+   return(statusFound && !(last_error|catch("RestoreRuntimeStatus(3)")));
 }
 
 
@@ -739,15 +739,15 @@ bool RestoreStickyStatus() {
  *
  * @return int - Fehlerstatus
  */
-int ClearStickyStatus() {
-   string label, prefix=StringConcatenate(__NAME__, ".sticky.");
+int ResetRuntimeStatus() {
+   string label, prefix=StringConcatenate(__NAME__, ".runtime.");
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
       if (StringStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
          ObjectDelete(label);
    }
-   return(catch("ClearStickyStatus()"));
+   return(catch("ResetRuntimeStatus(1)"));
 }
 
 

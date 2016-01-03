@@ -44,7 +44,7 @@ int onDeinitChartClose() {
    }
 
    // (2) Nicht im Tester
-   StoreStickyStatus();                                              // für Terminal-Restart oder Profilwechsel
+   StoreRuntimeStatus();                                             // für Terminal-Restart oder Profilwechsel
    return(last_error);
 }
 
@@ -81,6 +81,6 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   StoreStickyStatus();
+   StoreRuntimeStatus();
    return(-1);
 }

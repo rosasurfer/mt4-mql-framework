@@ -38,7 +38,7 @@ double leverage;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) TradeAccount und Status initialisieren
+   // (1) TradeAccount initialisieren
    if (!InitTradeAccount())
       return(last_error);
 
@@ -72,7 +72,7 @@ int onInit() {
    if (action == "open") {
       if (!IsGlobalConfigKey("MoneyManagement", "BasketLeverage"))
                                           return(catch("onInit(7)  Missing global MetaTrader config value [MoneyManagement]->BasketLeverage", ERR_INVALID_CONFIG_PARAMVALUE));
-      sValue = GetGlobalConfigString("MoneyManagement", "BasketLeverage", "");
+      sValue = GetGlobalConfigString("MoneyManagement", "BasketLeverage");
       if (!StringIsNumeric(sValue))       return(catch("onInit(8)  Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
       leverage = StrToDouble(sValue);
       if (leverage < 1)                   return(catch("onInit(9)  Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
@@ -80,9 +80,9 @@ int onInit() {
 
 
    // (5) SMS-Konfiguration einlesen
-   __SMS.alerts = GetLocalConfigBool("EventTracker", "SMS.Alerts", false);
+   __SMS.alerts = GetLocalConfigBool("EventTracker", "SMS.Alerts");
    if (__SMS.alerts) {
-      __SMS.receiver = GetConfigString("SMS", "Receiver", "");
+      __SMS.receiver = GetConfigString("SMS", "Receiver");
       if (!StringLen(__SMS.receiver)) {
          __SMS.alerts = false;
          return(catch("onInit(10)  missing setting [SMS]->Receiver", ERR_INVALID_CONFIG_PARAMVALUE));
@@ -298,7 +298,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
-   if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccountCompany +": "+ tradeAccountName +" ("+ tradeAccountNumber +"), "+ tradeAccountCurrency);
+   if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccount.company +": "+ tradeAccount.name +" ("+ tradeAccount.number +"), "+ tradeAccount.currency);
 
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
@@ -422,7 +422,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
          if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
          if (StringStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter = StrToInteger(comment);
-      string message = tradeAccountAlias +": ";
+      string message = tradeAccount.alias +": ";
       if (lo.IsOpenError(lo)) message = StringConcatenate(message, "opening of ", OperationTypeDescription(lo.Type(lo)), " ", currency, ".", counter, " at ", NumberToStr(lo.OpenPrice(lo), ".4'"), " failed (", ErrorToStr(error), "), ", subPositions, " subposition", ifString(subPositions==1, "", "s"), " opened");
       else                    message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position opened at ", NumberToStr(lo.OpenPrice(lo), ".4'"));
 
@@ -463,7 +463,7 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    double slippage    = 0.1;
    color  markerColor = CLR_NONE;
    int    oeFlags     = NULL;
-   if (__LOG) log("ClosePosition.Execute(3)  "+ tradeAccountCompany +": "+ tradeAccountName +" ("+ tradeAccountNumber +"), "+ tradeAccountCurrency);
+   if (__LOG) log("ClosePosition.Execute(3)  "+ tradeAccount.company +": "+ tradeAccount.name +" ("+ tradeAccount.number +"), "+ tradeAccount.currency);
 
    /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
    if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
@@ -579,7 +579,7 @@ bool ClosePosition.SendSMS(/*LFX_ORDER*/int lo[], string comment, int error) {
       if (StringStartsWith(comment, "."     )) comment = StringSubstr(comment, 1);
       if (StringStartsWith(comment, "#"     )) comment = StringSubstr(comment, 1);
       int    counter = StrToInteger(comment);
-      string message = tradeAccountAlias +": ";
+      string message = tradeAccount.alias +": ";
       if (lo.IsCloseError(lo)) message = StringConcatenate(message, "closing of ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position ", currency, ".", counter, " failed (", ErrorToStr(error), ")");
       else                     message = StringConcatenate(message, currency, ".", counter, " ", ifString(lo.Type(lo)==OP_BUY, "long", "short"), " position closed at ", NumberToStr(lo.ClosePrice(lo), ".4'"));
 

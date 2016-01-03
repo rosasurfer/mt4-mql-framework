@@ -39,18 +39,12 @@ extern double TakeProfitPrice;
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) TradeAccount und Status initialisieren
-   if (!InitTradeAccount())
-      return(last_error);
-
-
-   // (2) LFX-Currency und -ID bestimmen
+   // (1) TradeAccount initialisieren
+   if (!InitTradeAccount())              return(last_error);
    if (!StringEndsWith(Symbol(), "LFX")) return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
-   lfxCurrency   = StringLeft(Symbol(), -3);
-   lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
 
-   // (3) Parametervalidierung
+   // (2) Parametervalidierung
    // Units
    if (NE(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(2)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
    if (Units < 0.1 || Units > 1)         return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 1.0)", ERR_INVALID_INPUT_PARAMETER));
@@ -75,7 +69,7 @@ int onInit() {
    }
 
 
-   // (4) offene Orders einlesen
+   // (3) offene Orders einlesen
    int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
    if (size < 0)
       return(last_error);
@@ -105,7 +99,7 @@ int onStart() {
    // (1) Sicherheitsabfrage
    if (LimitPrice >= Bid) {
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox(ifString(tradeAccountType==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
+      button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" is already triggered (current price "+ NumberToStr(Bid, SubPipPriceFormat) +").\n\n"
                         +"Do you really want the order to get executed immediately?",
                         __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
@@ -117,7 +111,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox(ifString(tradeAccountType==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
+      button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"Do you really want to place a Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
                         +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
                         + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
@@ -153,7 +147,7 @@ int onStart() {
 
    // (4) Bestätigungsmeldung
    PlaySoundEx("OrderOk.wav");
-   MessageBox(ifString(tradeAccountType==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
+   MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
             +"Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
             + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))

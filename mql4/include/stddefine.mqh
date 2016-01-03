@@ -789,41 +789,119 @@ double  N_INF;                                              // -1.#INF: negative
 #define BAR_V                                   5
 
 
-// SimpleTrader-Signale
-#define ST_SIGNAL.ALEXPROFIT           "simpletrader.alexprofit"
-#define ST_SIGNAL.ASTA                 "simpletrader.asta"
-#define ST_SIGNAL.CAESAR2              "simpletrader.caesar2"
-#define ST_SIGNAL.CAESAR21             "simpletrader.caesar21"
-#define ST_SIGNAL.CONSISTENT           "simpletrader.consistent"
-#define ST_SIGNAL.DAYFOX               "simpletrader.dayfox"
-#define ST_SIGNAL.FXVIPER              "simpletrader.fxviper"
-#define ST_SIGNAL.GCEDGE               "simpletrader.gcedge"
-#define ST_SIGNAL.GOLDSTAR             "simpletrader.goldstar"
-#define ST_SIGNAL.KILIMANJARO          "simpletrader.kilimanjaro"
-#define ST_SIGNAL.NOVOLR               "simpletrader.novolr"
-#define ST_SIGNAL.OVERTRADER           "simpletrader.overtrader"
-#define ST_SIGNAL.SMARTSCALPER         "simpletrader.smartscalper"
-#define ST_SIGNAL.SMARTTRADER          "simpletrader.smarttrader"
-#define ST_SIGNAL.STEADYCAPTURE        "simpletrader.steadycapture"
-#define ST_SIGNAL.YENFORTRESS          "simpletrader.yenfortress"
-#define ST_SIGNAL.TWILIGHT             "simpletrader.twilight"
+// AccountCompany-ShortNames
+#define AC.Alpari                               "Alpari"
+#define AC.APBG                                 "APBG"
+#define AC.ATC                                  "ATC"
+#define AC.AxiTrader                            "AxiTrader"
+#define AC.BroCo                                "BroCo"
+#define AC.CollectiveFX                         "CollectiveFX"
+#define AC.Dukascopy                            "Dukascopy"
+#define AC.EasyForex                            "EasyForex"
+#define AC.FB_Capital                           "FB Capital"
+#define AC.FinFX                                "FinFX"
+#define AC.Forex_Ltd                            "Forex Ltd"
+#define AC.FX_Primus                            "FX Primus"
+#define AC.FXDD                                 "FXDD"
+#define AC.FXOpen                               "FXOpen"
+#define AC.FxPro                                "FxPro"
+#define AC.Gallant                              "Gallant"
+#define AC.GCI                                  "GCI"
+#define AC.GFT                                  "GFT"
+#define AC.Global_Prime                         "Global Prime"
+#define AC.IC_Markets                           "IC Markets"
+#define AC.InovaTrade                           "InovaTrade"
+#define AC.Investors_Europe                     "Investors Europe"
+#define AC.JFD_Brokers                          "JFD Brokers"
+#define AC.LiteForex                            "LiteForex"
+#define AC.London_Capital                       "London Capital"
+#define AC.MB_Trading                           "MB Trading"
+#define AC.MetaQuotes                           "MetaQuotes"
+#define AC.MIG                                  "MIG"
+#define AC.MyFX_Dukascopy                       "MyFX-Dukascopy"
+#define AC.MyFX_Synthetic                       "MyFX-Synthetic"
+#define AC.Oanda                                "Oanda"
+#define AC.Pepperstone                          "Pepperstone"
+#define AC.PrimeXM                              "PrimeXM"
+#define AC.SimpleTrader                         "SimpleTrader"
+#define AC.STS                                  "STS"
+#define AC.TeleTrade                            "TeleTrade"
 
 
-// SimpleTrader-Signal-ID's (entsprechen den ID's der SimpleTrader-URLs)
-#define ST_SIGNAL.ID_ALEXPROFIT        2474
-#define ST_SIGNAL.ID_ASTA              2370
-#define ST_SIGNAL.ID_CAESAR2           1619
-#define ST_SIGNAL.ID_CAESAR21          1803
-#define ST_SIGNAL.ID_CONSISTENT        4351
-#define ST_SIGNAL.ID_DAYFOX            2465
-#define ST_SIGNAL.ID_FXVIPER            633
-#define ST_SIGNAL.ID_GCEDGE             998
-#define ST_SIGNAL.ID_GOLDSTAR          2622
-#define ST_SIGNAL.ID_KILIMANJARO       2905
-#define ST_SIGNAL.ID_NOVOLR            4322
-#define ST_SIGNAL.ID_OVERTRADER        2973
-#define ST_SIGNAL.ID_SMARTSCALPER      1086
-#define ST_SIGNAL.ID_SMARTTRADER       1081
-#define ST_SIGNAL.ID_STEADYCAPTURE     4023
-#define ST_SIGNAL.ID_TWILIGHT          3913
-#define ST_SIGNAL.ID_YENFORTRESS       2877
+// AccountCompany-ID's
+#define AC_ID.Alpari                            1001
+#define AC_ID.APBG                              1002
+#define AC_ID.ATC                               1003
+#define AC_ID.AxiTrader                         1004
+#define AC_ID.BroCo                             1005
+#define AC_ID.CollectiveFX                      1006
+#define AC_ID.Dukascopy                         1007
+#define AC_ID.EasyForex                         1008
+#define AC_ID.FB_Capital                        1009
+#define AC_ID.FinFX                             1010
+#define AC_ID.Forex_Ltd                         1011
+#define AC_ID.FX_Primus                         1012
+#define AC_ID.FXDD                              1013
+#define AC_ID.FXOpen                            1014
+#define AC_ID.FxPro                             1015
+#define AC_ID.Gallant                           1016
+#define AC_ID.GCI                               1017
+#define AC_ID.GFT                               1018
+#define AC_ID.Global_Prime                      1019
+#define AC_ID.IC_Markets                        1020
+#define AC_ID.InovaTrade                        1021
+#define AC_ID.Investors_Europe                  1022
+#define AC_ID.JFD_Brokers                       1023
+#define AC_ID.LiteForex                         1024
+#define AC_ID.London_Capital                    1025
+#define AC_ID.MB_Trading                        1026
+#define AC_ID.MetaQuotes                        1027
+#define AC_ID.MIG                               1028
+#define AC_ID.MyFX_Dukascopy                    1029
+#define AC_ID.MyFX_Synthetic                    1030
+#define AC_ID.Oanda                             1031
+#define AC_ID.Pepperstone                       1032
+#define AC_ID.PrimeXM                           1033
+#define AC_ID.SimpleTrader                      1034
+#define AC_ID.STS                               1035
+#define AC_ID.TeleTrade                         1036
+
+
+// SimpleTrader Account-Aliasse
+#define STA_ALIAS.AlexProfit                    "alexprofit"
+#define STA_ALIAS.ASTA                          "asta"
+#define STA_ALIAS.Caesar2                       "caesar2"
+#define STA_ALIAS.Caesar21                      "caesar21"
+#define STA_ALIAS.ConsistentProfit              "consistent"
+#define STA_ALIAS.DayFox                        "dayfox"
+#define STA_ALIAS.FXViper                       "fxviper"
+#define STA_ALIAS.GCEdge                        "gcedge"
+#define STA_ALIAS.GoldStar                      "goldstar"
+#define STA_ALIAS.Kilimanjaro                   "kilimanjaro"
+#define STA_ALIAS.NovoLRfund                    "novolr"
+#define STA_ALIAS.OverTrader                    "overtrader"
+#define STA_ALIAS.SmartScalper                  "smartscalper"
+#define STA_ALIAS.SmartTrader                   "smarttrader"
+#define STA_ALIAS.SteadyCapture                 "steadycapture"
+#define STA_ALIAS.Twilight                      "twilight"
+#define STA_ALIAS.YenFortress                   "yenfortress"
+
+
+// SimpleTrader Account-ID's (entsprechen den ID's der SimpleTrader-URLs)
+#define STA_ID.AlexProfit                       2474
+#define STA_ID.ASTA                             2370
+#define STA_ID.Caesar2                          1619
+#define STA_ID.Caesar21                         1803
+#define STA_ID.ConsistentProfit                 4351
+#define STA_ID.DayFox                           2465
+#define STA_ID.FXViper                           633
+#define STA_ID.GCEdge                            998
+#define STA_ID.GoldStar                         2622
+#define STA_ID.Kilimanjaro                      2905
+#define STA_ID.NovoLRfund                       4322
+#define STA_ID.OverTrader                       2973
+#define STA_ID.SmartScalper                     1086
+#define STA_ID.SmartTrader                      1081
+#define STA_ID.SteadyCapture                    4023
+#define STA_ID.Twilight                         3913
+#define STA_ID.YenFortress                      2877

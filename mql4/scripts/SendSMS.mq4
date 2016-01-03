@@ -19,7 +19,7 @@ int onStart() {
    // Receiver
    string section = "SMS";
    string key     = "Receiver";
-   string receiver = GetGlobalConfigString(section, key, "");
+   string receiver = GetGlobalConfigString(section, key);
    if (!StringLen(receiver)) return(!catch("onStart(1)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Message

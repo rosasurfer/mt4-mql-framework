@@ -73,7 +73,6 @@
    int  GetDlgCtrlID(int hWndCtl);
    int  GetDlgItem(int hDlg, int nIDDlgItem);
    int  GetParent(int hWnd);
-   int  GetPropA(int hWnd, string lpKey);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);                           // @see stdlib::GetWindowText()
@@ -87,9 +86,7 @@
    bool RedrawWindow(int hWnd, int lpRectUpdate, int hRgnUpdate, int flags);
    int  RegisterWindowMessageA(string lpString);
    int  ReleaseDC(int hWnd, int hDC);
-   int  RemovePropA(int hWnd, string lpKey);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
-   bool SetPropA(int hWnd, string lpKey, int value);
    bool SetWindowTextA(int hWnd, string lpString);
 
 #import "version.dll"

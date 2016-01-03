@@ -71,7 +71,7 @@ int onInit() {
    CreateDescriptionLabel();
 
    // (4) Status restaurieren
-   if (!RestoreWindowStatus())
+   if (!RestoreRuntimeStatus())
       return(last_error);
 
    // (5) Verfügbarkeit des eingestellten Superbar-Timeframes prüfen bzw. Default festlegen
@@ -91,7 +91,7 @@ int onDeinit() {
    DeleteRegisteredObjects(NULL);
 
    // in allen deinit()-Szenarien Fensterstatus  speichern
-   if (!StoreWindowStatus())
+   if (!StoreRuntimeStatus())
       return(last_error);
    return(catch("onDeinit(1)"));
 }
@@ -623,25 +623,25 @@ int CreateDescriptionLabel() {
  *
  * @return bool - Erfolgsstatus
  */
-bool StoreWindowStatus() {
+bool StoreRuntimeStatus() {
    // Die Konfiguration wird nur gespeichert, wenn sie gültig ist.
    if (!superBars.timeframe)
       return(true);
 
    // Konfiguration im Chartfenster speichern
    int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
-   SetPropA(hWnd, "xtrade.SuperBars.Timeframe", superBars.timeframe);  // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
+   SetWindowProperty(hWnd, "xtrade.SuperBars.Timeframe", superBars.timeframe);  // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
-   // Konfiguration im Chart speichern                               // TODO: nur bei Terminal-Shutdown
-   string label = __NAME__ +".sticky.timeframe";
-   string value = superBars.timeframe;                               // (string) int
+   // Konfiguration im Chart speichern                                        // TODO: nur bei Terminal-Shutdown
+   string label = __NAME__ +".runtime.timeframe";
+   string value = superBars.timeframe;                                        // (string) int
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, value);
 
-   return(catch("StoreWindowStatus(1)"));
+   return(catch("StoreRuntimeStatus(1)"));
 }
 
 
@@ -650,14 +650,14 @@ bool StoreWindowStatus() {
  *
  * @return bool - Erfolgsstatus
  */
-bool RestoreWindowStatus() {
+bool RestoreRuntimeStatus() {
    // Konfiguration im Chartfenster suchen
    int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(false);
-   int result = RemovePropA(hWnd, "xtrade.SuperBars.Timeframe");       // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
+   int result = RemoveWindowProperty(hWnd, "xtrade.SuperBars.Timeframe");       // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
 
    if (!result) {
       // Konfiguration im Chart suchen
-      string label = __NAME__ +".sticky.timeframe";
+      string label = __NAME__ +".runtime.timeframe";
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);
          if (StringIsInteger(value))
@@ -668,5 +668,5 @@ bool RestoreWindowStatus() {
 
    if (result != 0)
       superBars.timeframe = result;
-   return(!catch("RestoreWindowStatus(1)"));
+   return(!catch("RestoreRuntimeStatus(1)"));
 }

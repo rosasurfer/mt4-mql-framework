@@ -63,7 +63,7 @@ int onInitChartClose() {
  */
 int onInitUndefined() {
    // Prüfen, ob im Chart Statusdaten existieren (einziger Unterschied zwischen vorherigem/neuem EA)
-   if (RestoreStickyStatus())
+   if (RestoreRuntimeStatus())
       return(onInitRecompile());    // ja:   vorheriger EA -> kein Input-Dialog: Funktionalität entspricht onInitRecompile()
 
    if (IsLastError())
@@ -96,9 +96,9 @@ int onInitRecompile() {
    bool interactive = false;
 
    // im Chart gespeicherte Daten restaurieren
-   if (RestoreStickyStatus())
+   if (RestoreRuntimeStatus())
       ValidateConfiguration(interactive);
 
-   ClearStickyStatus();
+   ResetRuntimeStatus();
    return(last_error);
 }

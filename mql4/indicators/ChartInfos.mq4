@@ -104,8 +104,8 @@ double longPosition;
 double shortPosition;
 int    positions.idata[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
 double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
-bool   positionsAnalyzed;
-bool   positions.ShowAbsoluteAmounts;                             // default: FALSE
+bool   positions.analyzed;
+bool   positions.showAbsAmounts;                                  // default: FALSE
 
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
@@ -133,12 +133,6 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_FULL_PROFIT_ABS               7
 #define I_FULL_PROFIT_PCT               8
 
-
-// externer Account
-string   external.signalProvider = "";          // simpletrader
-string   external.signalName     = "";          // FX Viper
-string   external.signalAlias    = "";          // fxviper
-int      external.signalId       = -1;          // 1234
 
 // externe Positionen: open
 int      external.open.ticket    [];
@@ -170,29 +164,28 @@ double   external.closed.profit    [];
 
 
 // Textlabel für die einzelnen Anzeigen
-string label.instrument      = "${__NAME__}.Instrument";
-string label.ohlc            = "${__NAME__}.OHLC";
-string label.price           = "${__NAME__}.Price";
-string label.spread          = "${__NAME__}.Spread";
-string label.aum             = "${__NAME__}.AuM";
-string label.position        = "${__NAME__}.Position";
-string label.unitSize        = "${__NAME__}.UnitSize";
-string label.orderCounter    = "${__NAME__}.OrderCounter";
-string label.externalAccount = "${__NAME__}.ExternalAccount";
-string label.lfxTradeAccount = "${__NAME__}.LfxTradeAccount";
-string label.stopoutLevel    = "${__NAME__}.StopoutLevel";
-string label.time            = "${__NAME__}.Time";
+string   label.instrument   = "${__NAME__}.Instrument";
+string   label.ohlc         = "${__NAME__}.OHLC";
+string   label.price        = "${__NAME__}.Price";
+string   label.spread       = "${__NAME__}.Spread";
+string   label.aum          = "${__NAME__}.AuM";
+string   label.position     = "${__NAME__}.Position";
+string   label.unitSize     = "${__NAME__}.UnitSize";
+string   label.orderCounter = "${__NAME__}.OrderCounter";
+string   label.tradeAccount = "${__NAME__}.TradeAccount";
+string   label.stopoutLevel = "${__NAME__}.StopoutLevel";
+string   label.time         = "${__NAME__}.Time";
 
 
 // Font-Settings der CustomPositions-Anzeige
-string positions.fontName          = "MS Sans Serif";
-int    positions.fontSize          = 8;
+string   positions.fontName          = "MS Sans Serif";
+int      positions.fontSize          = 8;
 
-color  positions.fontColor.intern  = Blue;
-color  positions.fontColor.extern  = Red;
-color  positions.fontColor.remote  = Blue;
-color  positions.fontColor.virtual = Green;
-color  positions.fontColor.history = C'128,128,0';
+color    positions.fontColor.intern  = Blue;
+color    positions.fontColor.extern  = Red;
+color    positions.fontColor.remote  = Blue;
+color    positions.fontColor.virtual = Green;
+color    positions.fontColor.history = C'128,128,0';
 
 
 // Farben für Orderanzeige
@@ -219,8 +212,8 @@ int tickTimerId;                                                  // ID eines gg
  * @return int - Fehlerstatus
  */
 int onTick() {
-   mm.ready          = false;
-   positionsAnalyzed = false;
+   mm.ready           = false;
+   positions.analyzed = false;
 
    HandleEvent(EVENT_CHART_CMD);                                                                   // ChartCommands verarbeiten
 
@@ -271,12 +264,12 @@ bool CheckLastError(string location) {
  * @return bool - Erfolgsstatus
  *
  *
- * Messageformat: "cmd=TrackSignal,{signalId}" - Schaltet das Signaltracking auf das angegebene Signal um.
- *                "cmd=ToggleOpenOrders"       - Schaltet die Anzeige der offenen Orders ein/aus.
- *                "cmd=ToggleTradeHistory"     - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleAuM"              - Schaltet die Assets-under-Management-Anzeige ein/aus.
- *                "cmd=EditAccountConfig"      - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
- *                                               da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
+ * Messageformat: "cmd=account:{companyId}:{account}" - Schaltet den externen Account um.
+ *                "cmd=ToggleOpenOrders"              - Schaltet die Anzeige der offenen Orders ein/aus.
+ *                "cmd=ToggleTradeHistory"            - Schaltet die Anzeige der Trade-History ein/aus.
+ *                "cmd=ToggleAuM"                     - Schaltet die Assets-under-Management-Anzeige ein/aus.
+ *                "cmd=EditAccountConfig"             - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
+ *                                                      da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
@@ -313,9 +306,17 @@ bool onChartCommand(string commands[]) {
             return(false);
          continue;
       }
-      if (StringStartsWith(commands[i], "cmd=TrackSignal,")) {
-         if (!TrackSignal(StringSubstr(commands[i], 16)))
-            return(false);
+      if (StringStartsWith(commands[i], "cmd=account:")) {
+         string key = StringRightFrom(commands[i], ":");
+         if (!InitTradeAccount(key))  return(false);
+         if (!UpdateAccountDisplay()) return(false);
+         if (mode.extern) {
+            external.open.lots.checked = false;
+            if (ReadExternalPositions(tradeAccount.company, tradeAccount.alias) == -1)
+               return(false);
+         }
+         ArrayResize(positions.config,          0);
+         ArrayResize(positions.config.comments, 0);
          continue;
       }
       warn("onChartCommand(2)  unknown chart command \""+ commands[i] +"\"");
@@ -730,7 +731,7 @@ int ShowTradeHistory() {
 
    // (1) Anzeigekonfiguration auslesen
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.signalProvider +"\\"+ external.signalAlias) +"_config.ini";
+   string file    = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini";
    string section = "Charts";
    string key     = "TradeHistory.ConnectOrders";
 
@@ -988,7 +989,7 @@ int ShowTradeHistory() {
  */
 bool Positions.ToggleAbsAmounts() {
    // aktuellen Anzeigestatus umschalten
-   positions.ShowAbsoluteAmounts = !positions.ShowAbsoluteAmounts;
+   positions.showAbsAmounts = !positions.showAbsAmounts;
 
    // Anzeige aktualisieren
    if (!UpdatePositions()) return(false);
@@ -1008,12 +1009,7 @@ bool ToggleAuM() {
 
    // Status ON
    if (status) {
-      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
-      else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
-
-      aum.value = RefreshExternalAssets(companyId, accountId);
-      if (IsEmptyValue(aum.value))
-         return(false);
+      aum.value = RefreshExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
       string strAum = " ";
 
       if (mode.intern) {
@@ -1023,7 +1019,7 @@ bool ToggleAuM() {
          strAum = "Assets:  " + ifString(!aum.value, "n/a", DoubleToStr(aum.value, 2) +" "+ AccountCurrency());
       }
       else /*mode.remote*/{
-         status = false;                                             // not implemented
+         status = false;                                             // not yet implemented
          PlaySoundEx("Plonk.wav");                                   // Plonk!!!
       }
       ObjectSetText(label.aum, strAum, 9, "Tahoma", SlateGray);
@@ -1035,7 +1031,7 @@ bool ToggleAuM() {
    }
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)              // bei offenem Properties-Dialog oder Object::onDrag()
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // bei offenem Properties-Dialog oder Object::onDrag()
       return(!catch("ToggleAuM(1)", error));
 
    // Anzeigestatus im Chart speichern
@@ -1080,68 +1076,6 @@ bool SetAuMDisplayStatus(bool status) {
    ObjectSetText(label, ""+ status, 0);
 
    return(!catch("SetAuMDisplayStatus(1)"));
-}
-
-
-/**
- * Schaltet das Signaltracking um.
- *
- * @param  string signal - das anzuzeigende Signal
- *
- * @return bool - Erfolgsstatus
- */
-bool TrackSignal(string signal) {
-   bool signalChanged = false;
-
-   if (signal == "") {                                               // Leerstring bedeutet: Signaltracking/mode.extern = OFF
-      external.signalProvider = "";
-      external.signalAlias    = "";
-      external.signalName     = "";
-      external.signalId       = -1;
-
-      if (!mode.intern) {
-         mode.intern   = true;
-         mode.extern   = false;
-         mode.remote   = false;
-         signalChanged = true;
-      }
-   }
-   else {
-      string signalProvider="", signalAlias="";
-      if (!ParseSignalStr(signal, signalProvider, signalAlias)) return(_true(warn("TrackSignal(1)  invalid or unknown parameter signal=\""+ signal +"\"")));
-      int signalId = SignalId(signal);
-
-      if (!mode.extern || signalProvider!=external.signalProvider || signalAlias!=external.signalAlias) {
-         mode.intern = false;
-         mode.extern = true;
-         mode.remote = false;
-
-         external.signalProvider = signalProvider;
-         external.signalAlias    = signalAlias;
-         external.signalId       = signalId;
-            string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-            string file    = TerminalPath() + mqlDir +"\\files\\"+ signalProvider +"\\"+ signalAlias +"_config.ini"; if (!IsFile(file)) return(!catch("TrackSignal(2)  file not found \""+ file +"\"", ERR_RUNTIME_ERROR));
-            string section = "General";
-            string key     = "Name";
-            string value   = GetIniString(file, section, key, ""); if (!StringLen(value))                                               return(!catch("TrackSignal(3)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty value)", ERR_RUNTIME_ERROR));
-         external.signalName = value;
-
-         external.open.lots.checked = false;
-         if (-1 == ReadExternalPositions(signalProvider, signalAlias))
-            return(false);
-         signalChanged = true;
-      }
-   }
-
-   if (signalChanged) {
-      ArrayResize(positions.config,          0);
-      ArrayResize(positions.config.comments, 0);
-      if (!UpdateExternalAccount()) return(false);
-         if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
-         else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
-      if (IsEmptyValue(RefreshExternalAssets(companyId, accountId))) return(false);
-   }
-   return(!catch("TrackSignal(4)"));
 }
 
 
@@ -1306,21 +1240,20 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
  */
 bool CreateLabels() {
    // Label definieren
-   label.instrument      = StringReplace(label.instrument     , "${__NAME__}", __NAME__);
-   label.ohlc            = StringReplace(label.ohlc           , "${__NAME__}", __NAME__);
-   label.price           = StringReplace(label.price          , "${__NAME__}", __NAME__);
-   label.spread          = StringReplace(label.spread         , "${__NAME__}", __NAME__);
-   label.aum             = StringReplace(label.aum            , "${__NAME__}", __NAME__);
-   label.position        = StringReplace(label.position       , "${__NAME__}", __NAME__);
-   label.unitSize        = StringReplace(label.unitSize       , "${__NAME__}", __NAME__);
-   label.orderCounter    = StringReplace(label.orderCounter   , "${__NAME__}", __NAME__);
-   label.externalAccount = StringReplace(label.externalAccount, "${__NAME__}", __NAME__);
-   label.lfxTradeAccount = StringReplace(label.lfxTradeAccount, "${__NAME__}", __NAME__);
-   label.time            = StringReplace(label.time           , "${__NAME__}", __NAME__);
-   label.stopoutLevel    = StringReplace(label.stopoutLevel   , "${__NAME__}", __NAME__);
+   label.instrument   = StringReplace(label.instrument  , "${__NAME__}", __NAME__);
+   label.ohlc         = StringReplace(label.ohlc        , "${__NAME__}", __NAME__);
+   label.price        = StringReplace(label.price       , "${__NAME__}", __NAME__);
+   label.spread       = StringReplace(label.spread      , "${__NAME__}", __NAME__);
+   label.aum          = StringReplace(label.aum         , "${__NAME__}", __NAME__);
+   label.position     = StringReplace(label.position    , "${__NAME__}", __NAME__);
+   label.unitSize     = StringReplace(label.unitSize    , "${__NAME__}", __NAME__);
+   label.orderCounter = StringReplace(label.orderCounter, "${__NAME__}", __NAME__);
+   label.tradeAccount = StringReplace(label.tradeAccount, "${__NAME__}", __NAME__);
+   label.time         = StringReplace(label.time        , "${__NAME__}", __NAME__);
+   label.stopoutLevel = StringReplace(label.stopoutLevel, "${__NAME__}", __NAME__);
 
 
-   // Instrument-Label: Anzeige wird sofort (und nur) hier gesetzt
+   // Instrument-Label: Anzeige wird sofort (und nur hier) gesetzt
    int build = GetTerminalBuild();
    if (build <= 509) {                                                                    // Builds größer 509 haben oben links eine {Symbol,Period}-Anzeige, die das
       if (ObjectFind(label.instrument) == 0)                                              // Label überlagert und sich nicht ohne weiteres ausblenden läßt.
@@ -1430,28 +1363,15 @@ bool CreateLabels() {
    else GetLastError();
 
 
-   // External-Account-Label
-   if (ObjectFind(label.externalAccount) == 0)
-      ObjectDelete(label.externalAccount);
-   if (ObjectCreate(label.externalAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.externalAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (label.externalAccount, OBJPROP_YDISTANCE, 8);
-      ObjectSetText(label.externalAccount, " ", 1);
-      ObjectRegister(label.externalAccount);
-   }
-   else GetLastError();
-
-
-   // LFX-Trade-Account-Label
-   if (ObjectFind(label.lfxTradeAccount) == 0)
-      ObjectDelete(label.lfxTradeAccount);
-   if (ObjectCreate(label.lfxTradeAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.lfxTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.lfxTradeAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (label.lfxTradeAccount, OBJPROP_YDISTANCE, 4);
-      ObjectSetText(label.lfxTradeAccount, " ", 1);
-      ObjectRegister(label.lfxTradeAccount);
+   // TradeAccount-Label
+   if (ObjectFind(label.tradeAccount) == 0)
+      ObjectDelete(label.tradeAccount);
+   if (ObjectCreate(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.tradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
+      ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
+      ObjectSetText(label.tradeAccount, " ", 1);
+      ObjectRegister(label.tradeAccount);
    }
    else GetLastError();
 
@@ -1557,10 +1477,10 @@ bool UpdateUnitSize() {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePositions() {
-   if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions()) return(false);
+   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
    if (!mode.remote && !mm.ready) {
-      if (!UpdateMoneyManagement())                        return(false);
-      if (!mm.ready )                                      return(true);
+      if (!UpdateMoneyManagement())                         return(false);
+      if (!mm.ready )                                       return(true);
    }
 
 
@@ -1590,9 +1510,9 @@ bool UpdatePositions() {
 
    // (2) Einzelpositionsanzeige unten links
    static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
-   static bool lastShowAbsoluteAmounts;
-   if (!ArraySize(col.xShifts) || positions.ShowAbsoluteAmounts!=lastShowAbsoluteAmounts) {
-      if (positions.ShowAbsoluteAmounts) {
+   static bool lastShowAbsAmounts;
+   if (!ArraySize(col.xShifts) || positions.showAbsAmounts!=lastShowAbsAmounts) {
+      if (positions.showAbsAmounts) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
          // col.xShifts[] = {20,   59,    135, 160,      226,    258,   345,      406};
          ArrayResize(col.xShifts, 8);
@@ -1617,10 +1537,10 @@ bool UpdatePositions() {
          col.xShifts[5] = 258;
          col.xShifts[6] = 319;
       }
-      cols                    = ArraySize(col.xShifts);
-      percentCol              = cols - 2;
-      commentCol              = cols - 1;
-      lastShowAbsoluteAmounts = positions.ShowAbsoluteAmounts;
+      cols               = ArraySize(col.xShifts);
+      percentCol         = cols - 2;
+      commentCol         = cols - 1;
+      lastShowAbsAmounts = positions.showAbsAmounts;
 
       // nach (Re-)Initialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
@@ -1689,7 +1609,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.ShowAbsoluteAmounts)
+         if (positions.showAbsAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1722,7 +1642,7 @@ bool UpdatePositions() {
 
          // Hedged und Not-Hedged
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.ShowAbsoluteAmounts)
+         if (positions.showAbsAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1740,7 +1660,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.ShowAbsoluteAmounts)
+         if (positions.showAbsAmounts)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2),                        positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), "?%",                                                                    positions.fontSize, positions.fontName, fontColor);
             sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
@@ -1793,23 +1713,31 @@ bool UpdateOrderCounter() {
 
 
 /**
- * Aktualisiert die Anzeige eines externen Accounts.
+ * Aktualisiert die Anzeige eines externen oder Remote-Accounts.
  *
  * @return bool - Erfolgsstatus
  */
-bool UpdateExternalAccount() {
-   if (!mode.extern) {
-      ObjectSetText(label.externalAccount, " ", 1);
+bool UpdateAccountDisplay() {
+   string text;
+
+   if (mode.intern) {
+      ObjectSetText(label.tradeAccount, " ", 1);
    }
-   else {
+   if (mode.extern) {
       ObjectSetText(label.unitSize, " ", 1);
-      ObjectSetText(label.externalAccount, external.signalName, 8, "Arial Fett", Red);
+      text = tradeAccount.name +"  ("+ tradeAccount.company +")";
+      ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", Red);
+   }
+   if (mode.remote) {
+      ObjectSetText(label.unitSize, " ", 1);
+      text = tradeAccount.name +": "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
+      ObjectSetText(label.tradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                            // bei offenem Properties-Dialog oder Object::onDrag()
       return(true);
-   return(!catch("UpdateExternalAccount(1)", error));
+   return(!catch("UpdateAccountDisplay(1)", error));
 }
 
 
@@ -1819,7 +1747,7 @@ bool UpdateExternalAccount() {
  * @return bool - Erfolgsstatus
  */
 bool UpdateStopoutLevel() {
-   if (!positionsAnalyzed) /*&&*/ if (!AnalyzePositions())
+   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
    if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
@@ -1975,9 +1903,9 @@ bool Positions.LogTickets() {
 bool AnalyzePositions(bool logTickets=false) {
    logTickets = logTickets!=0;
    if (logTickets)                                                      // vorm Loggen werden die Positionen immer re-evaluiert
-      positionsAnalyzed = false;
-   if (mode.remote      ) positionsAnalyzed = true;
-   if (positionsAnalyzed) return(true);
+      positions.analyzed = false;
+   if (mode.remote       ) positions.analyzed = true;
+   if (positions.analyzed) return(true);
 
    int      tickets    [], openPositions;                               // Positionsdetails
    int      types      [];
@@ -2107,9 +2035,9 @@ bool AnalyzePositions(bool logTickets=false) {
    int oldError = last_error;
    SetLastError(NO_ERROR);
    if (ArrayRange(positions.config, 0)==0) /*&&*/ if (!CustomPositions.ReadConfig()) {
-      positionsAnalyzed = !last_error;                                  // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
+      positions.analyzed = !last_error;                                 // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
       if (!last_error) SetLastError(oldError);                          // in diesem Fall nächster Versuch beim nächsten Tick.
-      return(positionsAnalyzed);
+      return(positions.analyzed);
    }
    SetLastError(oldError);
 
@@ -2172,7 +2100,7 @@ bool AnalyzePositions(bool logTickets=false) {
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
       return(false);
 
-   positionsAnalyzed = true;
+   positions.analyzed = true;
    return(!catch("AnalyzePositions(2)"));
 }
 
@@ -2230,10 +2158,7 @@ bool UpdateMoneyManagement() {
          }
          return(!catch("UpdateMoneyManagement(3)", error));
       }
-      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
-      else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
-
-   double externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
+   double externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
    if (mode.intern) {                                                         // TODO: !!! falsche Berechnung !!!
       mm.realEquity = MathMin(AccountBalance(), AccountEquity()-AccountCredit()) + externalAssets;
       if (mm.realEquity < 0)                                                  // kann bei negativer AccountBalance negativ sein
@@ -2409,7 +2334,7 @@ bool CustomPositions.ReadConfig() {
    if (mode.remote) return(!catch("CustomPositions.ReadConfig(1)  feature for mode.remote=1 not yet implemented", ERR_NOT_IMPLEMENTED));
 
    string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ ifString(mode.intern, ShortAccountCompany() +"\\"+ GetAccountNumber(), external.signalProvider +"\\"+ external.signalAlias) +"_config.ini";
+   string file     = TerminalPath() + mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ ifString(mode.extern, tradeAccount.alias, tradeAccount.number) +"_config.ini";
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
@@ -3684,11 +3609,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       return(true);                                                                                         // in tickets[] bereits auf NULL gesetzt worden sein können.
 
    static double externalAssets = EMPTY_VALUE;
-   if (IsEmptyValue(externalAssets)) {
-      if (mode.intern) { string companyId = ShortAccountCompany(); string accountId = GetAccountNumber();   }
-      else             {        companyId = external.signalProvider;      accountId = external.signalAlias; }
-      externalAssets = GetExternalAssets(companyId, accountId); if (IsEmptyValue(externalAssets)) return(false);
-   }
+   if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
 
    if (customEquity != NULL) equity  = customEquity;                 // TODO: tatsächlichen Wert von openEquity ermitteln
    else                    { equity  = externalAssets;
@@ -4270,206 +4191,126 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
 
 
 /**
- * Speichert die volatilen Konfigurationen im Chartfenster (für Init-Cycle und neue Templates) oder im Chart (für Terminal-Restart).
+ * Speichert die Laufzeitkonfiguration im Fenster (für Init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
  *
- *  (1) bool positions.ShowAbsoluteAmounts
- *  (2) mode.extern/TrackSignal
+ *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
+ *  (2) bool   positions.showAbsAmounts
  *
  * @return bool - Erfolgsstatus
  */
-bool StoreWindowStatus() {
-   // (1) bool positions.ShowAbsoluteAmounts
-   // Konfiguration im Chartfenster speichern
-   int hWnd   = WindowHandleEx(NULL); if (!hWnd) return(false);
-   int iValue = ifInt(positions.ShowAbsoluteAmounts, 1, -1);
-   SetPropA(hWnd, "xtrade.ChartInfos.Positions.AbsAmounts", iValue);         // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
-
-   // Konfiguration im Chart speichern
-   string label = __NAME__ +".sticky.Positions.AbsAmounts";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ iValue);
-
-
-   // (2) mode.extern/TrackSignal
-   // Konfiguration im Chartfenster speichern bzw. löschen
-   if (mode.extern) SetPropA   (hWnd, "xtrade.ChartInfos.TrackSignal", external.signalId);
-   else             RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");      // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
-
-   // Konfiguration im Chart speichern bzw. löschen
-   label = __NAME__ +".sticky.TrackSignal";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
+bool StoreRuntimeStatus() {
+   // (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
+   // Company-ID im Fenster speichern bzw. löschen
+   int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
+   string key     = __NAME__ +".runtime.tradeAccount.company";       // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   if (mode.extern) SetWindowProperty(hWnd, key, AccountCompanyId(tradeAccount.company));
+   else             RemoveWindowProperty(hWnd, key);
+   // Company-ID im Chart speichern bzw. löschen
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
    if (mode.extern) {
-      ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      ObjectSetText(label, external.signalProvider +"."+ external.signalAlias);
+      ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+      ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      ObjectSetText(key, ""+ AccountCompanyId(tradeAccount.company));
    }
 
-   return(!catch("StoreWindowStatus(1)"));
+   // AccountNumber im Fenster speichern bzw. löschen
+   key = __NAME__ +".runtime.tradeAccount.number";                   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   if (mode.extern) SetWindowProperty(hWnd, key, tradeAccount.number);
+   else             RemoveWindowProperty(hWnd, key);
+   // AccountNumber im Chart speichern bzw. löschen
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   if (mode.extern) {
+      ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+      ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      ObjectSetText(key, ""+ tradeAccount.number);
+   }
+
+
+   // (2) bool positions.showAbsAmounts
+   // Konfiguration im Fenster speichern
+   key       = __NAME__ +".runtime.positions.absAmounts";            // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int value = ifInt(positions.showAbsAmounts, 1, -1);
+   SetWindowProperty(hWnd, key, value);
+   // Konfiguration im Chart speichern
+   if (ObjectFind(key) == 0)
+      ObjectDelete(key);
+   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(key, ""+ value);
+
+   return(!catch("StoreRuntimeStatus(1)"));
 }
 
 
 /**
- * Restauriert die im Chartfenster oder im Chart gespeicherten Konfigurationen.
+ * Restauriert eine im Fenster oder im Chart gespeicherte Laufzeitkonfiguration.
  *
- *  (1) bool positions.ShowAbsoluteAmounts
- *  (2) mode.extern/TrackSignal
+ *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
+ *  (2) bool   positions.showAbsAmounts
  *
  * @return bool - Erfolgsstatus
  */
-bool RestoreWindowStatus() {
-   // (1) positions.ShowAbsoluteAmounts
-   // Konfiguration im Chartfenster suchen
-   int  hWnd     = WindowHandleEx(NULL); if (!hWnd) return(false);
-   int  iSuccess = GetPropA(hWnd, "xtrade.ChartInfos.Positions.AbsAmounts");    // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
-   bool status   = (iSuccess > 0);
-
-   // Bei Mißerfolg Konfiguration im Chart suchen
-   if (!iSuccess) {
-      string label = __NAME__ +".sticky.Positions.AbsAmounts";
-      if (ObjectFind(label) == 0) {
-         iSuccess = StrToInteger(ObjectDescription(label));
-         status  = (iSuccess > 0);
+bool RestoreRuntimeStatus() {
+   // (1) string tradeAccount.company, int tradeAccount.number
+   int companyId, accountNumber;
+   // Company-ID im Fenster suchen
+   int    hWnd    = WindowHandleEx(NULL); if (!hWnd) return(false);
+   string key     = __NAME__ +".runtime.tradeAccount.company";          // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int    value   = GetWindowProperty(hWnd, key);
+   bool   success = (value != 0);
+   // bei Mißerfolg Company-ID im Chart suchen
+   if (!success) {
+      if (ObjectFind(key) == 0) {
+         value   = StrToInteger(ObjectDescription(key));
+         success = (value != 0);
       }
    }
-   positions.ShowAbsoluteAmounts = status;
+   if (success) companyId = value;
 
-
-   // (2) mode.extern/TrackSignal
-   bool   bSuccess = false;
-   string signal="", providerName="", signalName="";
-
-   // Konfiguration im Chartfenster suchen
-   int id = RemovePropA(hWnd, "xtrade.ChartInfos.TrackSignal");                 // TODO: Schlüssel muß global verwaltet werden und Instanz-ID des Indikators enthalten
-   if (id != NULL) {
-      if (id == -1) {
-         bSuccess = true;
-      }
-      else if (ParseSignalId(id, providerName, signalName)) {
-         signal  = providerName +"."+ signalName;
-         bSuccess = true;
+   // AccountNumber im Fenster suchen
+   key     = __NAME__ +".runtime.tradeAccount.number";                  // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   value   = GetWindowProperty(hWnd, key);
+   success = (value != 0);
+   // bei Mißerfolg AccountNumber im Chart suchen
+   if (!success) {
+      if (ObjectFind(key) == 0) {
+         value   = StrToInteger(ObjectDescription(key));
+         success = (value != 0);
       }
    }
+   if (success) accountNumber = value;
 
-   // Bei Mißerfolg Konfiguration im Chart suchen
-   if (!bSuccess) {
-      label = __NAME__ +".sticky.TrackSignal";
-      if (ObjectFind(label) == 0) {
-         signal  = ObjectDescription(label);
-         bSuccess = (signal=="" || ParseSignalStr(signal, providerName, signalName));
+   // Account restaurieren
+   if (companyId && accountNumber) {
+      if (!InitTradeAccount(companyId +":"+ accountNumber)) return(false);
+      if (!UpdateAccountDisplay())                          return(false);
+      if (mode.extern) {
+         external.open.lots.checked = false;
+         if (ReadExternalPositions(tradeAccount.company, tradeAccount.alias) == -1)
+            return(false);
+      }
+      ArrayResize(positions.config,          0);
+      ArrayResize(positions.config.comments, 0);
+   }
+
+
+   // (2) bool positions.showAbsAmounts
+   // Konfiguration im Fenster suchen
+   key     = __NAME__ +".runtime.positions.absAmounts";                 // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   value   = GetWindowProperty(hWnd, key);
+   success = (value != 0);
+   // bei Mißerfolg Konfiguration im Chart suchen
+   if (!success) {
+      if (ObjectFind(key) == 0) {
+         value   = StrToInteger(ObjectDescription(key));
+         success = (value != 0);
       }
    }
-   if (bSuccess) TrackSignal(signal);                                         // Signal umschalten
+   if (success) positions.showAbsAmounts = (value > 0);
 
-   return(!catch("RestoreWindowStatus(1)"));
-}
-
-
-/**
- * Gibt die Signal-ID eines Signalbezeichners zurück.
- *
- * @param  string signal - Signalbezeichner
- *
- * @return int - Signal-ID der NULL, wenn der Bezeichner unbekannt oder ungültig ist
- */
-int SignalId(string signal) {
-   signal = StringToLower(signal);
-
-   if (signal == ST_SIGNAL.ALEXPROFIT   ) return(ST_SIGNAL.ID_ALEXPROFIT   );
-   if (signal == ST_SIGNAL.ASTA         ) return(ST_SIGNAL.ID_ASTA         );
-   if (signal == ST_SIGNAL.CAESAR2      ) return(ST_SIGNAL.ID_CAESAR2      );
-   if (signal == ST_SIGNAL.CAESAR21     ) return(ST_SIGNAL.ID_CAESAR21     );
-   if (signal == ST_SIGNAL.CONSISTENT   ) return(ST_SIGNAL.ID_CONSISTENT   );
-   if (signal == ST_SIGNAL.DAYFOX       ) return(ST_SIGNAL.ID_DAYFOX       );
-   if (signal == ST_SIGNAL.FXVIPER      ) return(ST_SIGNAL.ID_FXVIPER      );
-   if (signal == ST_SIGNAL.GCEDGE       ) return(ST_SIGNAL.ID_GCEDGE       );
-   if (signal == ST_SIGNAL.GOLDSTAR     ) return(ST_SIGNAL.ID_GOLDSTAR     );
-   if (signal == ST_SIGNAL.KILIMANJARO  ) return(ST_SIGNAL.ID_KILIMANJARO  );
-   if (signal == ST_SIGNAL.NOVOLR       ) return(ST_SIGNAL.ID_NOVOLR       );
-   if (signal == ST_SIGNAL.OVERTRADER   ) return(ST_SIGNAL.ID_OVERTRADER   );
-   if (signal == ST_SIGNAL.SMARTSCALPER ) return(ST_SIGNAL.ID_SMARTSCALPER );
-   if (signal == ST_SIGNAL.SMARTTRADER  ) return(ST_SIGNAL.ID_SMARTTRADER  );
-   if (signal == ST_SIGNAL.STEADYCAPTURE) return(ST_SIGNAL.ID_STEADYCAPTURE);
-   if (signal == ST_SIGNAL.TWILIGHT     ) return(ST_SIGNAL.ID_TWILIGHT     );
-   if (signal == ST_SIGNAL.YENFORTRESS  ) return(ST_SIGNAL.ID_YENFORTRESS  );
-
-   warn("SignalId(1)  invalid or unknown parameter signal=\""+ signal +"\"");
-   return(NULL);
-}
-
-
-/**
- * Parst einen Signalbezeichner (Integer).
- *
- * @param  _IN_  int     id         - zu parsender Bezeichner
- * @param  _OUT_ string &lpProvider - Zeiger auf Variable zur Aufnahme des Signalproviders
- * @param  _OUT_ string &lpSignal   - Zeiger auf Variable zur Aufnahme des Signalnamens
- *
- * @return bool - TRUE, wenn der Bezeichner ein gültiges Signal darstellt;
- *                FALSE andererseits
- */
-bool ParseSignalId(int id, string &lpProvider, string &lpSignal) {
-   if      (id == ST_SIGNAL.ID_ALEXPROFIT   ) { lpProvider="simpletrader"; lpSignal="alexprofit"   ; }
-   else if (id == ST_SIGNAL.ID_ASTA         ) { lpProvider="simpletrader"; lpSignal="asta"         ; }
-   else if (id == ST_SIGNAL.ID_CAESAR2      ) { lpProvider="simpletrader"; lpSignal="caesar2"      ; }
-   else if (id == ST_SIGNAL.ID_CAESAR21     ) { lpProvider="simpletrader"; lpSignal="caesar21"     ; }
-   else if (id == ST_SIGNAL.ID_CONSISTENT   ) { lpProvider="simpletrader"; lpSignal="consistent"   ; }
-   else if (id == ST_SIGNAL.ID_DAYFOX       ) { lpProvider="simpletrader"; lpSignal="dayfox"       ; }
-   else if (id == ST_SIGNAL.ID_FXVIPER      ) { lpProvider="simpletrader"; lpSignal="fxviper"      ; }
-   else if (id == ST_SIGNAL.ID_GCEDGE       ) { lpProvider="simpletrader"; lpSignal="gcedge"       ; }
-   else if (id == ST_SIGNAL.ID_GOLDSTAR     ) { lpProvider="simpletrader"; lpSignal="goldstar"     ; }
-   else if (id == ST_SIGNAL.ID_KILIMANJARO  ) { lpProvider="simpletrader"; lpSignal="kilimanjaro"  ; }
-   else if (id == ST_SIGNAL.ID_NOVOLR       ) { lpProvider="simpletrader"; lpSignal="novolr"       ; }
-   else if (id == ST_SIGNAL.ID_OVERTRADER   ) { lpProvider="simpletrader"; lpSignal="overtrader"   ; }
-   else if (id == ST_SIGNAL.ID_SMARTSCALPER ) { lpProvider="simpletrader"; lpSignal="smartscalper" ; }
-   else if (id == ST_SIGNAL.ID_SMARTTRADER  ) { lpProvider="simpletrader"; lpSignal="smarttrader"  ; }
-   else if (id == ST_SIGNAL.ID_STEADYCAPTURE) { lpProvider="simpletrader"; lpSignal="steadycapture"; }
-   else if (id == ST_SIGNAL.ID_TWILIGHT     ) { lpProvider="simpletrader"; lpSignal="twilight"     ; }
-   else if (id == ST_SIGNAL.ID_YENFORTRESS  ) { lpProvider="simpletrader"; lpSignal="yenfortress"  ; }
-   else {
-      return(false);
-   }
-   return(true);
-}
-
-
-/**
- * Parst einen Signalbezeichner (String).
- *
- * @param  _IN_  string  value      - zu parsender Bezeichner
- * @param  _OUT_ string &lpProvider - Zeiger auf Variable zur Aufnahme des Signalproviders
- * @param  _OUT_ string &lpSignal   - Zeiger auf Variable zur Aufnahme des Signalnamens
- *
- * @return bool - TRUE, wenn der Bezeichner ein gültiges Signal darstellt;
- *                FALSE andererseits
- */
-bool ParseSignalStr(string value, string &lpProvider, string &lpSignal) {
-   value = StringToLower(value);
-
-   if      (value == ST_SIGNAL.ALEXPROFIT   ) { lpProvider="simpletrader"; lpSignal="alexprofit"   ; }
-   else if (value == ST_SIGNAL.ASTA         ) { lpProvider="simpletrader"; lpSignal="asta"         ; }
-   else if (value == ST_SIGNAL.CAESAR2      ) { lpProvider="simpletrader"; lpSignal="caesar2"      ; }
-   else if (value == ST_SIGNAL.CAESAR21     ) { lpProvider="simpletrader"; lpSignal="caesar21"     ; }
-   else if (value == ST_SIGNAL.CONSISTENT   ) { lpProvider="simpletrader"; lpSignal="consistent"   ; }
-   else if (value == ST_SIGNAL.DAYFOX       ) { lpProvider="simpletrader"; lpSignal="dayfox"       ; }
-   else if (value == ST_SIGNAL.FXVIPER      ) { lpProvider="simpletrader"; lpSignal="fxviper"      ; }
-   else if (value == ST_SIGNAL.GCEDGE       ) { lpProvider="simpletrader"; lpSignal="gcedge"       ; }
-   else if (value == ST_SIGNAL.GOLDSTAR     ) { lpProvider="simpletrader"; lpSignal="goldstar"     ; }
-   else if (value == ST_SIGNAL.KILIMANJARO  ) { lpProvider="simpletrader"; lpSignal="kilimanjaro"  ; }
-   else if (value == ST_SIGNAL.NOVOLR       ) { lpProvider="simpletrader"; lpSignal="novolr"       ; }
-   else if (value == ST_SIGNAL.OVERTRADER   ) { lpProvider="simpletrader"; lpSignal="overtrader"   ; }
-   else if (value == ST_SIGNAL.SMARTSCALPER ) { lpProvider="simpletrader"; lpSignal="smartscalper" ; }
-   else if (value == ST_SIGNAL.SMARTTRADER  ) { lpProvider="simpletrader"; lpSignal="smarttrader"  ; }
-   else if (value == ST_SIGNAL.STEADYCAPTURE) { lpProvider="simpletrader"; lpSignal="steadycapture"; }
-   else if (value == ST_SIGNAL.TWILIGHT     ) { lpProvider="simpletrader"; lpSignal="twilight"     ; }
-   else if (value == ST_SIGNAL.YENFORTRESS  ) { lpProvider="simpletrader"; lpSignal="yenfortress"  ; }
-   else {
-      return(false);
-   }
-   return(true);
+   return(!catch("RestoreRuntimeStatus(1)"));
 }
 
 
@@ -4508,7 +4349,7 @@ int ReadExternalPositions(string provider, string signal) {
       if (StringStartsWith(key, symbol +".")) {
 
          // (1.2.1) Zeile lesen
-         string value = GetIniString(file, section, key, "");
+         string value = GetIniString(file, section, key);
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(2)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (1.2.2) Positionsdaten validieren
@@ -4638,7 +4479,7 @@ int ReadExternalPositions(string provider, string signal) {
       key = keys[i];
       if (StringStartsWith(key, symbol +".")) {
          // (2.2.1) Zeile lesen
-         value = GetIniString(file, section, key, "");
+         value = GetIniString(file, section, key);
          if (!StringLen(value))                       return(_EMPTY(catch("ReadExternalPositions(20)  invalid ini entry ["+ section +"]->"+ key +" in \""+ file +"\" (empty)", ERR_RUNTIME_ERROR)));
 
          // (2.2.2) Positionsdaten validieren
@@ -4783,16 +4624,16 @@ bool EditAccountConfig() {
    string files[];
 
    if (mode.intern) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini");
    }
    else if (mode.extern) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_open.ini"  );
-      ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_closed.ini");
-      ArrayPushString(files, mqlDir +"\\files\\"+ external.signalProvider +"\\"+ external.signalAlias +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_open.ini"  );
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_closed.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.alias +"_config.ini");
    }
    else if (mode.remote) {
-      ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini");
-      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccountCompany   +"\\"+ tradeAccountNumber +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber()  +"_config.ini");
+      ArrayPushString(files, mqlDir +"\\files\\"+ tradeAccount.company  +"\\"+ tradeAccount.number +"_config.ini");
    }
    else {
       return(!catch("EditAccountConfig(1)", ERR_WRONG_JUMP));

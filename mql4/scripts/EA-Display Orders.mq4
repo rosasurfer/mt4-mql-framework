@@ -1,7 +1,7 @@
 /**
  * EA-Display Orders
  *
- * Schickt dem Expert im aktuellen Chart das Kommando, den Orderanzeige-Modus zu wechseln.
+ * Schickt dem Expert des aktuellen Charts das Kommando, den Orderanzeige-Modus zu wechseln.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -24,7 +24,7 @@ int onStart() {
    int status[], sizeOfIds;
 
 
-   // (1) Sequenzen im aktuellen Chart ermitteln
+   // (1) Sequenzen des aktuellen Charts ermitteln
    if (FindChartSequences(ids, status)) {
       sizeOfIds = ArraySize(ids);
 
