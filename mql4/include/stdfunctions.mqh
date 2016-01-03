@@ -5093,9 +5093,9 @@ void __DummyCalls() {
    int      GetIniKeys(string fileName, string section, string keys[]);
 
 #import "Expander.dll"
-   int      ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
-   int      ec_ProgramType (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_hChart     (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_TestFlags  (/*EXECUTION_CONTEXT*/int ec[]);
+   int      ec_ProgramType(/*EXECUTION_CONTEXT*/int ec[]);
 
    int      onInit();                                                      // Stubs, können bei Bedarf im Modul durch konkrete Versionen "überschrieben" werden.
    int      onInit_User();
