@@ -39,7 +39,7 @@ string inputLabels[];
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // TradeAccount und Status initialisieren
+   // TradeAccount initialisieren
    if (!InitTradeAccount())
       return(last_error);
 

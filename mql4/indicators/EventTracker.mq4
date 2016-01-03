@@ -177,7 +177,7 @@ bool Configure() {
       }
       section = "EventTracker";
       key     = "Track.Orders";
-      track.orders = GetIniBool(configFile, section, key, false);
+      track.orders = GetIniBool(configFile, section, key);
    }
    else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
 
@@ -186,7 +186,7 @@ bool Configure() {
       if (!account) return(!SetLastError(stdlib.GetLastError()));
       section = "Accounts";
       key     = account +".alias";                                   // AccountAlias
-      orders.accountAlias = GetGlobalConfigString(section, key, "");
+      orders.accountAlias = GetGlobalConfigString(section, key);
       if (!StringLen(orders.accountAlias)) return(!catch("Configure(2)  Missing global account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
    }
 
@@ -209,7 +209,7 @@ bool Configure() {
       }
       section = "EventTracker";
       key     = "Track.Signals";
-      track.signals = GetIniBool(configFile, section, key, false);
+      track.signals = GetIniBool(configFile, section, key);
    }
    else return(!catch("Configure(3)  Invalid input parameter Track.Signals = \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
 
@@ -332,7 +332,7 @@ bool Configure() {
          // zusätzliche Parameter
          if (valuesSize == 3) {
             sParam = StringTrim(keyValues[2]);
-            sValue = GetIniString(configFile, section, keys[i], "");
+            sValue = GetIniString(configFile, section, keys[i]);
             if (!Configure.Set(signal.id, signal.timeframe, signal.bar, sParam, sValue))
                return(!catch("Configure(11)  invalid or unknown price signal ["+ section +"]->"+ keys[i] +" in \""+ configFile +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             //debug("Configure(0.2)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +"."+ sParam +" = "+ sValue);
@@ -344,11 +344,11 @@ bool Configure() {
 
 
          // (2.3) ini-Value parsen
-         iniValue = GetIniString(configFile, section, keys[i], "");
+         iniValue = GetIniString(configFile, section, keys[i]);
          //debug("Configure(0.3)  "+ PeriodDescription(signal.timeframe) +","+ signal.bar +" = "+ iniValue);
 
          if (signal.id == ET_SIGNAL_BAR_CLOSE) {
-            signal.enabled = GetIniBool(configFile, section, keys[i], false);
+            signal.enabled = GetIniBool(configFile, section, keys[i]);
             signal.param1  = NULL;
          }
          else if (signal.id == ET_SIGNAL_BAR_RANGE) {
@@ -362,7 +362,7 @@ bool Configure() {
             signal.param1  = iValue1;
          }
          else if (signal.id == ET_SIGNAL_BAR_BREAKOUT) {
-            signal.enabled = GetIniBool(configFile, section, keys[i], false);
+            signal.enabled = GetIniBool(configFile, section, keys[i]);
             signal.param1  = NULL;
          }
 
@@ -417,7 +417,7 @@ bool Configure() {
          }
          section = "EventTracker";
          key     = "Alert.Sound";
-         alert.sound = GetIniBool(configFile, section, key, false);
+         alert.sound = GetIniBool(configFile, section, key);
       }
       else return(!catch("Configure(16)  Invalid input parameter Alert.Sound = \""+ Alert.Sound +"\"", ERR_INVALID_INPUT_PARAMETER));
 
@@ -427,7 +427,7 @@ bool Configure() {
       alert.sms = false;
       sValue = StringToLower(StringTrim(Alert.SMS.Receiver));
       if (sValue == "system") {
-         sValue = GetConfigString("SMS", "Receiver", "");
+         sValue = GetConfigString("SMS", "Receiver");
          if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(17)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
          alert.sms          = true;
          alert.sms.receiver = sValue;
@@ -439,9 +439,9 @@ bool Configure() {
             mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
             configFile = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
          }
-         sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS", "")); // "on | off | phone-number"
+         sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS"));   // "on | off | phone-number"
          if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-            sValue = GetConfigString("SMS", "Receiver", "");
+            sValue = GetConfigString("SMS", "Receiver");
             if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(18)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             alert.sms          = true;
             alert.sms.receiver = sValue;
@@ -462,9 +462,9 @@ bool Configure() {
             mqlDir     = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
             configFile = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ account +"_config.ini";
          }
-         sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS", "")); // "on | off | phone-number"
+         sValue = StringToLower(GetIniString(configFile, "EventTracker", "Alert.SMS"));   // "on | off | phone-number"
          if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-            sValue = GetConfigString("SMS", "Receiver", "");
+            sValue = GetConfigString("SMS", "Receiver");
             if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(20)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
             alert.sms          = true;
             alert.sms.receiver = sValue;
@@ -477,9 +477,9 @@ bool Configure() {
             alert.sms.receiver = sValue;
          }
          else if (sValue=="") {
-            sValue = StringToLower(GetConfigString("EventTracker", "Alert.SMS", "")); // "on | off | phone-number"
+            sValue = StringToLower(GetConfigString("EventTracker", "Alert.SMS"));         // "on | off | phone-number"
             if (sValue=="on" || sValue=="1" || sValue=="yes" || sValue=="true") {
-               sValue = GetConfigString("SMS", "Receiver", "");
+               sValue = GetConfigString("SMS", "Receiver");
                if (!StringIsPhoneNumber(sValue)) return(!catch("Configure(21)  Invalid global/local config value [SMS]->Receiver = \""+ sValue +"\"", ERR_INVALID_CONFIG_PARAMVALUE));
                alert.sms          = true;
                alert.sms.receiver = sValue;
@@ -1549,8 +1549,3 @@ string InputsToStr() {
                             )
    );
 }
-
-
-#import "stdlib2.ex4"
-   int GetIniKeys(string fileName, string section, string keys[]);
-#import

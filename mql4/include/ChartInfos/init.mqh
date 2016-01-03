@@ -4,24 +4,22 @@
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Textlabel zuerst erzeugen, RestoreWindowStatus() benötigt sie bereits
+   // (1) Textlabel zuerst erzeugen, RestoreRuntimeStatus() benötigt sie bereits
    if (!CreateLabels())
       return(last_error);
 
 
-   // (2) TradeAccount und Status initialisieren
-   if (!InitTradeAccount())
+   // (2) Laufzeitstatus restaurieren
+   if (!RestoreRuntimeStatus())                                      // restauriert mode.extern
       return(last_error);
-   if (mode.remote) {
-      string text = tradeAccountName +": "+ tradeAccountCompany +", "+ tradeAccountNumber +", "+ tradeAccountCurrency;
-      ObjectSetText(label.lfxTradeAccount, text, 8, "Arial Fett", ifInt(tradeAccountType==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
-   }
-   else if (!RestoreWindowStatus()) {                                // restauriert mode.extern
-      return(last_error);
-   }
 
 
-   // (3) Konfiguration einlesen und validieren
+   // (3) TradeAccount initialisieren
+   if (!mode.extern && !InitTradeAccount())     return(last_error);
+   if (!mode.intern && !UpdateAccountDisplay()) return(last_error);
+
+
+   // (4) Input-Parameter validieren
    // AppliedPrice
    string section="", key="", stdSymbol=StdSymbol();
    string price = "bid";

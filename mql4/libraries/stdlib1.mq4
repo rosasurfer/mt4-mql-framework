@@ -337,7 +337,7 @@ bool EditFiles(string filenames[]) {
    // prüfen, ob ein Editor konfiguriert ist
    string section = "System";
    string key     = "Editor";
-   string editor  = GetGlobalConfigString(section, key, "");
+   string editor  = GetGlobalConfigString(section, key);
 
 
    if (StringLen(editor) > 0) {
@@ -370,7 +370,7 @@ double GetCommission() {
    int    account  = GetAccountNumber();
    string currency = AccountCurrency();
 
-   double commission = GetGlobalConfigDouble("Commissions", company +"."+ currency +"."+ account, GetGlobalConfigDouble("Commissions", company +"."+ currency, 0));
+   double commission = GetGlobalConfigDouble("Commissions", company +"."+ currency +"."+ account, GetGlobalConfigDouble("Commissions", company +"."+ currency));
    if (commission < 0)
       return(_EMPTY(catch("GetCommission()  invalid configuration value [Commissions] "+ company +"."+ currency +"."+ account +" = "+ NumberToStr(commission, ".+"), ERR_INVALID_CONFIG_PARAMVALUE)));
 
@@ -6056,7 +6056,7 @@ string GetServerTimezone() { // throws ERR_INVALID_TIMEZONE_CONFIG
    else if (StringStartsWith(directory, "teletradecy-"       )) timezone = "Europe/Berlin";
    else {
       // Fallback zur manuellen Konfiguration in globaler Config
-      timezone = GetGlobalConfigString("Timezones", directory, "");
+      timezone = GetGlobalConfigString("Timezones", directory);
       if (!StringLen(timezone))
          return(_EMPTY_STR(catch("GetServerTimezone(1)  missing timezone configuration for trade server \""+ GetServerName() +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
    }
@@ -6458,25 +6458,25 @@ bool SendSMS(string receiver, string message) {
    // Service-Provider
    string section  = "SMS";
    string key      = "Provider";
-   string provider = GetGlobalConfigString(section, key, "");
+   string provider = GetGlobalConfigString(section, key);
    if (!StringLen(provider)) return(!catch("SendSMS(2)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Username
    section = "SMS."+ provider;
    key     = "username";
-   string username = GetGlobalConfigString(section, key, "");
+   string username = GetGlobalConfigString(section, key);
    if (!StringLen(username)) return(!catch("SendSMS(3)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // Password
    key = "password";
-   string password = GetGlobalConfigString(section, key, "");
+   string password = GetGlobalConfigString(section, key);
    if (!StringLen(password)) return(!catch("SendSMS(4)  missing setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
 
    // API-ID
    key = "api_id";
-   int api_id = GetGlobalConfigInt(section, key, 0);
+   int api_id = GetGlobalConfigInt(section, key);
    if (api_id <= 0) {
-      string value = GetGlobalConfigString(section, key, "");
+      string value = GetGlobalConfigString(section, key);
       if (!StringLen(value)) return(!catch("SendSMS(5)  missing setting ["+ section +"]->"+ key,                       ERR_RUNTIME_ERROR));
                              return(!catch("SendSMS(6)  invalid setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
    }
@@ -6574,19 +6574,6 @@ bool StringContainsI(string object, string substring) {
    if (!StringLen(substring))
       return(!catch("StringContainsI()  empty substring \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
-}
-
-
-/**
- * Vergleicht zwei Strings ohne Berücksichtigung von Groß-/Kleinschreibung.
- *
- * @param  string string1
- * @param  string string2
- *
- * @return bool
- */
-bool StringCompareI(string string1, string string2) {
-   return(StringToUpper(string1) == StringToUpper(string2));
 }
 
 
@@ -10000,7 +9987,6 @@ void Tester.ResetGlobalArrays() {
 
 #import "stdlib2.ex4"
    string DoublesToStr(double array[], string separator);
-   int    GetIniKeys(string fileName, string section, string keys[]);
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "Expander.dll"

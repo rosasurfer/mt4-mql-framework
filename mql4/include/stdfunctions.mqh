@@ -256,8 +256,8 @@ int log(string message, int error=NO_ERROR) {
 
 
    // (1) ggf. ausschließliche/zusätzliche Ausgabe via Debug oder ...
-   static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug",  false);
-   static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug", false);
+   static int static.logToDebug  = -1; if (static.logToDebug  == -1) static.logToDebug  = GetLocalConfigBool("Logging", "LogToDebug" );
+   static int static.logTeeDebug = -1; if (static.logTeeDebug == -1) static.logTeeDebug = GetLocalConfigBool("Logging", "LogTeeDebug");
 
    if (static.logToDebug  == 1) return(debug(message, error));
    if (static.logTeeDebug == 1)        debug(message, error);
@@ -1768,6 +1768,8 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
  * @return bool
  */
 bool IsEmptyString(string value) {
+   if (StringIsNull(value))
+      return(false);
    return(value == "");
 }
 
@@ -2116,6 +2118,65 @@ string StringLeft(string value, int n) {
 
 
 /**
+ * Gibt einen linken Teilstring eines Strings bis zum Auftreten eines anderen Strings zurück.
+ *
+ * @param  string value     - Ausgangsstring
+ * @param  string substring - der das Ergebnis begrenzende Substring
+ * @param  int    count     - Anzahl der Substrings, deren Auftreten das Ergebnis begrenzen (default: das erste Auftreten)
+ *                            Wenn größer als die Anzahl der im String existierenden Substrings, wird der gesamte String zurückgegeben.
+ *                            Wenn 0, wird ein Leerstring zurückgegeben.
+ *                            Wenn negativ, wird mit dem Zählen statt von vorn von hinten begonnen.
+ * @return string
+ */
+string StringLeftTo(string value, string substring, int count=1) {
+   int start=0, pos=-1;
+
+
+   // (1) positive Anzahl: von vorn zählen
+   if (count > 0) {
+      while (count > 0) {
+         pos = StringFind(value, substring, pos+1);
+         if (pos == -1)
+            return(value);
+         count--;
+      }
+      return(StringLeft(value, pos));
+   }
+
+
+   // (2) negative Anzahl: von hinten zählen
+   if (count < 0) {
+      /*
+      while(count < 0) {
+         pos = StringFind(value, substring, 0);
+         if (pos == -1)
+            return("");
+         count++;
+      }
+      */
+      pos = StringFind(value, substring, 0);
+      if (pos == -1)
+         return(value);
+
+      if (count == -1) {
+         while (pos != -1) {
+            start = pos+1;
+            pos   = StringFind(value, substring, start);
+         }
+         return(StringLeft(value, start-1));
+      }
+      return(_EMPTY_STR(catch("StringLeftTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
+
+      //pos = StringFindEx(value, substring, count);
+      //return(StringLeft(value, pos));
+   }
+
+   // Anzahl == 0
+   return("");
+}
+
+
+/**
  * Gibt einen rechten Teilstring eines Strings zurück.
  *
  * Ist N positiv, gibt StringRight() die N am meisten rechts stehenden Zeichen des Strings zurück.
@@ -2132,6 +2193,65 @@ string StringLeft(string value, int n) {
 string StringRight(string value, int n) {
    if (n > 0) return(StringSubstr(value, StringLen(value)-n));
    if (n < 0) return(StringSubstr(value, -n                ));
+   return("");
+}
+
+
+/**
+ * Gibt einen rechten Teilstring eines Strings bis zum Auftreten eines anderen Strings zurück.
+ *
+ * @param  string value     - Ausgangsstring
+ * @param  string substring - der das Ergebnis begrenzende Substring
+ * @param  int    count     - Anzahl der Substrings, deren Auftreten das Ergebnis begrenzen (default: das erste Auftreten)
+ *                            Wenn 0 oder größer als die Anzahl der im String existierenden Substrings, wird ein Leerstring zurückgegeben.
+ *                            Wenn negativ, wird mit dem Zählen statt von vorn von hinten begonnen.
+ *                            Wenn negativ und absolut größer als die Anzahl der im String existierenden Substrings, wird der gesamte String zurückgegeben.
+ * @return string
+ */
+string StringRightFrom(string value, string substring, int count=1) {
+   int start=0, pos=-1;
+
+
+   // (1) positive Anzahl: von vorn zählen
+   if (count > 0) {
+      while (count > 0) {
+         pos = StringFind(value, substring, pos+1);
+         if (pos == -1)
+            return("");
+         count--;
+      }
+      return(StringRight(value, -(pos + StringLen(substring))));
+   }
+
+
+   // (2) negative Anzahl: von hinten zählen
+   if (count < 0) {
+      /*
+      while(count < 0) {
+         pos = StringFind(value, substring, 0);
+         if (pos == -1)
+            return("");
+         count++;
+      }
+      */
+      pos = StringFind(value, substring, 0);
+      if (pos == -1)
+         return(value);
+
+      if (count == -1) {
+         while (pos != -1) {
+            start = pos+1;
+            pos   = StringFind(value, substring, start);
+         }
+         return(StringRight(value, -(start-1 + StringLen(substring))));
+      }
+      return(_EMPTY_STR(catch("StringRightTo(1)->StringFindEx()", ERR_NOT_IMPLEMENTED)));
+
+      //pos = StringFindEx(value, substring, count);
+      //return(StringRight(value, -(pos + StringLen(substring))));
+   }
+
+   // Anzahl == 0
    return("");
 }
 
@@ -3814,12 +3934,15 @@ string UninitializeReasonToStr(int reason) {
 /**
  * Gibt den Wert der extern verwalteten Assets eines Accounts zurück.
  *
- * @param  string companyId - AccountCompany-Identifier (für den aktuellen Account wie von ShortAccountCompany() zurückgegeben)
- * @param  string accountId - Account-Identifier (für den aktuellen Account wie von GetAccountNumber() zurückgegeben)
+ * @param  string companyId - AccountCompany-Identifier
+ * @param  string accountId - Account-Identifier
  *
  * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 double GetExternalAssets(string companyId, string accountId) {
+   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("GetExternalAssets(1)  invalid parameter companyId = \"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("GetExternalAssets(2)  invalid parameter accountId = \"\"", ERR_INVALID_PARAMETER)));
+
    static string lastCompanyId;
    static string lastAccountId;
    static double lastAuM;
@@ -3827,13 +3950,13 @@ double GetExternalAssets(string companyId, string accountId) {
    if (companyId!=lastCompanyId || accountId!=lastAccountId) {
       double aum = RefreshExternalAssets(companyId, accountId);
       if (IsEmptyValue(aum))
-         return(aum);
+         return(EMPTY_VALUE);
 
       lastCompanyId = companyId;
       lastAccountId = accountId;
       lastAuM       = aum;
    }
-   return(lastAuM);
+   return(aum);
 }
 
 
@@ -3841,23 +3964,22 @@ double GetExternalAssets(string companyId, string accountId) {
  * Liest den Konfigurationswert der extern verwalteten Assets eines Acounts neu ein.  Der konfigurierte Wert kann negativ sein,
  * um die Accountgröße herunterzuskalieren (z.B. zum Testen einer Strategie im Real-Account).
  *
- * @param  string companyId - AccountCompany-Identifier (für den aktuellen Account wie von ShortAccountCompany() zurückgegeben)
- * @param  string accountId - Account-Identifier (für den aktuellen Account wie von GetAccountNumber() zurückgegeben)
+ * @param  string companyId - AccountCompany-Identifier
+ * @param  string accountId - Account-Identifier
  *
  * @return double - Wert oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 double RefreshExternalAssets(string companyId, string accountId) {
+   if (!StringLen(companyId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(1)  invalid parameter companyId = \"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountId)) return(_EMPTY_VALUE(catch("RefreshExternalAssets(2)  invalid parameter accountId = \"\"", ERR_INVALID_PARAMETER)));
+
    string mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
    string file    = TerminalPath() + mqlDir +"\\files\\"+ companyId +"\\"+ accountId +"_config.ini";
    string section = "General";
    string key     = "AuM.Value";
+   double value   = GetIniDouble(file, section, key);
 
-   double value = GetIniDouble(file, section, key, 0);
-
-   return(ifDouble(!catch("RefreshExternalAssets(1)"), value, EMPTY_VALUE));
-
-   //if (mode.intern) file = file + ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
-   //else             file = file + external.provider     +"\\"+ external.signal    +"_config.ini";
+   return(value);
 }
 
 
@@ -4300,56 +4422,367 @@ bool DeleteIniKey(string fileName, string section, string key) {
 string ShortAccountCompany() {
    string server=StringToLower(GetServerName());
 
-   if      (StringStartsWith(server, "alpari-"            )) return("Alpari"          );
-   else if (StringStartsWith(server, "alparibroker-"      )) return("Alpari"          );
-   else if (StringStartsWith(server, "alpariuk-"          )) return("Alpari"          );
-   else if (StringStartsWith(server, "alparius-"          )) return("Alpari"          );
-   else if (StringStartsWith(server, "apbgtrading-"       )) return("APBG"            );
-   else if (StringStartsWith(server, "atcbrokers-"        )) return("ATC"             );
-   else if (StringStartsWith(server, "atcbrokersest-"     )) return("ATC"             );
-   else if (StringStartsWith(server, "atcbrokersliq1-"    )) return("ATC"             );
-   else if (StringStartsWith(server, "axitrader-"         )) return("AxiTrader"       );
-   else if (StringStartsWith(server, "axitraderusa-"      )) return("AxiTrader"       );
-   else if (StringStartsWith(server, "broco-"             )) return("BroCo"           );
-   else if (StringStartsWith(server, "brocoinvestments-"  )) return("BroCo"           );
-   else if (StringStartsWith(server, "cmap-"              )) return("IC Markets"      );     // demo
-   else if (StringStartsWith(server, "collectivefx-"      )) return("CollectiveFX"    );
-   else if (StringStartsWith(server, "dukascopy-"         )) return("Dukascopy"       );
-   else if (StringStartsWith(server, "easyforex-"         )) return("EasyForex"       );
-   else if (StringStartsWith(server, "finfx-"             )) return("FinFX"           );
-   else if (StringStartsWith(server, "forex-"             )) return("Forex Ltd"       );
-   else if (StringStartsWith(server, "forexbaltic-"       )) return("FB Capital"      );
-   else if (StringStartsWith(server, "fxopen-"            )) return("FXOpen"          );
-   else if (StringStartsWith(server, "fxprimus-"          )) return("FX Primus"       );
-   else if (StringStartsWith(server, "fxpro.com-"         )) return("FxPro"           );
-   else if (StringStartsWith(server, "fxdd-"              )) return("FXDD"            );
-   else if (StringStartsWith(server, "gci-"               )) return("GCI"             );
-   else if (StringStartsWith(server, "gcmfx-"             )) return("Gallant"         );
-   else if (StringStartsWith(server, "gftforex-"          )) return("GFT"             );
-   else if (StringStartsWith(server, "globalprime-"       )) return("Global Prime"    );
-   else if (StringStartsWith(server, "icmarkets-"         )) return("IC Markets"      );
-   else if (StringStartsWith(server, "inovatrade-"        )) return("InovaTrade"      );
-   else if (StringStartsWith(server, "integral-"          )) return("Global Prime"    );     // demo
-   else if (StringStartsWith(server, "investorseurope-"   )) return("Investors Europe");
-   else if (StringStartsWith(server, "jfd-demo"           )) return("JFD Brokers"     );
-   else if (StringStartsWith(server, "jfd-live"           )) return("JFD Brokers"     );
-   else if (StringStartsWith(server, "liteforex-"         )) return("LiteForex"       );
-   else if (StringStartsWith(server, "londoncapitalgr-"   )) return("London Capital"  );
-   else if (StringStartsWith(server, "londoncapitalgroup-")) return("London Capital"  );
-   else if (StringStartsWith(server, "mbtrading-"         )) return("MB Trading"      );
-   else if (StringStartsWith(server, "metaquotes-"        )) return("MetaQuotes"      );
-   else if (StringStartsWith(server, "migbank-"           )) return("MIG"             );
-   else if (StringStartsWith(server, "myfx-dukascopy"     )) return("MyFX-Dukascopy"  );
-   else if (StringStartsWith(server, "myfx-synthetic"     )) return("MyFX-Synthetic"  );
-   else if (StringStartsWith(server, "oanda-"             )) return("Oanda"           );
-   else if (StringStartsWith(server, "pepperstone-"       )) return("Pepperstone"     );
-   else if (StringStartsWith(server, "primexm-"           )) return("PrimeXM"         );
-   else if (StringStartsWith(server, "sig-"               )) return("LiteForex"       );
-   else if (StringStartsWith(server, "sts-"               )) return("STS"             );
-   else if (StringStartsWith(server, "teletrade-"         )) return("TeleTrade"       );
-   else if (StringStartsWith(server, "teletradecy-"       )) return("TeleTrade"       );
+   if (StringStartsWith(server, "alpari-"            )) return(AC.Alpari          );
+   if (StringStartsWith(server, "alparibroker-"      )) return(AC.Alpari          );
+   if (StringStartsWith(server, "alpariuk-"          )) return(AC.Alpari          );
+   if (StringStartsWith(server, "alparius-"          )) return(AC.Alpari          );
+   if (StringStartsWith(server, "apbgtrading-"       )) return(AC.APBG            );
+   if (StringStartsWith(server, "atcbrokers-"        )) return(AC.ATC             );
+   if (StringStartsWith(server, "atcbrokersest-"     )) return(AC.ATC             );
+   if (StringStartsWith(server, "atcbrokersliq1-"    )) return(AC.ATC             );
+   if (StringStartsWith(server, "axitrader-"         )) return(AC.AxiTrader       );
+   if (StringStartsWith(server, "axitraderusa-"      )) return(AC.AxiTrader       );
+   if (StringStartsWith(server, "broco-"             )) return(AC.BroCo           );
+   if (StringStartsWith(server, "brocoinvestments-"  )) return(AC.BroCo           );
+   if (StringStartsWith(server, "cmap-"              )) return(AC.IC_Markets      );     // demo
+   if (StringStartsWith(server, "collectivefx-"      )) return(AC.CollectiveFX    );
+   if (StringStartsWith(server, "dukascopy-"         )) return(AC.Dukascopy       );
+   if (StringStartsWith(server, "easyforex-"         )) return(AC.EasyForex       );
+   if (StringStartsWith(server, "finfx-"             )) return(AC.FinFX           );
+   if (StringStartsWith(server, "forex-"             )) return(AC.Forex_Ltd       );
+   if (StringStartsWith(server, "forexbaltic-"       )) return(AC.FB_Capital      );
+   if (StringStartsWith(server, "fxopen-"            )) return(AC.FXOpen          );
+   if (StringStartsWith(server, "fxprimus-"          )) return(AC.FX_Primus       );
+   if (StringStartsWith(server, "fxpro.com-"         )) return(AC.FxPro           );
+   if (StringStartsWith(server, "fxdd-"              )) return(AC.FXDD            );
+   if (StringStartsWith(server, "gci-"               )) return(AC.GCI             );
+   if (StringStartsWith(server, "gcmfx-"             )) return(AC.Gallant         );
+   if (StringStartsWith(server, "gftforex-"          )) return(AC.GFT             );
+   if (StringStartsWith(server, "globalprime-"       )) return(AC.Global_Prime    );
+   if (StringStartsWith(server, "icmarkets-"         )) return(AC.IC_Markets      );
+   if (StringStartsWith(server, "inovatrade-"        )) return(AC.InovaTrade      );
+   if (StringStartsWith(server, "integral-"          )) return(AC.Global_Prime    );     // demo
+   if (StringStartsWith(server, "investorseurope-"   )) return(AC.Investors_Europe);
+   if (StringStartsWith(server, "jfd-demo"           )) return(AC.JFD_Brokers     );
+   if (StringStartsWith(server, "jfd-live"           )) return(AC.JFD_Brokers     );
+   if (StringStartsWith(server, "liteforex-"         )) return(AC.LiteForex       );
+   if (StringStartsWith(server, "londoncapitalgr-"   )) return(AC.London_Capital  );
+   if (StringStartsWith(server, "londoncapitalgroup-")) return(AC.London_Capital  );
+   if (StringStartsWith(server, "mbtrading-"         )) return(AC.MB_Trading      );
+   if (StringStartsWith(server, "metaquotes-"        )) return(AC.MetaQuotes      );
+   if (StringStartsWith(server, "migbank-"           )) return(AC.MIG             );
+   if (StringStartsWith(server, "myfx-dukascopy"     )) return(AC.MyFX_Dukascopy  );
+   if (StringStartsWith(server, "myfx-synthetic"     )) return(AC.MyFX_Synthetic  );
+   if (StringStartsWith(server, "oanda-"             )) return(AC.Oanda           );
+   if (StringStartsWith(server, "pepperstone-"       )) return(AC.Pepperstone     );
+   if (StringStartsWith(server, "primexm-"           )) return(AC.PrimeXM         );
+   if (StringStartsWith(server, "sig-"               )) return(AC.LiteForex       );
+   if (StringStartsWith(server, "sts-"               )) return(AC.STS             );
+   if (StringStartsWith(server, "teletrade-"         )) return(AC.TeleTrade       );
+   if (StringStartsWith(server, "teletradecy-"       )) return(AC.TeleTrade       );
 
    return(AccountCompany());
+}
+
+
+/**
+ * Gibt die Company-ID einer AccountCompany zurück.
+ *
+ * @param string shortName - Kurzname einer AccountCompany
+ *
+ * @return int - Company-ID oder NULL, falls der übergebene Wert keine bekannte AccountCompany darstellt
+ */
+int AccountCompanyId(string shortName) {
+   if (!StringLen(shortName))
+      return(NULL);
+
+   shortName = StringToUpper(shortName);
+
+   switch (StringGetChar(shortName, 0)) {
+      case 'A': if (shortName == StringToUpper(AC.Alpari          )) return(AC_ID.Alpari          );
+                if (shortName == StringToUpper(AC.APBG            )) return(AC_ID.APBG            );
+                if (shortName == StringToUpper(AC.ATC             )) return(AC_ID.ATC             );
+                if (shortName == StringToUpper(AC.AxiTrader       )) return(AC_ID.AxiTrader       );
+                break;
+
+      case 'B': if (shortName == StringToUpper(AC.BroCo           )) return(AC_ID.BroCo           );
+                break;
+
+      case 'C': if (shortName == StringToUpper(AC.CollectiveFX    )) return(AC_ID.CollectiveFX    );
+                break;
+
+      case 'D': if (shortName == StringToUpper(AC.Dukascopy       )) return(AC_ID.Dukascopy       );
+                break;
+
+      case 'E': if (shortName == StringToUpper(AC.EasyForex       )) return(AC_ID.EasyForex       );
+                break;
+
+      case 'F': if (shortName == StringToUpper(AC.FB_Capital      )) return(AC_ID.FB_Capital      );
+                if (shortName == StringToUpper(AC.FinFX           )) return(AC_ID.FinFX           );
+                if (shortName == StringToUpper(AC.Forex_Ltd       )) return(AC_ID.Forex_Ltd       );
+                if (shortName == StringToUpper(AC.FX_Primus       )) return(AC_ID.FX_Primus       );
+                if (shortName == StringToUpper(AC.FXDD            )) return(AC_ID.FXDD            );
+                if (shortName == StringToUpper(AC.FXOpen          )) return(AC_ID.FXOpen          );
+                if (shortName == StringToUpper(AC.FxPro           )) return(AC_ID.FxPro           );
+                break;
+
+      case 'G': if (shortName == StringToUpper(AC.Gallant         )) return(AC_ID.Gallant         );
+                if (shortName == StringToUpper(AC.GCI             )) return(AC_ID.GCI             );
+                if (shortName == StringToUpper(AC.GFT             )) return(AC_ID.GFT             );
+                if (shortName == StringToUpper(AC.Global_Prime    )) return(AC_ID.Global_Prime    );
+                break;
+
+      case 'H': break;
+
+      case 'I': if (shortName == StringToUpper(AC.IC_Markets      )) return(AC_ID.IC_Markets      );
+                if (shortName == StringToUpper(AC.InovaTrade      )) return(AC_ID.InovaTrade      );
+                if (shortName == StringToUpper(AC.Investors_Europe)) return(AC_ID.Investors_Europe);
+                break;
+
+      case 'J': if (shortName == StringToUpper(AC.JFD_Brokers     )) return(AC_ID.JFD_Brokers     );
+                break;
+
+      case 'K': break;
+
+      case 'L': if (shortName == StringToUpper(AC.LiteForex       )) return(AC_ID.LiteForex       );
+                if (shortName == StringToUpper(AC.London_Capital  )) return(AC_ID.London_Capital  );
+                break;
+
+      case 'M': if (shortName == StringToUpper(AC.MB_Trading      )) return(AC_ID.MB_Trading      );
+                if (shortName == StringToUpper(AC.MetaQuotes      )) return(AC_ID.MetaQuotes      );
+                if (shortName == StringToUpper(AC.MIG             )) return(AC_ID.MIG             );
+                if (shortName == StringToUpper(AC.MyFX_Dukascopy  )) return(AC_ID.MyFX_Dukascopy  );
+                if (shortName == StringToUpper(AC.MyFX_Synthetic  )) return(AC_ID.MyFX_Synthetic  );
+                break;
+
+      case 'N': break;
+
+      case 'O': if (shortName == StringToUpper(AC.Oanda           )) return(AC_ID.Oanda           );
+                break;
+
+      case 'P': if (shortName == StringToUpper(AC.Pepperstone     )) return(AC_ID.Pepperstone     );
+                if (shortName == StringToUpper(AC.PrimeXM         )) return(AC_ID.PrimeXM         );
+                break;
+
+      case 'Q': break;
+      case 'R': break;
+
+      case 'S': if (shortName == StringToUpper(AC.SimpleTrader    )) return(AC_ID.SimpleTrader    );
+                if (shortName == StringToUpper(AC.STS             )) return(AC_ID.STS             );
+                break;
+
+      case 'T': if (shortName == StringToUpper(AC.TeleTrade       )) return(AC_ID.TeleTrade       );
+                break;
+
+      case 'U': break;
+      case 'V': break;
+      case 'W': break;
+      case 'X': break;
+      case 'Y': break;
+      case 'Z': break;
+   }
+
+   return(NULL);
+}
+
+
+/**
+ * Gibt den Kurznamen der Firma mit der übergebenen Company-ID zurück.
+ *
+ * @param int id - Company-ID
+ *
+ * @return string - Kurzname oder Leerstring, falls die übergebene ID unbekannt ist
+ */
+string ShortAccountCompanyFromId(int id) {
+   switch (id) {
+      case AC_ID.Alpari          : return(AC.Alpari          );
+      case AC_ID.APBG            : return(AC.APBG            );
+      case AC_ID.ATC             : return(AC.ATC             );
+      case AC_ID.AxiTrader       : return(AC.AxiTrader       );
+      case AC_ID.BroCo           : return(AC.BroCo           );
+      case AC_ID.CollectiveFX    : return(AC.CollectiveFX    );
+      case AC_ID.Dukascopy       : return(AC.Dukascopy       );
+      case AC_ID.EasyForex       : return(AC.EasyForex       );
+      case AC_ID.FB_Capital      : return(AC.FB_Capital      );
+      case AC_ID.FinFX           : return(AC.FinFX           );
+      case AC_ID.Forex_Ltd       : return(AC.Forex_Ltd       );
+      case AC_ID.FX_Primus       : return(AC.FX_Primus       );
+      case AC_ID.FXDD            : return(AC.FXDD            );
+      case AC_ID.FXOpen          : return(AC.FXOpen          );
+      case AC_ID.FxPro           : return(AC.FxPro           );
+      case AC_ID.Gallant         : return(AC.Gallant         );
+      case AC_ID.GCI             : return(AC.GCI             );
+      case AC_ID.GFT             : return(AC.GFT             );
+      case AC_ID.Global_Prime    : return(AC.Global_Prime    );
+      case AC_ID.IC_Markets      : return(AC.IC_Markets      );
+      case AC_ID.InovaTrade      : return(AC.InovaTrade      );
+      case AC_ID.Investors_Europe: return(AC.Investors_Europe);
+      case AC_ID.JFD_Brokers     : return(AC.JFD_Brokers     );
+      case AC_ID.LiteForex       : return(AC.LiteForex       );
+      case AC_ID.London_Capital  : return(AC.London_Capital  );
+      case AC_ID.MB_Trading      : return(AC.MB_Trading      );
+      case AC_ID.MetaQuotes      : return(AC.MetaQuotes      );
+      case AC_ID.MIG             : return(AC.MIG             );
+      case AC_ID.MyFX_Dukascopy  : return(AC.MyFX_Dukascopy  );
+      case AC_ID.MyFX_Synthetic  : return(AC.MyFX_Synthetic  );
+      case AC_ID.Oanda           : return(AC.Oanda           );
+      case AC_ID.Pepperstone     : return(AC.Pepperstone     );
+      case AC_ID.PrimeXM         : return(AC.PrimeXM         );
+      case AC_ID.SimpleTrader    : return(AC.SimpleTrader    );
+      case AC_ID.STS             : return(AC.STS             );
+      case AC_ID.TeleTrade       : return(AC.TeleTrade       );
+   }
+   return("");
+}
+
+
+/**
+ * Ob der übergebene Wert einen bekannten Kurznamen einer AccountCompany darstellt.
+ *
+ * @param string value
+ *
+ * @return bool
+ */
+bool IsShortAccountCompany(string value) {
+   return(AccountCompanyId(value) != 0);
+}
+
+
+/**
+ * Gibt den Alias eines Accounts zurück.
+ *
+ * @param  string accountCompany
+ * @param  int    accountNumber
+ *
+ * @return string - Alias oder Leerstring, falls der Account unbekannt ist
+ */
+string AccountAlias(string accountCompany, int accountNumber) {
+   if (!StringLen(accountCompany)) return(_EMPTY_STR(catch("AccountAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
+   if (accountNumber <= 0)         return(_EMPTY_STR(catch("AccountAlias(2)  invalid parameter accountNumber = "+ accountNumber, ERR_INVALID_PARAMETER)));
+
+   if (StringCompareI(accountCompany, AC.SimpleTrader)) {
+      // SimpleTrader-Account
+      switch (accountNumber) {
+         case STA_ID.AlexProfit      : return(STA_ALIAS.AlexProfit      );
+         case STA_ID.ASTA            : return(STA_ALIAS.ASTA            );
+         case STA_ID.Caesar2         : return(STA_ALIAS.Caesar2         );
+         case STA_ID.Caesar21        : return(STA_ALIAS.Caesar21        );
+         case STA_ID.ConsistentProfit: return(STA_ALIAS.ConsistentProfit);
+         case STA_ID.DayFox          : return(STA_ALIAS.DayFox          );
+         case STA_ID.FXViper         : return(STA_ALIAS.FXViper         );
+         case STA_ID.GCEdge          : return(STA_ALIAS.GCEdge          );
+         case STA_ID.GoldStar        : return(STA_ALIAS.GoldStar        );
+         case STA_ID.Kilimanjaro     : return(STA_ALIAS.Kilimanjaro     );
+         case STA_ID.NovoLRfund      : return(STA_ALIAS.NovoLRfund      );
+         case STA_ID.OverTrader      : return(STA_ALIAS.OverTrader      );
+         case STA_ID.SmartScalper    : return(STA_ALIAS.SmartScalper    );
+         case STA_ID.SmartTrader     : return(STA_ALIAS.SmartTrader     );
+         case STA_ID.SteadyCapture   : return(STA_ALIAS.SteadyCapture   );
+         case STA_ID.Twilight        : return(STA_ALIAS.Twilight        );
+         case STA_ID.YenFortress     : return(STA_ALIAS.YenFortress     );
+      }
+   }
+   else {
+      // regulärer Account
+      string section = "Accounts";
+      string key     = accountNumber +".alias";
+      string value   = GetGlobalConfigString(section, key);
+      if (StringLen(value) > 0)
+         return(value);
+   }
+
+   return("");
+}
+
+
+/**
+ * Gibt die Account-Nummer eines Accounts anhand seines Aliasses zurück.
+ *
+ * @param  string accountCompany
+ * @param  string accountAlias
+ *
+ * @return int - Account-Nummer oder NULL, falls der Account unbekannt ist
+ */
+int AccountNumberFromAlias(string accountCompany, string accountAlias) {
+   if (!StringLen(accountCompany)) return(_NULL(catch("AccountNumberFromAlias(1)  invalid parameter accountCompany = \"\"", ERR_INVALID_PARAMETER)));
+   if (!StringLen(accountAlias))   return(_NULL(catch("AccountNumberFromAlias(2)  invalid parameter accountAlias = \"\"", ERR_INVALID_PARAMETER)));
+
+   if (StringCompareI(accountCompany, AC.SimpleTrader)) {
+      // SimpleTrader-Account
+      accountAlias = StringToLower(accountAlias);
+
+      if (accountAlias == StringToLower(STA_ALIAS.AlexProfit      )) return(STA_ID.AlexProfit      );
+      if (accountAlias == StringToLower(STA_ALIAS.ASTA            )) return(STA_ID.ASTA            );
+      if (accountAlias == StringToLower(STA_ALIAS.Caesar2         )) return(STA_ID.Caesar2         );
+      if (accountAlias == StringToLower(STA_ALIAS.Caesar21        )) return(STA_ID.Caesar21        );
+      if (accountAlias == StringToLower(STA_ALIAS.ConsistentProfit)) return(STA_ID.ConsistentProfit);
+      if (accountAlias == StringToLower(STA_ALIAS.DayFox          )) return(STA_ID.DayFox          );
+      if (accountAlias == StringToLower(STA_ALIAS.FXViper         )) return(STA_ID.FXViper         );
+      if (accountAlias == StringToLower(STA_ALIAS.GCEdge          )) return(STA_ID.GCEdge          );
+      if (accountAlias == StringToLower(STA_ALIAS.GoldStar        )) return(STA_ID.GoldStar        );
+      if (accountAlias == StringToLower(STA_ALIAS.Kilimanjaro     )) return(STA_ID.Kilimanjaro     );
+      if (accountAlias == StringToLower(STA_ALIAS.NovoLRfund      )) return(STA_ID.NovoLRfund      );
+      if (accountAlias == StringToLower(STA_ALIAS.OverTrader      )) return(STA_ID.OverTrader      );
+      if (accountAlias == StringToLower(STA_ALIAS.SmartScalper    )) return(STA_ID.SmartScalper    );
+      if (accountAlias == StringToLower(STA_ALIAS.SmartTrader     )) return(STA_ID.SmartTrader     );
+      if (accountAlias == StringToLower(STA_ALIAS.SteadyCapture   )) return(STA_ID.SteadyCapture   );
+      if (accountAlias == StringToLower(STA_ALIAS.Twilight        )) return(STA_ID.Twilight        );
+      if (accountAlias == StringToLower(STA_ALIAS.YenFortress     )) return(STA_ID.YenFortress     );
+   }
+   else {
+      // regulärer Account
+      string file    = GetGlobalConfigPath();
+      string section = "Accounts";
+      string keys[], value, sAccount;
+      int keysSize = GetIniKeys(file, section, keys);
+
+      for (int i=0; i < keysSize; i++) {
+         if (StringEndsWithI(keys[i], ".alias")) {
+            value = GetGlobalConfigString(section, keys[i]);
+            if (StringCompareI(value, accountAlias)) {
+               sAccount = StringTrimRight(StringLeft(keys[i], -6));
+               value    = GetGlobalConfigString(section, sAccount +".company");
+               if (StringCompareI(value, accountCompany)) {
+                  if (StringIsDigit(sAccount))
+                     return(StrToInteger(sAccount));
+               }
+            }
+         }
+      }
+   }
+   return(NULL);
+}
+
+
+/**
+ * Vergleicht zwei Strings mit Berücksichtigung von Groß-/Kleinschreibung.
+ *
+ * @param  string string1
+ * @param  string string2
+ *
+ * @return bool
+ */
+bool StringCompare(string string1, string string2) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(string1)) return(StringIsNull(string2));
+         if (StringIsNull(string2)) return(false);
+      }
+      catch("StringCompare(1)", error);
+   }
+   return(string1 == string2);
+}
+
+
+/**
+ * Vergleicht zwei Strings ohne Berücksichtigung von Groß-/Kleinschreibung.
+ *
+ * @param  string string1
+ * @param  string string2
+ *
+ * @return bool
+ */
+bool StringCompareI(string string1, string string2) {
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error == ERR_NOT_INITIALIZED_STRING) {
+         if (StringIsNull(string1)) return(StringIsNull(string2));
+         if (StringIsNull(string2)) return(false);
+      }
+      catch("StringCompareI(1)", error);
+   }
+   return(StringToUpper(string1) == StringToUpper(string2));
 }
 
 
@@ -4360,38 +4793,24 @@ void __DummyCalls() {
    int    iNulls[];
    string sNulls[];
 
-   IsExpert();
-   IsScript();
-   IsIndicator();
-   IsLibrary();
-
-   Expert.IsTesting();
-   Script.IsTesting();
-   Indicator.IsTesting();
-   This.IsTesting();
-
-   InitReason();
-   DeinitReason();
-
-   IsSuperContext();
-   SetLastError(NULL, NULL);
-   UpdateProgramStatus();
-
    __log.custom(NULL);
    _bool(NULL);
-   _int(NULL);
    _double(NULL);
-   _string(NULL);
    _EMPTY();
    _EMPTY_STR();
    _EMPTY_VALUE();
    _false();
+   _int(NULL);
    _last_error();
    _NaT();
    _NO_ERROR();
    _NULL();
+   _string(NULL);
    _true();
    Abs(NULL);
+   AccountAlias(NULL, NULL);
+   AccountCompanyId(NULL);
+   AccountNumberFromAlias(NULL, NULL);
    ArrayUnshiftString(sNulls, NULL);
    BoolToStr(NULL);
    catch(NULL, NULL, NULL);
@@ -4408,12 +4827,14 @@ void __DummyCalls() {
    DateTime(NULL);
    debug(NULL);
    DebugMarketInfo(NULL, NULL);
+   DeinitReason();
    DeleteIniKey(NULL, NULL, NULL);
    Div(NULL, NULL);
    DoubleQuoteStr(NULL);
    DummyCalls();
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
+   Expert.IsTesting();
    Floor(NULL);
    GE(NULL, NULL);
    GetConfigBool(NULL, NULL);
@@ -4444,21 +4865,29 @@ void __DummyCalls() {
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);
    ifString(NULL, NULL, NULL);
+   Indicator.IsTesting();
+   InitReason();
    IsConfigKey(NULL, NULL);
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
    IsError(NULL);
+   IsExpert();
    IsGlobalConfigKey(NULL, NULL);
+   IsIndicator();
    IsInfinity(NULL);
    IsLastError();
    IsLeapYear(NULL);
+   IsLibrary();
    IsLocalConfigKey(NULL, NULL);
    IsLogging();
    IsMqlDirectory(NULL);
    IsMqlFile(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
+   IsScript();
+   IsShortAccountCompany(NULL);
+   IsSuperContext();
    IsTicket(NULL);
    LE(NULL, NULL);
    log(NULL);
@@ -4485,10 +4914,15 @@ void __DummyCalls() {
    RoundCeil(NULL);
    RoundEx(NULL);
    RoundFloor(NULL);
+   Script.IsTesting();
    SelectTicket(NULL, NULL);
+   SetLastError(NULL, NULL);
    ShortAccountCompany();
+   ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
+   StringCompare(NULL, NULL);
+   StringCompareI(NULL, NULL);
    StringEndsWith(NULL, NULL);
    StringEndsWithI(NULL, NULL);
    StringIsDigit(NULL);
@@ -4498,10 +4932,12 @@ void __DummyCalls() {
    StringIsPhoneNumber(NULL);
    StringLeft(NULL, NULL);
    StringLeftPad(NULL, NULL);
+   StringLeftTo(NULL, NULL);
    StringPadLeft(NULL, NULL);
    StringPadRight(NULL, NULL);
    StringReplace(NULL, NULL, NULL);
    StringRight(NULL, NULL);
+   StringRightFrom(NULL, NULL);
    StringRightPad(NULL, NULL);
    StringStartsWith(NULL, NULL);
    StringStartsWithI(NULL, NULL);
@@ -4517,6 +4953,7 @@ void __DummyCalls() {
    Tester.IsPaused();
    Tester.IsStopped();
    Tester.Pause();
+   This.IsTesting();
    TimeCurrentEx();
    TimeDayFix(NULL);
    TimeDayOfWeekFix(NULL);
@@ -4529,6 +4966,7 @@ void __DummyCalls() {
    TimeYearFix(NULL);
    Toolbar.Experts(NULL);
    UninitializeReasonToStr(NULL);
+   UpdateProgramStatus();
    UrlEncode(NULL);
    WaitForTicket(NULL);
    warn(NULL);
@@ -4599,6 +5037,9 @@ void __DummyCalls() {
    bool     StringContains(string object, string substring);
    string   StringRepeat(string input, int times);
 
+#import "stdlib2.ex4"
+   int      GetIniKeys(string fileName, string section, string keys[]);
+
 #import "Expander.dll"
    int      ec_hChart      (/*EXECUTION_CONTEXT*/int ec[]);
    int      ec_TestFlags   (/*EXECUTION_CONTEXT*/int ec[]);
@@ -4627,11 +5068,14 @@ void __DummyCalls() {
    int      GetLastWin32Error();
    datetime GetLocalTime();
    string   GetString(int address);
+   int      GetWindowProperty(int hWnd, string lpName);
    string   IntToHexStr(int integer);
    bool     IsStandardTimeframe(int timeframe);
    bool     IsUIThread();
    bool     RemoveTickTimer(int timerId);
+   int      RemoveWindowProperty(int hWnd, string lpName);
    void     SetLogLevel(int level);
+   bool     SetWindowProperty(int hWnd, string lpName, int value);
    int      SetupTickTimer(int hWnd, int millis, int flags);
 
 #import "kernel32.dll"

@@ -14,12 +14,12 @@ bool   mode.intern = true;    // Default                             // - Intern
 bool   mode.extern;                                                  //   eingelesen. Orderänderungen werden automatisch erkannt.
 bool   mode.remote;                                                  // - Externe und Remote-Positionsdaten stammen aus einer externen Quelle und werden nur bei Timeframe-Wechsel
                                                                      //   oder nach Eintreffen eines entsprechenden Events zurückgesetzt und neu eingelesen. Orderänderungen werden
-int    tradeAccountNumber;                                           //   nicht automatisch erkannt.
-string tradeAccountCurrency;
-int    tradeAccountType;                                             // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
-string tradeAccountCompany;
-string tradeAccountName;                                             // Inhaber
-string tradeAccountAlias;                                            // Alias für Logs, SMS etc.
+string tradeAccount.company;                                         //   nicht automatisch erkannt.
+int    tradeAccount.number;
+string tradeAccount.currency;
+int    tradeAccount.type;                                            // ACCOUNT_TYPE_DEMO|ACCOUNT_TYPE_REAL
+string tradeAccount.name;                                            // Inhaber
+string tradeAccount.alias;                                           // Alias für Logs, SMS etc.
 
 
 string lfxCurrency = "";
@@ -38,91 +38,158 @@ int    lfxOrders.openPositions;                                      // Anzahl d
 
 
 /**
- * Initialisiert Status und Variablen des aktuellen TradeAccounts.
+ * Initialisiert Status und Variablen des zu verwendenden TradeAccounts. Wird ein Account-Parameter übergeben, wird dieser Account als externer Account
+ * interpretiert und eingestellt (mode.extern=TRUE).
  *
- * @return bool - Erfolgsstatus
+ * @param  string accountKey - Identifier eines externen Accounts im Format "{AccountCompany}:{Account}" (default: keiner)
+ *                             Dies kann sein:
+ *                              • eine "Integer:Integer"-Kombination: RestoreRuntimeStatus() kennt Accounts nur anhand von Integer-ID's
+ *                              • eine "String:Integer"-Kombination:  regulärer Account mit Company und AccountNumber
+ *                              • eine "String:String"-Kombination:   SimpleTrader-Account mit Company und AccountAlias
+ *
+ * @return bool - Erfolgsstatus; nicht, ob der angegebene Schlüssel einen gültigen Account darstellte
  */
-bool InitTradeAccount() {
-   if (tradeAccountNumber != 0)
-      return(true);
+bool InitTradeAccount(string accountKey="") {
+   if (accountKey == "0")                                            // (string) NULL
+      accountKey = "";
 
+   string _accountCompany;
    int    _accountNumber;
    string _accountCurrency;
    int    _accountType;
-   string _accountCompany;
    string _accountName;
    string _accountAlias;
 
 
-   // (1) AccountNumber bestimmen und dabei einen konfigurierten nicht-standardmäßigen Account berücksichtigen
-   _accountNumber = GetAccountNumber(); if (!_accountNumber) return(!SetLastError(stdlib.GetLastError()));
+   // (1) einen übergebenen externen Account zuordnen
+   if (StringLen(accountKey) > 0) {
+      string sCompanyId = StringLeftTo   (accountKey, ":"); if (!StringLen(sCompanyId))                          return(_true(warn("InitTradeAccount(1)  invalid parameter accountKey = \""+ accountKey +"\"")));
+      string sAccountId = StringRightFrom(accountKey, ":"); if (!StringLen(sAccountId))                          return(_true(warn("InitTradeAccount(2)  invalid parameter accountKey = \""+ accountKey +"\"")));
 
-   string mqlDir   = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file     = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ GetAccountNumber() +"_config.ini";
-   string section = "General";
-   string key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
+      bool sCompanyId.isDigit = StringIsDigit(sCompanyId);
+      bool sAccountId.isDigit = StringIsDigit(sAccountId);
 
-   int nonStdAccount = GetIniInt(file, section, key);
-   if (nonStdAccount <= 0) {
-      string value = GetIniString(file, section, key);
-      if (value != "")     return(!catch("InitTradeAccount(1)  invalid trade account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
+      // (1.1) companyId zuordnen
+      if (sCompanyId.isDigit) {
+         _accountCompany = ShortAccountCompanyFromId(StrToInteger(sCompanyId)); if (!StringLen(_accountCompany)) return(_true(warn("InitTradeAccount(3)  unsupported account key = \""+ accountKey +"\"")));
+      }
+      else {
+         _accountCompany = sCompanyId; if (!IsShortAccountCompany(_accountCompany))                              return(_true(warn("InitTradeAccount(4)  unsupported account key = \""+ accountKey +"\"")));
+      }
+
+      // (1.2) accountId zuordnen
+      if (sAccountId.isDigit) {
+         _accountNumber = StrToInteger(sAccountId); if (!_accountNumber)                                         return(_true(warn("InitTradeAccount(5)  invalid parameter accountKey = \""+ accountKey +"\"")));
+         _accountAlias  = AccountAlias(_accountCompany, _accountNumber); if (!StringLen(_accountAlias))          return(_true(warn("InitTradeAccount(6)  unsupported account key = \""+ accountKey +"\"")));
+      }
+      else {
+         _accountAlias  = sAccountId;
+         _accountNumber = AccountNumberFromAlias(_accountCompany, _accountAlias); if (!_accountNumber)           return(_true(warn("InitTradeAccount(7)  unsupported account key = \""+ accountKey +"\"")));
+      }
+      if (tradeAccount.company==_accountCompany && tradeAccount.number==_accountNumber)
+         return(true);
+
+
+      // (2) restliche Variablen eines SimpleTrader-Accounts ermitteln
+      if (StringCompareI(_accountCompany, AC.SimpleTrader)) {
+         string mqlDir = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+         string file   = TerminalPath() + mqlDir +"\\files\\"+ _accountCompany +"\\"+ _accountAlias +"_config.ini";
+         if (!IsFile(file))      return(_true(warn("InitTradeAccount(8)  account configuration file not found \""+ file +"\"")));
+
+         // AccountCurrency
+         string section = "General";
+         string key     = "Account.Currency";
+         string value   = GetIniString(file, section, key);
+         if (!StringLen(value))  return(_true(warn("InitTradeAccount(9)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
+         if (!IsCurrency(value)) return(_true(warn("InitTradeAccount(10)  invalid account setting ["+ section +"]->"+ key +" = \""+ value +"\" for SimpleTrader account \""+ _accountAlias +"\"" )));
+         _accountCurrency = StringToUpper(value);
+
+         // AccountType (für SimpleTrader immer DEMO)
+         _accountType = ACCOUNT_TYPE_DEMO;
+
+         // AccountName
+         section = "General";
+         key     = "Account.Name";
+         value   = GetIniString(file, section, key);
+         if (!StringLen(value))  return(_true(warn("InitTradeAccount(11)  missing account setting ["+ section +"]->"+ key +" for SimpleTrader account \""+ _accountAlias +"\"")));
+         _accountName = value;
+      }
    }
+
+
+   // (3) kein externer Account angegeben: AccountNumber bestimmen und durch einen ggf. konfigurierten Remote-Account überschreiben
    else {
-      _accountNumber = nonStdAccount;
+      _accountNumber = GetAccountNumber(); if (!_accountNumber) return(!SetLastError(stdlib.GetLastError()));
+
+      mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
+      file    = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ _accountNumber +"_config.ini";
+      section = "General";
+      key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
+
+      int tradeAccount = GetIniInt(file, section, key);
+      if (tradeAccount <= 0) {
+         value = GetIniString(file, section, key);
+         if (StringLen(value) > 0) return(_true(warn("InitTradeAccount(12)  invalid remote account setting ["+ section +"]->"+ key +" = \""+ value +"\"")));
+      }
+      else {
+         _accountNumber = tradeAccount;
+      }
    }
 
 
-   // (2) anhand des Accounts die restlichen Variablen ermitteln
-   // AccountCurrency
-   section = "Accounts";
-   key     = _accountNumber +".currency";
-   value   = GetGlobalConfigString(section, key);
-   if (!StringLen(value))  return(!catch("InitTradeAccount(2)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   if (!IsCurrency(value)) return(!catch("InitTradeAccount(3)  invalid account setting ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_RUNTIME_ERROR));
-   _accountCurrency = StringToUpper(value);
+   // (4) restliche Variablen eines Nicht-SimpleTrader-Accounts ermitteln
+   if (!StringCompareI(_accountCompany, AC.SimpleTrader)) {
+      // AccountCompany
+      section = "Accounts";
+      key     = _accountNumber +".company";
+      value   = GetGlobalConfigString(section, key);
+      if (!StringLen(value))  return(_true(warn("InitTradeAccount(13)  missing global account setting ["+ section +"]->"+ key)));
+      _accountCompany = value;
 
-   // AccountType
-   section = "Accounts";
-   key     = _accountNumber +".type";
-   value   = StringToLower(GetGlobalConfigString(section, key));
-   if (!StringLen(value))  return(!catch("InitTradeAccount(4)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
-   else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
-   else                    return(!catch("InitTradeAccount(5)  invalid account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"", ERR_RUNTIME_ERROR));
+      // AccountCurrency
+      section = "Accounts";
+      key     = _accountNumber +".currency";
+      value   = GetGlobalConfigString(section, key);
+      if (!StringLen(value))  return(_true(warn("InitTradeAccount(14)  missing global account setting ["+ section +"]->"+ key)));
+      if (!IsCurrency(value)) return(_true(warn("InitTradeAccount(15)  invalid global account setting ["+ section +"]->"+ key +" = \""+ value +"\"")));
+      _accountCurrency = StringToUpper(value);
 
-   // AccountCompany
-   section = "Accounts";
-   key     = _accountNumber +".company";
-   value   = GetGlobalConfigString(section, key);
-   if (!StringLen(value))  return(!catch("InitTradeAccount(6)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   _accountCompany = value;
+      // AccountType
+      section = "Accounts";
+      key     = _accountNumber +".type";
+      value   = StringToLower(GetGlobalConfigString(section, key));
+      if (!StringLen(value))  return(_true(warn("InitTradeAccount(16)  missing global account setting ["+ section +"]->"+ key)));
+      if      (value == "demo") _accountType = ACCOUNT_TYPE_DEMO;
+      else if (value == "real") _accountType = ACCOUNT_TYPE_REAL;
+      else                    return(_true(warn("InitTradeAccount(17)  invalid global account setting ["+ section +"]->"+ key +" = \""+ GetGlobalConfigString(section, key) +"\"")));
 
-   // AccountName
-   section = "Accounts";
-   key     = _accountNumber +".name";
-   value   = GetGlobalConfigString(section, key);
-   if (!StringLen(value))  return(!catch("InitTradeAccount(7)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   _accountName = value;
+      // AccountName
+      section = "Accounts";
+      key     = _accountNumber +".name";
+      value   = GetGlobalConfigString(section, key);
+      if (!StringLen(value))  return(_true(warn("InitTradeAccount(18)  missing global account setting ["+ section +"]->"+ key)));
+      _accountName = value;
 
-   // AccountAlias
-   section = "Accounts";
-   key     = _accountNumber +".alias";
-   value   = GetGlobalConfigString(section, key);
-   if (!StringLen(value))  return(!catch("InitTradeAccount(8)  missing account setting ["+ section +"]->"+ key, ERR_RUNTIME_ERROR));
-   _accountAlias = value;
+      // AccountAlias
+      section = "Accounts";
+      key     = _accountNumber +".alias";
+      value   = GetGlobalConfigString(section, key);
+      if (!StringLen(value))  return(_true(warn("InitTradeAccount(19)  missing global account setting ["+ section +"]->"+ key)));
+      _accountAlias = value;
+   }
 
 
-   // (3) globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
-   mode.intern = (_accountNumber == GetAccountNumber());
-   mode.extern = false;                                              // Hier immer FALSE, wird ggf. später von RestoreWindowStatus() überschrieben
-   mode.remote = !mode.intern;
+   // (5) globale Variablen erst nach vollständiger erfolgreicher Validierung überschreiben
+   mode.intern = (_accountCompany==ShortAccountCompany() && _accountNumber==GetAccountNumber());
+   mode.extern = !mode.intern && StringLen(accountKey) > 0;
+   mode.remote = !mode.intern && !mode.extern;
 
-   tradeAccountNumber   = _accountNumber;
-   tradeAccountCurrency = _accountCurrency;
-   tradeAccountType     = _accountType;
-   tradeAccountCompany  = _accountCompany;
-   tradeAccountName     = _accountName;
-   tradeAccountAlias    = _accountAlias;
+   tradeAccount.number   = _accountNumber;
+   tradeAccount.currency = _accountCurrency;
+   tradeAccount.type     = _accountType;
+   tradeAccount.company  = _accountCompany;
+   tradeAccount.name     = _accountName;
+   tradeAccount.alias    = _accountAlias;
 
    if (mode.remote) {
       if (StringEndsWith(Symbol(), "LFX")) {
@@ -130,7 +197,6 @@ bool InitTradeAccount() {
          lfxCurrencyId = GetCurrencyId(lfxCurrency);
       }
    }
-
    return(true);
 }
 
@@ -186,10 +252,10 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // (1) Orderdaten lesen
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
+   string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
    string section = "RemoteOrders";
    string key     = ticket;
-   string value   = GetIniString(file, section, key, "");
+   string value   = GetIniString(file, section, key);
    if (!StringLen(value)) {
       if (IsIniKey(file, section, key)) return(!catch("LFX.GetOrder(2)  invalid order entry ["+ section +"]->"+ key +" in \""+ file +"\"", ERR_RUNTIME_ERROR));
                                         return(-1);                  // Ticket nicht gefunden
@@ -406,7 +472,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
 
    // (2) alle Tickets einlesen
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
+   string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
    string section = "RemoteOrders";
    string keys[];
    int keysSize = GetIniKeys(file, section, keys);
@@ -538,7 +604,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
    // (4) Daten schreiben
    string mqlDir  = TerminalPath() + ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
-   string file    = mqlDir +"\\files\\"+ tradeAccountCompany +"\\"+ tradeAccountNumber +"_config.ini";
+   string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
    string section = "RemoteOrders";
    string key     = ticket;
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPrice, ", ", sOpenTriggerTime, ", ", sStopLoss, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfit, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
@@ -631,7 +697,4 @@ void DummyCalls() {
    string   OperationTypeToStr(int type);
    string   StringReplace.Recursive(string object, string search, string replace);
    int      StrToOperationType(string value);
-
-#import "stdlib2.ex4"
-   int      GetIniKeys(string fileName, string section, string names[]);
 #import
