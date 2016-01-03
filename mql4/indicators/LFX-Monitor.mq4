@@ -127,7 +127,7 @@ int onInit() {
    SetIndexLabel(0, NULL);
 
    // (3) Chart-Ticker installieren
-   if (!This.IsTesting() && GetServerName()!="MyFX-Synthetic") {
+   if (!This.IsTesting()) /*&&*/ if (GetServerName()!="MyFX-Synthetic") {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 500;
       int timerId = SetupTickTimer(hWnd, millis, NULL);

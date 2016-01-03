@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der absoluten Beträge der Positionen umzuschaltem.
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der absoluten P/L-Beträge der Positionen umzuschaltem.
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[] = { INIT_DOESNT_REQUIRE_BARS };
@@ -29,7 +29,7 @@ int onStart() {
       if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))                return(_int(catch("onStart(1)"), ReleaseLock(mutex)));
       if (!ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE)) return(_int(catch("onStart(2)"), ReleaseLock(mutex)));
    }
-   if (!ObjectSetText(label, "cmd=ToggleAbsPositionAmounts"))      return(_int(catch("onStart(3)"), ReleaseLock(mutex)));
+   if (!ObjectSetText(label, "cmd=ToggleAbsProfits"))              return(_int(catch("onStart(3)"), ReleaseLock(mutex)));
 
 
    // (3) Schreibzugriff auf Command-Object freigeben

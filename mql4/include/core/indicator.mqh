@@ -537,10 +537,10 @@ bool InitExecutionContext() {
       }
    string logFile;
 
-   __NAME__       = WindowExpertName();
-   __CHART        = hChart && 1;
-   __LOG          = true;
-   __LOG_CUSTOM   = false;                                           // Custom-Logging gibt es vorerst nur für Experts
+   __NAME__     = WindowExpertName();
+   __CHART      = hChart && 1;
+   __LOG        = true;
+   __LOG_CUSTOM = false;                                             // Custom-Logging gibt es vorerst nur für Experts
 
 
    // (2) letzten in Library zwischengespeicherten EXECUTION_CONTEXT holen
