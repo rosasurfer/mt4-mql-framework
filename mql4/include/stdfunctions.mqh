@@ -4461,8 +4461,7 @@ string ShortAccountCompany() {
    if (StringStartsWith(server, "mbtrading-"         )) return(AC.MB_Trading      );
    if (StringStartsWith(server, "metaquotes-"        )) return(AC.MetaQuotes      );
    if (StringStartsWith(server, "migbank-"           )) return(AC.MIG             );
-   if (StringStartsWith(server, "myfx-dukascopy"     )) return(AC.MyFX_Dukascopy  );
-   if (StringStartsWith(server, "myfx-synthetic"     )) return(AC.MyFX_Synthetic  );
+   if (StringStartsWith(server, "myfx-"              )) return(AC.MyFX            );
    if (StringStartsWith(server, "oanda-"             )) return(AC.Oanda           );
    if (StringStartsWith(server, "pepperstone-"       )) return(AC.Pepperstone     );
    if (StringStartsWith(server, "primexm-"           )) return(AC.PrimeXM         );
@@ -4541,8 +4540,7 @@ int AccountCompanyId(string shortName) {
       case 'M': if (shortName == StringToUpper(AC.MB_Trading      )) return(AC_ID.MB_Trading      );
                 if (shortName == StringToUpper(AC.MetaQuotes      )) return(AC_ID.MetaQuotes      );
                 if (shortName == StringToUpper(AC.MIG             )) return(AC_ID.MIG             );
-                if (shortName == StringToUpper(AC.MyFX_Dukascopy  )) return(AC_ID.MyFX_Dukascopy  );
-                if (shortName == StringToUpper(AC.MyFX_Synthetic  )) return(AC_ID.MyFX_Synthetic  );
+                if (shortName == StringToUpper(AC.MyFX            )) return(AC_ID.MyFX            );
                 break;
 
       case 'N': break;
@@ -4613,8 +4611,7 @@ string ShortAccountCompanyFromId(int id) {
       case AC_ID.MB_Trading      : return(AC.MB_Trading      );
       case AC_ID.MetaQuotes      : return(AC.MetaQuotes      );
       case AC_ID.MIG             : return(AC.MIG             );
-      case AC_ID.MyFX_Dukascopy  : return(AC.MyFX_Dukascopy  );
-      case AC_ID.MyFX_Synthetic  : return(AC.MyFX_Synthetic  );
+      case AC_ID.MyFX            : return(AC.MyFX            );
       case AC_ID.Oanda           : return(AC.Oanda           );
       case AC_ID.Pepperstone     : return(AC.Pepperstone     );
       case AC_ID.PrimeXM         : return(AC.PrimeXM         );
