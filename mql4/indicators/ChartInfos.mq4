@@ -105,7 +105,7 @@ double shortPosition;
 int    positions.idata[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
 double positions.ddata[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbsolute, FullProfitPercent]
 bool   positions.analyzed;
-bool   positions.showAbsAmounts;                                  // default: FALSE
+bool   positions.showAbsProfits;                                  // default: FALSE
 
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
@@ -264,12 +264,12 @@ bool CheckLastError(string location) {
  * @return bool - Erfolgsstatus
  *
  *
- * Messageformat: "cmd=account:{companyId}:{account}" - Schaltet den externen Account um.
- *                "cmd=ToggleOpenOrders"              - Schaltet die Anzeige der offenen Orders ein/aus.
- *                "cmd=ToggleTradeHistory"            - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleAuM"                     - Schaltet die Assets-under-Management-Anzeige ein/aus.
- *                "cmd=EditAccountConfig"             - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
- *                                                      da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
+ * Messageformat: "cmd=account:[{companyId}:{account}]" - Schaltet den externen Account um.
+ *                "cmd=ToggleOpenOrders"                - Schaltet die Anzeige der offenen Orders ein/aus.
+ *                "cmd=ToggleTradeHistory"              - Schaltet die Anzeige der Trade-History ein/aus.
+ *                "cmd=ToggleAuM"                       - Schaltet die Assets-under-Management-Anzeige ein/aus.
+ *                "cmd=EditAccountConfig"               - Lädt die Konfigurationsdatei des aktuellen Accounts in den Editor. Im ChartInfos-Indikator,
+ *                                                        da der aktuelle Account ein im Indikator definierter externer oder LFX-Account sein kann.
  */
 bool onChartCommand(string commands[]) {
    int size = ArraySize(commands);
@@ -286,8 +286,8 @@ bool onChartCommand(string commands[]) {
             return(false);
          continue;
       }
-      if (commands[i] == "cmd=ToggleAbsPositionAmounts") {
-         if (!Positions.ToggleAbsAmounts())
+      if (commands[i] == "cmd=ToggleAbsProfits") {
+         if (!Positions.ToggleAbsProfits())
             return(false);
          continue;
       }
@@ -983,18 +983,18 @@ int ShowTradeHistory() {
 
 
 /**
- * Schaltet die Anzeige der absoluten Beträge der Positionen ein/aus.
+ * Schaltet die Anzeige der absoluten P/L-Beträge der Positionen ein/aus.
  *
  * @return bool - Erfolgsstatus
  */
-bool Positions.ToggleAbsAmounts() {
+bool Positions.ToggleAbsProfits() {
    // aktuellen Anzeigestatus umschalten
-   positions.showAbsAmounts = !positions.showAbsAmounts;
+   positions.showAbsProfits = !positions.showAbsProfits;
 
    // Anzeige aktualisieren
    if (!UpdatePositions()) return(false);
 
-   return(!catch("Positions.ToggleAbsAmounts(1)"));
+   return(!catch("Positions.ToggleAbsProfits(1)"));
 }
 
 
@@ -1478,7 +1478,7 @@ bool UpdateUnitSize() {
  */
 bool UpdatePositions() {
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
-   if (!mode.remote && !mm.ready) {
+   if (!mode.remote) /*&&*/ if (!mm.ready) {
       if (!UpdateMoneyManagement())                         return(false);
       if (!mm.ready )                                       return(true);
    }
@@ -1510,9 +1510,9 @@ bool UpdatePositions() {
 
    // (2) Einzelpositionsanzeige unten links
    static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
-   static bool lastShowAbsAmounts;
-   if (!ArraySize(col.xShifts) || positions.showAbsAmounts!=lastShowAbsAmounts) {
-      if (positions.showAbsAmounts) {
+   static bool lastShowAbsProfits;
+   if (!ArraySize(col.xShifts) || positions.showAbsProfits!=lastShowAbsProfits) {
+      if (positions.showAbsProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
          // col.xShifts[] = {20,   59,    135, 160,      226,    258,   345,      406};
          ArrayResize(col.xShifts, 8);
@@ -1540,7 +1540,7 @@ bool UpdatePositions() {
       cols               = ArraySize(col.xShifts);
       percentCol         = cols - 2;
       commentCol         = cols - 1;
-      lastShowAbsAmounts = positions.showAbsAmounts;
+      lastShowAbsProfits = positions.showAbsProfits;
 
       // nach (Re-)Initialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
@@ -1609,7 +1609,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.showAbsAmounts)
+         if (positions.showAbsProfits)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1642,7 +1642,7 @@ bool UpdatePositions() {
 
          // Hedged und Not-Hedged
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.showAbsAmounts)
+         if (positions.showAbsProfits)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.ddata[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
@@ -1660,7 +1660,7 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-         if (positions.showAbsAmounts)
+         if (positions.showAbsProfits)
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2),                        positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), "?%",                                                                    positions.fontSize, positions.fontName, fontColor);
             sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
@@ -4194,7 +4194,7 @@ bool LFX.ProcessProfits(int &lfxMagics[], double &lfxProfits[]) {
  * Speichert die Laufzeitkonfiguration im Fenster (für Init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
  *
  *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
- *  (2) bool   positions.showAbsAmounts
+ *  (2) bool   positions.showAbsProfits
  *
  * @return bool - Erfolgsstatus
  */
@@ -4228,10 +4228,10 @@ bool StoreRuntimeStatus() {
    }
 
 
-   // (2) bool positions.showAbsAmounts
+   // (2) bool positions.showAbsProfits
    // Konfiguration im Fenster speichern
-   key       = __NAME__ +".runtime.positions.absAmounts";            // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int value = ifInt(positions.showAbsAmounts, 1, -1);
+   key       = __NAME__ +".runtime.positions.absProfits";            // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int value = ifInt(positions.showAbsProfits, 1, -1);
    SetWindowProperty(hWnd, key, value);
    // Konfiguration im Chart speichern
    if (ObjectFind(key) == 0)
@@ -4248,7 +4248,7 @@ bool StoreRuntimeStatus() {
  * Restauriert eine im Fenster oder im Chart gespeicherte Laufzeitkonfiguration.
  *
  *  (1) string tradeAccount.company, int tradeAccount.number (wenn mode.extern=TRUE)
- *  (2) bool   positions.showAbsAmounts
+ *  (2) bool   positions.showAbsProfits
  *
  * @return bool - Erfolgsstatus
  */
@@ -4296,9 +4296,9 @@ bool RestoreRuntimeStatus() {
    }
 
 
-   // (2) bool positions.showAbsAmounts
+   // (2) bool positions.showAbsProfits
    // Konfiguration im Fenster suchen
-   key     = __NAME__ +".runtime.positions.absAmounts";                 // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   key     = __NAME__ +".runtime.positions.absProfits";                 // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    value   = GetWindowProperty(hWnd, key);
    success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
@@ -4308,7 +4308,7 @@ bool RestoreRuntimeStatus() {
          success = (value != 0);
       }
    }
-   if (success) positions.showAbsAmounts = (value > 0);
+   if (success) positions.showAbsProfits = (value > 0);
 
    return(!catch("RestoreRuntimeStatus(1)"));
 }

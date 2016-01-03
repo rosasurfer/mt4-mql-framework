@@ -91,7 +91,7 @@ void DontOverwriteFXTPatch() {
       int patchAddr3 = FindMemoryAddress(patchAddr1, patchAddr1 + 32768, search3);
    }
 
-   if (patchAddr1!=0 && patchAddr2!=0 && patchAddr3!=0) {
+   if (patchAddr1 && patchAddr2 && patchAddr3) {
       int patch[] = { 0x00, 0x00 };
       PatchProcess(patchAddr1 + 7, patch);
       PatchProcess(patchAddr2 + 9, patch);

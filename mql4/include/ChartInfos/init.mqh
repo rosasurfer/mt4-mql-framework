@@ -15,8 +15,8 @@ int onInit() {
 
 
    // (3) TradeAccount initialisieren
-   if (!mode.extern && !InitTradeAccount())     return(last_error);
-   if (!mode.intern && !UpdateAccountDisplay()) return(last_error);
+   if (!mode.extern) /*&&*/ if (!InitTradeAccount())     return(last_error);
+   if (!mode.intern) /*&&*/ if (!UpdateAccountDisplay()) return(last_error);
 
 
    // (4) Input-Parameter validieren
