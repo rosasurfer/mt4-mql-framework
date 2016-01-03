@@ -6548,62 +6548,6 @@ datetime ServerToGmtTime(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_C
 
 
 /**
- * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird beachtet.
- *
- * @param  string object    - zu durchsuchender String
- * @param  string substring - zu suchender Substring
- *
- * @return bool
- */
-bool StringContains(string object, string substring) {
-   if (!StringLen(substring))
-      return(!catch("StringContains()  empty substring \"\"", ERR_INVALID_PARAMETER));
-   return(StringFind(object, substring) != -1);
-}
-
-
-/**
- * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird nicht beachtet.
- *
- * @param  string object    - zu durchsuchender String
- * @param  string substring - zu suchender Substring
- *
- * @return bool
- */
-bool StringContainsI(string object, string substring) {
-   if (!StringLen(substring))
-      return(!catch("StringContainsI()  empty substring \"\"", ERR_INVALID_PARAMETER));
-   return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
-}
-
-
-/**
- * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
- *
- * @param  string object - zu durchsuchender String
- * @param  string search - zu suchender Substring
- *
- * @return int - letzte Position des Substrings oder -1 (EMPTY), wenn der Substring nicht gefunden wurde
- */
-int StringFindR(string object, string search) {
-   int lenObject = StringLen(object),
-       lastFound  = -1,
-       result     =  0;
-
-   for (int i=0; i < lenObject; i++) {
-      result = StringFind(object, search, i);
-      if (result == -1)
-         break;
-      lastFound = result;
-   }
-
-   if (!catch("StringFindR()"))
-      return(lastFound);
-   return(EMPTY);
-}
-
-
-/**
  * Prüft, ob die angegebene Datei existiert und eine normale Datei ist (kein Verzeichnis).
  *
  * @return string filename - vollständiger Dateiname

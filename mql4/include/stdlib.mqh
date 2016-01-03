@@ -226,14 +226,8 @@
 
 
    // Strings
-   bool     StringContains(string object, string substring);
-   bool     StringContainsI(string object, string substring);
-
-   bool     StringCompareI(string a, string b);
-
    string   StringPad(string input, int length, string pad_string, int pad_type);
 
-   int      StringFindR(string object, string search);
    string   StringRepeat(string input, int times);
    string   StringReplace.Recursive(string object, string search, string replace);
 
