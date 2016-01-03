@@ -4787,6 +4787,59 @@ bool StringCompareI(string string1, string string2) {
 
 
 /**
+ * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird beachtet.
+ *
+ * @param  string object    - zu durchsuchender String
+ * @param  string substring - zu suchender Substring
+ *
+ * @return bool
+ */
+bool StringContains(string object, string substring) {
+   if (!StringLen(substring))
+      return(!catch("StringContains()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+   return(StringFind(object, substring) != -1);
+}
+
+
+/**
+ * Prüft, ob ein String einen Substring enthält. Groß-/Kleinschreibung wird nicht beachtet.
+ *
+ * @param  string object    - zu durchsuchender String
+ * @param  string substring - zu suchender Substring
+ *
+ * @return bool
+ */
+bool StringContainsI(string object, string substring) {
+   if (!StringLen(substring))
+      return(!catch("StringContainsI()  illegal parameter substring = "+ DoubleQuoteStr(substring), ERR_INVALID_PARAMETER));
+   return(StringFind(StringToUpper(object), StringToUpper(substring)) != -1);
+}
+
+
+/**
+ * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
+ *
+ * @param  string object - zu durchsuchender String
+ * @param  string search - zu suchender Substring
+ *
+ * @return int - letzte Position des Substrings oder -1, wenn der Substring nicht gefunden wurde
+ */
+int StringFindR(string object, string search) {
+   int lenObject = StringLen(object),
+       lastFound = -1,
+       result    =  0;
+
+   for (int i=0; i < lenObject; i++) {
+      result = StringFind(object, search, i);
+      if (result == -1)
+         break;
+      lastFound = result;
+   }
+   return(lastFound);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -4923,8 +4976,11 @@ void __DummyCalls() {
    start.RelaunchInputDialog();
    StringCompare(NULL, NULL);
    StringCompareI(NULL, NULL);
+   StringContains(NULL, NULL);
+   StringContainsI(NULL, NULL);
    StringEndsWith(NULL, NULL);
    StringEndsWithI(NULL, NULL);
+   StringFindR(NULL, NULL);
    StringIsDigit(NULL);
    StringIsInteger(NULL);
    StringIsNull(NULL);
@@ -5034,7 +5090,6 @@ void __DummyCalls() {
    bool     SendSMS(string receiver, string message);
    datetime ServerToGmtTime(datetime serverTime);
    string   StdSymbol();
-   bool     StringContains(string object, string substring);
    string   StringRepeat(string input, int times);
 
 #import "stdlib2.ex4"
