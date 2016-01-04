@@ -3609,7 +3609,7 @@ string GetStandardSymbolStrict(string symbol) {
                 if (                 symbol=="AUS200" )     return("ASX200");
                 break;
 
-      case 'B': if (                 symbol=="BRENT_CRUDE") return("BRENT" );
+      case 'B': if (StringStartsWith(symbol, "BRENT_"))     return("BRENT" );
                 break;
 
       case 'C': if (StringStartsWith(symbol, "CADCHF")  )   return("CADCHF");
@@ -3756,8 +3756,10 @@ string GetStandardSymbolStrict(string symbol) {
                 if (                 symbol=="USTEC"  )     return("NAS100");
                 break;
 
-      case 'V':
-      case 'W': break;
+      case 'V': break;
+
+      case 'W': if (StringStartsWith(symbol, "WTI_"  ))     return("WTI"   );
+                break;
 
       case 'X': if (StringStartsWith(symbol, "XAGEUR"))     return("XAGEUR");
                 if (StringStartsWith(symbol, "XAGJPY"))     return("XAGJPY");

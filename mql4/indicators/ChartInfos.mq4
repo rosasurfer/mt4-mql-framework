@@ -383,7 +383,7 @@ int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, units, openPrice, takeProfit, stopLoss;
-   string   label1, label2, label3, sTP, sSL, types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
+   string   comment, label1, label2, label3, sTP, sSL, types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
 
 
    // (1) mode.intern
@@ -532,6 +532,7 @@ int ShowOpenOrders() {
          openPrice  =                     los.OpenPrice (lfxOrders, i);
          takeProfit =                     los.TakeProfit(lfxOrders, i);
          stopLoss   =                     los.StopLoss  (lfxOrders, i);
+         comment    =                     los.Comment   (lfxOrders, i);
 
          if (type > OP_SELL) {
             // Pending-Order
@@ -581,7 +582,9 @@ int ShowOpenOrders() {
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
-               ObjectSetText(label1, StringConcatenate(sTP, "   ", sSL));
+               if (StringStartsWith(comment, "#"))
+                  comment = StringConcatenate(lfxCurrency, ".", StringRight(comment, -1));
+               ObjectSetText(label1, StringTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
             }
          }
          n++;
