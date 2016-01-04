@@ -345,7 +345,7 @@ int GetPositionCounter() {
          continue;
 
       string comment = los.Comment(lfxOrders, i);
-      if (StringStartsWith(comment, lfxCurrency +".")) comment = StringRight(comment, -4);
+      if (StringStartsWith(comment, lfxCurrency +".")) comment = StringRightFrom(comment, ".");
       if (StringStartsWith(comment,              "#")) comment = StringRight(comment, -1);
 
       counter = Max(counter, StrToInteger(comment));
