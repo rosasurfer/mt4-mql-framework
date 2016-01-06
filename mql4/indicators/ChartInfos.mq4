@@ -1936,7 +1936,7 @@ bool AnalyzePositions(bool logTickets=false) {
          if (OrderType() > OP_SELL) continue;
 
          // LFX-Reporting bei QuickChannel-Fehler (volle Message-Queue) deaktivieren
-         if (false && LFX.IsMyOrder()) {                                // nebenbei P/L gefundener LFX-Positionen aufaddieren
+         if (LFX.IsMyOrder()) {                                         // nebenbei P/L gefundener LFX-Positionen aufaddieren
             if (OrderMagicNumber() != lfxMagics[pos]) {                 // Zeile (1.1.1): Quickcheck mit dem letzten verwendeten Index, erst dann Suche (schnellste Variante)
                pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
                if (pos == -1)

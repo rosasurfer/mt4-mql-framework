@@ -71,8 +71,8 @@
 #define QC_CHECK_RECEIVER_NONE            0
 #define QC_CHECK_RECEIVER_OK              1
 
-#define QC_FLAG_SEND_MSG_REPLACE       0x01        // 1
-#define QC_FLAG_SEND_MSG_IF_RECEIVER   0x10        // 2
+#define QC_FLAG_SEND_MSG_REPLACE          1
+#define QC_FLAG_SEND_MSG_IF_RECEIVER      2
 
 #define QC_SEND_MSG_ADDED                 1
 #define QC_SEND_MSG_IGNORED              -1        // nur möglich bei gesetztem QC_FLAG_SEND_MSG_IF_RECEIVER
