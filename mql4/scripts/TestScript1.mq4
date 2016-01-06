@@ -16,9 +16,7 @@ int __DEINIT_FLAGS__[];
 
 
 #import "Expander.Release.dll"
-   int Test();
 #import
-
 
 
 /**
@@ -27,13 +25,6 @@ int __DEINIT_FLAGS__[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-
-   string value  = "abc.123.def.123";
-   string substr = ".";
-   int    count  = 5;
-
-   debug("onStart(0.1)  StringLeftTo ("+ QuoteStr(value) +", "+ QuoteStr(substr) +", count="+ count +") = "+ QuoteStr(StringLeftTo   (value, substr, count)));
-   debug("onStart(0.2)  StringRightTo("+ QuoteStr(value) +", "+ QuoteStr(substr) +", count="+ count +") = "+ QuoteStr(StringRightFrom(value, substr, count)));
 
 
    return(last_error);

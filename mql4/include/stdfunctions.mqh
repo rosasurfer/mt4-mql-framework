@@ -1761,7 +1761,7 @@ string _EMPTY_STR(int param1=NULL, int param2=NULL, int param3=NULL, int param4=
 
 
 /**
- * Ob der angegebene Wert einen Leerstring darstellt.
+ * Ob der angegebene Wert einen Leerstring darstellt (keinen NULL-Pointer).
  *
  * @param  string value
  *
@@ -2419,26 +2419,6 @@ bool StringIsInteger(string value) {
       catch("StringIsInteger(1)", error);
    }
    return(value == StringConcatenate("", StrToInteger(value)));
-}
-
-
-/**
- * Prüft, ob eine Stringvariable initialisiert oder nicht-initialisiert (NULL-Pointer) ist.
- *
- * @param  string value - zu prüfende Stringvariable
- *
- * @return bool
- */
-bool StringIsNull(string value) {
-   int error = GetLastError();
-
-   if (error == ERR_NOT_INITIALIZED_STRING)
-      return(true);
-
-   if (error != NO_ERROR)
-      catch("StringIsNull(1)", error);
-
-   return(false);
 }
 
 
@@ -4738,27 +4718,6 @@ int AccountNumberFromAlias(string accountCompany, string accountAlias) {
 
 
 /**
- * Vergleicht zwei Strings mit Berücksichtigung von Groß-/Kleinschreibung.
- *
- * @param  string string1
- * @param  string string2
- *
- * @return bool
- */
-bool StringCompare(string string1, string string2) {
-   int error = GetLastError();
-   if (error != NO_ERROR) {
-      if (error == ERR_NOT_INITIALIZED_STRING) {
-         if (StringIsNull(string1)) return(StringIsNull(string2));
-         if (StringIsNull(string2)) return(false);
-      }
-      catch("StringCompare(1)", error);
-   }
-   return(string1 == string2);
-}
-
-
-/**
  * Vergleicht zwei Strings ohne Berücksichtigung von Groß-/Kleinschreibung.
  *
  * @param  string string1
@@ -5163,7 +5122,6 @@ void __DummyCalls() {
    ShortAccountCompanyFromId(NULL);
    Sign(NULL);
    start.RelaunchInputDialog();
-   StringCompare(NULL, NULL);
    StringCompareI(NULL, NULL);
    StringContains(NULL, NULL);
    StringContainsI(NULL, NULL);
@@ -5172,7 +5130,6 @@ void __DummyCalls() {
    StringFindR(NULL, NULL);
    StringIsDigit(NULL);
    StringIsInteger(NULL);
-   StringIsNull(NULL);
    StringIsNumeric(NULL);
    StringIsPhoneNumber(NULL);
    StringLeft(NULL, NULL);
@@ -5313,6 +5270,7 @@ void __DummyCalls() {
    int      GetLastWin32Error();
    datetime GetLocalTime();
    string   GetString(int address);
+   int      GetStringAddress(string value);
    int      GetWindowProperty(int hWnd, string lpName);
    string   IntToHexStr(int integer);
    bool     IsStandardTimeframe(int timeframe);
@@ -5322,6 +5280,8 @@ void __DummyCalls() {
    void     SetLogLevel(int level);
    bool     SetWindowProperty(int hWnd, string lpName, int value);
    int      SetupTickTimer(int hWnd, int millis, int flags);
+   bool     StringCompare(string string1, string string2);
+   bool     StringIsNull(string value);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();
