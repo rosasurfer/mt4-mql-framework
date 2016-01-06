@@ -8782,7 +8782,7 @@ flags=339
 window_num=0
 <inputs>
 MA.Periods=48
-MA.Timeframe=M15
+MA.Timeframe=H1
 Max.Values=3000
 </inputs>
 </expert>
@@ -8791,7 +8791,7 @@ weight_1=0
 weight_2=3
 weight_3=3
 weight_4=3
-period_flags=15
+period_flags=30
 show_data=1
 </indicator>
 
