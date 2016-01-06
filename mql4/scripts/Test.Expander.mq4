@@ -8,10 +8,10 @@ int __DEINIT_FLAGS__[];
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <stdlib.mqh>
+#include <win32api.mqh>
 
 #include <history.mqh>
-#include <test/testlibrary.mqh>
-#include <win32api.mqh>
+//#include <test/testlibrary.mqh>
 
 
 #import "Expander.Release.dll"

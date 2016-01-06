@@ -4688,7 +4688,6 @@ string InputsToStr() {
    string   PriceTypeToStr(int type);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
-   bool     StringCompareI(string a, string b);
 
 #import "stdlib2.ex4"
    int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
