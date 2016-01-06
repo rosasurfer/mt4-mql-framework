@@ -8783,8 +8783,6 @@ window_num=0
 <inputs>
 MA.Periods=48
 MA.Timeframe=M15
-Color.UpTrend=3329330
-Color.DownTrend=255
 Max.Values=3000
 </inputs>
 </expert>
