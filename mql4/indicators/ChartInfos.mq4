@@ -519,13 +519,13 @@ int ShowOpenOrders() {
 
    // (3) mode.remote
    if (mode.remote) {
-      orders = ArrayRange(lfxOrders.ivolatile, 0);
+      orders = ArrayRange(lfxOrders.iVolatile, 0);
 
       for (i=0, n=0; i < orders; i++) {
-         if (!lfxOrders.ivolatile[i][I_ISOPEN]) continue;
+         if (!lfxOrders.iVolatile[i][I_ISOPEN]) continue;
 
          // Daten auslesen
-         ticket     = lfxOrders.ivolatile[i][I_TICKET];
+         ticket     = lfxOrders.iVolatile[i][I_TICKET];
          type       =                     los.Type      (lfxOrders, i);
          units      =                     los.Units     (lfxOrders, i);
          openTime   = FxtToServerTime(Abs(los.OpenTime  (lfxOrders, i)));
@@ -582,8 +582,8 @@ int ShowOpenOrders() {
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
-               if (StringStartsWith(comment, "#"))
-                  comment = StringConcatenate(lfxCurrency, ".", StringRight(comment, -1));
+               if (StringStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StringRight(comment, -1)));
+               else                                comment = "";
                ObjectSetText(label1, StringTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
             }
          }
@@ -921,7 +921,7 @@ int ShowTradeHistory() {
 
    // (4) mode.remote
    if (mode.remote) {
-      orders = ArrayRange(lfxOrders.ivolatile, 0);
+      orders = ArrayRange(lfxOrders.iVolatile, 0);
 
       for (i=0, n=0; i < orders; i++) {
          if (!los.IsOpened(lfxOrders, i)) continue;
@@ -946,11 +946,8 @@ int ShowTradeHistory() {
          if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
             ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
             ObjectSet(openLabel, OBJPROP_COLOR    , markerColors[type]);
-            if (StringLen(comment) > 0) {
-               if (StringEndsWith(comment, "%"))
-                  comment = StringConcatenate("PL: ", comment);
+            if (StringLen(comment) > 0)
                ObjectSetText(openLabel, comment);
-            }
          }
 
          // Trendlinie anzeigen
@@ -1213,7 +1210,7 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
          slValue = los.StopLossValue  (lfxOrders, i);
          tpPrice = los.TakeProfit     (lfxOrders, i);
          tpValue = los.TakeProfitValue(lfxOrders, i);
-         profit  = lfxOrders.dvolatile[i][I_PROFIT];
+         profit  = lfxOrders.dVolatile[i][I_PROFIT];
    }
 
    switch (type) {
@@ -1655,7 +1652,7 @@ bool UpdatePositions() {
    // (3.2) Anzeige Remote-Positionsdaten (mode.remote = TRUE)
    fontColor = positions.fontColor.remote;
    for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
-      if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
+      if (lfxOrders.iVolatile[i][I_ISOPEN] != 0) {
          line++;
          // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
@@ -1664,8 +1661,9 @@ bool UpdatePositions() {
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
          ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
          if (positions.showAbsProfits)
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2),                        positions.fontSize, positions.fontName, fontColor);
-         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), "?%",                                                                    positions.fontSize, positions.fontName, fontColor);
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dVolatile[i][I_PROFIT], 2),                        positions.fontSize, positions.fontName, fontColor);
+            double profitPct = lfxOrders.dVolatile[i][I_PROFIT] / los.OpenEquity(lfxOrders, i) * 100;
+         ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
             sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
             if (StringGetChar(sComment, 0) == '#')
                sComment = StringConcatenate(lfxCurrency, ".", StringRight(sComment, -1));
@@ -1938,9 +1936,8 @@ bool AnalyzePositions(bool logTickets=false) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;        // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
          if (OrderType() > OP_SELL) continue;
 
-         // LFX-Reporting vorübergehend wegen QuickChannel-Fehler (volle Message-Queue) deaktiviert
-
-         if (false /*LFX.IsMyOrder()*/) {                               // nebenbei P/L gefundener LFX-Positionen aufaddieren
+         // LFX-Reporting bei QuickChannel-Fehler (volle Message-Queue) deaktivieren
+         if (LFX.IsMyOrder()) {                                         // nebenbei P/L gefundener LFX-Positionen aufaddieren
             if (OrderMagicNumber() != lfxMagics[pos]) {                 // Zeile (1.1.1): Quickcheck mit dem letzten verwendeten Index, erst dann Suche (schnellste Variante)
                pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
                if (pos == -1)
@@ -2045,7 +2042,7 @@ bool AnalyzePositions(bool logTickets=false) {
    SetLastError(oldError);
 
    int    termType, confLineIndex;
-   double termValue1, termValue2, termCache1, termCache2, customLongPosition, customShortPosition, customTotalPosition, closedProfit, adjustedProfit, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
+   double termValue1, termValue2, termCache1, termCache2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
    bool   isCustomVirtual;
    int    customTickets    [];
    int    customTypes      [];
@@ -2075,7 +2072,7 @@ bool AnalyzePositions(bool logTickets=false) {
          customLongPosition  = 0;
          customShortPosition = 0;
          customTotalPosition = 0;
-         closedProfit        = 0;
+         closedProfit        = EMPTY_VALUE;
          adjustedProfit      = 0;
          customEquity        = 0;
          ArrayResize(customTickets    , 0);
@@ -2100,7 +2097,7 @@ bool AnalyzePositions(bool logTickets=false) {
    if (logTickets) AnalyzePositions.LogTickets(false, tickets, -1);
 
    // (2.4) verbleibende Position(en) speichern
-   if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, 0, 0, 0, -1))
+   if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, 0, 0, -1))
       return(false);
 
    positions.analyzed = true;
@@ -3450,7 +3447,6 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          // (3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
          for (i=0; i < orders; i++) {
             if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {          // lotSize = 0: Hedge-Position
-
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
                if (!StringStartsWithI(hst.comments[i], "close hedge by #"))
                   return(!catch("ExtractPosition(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
@@ -3492,10 +3488,12 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          lastProfit = NormalizeDouble(lastProfit, 2);
          cache1     = lastProfit;
          cache2     = _orders;
+
          //debug("ExtractPosition(6)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
       }
       // Betrag zu closedProfit hinzufügen (Ausgangsdaten bleiben unverändert)
-      closedProfit += lastProfit;
+      if (closedProfit == EMPTY_VALUE) closedProfit  = lastProfit;
+      else                             closedProfit += lastProfit;
    }
 
    else if (type == TERM_ADJUSTMENT) {
@@ -3608,8 +3606,11 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    int size, ticketsSize=ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen) noch ClosedProfit, wird sie übersprungen.
-   if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (!closedProfit)       // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets
-      return(true);                                                                                         // in tickets[] bereits auf NULL gesetzt worden sein können.
+   if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) // Ein Test auf (ticketsSize != 0) reicht nicht aus, da alle Tickets
+      return(true);                                                                                               // in tickets[] bereits auf NULL gesetzt worden sein können.
+
+   if (closedProfit == EMPTY_VALUE)
+      closedProfit = 0;                                              // 0.00 ist gültiger P/L
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, ifString(mode.extern, tradeAccount.alias, tradeAccount.number));
@@ -3839,31 +3840,28 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    }
 
 
-   // (2.3) ohne offene Positionen muß ClosedProfit gesetzt sein
-   if (closedProfit != 0) {
-      // History mit leerer Position speichern
-      size = ArrayRange(positions.idata, 0);
-      ArrayResize(positions.idata, size+1);
-      ArrayResize(positions.ddata, size+1);
+   // (2.3) ohne offene Positionen muß ClosedProfit gesetzt sein und kann 0.00 oder EMPTY_VALUE sein
+   // History mit leerer Position speichern
+   size = ArrayRange(positions.idata, 0);
+   ArrayResize(positions.idata, size+1);
+   ArrayResize(positions.ddata, size+1);
 
-      positions.idata[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-      positions.idata[size][I_POSITION_TYPE   ] = POSITION_HISTORY;
-      positions.idata[size][I_COMMENT_INDEX   ] = commentIndex;
+   positions.idata[size][I_CONFIG_TYPE     ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
+   positions.idata[size][I_POSITION_TYPE   ] = POSITION_HISTORY;
+   positions.idata[size][I_COMMENT_INDEX   ] = commentIndex;
 
-      positions.ddata[size][I_DIRECTIONAL_LOTS] = NULL;
-      positions.ddata[size][I_HEDGED_LOTS     ] = NULL;
-      positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
+   positions.ddata[size][I_DIRECTIONAL_LOTS] = NULL;
+   positions.ddata[size][I_HEDGED_LOTS     ] = NULL;
+   positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
 
-      positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = 0;
-      positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
-      positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
-      positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
-      positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
-      positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
-      return(!catch("StorePosition(8)"));
-   }
+   positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit   = 0;
+   positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;     closedProfit = ifDouble(closedProfit==EMPTY_VALUE, 0, closedProfit);
+   positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
+   positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
+   positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;
+   positions.ddata[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-fullProfit) * 100;
 
-   return(!catch("StorePosition(9)  unreachable code reached", ERR_RUNTIME_ERROR));
+   return(!catch("StorePosition(8)"));
 }
 
 
@@ -3926,18 +3924,20 @@ bool QC.HandleLfxTerminalMessages() {
  *                               das Auslösen eines Fehlers durch Schicken einer falschen Message ist so nicht möglich. Für nicht unterstützte Messages wird
  *                               stattdessen eine Warnung ausgegeben.
  *
- *  Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
- *                 "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
- *                 "LFX:{iTicket]:close={1|0}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
- *                 "LFX:{iTicket]:profit={dValue}" - der P/L der angegebenen Position hat sich geändert
+ * Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
+ *                "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
+ *                "LFX:{iTicket]:close={1|0}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
+ *                "LFX:{iTicket]:profit={dValue}" - der P/L der angegebenen Position hat sich geändert
  */
 bool ProcessLfxTerminalMessage(string message) {
+   //debug("ProcessLfxTerminalMessage(1)  tick="+ Tick +"  msg=\""+ message +"\"");
+
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
-   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(1)  unknown message format \""+ message +"\"")));
+   if (StringSubstr(message, 0, 4) != "LFX:")                                        return(_true(warn("ProcessLfxTerminalMessage(2)  unknown message format \""+ message +"\"")));
    // LFX-Ticket
-   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessLfxTerminalMessage(2)  unknown message \""+ message +"\" (illegal order ticket)")));
-   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)")));
+   int from=4, to=StringFind(message, ":", from);                   if (to <= from)  return(_true(warn("ProcessLfxTerminalMessage(3)  unknown message \""+ message +"\" (illegal order ticket)")));
+   int ticket = StrToInteger(StringSubstr(message, from, to-from)); if (ticket <= 0) return(_true(warn("ProcessLfxTerminalMessage(4)  unknown message \""+ message +"\" (illegal order ticket)")));
    // LFX-Parameter
    double profit;
    bool   success;
@@ -3947,9 +3947,9 @@ bool ProcessLfxTerminalMessage(string message) {
    if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
       int size = ArrayRange(lfxOrders, 0);
       for (int i=0; i < size; i++) {
-         if (lfxOrders.ivolatile[i][I_TICKET] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
-            if (lfxOrders.ivolatile[i][I_ISOPEN] && !lfxOrders.ivolatile[i][I_ISLOCKED])
-               lfxOrders.dvolatile[i][I_PROFIT] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
+         if (lfxOrders.iVolatile[i][I_TICKET] == ticket) {                    // geladene LFX-Orders durchsuchen und P/L aktualisieren
+            if (lfxOrders.iVolatile[i][I_ISOPEN] && !lfxOrders.iVolatile[i][I_ISLOCKED])
+               lfxOrders.dVolatile[i][I_PROFIT] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
             break;
          }
       }
@@ -3959,27 +3959,27 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (__LOG) log("ProcessLfxTerminalMessage(4)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
-      else         {           warn("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
+      if (success) { if (__LOG) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
+      else         {           warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
       return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (__LOG) log("ProcessLfxTerminalMessage(6)  #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
       return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
       return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // ???
-   return(_true(warn("ProcessLfxTerminalMessage(8)  unknown message \""+ message +"\"")));
+   return(_true(warn("ProcessLfxTerminalMessage(9)  unknown message \""+ message +"\"")));
 }
 
 
@@ -4001,7 +4001,7 @@ bool RestoreRemoteOrders(bool fromCache) {
 
    // (1) Orderdaten aus in der Library zwischengespeicherten Daten restaurieren
    if (fromCache) {
-      int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.ivolatile, lfxOrders.dvolatile);
+      int size = ChartInfos.CopyLfxStatus(false, lfxOrders, lfxOrders.iVolatile, lfxOrders.dVolatile);
       if (size == -1)
          return(!SetLastError(ERR_RUNTIME_ERROR));
 
@@ -4009,7 +4009,7 @@ bool RestoreRemoteOrders(bool fromCache) {
       lfxOrders.openPositions = 0;
 
       for (int i=0; i < size; i++) {
-         if (lfxOrders.ivolatile[i][I_ISOPEN] != 0)
+         if (lfxOrders.iVolatile[i][I_ISOPEN] != 0)
             lfxOrders.openPositions++;
       }
       return(true);
@@ -4017,12 +4017,12 @@ bool RestoreRemoteOrders(bool fromCache) {
 
 
    // (2) Orderdaten neu einlesen: Sind wir nicht in einem init()-Cycle, werden die vorhandenen volatilen Daten vorm Überschreiben gespeichert.
-   if (ArrayRange(lfxOrders.ivolatile, 0) > 0) {
+   if (ArrayRange(lfxOrders.iVolatile, 0) > 0) {
       if (!SaveVolatileLfxStatus())
          return(false);
    }
-   ArrayResize(lfxOrders.ivolatile, 0);
-   ArrayResize(lfxOrders.dvolatile, 0);
+   ArrayResize(lfxOrders.iVolatile, 0);
+   ArrayResize(lfxOrders.dVolatile, 0);
    lfxOrders.openPositions = 0;
 
 
@@ -4035,26 +4035,26 @@ bool RestoreRemoteOrders(bool fromCache) {
    size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size == -1)
       return(false);
-   ArrayResize(lfxOrders.ivolatile, size);
-   ArrayResize(lfxOrders.dvolatile, size);
+   ArrayResize(lfxOrders.iVolatile, size);
+   ArrayResize(lfxOrders.dVolatile, size);
 
    // Zähler der offenen Positionen und volatile P/L-Daten aktualisieren
    for (i=0; i < size; i++) {
-      lfxOrders.ivolatile[i][I_TICKET  ] = los.Ticket(lfxOrders, i);
-      lfxOrders.ivolatile[i][I_ISOPEN  ] = los.IsOpen(lfxOrders, i);
-      lfxOrders.ivolatile[i][I_ISLOCKED] = false;
-      if (!lfxOrders.ivolatile[i][I_ISOPEN]) {
-         lfxOrders.dvolatile[i][I_PROFIT] = los.Profit(lfxOrders, i);
+      lfxOrders.iVolatile[i][I_TICKET  ] = los.Ticket(lfxOrders, i);
+      lfxOrders.iVolatile[i][I_ISOPEN  ] = los.IsOpen(lfxOrders, i);
+      lfxOrders.iVolatile[i][I_ISLOCKED] = false;
+      if (!lfxOrders.iVolatile[i][I_ISOPEN]) {
+         lfxOrders.dVolatile[i][I_PROFIT] = los.Profit(lfxOrders, i);
       }
       else {
-         string varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
+         string varName = StringConcatenate("LFX.#", lfxOrders.iVolatile[i][I_TICKET], ".profit");
          double value   = GlobalVariableGet(varName);
          if (!value) {                                                  // 0 oder Fehler
             int error = GetLastError();
             if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
                return(!catch("RestoreRemoteOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
          }
-         lfxOrders.dvolatile[i][I_PROFIT] = value;
+         lfxOrders.dVolatile[i][I_PROFIT] = value;
          lfxOrders.openPositions++;
       }
    }
@@ -4069,15 +4069,15 @@ bool RestoreRemoteOrders(bool fromCache) {
  */
 bool SaveVolatileLfxStatus() {
    string varName;
-   int size = ArrayRange(lfxOrders.ivolatile, 0);
+   int size = ArrayRange(lfxOrders.iVolatile, 0);
 
    for (int i=0; i < size; i++) {
-      if (lfxOrders.ivolatile[i][I_ISOPEN] != 0) {
-         varName = StringConcatenate("LFX.#", lfxOrders.ivolatile[i][I_TICKET], ".profit");
+      if (lfxOrders.iVolatile[i][I_ISOPEN] != 0) {
+         varName = StringConcatenate("LFX.#", lfxOrders.iVolatile[i][I_TICKET], ".profit");
 
-         if (!GlobalVariableSet(varName, lfxOrders.dvolatile[i][I_PROFIT])) {
+         if (!GlobalVariableSet(varName, lfxOrders.dVolatile[i][I_PROFIT])) {
             int error = GetLastError();
-            return(!catch("SaveVolatileLfxStatus(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dvolatile[i][I_PROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
+            return(!catch("SaveVolatileLfxStatus(1)->GlobalVariableSet(name=\""+ varName +"\", value="+ DoubleToStr(lfxOrders.dVolatile[i][I_PROFIT], 2) +")", ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
       }
    }

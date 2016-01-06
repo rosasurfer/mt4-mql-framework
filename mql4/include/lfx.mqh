@@ -27,8 +27,8 @@ int    lfxCurrencyId;
 
 int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]: Array von RemoteOrders
 
-int    lfxOrders.ivolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
-double lfxOrders.dvolatile[][1];                                     //                               = {Profit}
+int    lfxOrders.iVolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
+double lfxOrders.dVolatile[][1];                                     //                               = {Profit}
 int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen in den offenen Orders (IsOpen = 1)
 
 #define I_TICKET           0                                         // Arrayindizes von lfxOrders.~volatile[]

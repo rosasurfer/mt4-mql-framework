@@ -2273,9 +2273,8 @@ bool StringStartsWith(string object, string prefix) {
       }
       catch("StringStartsWith(2)", error);
    }
+   if (!StringLen(prefix))         return(!catch("StringStartsWith(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
-   if (!StringLen(prefix))
-      return(!catch("StringStartsWith(3)  empty prefix \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(object, prefix) == 0);
 }
 
@@ -2297,9 +2296,8 @@ bool StringStartsWithI(string object, string prefix) {
       }
       catch("StringStartsWithI(2)", error);
    }
+   if (!StringLen(prefix))         return(!catch("StringStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
 
-   if (!StringLen(prefix))
-      return(!catch("StringStartsWithI(3)  empty prefix \"\"", ERR_INVALID_PARAMETER));
    return(StringFind(StringToUpper(object), StringToUpper(prefix)) == 0);
 }
 
@@ -2325,8 +2323,7 @@ bool StringEndsWith(string object, string suffix) {
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)
-      return(!catch("StringEndsWith(3)  empty suffix \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)             return(!catch("StringEndsWith(3)  illegal parameter suffix = \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
@@ -2360,8 +2357,7 @@ bool StringEndsWithI(string object, string suffix) {
    int lenObject = StringLen(object);
    int lenSuffix = StringLen(suffix);
 
-   if (lenSuffix == 0)
-      return(!catch("StringEndsWithI(3)  empty suffix \"\"", ERR_INVALID_PARAMETER));
+   if (lenSuffix == 0)             return(!catch("StringEndsWithI(3)  illegal parameter suffix = \"\"", ERR_INVALID_PARAMETER));
 
    if (lenObject < lenSuffix)
       return(false);
