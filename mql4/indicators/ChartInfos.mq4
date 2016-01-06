@@ -1586,7 +1586,6 @@ bool UpdatePositions() {
    color  fontColor;
    int    line;
 
-
    // (3.1) Anzeige interne/externe Positionsdaten
    for (int i=iePositions-1; i >= 0; i--) {
       line++;
@@ -1937,7 +1936,7 @@ bool AnalyzePositions(bool logTickets=false) {
          if (OrderType() > OP_SELL) continue;
 
          // LFX-Reporting bei QuickChannel-Fehler (volle Message-Queue) deaktivieren
-         if (LFX.IsMyOrder()) {                                         // nebenbei P/L gefundener LFX-Positionen aufaddieren
+         if (false && LFX.IsMyOrder()) {                                // nebenbei P/L gefundener LFX-Positionen aufaddieren
             if (OrderMagicNumber() != lfxMagics[pos]) {                 // Zeile (1.1.1): Quickcheck mit dem letzten verwendeten Index, erst dann Suche (schnellste Variante)
                pos = SearchMagicNumber(lfxMagics, OrderMagicNumber());
                if (pos == -1)
@@ -3368,12 +3367,12 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
       // geschlossene Positionen des aktuellen oder aller Symbole eines Zeitraumes
       from              = value1;
       to                = value2;
-      double lastProfit = cache1;
-      int    lastOrders = cache2;                                             // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
+      double lastProfit = cache1;      // default: EMPTY_VALUE
+      int    lastOrders = cache2;      // default: EMPTY_VALUE                // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
 
       int orders=OrdersHistoryTotal(), _orders=orders;
 
-      if (lastProfit==EMPTY_VALUE || orders!=lastOrders) {
+      if (orders != lastOrders) {
          // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
          int sortKeys[][3], n, hst.ticket;                                    // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
@@ -3485,15 +3484,17 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
          }
-         lastProfit = NormalizeDouble(lastProfit, 2);
-         cache1     = lastProfit;
-         cache2     = _orders;
-
-         //debug("ExtractPosition(6)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ DoubleToStr(lastProfit, 2) +"  trades="+ n);
+         if (!n) lastProfit = EMPTY_VALUE;                                       // keine passenden geschlossenen Trades gefunden
+         else    lastProfit = NormalizeDouble(lastProfit, 2);
+         cache1             = lastProfit;
+         cache2             = _orders;
+         //debug("ExtractPosition(6)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ ifString(IsEmptyValue(lastProfit), "empty", DoubleToStr(lastProfit, 2)) +"  closed trades="+ n);
       }
-      // Betrag zu closedProfit hinzufügen (Ausgangsdaten bleiben unverändert)
-      if (closedProfit == EMPTY_VALUE) closedProfit  = lastProfit;
-      else                             closedProfit += lastProfit;
+      // lastProfit zu closedProfit hinzufügen, wenn geschlossene Trades existierten (Ausgangsdaten bleiben unverändert)
+      if (lastProfit != EMPTY_VALUE) {
+         if (closedProfit == EMPTY_VALUE) closedProfit  = lastProfit;
+         else                             closedProfit += lastProfit;
+      }
    }
 
    else if (type == TERM_ADJUSTMENT) {
@@ -3840,7 +3841,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    }
 
 
-   // (2.3) ohne offene Positionen muß ClosedProfit gesetzt sein und kann 0.00 oder EMPTY_VALUE sein
+   // (2.3) ohne offene Positionen muß ClosedProfit gesetzt sein und kann 0.00 sein
    // History mit leerer Position speichern
    size = ArrayRange(positions.idata, 0);
    ArrayResize(positions.idata, size+1);
@@ -3854,8 +3855,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.ddata[size][I_HEDGED_LOTS     ] = NULL;
    positions.ddata[size][I_BREAKEVEN_PRICE ] = NULL;
 
-   positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit   = 0;
-   positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;     closedProfit = ifDouble(closedProfit==EMPTY_VALUE, 0, closedProfit);
+   positions.ddata[size][I_OPEN_EQUITY     ] = equity;         openProfit = 0;
+   positions.ddata[size][I_OPEN_PROFIT     ] = openProfit;
    positions.ddata[size][I_CLOSED_PROFIT   ] = closedProfit;
    positions.ddata[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
    positions.ddata[size][I_FULL_PROFIT_ABS ] = fullProfit;

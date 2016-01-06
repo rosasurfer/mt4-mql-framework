@@ -203,10 +203,7 @@
    color    HSVValuesToRGB(double hue, double saturation, double value);
 
    color    Color.ModifyHSV(color rgb, double hue, double saturation, double value);
-
-   string   ColorToStr(color rgb);
    string   ColorToRGBStr(color rgb);
-   string   ColorToHtmlStr(color rgb);
 
 
    // Files, I/O
@@ -227,10 +224,7 @@
 
    // Strings
    string   StringPad(string input, int length, string pad_string, int pad_type);
-
-   string   StringRepeat(string input, int times);
    string   StringReplace.Recursive(string object, string search, string replace);
-
    int      Explode(string input, string separator, string results[], int limit);
 
 
