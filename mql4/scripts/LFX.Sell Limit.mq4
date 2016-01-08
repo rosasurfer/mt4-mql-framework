@@ -70,8 +70,8 @@ int onInit() {
    }
 
 
-   // (3) offene Orders einlesen
-   int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
+   // (3) alle Orders des Symbols einlesen
+   int size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size < 0)
       return(last_error);
    return(catch("onInit(9)"));

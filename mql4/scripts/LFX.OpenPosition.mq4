@@ -74,8 +74,8 @@ int onInit() {
    if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value [MoneyManagement]->BasketLeverage = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_PARAMVALUE));
 
 
-   // (4) offene Orders einlesen
-   int size = LFX.GetOrders(NULL, OF_OPEN, lfxOrders);
+   // (4) alle Orders des Symbols einlesen
+   int size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size < 0)
       return(last_error);
    return(catch("onInit(8)"));
