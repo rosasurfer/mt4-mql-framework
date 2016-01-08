@@ -728,8 +728,8 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
-   double   lots, units, openPrice, closePrice;
-   string   sOpenPrice, sClosePrice, comment, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
+   double   lots, units, openPrice, closePrice, openEquity, profit;
+   string   sOpenPrice, sClosePrice, comment, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
 
    // (1) Anzeigekonfiguration auslesen
@@ -932,8 +932,10 @@ int ShowTradeHistory() {
          units       =                     los.Units     (lfxOrders, i);
          openTime    =     FxtToServerTime(los.OpenTime  (lfxOrders, i));
          openPrice   =                     los.OpenPrice (lfxOrders, i);
+         openEquity  =                     los.OpenEquity(lfxOrders, i);
          closeTime   = FxtToServerTime(Abs(los.CloseTime (lfxOrders, i)));
          closePrice  =                     los.ClosePrice(lfxOrders, i);
+         profit      =                     los.Profit    (lfxOrders, i);
          comment     =                     los.Comment   (lfxOrders, i);
 
          sOpenPrice  = NumberToStr(openPrice,  PriceFormat);
@@ -944,10 +946,11 @@ int ShowTradeHistory() {
          if (ObjectFind(openLabel) == 0)
             ObjectDelete(openLabel);
          if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
-            ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
-            ObjectSet(openLabel, OBJPROP_COLOR    , markerColors[type]);
-            if (StringLen(comment) > 0)
-               ObjectSetText(openLabel, comment);
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN  );
+            ObjectSet    (openLabel, OBJPROP_COLOR    , markerColors[type]);
+               if (positions.showAbsProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
+               else                                         text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
+            ObjectSetText(openLabel, text);
          }
 
          // Trendlinie anzeigen
@@ -968,10 +971,9 @@ int ShowTradeHistory() {
          if (ObjectFind(closeLabel) == 0)
             ObjectDelete(closeLabel);
          if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
-            ObjectSet(closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet(closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
-            if (StringLen(comment) > 0)
-               ObjectSetText(closeLabel, comment);
+            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
+            ObjectSetText(closeLabel, text);
          }
          n++;
       }
@@ -991,8 +993,13 @@ bool Positions.ToggleAbsProfits() {
    // aktuellen Anzeigestatus umschalten
    positions.showAbsProfits = !positions.showAbsProfits;
 
-   // Anzeige aktualisieren
+   // Positionsanzeige aktualisieren
    if (!UpdatePositions()) return(false);
+
+
+   // ggf. TradeHistory aktualisieren
+   if (GetTradeHistoryDisplayStatus())
+      ShowTradeHistory();
 
    return(!catch("Positions.ToggleAbsProfits(1)"));
 }
