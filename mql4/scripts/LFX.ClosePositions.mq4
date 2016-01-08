@@ -1,6 +1,10 @@
 /**
  * Schlieﬂt die angegebenen LFX-Positionen.
  *
+ *
+ * FEHLER !!!: Werden mehrere Positionen angegeben, wird nur die letzte geschlossen.
+ *
+ *
  * NOTE: Zur Zeit kˆnnen die Positionen nur einzeln und nicht gleichzeitig geschlossen werden. Beim gleichzeitigen Schlieﬂen
  *       kann der ClosePrice der Gesamtposition noch nicht korrekt berechnet werden. Beim einzelnen Schlieﬂen mehrerer Positionen
  *       werden dadurch Commission und Spread mehrfach berechnet.
