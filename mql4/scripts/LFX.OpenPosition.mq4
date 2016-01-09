@@ -343,11 +343,14 @@ int GetPositionCounter() {
    for (int i=0; i < size; i++) {
       if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
          continue;
+      if (!los.IsOpen(lfxOrders, i))
+         continue;
 
       string comment = los.Comment(lfxOrders, i);
-      if (StringStartsWith(comment, lfxCurrency +".")) comment = StringRightFrom(comment, ".");
-      if (StringStartsWith(comment,              "#")) comment = StringRight(comment, -1);
-
+      if      (StringStartsWith(comment, lfxCurrency +".")) comment = StringRightFrom(comment, ".");
+      else if (StringStartsWith(comment, "#"))              comment = StringRight(comment, -1);
+      else
+         continue;
       counter = Max(counter, StrToInteger(comment));
    }
    return(counter);

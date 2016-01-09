@@ -69,7 +69,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=DataRecorder
+name=EquityRecorder
 flags=339
 window_num=0
 </expert>

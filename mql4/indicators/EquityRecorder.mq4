@@ -1,5 +1,6 @@
 /**
- * Zeichnet die Equity-Kurven des Accounts auf.
+ * Zeichnet die echten Equity-Kurven des aktuellen Accounts auf. Diese Kurven sind nicht wie vom Broker berechnet und Value-To-Market (ohne einen
+ * ggf. außerordentlichen und nur im Moment existierenden Spread offener effektiver Positionen).
  */
 #include  <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -22,7 +23,7 @@ double  account.data     [2];                                        // Accountd
 double  account.data.last[2];                                        // vorheriger Datenwert für RecordAccountData()
 int     account.hSet     [2];                                        // HistorySet-Handles der Accountdaten
 
-string  account.symbolSuffixes    [] = { ".EA", ".EX" };
+string  account.symbolSuffixes    [] = { ".EA"                           , ".EX"                                                 };
 string  account.symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity with external assets" };
 
 // Array-Indizes
@@ -165,19 +166,24 @@ bool CollectAccountData() {
  * @return double - P/L-Value oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[]) {
-   double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit;
+   double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit, vtmProfit, pipValue, pipDistance;
    int    ticketsSize = ArraySize(tickets);
 
    // (1) Gesamtposition des Symbols ermitteln: gehedgter Anteil (konstanter Profit) und direktionaler Anteil (variabler Profit)
    for (int i=0; i < ticketsSize; i++) {
       if (symbol.idx[i] != index) continue;
 
-      if (types[i] == OP_BUY) longPosition  += lots[i];              // Gesamtposition je Richtung aufaddieren
+      if (types[i] == OP_BUY) longPosition  += lots[i];                          // Gesamtposition je Richtung aufaddieren
       else                    shortPosition += lots[i];
    }
    longPosition  = NormalizeDouble(longPosition,  2);
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(longPosition-shortPosition, 2);
+
+   int    digits     = MarketInfo(symbol, MODE_DIGITS);                          // TODO: !!! digits ist u.U. falsch gesetzt !!!
+   int    pipDigits  = digits & (~1);
+   double pipSize    = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
+   double spreadPips = MarketInfo(symbol, MODE_SPREAD)/MathPow(10, digits & 1);  // SpreadPoints/PipPoints = Spread in Pip
 
 
    // (2) Konstanten Profit einer eventuellen Hedgeposition ermitteln
@@ -185,9 +191,6 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
       hedgedLots     = MathMin(longPosition, shortPosition);
       remainingLong  = hedgedLots;
       remainingShort = hedgedLots;
-
-      int    pipDigits = _int(MarketInfo(symbol, MODE_DIGITS)) & (~1);  // TODO: !!! pipDigits ist u.U. falsch gesetzt !!!
-      double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
 
       for (i=0; i < ticketsSize; i++) {
          if (symbol.idx[i] != index) continue;
@@ -240,9 +243,9 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
       if (remainingShort != 0) return(_EMPTY_VALUE(catch("CalculateProfit(2)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
 
       // Breakeven-Distance und daraus Profit berechnen
-      double pipValue     = PipValueEx(symbol, hedgedLots); if (!pipValue) return(EMPTY_VALUE);
-      double pipDistance  = (closePrice-openPrice)/hedgedLots/pipSize + (commission+swap)/pipValue;
-             hedgedProfit = pipDistance * pipValue;
+      pipValue     = PipValueEx(symbol, hedgedLots); if (!pipValue) return(EMPTY_VALUE);
+      pipDistance  = (closePrice-openPrice)/hedgedLots/pipSize + (commission+swap)/pipValue;
+      hedgedProfit = pipDistance * pipValue;
 
       // ohne direktionalen Anteil nur Hedged-Profit zurückgeben
       if (!totalPosition) {
@@ -269,7 +272,12 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
             tickets[i]      = NULL;
          }
       }
-      fullProfit = NormalizeDouble(hedgedProfit + swap + commission + floatingProfit, 2);
+
+      // Halben Spread und dessen Profitanteil berechnen und diesen zuschlagen
+      pipDistance = spreadPips/2;
+      pipValue    = PipValueEx(symbol, totalPosition); if (!pipValue) return(EMPTY_VALUE);
+      vtmProfit   = pipDistance * pipValue;
+      fullProfit  = NormalizeDouble(hedgedProfit + floatingProfit + vtmProfit + swap + commission, 2);
       return(ifDouble(!catch("CalculateProfit(4)"), fullProfit, EMPTY_VALUE));
    }
 
@@ -291,7 +299,11 @@ double CalculateProfit(string symbol, int index, int symbol.idx[], int &tickets[
             tickets[i]      = NULL;
          }
       }
-      fullProfit = NormalizeDouble(hedgedProfit + swap + commission + floatingProfit, 2);
+      // Halben Spread und dessen Profitanteil berechnen und diesen zuschlagen
+      pipDistance = spreadPips/2;
+      pipValue    = PipValueEx(symbol, totalPosition); if (!pipValue) return(EMPTY_VALUE);
+      vtmProfit   = pipDistance * pipValue;
+      fullProfit  = NormalizeDouble(hedgedProfit + floatingProfit + vtmProfit + swap + commission, 2);
       return(ifDouble(!catch("CalculateProfit(5)"), fullProfit, EMPTY_VALUE));
    }
 
