@@ -5754,13 +5754,12 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          (2) For descriptions of opening mode flag combinations see notes of <a href="help://files_FileOpen">FileOpen()</a>.<br/>
 
          <br/>
-         <span style="color:red">Bug:</span>
+         <span style="color:red">Bugs:</span>
          <br/>
          (1) Ab Build 810 ist die Funktion im Tester blockiert.<br>
-         <br/>
          (2) Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.<br/>
-         <br/>
-         Workaround: Dateifunktionen des MT4Expanders verwenden.
+         Workaround: Dateifunktionen des MT4Expanders verwenden.<br/>
+			<br/>
       </content>
       <example>
    int hFile = FileOpenHistory(<span class="string">&quot;USDX240.HST&quot;</span>, <span class="const">FILE_BIN</span>|<span class="const">FILE_WRITE</span>);
