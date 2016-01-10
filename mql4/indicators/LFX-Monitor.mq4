@@ -66,14 +66,15 @@ double mainIndex.last[10];                                           // vorherig
 bool   recording     [10];                                           // default: FALSE
 int    hSet          [10];                                           // HistorySet-Handles der Indizes
 
-string labels        [10];                                           // Label für Visualisierung
+string labels        [10];                                           // Label für Ticker-Visualisierung
 string label.animation;
 string label.animation.chars[] = {"|", "/", "—", "\\"};
 
-string fontName  = "Tahoma";
-int    fontSize  = 10;
-color  fontColor = Blue;
-color  bgColor   = C'212,208,200';
+color  bgColor                = C'212,208,200';
+color  fontColor.recordingOn  = Blue;
+color  fontColor.recordingOff = Gray;
+string fontName               = "Tahoma";
+int    fontSize               = 10;
 
 int    tickTimerId;                                                  // ID des TickTimers des Charts
 
@@ -210,8 +211,9 @@ int CreateLabels() {
    else GetLastError();
 
    // Headerzeile
-   int col3width = 110;
-   int yCoord    =  58;
+   int   col3width = 110;
+   int   yCoord    =  58;
+   color fontColor =  ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
    c++;
    label = StringConcatenate(__NAME__, ".", c, ".Header.animation");
    if (ObjectFind(label) == 0)
@@ -254,8 +256,10 @@ int CreateLabels() {
    // Datenzeilen
    yCoord += 16;
    for (int i=0; i < ArraySize(symbols); i++) {
-      c++;
+      fontColor = ifInt(recording[i], fontColor.recordingOn, fontColor.recordingOff);
+
       // Währung
+      c++;
       label = StringConcatenate(__NAME__, ".", c, ".", names[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
@@ -664,56 +668,70 @@ bool UpdateInfos() {
    if (IsError(error)) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE) return(!catch("UpdateInfos(1)", error));
 
 
+   // Farben definieren
+   color fontColor.USD = ifInt(recording[I_USD], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.AUD = ifInt(recording[I_AUD], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.CAD = ifInt(recording[I_CAD], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.CHF = ifInt(recording[I_CHF], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.EUR = ifInt(recording[I_EUR], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.GBP = ifInt(recording[I_GBP], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.JPY = ifInt(recording[I_JPY], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.NZD = ifInt(recording[I_NZD], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.USX = ifInt(recording[I_USX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.EUX = ifInt(recording[I_EUX], fontColor.recordingOn, fontColor.recordingOff);
+
+
    // Cross-Indizes
-   string sValue            = "-";                                                                                                                       ObjectSetText(labels[I_USD] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!AUD.Enabled) sValue = "off"; else if (is_audlfx.crs) sValue = NumberToStr(NormalizeDouble(audlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_AUD] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!CAD.Enabled) sValue = "off"; else if (is_cadlfx.crs) sValue = NumberToStr(NormalizeDouble(cadlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_CAD] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!CHF.Enabled) sValue = "off"; else if (is_chflfx.crs) sValue = NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_CHF] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!EUR.Enabled) sValue = "off"; else if (is_eurlfx.crs) sValue = NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_EUR] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!GBP.Enabled) sValue = "off"; else if (is_gbplfx.crs) sValue = NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_GBP] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled) sValue = "off"; else if (is_jpylfx.crs) sValue = NumberToStr(NormalizeDouble(jpylfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_JPY] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-   if (!NZD.Enabled) sValue = "off"; else if (is_nzdlfx.crs) sValue = NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_NZD] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-                     sValue = "-";                                                                                                                       ObjectSetText(labels[I_USX] +".quote.cross",  sValue, fontSize, fontName, fontColor);
-                     sValue = "-";                                                                                                                       ObjectSetText(labels[I_EUX] +".quote.cross",  sValue, fontSize, fontName, fontColor);
+   string sValue            = "-";                                                                                                                       ObjectSetText(labels[I_USD] +".quote.cross",  sValue, fontSize, fontName, fontColor.USD);
+   if (!AUD.Enabled) sValue = "off"; else if (is_audlfx.crs) sValue = NumberToStr(NormalizeDouble(audlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_AUD] +".quote.cross",  sValue, fontSize, fontName, fontColor.AUD);
+   if (!CAD.Enabled) sValue = "off"; else if (is_cadlfx.crs) sValue = NumberToStr(NormalizeDouble(cadlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_CAD] +".quote.cross",  sValue, fontSize, fontName, fontColor.CAD);
+   if (!CHF.Enabled) sValue = "off"; else if (is_chflfx.crs) sValue = NumberToStr(NormalizeDouble(chflfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_CHF] +".quote.cross",  sValue, fontSize, fontName, fontColor.CHF);
+   if (!EUR.Enabled) sValue = "off"; else if (is_eurlfx.crs) sValue = NumberToStr(NormalizeDouble(eurlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_EUR] +".quote.cross",  sValue, fontSize, fontName, fontColor.EUR);
+   if (!GBP.Enabled) sValue = "off"; else if (is_gbplfx.crs) sValue = NumberToStr(NormalizeDouble(gbplfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_GBP] +".quote.cross",  sValue, fontSize, fontName, fontColor.GBP);
+   if (!JPY.Enabled) sValue = "off"; else if (is_jpylfx.crs) sValue = NumberToStr(NormalizeDouble(jpylfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_JPY] +".quote.cross",  sValue, fontSize, fontName, fontColor.JPY);
+   if (!NZD.Enabled) sValue = "off"; else if (is_nzdlfx.crs) sValue = NumberToStr(NormalizeDouble(nzdlfx.crs, 5), ".4'"); else sValue = " ";             ObjectSetText(labels[I_NZD] +".quote.cross",  sValue, fontSize, fontName, fontColor.NZD);
+                     sValue = "-";                                                                                                                       ObjectSetText(labels[I_USX] +".quote.cross",  sValue, fontSize, fontName, fontColor.USX);
+                     sValue = "-";                                                                                                                       ObjectSetText(labels[I_EUX] +".quote.cross",  sValue, fontSize, fontName, fontColor.EUX);
 
    // Cross-Spreads
-                                       sValue = " ";                                                                                                     ObjectSetText(labels[I_USD] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!AUD.Enabled || !is_audlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_AUD] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!CAD.Enabled || !is_cadlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_CAD] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!CHF.Enabled || !is_chflfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_CHF] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!EUR.Enabled || !is_eurlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_EUR] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!GBP.Enabled || !is_gbplfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_GBP] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled || !is_jpylfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_JPY] +".spread.cross", sValue, fontSize, fontName, fontColor);
-   if (!NZD.Enabled || !is_nzdlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_NZD] +".spread.cross", sValue, fontSize, fontName, fontColor);
-                                       sValue = " ";                                                                                                     ObjectSetText(labels[I_USX] +".spread.cross", sValue, fontSize, fontName, fontColor);
-                                       sValue = " ";                                                                                                     ObjectSetText(labels[I_EUX] +".spread.cross", sValue, fontSize, fontName, fontColor);
+                                       sValue = " ";                                                                                                     ObjectSetText(labels[I_USD] +".spread.cross", sValue, fontSize, fontName, fontColor.USD);
+   if (!AUD.Enabled || !is_audlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_AUD] +".spread.cross", sValue, fontSize, fontName, fontColor.AUD);
+   if (!CAD.Enabled || !is_cadlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_CAD] +".spread.cross", sValue, fontSize, fontName, fontColor.CAD);
+   if (!CHF.Enabled || !is_chflfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_CHF] +".spread.cross", sValue, fontSize, fontName, fontColor.CHF);
+   if (!EUR.Enabled || !is_eurlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_EUR] +".spread.cross", sValue, fontSize, fontName, fontColor.EUR);
+   if (!GBP.Enabled || !is_gbplfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_GBP] +".spread.cross", sValue, fontSize, fontName, fontColor.GBP);
+   if (!JPY.Enabled || !is_jpylfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_JPY] +".spread.cross", sValue, fontSize, fontName, fontColor.JPY);
+   if (!NZD.Enabled || !is_nzdlfx.crs) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                      ObjectSetText(labels[I_NZD] +".spread.cross", sValue, fontSize, fontName, fontColor.NZD);
+                                       sValue = " ";                                                                                                     ObjectSetText(labels[I_USX] +".spread.cross", sValue, fontSize, fontName, fontColor.USX);
+                                       sValue = " ";                                                                                                     ObjectSetText(labels[I_EUX] +".spread.cross", sValue, fontSize, fontName, fontColor.EUX);
 
    // Main-Indizes
-   if (!USD.Enabled ) sValue = "off"; else if (isMainIndex[I_USD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_USD] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!AUD.Enabled ) sValue = "off"; else if (isMainIndex[I_AUD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_AUD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_AUD] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!CAD.Enabled ) sValue = "off"; else if (isMainIndex[I_CAD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CAD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CAD] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!CHF.Enabled ) sValue = "off"; else if (isMainIndex[I_CHF]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CHF], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CHF] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!EUR.Enabled ) sValue = "off"; else if (isMainIndex[I_EUR]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUR], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_EUR] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!GBP.Enabled ) sValue = "off"; else if (isMainIndex[I_GBP]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_GBP], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_GBP] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled ) sValue = "off"; else if (isMainIndex[I_JPY]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_JPY], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_JPY] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!NZD.Enabled ) sValue = "off"; else if (isMainIndex[I_NZD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_NZD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_NZD] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!USDX.Enabled) sValue = "off"; else if (isMainIndex[I_USX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_USX] +".quote.main",   sValue, fontSize, fontName, fontColor);
-   if (!EURX.Enabled) sValue = "off"; else if (isMainIndex[I_EUX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_EUX] +".quote.main",   sValue, fontSize, fontName, fontColor);
+   if (!USD.Enabled ) sValue = "off"; else if (isMainIndex[I_USD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_USD] +".quote.main",   sValue, fontSize, fontName, fontColor.USD);
+   if (!AUD.Enabled ) sValue = "off"; else if (isMainIndex[I_AUD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_AUD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_AUD] +".quote.main",   sValue, fontSize, fontName, fontColor.AUD);
+   if (!CAD.Enabled ) sValue = "off"; else if (isMainIndex[I_CAD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CAD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CAD] +".quote.main",   sValue, fontSize, fontName, fontColor.CAD);
+   if (!CHF.Enabled ) sValue = "off"; else if (isMainIndex[I_CHF]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CHF], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CHF] +".quote.main",   sValue, fontSize, fontName, fontColor.CHF);
+   if (!EUR.Enabled ) sValue = "off"; else if (isMainIndex[I_EUR]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUR], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_EUR] +".quote.main",   sValue, fontSize, fontName, fontColor.EUR);
+   if (!GBP.Enabled ) sValue = "off"; else if (isMainIndex[I_GBP]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_GBP], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_GBP] +".quote.main",   sValue, fontSize, fontName, fontColor.GBP);
+   if (!JPY.Enabled ) sValue = "off"; else if (isMainIndex[I_JPY]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_JPY], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_JPY] +".quote.main",   sValue, fontSize, fontName, fontColor.JPY);
+   if (!NZD.Enabled ) sValue = "off"; else if (isMainIndex[I_NZD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_NZD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_NZD] +".quote.main",   sValue, fontSize, fontName, fontColor.NZD);
+   if (!USDX.Enabled) sValue = "off"; else if (isMainIndex[I_USX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_USX] +".quote.main",   sValue, fontSize, fontName, fontColor.USX);
+   if (!EURX.Enabled) sValue = "off"; else if (isMainIndex[I_EUX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_EUX] +".quote.main",   sValue, fontSize, fontName, fontColor.EUX);
 
    // Main-Spreads
-   if (!USD.Enabled  || !isMainIndex[I_USD]) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.main_Ask-usdlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_USD] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!AUD.Enabled  || !isMainIndex[I_AUD]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.main_Ask-audlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_AUD] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!CAD.Enabled  || !isMainIndex[I_CAD]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.main_Ask-cadlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_CAD] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!CHF.Enabled  || !isMainIndex[I_CHF]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.main_Ask-chflfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_CHF] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!EUR.Enabled  || !isMainIndex[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.main_Ask-eurlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_EUR] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!GBP.Enabled  || !isMainIndex[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.main_Ask-gbplfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_GBP] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!JPY.Enabled  || !isMainIndex[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.main_Ask-jpylfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_JPY] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!NZD.Enabled  || !isMainIndex[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.main_Ask-nzdlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_NZD] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!USDX.Enabled || !isMainIndex[I_USX]) sValue = " "; else sValue = "("+ DoubleToStr((  usdx.main_Ask-  usdx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_USX] +".spread.main",  sValue, fontSize, fontName, fontColor);
-   if (!EURX.Enabled || !isMainIndex[I_EUX]) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.main_Ask-  eurx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_EUX] +".spread.main",  sValue, fontSize, fontName, fontColor);
+   if (!USD.Enabled  || !isMainIndex[I_USD]) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.main_Ask-usdlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_USD] +".spread.main",  sValue, fontSize, fontName, fontColor.USD);
+   if (!AUD.Enabled  || !isMainIndex[I_AUD]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.main_Ask-audlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_AUD] +".spread.main",  sValue, fontSize, fontName, fontColor.AUD);
+   if (!CAD.Enabled  || !isMainIndex[I_CAD]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.main_Ask-cadlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_CAD] +".spread.main",  sValue, fontSize, fontName, fontColor.CAD);
+   if (!CHF.Enabled  || !isMainIndex[I_CHF]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.main_Ask-chflfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_CHF] +".spread.main",  sValue, fontSize, fontName, fontColor.CHF);
+   if (!EUR.Enabled  || !isMainIndex[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.main_Ask-eurlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_EUR] +".spread.main",  sValue, fontSize, fontName, fontColor.EUR);
+   if (!GBP.Enabled  || !isMainIndex[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.main_Ask-gbplfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_GBP] +".spread.main",  sValue, fontSize, fontName, fontColor.GBP);
+   if (!JPY.Enabled  || !isMainIndex[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.main_Ask-jpylfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_JPY] +".spread.main",  sValue, fontSize, fontName, fontColor.JPY);
+   if (!NZD.Enabled  || !isMainIndex[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.main_Ask-nzdlfx.main_Bid)*10000, 1) +")";              ObjectSetText(labels[I_NZD] +".spread.main",  sValue, fontSize, fontName, fontColor.NZD);
+   if (!USDX.Enabled || !isMainIndex[I_USX]) sValue = " "; else sValue = "("+ DoubleToStr((  usdx.main_Ask-  usdx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_USX] +".spread.main",  sValue, fontSize, fontName, fontColor.USX);
+   if (!EURX.Enabled || !isMainIndex[I_EUX]) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.main_Ask-  eurx.main_Bid)*  100, 1) +")";              ObjectSetText(labels[I_EUX] +".spread.main",  sValue, fontSize, fontName, fontColor.EUX);
 
    // Animation
    static int size = -1; if (size==-1) size = ArraySize(label.animation.chars);
+   color fontColor = ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
    ObjectSetText(label.animation, label.animation.chars[Tick % size], fontSize, fontName, fontColor);
 
 
