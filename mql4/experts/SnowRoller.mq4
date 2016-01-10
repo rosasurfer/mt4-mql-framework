@@ -5307,9 +5307,9 @@ bool RecordEquity(int flags=NULL) {
       string description = "Equity SR."+ sequenceId;
       int    digits      = 2;
       int    format      = 400;
-      bool   synthetic   = true;
+      string server      = "MyFX-Synthetic";
 
-      hSet = HistorySet.Create(symbol, description, digits, format, synthetic);
+      hSet = HistorySet.Create(symbol, description, digits, format, server);
       if (!hSet) return(!SetLastError(history.GetLastError()));
    }
 
