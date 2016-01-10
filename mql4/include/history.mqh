@@ -6,12 +6,12 @@
  */
 #import "history.ex4"
 
-   int      HistorySet.Create (string symbol, string description, int digits, int format, bool synthetic=false);
-   int      HistorySet.Get    (string symbol, bool synthetic=false);
+   int      HistorySet.Create (string symbol, string description, int digits, int format, string server="");
+   int      HistorySet.Get    (string symbol, string server="");
    bool     HistorySet.Close  (int hSet);
    bool     HistorySet.AddTick(int hSet, datetime time, double value, int flags=NULL);
 
-   int      HistoryFile.Open             (string symbol, int timeframe, string description, int digits, int format, int mode, bool synthetic=false);
+   int      HistoryFile.Open             (string symbol, int timeframe, string description, int digits, int format, int mode, string server="");
    bool     HistoryFile.Close            (int hFile);
    int      HistoryFile.FindBar          (int hFile, datetime time, int flags, bool lpBarExists[]);
    bool     HistoryFile.ReadBar          (int hFile, int offset, double bar[]);
@@ -36,7 +36,7 @@
    string   hf.Description(int hFile);
    int      hf.Period     (int hFile);
    int      hf.Digits     (int hFile);
-   bool     hf.Synthetic  (int hFile);
+   string   hf.ServerName (int hFile);
    datetime hf.SyncMark   (int hFile);
    datetime hf.LastSync   (int hFile);
 

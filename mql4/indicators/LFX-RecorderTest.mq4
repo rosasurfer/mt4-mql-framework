@@ -764,7 +764,7 @@ bool RecordLfxIndices() {
             if (!hSet[i]) {
                string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
                int    format      = 400;
-               string server      = "MyFX-Synthetic";
+               string server      = "MyFX-Synthetic.test";
 
                hSet[i] = HistorySet.Get(symbols[i], server);
                if (hSet[i] == -1)
