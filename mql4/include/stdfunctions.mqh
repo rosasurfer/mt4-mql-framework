@@ -28,12 +28,14 @@ int start.RelaunchInputDialog() {
 
 
 /**
- * Schickt eine Debug-Message an den angeschlossenen Debugger. OutputDebugString() funktioniert nur für Admins zuverlässig.
+ * Schickt eine Debug-Message an den angeschlossenen Debugger.
  *
  * @param  string message - Message
  * @param  int    error   - Fehlercode
  *
  * @return int - derselbe Fehlercode
+ *
+ * NOTE:  OutputDebugString() benötigt Admin-Rechte.
  */
 int debug(string message, int error=NO_ERROR) {
    string name;
@@ -243,7 +245,7 @@ int warnSMS(string message, int error=NO_ERROR) {
 
 
 /**
- * Loggt eine Message.
+ * Loggt eine Message in das Logfile des Terminals.
  *
  * @param  string message - Message
  * @param  int    error   - Fehlercode
@@ -291,15 +293,15 @@ int log(string message, int error=NO_ERROR) {
 
 
 /**
- * Loggt eine Message in das Instanz-eigene Logfile.
+ * Loggt eine Message in das Logfile des Programms.
  *
  * @param  string message - vollständige zu loggende Message (ohne Zeitstempel, Symbol, Timeframe)
  *
- * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile (noch) nicht definiert ist
+ * @return bool - Erfolgsstatus: u.a. FALSE, wenn das Instanz-eigene Logfile nicht definiert ist
  *
- * @private
+ * @private - Aufruf nur aus log()
  */
-bool __log.custom(string message) {
+/*private*/bool __log.custom(string message) {
    bool old.LOG_CUSTOM = __LOG_CUSTOM;
    int logId = GetCustomLogID();
    if (logId == NULL)

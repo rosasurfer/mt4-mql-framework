@@ -1270,7 +1270,7 @@ bool HistoryFile.MoveBars(int hFile, int startOffset, int destOffset) {
  *
  * @private
  */
-int hs.__ResizeArrays(int size) {
+/*@private*/int hs.__ResizeArrays(int size) {
    if (size != ArraySize(hs.hSet)) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
@@ -1294,7 +1294,7 @@ int hs.__ResizeArrays(int size) {
  *
  * @private
  */
-int hf.__ResizeArrays(int size) {
+/*@private*/int hf.__ResizeArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {

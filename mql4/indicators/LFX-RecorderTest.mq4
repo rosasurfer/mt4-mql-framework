@@ -17,8 +17,8 @@
  *                     oder CHF-LFX = USD-LFX / USDCHF
  *                          NZDLFX  = NZD-FX7
  *
- * - Wird eine Handelsposition statt über die direkten Paare über die USD-Crosses abgebildet, erzielt man einen niedrigerer Spread, die Anzahl der Teilpositionen und die
- *   Margin-Requirements sind jedoch höher.
+ * - Wird eine Handelsposition statt über die direkten Paare über die USD-Crosses abgebildet, erzielt man einen niedrigeren Spread, die Anzahl der Teilpositionen und die
+ *   entsprechenden Margin-Requirements sind jedoch höher.
  *
  * - Unterschiede zwischen theoretischer und praktischer Performance von Handelspositionen können vom Position-Sizing (MinLotStep) und bei längerfristigem Handel vom
  *   fehlenden Re-Balancing der Teilpositionen verursacht werden.
