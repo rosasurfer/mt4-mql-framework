@@ -342,11 +342,11 @@ bool RecordAccountData() {
             string description = StringReplace(account.symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
             int    digits      = 2;
             int    format      = 400;
-            bool   synthetic   = true;
+            string server      = "MyFX-Synthetic";
 
-            account.hSet[i] = HistorySet.Get(symbol, synthetic);
+            account.hSet[i] = HistorySet.Get(symbol, server);
             if (account.hSet[i] == -1)
-               account.hSet[i] = HistorySet.Create(symbol, description, digits, format, synthetic);
+               account.hSet[i] = HistorySet.Create(symbol, description, digits, format, server);
             if (!account.hSet[i]) return(!SetLastError(history.GetLastError()));
          }
 
