@@ -15,7 +15,7 @@
  *  • LiteForex:            USD-LFX = (USDAUD * USDCAD * USDCHF * USDEUR * USDGBP * USDJPY * 1) ^ 1/7
  *                          CHF-LFX = (CHFAUD * CHFCAD * CHFEUR * CHFGBP * CHFJPY * CHFUSD * 1) ^ 1/7
  *                     oder CHF-LFX = USD-LFX / USDCHF
- *                          NZDLFX  = NZD-FX7
+ *                          NZD-LFX = NZD-FX7
  *
  * - Wird eine Handelsposition statt über die direkten Paare über die USD-Crosses abgebildet, erzielt man einen niedrigeren Spread, die Anzahl der Teilpositionen und die
  *   entsprechenden Margin-Requirements sind jedoch höher.
@@ -64,6 +64,7 @@ double mainIndex.last[10];                                           // vorherig
 
 bool   recording     [10];                                           // default: FALSE
 int    hSet          [10];                                           // HistorySet-Handles der Indizes
+string serverName = "MyFX-Synthetic";                                // default: Serververzeichnis
 
 string labels        [10];                                           // Label für Ticker-Visualisierung
 string label.animation;
@@ -96,7 +97,16 @@ int    tickTimerId;                                                  // ID des T
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Parameterauswertung
+   // (1) Serververzeichnis für Historydateien definieren
+   if (__NAME__ != "LFX-Recorder") {
+      string postfix = StringRightFrom(__NAME__, "LFX-Recorder");
+      if (!StringLen(postfix))            postfix = __NAME__;
+      if (StringStartsWith(postfix, ".")) postfix = StringRight(postfix, -1);
+      serverName = serverName +"."+ postfix;
+   }
+
+
+   // (2) Parameterauswertung
    if (Recording.Enabled) {
       int count;
       recording[I_AUD] = AUD.Enabled;  count += AUD.Enabled;
@@ -122,7 +132,7 @@ int onInit() {
       }
    }
 
-   // (2) Anzeige erzeugen und Datenanzeige ausschalten
+   // (3) Anzeige erzeugen und Datenanzeige ausschalten
    CreateLabels();
    SetIndexLabel(0, NULL);
 
@@ -232,9 +242,9 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 69+col3width);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 5+col3width);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "cross", fontSize, fontName, fontColor);
+      ObjectSetText(label, serverName, fontSize, fontName, fontColor);
       ObjectRegister(label);
    }
    else GetLastError();
@@ -781,11 +791,10 @@ bool RecordLfxIndices() {
             if (!hSet[i]) {
                string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
                int    format      = 400;
-               string server      = "MyFX-Synthetic";
 
-               hSet[i] = HistorySet.Get(symbols[i], server);
+               hSet[i] = HistorySet.Get(symbols[i], serverName);
                if (hSet[i] == -1)
-                  hSet[i] = HistorySet.Create(symbols[i], description, digits[i], format, server);
+                  hSet[i] = HistorySet.Create(symbols[i], description, digits[i], format, serverName);
                if (!hSet[i]) return(!SetLastError(history.GetLastError()));
             }
 
