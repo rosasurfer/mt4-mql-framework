@@ -442,23 +442,26 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    string baseName     = symbol + timeframe +".hst";
    string mqlFileName  = mqlHstDir  + baseName;
    string fullFileName = fullHstDir + baseName;
-   int    hFile        = FileOpen(mqlFileName, mode|FILE_BIN);                      // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
+   // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
+   if (!read_only) /*&&*/ if (!IsDirectory(fullHstDir)) return(_NULL(catch("HistoryFile.Open(5)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist", ERR_RUNTIME_ERROR)));
 
-   // (1.1) read-only                                                               // TODO: !!! Bei read-only Existenz mit IsFile() prüfen, da FileOpenHistory()
+   int hFile = FileOpen(mqlFileName, mode|FILE_BIN);                                // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
+
+   // (1.1) read-only                                                               // TODO: !!! Bei read-only Existenz mit IsFile() prüfen, da FileOpen[History]()
    if (read_only) {                                                                 // TODO: !!! sonst das Log ggf. mit Warnungen ERR_CANNOT_OPEN_FILE zupflastert !!!
       int error = GetLastError();
       if (error == ERR_CANNOT_OPEN_FILE) return(-1);                                // file not found
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(5)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(6)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifInt(error, error, ERR_RUNTIME_ERROR))));
    }
 
    // (1.2) read-write
    else if (read_write) {
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(6)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
 
    // (1.3) write-only
    else if (write_only) {
-      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(7)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(_NULL(catch("HistoryFile.Open(8)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
    }
 
    int bars, from, to, fileSize=FileSize(hFile), /*HISTORY_HEADER*/hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
@@ -469,8 +472,8 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
       // Parameter validieren
       if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
       if (StringLen(description) > 63) description = StringLeft(description, 63);   // ein zu langer String wird gekürzt
-      if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(8)  invalid parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
-      if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(9)  invalid parameter format = "+ format +" (needs to be 400 or 401)", ERR_INVALID_PARAMETER)));
+      if (digits < 0)                          return(_NULL(catch("HistoryFile.Open(9)  invalid parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
+      if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile.Open(10)  invalid parameter format = "+ format +" (needs to be 400 or 401)", ERR_INVALID_PARAMETER)));
 
       hh.setFormat     (hh, format     );
       hh.setDescription(hh, description);
@@ -485,7 +488,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
    else if (read_only || fileSize > 0) {
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize) != HISTORY_HEADER.intSize) {
          FileClose(hFile);
-         return(_NULL(catch("HistoryFile.Open(10)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +")", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
+         return(_NULL(catch("HistoryFile.Open(11)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +")", ifInt(SetLastError(GetLastError()), last_error, ERR_RUNTIME_ERROR))));
       }
 
       // (3.2) ggf. Bar-Infos auslesen
@@ -548,7 +551,7 @@ int HistoryFile.Open(string symbol, int timeframe, string description, int digit
 
    ArrayResize(hh, 0);
 
-   if (!catch("HistoryFile.Open(11)"))
+   if (!catch("HistoryFile.Open(12)"))
       return(hFile);
    return(NULL);
 }

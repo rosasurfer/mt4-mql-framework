@@ -6582,6 +6582,13 @@ bool IsFile(string filename) {
  * @return bool
  */
 bool IsDirectory(string filename) {
+   //
+   // TODO: !!! Achtung !!!
+   //       http://stackoverflow.com/questions/6218325/how-do-you-check-if-a-directory-exists-on-windows-in-c
+   //
+   //       siehe: If szPath is "C:\\", GetFileAttributes, PathIsDirectory and PathFileExists will not work.
+   //              – zwcloud Jun 30 '15 at 7:59
+   //
    bool result;
 
    if (StringLen(filename) > 0) {
