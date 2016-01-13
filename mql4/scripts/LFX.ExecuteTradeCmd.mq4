@@ -153,35 +153,6 @@ bool OpenOrder(/*LFX_ORDER*/int lo[]) {
 
 
 /**
- * Schlieﬂt eine offene Position.
- *
- * @param  LFX_ORDER lo[] - die zu schlieﬂende Order
- *
- * @return bool - Erfolgsstatus
- */
-bool ClosePosition(/*LFX_ORDER*/int lo[]) {
-
-   // Um die Implementierung ¸bersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
-   // in eine eigene Funktion ausgelagert:
-   //
-   //  - Position schlieﬂen
-   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION ber¸cksichtigen
-   //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
-   //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
-
-   string comment = lo.Comment(lo);
-   int    error;
-
-   bool success.close  = ClosePosition.Execute          (lo); error = last_error;
-   bool success.save   = ClosePosition.Save             (lo, !success.close);
-   bool success.notify = ClosePosition.NotifyLfxTerminal(lo);
-   bool success.sms    = ClosePosition.SendSMS          (lo, comment, error);
-
-   return(success.close && success.save && success.notify && success.sms);
-}
-
-
-/**
  * ÷ffnet die Order.
  *
  * @param  LFX_ORDER  lo[]         - LFX-Order
@@ -191,7 +162,7 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
  */
 bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    subPositions = 0;
-   if (!lo.IsPending(lo)) return(!catch("OpenOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpen(lo), "an already open", "a closed") +" order", ERR_RUNTIME_ERROR));
+   if (!lo.IsPendingOrder(lo)) return(!catch("OpenOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot open "+ ifString(lo.IsOpenPosition(lo), "an already open position", "a closed order"), ERR_RUNTIME_ERROR));
 
    // (1) Trade-Parameter einlesen
    string lfxCurrency  = lo.Currency(lo);
@@ -286,7 +257,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    realUnits = NormalizeDouble(realUnits * units, 1);
 
    // (3.8) bei Leverage¸berschreitung Info loggen, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0) log("OpenOrder.Execute(5)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
+   if (StringLen(overLeverageMsg) > 0) log("OpenOrder.Execute(5)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
 
 
    // (4) Directions der Teilpositionen bestimmen
@@ -300,9 +271,9 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccount.company +": "+ tradeAccount.number +" ("+ tradeAccount.currency +")");
 
    string comment = lo.Comment(lo);
-      if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);
-      if ( StringStartsWith(comment, "."        )) comment = StringSubstr(comment, 1);
-      if ( StringStartsWith(comment, "#"        )) comment = StringSubstr(comment, 1);
+      if ( StringStartsWith(comment, lfxCurrency)) comment = StringRightFrom(comment, lfxCurrency);
+      if ( StringStartsWith(comment, "."        )) comment = StringRight(comment, -1);
+      if ( StringStartsWith(comment, "#"        )) comment = StringRight(comment, -1);
       if (!StringStartsWith(comment, lfxCurrency)) comment = lfxCurrency +"."+ comment;
    double openPrice = 1.0;
 
@@ -433,6 +404,35 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
 
 
 /**
+ * Schlieﬂt eine offene Position.
+ *
+ * @param  LFX_ORDER lo[] - die zu schlieﬂende Order
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool ClosePosition(/*LFX_ORDER*/int lo[]) {
+
+   // Um die Implementierung ¸bersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
+   // in eine eigene Funktion ausgelagert:
+   //
+   //  - Position schlieﬂen
+   //  - Order speichern (Erfolgs- oder Fehlerstatus), dabei ERR_CONCURRENT_MODIFICATION ber¸cksichtigen
+   //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
+   //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
+
+   string comment = lo.Comment(lo);
+   int    error;
+
+   bool success.close  = ClosePosition.Execute          (lo); error = last_error;
+   bool success.save   = ClosePosition.Save             (lo, !success.close);
+   bool success.notify = ClosePosition.NotifyLfxTerminal(lo);
+   bool success.sms    = ClosePosition.SendSMS          (lo, comment, error);
+
+   return(success.close && success.save && success.notify && success.sms);
+}
+
+
+/**
  * Schlieﬂt die Position.
  *
  * @param  LFX_ORDER lo[] - LFX-Order
@@ -440,7 +440,7 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
  * @return bool - Erfolgsstatus
  */
 bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
-   if (!lo.IsOpen(lo)) return(!catch("ClosePosition.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPending(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
+   if (!lo.IsOpenPosition(lo)) return(!catch("ClosePosition.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPendingOrder(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
 
 
    // (1) zu schlieﬂende Einzelpositionen selektieren

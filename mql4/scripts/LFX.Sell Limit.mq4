@@ -207,7 +207,7 @@ int GetPositionCounter() {
    for (int i=0; i < size; i++) {
       if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
          continue;
-      if (!los.IsOpen(lfxOrders, i))
+      if (!los.IsOpenPosition(lfxOrders, i))
          continue;
 
       string comment = los.Comment(lfxOrders, i);
