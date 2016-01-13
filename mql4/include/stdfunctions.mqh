@@ -3752,7 +3752,7 @@ datetime TimeServer() {
       serverTime = TimeCurrentEx("TimeServer(1)"); if (!serverTime) return(NULL);
    }
    else {
-      // Außerhalb des Testers darf TimeCurrent() nicht verwendet werden. Der Rückgabewert ist in Kurspausen bzw. am Wochenende oder wenn keine
+      // Außerhalb des Testers darf TimeCurrent[Ex]() nicht verwendet werden. Der Rückgabewert ist in Kurspausen bzw. am Wochenende oder wenn keine
       // Ticks existieren (in Offline-Charts) falsch.
       serverTime = GmtToServerTime(GetGmtTime()); if (serverTime == NaT) return(NULL);
    }

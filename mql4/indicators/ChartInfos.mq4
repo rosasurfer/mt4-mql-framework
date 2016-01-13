@@ -411,7 +411,7 @@ int ShowOpenOrders() {
             // Order anzeigen
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(1)"), openPrice)) {
+            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
             }
@@ -426,7 +426,7 @@ int ShowOpenOrders() {
                label2 = StringConcatenate(label1, ",  ", sTP);
                if (ObjectFind(label2) == 0)
                   ObjectDelete(label2);
-               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(2)"), takeProfit)) {
+               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit)) {
                   ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                   ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
                }
@@ -439,7 +439,7 @@ int ShowOpenOrders() {
                label3 = StringConcatenate(label1, ",  ", sSL);
                if (ObjectFind(label3) == 0)
                   ObjectDelete(label3);
-               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(3)"), stopLoss)) {
+               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss)) {
                   ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                   ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
                }
@@ -484,7 +484,7 @@ int ShowOpenOrders() {
             label2 = StringConcatenate(label1, ",  ", sTP);
             if (ObjectFind(label2) == 0)
                ObjectDelete(label2);
-            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(4)"), takeProfit)) {
+            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit)) {
                ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
             }
@@ -497,7 +497,7 @@ int ShowOpenOrders() {
             label3 = StringConcatenate(label1, ",  ", sSL);
             if (ObjectFind(label3) == 0)
                ObjectDelete(label3);
-            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(5)"), stopLoss)) {
+            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss)) {
                ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
             }
@@ -544,7 +544,7 @@ int ShowOpenOrders() {
             // Order anzeigen
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(6)"), openPrice)) {
+            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
                ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
                ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
             }
@@ -559,7 +559,7 @@ int ShowOpenOrders() {
                label2 = StringConcatenate(label1, ",  ", sTP);
                if (ObjectFind(label2) == 0)
                   ObjectDelete(label2);
-               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(7)"), takeProfit)) {
+               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit)) {
                   ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                   ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
                }
@@ -572,7 +572,7 @@ int ShowOpenOrders() {
                label3 = StringConcatenate(label1, ",  ", sSL);
                if (ObjectFind(label3) == 0)
                   ObjectDelete(label3);
-               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeCurrentEx("ShowOpenOrders(8)"), stopLoss)) {
+               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss)) {
                   ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                   ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
                }
@@ -595,7 +595,7 @@ int ShowOpenOrders() {
       return(n);
    }
 
-   return(_EMPTY(catch("ShowOpenOrders(9)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY(catch("ShowOpenOrders(1)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
