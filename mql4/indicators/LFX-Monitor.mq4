@@ -47,8 +47,13 @@ extern bool   USDX.Enabled      = true;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
+#include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
 #include <history.mqh>
+
+#include <remote/functions.mqh>
+#include <structs/pewa/LFX_ORDER.mqh>
 
 
 #property indicator_chart_window
@@ -97,16 +102,22 @@ int    tickTimerId;                                                  // ID des T
  * @return int - Fehlerstatus
  */
 int onInit() {
-   // (1) Serververzeichnis für Historydateien definieren
+   // (1) TradeAccount und Status initialisieren
+   if (!InitTradeAccount())
+      return(last_error);
+   debug("onInit(1)  tradeAccount="+ tradeAccount.company +":"+ tradeAccount.number +"  mode.intern="+ mode.intern +"  mode.extern="+ mode.extern +"  mode.remote="+ mode.remote);
+
+
+   // (2) Serververzeichnis für Historydateien definieren
    if (__NAME__ != "LFX-Recorder") {
-      string postfix = StringRightFrom(__NAME__, "LFX-Recorder");
-      if (!StringLen(postfix))            postfix = __NAME__;
-      if (StringStartsWith(postfix, ".")) postfix = StringRight(postfix, -1);
-      serverName = serverName +"."+ postfix;
+      string suffix = StringRightFrom(__NAME__, "LFX-Recorder");
+      if (!StringLen(suffix))            suffix = __NAME__;
+      if (StringStartsWith(suffix, ".")) suffix = StringRight(suffix, -1);
+      serverName = serverName +"."+ suffix;
    }
 
 
-   // (2) Parameterauswertung
+   // (3) Parameterauswertung
    if (Recording.Enabled) {
       int count;
       recording[I_AUD] = AUD.Enabled;  count += AUD.Enabled;
@@ -132,19 +143,21 @@ int onInit() {
       }
    }
 
-   // (3) Anzeige erzeugen und Datenanzeige ausschalten
-   CreateLabels();
-   SetIndexLabel(0, NULL);
 
-   // (3) Chart-Ticker installieren
+   // (4) Chart-Ticker installieren
    if (!This.IsTesting()) /*&&*/ if (!StringStartsWithI(GetServerName(), "MyFX-")) {
       int hWnd    = WindowHandleEx(NULL); if (!hWnd) return(last_error);
       int millis  = 500;
       int timerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!timerId) return(catch("onInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!timerId) return(catch("onInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
-   return(catch("onInit(2)"));
+
+
+   // (5) Anzeige erzeugen und Datenanzeige ausschalten
+   CreateLabels();
+   SetIndexLabel(0, NULL);
+   return(catch("onInit(3)"));
 }
 
 

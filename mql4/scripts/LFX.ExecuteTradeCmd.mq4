@@ -1,7 +1,6 @@
 /**
- * LFX.ExecuteTradeCmd
- *
  * Script, daß intern zur Ausführung von zwischen den Terminals verschickten TradeCommands benutzt wird. Ein manueller Aufruf ist nicht möglich.
+ *
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -286,8 +285,8 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    }
    realUnits = NormalizeDouble(realUnits * units, 1);
 
-   // (3.8) bei Leverageüberschreitung Warnung ausgeben, jedoch nicht abbrechen
-   if (StringLen(overLeverageMsg) > 0) warn("OpenOrder.Execute(5)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
+   // (3.8) bei Leverageüberschreitung Info loggen, jedoch nicht abbrechen
+   if (StringLen(overLeverageMsg) > 0) log("OpenOrder.Execute(5)  #"+ lo.Ticket(lo) +" Not enough money! The following positions will over-leverage: "+ StringRight(overLeverageMsg, -2) +". Resulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, units), " units (unchanged)", " instead of "+ DoubleToStr(units, 1) +" units"+ ifString(LT(realUnits, units), " (not realizable)", "")));
 
 
    // (4) Directions der Teilpositionen bestimmen
@@ -298,7 +297,7 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
-   if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccount.company +": "+ tradeAccount.name +" ("+ tradeAccount.number +"), "+ tradeAccount.currency);
+   if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccount.company +": "+ tradeAccount.number +" ("+ tradeAccount.currency +")");
 
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringSubstr(comment, 3);

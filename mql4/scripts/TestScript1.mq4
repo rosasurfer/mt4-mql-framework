@@ -26,6 +26,20 @@ int __DEINIT_FLAGS__[];
  */
 int onStart() {
 
+   string values[3], value;
+   values[0] = "0";
+ //values[1] = "1"; // NULL-Pointer
+   values[2] = "2";
+
+
+   value = StringToStr(values[0]);
+   if (!catch("onStart(2)")) debug("onStart(2)  values[0]="+ value);
+
+   value = StringToStr(values[1]);
+   if (!catch("onStart(3)")) debug("onStart(3)  values[1]="+ value);
+
+   value = StringToStr(values[2]);
+   if (!catch("onStart(4)")) debug("onStart(4)  values[2]="+ value);
 
    return(last_error);
 
@@ -43,6 +57,7 @@ int onStart() {
 
    iChangedBars(NULL, NULL);
 }
+
 
 
 /*

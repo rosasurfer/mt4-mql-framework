@@ -520,6 +520,7 @@ int ShowOpenOrders() {
    // (3) mode.remote
    if (mode.remote) {
       orders = ArrayRange(lfxOrders.iVolatile, 0);
+      debug("ShowOpenOrders(0.1)  lfxOrders.iVolatile="+ IntsToStr(lfxOrders.iVolatile, NULL));
 
       for (i=0, n=0; i < orders; i++) {
          if (!lfxOrders.iVolatile[i][I_ISOPEN]) continue;
@@ -1112,7 +1113,7 @@ bool CheckLfxLimits() {
 
       if (!triggerTime) {
          // (2) ein Limit wurde genau jetzt getriggert
-         if (result == LIMIT_ENTRY     ) log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" triggered (Bid="+ NumberToStr(Bid, PriceFormat) +")");
+         if (result == LIMIT_ENTRY     ) log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" triggered ("+ NumberToStr(Close[0], PriceFormat) +")");
          if (result == LIMIT_STOPLOSS  ) log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
          if (result == LIMIT_TAKEPROFIT) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
 
@@ -1133,7 +1134,7 @@ bool CheckLfxLimits() {
          if (LFX.GetOrder(los.Ticket(lfxOrders, i), stored) != 1)    // aktuell gespeicherte Version der Order holen
             return(!catch("CheckLfxLimits(4)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +") => "+ result, ERR_RUNTIME_ERROR));
 
-         // prüfen, ob inzwischen ein Open- bzw. Close-Error gesetzt wurde und ggf. Fehler melden und speichern
+         // prüfen, ob inzwischen ein Open-/Close-Error gesetzt wurde und ggf. Fehler melden und speichern
          if (result == LIMIT_ENTRY) {
             if (!lo.IsOpenError(stored)) {
                warnSMS("CheckLfxLimits(5)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
@@ -1156,7 +1157,8 @@ bool CheckLfxLimits() {
 
 
 /**
- * Ob die angegebene LFX-Order ein Limit erreicht hat. Alle Preise werden gegen das Bid geprüft (LFX-Chart).
+ * Ob die angegebene LFX-Order ein Limit erreicht hat. Alle Preise werden gegen den Close-Price der jüngsten Bar geprüft (LFX-Chart).
+ * Diese Funktion prüft nicht, ob der Indikator auf einem Offline-Chart läuft.
  *
  * @param  int       i           - Index der zu überprüfenden Order im globalen LFX_ORDER[]-Array
  * @param  datetime &triggerTime - Variable zur Aufnahme des Zeitpunktes eines bereits als getriggert markierten Limits
@@ -1206,12 +1208,12 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
    switch (type) {
       case OP_BUYLIMIT:
       case OP_SELLSTOP:
-         if (LE(Bid, los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
-                                                   return(LIMIT_NONE );
+         if (LE(Close[0], los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
+                                                        return(LIMIT_NONE );
       case OP_SELLLIMIT:
       case OP_BUYSTOP  :
-         if (GE(Bid, los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
-                                                   return(LIMIT_NONE );
+         if (GE(Close[0], los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
+                                                        return(LIMIT_NONE );
       default:
          slPrice = los.StopLoss       (lfxOrders, i);
          slValue = los.StopLossValue  (lfxOrders, i);
@@ -1221,19 +1223,19 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
    }
 
    switch (type) {
-      // Um Auslösefehler bei nicht initialisiertem P/L zu verhindern, wird dieser nur geprüft, wenn er ungleich 0.00 ist.
+      // Um Auslösefehler bei noch nicht initialisiertem P/L zu verhindern, wird dieser nur geprüft, wenn er ungleich 0.00 ist.
       case OP_BUY:
-                                     if (slPrice != 0) if (LE(Bid,    slPrice)) return(LIMIT_STOPLOSS  );
-         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit, slValue)) return(LIMIT_STOPLOSS  );
-                                     if (tpPrice != 0) if (GE(Bid,    tpPrice)) return(LIMIT_TAKEPROFIT);
-         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit, tpValue)) return(LIMIT_TAKEPROFIT);
-                                                                                return(LIMIT_NONE      );
+                                     if (slPrice != 0) if (LE(Close[0], slPrice)) return(LIMIT_STOPLOSS  );
+         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit,   slValue)) return(LIMIT_STOPLOSS  );
+                                     if (tpPrice != 0) if (GE(Close[0], tpPrice)) return(LIMIT_TAKEPROFIT);
+         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit,   tpValue)) return(LIMIT_TAKEPROFIT);
+                                                                                  return(LIMIT_NONE      );
       case OP_SELL:
-                                     if (slPrice != 0) if (GE(Bid,    slPrice)) return(LIMIT_STOPLOSS  );
-         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit, slValue)) return(LIMIT_STOPLOSS  );
-                                     if (tpPrice != 0) if (LE(Bid,    tpPrice)) return(LIMIT_TAKEPROFIT);
-         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit, tpValue)) return(LIMIT_TAKEPROFIT);
-                                                                                return(LIMIT_NONE      );
+                                     if (slPrice != 0) if (GE(Close[0], slPrice)) return(LIMIT_STOPLOSS  );
+         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit,   slValue)) return(LIMIT_STOPLOSS  );
+                                     if (tpPrice != 0) if (LE(Close[0], tpPrice)) return(LIMIT_TAKEPROFIT);
+         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit,   tpValue)) return(LIMIT_TAKEPROFIT);
+                                                                                  return(LIMIT_NONE      );
    }
 
    return(_NULL(catch("IsLfxLimitTriggered(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
@@ -4039,7 +4041,7 @@ bool RestoreRemoteOrders(bool fromCache) {
       return(true);
 
 
-   // Orders einlesen
+   // alle Orders einlesen
    size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size == -1)
       return(false);

@@ -141,30 +141,22 @@ string StringsToStr(string values[][], string separator=", ") {
 
 
 /**
- * Faßt jeden Wert eines String-Arrays in doppelte Anführungszeichen ein. Nicht initialisierte Werte (NULL-Pointer) bleiben unverändert.
+ * Faßt die einzelnen Werte eines String-Arrays in doppelte Anführungszeichen ein. Nicht initialisierte Strings (NULL-Pointer) bleiben unverändert.
  *
  * @param  string values[]
  *
- * @return int - Fehlerstatus
+ * @return bool - Erfolgsstatus
  */
-int DoubleQuoteStrings(string &values[]) {
-   if (ArrayDimension(values) > 1)
-      return(catch("DoubleQuoteStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+bool DoubleQuoteStrings(string &values[]) {
+   if (ArrayDimension(values) > 1) return(!catch("DoubleQuoteStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
 
-   string value;
-   int error, size=ArraySize(values);
+   int size = ArraySize(values);
 
    for (int i=0; i < size; i++) {
-      value = values[i];                                             // NPE provozieren
-      error = GetLastError();
-      if (!error) {
+      if (!StringIsNull(values[i]))                                  // NULL-Werte bleiben unverändert
          values[i] = StringConcatenate("\"", values[i], "\"");
-         continue;
-      }
-      if (error != ERR_NOT_INITIALIZED_ARRAYSTRING)                  // NULL-Werte bleiben unverändert
-         return(catch("DoubleQuoteStrings(2)", error));
    }
-   return(0);
+   return(true);
 }
 
 

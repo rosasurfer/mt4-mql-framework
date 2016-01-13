@@ -47,4 +47,4 @@ int onStart() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender(1)", ERR_WRONG_JUMP)); }
