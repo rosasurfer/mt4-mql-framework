@@ -199,7 +199,7 @@ int onStart() {
    // (2.8) bei Leverageüberschreitung ausdrückliche Bestätigung einholen
    if (StringLen(overLeverageMsg) > 0) {
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBox("Not enough money! The following positions will over-leverage:\n"+ overLeverageMsg +"\n\nResulting trade: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not realizable)", "")) +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBox("Not enough money! The following positions will over-leverage:\n"+ overLeverageMsg +"\n\nResulting position: "+ DoubleToStr(realUnits, 1) + ifString(EQ(realUnits, Units), " units (unchanged)", " instead of "+ DoubleToStr(Units, 1) +" units"+ ifString(LT(realUnits, Units), " (not realizable)", "")) +"\n\nContinue?", __NAME__, MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(4)"));
    }
@@ -343,7 +343,7 @@ int GetPositionCounter() {
    for (int i=0; i < size; i++) {
       if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
          continue;
-      if (!los.IsOpen(lfxOrders, i))
+      if (!los.IsOpenPosition(lfxOrders, i))
          continue;
 
       string comment = los.Comment(lfxOrders, i);

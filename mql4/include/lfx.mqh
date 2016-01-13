@@ -27,14 +27,18 @@ int    lfxCurrencyId;
 
 int    lfxOrders[][LFX_ORDER.intSize];                               // struct LFX_ORDER[]: Array von RemoteOrders
 
-int    lfxOrders.iVolatile[][3];                                     // veränderliche Positionsdaten: = {Ticket, IsOpen, IsLocked}
-double lfxOrders.dVolatile[][1];                                     //                               = {Profit}
-int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen in den offenen Orders (IsOpen = 1)
+int    lfxOrders.iCache[][5];                                        // LFX-Daten-Cache: = {Ticket, IsPendingOrder, IsOpenPosition, IsPendingPosition, IsLocked}
+double lfxOrders.dCache[][1];                                        //                  = {Profit}
+int    lfxOrders.pendingOrders;                                      // Anzahl der PendingOrders, ie. Entry-Limit    (IsPendingOrder    = 1)
+int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen                (IsOpenPosition    = 1)
+int    lfxOrders.pendingPositions;                                   // Anzahl der offenen Positionen mit Exit-Limit (IsPendingPosition = 1)
 
-#define I_TICKET           0                                         // Arrayindizes von lfxOrders.~volatile[]
-#define I_ISOPEN           1
-#define I_ISLOCKED         2
-#define I_PROFIT           0
+#define I_TICKET                 0                                   // Arrayindizes von lfxOrders.iData[]
+#define I_IS_PENDING_ORDER       1
+#define I_IS_OPEN_POSITION       2
+#define I_IS_PENDING_POSITION    3
+#define I_IS_LOCKED              4
+#define I_PROFIT                 0                                   // Arrayindizes von lfxOrders.dData[]
 
 
 /**
@@ -510,7 +514,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
             match = true;
             break;
          }
-         if (lo.IsPending(lo)) {
+         if (lo.IsPendingOrder(lo)) {
             match = (fSelection & OF_PENDINGORDER);
             break;
          }

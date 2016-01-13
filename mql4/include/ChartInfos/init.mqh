@@ -73,7 +73,7 @@ int onInit() {
  */
 int onInit_User() {
    if (mode.remote) {
-      // LFX-Status einlesen
+      // RemoteOrder-Daten einlesen
       if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
@@ -87,7 +87,7 @@ int onInit_User() {
  */
 int onInit_Template() {
    if (mode.remote) {
-      // LFX-Status neu einlesen
+      // RemoteOrder-Daten neu einlesen
       if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);
@@ -101,7 +101,7 @@ int onInit_Template() {
  */
 int onInit_Parameters() {
    if (mode.remote) {
-      // in Library gespeicherten LFX-Status restaurieren
+      // in Library gespeicherte RemoteOrder-Daten restaurieren
       bool fromCache = true;
       if (!RestoreRemoteOrders(fromCache)) return(last_error);
    }
@@ -116,7 +116,7 @@ int onInit_Parameters() {
  */
 int onInit_TimeframeChange() {
    if (mode.remote) {
-      // in Library gespeicherten LFX-Status restaurieren
+      // in Library gespeicherte RemoteOrder-Daten restaurieren
       bool fromCache = true;
       if (!RestoreRemoteOrders(fromCache)) return(last_error);
    }
@@ -131,12 +131,12 @@ int onInit_TimeframeChange() {
  */
 int onInit_SymbolChange() {
    if (mode.remote) {
-      // LFX-Status des alten Symbols speichern (liegt noch in Library)
+      // RemoteOrder-Daten des alten Symbols speichern (liegen noch in Library)
       bool fromCache = true;
       if (!RestoreRemoteOrders(fromCache)) return(last_error);
-      if (!SaveVolatileLfxStatus())        return(last_error);
+      if (!SaveRemoteOrderCache())         return(last_error);
 
-      // LFX-Status des neuen Symbols einlesen
+      // RemoteOrder-Daten des neuen Symbols einlesen
       if (!RestoreRemoteOrders(false))     return(last_error);
    }
    return(NO_ERROR);
@@ -150,7 +150,7 @@ int onInit_SymbolChange() {
  */
 int onInit_Recompile() {
    if (mode.remote) {
-      // LFX-Status neu einlesen
+      // RemoteOrder-Daten neu einlesen
       if (!RestoreRemoteOrders(false)) return(last_error);
    }
    return(NO_ERROR);

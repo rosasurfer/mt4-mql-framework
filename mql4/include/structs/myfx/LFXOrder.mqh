@@ -77,10 +77,17 @@ int      lo.Version             (/*LFX_ORDER*/int lo[]         ) {              
 int      lo.Digits              (/*LFX_ORDER*/int lo[]         ) {                                                  return(5);                                                                                                        LFX_ORDER.toStr(lo); }
 string   lo.Currency            (/*LFX_ORDER*/int lo[]         ) {             return(GetCurrency(LFX.CurrencyId(lo.Ticket(lo))));                                                                                                    LFX_ORDER.toStr(lo); }
 int      lo.CurrencyId          (/*LFX_ORDER*/int lo[]         ) {                         return(LFX.CurrencyId(lo.Ticket(lo)));                                                                                                     LFX_ORDER.toStr(lo); }
-bool     lo.IsPending           (/*LFX_ORDER*/int lo[]         ) {                             return(OP_BUYLIMIT<=lo.Type(lo) && lo.Type(lo)<=OP_SELLSTOP && !lo.IsClosed(lo));                                                      LFX_ORDER.toStr(lo); }
-bool     lo.IsOpened            (/*LFX_ORDER*/int lo[]         ) {                  return((lo.Type(lo)==OP_BUY || lo.Type(lo)==OP_SELL) && lo.OpenTime(lo) > 0);                                                                     LFX_ORDER.toStr(lo); }
-bool     lo.IsOpen              (/*LFX_ORDER*/int lo[]         ) {                                      return(lo.IsOpened(lo) && !lo.IsClosed(lo));                                                                                  LFX_ORDER.toStr(lo); }
+bool     lo.IsPendingOrder      (/*LFX_ORDER*/int lo[]         ) { if (!lo.IsClosed(lo)) {
+                                                                      if (OP_BUYLIMIT<=lo.Type(lo) && lo.Type(lo)<=OP_SELLSTOP)                                                  return(true);
+                                                                      if ((lo.Type(lo)==OP_BUY     || lo.Type(lo)==OP_SELL    ) && lo.OpenTriggerTime(lo) && lo.IsOpenError(lo)) return(true);
+                                                                   }                                                                                                             return(false);                                       LFX_ORDER.toStr(lo); }
+bool     lo.IsPosition          (/*LFX_ORDER*/int lo[]         ) {                  return((lo.Type(lo)==OP_BUY || lo.Type(lo)==OP_SELL) && lo.OpenTime(lo) > 0);                                                                     LFX_ORDER.toStr(lo); }
+bool     lo.IsOpenPosition      (/*LFX_ORDER*/int lo[]         ) {                                    return(lo.IsPosition(lo) && !lo.IsClosed(lo));                                                                                  LFX_ORDER.toStr(lo); }
+bool     lo.IsPendingPosition   (/*LFX_ORDER*/int lo[]         ) {                                return(lo.IsOpenPosition(lo) && (lo.IsStopLoss(lo) || lo.IsTakeProfit(lo)));                                                        LFX_ORDER.toStr(lo); }
+bool     lo.IsClosedPosition    (/*LFX_ORDER*/int lo[]         ) {                                    return(lo.IsPosition(lo) &&  lo.IsClosed(lo));                                                                                  LFX_ORDER.toStr(lo); }
 bool     lo.IsClosed            (/*LFX_ORDER*/int lo[]         ) {                                     return(lo.CloseTime(lo) > 0);                                                                                                  LFX_ORDER.toStr(lo); }
+bool     lo.IsStopLoss          (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.stopLoss  ] || lo[I_LFX_ORDER.stopLossValue  ]);                                            LFX_ORDER.toStr(lo); }
+bool     lo.IsTakeProfit        (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.takeProfit] || lo[I_LFX_ORDER.takeProfitValue]);                                            LFX_ORDER.toStr(lo); }
 bool     lo.IsOpenError         (/*LFX_ORDER*/int lo[]         ) {                                      return(lo.OpenTime(lo) < 0);                                                                                                  LFX_ORDER.toStr(lo); }
 bool     lo.IsCloseError        (/*LFX_ORDER*/int lo[]         ) {                                     return(lo.CloseTime(lo) < 0);                                                                                                  LFX_ORDER.toStr(lo); }
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -110,10 +117,17 @@ int      los.Version            (/*LFX_ORDER*/int lo[][], int i) {              
 int      los.Digits             (/*LFX_ORDER*/int lo[][], int i) {                                                  return(5);                                                                                                        LFX_ORDER.toStr(lo); }
 string   los.Currency           (/*LFX_ORDER*/int lo[][], int i) {            return(GetCurrency(LFX.CurrencyId(los.Ticket(lo, i))));                                                                                                 LFX_ORDER.toStr(lo); }
 int      los.CurrencyId         (/*LFX_ORDER*/int lo[][], int i) {                        return(LFX.CurrencyId(los.Ticket(lo, i)));                                                                                                  LFX_ORDER.toStr(lo); }
-bool     los.IsPending          (/*LFX_ORDER*/int lo[][], int i) {                            return(OP_BUYLIMIT<=los.Type(lo, i) && los.Type(lo, i)<=OP_SELLSTOP && !los.IsClosed(lo, i));                                           LFX_ORDER.toStr(lo); }
-bool     los.IsOpened           (/*LFX_ORDER*/int lo[][], int i) {             return((los.Type(lo, i)==OP_BUY || los.Type(lo, i)==OP_SELL) && los.OpenTime(lo, i) > 0);                                                              LFX_ORDER.toStr(lo); }
-bool     los.IsOpen             (/*LFX_ORDER*/int lo[][], int i) {                                     return(los.IsOpened(lo, i) && !los.IsClosed(lo, i));                                                                           LFX_ORDER.toStr(lo); }
+bool     los.IsPendingOrder     (/*LFX_ORDER*/int lo[][], int i) { if (!los.IsClosed(lo, i)) {
+                                                                      if (OP_BUYLIMIT<=los.Type(lo, i) && los.Type(lo, i)<=OP_SELLSTOP)                                                          return(true);
+                                                                      if ((los.Type(lo, i)==OP_BUY     || los.Type(lo, i)==OP_SELL    ) && los.OpenTriggerTime(lo, i) && los.IsOpenError(lo, i)) return(true);
+                                                                   }                                                                                                                             return(false);                       LFX_ORDER.toStr(lo); }
+bool     los.IsPosition         (/*LFX_ORDER*/int lo[][], int i) {             return((los.Type(lo, i)==OP_BUY || los.Type(lo, i)==OP_SELL) && los.OpenTime(lo, i) > 0);                                                              LFX_ORDER.toStr(lo); }
+bool     los.IsOpenPosition     (/*LFX_ORDER*/int lo[][], int i) {                                   return(los.IsPosition(lo, i) && !los.IsClosed(lo, i));                                                                           LFX_ORDER.toStr(lo); }
+bool     los.IsPendingPosition  (/*LFX_ORDER*/int lo[][], int i) {                               return(los.IsOpenPosition(lo, i) && (los.IsStopLoss(lo, i) || los.IsTakeProfit(lo, i)));                                             LFX_ORDER.toStr(lo); }
+bool     los.IsClosedPosition   (/*LFX_ORDER*/int lo[][], int i) {                                   return(los.IsPosition(lo, i) &&  los.IsClosed(lo, i));                                                                           LFX_ORDER.toStr(lo); }
 bool     los.IsClosed           (/*LFX_ORDER*/int lo[][], int i) {                                    return(los.CloseTime(lo, i) > 0);                                                                                               LFX_ORDER.toStr(lo); }
+bool     los.IsStopLoss         (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.stopLoss  ] || lo[i][I_LFX_ORDER.stopLossValue  ]);                                      LFX_ORDER.toStr(lo); }
+bool     los.IsTakeProfit       (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.takeProfit] || lo[i][I_LFX_ORDER.takeProfitValue]);                                      LFX_ORDER.toStr(lo); }
 bool     los.IsOpenError        (/*LFX_ORDER*/int lo[][], int i) {                                     return(los.OpenTime(lo, i) < 0);                                                                                               LFX_ORDER.toStr(lo); }
 bool     los.IsCloseError       (/*LFX_ORDER*/int lo[][], int i) {                                    return(los.CloseTime(lo, i) < 0);                                                                                               LFX_ORDER.toStr(lo); }
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -281,11 +295,15 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
    lo.CurrencyId            (iNulls);       los.CurrencyId            (iNulls, NULL);
    lo.Digits                (iNulls);       los.Digits                (iNulls, NULL);
    lo.IsClosed              (iNulls);       los.IsClosed              (iNulls, NULL);
+   lo.IsClosedPosition      (iNulls);       los.IsClosedPosition      (iNulls, NULL);
    lo.IsCloseError          (iNulls);       los.IsCloseError          (iNulls, NULL);
-   lo.IsOpen                (iNulls);       los.IsOpen                (iNulls, NULL);
-   lo.IsOpened              (iNulls);       los.IsOpened              (iNulls, NULL);
    lo.IsOpenError           (iNulls);       los.IsOpenError           (iNulls, NULL);
-   lo.IsPending             (iNulls);       los.IsPending             (iNulls, NULL);
+   lo.IsOpenPosition        (iNulls);       los.IsOpenPosition        (iNulls, NULL);
+   lo.IsPendingPosition     (iNulls);       los.IsPendingPosition     (iNulls, NULL);
+   lo.IsPendingOrder        (iNulls);       los.IsPendingOrder        (iNulls, NULL);
+   lo.IsPosition            (iNulls);       los.IsPosition            (iNulls, NULL);
+   lo.IsStopLoss            (iNulls);       los.IsStopLoss            (iNulls, NULL);
+   lo.IsTakeProfit          (iNulls);       los.IsTakeProfit          (iNulls, NULL);
    lo.Lots                  (iNulls);       los.Lots                  (iNulls, NULL);
    lo.ModificationTime      (iNulls);       los.ModificationTime      (iNulls, NULL);
    lo.OpenEquity            (iNulls);       los.OpenEquity            (iNulls, NULL);
@@ -369,10 +387,14 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   int      lo.Digits                 (/*LFX_ORDER*/int lo[]);
 //   string   lo.Currency               (/*LFX_ORDER*/int lo[]);
 //   int      lo.CurrencyId             (/*LFX_ORDER*/int lo[]);
-//   bool     lo.IsPending              (/*LFX_ORDER*/int lo[]);
-//   bool     lo.IsOpened               (/*LFX_ORDER*/int lo[]);
-//   bool     lo.IsOpen                 (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsPendingOrder         (/*LFX_ORDER*/int lo[]);              // ohne Fehler gilt: lo.IsPendingOrder() == !lo.IsPosition()
+//   bool     lo.IsPosition             (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsOpenPosition         (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsPendingPosition      (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsClosedPosition       (/*LFX_ORDER*/int lo[]);
 //   bool     lo.IsClosed               (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsStopLoss             (/*LFX_ORDER*/int lo[]);
+//   bool     lo.IsTakeProfit           (/*LFX_ORDER*/int lo[]);
 //   bool     lo.IsOpenError            (/*LFX_ORDER*/int lo[]);
 //   bool     lo.IsCloseError           (/*LFX_ORDER*/int lo[]);
 
@@ -400,10 +422,14 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   int      los.Digits                (/*LFX_ORDER*/int lo[][], int i);
 //   string   los.Currency              (/*LFX_ORDER*/int lo[][], int i);
 //   int      los.CurrencyId            (/*LFX_ORDER*/int lo[][], int i);
-//   bool     los.IsPending             (/*LFX_ORDER*/int lo[][], int i);
-//   bool     los.IsOpened              (/*LFX_ORDER*/int lo[][], int i);
-//   bool     los.IsOpen                (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsPendingOrder        (/*LFX_ORDER*/int lo[][], int i);     // ohne Fehler gilt: los.IsPendingOrder() == !los.IsPosition()
+//   bool     los.IsPosition            (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsOpenPosition        (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsPendingPosition     (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsClosedPosition      (/*LFX_ORDER*/int lo[][], int i);
 //   bool     los.IsClosed              (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsStopLoss            (/*LFX_ORDER*/int lo[][], int i);
+//   bool     los.IsTakeprofit          (/*LFX_ORDER*/int lo[][], int i);
 //   bool     los.IsOpenError           (/*LFX_ORDER*/int lo[][], int i);
 //   bool     los.IsCloseError          (/*LFX_ORDER*/int lo[][], int i);
 
