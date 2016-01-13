@@ -124,6 +124,7 @@ bool InitTradeAccount(string accountKey="") {
       mqlDir  = ifString(GetTerminalBuild()<=509, "\\experts", "\\mql4");
       file    = TerminalPath() + mqlDir +"\\files\\"+ ShortAccountCompany() +"\\"+ _accountNumber +"_config.ini";
       section = "General";
+         if (IsIndicator() && StringStartsWith(__NAME__, "LFX-Recorder")) section = "LFX-Recorder";
       key     = "TradeAccount" + ifString(This.IsTesting(), ".Tester", "");
 
       int tradeAccount = GetIniInt(file, section, key);
@@ -263,7 +264,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (2) Orderdaten validieren
-   //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, (-)OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
+   //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, (-)OpenTime, OpenPrice, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sValue, values[];
    if (Explode(value, ",", values, NULL) != 20)    return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int digits = 5;
@@ -291,28 +292,28 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
       if (_openEquity <= 0)                        return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openEquity = NormalizeDouble(_openEquity, 2);
 
-   // OpenTime
+   // OpenTriggerTime
    sValue = StringTrim(values[5]);
+   if (StringIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
+   else                                _openTriggerTime =    StrToTime(sValue);
+   if      (_openTriggerTime < 0)                  return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (_openTriggerTime > 0)
+      if (_openTriggerTime > GetFxtTime())         return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+
+   // OpenTime
+   sValue = StringTrim(values[6]);
    if      (StringIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
    else if (StringStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                       _openTime =  StrToTime(sValue);
-   if (!_openTime)                                 return(!catch("LFX.GetOrder(9)  invalid open time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (Abs(_openTime) > GetFxtTime())              return(!catch("LFX.GetOrder(10)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!_openTime)                                 return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_openTime) > GetFxtTime())              return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenPrice
-   sValue = StringTrim(values[6]);
-   if (!StringIsNumeric(sValue))                   return(!catch("LFX.GetOrder(11)  invalid open price \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   double _openPrice = StrToDouble(sValue);
-   if (_openPrice <= 0)                            return(!catch("LFX.GetOrder(12)  invalid open price \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   _openPrice = NormalizeDouble(_openPrice, digits);
-
-   // OpenTriggerTime
    sValue = StringTrim(values[7]);
-   if (StringIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
-   else                                _openTriggerTime =    StrToTime(sValue);
-   if      (_openTriggerTime < 0)                  return(!catch("LFX.GetOrder(13)  invalid open-trigger time \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   else if (_openTriggerTime > 0)
-      if (_openTriggerTime > GetFxtTime())         return(!catch("LFX.GetOrder(14)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StringIsNumeric(sValue))                   return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   double _openPrice = StrToDouble(sValue);
+   if (_openPrice <= 0)                            return(!catch("LFX.GetOrder(14)  invalid open price \""+ sValue +"\" in order entry ["+ section +"]->"+ ticket +" = \""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   _openPrice = NormalizeDouble(_openPrice, digits);
 
    // StopLoss
    sValue = StringTrim(values[8]);
@@ -407,9 +408,9 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    lo.setUnits              (lo, _orderUnits         );
    lo.setLots               (lo,  NULL               );
    lo.setOpenEquity         (lo, _openEquity         );
+   lo.setOpenTriggerTime    (lo, _openTriggerTime    );
    lo.setOpenTime           (lo, _openTime           );
    lo.setOpenPrice          (lo, _openPrice          );
-   lo.setOpenTriggerTime    (lo, _openTriggerTime    );
    lo.setStopLoss           (lo, _stopLoss           );
    lo.setStopLossValue      (lo, _stopLossValue      );
    lo.setStopLossTriggered  (lo, _stopLossTriggered  );
@@ -579,15 +580,15 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (3) Daten formatieren
-   //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTime, OpenPrice, OpenTriggerTime, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, CloseTime, ClosePrice, Profit, ModificationTime, Version
+   //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, OpenTime, OpenPrice, StopLoss, StopLossValue, StopLossTriggered, TakeProfit, TakeProfitValue, TakeProfitTriggered, CloseTriggerTime, CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sSymbol              =                          lo.Currency           (lo);
    string sComment             =                          lo.Comment            (lo);                                                                                               sComment          = StringPadRight(sComment         , 13, " ");
    string sOperationType       = OperationTypeDescription(lo.Type               (lo));                                                                                              sOperationType    = StringPadRight(sOperationType   , 10, " ");
    string sUnits               =              NumberToStr(lo.Units              (lo), ".+");                                                                                        sUnits            = StringPadLeft (sUnits           ,  5, " ");
    string sOpenEquity          =                ifString(!lo.OpenEquity         (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity       = StringPadLeft (sOpenEquity      , 10, " ");
+   string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (lo), "0", TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL));                                           sOpenTriggerTime  = StringPadLeft (sOpenTriggerTime , 19, " ");
    string sOpenTime            =                 ifString(lo.OpenTime           (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime         = StringPadLeft (sOpenTime        , 20, " ");
    string sOpenPrice           =              DoubleToStr(lo.OpenPrice          (lo), lo.Digits(lo));                                                                               sOpenPrice        = StringPadLeft (sOpenPrice       , 10, " ");
-   string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (lo), "0", TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL));                                           sOpenTriggerTime  = StringPadLeft (sOpenTriggerTime , 19, " ");
    string sStopLoss            =                ifString(!lo.StopLoss           (lo), "0", DoubleToStr(lo.StopLoss(lo), lo.Digits(lo)));                                            sStopLoss         = StringPadLeft (sStopLoss        ,  7, " ");
    string sStopLossValue       =                 ifString(lo.StopLossValue      (lo)==EMPTY_VALUE, "", DoubleToStr(lo.StopLossValue(lo), 2));                                       sStopLossValue    = StringPadLeft (sStopLossValue   ,  8, " ");
    string sStopLossTriggered   =                         (lo.StopLossTriggered  (lo)!=0);
@@ -611,7 +612,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string file    = mqlDir +"\\files\\"+ tradeAccount.company +"\\"+ tradeAccount.number +"_config.ini";
    string section = "RemoteOrders";
    string key     = ticket;
-   string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTime, ", ", sOpenPrice, ", ", sOpenTriggerTime, ", ", sStopLoss, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfit, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
+   string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sStopLoss, ", ", sStopLossValue, ", ", sStopLossTriggered, ", ", sTakeProfit, ", ", sTakeProfitValue, ", ", sTakeProfitTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
       return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StringReplace.Recursive(StringReplace.Recursive(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));

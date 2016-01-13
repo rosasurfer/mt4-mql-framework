@@ -5284,6 +5284,7 @@ void __DummyCalls() {
    int      SetupTickTimer(int hWnd, int millis, int flags);
    bool     StringCompare(string string1, string string2);
    bool     StringIsNull(string value);
+   string   StringToStr(string value);
 
 #import "kernel32.dll"
    int      GetCurrentProcessId();

@@ -1,8 +1,7 @@
 /**
- * Erzeugt eine neue LFX-"Sell Limit"-Order, die überwacht und bei Erreichen des Limit-Preises ausgeführt wird.
- * Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
+ * Erzeugt und speichert eine LFX-"Sell Limit"-Order. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
  *
- *  TODO: Fehler in Counter, wenn gleichzeitig zwei Orders erzeugt werden (2 x CHF.3)
+ *  TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
 #include <stddefine.mqh>
 int   __INIT_FLAGS__[];
@@ -42,7 +41,7 @@ extern double TakeProfitPrice;
 int onInit() {
    // (1) TradeAccount initialisieren
    if (!InitTradeAccount())              return(last_error);
-   if (!StringEndsWith(Symbol(), "LFX")) return(HandleScriptError("onInit(1)", "Cannot place LFX orders on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
+   if (!StringEndsWith(Symbol(), "LFX")) return(HandleScriptError("onInit(1)", "Cannot place a LFX order on a non LFX chart (\""+ Symbol() +"\")", ERR_RUNTIME_ERROR));
 
 
    // (2) Parametervalidierung
@@ -70,7 +69,7 @@ int onInit() {
    }
 
 
-   // (3) alle Orders des Symbols einlesen
+   // (3) Orders des Symbols einlesen
    int size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size < 0)
       return(last_error);
@@ -98,17 +97,17 @@ int onStart() {
    int button;
 
    // (1) Sicherheitsabfrage
-   if (LimitPrice <= Bid) {
+   if (LimitPrice <= Close[0]) {
       PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
-                        +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" is already triggered (current price "+ NumberToStr(Bid, SubPipPriceFormat) +").\n\n"
-                        +"Do you really want the order to get executed immediately?",
+                        +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" is already triggered (current price "+ NumberToStr(Close[0], SubPipPriceFormat) +").\n\n"
+                        +"Do you really want to immediately execute the order?",
                         __NAME__, MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(1)"));
-      if (StopLossPrice   && StopLossPrice   <= Bid) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
-      if (TakeProfitPrice && TakeProfitPrice >= Bid) return(HandleScriptError("onStart(3)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Bid, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
-      // TODO: Statt eine PendingOrder zu erzeugen Order sofort ausführen, da sie sonst erst beim nächsten Tick geprüft und ggf. nicht ausgeführt wird.
+      if (StopLossPrice   && StopLossPrice   <= Close[0]) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (TakeProfitPrice && TakeProfitPrice >= Close[0]) return(HandleScriptError("onStart(3)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      // TODO: Statt eine PendingOrder zu erzeugen die Order sofort ausführen, da sie sonst erst beim nächsten Tick geprüft und ggf. doch nicht ausgeführt wird.
    }
    else {
       PlaySoundEx("Windows Notify.wav");
@@ -225,4 +224,4 @@ int GetPositionCounter() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender()", ERR_WRONG_JUMP)); }
+/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender(1)", ERR_WRONG_JUMP)); }
