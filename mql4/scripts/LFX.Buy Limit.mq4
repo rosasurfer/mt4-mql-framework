@@ -11,7 +11,7 @@ int __DEINIT_FLAGS__[];
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
 extern string Help  = "Buy Limit Order";
-extern double Units = 1.0;                                           // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
+extern double Units = 0.5;                                           // Positionsgröße (Vielfaches von 0.1 im Bereich von 0.1 bis 1.0)
 extern double LimitPrice;
 extern double StopLossPrice;
 extern double TakeProfitPrice;
@@ -146,12 +146,14 @@ int onStart() {
 
    // (4) Bestätigungsmeldung
    PlaySoundEx("OrderOk.wav");
+   /*
    MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
             +"Buy Limit order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +" placed.\n\n"
             +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
             + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat))
             + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat)),
             __NAME__, MB_ICONINFORMATION|MB_OK);
+   */
    return(last_error);
 }
 
