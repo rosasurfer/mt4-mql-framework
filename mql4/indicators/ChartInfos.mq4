@@ -519,8 +519,6 @@ int ShowOpenOrders() {
 
    // (3) mode.remote
    if (mode.remote) {
-      if (!(lfxOrders.pendingOrders + lfxOrders.openPositions))      // ohne offene Orders schnelle Rückkehr
-         return(0);
       orders = ArrayRange(lfxOrders.iCache, 0);
 
       for (i=0, n=0; i < orders; i++) {
