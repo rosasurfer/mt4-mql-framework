@@ -1,5 +1,5 @@
 /**
- * Erzeugt und speichert eine LFX-"Sell Limit"-Order. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
+ * Erzeugt eine neue "Sell Limit"-RemoteOrder. Muß auf dem jeweiligen LFX-Chart ausgeführt werden.
  *
  *  TODO: Fehler in Counter, wenn zwei Orders gleichzeitig erzeugt werden (2 x CHF.3)
  */
