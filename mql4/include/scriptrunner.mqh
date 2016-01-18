@@ -1,10 +1,5 @@
 #import "stdlib1.ex4"
-   int    Explode(string input, string separator, string results[], int limit);
-   int    InitializeStringBuffer(string buffer[], int length);
-   string ModuleTypeDescription(int type);
-
-#import "Expander.dll"
-   int    GetStringAddress(string value);
+   int Explode(string input, string separator, string results[], int limit);
 #import
 
 
@@ -16,15 +11,15 @@ int    hQC.ScriptParameterSender;
  * Startet im aktuellen Chart ein Script und übergibt die angegebenen Parameter. Darf nicht aus einem Script selbst aufgerufen werden,
  * da im Chart jeweils nur ein Script laufen kann.
  *
- * @param  string scriptName - Name des Scripts
+ * @param  string name       - Name des Scripts
  * @param  string parameters - Parameter im Format "param1Name=param1Value{TAB}param2Name=param2Value[{TAB}...]" (default: keine Parameter)
  *
  * @return bool - Ob die Startanweisung erfolgreich ans System übermittelt wurde.
  *                Nicht, ob das Script erfolgreich gestartet und/oder ausgeführt wurde.
  */
-bool RunScript(string scriptName, string parameters="") {
-   if (IsScript())             return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
-   if (!StringLen(scriptName)) return(!catch("RunScript(2)  invalid parameter scriptName=\"\"", ERR_INVALID_PARAMETER));
+bool RunScript(string name, string parameters="") {
+   if (IsScript())       return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
+   if (!StringLen(name)) return(!catch("RunScript(2)  invalid parameter name=\"\"", ERR_INVALID_PARAMETER));
 
    if (parameters == "0")                                            // (string) NULL
       parameters = "";
@@ -36,10 +31,10 @@ bool RunScript(string scriptName, string parameters="") {
    if (!SetScriptParameters(parameters))
       return(false);
 
-   string script[1]; script[0]=StringConcatenate("", scriptName);    // Der Pointer auf 'scriptName' muß zur Zeit der Message-Verarbeitung noch gültig sein,
-                                                                     // was im Indikator oder Expert nur mit einem String-Array sichergestellt werden kann.
+   string scriptName[1]; scriptName[0]=StringConcatenate("", name);  // Der Pointer auf 'name' muß während der Script-Ausführung noch gültig sein,
+                                                                     // was im Indikator oder Expert nur mit einem String-Array sichergestellt ist.
    // Script starten
-   if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(script[0])))
+   if (!PostMessageA(hWnd, MT4InternalMsg(), MT4_LOAD_SCRIPT, GetStringAddress(scriptName[0])))
       return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(true);

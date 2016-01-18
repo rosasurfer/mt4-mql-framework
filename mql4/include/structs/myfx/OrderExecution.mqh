@@ -358,9 +358,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
 
 #import "stdlib1.ex4"
    string OperationTypeToStr(int type);
-
-#import "Expander.dll"
-   int    GetStringAddress(string value);
 #import
 
 

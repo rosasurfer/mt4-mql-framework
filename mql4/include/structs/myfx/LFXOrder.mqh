@@ -352,9 +352,6 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 #import "stdlib1.ex4"
    string GetCurrency(int id);
    string OperationTypeToStr(int type);
-
-#import "Expander.dll"
-   int    GetStringAddress(string value);
 #import
 
 

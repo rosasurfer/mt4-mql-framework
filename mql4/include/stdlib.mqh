@@ -107,7 +107,6 @@
 
    // Buffer-Funktionen
    int      InitializeDoubleBuffer(double buffer[], int size  );
-   int      InitializeStringBuffer(string buffer[], int length);
 
    string   BufferToStr   (int buffer[]);
    string   BufferToHexStr(int buffer[]);
@@ -336,7 +335,6 @@
    string   EventToStr(int event);
    string   FileAccessModeToStr(int mode);
    string   MessageBoxCmdToStr(int cmd);
-   string   ModuleTypeDescription(int type);
    string   MaMethodDescription(int method);          string MovingAverageMethodDescription(int method);                // Alias
    string   MaMethodToStr      (int method);          string MovingAverageMethodToStr      (int method);                // Alias
    string   OperationTypeDescription(int type);       string OrderTypeDescription(int type);                            // Alias

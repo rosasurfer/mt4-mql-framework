@@ -1,5 +1,5 @@
 /**
- * Script, daß intern zur Ausführung von zwischen den Terminals verschickten TradeCommands benutzt wird. Ein manueller Aufruf ist nicht möglich.
+ * Script, daß intern zur Ausführung von TradeCommands benutzt wird. Ein manueller Aufruf ist nicht möglich.
  *
  */
 #include <stddefine.mqh>
