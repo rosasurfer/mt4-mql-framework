@@ -8786,7 +8786,7 @@ window_num=0
 MA.Periods=75
 MA.Timeframe=H1
 MA.Methods=EMA
-Max.Values=5000
+Max.Values=3000
 Color.Bands=14772545
 </inputs>
 </expert>
@@ -8803,7 +8803,7 @@ window_num=0
 <inputs>
 MA.Periods=75
 MA.Timeframe=H1
-Max.Values=5000
+Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
