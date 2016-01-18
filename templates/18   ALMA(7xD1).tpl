@@ -8785,7 +8785,7 @@ window_num=0
 <inputs>
 MA.Periods=7
 MA.Timeframe=D1
-Max.Values=5000
+Max.Values=3000
 </inputs>
 </expert>
 weight_0=0
