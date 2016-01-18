@@ -203,41 +203,60 @@ int onTick() {
  * @return int - Fehlerstatus
  */
 int CreateLabels() {
-   int c = 10;                               // Zählervariable für Label, mindestens zweistellig
+   int counter = 10;                                                 // Zählervariable für eindeutige Label, mindestens zweistellig
 
-   // Backgrounds
-   c++;
-   string label = StringConcatenate(__NAME__, ".", c, ".Background");
+   // Hintergrund-Rechtecke
+   counter++;
+   string label = StringConcatenate(__NAME__, ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 90);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 76);
       ObjectSet    (label, OBJPROP_YDISTANCE, 56);
-      ObjectSetText(label, "g", 136, "Webdings", bgColor);
+      ObjectSetText(label, "g", 146, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
 
-   c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Background");
+   counter++;
+   label = StringConcatenate(__NAME__, ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 13);
       ObjectSet    (label, OBJPROP_YDISTANCE, 56);
-      ObjectSetText(label, "g", 136, "Webdings", bgColor);
+      ObjectSetText(label, "g", 146, "Webdings", bgColor);
       ObjectRegister(label);
    }
    else GetLastError();
 
-   // Headerzeile
    int   col3width = 110;
    int   yCoord    =  58;
    color fontColor =  ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
-   c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Header.animation");
+
+
+   // Recording-Status
+   counter++;
+   label = StringConcatenate(__NAME__, ".", counter, ".Recording.status");
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 19);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+         string text = ifString(Recording.Enabled, "Saving in:  "+ serverName, "Saving:  off");
+      ObjectSetText(label, text, fontSize, fontName, fontColor);
+      ObjectRegister(label);
+   }
+   else GetLastError();
+
+
+   // Spaltenköpfe
+   yCoord += 16;
+   counter++;
+   label = StringConcatenate(__NAME__, ".", counter, ".Header.animation");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -250,20 +269,20 @@ int CreateLabels() {
    }
    else GetLastError();
 
-   label = StringConcatenate(__NAME__, ".", c, ".Header.cross");
+   label = StringConcatenate(__NAME__, ".", counter, ".Header.cross");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 5+col3width);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 69+col3width);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, serverName, fontSize, fontName, fontColor);
+      ObjectSetText(label, "cross", fontSize, fontName, fontColor);
       ObjectRegister(label);
    }
    else GetLastError();
 
-   c++;
-   label = StringConcatenate(__NAME__, ".", c, ".Header.main");
+   counter++;
+   label = StringConcatenate(__NAME__, ".", counter, ".Header.main");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -275,14 +294,15 @@ int CreateLabels() {
    }
    else GetLastError();
 
+
    // Datenzeilen
    yCoord += 16;
    for (int i=0; i < ArraySize(symbols); i++) {
       fontColor = ifInt(recording[i], fontColor.recordingOn, fontColor.recordingOff);
+      counter++;
 
       // Währung
-      c++;
-      label = StringConcatenate(__NAME__, ".", c, ".", names[i]);
+      label = StringConcatenate(__NAME__, ".", counter, ".", names[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
