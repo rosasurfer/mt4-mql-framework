@@ -231,9 +231,6 @@ string lpEXECUTION_CONTEXT.toStr(int lpContext, bool outputDebug=false) {
    //     ...
    bool   ec_setLogging           (/*EXECUTION_CONTEXT*/int ec[], int    logging  );
    string ec_setLogFile           (/*EXECUTION_CONTEXT*/int ec[], string logFile  );
-
-
-   int    GetStringAddress(string value);
 #import
 
 

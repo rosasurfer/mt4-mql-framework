@@ -158,14 +158,6 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "Expander.dll"
-   int GetStringAddress(string value);
-#import
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 //#import "Expander.dll"
 //   int      hh.Format         (/*HISTORY_HEADER*/int hh[]);
 //   string   hh.Description    (/*HISTORY_HEADER*/int hh[]);
