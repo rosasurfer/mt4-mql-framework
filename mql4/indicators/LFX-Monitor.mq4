@@ -29,16 +29,16 @@ int __DEINIT_FLAGS__[];
 
 ////////////////////////////////////////////////////////////////////////////////// Konfiguration ////////////////////////////////////////////////////////////////////////////////////
 
-extern bool   Recording.Enabled = false;                             // default: kein Recording
+extern bool   Recording.Enabled = false;                             // default: alle aktiviert, aber kein Recording
 extern string _1________________________;
-extern bool   AUD.Enabled       = true;
-extern bool   CAD.Enabled       = true;
-extern bool   CHF.Enabled       = true;
-extern bool   EUR.Enabled       = true;
-extern bool   GBP.Enabled       = true;
-extern bool   JPY.Enabled       = true;
-extern bool   NZD.Enabled       = true;
-extern bool   USD.Enabled       = true;
+extern bool   AUDLFX.Enabled    = true;
+extern bool   CADLFX.Enabled    = true;
+extern bool   CHFLFX.Enabled    = true;
+extern bool   EURLFX.Enabled    = true;
+extern bool   GBPLFX.Enabled    = true;
+extern bool   JPYLFX.Enabled    = true;
+extern bool   NZDLFX.Enabled    = true;
+extern bool   USDLFX.Enabled    = true;
 extern string _2________________________;
 extern bool   EURX.Enabled      = true;
 extern bool   USDX.Enabled      = true;
@@ -62,6 +62,17 @@ extern bool   USDX.Enabled      = true;
 string symbols    [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "EURX", "USDX" };
 string names      [] = { "AUD"   , "CAD"   , "CHF"   , "EUR"   , "GBP"   , "JPY"   , "NZD"   , "USD"   , "EURX", "USDX" };
 int    digits     [] = {        5,        5,        5,        5,        5,        5,        5,        5,      3,      3 };
+
+bool   AUDLFX.Available;
+bool   CADLFX.Available;
+bool   CHFLFX.Available;
+bool   EURLFX.Available;
+bool   GBPLFX.Available;
+bool   JPYLFX.Available;
+bool   NZDLFX.Available;
+bool   USDLFX.Available;
+bool     EURX.Available;
+bool     USDX.Available;
 
 bool   isMainIndex    [10];                                          // ob der über die USD-Pairs berechnete Index einer Währung verfügbar ist
 double mainIndex      [10];                                          // aktueller Indexwert
@@ -87,16 +98,16 @@ int    fontSize               = 10;
 int    tickTimerId;                                                  // ID des TickTimers des Charts
 
 
-#define I_AUD   0                                                    // Array-Indizes
-#define I_CAD   1
-#define I_CHF   2
-#define I_EUR   3
-#define I_GBP   4
-#define I_JPY   5
-#define I_NZD   6
-#define I_USD   7
-#define I_EUX   8
-#define I_USX   9
+#define I_AUDLFX     0                                               // Array-Indizes
+#define I_CADLFX     1
+#define I_CHFLFX     2
+#define I_EURLFX     3
+#define I_GBPLFX     4
+#define I_JPYLFX     5
+#define I_NZDLFX     6
+#define I_USDLFX     7
+#define I_EURX       8
+#define I_USDX       9
 
 
 /**
@@ -123,16 +134,16 @@ int onInit() {
    // (3) Parameterauswertung
    if (Recording.Enabled) {
       int count;
-      recording[I_AUD] = AUD.Enabled;  count += AUD.Enabled;
-      recording[I_CAD] = CAD.Enabled;  count += CAD.Enabled;
-      recording[I_CHF] = CHF.Enabled;  count += CHF.Enabled;
-      recording[I_EUR] = EUR.Enabled;  count += EUR.Enabled;
-      recording[I_GBP] = GBP.Enabled;  count += GBP.Enabled;
-      recording[I_JPY] = JPY.Enabled;  count += JPY.Enabled;
-      recording[I_NZD] = NZD.Enabled;  count += NZD.Enabled;
-      recording[I_USD] = USD.Enabled;  count += USD.Enabled;
-      recording[I_EUX] = EURX.Enabled; count += EURX.Enabled;
-      recording[I_USX] = USDX.Enabled; count += USDX.Enabled;
+      recording[I_AUDLFX] = AUDLFX.Enabled; count += AUDLFX.Enabled;
+      recording[I_CADLFX] = CADLFX.Enabled; count += CADLFX.Enabled;
+      recording[I_CHFLFX] = CHFLFX.Enabled; count += CHFLFX.Enabled;
+      recording[I_EURLFX] = EURLFX.Enabled; count += EURLFX.Enabled;
+      recording[I_GBPLFX] = GBPLFX.Enabled; count += GBPLFX.Enabled;
+      recording[I_JPYLFX] = JPYLFX.Enabled; count += JPYLFX.Enabled;
+      recording[I_NZDLFX] = NZDLFX.Enabled; count += NZDLFX.Enabled;
+      recording[I_USDLFX] = USDLFX.Enabled; count += USDLFX.Enabled;
+      recording[I_EURX  ] =   EURX.Enabled; count +=   EURX.Enabled;
+      recording[I_USDX  ] =   USDX.Enabled; count +=   USDX.Enabled;
 
       if (count > 7) {                                               // Je MQL-Modul können maximal 64 Dateien gleichzeitig offen sein (entspricht 7 Instrumenten).
          for (int i=ArraySize(recording)-1; i >= 0; i--) {
@@ -206,20 +217,34 @@ int onTick() {
 
 
 
-   // für alle konfigurierten Indizes
-   int symbolsSize = ArraySize(symbols);
-   for (int i=0; i < symbolsSize; i++) {
+   // (1) onInit()
+   if (AUDLFX.Enabled) {}     // Index anzeigen: {Symbol}: [off | n/a]
+   if (CADLFX.Enabled) {}     // aktive Limits anzeigen
+   if (CHFLFX.Enabled) {}
+   if (EURLFX.Enabled) {}
+   if (GBPLFX.Enabled) {}
+   if (JPYLFX.Enabled) {}
+   if (NZDLFX.Enabled) {}
+   if (USDLFX.Enabled) {}
+   if (  EURX.Enabled) {}
+   if (  USDX.Enabled) {}
 
-      // prüfen, ob alle Daten für Berechnung verfügbar sind
-         // nein -> continue;
 
-      // ja: alle Daten verfügbar
-      // (1)   Index berechnen und anzeigen
-      // (2.1) konfigurierte Preis-Limits anzeigen
-      // (2.2) Preis-Limits prüfen und bei Erreichen jeweilige Action auslösen
-      // (3)   ggf. Indexhistory speichern
+   // (2) onTick()
+   // (2.1) prüfen, ob alle Daten für diesen Index verfügbar sind
+   if (AUDLFX.Enabled) {
+      if (AUDLFX.Available) {
+         // Index berechnen
+         // Limits prüfen und bei Erreichen Action auslösen
+         // Index speichern
+         // Index anzeigen:   {Symbol}: {value}
+      }
+      else {
+         // Index anzeigen:   {Symbol}: n/a
+      }
    }
 
+   // (2.2) regelmäßig prüfen, ob sich die Limite geändert haben (nicht bei jedem Tick)
 }
 
 
@@ -424,13 +449,13 @@ bool UpdateInfos() {
    double eurusd_Bid = MarketInfo("EURUSD", MODE_BID), eurusd_Ask = MarketInfo("EURUSD", MODE_ASK), eurusd = (eurusd_Bid + eurusd_Ask)/2;
    double gbpusd_Bid = MarketInfo("GBPUSD", MODE_BID), gbpusd_Ask = MarketInfo("GBPUSD", MODE_ASK), gbpusd = (gbpusd_Bid + gbpusd_Ask)/2;
 
-   isMainIndex[I_USD] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_USD] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
-      usdlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
-      usdlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
+   isMainIndex[I_USDLFX]  = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && audusd_Bid && eurusd_Bid && gbpusd_Bid);
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_USDLFX] = MathPow((usdcad     * usdchf     * usdjpy    ) / (audusd     * eurusd     * gbpusd    ), 1/7.);
+      usdlfx.main_Bid     = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.);
+      usdlfx.main_Ask     = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.);
    }
-   isCrossIndex[I_USD] = false;
+   isCrossIndex[I_USDLFX] = false;
 
    // AUDLFX
    double audcad_Bid = MarketInfo("AUDCAD", MODE_BID), audcad_Ask = MarketInfo("AUDCAD", MODE_ASK), audcad = (audcad_Bid + audcad_Ask)/2;
@@ -440,18 +465,18 @@ bool UpdateInfos() {
    double euraud_Bid = MarketInfo("EURAUD", MODE_BID), euraud_Ask = MarketInfo("EURAUD", MODE_ASK), euraud = (euraud_Bid + euraud_Ask)/2;
    double gbpaud_Bid = MarketInfo("GBPAUD", MODE_BID), gbpaud_Ask = MarketInfo("GBPAUD", MODE_ASK), gbpaud = (gbpaud_Bid + gbpaud_Ask)/2;
 
-   isCrossIndex[I_AUD] = (audcad_Bid && audchf_Bid && audjpy_Bid && audusd_Bid && euraud_Bid && gbpaud_Bid);
-   if (isCrossIndex[I_AUD]) {
-      crossIndex[I_AUD] = MathPow((audcad     * audchf     * audjpy     * audusd    ) / (euraud     * gbpaud    ), 1/7.);
-      audlfx.crs_Bid    = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.);
-      audlfx.crs_Ask    = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.);
+   isCrossIndex[I_AUDLFX]  = (audcad_Bid && audchf_Bid && audjpy_Bid && audusd_Bid && euraud_Bid && gbpaud_Bid);
+   if (isCrossIndex[I_AUDLFX]) {
+      crossIndex[I_AUDLFX] = MathPow((audcad     * audchf     * audjpy     * audusd    ) / (euraud     * gbpaud    ), 1/7.);
+      audlfx.crs_Bid       = MathPow((audcad_Bid * audchf_Bid * audjpy_Bid * audusd_Bid) / (euraud_Ask * gbpaud_Ask), 1/7.);
+      audlfx.crs_Ask       = MathPow((audcad_Ask * audchf_Ask * audjpy_Ask * audusd_Ask) / (euraud_Bid * gbpaud_Bid), 1/7.);
    }
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_AUD] = mainIndex[I_USD] * audusd;
-      audlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
-      audlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_AUDLFX]  = mainIndex[I_USDLFX] * audusd;
+      audlfx.main_Bid      = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Bid * eurusd_Ask * gbpusd_Ask), 1/7.) * audusd_Bid;
+      audlfx.main_Ask      = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Ask * eurusd_Bid * gbpusd_Bid), 1/7.) * audusd_Ask;
    }
-   isMainIndex[I_AUD] = isMainIndex[I_USD];
+   isMainIndex[I_AUDLFX]   = isMainIndex[I_USDLFX];
 
    // CADLFX
    double cadchf_Bid = MarketInfo("CADCHF", MODE_BID), cadchf_Ask = MarketInfo("CADCHF", MODE_ASK), cadchf = (cadchf_Bid + cadchf_Ask)/2;
@@ -461,18 +486,18 @@ bool UpdateInfos() {
    double gbpcad_Bid = MarketInfo("GBPCAD", MODE_BID), gbpcad_Ask = MarketInfo("GBPCAD", MODE_ASK), gbpcad = (gbpcad_Bid + gbpcad_Ask)/2;
    //     usdcad_Bid = ...
 
-   isCrossIndex[I_CAD] = (cadchf_Bid && cadjpy_Bid && audcad_Bid && eurcad_Bid && gbpcad_Bid && usdcad_Bid);
-   if (isCrossIndex[I_CAD]) {
-      crossIndex[I_CAD] = MathPow((cadchf     * cadjpy    ) / (audcad     * eurcad     * gbpcad     * usdcad    ), 1/7.);
-      cadlfx.crs_Bid    = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.);
-      cadlfx.crs_Ask    = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.);
+   isCrossIndex[I_CADLFX]  = (cadchf_Bid && cadjpy_Bid && audcad_Bid && eurcad_Bid && gbpcad_Bid && usdcad_Bid);
+   if (isCrossIndex[I_CADLFX]) {
+      crossIndex[I_CADLFX] = MathPow((cadchf     * cadjpy    ) / (audcad     * eurcad     * gbpcad     * usdcad    ), 1/7.);
+      cadlfx.crs_Bid       = MathPow((cadchf_Bid * cadjpy_Bid) / (audcad_Ask * eurcad_Ask * gbpcad_Ask * usdcad_Ask), 1/7.);
+      cadlfx.crs_Ask       = MathPow((cadchf_Ask * cadjpy_Ask) / (audcad_Bid * eurcad_Bid * gbpcad_Bid * usdcad_Bid), 1/7.);
    }
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_CAD] = mainIndex[I_USD] / usdcad;
-      cadlfx.main_Bid  = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
-      cadlfx.main_Ask  = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_CADLFX]  = mainIndex[I_USDLFX] / usdcad;
+      cadlfx.main_Bid      = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdcad_Ask;
+      cadlfx.main_Ask      = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdcad_Bid;
    }
-   isMainIndex[I_CAD] = isMainIndex[I_USD];
+   isMainIndex[I_CADLFX]   = isMainIndex[I_USDLFX];
 
    // CHFLFX
    double chfjpy_Bid = MarketInfo("CHFJPY", MODE_BID), chfjpy_Ask = MarketInfo("CHFJPY", MODE_ASK), chfjpy = (chfjpy_Bid + chfjpy_Ask)/2;
@@ -482,18 +507,18 @@ bool UpdateInfos() {
    double gbpchf_Bid = MarketInfo("GBPCHF", MODE_BID), gbpchf_Ask = MarketInfo("GBPCHF", MODE_ASK), gbpchf = (gbpchf_Bid + gbpchf_Ask)/2;
    //     usdchf_Bid = ...
 
-   isCrossIndex[I_CHF] = (chfjpy_Bid && audchf_Bid && cadchf_Bid && eurchf_Bid && gbpchf_Bid && usdchf_Bid);
-   if (isCrossIndex[I_CHF]) {
-      crossIndex[I_CHF] = MathPow(chfjpy     / (audchf     * cadchf     * eurchf     * gbpchf     * usdchf    ), 1/7.);
-      chflfx.crs_Bid    = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.);
-      chflfx.crs_Ask    = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.);
+   isCrossIndex[I_CHFLFX]  = (chfjpy_Bid && audchf_Bid && cadchf_Bid && eurchf_Bid && gbpchf_Bid && usdchf_Bid);
+   if (isCrossIndex[I_CHFLFX]) {
+      crossIndex[I_CHFLFX] = MathPow(chfjpy     / (audchf     * cadchf     * eurchf     * gbpchf     * usdchf    ), 1/7.);
+      chflfx.crs_Bid       = MathPow(chfjpy_Bid / (audchf_Ask * cadchf_Ask * eurchf_Ask * gbpchf_Ask * usdchf_Ask), 1/7.);
+      chflfx.crs_Ask       = MathPow(chfjpy_Ask / (audchf_Bid * cadchf_Bid * eurchf_Bid * gbpchf_Bid * usdchf_Bid), 1/7.);
    }
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_CHF] = mainIndex[I_USD] / usdchf;
-      chflfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
-      chflfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_CHFLFX]  = mainIndex[I_USDLFX] / usdchf;
+      chflfx.main_Bid      = MathPow((usdcad_Bid * usdchf_Ask * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdchf_Ask;
+      chflfx.main_Ask      = MathPow((usdcad_Ask * usdchf_Bid * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdchf_Bid;
    }
-   isMainIndex[I_CHF] = isMainIndex[I_USD];
+   isMainIndex[I_CHFLFX]   = isMainIndex[I_USDLFX];
    /*
    chfjpy = usdjpy / usdchf
    audchf = audusd * usdchf
@@ -556,18 +581,18 @@ bool UpdateInfos() {
    double eurjpy_Bid = MarketInfo("EURJPY", MODE_BID), eurjpy_Ask = MarketInfo("EURJPY", MODE_ASK), eurjpy = (eurjpy_Bid + eurjpy_Ask)/2;
    //     eurusd_Bid = ...
 
-   isCrossIndex[I_EUR] = (euraud_Bid && eurcad_Bid && eurchf_Bid && eurgbp_Bid && eurjpy_Bid && eurusd_Bid);
-   if (isCrossIndex[I_EUR]) {
-      crossIndex[I_EUR] = MathPow((euraud     * eurcad     * eurchf     * eurgbp     * eurjpy     * eurusd    ), 1/7.);
-      eurlfx.crs_Bid    = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.);
-      eurlfx.crs_Ask    = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.);
+   isCrossIndex[I_EURLFX]  = (euraud_Bid && eurcad_Bid && eurchf_Bid && eurgbp_Bid && eurjpy_Bid && eurusd_Bid);
+   if (isCrossIndex[I_EURLFX]) {
+      crossIndex[I_EURLFX] = MathPow((euraud     * eurcad     * eurchf     * eurgbp     * eurjpy     * eurusd    ), 1/7.);
+      eurlfx.crs_Bid       = MathPow((euraud_Bid * eurcad_Bid * eurchf_Bid * eurgbp_Bid * eurjpy_Bid * eurusd_Bid), 1/7.);
+      eurlfx.crs_Ask       = MathPow((euraud_Ask * eurcad_Ask * eurchf_Ask * eurgbp_Ask * eurjpy_Ask * eurusd_Ask), 1/7.);
    }
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_EUR] = mainIndex[I_USD] * eurusd;
-      eurlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
-      eurlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_EURLFX]  = mainIndex[I_USDLFX] * eurusd;
+      eurlfx.main_Bid      = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Bid * gbpusd_Ask), 1/7.) * eurusd_Bid;
+      eurlfx.main_Ask      = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Ask * gbpusd_Bid), 1/7.) * eurusd_Ask;
    }
-   isMainIndex[I_EUR] = isMainIndex[I_USD];
+   isMainIndex[I_EURLFX]   = isMainIndex[I_USDLFX];
 
    // GBPLFX
    //     gbpaud_Bid = ...
@@ -577,18 +602,18 @@ bool UpdateInfos() {
    //     gbpusd_Bid = ...
    //     eurgbp_Bid = ...
 
-   isCrossIndex[I_GBP] = (gbpaud_Bid && gbpcad_Bid && gbpchf_Bid && gbpjpy_Bid && gbpusd_Bid && eurgbp_Bid);
-   if (isCrossIndex[I_GBP]) {
-      crossIndex[I_GBP] = MathPow((gbpaud     * gbpcad     * gbpchf     * gbpjpy     * gbpusd    ) / eurgbp    , 1/7.);
-      gbplfx.crs_Bid    = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.);
-      gbplfx.crs_Ask    = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.);
+   isCrossIndex[I_GBPLFX]  = (gbpaud_Bid && gbpcad_Bid && gbpchf_Bid && gbpjpy_Bid && gbpusd_Bid && eurgbp_Bid);
+   if (isCrossIndex[I_GBPLFX]) {
+      crossIndex[I_GBPLFX] = MathPow((gbpaud     * gbpcad     * gbpchf     * gbpjpy     * gbpusd    ) / eurgbp    , 1/7.);
+      gbplfx.crs_Bid       = MathPow((gbpaud_Bid * gbpcad_Bid * gbpchf_Bid * gbpjpy_Bid * gbpusd_Bid) / eurgbp_Ask, 1/7.);
+      gbplfx.crs_Ask       = MathPow((gbpaud_Ask * gbpcad_Ask * gbpchf_Ask * gbpjpy_Ask * gbpusd_Ask) / eurgbp_Bid, 1/7.);
    }
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_GBP] = mainIndex[I_USD] * gbpusd;
-      gbplfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
-      gbplfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_GBPLFX]  = mainIndex[I_USDLFX] * gbpusd;
+      gbplfx.main_Bid      = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Bid), 1/7.) * gbpusd_Bid;
+      gbplfx.main_Ask      = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Ask), 1/7.) * gbpusd_Ask;
    }
-   isMainIndex[I_GBP] = isMainIndex[I_USD];
+   isMainIndex[I_GBPLFX]   = isMainIndex[I_USDLFX];
 
    // JPYLFX
    //     audjpy_Bid = ...
@@ -598,18 +623,18 @@ bool UpdateInfos() {
    //     gbpjpy_Bid = ...
    //     usdjpy_Bid = ...
 
-   isCrossIndex[I_JPY] = (audjpy_Bid && cadjpy_Bid && chfjpy_Bid && eurjpy_Bid && gbpjpy_Bid && usdjpy_Bid);
-   if (isCrossIndex[I_JPY]) {
-      crossIndex[I_JPY] = 100 * MathPow(1 / (audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
-      jpylfx.crs_Bid    = 100 * MathPow(1 / (audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
-      jpylfx.crs_Ask    = 100 * MathPow(1 / (audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
+   isCrossIndex[I_JPYLFX]  = (audjpy_Bid && cadjpy_Bid && chfjpy_Bid && eurjpy_Bid && gbpjpy_Bid && usdjpy_Bid);
+   if (isCrossIndex[I_JPYLFX]) {
+      crossIndex[I_JPYLFX] = 100 * MathPow(1 / (audjpy     * cadjpy     * chfjpy     * eurjpy     * gbpjpy     * usdjpy    ), 1/7.);
+      jpylfx.crs_Bid       = 100 * MathPow(1 / (audjpy_Ask * cadjpy_Ask * chfjpy_Ask * eurjpy_Ask * gbpjpy_Ask * usdjpy_Ask), 1/7.);
+      jpylfx.crs_Ask       = 100 * MathPow(1 / (audjpy_Bid * cadjpy_Bid * chfjpy_Bid * eurjpy_Bid * gbpjpy_Bid * usdjpy_Bid), 1/7.);
    }
-   if (isMainIndex[I_USD]) {
-      mainIndex[I_JPY] = 100 * mainIndex[I_USD] / usdjpy;
-      jpylfx.main_Bid  = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
-      jpylfx.main_Ask  = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
+   if (isMainIndex[I_USDLFX]) {
+      mainIndex[I_JPYLFX]  = 100 * mainIndex[I_USDLFX] / usdjpy;
+      jpylfx.main_Bid      = 100 * MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Ask) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) / usdjpy_Ask;
+      jpylfx.main_Ask      = 100 * MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Bid) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) / usdjpy_Bid;
    }
-   isMainIndex[I_JPY] = isMainIndex[I_USD];
+   isMainIndex[I_JPYLFX]   = isMainIndex[I_USDLFX];
 
    // NZDLFX
    double audnzd_Bid = MarketInfo("AUDNZD", MODE_BID), audnzd_Ask = MarketInfo("AUDNZD", MODE_ASK), audnzd = (audnzd_Bid + audnzd_Ask)/2;
@@ -620,18 +645,18 @@ bool UpdateInfos() {
    double nzdjpy_Bid = MarketInfo("NZDJPY", MODE_BID), nzdjpy_Ask = MarketInfo("NZDJPY", MODE_ASK), nzdjpy = (nzdjpy_Bid + nzdjpy_Ask)/2;
    double nzdusd_Bid = MarketInfo("NZDUSD", MODE_BID), nzdusd_Ask = MarketInfo("NZDUSD", MODE_ASK), nzdusd = (nzdusd_Bid + nzdusd_Ask)/2;
 
-   isCrossIndex[I_NZD] = (audnzd_Bid && eurnzd_Bid && gbpnzd_Bid && nzdcad_Bid && nzdchf_Bid && nzdjpy_Bid && nzdusd_Bid);
-   if (isCrossIndex[I_NZD]) {
-      crossIndex[I_NZD] = MathPow((nzdcad     * nzdchf     * nzdjpy     * nzdusd    ) / (audnzd     * eurnzd     * gbpnzd    ), 1/7.);
-      nzdlfx.crs_Bid    = MathPow((nzdcad_Bid * nzdchf_Bid * nzdjpy_Bid * nzdusd_Bid) / (audnzd_Ask * eurnzd_Ask * gbpnzd_Ask), 1/7.);
-      nzdlfx.crs_Ask    = MathPow((nzdcad_Ask * nzdchf_Ask * nzdjpy_Ask * nzdusd_Ask) / (audnzd_Bid * eurnzd_Bid * gbpnzd_Bid), 1/7.);
+   isCrossIndex[I_NZDLFX]  = (audnzd_Bid && eurnzd_Bid && gbpnzd_Bid && nzdcad_Bid && nzdchf_Bid && nzdjpy_Bid && nzdusd_Bid);
+   if (isCrossIndex[I_NZDLFX]) {
+      crossIndex[I_NZDLFX] = MathPow((nzdcad     * nzdchf     * nzdjpy     * nzdusd    ) / (audnzd     * eurnzd     * gbpnzd    ), 1/7.);
+      nzdlfx.crs_Bid       = MathPow((nzdcad_Bid * nzdchf_Bid * nzdjpy_Bid * nzdusd_Bid) / (audnzd_Ask * eurnzd_Ask * gbpnzd_Ask), 1/7.);
+      nzdlfx.crs_Ask       = MathPow((nzdcad_Ask * nzdchf_Ask * nzdjpy_Ask * nzdusd_Ask) / (audnzd_Bid * eurnzd_Bid * gbpnzd_Bid), 1/7.);
    }
-   if (isMainIndex[I_USD] && nzdusd_Bid) {
-      mainIndex[I_NZD] = mainIndex[I_USD] * nzdusd;
-      nzdlfx.main_Bid  = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
-      nzdlfx.main_Ask  = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
+   if (isMainIndex[I_USDLFX] && nzdusd_Bid) {
+      mainIndex[I_NZDLFX]  = mainIndex[I_USDLFX] * nzdusd;
+      nzdlfx.main_Bid      = MathPow((usdcad_Bid * usdchf_Bid * usdjpy_Bid) / (audusd_Ask * eurusd_Ask * gbpusd_Ask), 1/7.) * nzdusd_Bid;
+      nzdlfx.main_Ask      = MathPow((usdcad_Ask * usdchf_Ask * usdjpy_Ask) / (audusd_Bid * eurusd_Bid * gbpusd_Bid), 1/7.) * nzdusd_Ask;
    }
-   isMainIndex[I_NZD] = (isMainIndex[I_USD] && nzdusd_Bid);
+   isMainIndex[I_NZDLFX]   = (isMainIndex[I_USDLFX] && nzdusd_Bid);
    /*
    usdcad = nzdcad / nzdusd
    usdchf = nzdchf / nzdusd
@@ -697,13 +722,13 @@ bool UpdateInfos() {
    //     eurusd_Bid = ...
    //     gbpusd_Bid = ...
 
-   isMainIndex[I_USX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
-   if (isMainIndex[I_USX]) {
-      mainIndex[I_USX] = 50.14348112 * (MathPow(usdcad    , 0.091) * MathPow(usdchf    , 0.036) * MathPow(usdjpy    , 0.136) * MathPow(usdsek    , 0.042)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
-      usdx.main_Bid    = 50.14348112 * (MathPow(usdcad_Bid, 0.091) * MathPow(usdchf_Bid, 0.036) * MathPow(usdjpy_Bid, 0.136) * MathPow(usdsek_Bid, 0.042)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
-      usdx.main_Ask    = 50.14348112 * (MathPow(usdcad_Ask, 0.091) * MathPow(usdchf_Ask, 0.036) * MathPow(usdjpy_Ask, 0.136) * MathPow(usdsek_Ask, 0.042)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
+   isMainIndex[I_USDX]  = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
+   if (isMainIndex[I_USDX]) {
+      mainIndex[I_USDX] = 50.14348112 * (MathPow(usdcad    , 0.091) * MathPow(usdchf    , 0.036) * MathPow(usdjpy    , 0.136) * MathPow(usdsek    , 0.042)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
+      usdx.main_Bid     = 50.14348112 * (MathPow(usdcad_Bid, 0.091) * MathPow(usdchf_Bid, 0.036) * MathPow(usdjpy_Bid, 0.136) * MathPow(usdsek_Bid, 0.042)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
+      usdx.main_Ask     = 50.14348112 * (MathPow(usdcad_Ask, 0.091) * MathPow(usdchf_Ask, 0.036) * MathPow(usdjpy_Ask, 0.136) * MathPow(usdsek_Ask, 0.042)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
    }
-   isCrossIndex[I_USX] = false;
+   isCrossIndex[I_USDX] = false;
    /*
    USDX = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
 
@@ -720,22 +745,22 @@ bool UpdateInfos() {
    double eursek_Bid = MarketInfo("EURSEK", MODE_BID), eursek_Ask = MarketInfo("EURSEK", MODE_ASK), eursek = (eursek_Bid + eursek_Ask)/2;
    //     eurusd_Bid = ...
 
-   isCrossIndex[I_EUX] = (eurchf_Bid && eurgbp_Bid && eurjpy_Bid && eursek_Bid && eurusd_Bid);
-   if (isCrossIndex[I_EUX]) {
-      crossIndex[I_EUX] = 34.38805726 * MathPow(eurchf    , 0.1113) * MathPow(eurgbp    , 0.3056) * MathPow(eurjpy    , 0.1891) * MathPow(eursek    , 0.0785) * MathPow(eurusd    , 0.3155);
-      eurx.crs_Bid      = 34.38805726 * MathPow(eurchf_Bid, 0.1113) * MathPow(eurgbp_Bid, 0.3056) * MathPow(eurjpy_Bid, 0.1891) * MathPow(eursek_Bid, 0.0785) * MathPow(eurusd_Bid, 0.3155);
-      eurx.crs_Ask      = 34.38805726 * MathPow(eurchf_Ask, 0.1113) * MathPow(eurgbp_Ask, 0.3056) * MathPow(eurjpy_Ask, 0.1891) * MathPow(eursek_Ask, 0.0785) * MathPow(eurusd_Ask, 0.3155);
+   isCrossIndex[I_EURX]  = (eurchf_Bid && eurgbp_Bid && eurjpy_Bid && eursek_Bid && eurusd_Bid);
+   if (isCrossIndex[I_EURX]) {
+      crossIndex[I_EURX] = 34.38805726 * MathPow(eurchf    , 0.1113) * MathPow(eurgbp    , 0.3056) * MathPow(eurjpy    , 0.1891) * MathPow(eursek    , 0.0785) * MathPow(eurusd    , 0.3155);
+      eurx.crs_Bid       = 34.38805726 * MathPow(eurchf_Bid, 0.1113) * MathPow(eurgbp_Bid, 0.3056) * MathPow(eurjpy_Bid, 0.1891) * MathPow(eursek_Bid, 0.0785) * MathPow(eurusd_Bid, 0.3155);
+      eurx.crs_Ask       = 34.38805726 * MathPow(eurchf_Ask, 0.1113) * MathPow(eurgbp_Ask, 0.3056) * MathPow(eurjpy_Ask, 0.1891) * MathPow(eursek_Ask, 0.0785) * MathPow(eurusd_Ask, 0.3155);
    }
-   if (isMainIndex[I_USX]) {
+   if (isMainIndex[I_USDX]) {
       eurchf = usdchf * eurusd;
       eurgbp = eurusd / gbpusd;
       eurjpy = usdjpy * eurusd;
       eursek = usdsek * eurusd;
-      mainIndex[I_EUX] = 34.38805726 * MathPow(eurchf    , 0.1113) * MathPow(eurgbp    , 0.3056) * MathPow(eurjpy    , 0.1891) * MathPow(eursek    , 0.0785) * MathPow(eurusd    , 0.3155);
-      eurx.main_Bid    = 0; //34.38805726 * MathPow(eurchf_Bid, 0.1113) * MathPow(eurgbp_Bid, 0.3056) * MathPow(eurjpy_Bid, 0.1891) * MathPow(eursek_Bid, 0.0785) * MathPow(eurusd_Bid, 0.3155);
-      eurx.main_Ask    = 0; //34.38805726 * MathPow(eurchf_Ask, 0.1113) * MathPow(eurgbp_Ask, 0.3056) * MathPow(eurjpy_Ask, 0.1891) * MathPow(eursek_Ask, 0.0785) * MathPow(eurusd_Ask, 0.3155);
+      mainIndex[I_EURX]  = 34.38805726 * MathPow(eurchf    , 0.1113) * MathPow(eurgbp    , 0.3056) * MathPow(eurjpy    , 0.1891) * MathPow(eursek    , 0.0785) * MathPow(eurusd    , 0.3155);
+      eurx.main_Bid      = 0; //34.38805726 * MathPow(eurchf_Bid, 0.1113) * MathPow(eurgbp_Bid, 0.3056) * MathPow(eurjpy_Bid, 0.1891) * MathPow(eursek_Bid, 0.0785) * MathPow(eurusd_Bid, 0.3155);
+      eurx.main_Ask      = 0; //34.38805726 * MathPow(eurchf_Ask, 0.1113) * MathPow(eurgbp_Ask, 0.3056) * MathPow(eurjpy_Ask, 0.1891) * MathPow(eursek_Ask, 0.0785) * MathPow(eurusd_Ask, 0.3155);
    }
-   isMainIndex[I_EUX] = isMainIndex[I_USX];
+   isMainIndex[I_EURX]   = isMainIndex[I_USDX];
    /*
    EURX = 34.38805726 * EURCHF^0.1113 * EURGBP^0.3056 * EURJPY^0.1891 * EURSEK^0.0785 * EURUSD^0.3155
    */
@@ -748,65 +773,65 @@ bool UpdateInfos() {
 
 
    // Farben definieren
-   color fontColor.USD = ifInt(recording[I_USD], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.AUD = ifInt(recording[I_AUD], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.CAD = ifInt(recording[I_CAD], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.CHF = ifInt(recording[I_CHF], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.EUR = ifInt(recording[I_EUR], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.GBP = ifInt(recording[I_GBP], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.JPY = ifInt(recording[I_JPY], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.NZD = ifInt(recording[I_NZD], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.USX = ifInt(recording[I_USX], fontColor.recordingOn, fontColor.recordingOff);
-   color fontColor.EUX = ifInt(recording[I_EUX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.USDLFX = ifInt(recording[I_USDLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.AUDLFX = ifInt(recording[I_AUDLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.CADLFX = ifInt(recording[I_CADLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.CHFLFX = ifInt(recording[I_CHFLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.EURLFX = ifInt(recording[I_EURLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.GBPLFX = ifInt(recording[I_GBPLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.JPYLFX = ifInt(recording[I_JPYLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.NZDLFX = ifInt(recording[I_NZDLFX], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.USDX   = ifInt(recording[I_USDX  ], fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor.EURX   = ifInt(recording[I_EURX  ], fontColor.recordingOn, fontColor.recordingOff);
 
 
    // Anzeige Cross-Indizes
-   string sValue            = "-";                                                                                                                         ObjectSetText(labels[I_USD] +".quote.cross",  sValue, fontSize, fontName, fontColor.USD);
-   if (!AUD.Enabled ) sValue = "off"; else if (isCrossIndex[I_AUD]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_AUD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_AUD] +".quote.cross",  sValue, fontSize, fontName, fontColor.AUD);
-   if (!CAD.Enabled ) sValue = "off"; else if (isCrossIndex[I_CAD]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_CAD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CAD] +".quote.cross",  sValue, fontSize, fontName, fontColor.CAD);
-   if (!CHF.Enabled ) sValue = "off"; else if (isCrossIndex[I_CHF]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_CHF], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CHF] +".quote.cross",  sValue, fontSize, fontName, fontColor.CHF);
-   if (!EUR.Enabled ) sValue = "off"; else if (isCrossIndex[I_EUR]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_EUR], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_EUR] +".quote.cross",  sValue, fontSize, fontName, fontColor.EUR);
-   if (!GBP.Enabled ) sValue = "off"; else if (isCrossIndex[I_GBP]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_GBP], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_GBP] +".quote.cross",  sValue, fontSize, fontName, fontColor.GBP);
-   if (!JPY.Enabled ) sValue = "off"; else if (isCrossIndex[I_JPY]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_JPY], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_JPY] +".quote.cross",  sValue, fontSize, fontName, fontColor.JPY);
-   if (!NZD.Enabled ) sValue = "off"; else if (isCrossIndex[I_NZD]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_NZD], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_NZD] +".quote.cross",  sValue, fontSize, fontName, fontColor.NZD);
-                      sValue = "-";                                                                                                                        ObjectSetText(labels[I_USX] +".quote.cross",  sValue, fontSize, fontName, fontColor.USX);
-   if (!EURX.Enabled) sValue = "off"; else if (isCrossIndex[I_EUX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_EUX], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_EUX] +".quote.cross",  sValue, fontSize, fontName, fontColor.EUX);
+   string sValue               = "-";                                                                                                                              ObjectSetText(labels[I_USDLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.USDLFX);
+   if (!AUDLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_AUDLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_AUDLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_AUDLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.AUDLFX);
+   if (!CADLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_CADLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_CADLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CADLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.CADLFX);
+   if (!CHFLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_CHFLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_CHFLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_CHFLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.CHFLFX);
+   if (!EURLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_EURLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_EURLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_EURLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.EURLFX);
+   if (!GBPLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_GBPLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_GBPLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_GBPLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.GBPLFX);
+   if (!JPYLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_JPYLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_JPYLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_JPYLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.JPYLFX);
+   if (!NZDLFX.Enabled) sValue = "off"; else if (isCrossIndex[I_NZDLFX]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_NZDLFX], 5), ".4'"); else sValue = " "; ObjectSetText(labels[I_NZDLFX] +".quote.cross",  sValue, fontSize, fontName, fontColor.NZDLFX);
+                        sValue = "-";                                                                                                                              ObjectSetText(labels[I_USDX  ] +".quote.cross",  sValue, fontSize, fontName, fontColor.USDX  );
+   if (  !EURX.Enabled) sValue = "off"; else if (isCrossIndex[I_EURX  ]) sValue = NumberToStr(NormalizeDouble(crossIndex[I_EURX  ], 3), ".2'"); else sValue = " "; ObjectSetText(labels[I_EURX  ] +".quote.cross",  sValue, fontSize, fontName, fontColor.EURX  );
 
    // Anzeige Cross-Spreads
-                                             sValue = " ";                                                                                                 ObjectSetText(labels[I_USD] +".spread.cross", sValue, fontSize, fontName, fontColor.USD);
-   if (!AUD.Enabled  || !isCrossIndex[I_AUD]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_AUD] +".spread.cross", sValue, fontSize, fontName, fontColor.AUD);
-   if (!CAD.Enabled  || !isCrossIndex[I_CAD]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_CAD] +".spread.cross", sValue, fontSize, fontName, fontColor.CAD);
-   if (!CHF.Enabled  || !isCrossIndex[I_CHF]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_CHF] +".spread.cross", sValue, fontSize, fontName, fontColor.CHF);
-   if (!EUR.Enabled  || !isCrossIndex[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_EUR] +".spread.cross", sValue, fontSize, fontName, fontColor.EUR);
-   if (!GBP.Enabled  || !isCrossIndex[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_GBP] +".spread.cross", sValue, fontSize, fontName, fontColor.GBP);
-   if (!JPY.Enabled  || !isCrossIndex[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_JPY] +".spread.cross", sValue, fontSize, fontName, fontColor.JPY);
-   if (!NZD.Enabled  || !isCrossIndex[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                 ObjectSetText(labels[I_NZD] +".spread.cross", sValue, fontSize, fontName, fontColor.NZD);
-                                              sValue = " ";                                                                                                ObjectSetText(labels[I_USX] +".spread.cross", sValue, fontSize, fontName, fontColor.USX);
-   if (!EURX.Enabled || !isCrossIndex[I_EUX]) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.crs_Ask-  eurx.crs_Bid)*  100, 1) +")";                 ObjectSetText(labels[I_EUX] +".spread.cross", sValue, fontSize, fontName, fontColor.EUX);
+                                                   sValue = " ";                                                                                                   ObjectSetText(labels[I_USDLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.USDLFX);
+   if (!AUDLFX.Enabled || !isCrossIndex[I_AUDLFX]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.crs_Ask-audlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_AUDLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.AUDLFX);
+   if (!CADLFX.Enabled || !isCrossIndex[I_CADLFX]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.crs_Ask-cadlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_CADLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.CADLFX);
+   if (!CHFLFX.Enabled || !isCrossIndex[I_CHFLFX]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.crs_Ask-chflfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_CHFLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.CHFLFX);
+   if (!EURLFX.Enabled || !isCrossIndex[I_EURLFX]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.crs_Ask-eurlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_EURLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.EURLFX);
+   if (!GBPLFX.Enabled || !isCrossIndex[I_GBPLFX]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.crs_Ask-gbplfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_GBPLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.GBPLFX);
+   if (!JPYLFX.Enabled || !isCrossIndex[I_JPYLFX]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.crs_Ask-jpylfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_JPYLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.JPYLFX);
+   if (!NZDLFX.Enabled || !isCrossIndex[I_NZDLFX]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.crs_Ask-nzdlfx.crs_Bid)*10000, 1) +")";                    ObjectSetText(labels[I_NZDLFX] +".spread.cross", sValue, fontSize, fontName, fontColor.NZDLFX);
+                                                   sValue = " ";                                                                                                   ObjectSetText(labels[I_USDX  ] +".spread.cross", sValue, fontSize, fontName, fontColor.USDX  );
+   if (  !EURX.Enabled || !isCrossIndex[I_EURX  ]) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.crs_Ask-  eurx.crs_Bid)*  100, 1) +")";                    ObjectSetText(labels[I_EURX  ] +".spread.cross", sValue, fontSize, fontName, fontColor.EURX  );
 
    // Anzeige Main-Indizes
-   if (!USD.Enabled ) sValue = "off"; else if (isMainIndex[I_USD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USD], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_USD] +".quote.main",   sValue, fontSize, fontName, fontColor.USD);
-   if (!AUD.Enabled ) sValue = "off"; else if (isMainIndex[I_AUD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_AUD], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_AUD] +".quote.main",   sValue, fontSize, fontName, fontColor.AUD);
-   if (!CAD.Enabled ) sValue = "off"; else if (isMainIndex[I_CAD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CAD], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_CAD] +".quote.main",   sValue, fontSize, fontName, fontColor.CAD);
-   if (!CHF.Enabled ) sValue = "off"; else if (isMainIndex[I_CHF]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CHF], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_CHF] +".quote.main",   sValue, fontSize, fontName, fontColor.CHF);
-   if (!EUR.Enabled ) sValue = "off"; else if (isMainIndex[I_EUR]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUR], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_EUR] +".quote.main",   sValue, fontSize, fontName, fontColor.EUR);
-   if (!GBP.Enabled ) sValue = "off"; else if (isMainIndex[I_GBP]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_GBP], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_GBP] +".quote.main",   sValue, fontSize, fontName, fontColor.GBP);
-   if (!JPY.Enabled ) sValue = "off"; else if (isMainIndex[I_JPY]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_JPY], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_JPY] +".quote.main",   sValue, fontSize, fontName, fontColor.JPY);
-   if (!NZD.Enabled ) sValue = "off"; else if (isMainIndex[I_NZD]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_NZD], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_NZD] +".quote.main",   sValue, fontSize, fontName, fontColor.NZD);
-   if (!USDX.Enabled) sValue = "off"; else if (isMainIndex[I_USX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USX], 3), ".2'"); else sValue = " ";   ObjectSetText(labels[I_USX] +".quote.main",   sValue, fontSize, fontName, fontColor.USX);
-   if (!EURX.Enabled) sValue = "off"; else if (isMainIndex[I_EUX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EUX], 3), ".2'"); else sValue = " ";   ObjectSetText(labels[I_EUX] +".quote.main",   sValue, fontSize, fontName, fontColor.EUX);
+   if (!USDLFX.Enabled) sValue = "off"; else if (isMainIndex[I_USDLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USDLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_USDLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.USDLFX);
+   if (!AUDLFX.Enabled) sValue = "off"; else if (isMainIndex[I_AUDLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_AUDLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_AUDLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.AUDLFX);
+   if (!CADLFX.Enabled) sValue = "off"; else if (isMainIndex[I_CADLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CADLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_CADLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.CADLFX);
+   if (!CHFLFX.Enabled) sValue = "off"; else if (isMainIndex[I_CHFLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_CHFLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_CHFLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.CHFLFX);
+   if (!EURLFX.Enabled) sValue = "off"; else if (isMainIndex[I_EURLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EURLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_EURLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.EURLFX);
+   if (!GBPLFX.Enabled) sValue = "off"; else if (isMainIndex[I_GBPLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_GBPLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_GBPLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.GBPLFX);
+   if (!JPYLFX.Enabled) sValue = "off"; else if (isMainIndex[I_JPYLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_JPYLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_JPYLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.JPYLFX);
+   if (!NZDLFX.Enabled) sValue = "off"; else if (isMainIndex[I_NZDLFX]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_NZDLFX], 5), ".4'"); else sValue = " ";   ObjectSetText(labels[I_NZDLFX] +".quote.main",   sValue, fontSize, fontName, fontColor.NZDLFX);
+   if (  !USDX.Enabled) sValue = "off"; else if (isMainIndex[I_USDX  ]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_USDX  ], 3), ".2'"); else sValue = " ";   ObjectSetText(labels[I_USDX  ] +".quote.main",   sValue, fontSize, fontName, fontColor.USDX  );
+   if (  !EURX.Enabled) sValue = "off"; else if (isMainIndex[I_EURX  ]) sValue = NumberToStr(NormalizeDouble(mainIndex[I_EURX  ], 3), ".2'"); else sValue = " ";   ObjectSetText(labels[I_EURX  ] +".quote.main",   sValue, fontSize, fontName, fontColor.EURX  );
 
    // Anzeige Main-Spreads
-   if (!USD.Enabled  || !isMainIndex[I_USD]) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.main_Ask-usdlfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_USD] +".spread.main",  sValue, fontSize, fontName, fontColor.USD);
-   if (!AUD.Enabled  || !isMainIndex[I_AUD]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.main_Ask-audlfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_AUD] +".spread.main",  sValue, fontSize, fontName, fontColor.AUD);
-   if (!CAD.Enabled  || !isMainIndex[I_CAD]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.main_Ask-cadlfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_CAD] +".spread.main",  sValue, fontSize, fontName, fontColor.CAD);
-   if (!CHF.Enabled  || !isMainIndex[I_CHF]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.main_Ask-chflfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_CHF] +".spread.main",  sValue, fontSize, fontName, fontColor.CHF);
-   if (!EUR.Enabled  || !isMainIndex[I_EUR]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.main_Ask-eurlfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_EUR] +".spread.main",  sValue, fontSize, fontName, fontColor.EUR);
-   if (!GBP.Enabled  || !isMainIndex[I_GBP]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.main_Ask-gbplfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_GBP] +".spread.main",  sValue, fontSize, fontName, fontColor.GBP);
-   if (!JPY.Enabled  || !isMainIndex[I_JPY]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.main_Ask-jpylfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_JPY] +".spread.main",  sValue, fontSize, fontName, fontColor.JPY);
-   if (!NZD.Enabled  || !isMainIndex[I_NZD]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.main_Ask-nzdlfx.main_Bid)*10000, 1) +")";                ObjectSetText(labels[I_NZD] +".spread.main",  sValue, fontSize, fontName, fontColor.NZD);
-   if (!USDX.Enabled || !isMainIndex[I_USX]) sValue = " "; else sValue = "("+ DoubleToStr((  usdx.main_Ask-  usdx.main_Bid)*  100, 1) +")";                ObjectSetText(labels[I_USX] +".spread.main",  sValue, fontSize, fontName, fontColor.USX);
-   if (true                                ) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.main_Ask-  eurx.main_Bid)*  100, 1) +")";                ObjectSetText(labels[I_EUX] +".spread.main",  sValue, fontSize, fontName, fontColor.EUX);
+   if (!USDLFX.Enabled || !isMainIndex[I_USDLFX]) sValue = " "; else sValue = "("+ DoubleToStr((usdlfx.main_Ask-usdlfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_USDLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.USDLFX);
+   if (!AUDLFX.Enabled || !isMainIndex[I_AUDLFX]) sValue = " "; else sValue = "("+ DoubleToStr((audlfx.main_Ask-audlfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_AUDLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.AUDLFX);
+   if (!CADLFX.Enabled || !isMainIndex[I_CADLFX]) sValue = " "; else sValue = "("+ DoubleToStr((cadlfx.main_Ask-cadlfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_CADLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.CADLFX);
+   if (!CHFLFX.Enabled || !isMainIndex[I_CHFLFX]) sValue = " "; else sValue = "("+ DoubleToStr((chflfx.main_Ask-chflfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_CHFLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.CHFLFX);
+   if (!EURLFX.Enabled || !isMainIndex[I_EURLFX]) sValue = " "; else sValue = "("+ DoubleToStr((eurlfx.main_Ask-eurlfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_EURLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.EURLFX);
+   if (!GBPLFX.Enabled || !isMainIndex[I_GBPLFX]) sValue = " "; else sValue = "("+ DoubleToStr((gbplfx.main_Ask-gbplfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_GBPLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.GBPLFX);
+   if (!JPYLFX.Enabled || !isMainIndex[I_JPYLFX]) sValue = " "; else sValue = "("+ DoubleToStr((jpylfx.main_Ask-jpylfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_JPYLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.JPYLFX);
+   if (!NZDLFX.Enabled || !isMainIndex[I_NZDLFX]) sValue = " "; else sValue = "("+ DoubleToStr((nzdlfx.main_Ask-nzdlfx.main_Bid)*10000, 1) +")";                   ObjectSetText(labels[I_NZDLFX] +".spread.main",  sValue, fontSize, fontName, fontColor.NZDLFX);
+   if (  !USDX.Enabled || !isMainIndex[I_USDX  ]) sValue = " "; else sValue = "("+ DoubleToStr((  usdx.main_Ask-  usdx.main_Bid)*  100, 1) +")";                   ObjectSetText(labels[I_USDX  ] +".spread.main",  sValue, fontSize, fontName, fontColor.USDX  );
+   if (true                                     ) sValue = " "; else sValue = "("+ DoubleToStr((  eurx.main_Ask-  eurx.main_Bid)*  100, 1) +")";                   ObjectSetText(labels[I_EURX  ] +".spread.main",  sValue, fontSize, fontName, fontColor.EURX  );
 
    // Animation
    static int size = -1; if (size==-1) size = ArraySize(label.animation.chars);
@@ -859,7 +884,7 @@ bool RecordLfxIndices() {
          if (!skipTick) {
             //debug("RecordLfxIndices(4)  zTick="+ zTick +"  recording "+ names[i] +" tick "+ NumberToStr(tickValue, "."+ (digits[i]-1) +"'"));
             if (!hSet[i]) {
-               string description = names[i] + ifString(i==I_EUX || i==I_USX, " Index (ICE)", " Index (LiteForex)");
+               string description = names[i] + ifString(i==I_EURX || i==I_USDX, " Index (ICE)", " Index (LiteForex)");
                int    format      = 400;
 
                hSet[i] = HistorySet.Get(symbols[i], serverName);
