@@ -161,6 +161,12 @@ int onInit() {
    CreateLabels();
    SetIndexLabel(0, NULL);
    return(catch("onInit(3)"));
+
+   // für alle konfigurierten Indizes
+   int sizeIndizes;
+   for (i=0; i < sizeIndizes; i++) {
+      // Statusanzeige initialisieren
+   }
 }
 
 
@@ -197,6 +203,23 @@ int onDeinit() {
 int onTick() {
    UpdateInfos();
    return(last_error);
+
+
+
+   // für alle konfigurierten Indizes
+   int symbolsSize = ArraySize(symbols);
+   for (int i=0; i < symbolsSize; i++) {
+
+      // prüfen, ob alle Daten für Berechnung verfügbar sind
+         // nein -> continue;
+
+      // ja: alle Daten verfügbar
+      // (1)   Index berechnen und anzeigen
+      // (2.1) konfigurierte Preis-Limits anzeigen
+      // (2.2) Preis-Limits prüfen und bei Erreichen jeweilige Action auslösen
+      // (3)   ggf. Indexhistory speichern
+   }
+
 }
 
 
