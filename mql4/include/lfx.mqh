@@ -695,15 +695,15 @@ void DummyCalls() {
 
 
 #import "stdlib1.ex4"
-   int      ArrayPushInts(int array[][], int values[]);
-   int      GetAccountNumber();
-   string   GetCurrency(int id);
-   int      GetCurrencyId(string currency);
-   bool     IsIniKey(string fileName, string section, string key);
-   bool     IsPendingTradeOperation(int value);
-   bool     IsTradeOperation(int value);
-   string   OperationTypeDescription(int type);
-   string   OperationTypeToStr(int type);
-   string   StringReplace.Recursive(string object, string search, string replace);
-   int      StrToOperationType(string value);
+   int    ArrayPushInts(int array[][], int values[]);
+   int    GetAccountNumber();
+   string GetCurrency(int id);
+   int    GetCurrencyId(string currency);
+   bool   IsIniKey(string fileName, string section, string key);
+   bool   IsPendingTradeOperation(int value);
+   bool   IsTradeOperation(int value);
+   string OperationTypeDescription(int type);
+   string OperationTypeToStr(int type);
+   string StringReplace.Recursive(string object, string search, string replace);
+   int    StrToOperationType(string value);
 #import
