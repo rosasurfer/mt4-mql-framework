@@ -4540,9 +4540,9 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <span class="function">NormalizeDouble</span>(<span class="number">1.54999999</span>, <span class="number">1</span>) = <span class="number">1.6</span><br/>
       <br/>
       Workaround: für <i>digits</i> = <span class="number">0</span> <span class="function">MathRound</span>() verwenden<br/>
-		<br/>
-		<i>@see</i> <a href="http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c">http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c</a><br/>
-						letzte Antwort (evt. wird intern <span class="type">float</span> statt <span class="type">double</span> benutzt)
+      <br/>
+      <i>@see</i> <a href="http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c">http://stackoverflow.com/questions/1343890/rounding-number-to-2-decimal-places-in-c</a><br/>
+                  letzte Antwort (evt. wird intern <span class="type">float</span> statt <span class="type">double</span> benutzt)
       </content>
       <example>
   double var1 = 0.123456789;
@@ -5759,7 +5759,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
          (1) Ab Build 810 ist die Funktion im Tester blockiert.<br>
          (2) Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht öffnen.<br/>
          Workaround: Dateifunktionen des MT4Expanders verwenden.<br/>
-			<br/>
+         <br/>
       </content>
       <example>
    int hFile = FileOpenHistory(<span class="string">&quot;USDX240.HST&quot;</span>, <span class="const">FILE_BIN</span>|<span class="const">FILE_WRITE</span>);
@@ -7029,27 +7029,22 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=ObjectDescription()
       type=string
       <content>
-Return object description. For objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> types, the text drawn by these objects will be returned.<br/>
+Returns an object's description. For objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> types, the text drawn by these objects will be returned.<br/>
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectSetText">ObjectSetText()</a> function.
      </content>
       <example>
-  // writing the chart objects list to the file
-  int    handle, total;
-  string obj_name,fname;
-  // file name
-  fname="objlist_"+Symbol();
-  handle=FileOpen(fname,FILE_CSV|FILE_WRITE);
-  if(handle!=false)
-    {
-     total=ObjectsTotal();
-     for(int i=-;i&lt;total;i++)
-       {
-        obj_name=ObjectName(i);
-        FileWrite(handle,"Object "+obj_name+" description= "+ObjectDescription(obj_name));
-       }
-     FileClose(handle);
-    }
+// writing the objects list to a file
+string fileName = "objlist_"+ Symbol();
+
+int hFile = FileOpen(fileName, FILE_CSV|FILE_WRITE);
+if (hFile) {
+   int total = ObjectsTotal();
+   for (int i=0; i&lt;total; i++) {
+      FileWrite(hFile, "Object "+ ObjectName(i) +" description="+ ObjectDescription(obj_name));
+   }
+   FileClose(hFile);
+}
       </example>
       <parameter>
         type=string
@@ -7341,7 +7336,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=ObjectSetText()
       type=bool
       <content>
-Changes the object description. For objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> the description is shown as text in the chart.
+Changes an object's description. For objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> the description is shown as text in the chart.
 Returns <span class="const">true</span> on success, otherwise <span class="const">false</span>. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
 The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> only.
 For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.<br/>
@@ -7364,7 +7359,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=int
         name=fontSize
-        def_value=10
+        def_value=<span class="number">10</span>
         description=font size in points
       </parameter>
       <parameter>
@@ -7376,7 +7371,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       <parameter>
         type=color
         name=fontColor
-        def_value=Gray
+        def_value=<span class="const">Gray</span>
         description=text color
       </parameter>
     </function>
@@ -7386,7 +7381,7 @@ For objects of <a href="help://constants_objects">other types</a> these paramete
       caption=ObjectsTotal()
       type=int
       <content>
-      Returns total amount of objects of the specified type in the chart.
+      Returns the total number of objects of the specified type in the chart.
       </content>
       <example>
   int    obj_total=ObjectsTotal();
