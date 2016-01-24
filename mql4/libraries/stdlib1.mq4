@@ -647,8 +647,8 @@ bool AquireLock(string mutexName, bool wait) {
       }
 
       // Sleep and retry...
-      if (IsTesting() || IsIndicator()) SleepEx(100, true);          // Expert oder Indicator im Tester
-      else                              Sleep(100);
+      if (IsIndicator() || IsTesting()) SleepEx(100, true);          // Indicator oder Expert im Tester
+      else                              Sleep  (100);
    }
 
    return(!catch("AquireLock(7)", ERR_WRONG_JUMP));                  // unreachable
@@ -1232,134 +1232,6 @@ string GetGlobalConfigPath() {
    if (!catch("GetGlobalConfigPath(2)"))
       return(static.result[0]);
    return("");
-}
-
-
-/**
- * Ob ein String einen gültigen Währungsbezeichner darstellt.
- *
- * @param  string value - Wert
- *
- * @return bool
- */
-bool IsCurrency(string value) {
-   value = StringToUpper(value);
-
-   if (value == C_AUD) return(true);
-   if (value == C_CAD) return(true);
-   if (value == C_CHF) return(true);
-   if (value == C_CNY) return(true);
-   if (value == C_CZK) return(true);
-   if (value == C_DKK) return(true);
-   if (value == C_EUR) return(true);
-   if (value == C_GBP) return(true);
-   if (value == C_HKD) return(true);
-   if (value == C_HRK) return(true);
-   if (value == C_HUF) return(true);
-   if (value == C_INR) return(true);
-   if (value == C_JPY) return(true);
-   if (value == C_LTL) return(true);
-   if (value == C_LVL) return(true);
-   if (value == C_MXN) return(true);
-   if (value == C_NOK) return(true);
-   if (value == C_NZD) return(true);
-   if (value == C_PLN) return(true);
-   if (value == C_RUB) return(true);
-   if (value == C_SAR) return(true);
-   if (value == C_SEK) return(true);
-   if (value == C_SGD) return(true);
-   if (value == C_THB) return(true);
-   if (value == C_TRY) return(true);
-   if (value == C_TWD) return(true);
-   if (value == C_USD) return(true);
-   if (value == C_ZAR) return(true);
-
-   return(false);
-}
-
-
-/**
- * Gibt die eindeutige ID einer Währung zurück.
- *
- * @param  string currency - 3-stelliger Währungsbezeichner
- *
- * @return int - Currency-ID oder 0, falls ein Fehler auftrat
- */
-int GetCurrencyId(string currency) {
-   string curr = StringToUpper(currency);
-
-   if (curr == C_AUD) return(CID_AUD);
-   if (curr == C_CAD) return(CID_CAD);
-   if (curr == C_CHF) return(CID_CHF);
-   if (curr == C_CNY) return(CID_CNY);
-   if (curr == C_CZK) return(CID_CZK);
-   if (curr == C_DKK) return(CID_DKK);
-   if (curr == C_EUR) return(CID_EUR);
-   if (curr == C_GBP) return(CID_GBP);
-   if (curr == C_HKD) return(CID_HKD);
-   if (curr == C_HRK) return(CID_HRK);
-   if (curr == C_HUF) return(CID_HUF);
-   if (curr == C_INR) return(CID_INR);
-   if (curr == C_JPY) return(CID_JPY);
-   if (curr == C_LTL) return(CID_LTL);
-   if (curr == C_LVL) return(CID_LVL);
-   if (curr == C_MXN) return(CID_MXN);
-   if (curr == C_NOK) return(CID_NOK);
-   if (curr == C_NZD) return(CID_NZD);
-   if (curr == C_PLN) return(CID_PLN);
-   if (curr == C_RUB) return(CID_RUB);
-   if (curr == C_SAR) return(CID_SAR);
-   if (curr == C_SEK) return(CID_SEK);
-   if (curr == C_SGD) return(CID_SGD);
-   if (curr == C_THB) return(CID_THB);
-   if (curr == C_TRY) return(CID_TRY);
-   if (curr == C_TWD) return(CID_TWD);
-   if (curr == C_USD) return(CID_USD);
-   if (curr == C_ZAR) return(CID_ZAR);
-
-   return(_NULL(catch("GetCurrencyId()  unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR)));
-}
-
-
-/**
- * Gibt den 3-stelligen Bezeichner einer Währungs-ID zurück.
- *
- * @param  int id - Währungs-ID
- *
- * @return string - Währungsbezeichner
- */
-string GetCurrency(int id) {
-   switch (id) {
-      case CID_AUD: return(C_AUD);
-      case CID_CAD: return(C_CAD);
-      case CID_CHF: return(C_CHF);
-      case CID_CNY: return(C_CNY);
-      case CID_CZK: return(C_CZK);
-      case CID_DKK: return(C_DKK);
-      case CID_EUR: return(C_EUR);
-      case CID_GBP: return(C_GBP);
-      case CID_HKD: return(C_HKD);
-      case CID_HRK: return(C_HRK);
-      case CID_HUF: return(C_HUF);
-      case CID_INR: return(C_INR);
-      case CID_JPY: return(C_JPY);
-      case CID_LTL: return(C_LTL);
-      case CID_LVL: return(C_LVL);
-      case CID_MXN: return(C_MXN);
-      case CID_NOK: return(C_NOK);
-      case CID_NZD: return(C_NZD);
-      case CID_PLN: return(C_PLN);
-      case CID_RUB: return(C_RUB);
-      case CID_SAR: return(C_SAR);
-      case CID_SEK: return(C_SEK);
-      case CID_SGD: return(C_SGD);
-      case CID_THB: return(C_THB);
-      case CID_TRY: return(C_TRY);
-      case CID_TWD: return(C_TWD);
-      case CID_USD: return(C_USD);
-      case CID_ZAR: return(C_ZAR);
-   }
-   return(_EMPTY_STR(catch("GetCurrency()  unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
 }
 
 
@@ -5025,8 +4897,7 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                          // im Tester ohne Server-Verbindung
-      if (!IsTesting())
-         return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+      if (!IsTesting())             return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
@@ -5043,9 +4914,9 @@ int GetAccountNumber() {
       account = StrToInteger(strValue);
    }
 
-   // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden. stdlib.init() ruft daher
-   // für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
-   // Online darf nicht gecacht werden, da dann Accountwechsel zuverlässig erkannt werden müßten (was zu umständlich ist).
+   // Im Tester muß die Accountnummer während der Laufzeit gecacht werden, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
+   // stdlib.init() ruft daher für Experts im Tester als Vorbedingung einer vollständigen Initialisierung GetAccountNumber() auf.
+   // Online wiederum darf jedoch nicht gecacht werden, da Accountwechsel nicht zuverlässig erkannt werden können.
    if (IsTesting())
       tester.result = account;
 

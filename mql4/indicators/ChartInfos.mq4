@@ -1093,7 +1093,7 @@ bool SetAuMDisplayStatus(bool status) {
 
 
 /**
- * Überprüft alle Pending-LFX-Limits: Pending-Open, StopLoss, TakeProfit
+ * Überprüft alle LFX-Limits: PendingOpen, StopLoss, TakeProfit
  *
  * @return bool - Erfolgsstatus
  */
@@ -4704,7 +4704,6 @@ string InputsToStr() {
    datetime GetSessionStartTime.srv(datetime serverTime);
    string   GetSymbolName(string symbol);
    int      GetTerminalBuild();
-   bool     IsCurrency(string value);
    bool     IsFile(string filename);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      ObjectRegister(string label);
