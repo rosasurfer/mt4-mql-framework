@@ -33,12 +33,17 @@ int    lfxOrders.pendingOrders;                                      // Anzahl d
 int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen                : IsOpenPosition    = 1
 int    lfxOrders.pendingPositions;                                   // Anzahl der offenen Positionen mit Exit-Limit : IsPendingPosition = 1
 
-#define I_TICKET                 0                                   // Arrayindizes von lfxOrders.iData[]
-#define I_IS_PENDING_ORDER       1
-#define I_IS_OPEN_POSITION       2
-#define I_IS_PENDING_POSITION    3
-#define I_IS_LOCKED              4
-#define I_PROFIT                 0                                   // Arrayindizes von lfxOrders.dData[]
+#define I_TICKET                    0                                // Arrayindizes von lfxOrders.iData[]
+#define I_IS_PENDING_ORDER          1
+#define I_IS_OPEN_POSITION          2
+#define I_IS_PENDING_POSITION       3
+#define I_IS_LOCKED                 4
+#define I_PROFIT                    0                                // Arrayindizes von lfxOrders.dData[]
+
+#define NO_LIMIT_TRIGGERED         -1                                // Limitkontrolle
+#define OPEN_LIMIT_TRIGGERED        1
+#define STOPLOSS_LIMIT_TRIGGERED    2
+#define TAKEPROFIT_LIMIT_TRIGGERED  3
 
 
 /**

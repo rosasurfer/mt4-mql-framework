@@ -1086,12 +1086,6 @@ bool SetAuMDisplayStatus(bool status) {
 }
 
 
-#define LIMIT_NONE        -1
-#define LIMIT_ENTRY        1
-#define LIMIT_STOPLOSS     2
-#define LIMIT_TAKEPROFIT   3
-
-
 /**
  * Überprüft alle LFX-Limits: PendingOpen, StopLoss, TakeProfit
  *
@@ -1107,23 +1101,23 @@ bool CheckLfxLimits() {
 
       // (1) alle Limite einer Order prüfen
       int result = IsLfxLimitTriggered(i, triggerTime);
-      if (!result)              return(false);
-      if (result == LIMIT_NONE) continue;
+      if (!result)                      return(false);
+      if (result == NO_LIMIT_TRIGGERED) continue;
 
       if (!triggerTime) {
          // (2) ein Limit wurde genau jetzt getriggert
-         if (result == LIMIT_ENTRY     ) log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" triggered ("+ NumberToStr(Close[0], PriceFormat) +")");
-         if (result == LIMIT_STOPLOSS  ) log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
-         if (result == LIMIT_TAKEPROFIT) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
+         if (result == OPEN_LIMIT_TRIGGERED)       log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" triggered ("+ NumberToStr(Close[0], PriceFormat) +")");
+         if (result == STOPLOSS_LIMIT_TRIGGERED)   log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
+         if (result == TAKEPROFIT_LIMIT_TRIGGERED) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
 
          // Auslösen speichern und TradeCommand verschicken
-         if (result==LIMIT_ENTRY)       los.setOpenTriggerTime    (lfxOrders, i, now.fxt);
-         else {                         los.setCloseTriggerTime   (lfxOrders, i, now.fxt);
-            if (result==LIMIT_STOPLOSS) los.setStopLossTriggered  (lfxOrders, i, true   );
-            else                        los.setTakeProfitTriggered(lfxOrders, i, true   );
+         if (result == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (lfxOrders, i, now.fxt);
+         else {                                     los.setCloseTriggerTime   (lfxOrders, i, now.fxt);
+            if (result == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (lfxOrders, i, true   );
+            else                                    los.setTakeProfitTriggered(lfxOrders, i, true   );
          }
-         if (!LFX.SaveOrder(lfxOrders, i))                                                                              return(false);
-         if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) + ifString(result==LIMIT_ENTRY, ":open", ":close"))) return(false);
+         if (!LFX.SaveOrder(lfxOrders, i))                                                                                       return(false);
+         if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) + ifString(result==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) return(false);
       }
       else if (triggerTime + 30*SECONDS >= now.fxt) {
          // (3) ein Limit war bereits vorher getriggert, auf Ausführungsbestätigung warten
@@ -1134,21 +1128,21 @@ bool CheckLfxLimits() {
             return(!catch("CheckLfxLimits(4)->LFX.GetOrder(ticket="+ los.Ticket(lfxOrders, i) +") => "+ result, ERR_RUNTIME_ERROR));
 
          // prüfen, ob inzwischen ein Open-/Close-Error gesetzt wurde und ggf. Fehler melden und speichern
-         if (result == LIMIT_ENTRY) {
+         if (result == OPEN_LIMIT_TRIGGERED) {
             if (!lo.IsOpenError(stored)) {
                warnSMS("CheckLfxLimits(5)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(lfxOrders, i)) +" at "+ NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat));
                los.setOpenTime(lfxOrders, i, -now.fxt);
             }
          }
          else if (!lo.IsCloseError(stored)) {
-            if (result == LIMIT_STOPLOSS) warnSMS("CheckLfxLimits(6)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), ""));
-            else                          warnSMS("CheckLfxLimits(7)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), ""));
+            if (result == STOPLOSS_LIMIT_TRIGGERED) warnSMS("CheckLfxLimits(6)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLoss  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.StopLossValue  (lfxOrders, i)!=EMPTY_VALUE, ifString(los.StopLoss  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), ""));
+            else                                    warnSMS("CheckLfxLimits(7)  #"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfit(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.TakeProfitValue(lfxOrders, i)!=EMPTY_VALUE, ifString(los.TakeProfit(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), ""));
             los.setCloseTime(lfxOrders, i, -now.fxt);
          }
 
          // Order speichern und beim nächsten Tick offene Orders neu einlesen
-         if (!LFX.SaveOrder(lfxOrders, i))                                                                                                      return(false);
-         if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) + ifString(result==LIMIT_ENTRY, ":open=0", ":close=0"))) return(false);
+         if (!LFX.SaveOrder(lfxOrders, i))                                                                                                               return(false);
+         if (!QC.SendOrderNotification(lfxCurrencyId, "LFX:"+ los.Ticket(lfxOrders, i) + ifString(result==OPEN_LIMIT_TRIGGERED, ":open=0", ":close=0"))) return(false);
       }
    }
    return(true);
@@ -1162,18 +1156,18 @@ bool CheckLfxLimits() {
  * @param  int       i           - Index der zu überprüfenden Order im globalen LFX_ORDER[]-Array
  * @param  datetime &triggerTime - Variable zur Aufnahme des Zeitpunktes eines bereits als getriggert markierten Limits
  *
- * @return int - Ergebnis, LIMIT_NONE:       wenn kein Limit erreicht wurde
- *                         LIMIT_ENTRY:      wenn ein Entry-Limit erreicht wurde
- *                         LIMIT_STOPLOSS:   wenn ein StopLoss-Limit erreicht wurde
- *                         LIMIT_TAKEPROFIT: wenn ein TakeProfit-Limit erreicht wurde
- *                         0:                wenn ein Fehler auftrat
+ * @return int - Ergebnis, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
+ *                         OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
+ *                         STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
+ *                         TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
+ *                         0:                          wenn ein Fehler auftrat
  *
  * Ist ein Limit bereits als getriggert markiert, wird zusätzlich der Triggerzeitpunkt in der Variable triggerTime gespeichert.
  */
 int IsLfxLimitTriggered(int i, datetime &triggerTime) {
    triggerTime = NULL;
    if (los.IsClosed(lfxOrders, i))
-      return(LIMIT_NONE);
+      return(NO_LIMIT_TRIGGERED);
 
    double slPrice, slValue, tpPrice, tpValue, profit;
 
@@ -1184,35 +1178,35 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
       case OP_BUYSTOP  :
       case OP_SELLLIMIT:
       case OP_SELLSTOP :
-         if (los.IsOpenError(lfxOrders, i))            return(LIMIT_NONE);
+         if (los.IsOpenError(lfxOrders, i))            return(NO_LIMIT_TRIGGERED);
          triggerTime = los.OpenTriggerTime(lfxOrders, i);
-         if (triggerTime != 0)                         return(LIMIT_ENTRY);
+         if (triggerTime != 0)                         return(OPEN_LIMIT_TRIGGERED);
          break;
 
       case OP_BUY :
       case OP_SELL:
-         if (los.IsCloseError(lfxOrders, i))           return(LIMIT_NONE);
+         if (los.IsCloseError(lfxOrders, i))           return(NO_LIMIT_TRIGGERED);
          triggerTime = los.CloseTriggerTime(lfxOrders, i);
          if (triggerTime != 0) {
-            if (los.StopLossTriggered  (lfxOrders, i)) return(LIMIT_STOPLOSS  );
-            if (los.TakeProfitTriggered(lfxOrders, i)) return(LIMIT_TAKEPROFIT);
+            if (los.StopLossTriggered  (lfxOrders, i)) return(STOPLOSS_LIMIT_TRIGGERED  );
+            if (los.TakeProfitTriggered(lfxOrders, i)) return(TAKEPROFIT_LIMIT_TRIGGERED);
             triggerTime = NULL;                        return(_NULL(catch("IsLfxLimitTriggered(1)  data constraint violation in #"+ los.Ticket(lfxOrders, i) +": closeTriggerTime="+ los.CloseTriggerTime(lfxOrders, i) +", slTriggered=0, tpTriggered=0", ERR_RUNTIME_ERROR)));
          }
          break;
 
       default:
-         return(LIMIT_NONE);
+         return(NO_LIMIT_TRIGGERED);
    }
 
    switch (type) {
       case OP_BUYLIMIT:
       case OP_SELLSTOP:
-         if (LE(Close[0], los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
-                                                        return(LIMIT_NONE );
+         if (LE(Close[0], los.OpenPrice(lfxOrders, i))) return(OPEN_LIMIT_TRIGGERED);
+                                                        return(NO_LIMIT_TRIGGERED  );
       case OP_SELLLIMIT:
       case OP_BUYSTOP  :
-         if (GE(Close[0], los.OpenPrice(lfxOrders, i))) return(LIMIT_ENTRY);
-                                                        return(LIMIT_NONE );
+         if (GE(Close[0], los.OpenPrice(lfxOrders, i))) return(OPEN_LIMIT_TRIGGERED);
+                                                        return(NO_LIMIT_TRIGGERED  );
       default:
          slPrice = los.StopLoss       (lfxOrders, i);
          slValue = los.StopLossValue  (lfxOrders, i);
@@ -1224,17 +1218,17 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
    switch (type) {
       // Um Auslösefehler bei noch nicht initialisiertem P/L zu verhindern, wird dieser nur geprüft, wenn er ungleich 0.00 ist.
       case OP_BUY:
-                                     if (slPrice != 0) if (LE(Close[0], slPrice)) return(LIMIT_STOPLOSS  );
-         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit,   slValue)) return(LIMIT_STOPLOSS  );
-                                     if (tpPrice != 0) if (GE(Close[0], tpPrice)) return(LIMIT_TAKEPROFIT);
-         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit,   tpValue)) return(LIMIT_TAKEPROFIT);
-                                                                                  return(LIMIT_NONE      );
+                                     if (slPrice != 0) if (LE(Close[0], slPrice)) return(STOPLOSS_LIMIT_TRIGGERED  );
+         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit,   slValue)) return(STOPLOSS_LIMIT_TRIGGERED  );
+                                     if (tpPrice != 0) if (GE(Close[0], tpPrice)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit,   tpValue)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+                                                                                  return(NO_LIMIT_TRIGGERED        );
       case OP_SELL:
-                                     if (slPrice != 0) if (GE(Close[0], slPrice)) return(LIMIT_STOPLOSS  );
-         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit,   slValue)) return(LIMIT_STOPLOSS  );
-                                     if (tpPrice != 0) if (LE(Close[0], tpPrice)) return(LIMIT_TAKEPROFIT);
-         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit,   tpValue)) return(LIMIT_TAKEPROFIT);
-                                                                                  return(LIMIT_NONE      );
+                                     if (slPrice != 0) if (GE(Close[0], slPrice)) return(STOPLOSS_LIMIT_TRIGGERED  );
+         if (slValue != EMPTY_VALUE) if (profit  != 0) if (LE(profit,   slValue)) return(STOPLOSS_LIMIT_TRIGGERED  );
+                                     if (tpPrice != 0) if (LE(Close[0], tpPrice)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+         if (tpValue != EMPTY_VALUE) if (profit  != 0) if (GE(profit,   tpValue)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+                                                                                  return(NO_LIMIT_TRIGGERED        );
    }
 
    return(_NULL(catch("IsLfxLimitTriggered(2)  unreachable code reached", ERR_RUNTIME_ERROR)));
