@@ -263,23 +263,13 @@ int onTick() {
       if (!CalculateIndices())   return(last_error);
     //if (!ProcessLimits())      return(last_error);
       if (!UpdateIndexDisplay()) return(last_error);
-      if (!RecordIndices())      return(last_error);
+
+      if (Recording.Enabled) {
+         if (!RecordIndices())   return(last_error);
+      }
    }
    return(last_error);
-
-
-   // (1) Limite prüfen
-   if (!ProcessLimits())      return(last_error);
-
-
-   // (2) Anzeige aktualisieren
-   if (!UpdateIndexDisplay()) return(last_error);
-
-
-   // (3) Indizes speichern
-   if (Recording.Enabled) {
-      if (!RecordIndices())   return(last_error);
-   }
+   ProcessLimits();
 
 
    // (4) regelmäßig prüfen, ob sich die Limite geändert haben (nicht bei jedem Tick)
@@ -659,12 +649,13 @@ bool CalculateIndices() {
  * @return bool - Erfolgsstatus
  */
 bool ProcessLimits() {
-   int i, orderSize;
+   int i, orderSize, result;
 
    if (isAvailable[I_AUDLFX]) {
       orderSize = ArrayRange(AUDLFX.orders, 0);
       for (i=0; i < orderSize; i++) {
-         //debug("ProcessLimits(1)  checking AUDLFX limit");
+         result = CheckLimits(AUDLFX.orders, i, index[I_AUDLFX], index[I_AUDLFX]);     // Limits gegen Median-Preis prüfen
+         //debug("ProcessLimits(1)  checking AUDLFX limit = "+ result);
       }
    }
 
@@ -680,49 +671,83 @@ bool ProcessLimits() {
       }
    }
 
-   if (isAvailable[I_EURLFX]) {
-      orderSize = ArrayRange(EURLFX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
-   if (isAvailable[I_GBPLFX]) {
-      orderSize = ArrayRange(GBPLFX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
-   if (isAvailable[I_JPYLFX]) {
-      orderSize = ArrayRange(JPYLFX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
-   if (isAvailable[I_NZDLFX]) {
-      orderSize = ArrayRange(NZDLFX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
-   if (isAvailable[I_USDLFX]) {
-      orderSize = ArrayRange(USDLFX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
-   if (isAvailable[I_EURX]) {
-      orderSize = ArrayRange(EURX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
-   if (isAvailable[I_USDX]) {
-      orderSize = ArrayRange(USDX.orders, 0);
-      for (i=0; i < orderSize; i++) {
-      }
-   }
-
    return(!catch("ProcessLimits(2)"));
+}
+
+
+/**
+ * Ob die angegebene LFX-Order ein Limit erreicht hat.
+ *
+ * @param  LFX_ORDER lfxOrders[] - Array von LFX-ORDERs
+ * @param  int       i           - Index der zu prüfenden Order im übergebenen LFX_ORDER[]-Array
+ * @param  double    bid         - zur Prüfung zu benutzender Bid-Preis
+ * @param  double    ask         - zur Prüfung zu benutzender Ask-Preis
+ *
+ * @return int - Ergebnis, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
+ *                         OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
+ *                         STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
+ *                         TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
+ *                         0:                          wenn ein Fehler auftrat
+ */
+int CheckLimits(/*LFX_ORDER*/int lfxOrders[][], int i, double bid, double ask) {
+   if (los.IsClosed(lfxOrders, i))
+      return(NO_LIMIT_TRIGGERED);
+
+   int type = los.Type(lfxOrders, i);
+
+
+   // (1) bereits getriggerte Limits und fehlerhafte Orders abfangen
+   switch (type) {
+      case OP_BUYLIMIT :
+      case OP_BUYSTOP  :
+      case OP_SELLLIMIT:
+      case OP_SELLSTOP :
+         if (los.IsOpenError    (lfxOrders, i))       return(NO_LIMIT_TRIGGERED);
+         if (los.OpenTriggerTime(lfxOrders, i) != 0)  return(NO_LIMIT_TRIGGERED);
+         break;
+
+      case OP_BUY :
+      case OP_SELL:
+         if (los.IsCloseError    (lfxOrders, i))      return(NO_LIMIT_TRIGGERED);
+         if (los.CloseTriggerTime(lfxOrders, i) != 0) return(NO_LIMIT_TRIGGERED);
+         break;
+
+      default:
+         return(NO_LIMIT_TRIGGERED);
+   }
+
+   int digits = los.Digits(lfxOrders, i);
+
+
+   // (2) Open-Limits prüfen
+   switch (type) {
+      case OP_BUYLIMIT:
+      case OP_SELLSTOP:
+         if (LE(ask, los.OpenPrice(lfxOrders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
+                                                           return(NO_LIMIT_TRIGGERED  );
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :
+         if (GE(bid, los.OpenPrice(lfxOrders, i), digits)) return(OPEN_LIMIT_TRIGGERED);
+                                                           return(NO_LIMIT_TRIGGERED  );
+   }
+
+   double slPrice = los.StopLoss  (lfxOrders, i);
+   double tpPrice = los.TakeProfit(lfxOrders, i);
+
+
+   // (3) Close-Limits prüfen
+   switch (type) {
+      case OP_BUY:
+         if (slPrice != 0) if (LE(ask, slPrice, digits)) return(STOPLOSS_LIMIT_TRIGGERED  );
+         if (tpPrice != 0) if (GE(bid, tpPrice, digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+                                                         return(NO_LIMIT_TRIGGERED        );
+      case OP_SELL:
+         if (slPrice != 0) if (GE(bid, slPrice, digits)) return(STOPLOSS_LIMIT_TRIGGERED  );
+         if (tpPrice != 0) if (LE(ask, tpPrice, digits)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+                                                         return(NO_LIMIT_TRIGGERED        );
+   }
+
+   return(_NULL(catch("CheckLimits(1)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
