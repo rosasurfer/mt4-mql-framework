@@ -29,9 +29,9 @@ int    lfxOrders[][LFX_ORDER.intSize];                               // struct L
 
 int    lfxOrders.iCache[][5];                                        // LFX-Daten-Cache: = {Ticket, IsPendingOrder, IsOpenPosition, IsPendingPosition, IsLocked}
 double lfxOrders.dCache[][1];                                        //                  = {Profit}
-int    lfxOrders.pendingOrders;                                      // Anzahl der PendingOrders, ie. Entry-Limit    (IsPendingOrder    = 1)
-int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen                (IsOpenPosition    = 1)
-int    lfxOrders.pendingPositions;                                   // Anzahl der offenen Positionen mit Exit-Limit (IsPendingPosition = 1)
+int    lfxOrders.pendingOrders;                                      // Anzahl der PendingOrders, ie. mit Entry-Limit: IsPendingOrder    = 1
+int    lfxOrders.openPositions;                                      // Anzahl der offenen Positionen                : IsOpenPosition    = 1
+int    lfxOrders.pendingPositions;                                   // Anzahl der offenen Positionen mit Exit-Limit : IsPendingPosition = 1
 
 #define I_TICKET                 0                                   // Arrayindizes von lfxOrders.iData[]
 #define I_IS_PENDING_ORDER       1
@@ -446,11 +446,11 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
  *
  * @param  string currency   - LFX-Währung der Orders (default: alle Währungen)
  * @param  int    fSelection - Kombination von Selection-Flags (default: alle Orders werden zurückgegeben)
- *                             OF_OPEN            - gibt alle offenen Tickets zurück: Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
- *                             OF_CLOSED          - gibt alle geschlossenen Tickets zurück: Trade History, analog zu OrderSelect(MODE_HISTORY)
- *                             OF_PENDINGORDER    - gibt alle Pending-Orders mit wartendem OpenLimit zurück: OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
+ *                             OF_OPEN            - gibt alle offenen Tickets zurück:                   Pending-Orders und offene Positionen, analog zu OrderSelect(MODE_TRADES)
+ *                             OF_CLOSED          - gibt alle geschlossenen Tickets zurück:             Trade-History, analog zu OrderSelect(MODE_HISTORY)
+ *                             OF_PENDINGORDER    - gibt alle Orders mit aktivem OpenLimit zurück:      OP_BUYLIMIT, OP_BUYSTOP, OP_SELLLIMIT, OP_SELLSTOP
  *                             OF_OPENPOSITION    - gibt alle offenen Positionen zurück
- *                             OF_PENDINGPOSITION - gibt alle offenen Positionen mit wartendem CloseLimit zurück: StopLoss oder TakeProfit
+ *                             OF_PENDINGPOSITION - gibt alle Positionen mit aktivem CloseLimit zurück: StopLoss, TakeProfit
  * @param  int    los[]      - LFX_ORDER[]-Array zur Aufnahme der gelesenen Daten
  *
  * @return int - Anzahl der zurückgegebenen Orders oder -1 (EMPTY), falls ein Fehler auftrat
@@ -697,8 +697,6 @@ void DummyCalls() {
 #import "stdlib1.ex4"
    int    ArrayPushInts(int array[][], int values[]);
    int    GetAccountNumber();
-   string GetCurrency(int id);
-   int    GetCurrencyId(string currency);
    bool   IsIniKey(string fileName, string section, string key);
    bool   IsPendingTradeOperation(int value);
    bool   IsTradeOperation(int value);

@@ -265,10 +265,6 @@
    bool     SortOpenTickets(int keys[][]);
 
 #import "stdlib1.ex4"
-   string   GetCurrency(int id);
-   int      GetCurrencyId(string currency);
-   bool     IsCurrency(string value);
-
    string   StdSymbol();                                                            // Alias für GetStandardSymbol(Symbol())
    string   GetStandardSymbol(string symbol);                                       // Alias für GetStandardSymbolOrAlt(symbol, symbol)
    string   GetStandardSymbolOrAlt(string symbol, string altValue);

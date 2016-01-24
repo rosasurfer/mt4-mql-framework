@@ -61,10 +61,10 @@
 
 
 
-
-
 // stdfunctions.mgh
-
+bool IsCurrency(string value);;
+string GetCurrency(int id);;
+int GetCurrencyId(string currency);;
 int start.RelaunchInputDialog();;
 int debug(string message, int error=NO_ERROR);;
 int catch(string location, int error=NO_ERROR, bool orderPop=false);;

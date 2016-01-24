@@ -3131,27 +3131,22 @@ bool Script.IsTesting() {
  */
 bool Indicator.IsTesting() {
    if (__TYPE__ == MT_LIBRARY) return(!catch("Indicator.IsTesting(1)  library not initialized", ERR_RUNTIME_ERROR));
+   if (!IsIndicator()) return(false);
 
-   if (!IsIndicator())
-      return(false);
+   if (IsTesting())    return(true);                                                      // Indikator läuft in iCustom() im Tester
 
-   if (IsTesting())                                                        // Indikator läuft in iCustom() im Tester
-      return(true);
-
-   int static.result = -1;                                                 // static: in Indikatoren bis zum nächsten init-Cycle ok
-   if (static.result > -1)
+   int static.result  = -1;                                                               // static: in Indikatoren bis zum nächsten init-Cycle ok
+   if (static.result != -1)
       return(static.result != 0);
 
 
-   // (1) Indikator wurde durch iCustom() geladen:  SuperContext vorhanden
-   //     - Teststatus des SuperContexts übernehmen
-   //
+   // (1) Indikator wurde durch iCustom() geladen => Status des SuperContext übernehmen
    if (IsSuperContext()) {
       if (__lpSuperContext>=0 && __lpSuperContext<MIN_VALID_POINTER) return(!catch("Indicator.IsTesting(2)  invalid input parameter __lpSuperContext = 0x"+ IntToHexStr(__lpSuperContext) +" (not a valid pointer)", ERR_INVALID_POINTER));
       int superCopy[EXECUTION_CONTEXT.intSize];
-      CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);       // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
-                                                                                             // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() benutzt wird.
-      static.result = (ec_TestFlags(superCopy) & TF_TESTING && 1);         // (int) bool
+      CopyMemory(GetIntsAddress(superCopy), __lpSuperContext, EXECUTION_CONTEXT.size);    // SuperContext selbst kopieren, da der Context des laufenden Programms u.U. noch nicht
+                                                                                          // initialisiert ist, z.B. wenn IsTesting() in InitExecutionContext() aufgerufen wird.
+      static.result = (ec_TestFlags(superCopy) & TF_TESTING && 1);                        // (int) bool
       ArrayResize(superCopy, 0);
 
       return(static.result != 0);
@@ -3159,29 +3154,29 @@ bool Indicator.IsTesting() {
 
 
    // (2) Indikator wurde manuell geladen:          INIT_REASON_USER
-   //     - außerhalb des Testers:                                            Fenster existiert, Titel ist gesetzt und endet nicht mit "(visual)"
-   //     - innerhalb des Testers:                                            Fenster existiert, Titel ist gesetzt und endet       mit "(visual)"
-   //
-   //
+   //     - außerhalb des Testers:                                                           Fenster existiert, Titel ist gesetzt und endet nicht mit "(visual)"
+   //     - innerhalb des Testers:                                                           Fenster existiert, Titel ist gesetzt und endet       mit "(visual)"
+
+
    // (3) Indikator wurde per Template geladen:     INIT_REASON_TEMPLATE
-   //     - außerhalb des Testers:                                            Fenster existiert, Titel ist noch nicht gesetzt oder endet nicht mit "(visual)"
-   //     - innerhalb des Testers:                                            Fenster existiert, Titel ist            gesetzt und  endet       mit "(visual)"
-   //                                                                    oder Fenster existiert nicht (VisualMode=Off)
+   //     - außerhalb des Testers:                                                           Fenster existiert, Titel ist noch nicht gesetzt oder endet nicht mit "(visual)"
+   //     - innerhalb des Testers:                                                           Fenster existiert, Titel ist            gesetzt und  endet       mit "(visual)"
+   //                                                                                   oder Fenster existiert nicht (VisualMode=Off)
 
 
    int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);
-   if (hWnd == -1) {                                                       // Fenster existiert nicht:             (3) im Tester, VisualMode=Off
+   if (hWnd == -1) {                                                                      // Fenster existiert nicht             => kommt nur im Tester bei VisualMode=Off vor
       static.result = 1;
       return(static.result != 0);
    }
 
    string title = GetWindowText(GetParent(hWnd));
-   if (!StringLen(title)) {                                                // Fenstertitel ist noch nicht gesetzt: (3) nicht im Tester
+   if (!StringLen(title)) {                                                               // Fenstertitel ist noch nicht gesetzt => kommt nicht im Tester vor
       static.result = 0;
       return(static.result != 0);
    }
 
-   static.result = StringEndsWith(title, "(visual)");                      // Unterscheidung durch "...(visual)" im Titel (2) und (3)
+   static.result = StringEndsWith(title, "(visual)");                                     // Unterscheidung durch "...(visual)" im Titel
    return(static.result != 0);
 }
 
@@ -4988,6 +4983,134 @@ string StringRepeat(string input, int times) {
 
 
 /**
+ * Gibt die eindeutige ID einer Währung zurück.
+ *
+ * @param  string currency - 3-stelliger Währungsbezeichner
+ *
+ * @return int - Currency-ID oder 0, falls ein Fehler auftrat
+ */
+int GetCurrencyId(string currency) {
+   string value = StringToUpper(currency);
+
+   if (value == C_AUD) return(CID_AUD);
+   if (value == C_CAD) return(CID_CAD);
+   if (value == C_CHF) return(CID_CHF);
+   if (value == C_CNY) return(CID_CNY);
+   if (value == C_CZK) return(CID_CZK);
+   if (value == C_DKK) return(CID_DKK);
+   if (value == C_EUR) return(CID_EUR);
+   if (value == C_GBP) return(CID_GBP);
+   if (value == C_HKD) return(CID_HKD);
+   if (value == C_HRK) return(CID_HRK);
+   if (value == C_HUF) return(CID_HUF);
+   if (value == C_INR) return(CID_INR);
+   if (value == C_JPY) return(CID_JPY);
+   if (value == C_LTL) return(CID_LTL);
+   if (value == C_LVL) return(CID_LVL);
+   if (value == C_MXN) return(CID_MXN);
+   if (value == C_NOK) return(CID_NOK);
+   if (value == C_NZD) return(CID_NZD);
+   if (value == C_PLN) return(CID_PLN);
+   if (value == C_RUB) return(CID_RUB);
+   if (value == C_SAR) return(CID_SAR);
+   if (value == C_SEK) return(CID_SEK);
+   if (value == C_SGD) return(CID_SGD);
+   if (value == C_THB) return(CID_THB);
+   if (value == C_TRY) return(CID_TRY);
+   if (value == C_TWD) return(CID_TWD);
+   if (value == C_USD) return(CID_USD);
+   if (value == C_ZAR) return(CID_ZAR);
+
+   return(_NULL(catch("GetCurrencyId(1)  unknown currency = \""+ currency +"\"", ERR_RUNTIME_ERROR)));
+}
+
+
+/**
+ * Gibt den 3-stelligen Bezeichner einer Währungs-ID zurück.
+ *
+ * @param  int id - Währungs-ID
+ *
+ * @return string - Währungsbezeichner
+ */
+string GetCurrency(int id) {
+   switch (id) {
+      case CID_AUD: return(C_AUD);
+      case CID_CAD: return(C_CAD);
+      case CID_CHF: return(C_CHF);
+      case CID_CNY: return(C_CNY);
+      case CID_CZK: return(C_CZK);
+      case CID_DKK: return(C_DKK);
+      case CID_EUR: return(C_EUR);
+      case CID_GBP: return(C_GBP);
+      case CID_HKD: return(C_HKD);
+      case CID_HRK: return(C_HRK);
+      case CID_HUF: return(C_HUF);
+      case CID_INR: return(C_INR);
+      case CID_JPY: return(C_JPY);
+      case CID_LTL: return(C_LTL);
+      case CID_LVL: return(C_LVL);
+      case CID_MXN: return(C_MXN);
+      case CID_NOK: return(C_NOK);
+      case CID_NZD: return(C_NZD);
+      case CID_PLN: return(C_PLN);
+      case CID_RUB: return(C_RUB);
+      case CID_SAR: return(C_SAR);
+      case CID_SEK: return(C_SEK);
+      case CID_SGD: return(C_SGD);
+      case CID_THB: return(C_THB);
+      case CID_TRY: return(C_TRY);
+      case CID_TWD: return(C_TWD);
+      case CID_USD: return(C_USD);
+      case CID_ZAR: return(C_ZAR);
+   }
+   return(_EMPTY_STR(catch("GetCurrency(1)  unknown currency id = "+ id, ERR_RUNTIME_ERROR)));
+}
+
+
+/**
+ * Ob ein String einen gültigen Währungsbezeichner darstellt.
+ *
+ * @param  string value - Wert
+ *
+ * @return bool
+ */
+bool IsCurrency(string value) {
+   value = StringToUpper(value);
+
+   if (value == C_AUD) return(true);
+   if (value == C_CAD) return(true);
+   if (value == C_CHF) return(true);
+   if (value == C_CNY) return(true);
+   if (value == C_CZK) return(true);
+   if (value == C_DKK) return(true);
+   if (value == C_EUR) return(true);
+   if (value == C_GBP) return(true);
+   if (value == C_HKD) return(true);
+   if (value == C_HRK) return(true);
+   if (value == C_HUF) return(true);
+   if (value == C_INR) return(true);
+   if (value == C_JPY) return(true);
+   if (value == C_LTL) return(true);
+   if (value == C_LVL) return(true);
+   if (value == C_MXN) return(true);
+   if (value == C_NOK) return(true);
+   if (value == C_NZD) return(true);
+   if (value == C_PLN) return(true);
+   if (value == C_RUB) return(true);
+   if (value == C_SAR) return(true);
+   if (value == C_SEK) return(true);
+   if (value == C_SGD) return(true);
+   if (value == C_THB) return(true);
+   if (value == C_TRY) return(true);
+   if (value == C_TWD) return(true);
+   if (value == C_USD) return(true);
+   if (value == C_ZAR) return(true);
+
+   return(false);
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5044,6 +5167,8 @@ void __DummyCalls() {
    GetConfigDouble(NULL, NULL);
    GetConfigInt(NULL, NULL);
    GetConfigString(NULL, NULL);
+   GetCurrency(NULL);
+   GetCurrencyId(NULL);
    GetExternalAssets(NULL, NULL);
    GetFxtTime();
    GetGlobalConfigBool(NULL, NULL);
@@ -5071,6 +5196,7 @@ void __DummyCalls() {
    Indicator.IsTesting();
    InitReason();
    IsConfigKey(NULL, NULL);
+   IsCurrency(NULL);
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
