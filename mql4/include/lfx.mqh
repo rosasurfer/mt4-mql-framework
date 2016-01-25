@@ -980,7 +980,7 @@ bool QC.StopChannels() {
    if (!QC.StopTradeCmdSender()  )      return(false);
    if (!QC.StopTradeCmdReceiver())      return(false);
 
-   if (!QC.StopScriptParameterSender()) return(false);               // es gibt keinen Receiver
+   if (!QC.StopScriptParameterSender()) return(false);               // Es gibt nur einen Sender und keinen Receiver, der gestoppt werden müßte.
 
    return(true);
 }
@@ -990,9 +990,7 @@ bool QC.StopChannels() {
  * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
  */
 void DummyCalls() {
-   int    iNull, iNulls[];
-   double dNull;
-   string sNull;
+   int iNulls[];
    LFX.CurrencyId(NULL);
    LFX.GetOrder(NULL, iNulls);
    LFX.GetOrders(NULL, NULL, iNulls);
