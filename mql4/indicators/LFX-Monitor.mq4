@@ -53,7 +53,7 @@ extern bool   USDX.Enabled      = true;
 #include <history.mqh>
 
 #include <MT4iQuickChannel.mqh>
-#include <remote/functions.mqh>
+#include <lfxfunctions.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 #include <core/script.ParameterProvider.mqh>
 
