@@ -6,12 +6,13 @@
  • Neue MetaTrader-Versionen setzen die Variablen Digits und Point in Offline-Charts permanent falsch, bei alten Versionen reicht 
    es, das Charttemplate neuzuladen.
 
- • EA's führen die start()-Funktion bei künstlichen Ticks in Offline- (und in regulären) Charts nur mit Serververbindung, 
+ • EA's führen die start()-Funktion bei künstlichen Ticks in Offline- und in Online-Charts nur mit Serververbindung, 
    Indikatoren in jedem Fall auch ohne Serververbindung aus.
 
  • Charting synthetischer Instrumente:
    - Um die Chartperiode dynamisch umschalten zu können, muß das Instrument in "symbols.raw" eingetragen und eine Verbindung zum 
-     Tradeserver verhindert werden. Für das Terminal sieht das synthetische Instrument dann wie ein reguläres Instrument aus.
+     Tradeserver verhindert werden, damit die modifizierte "symbols.raw" nicht durch die Online-Version ersetzt wird. 
+     Für das Terminal sieht das synthetische Instrument dann wie ein reguläres Instrument aus.
 
    - Bei Verbindung zum Tradeserver wird eine modifizierte Datei "symbols.raw" überschrieben und dort eingetragene synthetische
      Instrumente gehen verloren.
@@ -36,9 +37,9 @@
   Beliebige Clients (z.B. Charts in beliebigen Terminals) können sich per Subscription-Modell beim QuoteServer anmelden. Auch ein 
   weiterer, parallel laufender QuoteServer kann sich als Subscriber anmelden, um benachrichtigt zu werden, wenn der momentan  
   laufende QuoteServer herunterfährt oder offline geht. In diesem Fall kann der zusätzliche QuoteServer den Subscription-Channel 
-  des herunterfahrenden QuoteServers inkl. dort auflaufender Messages nahtlos übernehmen und die Subscriber können sich sofort 
-  und ohne Unterbrechung erneut anmelden. Aus Sicht des Subscribers erfolgt ein Resubscribe, ohne den Wechsel der QuoteServer-
-  Instanz zu bemerken.
+  des herunterfahrenden QuoteServers inkl. dort auflaufender Subscription-Messages nahtlos übernehmen und die Subscriber können 
+  sich sofort und ohne Unterbrechung erneut anmelden. Aus Sicht des Subscribers erfolgt ein Resubscribe, ohne den Wechsel der 
+  QuoteServer-Instanz zu bemerken.
   
   Subscription-Channel: "MetaTrader::QuoteServer::{Symbol}"             - ein Channel für jedes vom QuoteServer angebotene Symbol 
   Backchannel:          "MetaTrader::QuoteClient::{Symbol}::{UniqueId}" - ein Channel für jeden Subscriber
@@ -47,10 +48,11 @@
   TODO: MQL kann in deinit() einen UninitReason noch nicht eindeutig erkennen, sondern erst im folgenden init(). Daher ist es 
         nicht möglich, externe Resourcen (z.B. ein QuickChannel-Handle) abhängig vom UninitReason korrekt zu speichern oder 
         freizugeben. Dies kann erst mit einer UninitReason-Erkennung via DLL zuverlässig erreicht werden. Externe Resourcen 
-        müssen daher bei jedem deinit() freigegeben und ein komplettes Unsubscribe-Subscribe durchgeführt werden. 
+        müssen daher bei jedem deinit() freigegeben und für jeden init-Cycle ein komplettes Unsubscribe-Subscribe durchgeführt 
+        werden. 
        
-        Wegen dieses unnötigen Mehraufwandes wurde vorläufig die Bestätigung jeder einzelnen Message entfernt. Dementsprechend 
-        ist der Subscriber statuslos.       
+        Wegen dieses unnötigen Mehraufwandes wurde vorläufig die Bestätigung jeder einzelnen Message (ACK) entfernt. 
+        Dementsprechend sind die Subscriber statuslos.       
 
 
 (1) QuoteClient des Charts meldet sich beim QuoteServer an
