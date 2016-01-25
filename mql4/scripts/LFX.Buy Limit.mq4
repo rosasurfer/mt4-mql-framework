@@ -79,7 +79,7 @@ int onInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   QC.StopLfxSenders();
+   QC.StopChannels();
    return(last_error);
 }
 

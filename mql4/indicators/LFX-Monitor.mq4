@@ -237,6 +237,7 @@ int onInit() {
  */
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
+   QC.StopChannels();
 
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
@@ -651,40 +652,82 @@ bool CalculateIndices() {
  * @return bool - Erfolgsstatus
  */
 bool ProcessLimits() {
-   int i, orderSize, result;
-   datetime triggerTime, now.fxt=TimeFXT(); if (!now.fxt) return(false);
+   int      i, orderSize, limitResult, /*LFX_ORDER*/order[];
+   datetime prevTriggerTime, now=TimeFXT(); if (!now) return(false);
+   string   errorMsg;
 
    if (isAvailable[I_AUDLFX]) {
       orderSize = ArrayRange(AUDLFX.orders, 0);
 
       for (i=0; i < orderSize; i++) {
-         triggerTime = NULL;
+         prevTriggerTime = NULL;
 
          // (1) Limite prüfen
-         result = CheckLimits(AUDLFX.orders, i, index[I_AUDLFX], index[I_AUDLFX], triggerTime);    // gegen Median-Preis prüfen
-         if (!result)                      return(false);                                          // Fehler
-         if (result == NO_LIMIT_TRIGGERED) continue;
+         limitResult = CheckLimits(AUDLFX.orders, i, index[I_AUDLFX], index[I_AUDLFX], prevTriggerTime); // gegen Median-Preis prüfen
+         if (!limitResult)                      return(false);                                           // Fehler
+         if (limitResult == NO_LIMIT_TRIGGERED) continue;
 
-         if (!triggerTime) {
-            // (2) ein Limit wurde bei diesem Aufruf von CheckLimits() getriggert
-            if (result == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(AUDLFX.orders, i) +" "+ OperationTypeToStr(los.Type      (AUDLFX.orders, i)) +" at "+ NumberToStr(los.OpenPrice (AUDLFX.orders, i), priceFormats[I_AUDLFX]) +" triggered ("+ NumberToStr(index[I_AUDLFX], priceFormats[I_AUDLFX]) +")");
-            if (result == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(AUDLFX.orders, i) +" StopLoss"  + ifString(los.StopLoss  (AUDLFX.orders, i),  " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.StopLossValue  (AUDLFX.orders, i)), ifString(los.StopLoss  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "") +" triggered");
-            if (result == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(AUDLFX.orders, i) +" TakeProfit"+ ifString(los.TakeProfit(AUDLFX.orders, i),  " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.TakeProfitValue(AUDLFX.orders, i)), ifString(los.TakeProfit(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "") +" triggered");
+         if (!prevTriggerTime) {
+            // (2) Ein Limit wurde bei diesem Aufruf von CheckLimits() getriggert.
+            if (limitResult == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(AUDLFX.orders, i) +" "+ OperationTypeToStr(los.Type      (AUDLFX.orders, i)) +" at "+ NumberToStr(los.OpenPrice (AUDLFX.orders, i), priceFormats[I_AUDLFX]) +" triggered ("+ NumberToStr(index[I_AUDLFX], priceFormats[I_AUDLFX]) +")");
+            if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(AUDLFX.orders, i) +" StopLoss"  + ifString(los.StopLoss  (AUDLFX.orders, i),  " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.StopLossValue  (AUDLFX.orders, i)), ifString(los.StopLoss  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "") +" triggered");
+            if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(AUDLFX.orders, i) +" TakeProfit"+ ifString(los.TakeProfit(AUDLFX.orders, i),  " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.TakeProfitValue(AUDLFX.orders, i)), ifString(los.TakeProfit(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "") +" triggered");
 
             // Auslösen speichern und TradeCommand verschicken
-            if (result == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (AUDLFX.orders, i, now.fxt);
-            else {                                     los.setCloseTriggerTime   (AUDLFX.orders, i, now.fxt);
-               if (result == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (AUDLFX.orders, i, true   );
-               else                                    los.setTakeProfitTriggered(AUDLFX.orders, i, true   );
+            if (limitResult == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (AUDLFX.orders, i, now );
+            else {                                          los.setCloseTriggerTime   (AUDLFX.orders, i, now );
+               if (limitResult == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (AUDLFX.orders, i, true);
+               else                                         los.setTakeProfitTriggered(AUDLFX.orders, i, true);
             }
-            if (!LFX.SaveOrder(AUDLFX.orders, i))                                                                                       return(false);
-            if (!QC.SendTradeCommand("LFX:"+ los.Ticket(AUDLFX.orders, i) + ifString(result==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) return(false);
+            if (!LFX.SaveOrder(AUDLFX.orders, i)) return(false);
+            if (!QC.SendTradeCommand("LFX:"+ los.Ticket(AUDLFX.orders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) {
+               if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (AUDLFX.orders, i, -now);        // Bei einem Fehler in QC.SendTradeCommand() diesen Fehler auch
+               else                                     los.setCloseTime(AUDLFX.orders, i, -now);        // in der Order speichern. Ansonsten wartet die Funktion auf eine
+               LFX.SaveOrder(AUDLFX.orders, i);                                                          // Ausführungsbestätigung, die nicht kommen kann.
+               return(false);
+            }
          }
-         else if (now.fxt < triggerTime + 30*SECONDS) {
-            // (3) ein Limit war bei einem vorherigen Aufruf getriggert worden und wir warten auf die Ausführungsbestätigung
+         else if (now < prevTriggerTime + 30*SECONDS) {
+            // (3) Ein Limit war bei einem vorherigen Aufruf getriggert worden und wir warten noch auf die Ausführungsbestätigung.
          }
          else {
-            // (4) ein Limit war bei einem vorherigen Aufruf getriggert worden und die Ausführungsbestätigung ist überfällig
+            // (4) Ein Limit war bei einem vorherigen Aufruf getriggert worden und die Ausführungsbestätigung ist überfällig.
+            // aktuell gespeicherte Version der Order holen
+            int result = LFX.GetOrder(los.Ticket(AUDLFX.orders, i), order); if (result != 1) return(!catch("ProcessLimits(4)->LFX.GetOrder(ticket="+ los.Ticket(AUDLFX.orders, i) +") => "+ result, ERR_RUNTIME_ERROR));
+
+            // Prüfen, ob die Order inzwischen ausgeführt oder ein Open- bzw. Close-Error gesetzt wurde. Wenn nicht, Fehler melden und speichern.
+            if (limitResult == OPEN_LIMIT_TRIGGERED) {
+               errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered "+ OperationTypeToStr(los.Type(AUDLFX.orders, i)) +" at "+ NumberToStr(los.OpenPrice(AUDLFX.orders, i), priceFormats[I_AUDLFX]);
+
+               if (!lo.IsPosition(order) && !lo.IsOpenError(order)) {
+                  warnSMS("ProcessLimits(5)  "+ errorMsg +", continuing...");
+                  los.setOpenTime(AUDLFX.orders, i, -now);
+                  if (!LFX.SaveOrder(AUDLFX.orders, i)) return(false);
+               }
+               else {
+                  // Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte keine Benachrichtigung.
+                  // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
+                  debug("ProcessLimits(6)  "+ errorMsg +", continuing...");                  // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+               }
+            }
+            else {
+               if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLoss  (AUDLFX.orders, i), " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.StopLossValue  (AUDLFX.orders, i)), ifString(los.StopLoss  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "");
+               else                                         errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfit(AUDLFX.orders, i), " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.TakeProfitValue(AUDLFX.orders, i)), ifString(los.TakeProfit(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "");
+
+               if (!lo.IsClosedPosition(order) && !lo.IsCloseError(order)) {
+                  warnSMS("ProcessLimits(7)  "+ errorMsg +", continuing...");
+                  los.setCloseTime(AUDLFX.orders, i, -now);
+                  if (!LFX.SaveOrder(AUDLFX.orders, i)) return(false);
+               }
+               else {
+                  // Position wurde geschlossen oder ein Fehler trat auf. In beiden Fällen erfolgte keine Benachrichtigung.
+                  // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
+                  debug("ProcessLimits(8)  "+ errorMsg +", continuing...");                  // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+               }
+            }
+
+            // OrderNotification verschicken, um das erneute Einlesen der Orders auszulösen
+            if (!QC.SendOrderNotification(CID_AUD, "LFX:"+ los.Ticket(AUDLFX.orders, i) + ifString(limitResult==OPEN_LIMIT_TRIGGERED, ":open="+ (!los.IsOpenError(AUDLFX.orders, i)), ":close="+ (!los.IsCloseError(AUDLFX.orders, i))))) return(false);
          }
       }
    }
@@ -701,7 +744,7 @@ bool ProcessLimits() {
       }
    }
 
-   return(!catch("ProcessLimits(4)"));
+   return(!catch("ProcessLimits(9)"));
 }
 
 

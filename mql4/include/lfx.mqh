@@ -746,21 +746,19 @@ bool QC.StartTradeCmdSender() {
             int result = QC_ChannelHasReceiver(keys[i]);
             if (result == QC_CHECK_RECEIVER_OK)                   // Receiver ist da, Channel ist ok
                break;
-            if (result == QC_CHECK_CHANNEL_NONE) {                // kann auftreten, wenn Terminal crashte
-               // orphaned Channeleintrag aus .ini-Datei löschen
-               warn("QC.StartTradeCmdSender(1)  deleting orphaned channel entry \""+ keys[i] +"\"");
-               if (!DeleteIniKey(file, section, keys[i]))
+            if (result == QC_CHECK_CHANNEL_NONE) {                // orphaned Channeleintrag aus .ini-Datei löschen
+               if (!DeleteIniKey(file, section, keys[i]))         // kann auftreten, wenn das TradeTerminal oder der dortige Indikator crashte (z.B. bei Recompile)
                   return(!SetLastError(stdlib.GetLastError()));
                continue;
             }
-            if (result == QC_CHECK_RECEIVER_NONE) return(!catch("QC.StartTradeCmdSender(2)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") has no reiver but a sender",          ERR_WIN32_ERROR));
-            if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartTradeCmdSender(3)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") = QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
-                                                  return(!catch("QC.StartTradeCmdSender(4)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
+            if (result == QC_CHECK_RECEIVER_NONE) return(!catch("QC.StartTradeCmdSender(1)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") has no reiver but a sender",          ERR_WIN32_ERROR));
+            if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartTradeCmdSender(2)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") = QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+                                                  return(!catch("QC.StartTradeCmdSender(3)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
          }
       }
    }
    if (i >= keysSize) {                                            // break wurde nicht getriggert
-      warn("QC.StartTradeCmdSender(5)  no active TradeCommand receiver found");
+      warn("QC.StartTradeCmdSender(4)  No TradeCommand receiver found. Is the trade terminal running?");
       return(false);
    }
 
@@ -768,9 +766,9 @@ bool QC.StartTradeCmdSender() {
    qc.TradeCmdChannel = keys[i];
    hQC.TradeCmdSender = QC_StartSender(qc.TradeCmdChannel);
    if (!hQC.TradeCmdSender)
-      return(!catch("QC.StartTradeCmdSender(6)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeCmdChannel +"\")", ERR_WIN32_ERROR));
+      return(!catch("QC.StartTradeCmdSender(5)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeCmdChannel +"\")", ERR_WIN32_ERROR));
 
-   //debug("QC.StartTradeCmdSender(7)  sender on \""+ qc.TradeCmdChannel +"\" started");
+   //debug("QC.StartTradeCmdSender(6)  sender on \""+ qc.TradeCmdChannel +"\" started");
    return(true);
 }
 
