@@ -27,7 +27,7 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 #include <stdlib.mqh>
 
 #include <MT4iQuickChannel.mqh>
-#include <lfxfunctions.mqh>
+#include <lfx.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 

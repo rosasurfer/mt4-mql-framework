@@ -12,7 +12,7 @@ int __DEINIT_FLAGS__[];
 #include <stdlib.mqh>
 
 #include <MT4iQuickChannel.mqh>
-#include <lfxfunctions.mqh>
+#include <lfx.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 #include <core/script.ParameterProvider.mqh>
 
