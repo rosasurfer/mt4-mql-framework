@@ -36,7 +36,7 @@ extern bool Offline.Ticker = true;                                // ob der Tick
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
-#include <structs/pewa/LFX_ORDER.mqh>
+#include <structs/myfx/LFX_ORDER.mqh>
 #include <core/script.ParameterProvider.mqh>
 
 

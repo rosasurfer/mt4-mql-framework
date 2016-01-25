@@ -9,7 +9,7 @@ int __DEINIT_FLAGS__[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
 #include <functions/JoinStrings.mqh>
-#include <structs/pewa/ORDER_EXECUTION.mqh>
+#include <structs/myfx/ORDER_EXECUTION.mqh>
 
 
 /**
