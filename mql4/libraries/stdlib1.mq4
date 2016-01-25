@@ -32,7 +32,7 @@ int __DEINIT_FLAGS__[];
 #include <timezones.mqh>
 #include <win32api.mqh>
 
-#include <structs/pewa/ORDER_EXECUTION.mqh>
+#include <structs/myfx/ORDER_EXECUTION.mqh>
 
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
