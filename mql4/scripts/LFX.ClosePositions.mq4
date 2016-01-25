@@ -205,12 +205,6 @@ int onStart() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender(1)", ERR_WRONG_JUMP)); }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 #import "struct.ORDER_EXECUTION.ex4"
    string oes.Symbol    (/*ORDER_EXECUTION*/int oe[][], int i);
    double oes.ClosePrice(/*ORDER_EXECUTION*/int oe[][], int i);
