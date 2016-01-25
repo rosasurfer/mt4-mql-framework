@@ -1,7 +1,3 @@
-#import "stdlib1.ex4"
-   int Explode(string input, string separator, string results[], int limit);
-#import
-
 
 string  qc.ScriptParameterChannel;
 int    hQC.ScriptParameterSender;
@@ -38,13 +34,7 @@ bool RunScript(string name, string parameters="") {
       return(!catch("RunScript(3)->user32::PostMessageA()", ERR_WIN32_ERROR));
 
    return(true);
-
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   string sNulls[];
-   GetScriptParameters(sNulls, sNulls);
-   QC.StartScriptParameterSender();
-   QC.StopScriptParameterSender();
-   SetScriptParameters(NULL);
+   DummyCalls.ParameterProvider();
 }
 
 
@@ -67,6 +57,7 @@ bool SetScriptParameters(string parameters) {
       return(!catch("SetScriptParameters()->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
 
    return(true);
+   DummyCalls.ParameterProvider();
 }
 
 
@@ -131,13 +122,9 @@ int GetScriptParameters(string paramNames[], string paramValues[]) {
       ArrayPushString(paramNames,  param[0]);
       ArrayPushString(paramValues, param[1]);
    }
-   return(ArraySize(paramNames));
 
-   // Dummy-Calls: unterdrücken unnütze Compilerwarnungen
-   QC.StartScriptParameterSender();
-   QC.StopScriptParameterSender();
-   RunScript(NULL);
-   SetScriptParameters(NULL);
+   return(ArraySize(paramNames));
+   DummyCalls.ParameterProvider();
 }
 
 
@@ -171,6 +158,7 @@ bool QC.StartScriptParameterSender() {
       return(!catch("QC.StartScriptParameterSender(4)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.ScriptParameterChannel +"\")", ERR_WIN32_ERROR));
 
    return(true);
+   DummyCalls.ParameterProvider();
 }
 
 
@@ -195,4 +183,27 @@ bool QC.StopScriptParameterSender() {
       return(!catch("QC.StopScriptParameterSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")  error stopping sender", ERR_WIN32_ERROR));
 
    return(true);
+   DummyCalls.ParameterProvider();
 }
+
+
+/**
+ * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
+ *
+ */
+void DummyCalls.ParameterProvider() {
+   string sNulls[];
+   GetScriptParameters(sNulls, sNulls);
+   QC.StartScriptParameterSender();
+   QC.StopScriptParameterSender();
+   RunScript(NULL);
+   SetScriptParameters(NULL);
+}
+
+
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+#import "stdlib1.ex4"
+   int Explode(string input, string separator, string results[], int limit);
+#import
