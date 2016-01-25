@@ -20,11 +20,32 @@ int __DEINIT_FLAGS__[];
 
 
 /**
+ *
+ */
+bool test() {
+   return(3 != 0);
+}
+
+
+/**
  * Main-Funktion
  *
  * @return int - Fehlerstatus
  */
 int onStart() {
+
+   if (test() == true) {
+      debug("onStart()  test() == true");
+   }
+   else if (test() == false) {
+      debug("onStart()  test() == false");
+   }
+   else {
+      debug("onStart()  test()!=true && test()!=false");
+   }
+
+   return(last_error);
+
 
    string values[3], value;
    values[0] = "0";

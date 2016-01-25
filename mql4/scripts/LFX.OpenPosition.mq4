@@ -357,12 +357,6 @@ int GetPositionCounter() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender(1)", ERR_WRONG_JUMP)); }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 #import "struct.ORDER_EXECUTION.ex4"
    double oe.OpenPrice(/*ORDER_EXECUTION*/int oe[]);
 #import

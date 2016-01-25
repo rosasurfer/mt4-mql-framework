@@ -238,6 +238,7 @@ int onInit() {
 int onDeinit() {
    DeleteRegisteredObjects(NULL);
    QC.StopChannels();
+   QC.StopScriptParameterSender();
 
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
@@ -264,7 +265,7 @@ int onDeinit() {
 int onTick() {
    if (1 && 1) {
       if (!CalculateIndices())   return(last_error);
-    //if (!ProcessLimits())      return(last_error);
+      if (!ProcessLimits())      return(last_error);
       if (!UpdateIndexDisplay()) return(last_error);
 
       if (Recording.Enabled) {
@@ -670,8 +671,8 @@ bool ProcessLimits() {
          if (!prevTriggerTime) {
             // (2) Ein Limit wurde bei diesem Aufruf von CheckLimits() getriggert.
             if (limitResult == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(AUDLFX.orders, i) +" "+ OperationTypeToStr(los.Type      (AUDLFX.orders, i)) +" at "+ NumberToStr(los.OpenPrice (AUDLFX.orders, i), priceFormats[I_AUDLFX]) +" triggered ("+ NumberToStr(index[I_AUDLFX], priceFormats[I_AUDLFX]) +")");
-            if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(AUDLFX.orders, i) +" StopLoss"  + ifString(los.StopLoss  (AUDLFX.orders, i),  " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.StopLossValue  (AUDLFX.orders, i)), ifString(los.StopLoss  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "") +" triggered");
-            if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(AUDLFX.orders, i) +" TakeProfit"+ ifString(los.TakeProfit(AUDLFX.orders, i),  " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.TakeProfitValue(AUDLFX.orders, i)), ifString(los.TakeProfit(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "") +" triggered");
+            if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(AUDLFX.orders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (AUDLFX.orders, i),  " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(los.IsStopLossValue  (AUDLFX.orders, i), ifString(los.IsStopLossPrice  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "") +" triggered");
+            if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(AUDLFX.orders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(AUDLFX.orders, i),  " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(los.IsTakeProfitValue(AUDLFX.orders, i), ifString(los.IsTakeProfitPrice(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "") +" triggered");
 
             // Auslösen speichern und TradeCommand verschicken
             if (limitResult == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (AUDLFX.orders, i, now );
@@ -711,8 +712,8 @@ bool ProcessLimits() {
                }
             }
             else {
-               if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.StopLoss  (AUDLFX.orders, i), " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.StopLossValue  (AUDLFX.orders, i)), ifString(los.StopLoss  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "");
-               else                                         errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.TakeProfit(AUDLFX.orders, i), " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.TakeProfitValue(AUDLFX.orders, i)), ifString(los.TakeProfit(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "");
+               if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (AUDLFX.orders, i), " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(los.IsStopLossValue  (AUDLFX.orders, i), ifString(los.IsStopLossPrice  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "");
+               else                                         errorMsg = "#"+ los.Ticket(AUDLFX.orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(AUDLFX.orders, i), " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(los.IsTakeProfitValue(AUDLFX.orders, i), ifString(los.IsTakeProfitPrice(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "");
 
                if (!lo.IsClosedPosition(order) && !lo.IsCloseError(order)) {
                   warnSMS("ProcessLimits(7)  "+ errorMsg +", continuing...");

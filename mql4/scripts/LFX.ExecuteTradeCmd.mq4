@@ -94,6 +94,7 @@ int onInit() {
  */
 int onDeinit() {
    QC.StopChannels();
+   QC.StopScriptParameterSender();
    return(last_error);
 }
 

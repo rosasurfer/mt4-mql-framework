@@ -542,7 +542,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int los[][]) {
             break;
          }
          if (fSelection & OF_PENDINGPOSITION && 1)
-            match = (lo.StopLoss(lo) || lo.TakeProfit(lo));
+            match = (lo.IsStopLoss(lo) || lo.IsTakeProfit(lo));
          break;
       }
       if (match)
@@ -611,11 +611,11 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
    string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (lo), "0", TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL));                                           sOpenTriggerTime  = StringPadLeft (sOpenTriggerTime , 19, " ");
    string sOpenTime            =                 ifString(lo.OpenTime           (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime         = StringPadLeft (sOpenTime        , 20, " ");
    string sOpenPrice           =              DoubleToStr(lo.OpenPrice          (lo), lo.Digits(lo));                                                                               sOpenPrice        = StringPadLeft (sOpenPrice       , 10, " ");
-   string sStopLoss            =                ifString(!lo.StopLoss           (lo), "0", DoubleToStr(lo.StopLoss(lo), lo.Digits(lo)));                                            sStopLoss         = StringPadLeft (sStopLoss        ,  7, " ");
-   string sStopLossValue       =                 ifString(lo.StopLossValue      (lo)==EMPTY_VALUE, "", DoubleToStr(lo.StopLossValue(lo), 2));                                       sStopLossValue    = StringPadLeft (sStopLossValue   ,  8, " ");
+   string sStopLoss            =                ifString(!lo.IsStopLossPrice    (lo), "0", DoubleToStr(lo.StopLoss(lo), lo.Digits(lo)));                                            sStopLoss         = StringPadLeft (sStopLoss        ,  7, " ");
+   string sStopLossValue       =                ifString(!lo.IsStopLossValue    (lo), "", DoubleToStr(lo.StopLossValue(lo), 2));                                                    sStopLossValue    = StringPadLeft (sStopLossValue   ,  8, " ");
    string sStopLossTriggered   =                         (lo.StopLossTriggered  (lo)!=0);
-   string sTakeProfit          =                ifString(!lo.TakeProfit         (lo), "0", DoubleToStr(lo.TakeProfit(lo), lo.Digits(lo)));                                          sTakeProfit       = StringPadLeft (sTakeProfit      ,  7, " ");
-   string sTakeProfitValue     =                 ifString(lo.TakeProfitValue    (lo)==EMPTY_VALUE, "", DoubleToStr(lo.TakeProfitValue(lo), 2));                                     sTakeProfitValue  = StringPadLeft (sTakeProfitValue ,  8, " ");
+   string sTakeProfit          =                ifString(!lo.IsTakeProfitPrice  (lo), "0", DoubleToStr(lo.TakeProfit(lo), lo.Digits(lo)));                                          sTakeProfit       = StringPadLeft (sTakeProfit      ,  7, " ");
+   string sTakeProfitValue     =                ifString(!lo.IsTakeProfitValue  (lo), "", DoubleToStr(lo.TakeProfitValue(lo), 2));                                                  sTakeProfitValue  = StringPadLeft (sTakeProfitValue ,  8, " ");
    string sTakeProfitTriggered =                         (lo.TakeProfitTriggered(lo)!=0);
    string sCloseTriggerTime    =                ifString(!lo.CloseTriggerTime   (lo), "0", TimeToStr(lo.CloseTriggerTime(lo), TIME_FULL));                                          sCloseTriggerTime = StringPadLeft (sCloseTriggerTime, 19, " ");
    string sCloseTime           =                 ifString(lo.CloseTime          (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime        = StringPadLeft (sCloseTime       , 20, " ");
@@ -977,9 +977,6 @@ bool QC.StopChannels() {
 
    if (!QC.StopTradeCmdSender()  )      return(false);
    if (!QC.StopTradeCmdReceiver())      return(false);
-
-   if (!QC.StopScriptParameterSender()) return(false);               // Es gibt nur einen Sender und keinen Receiver, der gestoppt werden müßte.
-
    return(true);
 }
 

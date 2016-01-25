@@ -50,9 +50,3 @@ int onStart() {
 
    return(last_error);
 }
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-/*abstract*/bool QC.StopScriptParameterSender()  { return(!catch("QC.StopScriptParameterSender(1)", ERR_WRONG_JUMP)); }
