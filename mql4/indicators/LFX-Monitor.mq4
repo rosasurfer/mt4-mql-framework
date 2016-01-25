@@ -52,8 +52,10 @@ extern bool   USDX.Enabled      = true;
 #include <stdlib.mqh>
 #include <history.mqh>
 
+#include <MT4iQuickChannel.mqh>
 #include <remote/functions.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
+#include <core/script.ParameterProvider.mqh>
 
 
 #property indicator_chart_window
@@ -650,12 +652,40 @@ bool CalculateIndices() {
  */
 bool ProcessLimits() {
    int i, orderSize, result;
+   datetime triggerTime, now.fxt=TimeFXT(); if (!now.fxt) return(false);
 
    if (isAvailable[I_AUDLFX]) {
       orderSize = ArrayRange(AUDLFX.orders, 0);
+
       for (i=0; i < orderSize; i++) {
-         result = CheckLimits(AUDLFX.orders, i, index[I_AUDLFX], index[I_AUDLFX]);     // Limits gegen Median-Preis prüfen
-         //debug("ProcessLimits(1)  checking AUDLFX limit = "+ result);
+         triggerTime = NULL;
+
+         // (1) Limite prüfen
+         result = CheckLimits(AUDLFX.orders, i, index[I_AUDLFX], index[I_AUDLFX], triggerTime);    // gegen Median-Preis prüfen
+         if (!result)                      return(false);                                          // Fehler
+         if (result == NO_LIMIT_TRIGGERED) continue;
+
+         if (!triggerTime) {
+            // (2) ein Limit wurde bei diesem Aufruf von CheckLimits() getriggert
+            if (result == OPEN_LIMIT_TRIGGERED)       log("ProcessLimits(1)  #"+ los.Ticket(AUDLFX.orders, i) +" "+ OperationTypeToStr(los.Type      (AUDLFX.orders, i)) +" at "+ NumberToStr(los.OpenPrice (AUDLFX.orders, i), priceFormats[I_AUDLFX]) +" triggered ("+ NumberToStr(index[I_AUDLFX], priceFormats[I_AUDLFX]) +")");
+            if (result == STOPLOSS_LIMIT_TRIGGERED)   log("ProcessLimits(2)  #"+ los.Ticket(AUDLFX.orders, i) +" StopLoss"  + ifString(los.StopLoss  (AUDLFX.orders, i),  " at "+ NumberToStr(los.StopLoss  (AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.StopLossValue  (AUDLFX.orders, i)), ifString(los.StopLoss  (AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (AUDLFX.orders, i), 2), "") +" triggered");
+            if (result == TAKEPROFIT_LIMIT_TRIGGERED) log("ProcessLimits(3)  #"+ los.Ticket(AUDLFX.orders, i) +" TakeProfit"+ ifString(los.TakeProfit(AUDLFX.orders, i),  " at "+ NumberToStr(los.TakeProfit(AUDLFX.orders, i), priceFormats[I_AUDLFX]), "") + ifString(!IsEmptyValue(los.TakeProfitValue(AUDLFX.orders, i)), ifString(los.TakeProfit(AUDLFX.orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(AUDLFX.orders, i), 2), "") +" triggered");
+
+            // Auslösen speichern und TradeCommand verschicken
+            if (result == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (AUDLFX.orders, i, now.fxt);
+            else {                                     los.setCloseTriggerTime   (AUDLFX.orders, i, now.fxt);
+               if (result == STOPLOSS_LIMIT_TRIGGERED) los.setStopLossTriggered  (AUDLFX.orders, i, true   );
+               else                                    los.setTakeProfitTriggered(AUDLFX.orders, i, true   );
+            }
+            if (!LFX.SaveOrder(AUDLFX.orders, i))                                                                                       return(false);
+            if (!QC.SendTradeCommand("LFX:"+ los.Ticket(AUDLFX.orders, i) + ifString(result==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) return(false);
+         }
+         else if (now.fxt < triggerTime + 30*SECONDS) {
+            // (3) ein Limit war bei einem vorherigen Aufruf getriggert worden und wir warten auf die Ausführungsbestätigung
+         }
+         else {
+            // (4) ein Limit war bei einem vorherigen Aufruf getriggert worden und die Ausführungsbestätigung ist überfällig
+         }
       }
    }
 
@@ -671,55 +701,63 @@ bool ProcessLimits() {
       }
    }
 
-   return(!catch("ProcessLimits(2)"));
+   return(!catch("ProcessLimits(4)"));
 }
 
 
 /**
  * Ob die angegebene LFX-Order ein Limit erreicht hat.
  *
- * @param  LFX_ORDER lfxOrders[] - Array von LFX-ORDERs
- * @param  int       i           - Index der zu prüfenden Order im übergebenen LFX_ORDER[]-Array
- * @param  double    bid         - zur Prüfung zu benutzender Bid-Preis
- * @param  double    ask         - zur Prüfung zu benutzender Ask-Preis
+ * @param  _IN_  LFX_ORDER lfxOrders[] - Array von LFX-ORDERs
+ * @param  _IN_  int       i           - Index der zu prüfenden Order im übergebenen LFX_ORDER[]-Array
+ * @param  _IN_  double    bid         - zur Prüfung zu benutzender Bid-Preis
+ * @param  _IN_  double    ask         - zur Prüfung zu benutzender Ask-Preis
+ * @param  _OUT_ datetime &triggerTime - Trigger-Zeitpunkt einer bereits getriggerten, aber noch nicht ausgeführten Limit-Order
  *
- * @return int - Ergebnis, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
- *                         OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
- *                         STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
- *                         TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
- *                         0:                          wenn ein Fehler auftrat
+ * @return int - Triggerstatus, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
+ *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
+ *                              STOPLOSS_LIMIT_TRIGGERED:   wenn ein StopLoss-Limit erreicht wurde
+ *                              TAKEPROFIT_LIMIT_TRIGGERED: wenn ein TakeProfit-Limit erreicht wurde
+ *                              0:                          wenn ein Fehler auftrat
+ *
+ * Nachdem ein Limit getriggert wurde, wird bis zum Eintreffen der Ausführungsbestätigung derselbe Triggerstatus und zusätzlich
+ * der Triggerzeitpunkt zurückgegeben.
  */
-int CheckLimits(/*LFX_ORDER*/int lfxOrders[][], int i, double bid, double ask) {
+int CheckLimits(/*LFX_ORDER*/int lfxOrders[][], int i, double bid, double ask, datetime &triggerTime) {
    if (los.IsClosed(lfxOrders, i))
       return(NO_LIMIT_TRIGGERED);
 
+
+   // (1) fehlerhafte Orders und bereits getriggerte (auf Ausführungsbestätigung wartende) Limits abfangen
    int type = los.Type(lfxOrders, i);
-
-
-   // (1) bereits getriggerte Limits und fehlerhafte Orders abfangen
    switch (type) {
       case OP_BUYLIMIT :
       case OP_BUYSTOP  :
       case OP_SELLLIMIT:
       case OP_SELLSTOP :
-         if (los.IsOpenError    (lfxOrders, i))       return(NO_LIMIT_TRIGGERED);
-         if (los.OpenTriggerTime(lfxOrders, i) != 0)  return(NO_LIMIT_TRIGGERED);
+         if (los.IsOpenError(lfxOrders, i))            return(NO_LIMIT_TRIGGERED);
+         triggerTime = los.OpenTriggerTime(lfxOrders, i);
+         if (triggerTime != 0)                         return(OPEN_LIMIT_TRIGGERED);
          break;
 
       case OP_BUY :
       case OP_SELL:
-         if (los.IsCloseError    (lfxOrders, i))      return(NO_LIMIT_TRIGGERED);
-         if (los.CloseTriggerTime(lfxOrders, i) != 0) return(NO_LIMIT_TRIGGERED);
+         if (los.IsCloseError(lfxOrders, i))           return(NO_LIMIT_TRIGGERED);
+         triggerTime = los.CloseTriggerTime(lfxOrders, i);
+         if (triggerTime != 0) {
+            if (los.StopLossTriggered  (lfxOrders, i)) return(STOPLOSS_LIMIT_TRIGGERED  );
+            if (los.TakeProfitTriggered(lfxOrders, i)) return(TAKEPROFIT_LIMIT_TRIGGERED);
+            return(_NULL(catch("CheckLimits(1)  data constraint violation in #"+ los.Ticket(lfxOrders, i) +": closeTriggerTime="+ los.CloseTriggerTime(lfxOrders, i) +", slTriggered=0, tpTriggered=0", ERR_RUNTIME_ERROR)));
+         }
          break;
 
       default:
          return(NO_LIMIT_TRIGGERED);
    }
 
-   int digits = los.Digits(lfxOrders, i);
-
 
    // (2) Open-Limits prüfen
+   int digits = los.Digits(lfxOrders, i);
    switch (type) {
       case OP_BUYLIMIT:
       case OP_SELLSTOP:
@@ -731,11 +769,10 @@ int CheckLimits(/*LFX_ORDER*/int lfxOrders[][], int i, double bid, double ask) {
                                                            return(NO_LIMIT_TRIGGERED  );
    }
 
-   double slPrice = los.StopLoss  (lfxOrders, i);
-   double tpPrice = los.TakeProfit(lfxOrders, i);
-
 
    // (3) Close-Limits prüfen
+   double slPrice = los.StopLoss  (lfxOrders, i);
+   double tpPrice = los.TakeProfit(lfxOrders, i);
    switch (type) {
       case OP_BUY:
          if (slPrice != 0) if (LE(ask, slPrice, digits)) return(STOPLOSS_LIMIT_TRIGGERED  );

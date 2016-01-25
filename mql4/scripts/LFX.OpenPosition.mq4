@@ -23,11 +23,8 @@ extern double Units        = 1.0;                                    // Position
 #include <functions/JoinStrings.mqh>
 #include <stdlib.mqh>
 
-#include <win32api.mqh>
 #include <MT4iQuickChannel.mqh>
-
 #include <remote/functions.mqh>
-#include <remote/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 

@@ -46,6 +46,19 @@ int    lfxOrders.pendingPositions;                                   // Anzahl d
 #define TAKEPROFIT_LIMIT_TRIGGERED  3
 
 
+// Trade-Terminal -> LFX-Terminal: P/L-Messages
+string  qc.TradeToLfxChannels[9];                           // ein Channel je LFX-Währung bzw. LFX-Chart
+int    hQC.TradeToLfxSenders [9];                           // jeweils ein Sender
+string  qc.TradeToLfxChannel;                               // Channel des aktuellen LFX-Charts (einer)
+int    hQC.TradeToLfxReceiver;                              // Receiver des aktuellen LFX-Charts (einer)
+
+
+// LFX-Terminal -> Trade-Terminal: TradeCommands
+string  qc.TradeCmdChannel;
+int    hQC.TradeCmdSender;
+int    hQC.TradeCmdReceiver;
+
+
 /**
  * Initialisiert Status und Variablen des zu verwendenden TradeAccounts. Wird ein Account-Parameter übergeben, wird dieser Account als externer Account
  * interpretiert und eingestellt (mode.extern=TRUE).
@@ -682,7 +695,299 @@ bool LFX.SaveOrders(/*LFX_ORDER*/int los[][]) {
 
 
 /**
- * Dummy-Calls: unterdrücken unnütze Compilerwarnungen
+ * Sendet dem aktuellen TradeAccount ein TradeCommand.
+ *
+ * @param  string cmd - Command
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.SendTradeCommand(string cmd) {
+   while (true) {
+      if (!hQC.TradeCmdSender) /*&&*/ if (!QC.StartTradeCmdSender())
+         return(false);
+
+      int result = QC_SendMessage(hQC.TradeCmdSender, cmd, QC_FLAG_SEND_MSG_IF_RECEIVER);
+      if (!result)
+         return(!catch("QC.SendTradeCommand(1)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+
+      if (result == QC_SEND_MSG_IGNORED) {
+         debug("QC.SendTradeCommand(2)  receiver on \""+ qc.TradeCmdChannel +"\" gone");
+         QC.StopTradeCmdSender();
+         continue;
+      }
+      break;
+   }
+
+   QC.StopTradeCmdSender();
+   return(true);
+}
+
+
+/**
+ * Startet einen QuickChannel-Sender für TradeCommands.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StartTradeCmdSender() {
+   if (hQC.TradeCmdSender != 0)
+      return(true);
+
+   // aktiven Channel ermitteln
+   string file    = TerminalPath() +"\\..\\quickchannel.ini";
+   string section = tradeAccount.number;
+   string keys[], value;
+   int error, iValue, keysSize = GetIniKeys(file, section, keys);
+
+   for (int i=0; i < keysSize; i++) {
+      if (StringStartsWithI(keys[i], "TradeCommands.")) {
+         value = GetIniString(file, section, keys[i]);
+         if (value!="") /*&&*/ if (value!="0") {
+            // Channel sollte aktiv sein, testen...
+            int result = QC_ChannelHasReceiver(keys[i]);
+            if (result == QC_CHECK_RECEIVER_OK)                   // Receiver ist da, Channel ist ok
+               break;
+            if (result == QC_CHECK_CHANNEL_NONE) {                // kann auftreten, wenn Terminal crashte
+               // orphaned Channeleintrag aus .ini-Datei löschen
+               warn("QC.StartTradeCmdSender(1)  deleting orphaned channel entry \""+ keys[i] +"\"");
+               if (!DeleteIniKey(file, section, keys[i]))
+                  return(!SetLastError(stdlib.GetLastError()));
+               continue;
+            }
+            if (result == QC_CHECK_RECEIVER_NONE) return(!catch("QC.StartTradeCmdSender(2)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") has no reiver but a sender",          ERR_WIN32_ERROR));
+            if (result == QC_CHECK_CHANNEL_ERROR) return(!catch("QC.StartTradeCmdSender(3)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") = QC_CHECK_CHANNEL_ERROR",            ERR_WIN32_ERROR));
+                                                  return(!catch("QC.StartTradeCmdSender(4)->MT4iQuickChannel::QC_ChannelHasReceiver(name=\""+ keys[i] +"\") = unexpected return value: "+ result, ERR_WIN32_ERROR));
+         }
+      }
+   }
+   if (i >= keysSize) {                                            // break wurde nicht getriggert
+      warn("QC.StartTradeCmdSender(5)  no active TradeCommand receiver found");
+      return(false);
+   }
+
+   // Sender auf gefundenem Channel starten
+   qc.TradeCmdChannel = keys[i];
+   hQC.TradeCmdSender = QC_StartSender(qc.TradeCmdChannel);
+   if (!hQC.TradeCmdSender)
+      return(!catch("QC.StartTradeCmdSender(6)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeCmdChannel +"\")", ERR_WIN32_ERROR));
+
+   //debug("QC.StartTradeCmdSender(7)  sender on \""+ qc.TradeCmdChannel +"\" started");
+   return(true);
+}
+
+
+/**
+ * Stoppt einen QuickChannel-Sender für TradeCommands.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StopTradeCmdSender() {
+   if (!hQC.TradeCmdSender)
+      return(true);
+
+   int    hTmp    = hQC.TradeCmdSender;
+   string channel = qc.TradeCmdChannel;
+
+   hQC.TradeCmdSender = NULL;
+   qc.TradeCmdChannel = "";
+
+   if (!QC_ReleaseSender(hTmp))
+      return(!catch("QC.StopTradeCmdSender(1)->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")  error stopping sender", ERR_WIN32_ERROR));
+
+   //debug("QC.StopTradeCmdSender()  sender on \""+ channel +"\" stopped");
+   return(true);
+}
+
+
+/**
+ * Startet einen QuickChannel-Receiver für TradeCommands.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StartTradeCmdReceiver() {
+   if (hQC.TradeCmdReceiver != NULL) return(true);
+   if (!__CHART)                     return(false);
+
+   int hWnd = WindowHandleEx(NULL);
+   if (!hWnd) return(false);
+
+   // Channelnamen definieren
+   qc.TradeCmdChannel = "TradeCommands.0x"+ IntToHexStr(hWnd);
+
+   // Receiver starten
+   hQC.TradeCmdReceiver = QC_StartReceiver(qc.TradeCmdChannel, hWnd);
+   if (!hQC.TradeCmdReceiver)
+      return(!catch("QC.StartTradeCmdReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeCmdChannel +"\", hWnd=0x"+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+
+   //debug("QC.StartTradeCmdReceiver()  receiver on \""+ qc.TradeCmdChannel +"\" started");
+
+   // Channelnamen und -status in .ini-Datei hinterlegen
+   string file    = TerminalPath() +"\\..\\quickchannel.ini";
+   string section = GetAccountNumber();
+   string key     = qc.TradeCmdChannel;
+   string value   = "1";
+   if (!WritePrivateProfileStringA(section, key, value, file))
+      return(!catch("QC.StartTradeCmdReceiver(2)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ value +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR));
+
+   return(true);
+}
+
+
+/**
+ * Stoppt einen QuickChannel-Receiver für TradeCommands.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StopTradeCmdReceiver() {
+   if (hQC.TradeCmdReceiver != NULL) {
+      // Channelstatus in .ini-Datei aktualisieren (vorm Stoppen des Receivers)
+      string file    = TerminalPath() +"\\..\\quickchannel.ini";
+      string section = GetAccountNumber();
+      string key     = qc.TradeCmdChannel;
+      if (!DeleteIniKey(file, section, key))
+         return(!SetLastError(stdlib.GetLastError()));
+
+      // Receiver stoppen
+      int    hTmp    = hQC.TradeCmdReceiver;
+      string channel = qc.TradeCmdChannel;
+      hQC.TradeCmdReceiver   = NULL;                                 // Handle immer zurücksetzen (um mehrfache Stopversuche bei Fehlern zu vermeiden)
+      qc.TradeCmdChannel = "";
+      if (!QC_ReleaseReceiver(hTmp))
+         return(!catch("QC.StopTradeCmdReceiver(1)->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ channel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+
+      //debug("QC.StopTradeCmdReceiver()  receiver on \""+ channel +"\" stopped");
+   }
+   return(true);
+}
+
+
+/**
+ * Sendet dem LFX-Terminal eine Orderbenachrichtigung.
+ *
+ * @param  int    cid - Currency-ID des für die Nachricht zu benutzenden Channels
+ * @param  string msg - Nachricht
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.SendOrderNotification(int cid, string msg) {
+   if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
+      return(!catch("QC.SendOrderNotification(1)  illegal parameter cid = "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+
+   if (!hQC.TradeToLfxSenders[cid]) /*&&*/ if (!QC.StartLfxSender(cid))
+      return(false);
+
+   int result = QC_SendMessage(hQC.TradeToLfxSenders[cid], msg, QC_FLAG_SEND_MSG_IF_RECEIVER);
+   if (!result)
+      return(!catch("QC.SendOrderNotification(2)->MT4iQuickChannel::QC_SendMessage() = QC_SEND_MSG_ERROR", ERR_WIN32_ERROR));
+   return(true);
+}
+
+
+/**
+ * Startet einen QuickChannel-Sender für "TradeToLfxTerminal"-Messages. Das LFX-Terminal kann sich über diesen Channel auch selbst Messages schicken.
+ *
+ * @param  int cid - Currency-ID des zu startenden Channels
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StartLfxSender(int cid) {
+   if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
+      return(!catch("QC.StartLfxSender(1)  illegal parameter cid = "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+   if (hQC.TradeToLfxSenders[cid] > 0)
+      return(true);
+                                                                     // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
+   qc.TradeToLfxChannels[cid] = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ GetCurrency(cid);
+   hQC.TradeToLfxSenders[cid] = QC_StartSender(qc.TradeToLfxChannels[cid]);
+   if (!hQC.TradeToLfxSenders[cid])
+      return(!catch("QC.StartLfxSender(2)->MT4iQuickChannel::QC_StartSender(channel=\""+ qc.TradeToLfxChannels[cid] +"\")", ERR_WIN32_ERROR));
+
+   //debug("QC.StartLfxSender(3)  sender on \""+ qc.TradeToLfxChannels[cid] +"\" started");
+   return(true);
+}
+
+
+/**
+ * Stoppt alle QuickChannel-Sender für "TradeToLfxTerminal"-Messages.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StopLfxSenders() {
+   for (int i=ArraySize(hQC.TradeToLfxSenders)-1; i >= 0; i--) {
+      if (hQC.TradeToLfxSenders[i] != NULL) {
+         int    hTmp    = hQC.TradeToLfxSenders[i];
+         string channel = qc.TradeToLfxChannels[i];
+
+         hQC.TradeToLfxSenders[i] = NULL;                            // Handle immer zurücksetzen (um mehrfache Stopversuche bei Fehlern zu vermeiden)
+         qc.TradeToLfxChannels[i] = "";
+
+         if (!QC_ReleaseSender(hTmp))
+            return(!catch("QC.StopLfxSenders()->MT4iQuickChannel::QC_ReleaseSender(channel=\""+ channel +"\")  error stopping sender", ERR_WIN32_ERROR));
+      }
+   }
+   return(true);
+}
+
+
+/**
+ * Startet einen QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StartLfxReceiver() {
+   if (hQC.TradeToLfxReceiver != NULL)   return(true);
+   if (!__CHART)                         return(false);
+   if (!StringEndsWith(Symbol(), "LFX")) return(false);              // kein LFX-Chart
+
+   int hWnd = WindowHandleEx(NULL); if (!hWnd) return(false);        // Channel-Name: "{AccountCompanyId}:{AccountNumber}:LFX.Profit.{Currency}"
+   qc.TradeToLfxChannel = AccountCompanyId(tradeAccount.company) +":"+ tradeAccount.number +":LFX.Profit."+ StringLeft(Symbol(), -3);
+
+   hQC.TradeToLfxReceiver = QC_StartReceiver(qc.TradeToLfxChannel, hWnd);
+   if (!hQC.TradeToLfxReceiver)
+      return(!catch("QC.StartLfxReceiver(1)->MT4iQuickChannel::QC_StartReceiver(channel=\""+ qc.TradeToLfxChannel +"\", hWnd=0x"+ IntToHexStr(hWnd) +") => 0", ERR_WIN32_ERROR));
+
+   //debug("QC.StartLfxReceiver(2)  receiver on \""+ qc.TradeToLfxChannel +"\" started");
+   return(true);
+}
+
+
+/**
+ * Stoppt den QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StopLfxReceiver() {
+   if (hQC.TradeToLfxReceiver != NULL) {
+      int    hTmp    = hQC.TradeToLfxReceiver;
+      string channel = qc.TradeToLfxChannel;
+
+      hQC.TradeToLfxReceiver = NULL;                                 // Handle immer zurücksetzen (um mehrfache Stopversuche bei Fehlern zu vermeiden)
+      qc.TradeToLfxChannel   = "";
+      if (!QC_ReleaseReceiver(hTmp))
+         return(!catch("QC.StopLfxReceiver()->MT4iQuickChannel::QC_ReleaseReceiver(channel=\""+ channel +"\")  error stopping receiver", ERR_WIN32_ERROR));
+   }
+   return(true);
+}
+
+
+/**
+ * Stoppt alle laufenden Sender und Receiver.
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool QC.StopChannels() {
+   if (!QC.StopLfxSenders())            return(false);
+   if (!QC.StopLfxReceiver())           return(false);
+
+   if (!QC.StopTradeCmdSender()  )      return(false);
+   if (!QC.StopTradeCmdReceiver())      return(false);
+
+   if (!QC.StopScriptParameterSender()) return(false);               // es gibt keinen Receiver
+
+   return(true);
+}
+
+
+/**
+ * Dummy-Calls unterdrücken unnütze Compilerwarnungen.
  */
 void DummyCalls() {
    int    iNull, iNulls[];
@@ -696,10 +1001,25 @@ void DummyCalls() {
    LFX.SaveOrder(iNulls, NULL);
    LFX.SaveOrders(iNulls);
    LFX_ORDER.toStr(iNulls);
+   QC.SendOrderNotification(NULL, NULL);
+   QC.SendTradeCommand(NULL);
+   QC.StartLfxReceiver();
+   QC.StartLfxSender(NULL);
+   QC.StartTradeCmdReceiver();
+   QC.StartTradeCmdSender();
+   QC.StopChannels();
+   QC.StopLfxReceiver();
+   QC.StopLfxSenders();
+   QC.StopTradeCmdReceiver();
+   QC.StopTradeCmdSender();
 }
 
 
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 #import "stdlib1.ex4"
+   string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    GetAccountNumber();
    bool   IsIniKey(string fileName, string section, string key);

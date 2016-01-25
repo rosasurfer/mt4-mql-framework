@@ -30,16 +30,14 @@ extern bool Offline.Ticker = true;                                // ob der Tick
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 
-#include <MT4iQuickChannel.mqh>
-#include <win32api.mqh>
-
-#include <core/script.ParameterProvider.mqh>
 #include <iFunctions/@ATR.mqh>
 #include <iFunctions/iBarShiftNext.mqh>
 #include <iFunctions/iBarShiftPrevious.mqh>
+
+#include <MT4iQuickChannel.mqh>
 #include <remote/functions.mqh>
-#include <remote/quickchannel.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
+#include <core/script.ParameterProvider.mqh>
 
 
 // Typ der Kursanzeige
@@ -1119,7 +1117,7 @@ bool CheckLfxLimits() {
          if (!LFX.SaveOrder(lfxOrders, i))                                                                                       return(false);
          if (!QC.SendTradeCommand("LFX:"+ los.Ticket(lfxOrders, i) + ifString(result==OPEN_LIMIT_TRIGGERED, ":open", ":close"))) return(false);
       }
-      else if (triggerTime + 30*SECONDS >= now.fxt) {
+      else if (now.fxt < triggerTime + 30*SECONDS) {
          // (3) ein Limit war bereits vorher getriggert, auf Ausführungsbestätigung warten
       }
       else {
@@ -1151,10 +1149,10 @@ bool CheckLfxLimits() {
 
 /**
  * Ob die angegebene LFX-Order ein Limit erreicht hat. Alle Preise werden gegen den Close-Price der jüngsten Bar geprüft (LFX-Chart).
- * Diese Funktion prüft nicht, ob der Indikator auf einem Offline-Chart läuft.
+ * Die Funktion prüft nicht, ob der Indikator auf einem Offline-Chart läuft.
  *
  * @param  int       i           - Index der zu überprüfenden Order im globalen LFX_ORDER[]-Array
- * @param  datetime &triggerTime - Variable zur Aufnahme des Zeitpunktes eines bereits als getriggert markierten Limits
+ * @param  datetime &triggerTime - Trigger-Zeitpunkt eines bereits als getriggert markierten Limits
  *
  * @return int - Ergebnis, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
  *                         OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde
