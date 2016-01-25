@@ -35,7 +35,7 @@ extern bool Offline.Ticker = true;                                // ob der Tick
 #include <iFunctions/iBarShiftPrevious.mqh>
 
 #include <MT4iQuickChannel.mqh>
-#include <lfxfunctions.mqh>
+#include <lfx.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 #include <core/script.ParameterProvider.mqh>
 

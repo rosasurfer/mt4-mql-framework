@@ -24,7 +24,7 @@ extern double Units        = 1.0;                                    // Position
 #include <stdlib.mqh>
 
 #include <MT4iQuickChannel.mqh>
-#include <lfxfunctions.mqh>
+#include <lfx.mqh>
 #include <structs/pewa/LFX_ORDER.mqh>
 
 

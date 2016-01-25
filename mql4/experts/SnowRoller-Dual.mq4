@@ -28,7 +28,7 @@ extern     string StopConditions       = "@profit(500)";
 #include <win32api.mqh>
 #include <SnowRoller/functions.mqh>
 #include <iCustom/icMovingAverage.mqh>
-#include <structs/pewa/ORDER_EXECUTION.mqh>
+#include <structs/myfx/ORDER_EXECUTION.mqh>
 
 
 int      last.GridSize;                                              // Input-Parameter sind nicht statisch. Extern geladene Parameter werden bei REASON_CHARTCHANGE
