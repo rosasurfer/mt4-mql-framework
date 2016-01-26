@@ -265,7 +265,7 @@ int onDeinit() {
 int onTick() {
    if (1 && 1) {
       if (!CalculateIndices())   return(last_error);
-      if (!ProcessLimits())      return(last_error);
+    //if (!ProcessLimits())      return(last_error);
       if (!UpdateIndexDisplay()) return(last_error);
 
       if (Recording.Enabled) {
