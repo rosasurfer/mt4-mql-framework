@@ -259,6 +259,32 @@ int LFX.InstanceId(int magicNumber) {
 
 
 /**
+ * Gibt den größten existierenden Marker der offenen Orders des angegebenen Symbols zurück.
+ *
+ * @param  LFX_ORDER orders[]   - Array von LFX_ORDERs
+ * @param  int       currencyId - Währungs-ID
+ *
+ * @return int - positive Ganzzahl oder 0, falls keine markierte Order existiert
+ */
+int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
+   int marker, size=ArrayRange(orders, 0);
+
+   for (int i=0; i < size; i++) {
+      if (los.CurrencyId(orders, i) != currencyId) continue;
+      if (los.IsClosed  (orders, i))               continue;
+
+      string comment = los.Comment(orders, i);
+      if      (StringStartsWith(comment, los.Currency(orders, i) +".")) comment = StringRightFrom(comment, ".");
+      else if (StringStartsWith(comment, "#"))                          comment = StringRight    (comment,  -1);
+      else
+         continue;
+      marker = Max(marker, StrToInteger(comment));
+   }
+   return(marker);
+}
+
+
+/**
  * Gibt eine LFX-Order des TradeAccounts zurück.
  *
  * @param  int ticket - Ticket der zurückzugebenden Order
@@ -987,6 +1013,7 @@ bool QC.StopChannels() {
 void DummyCalls() {
    int iNulls[];
    LFX.CurrencyId(NULL);
+   LFX.GetMaxOpenOrderMarker(iNulls, NULL);
    LFX.GetOrder(NULL, iNulls);
    LFX.GetOrders(NULL, NULL, iNulls);
    LFX.InstanceId(NULL);

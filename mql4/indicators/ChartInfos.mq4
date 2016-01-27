@@ -3971,22 +3971,22 @@ bool ProcessLfxTerminalMessage(string message) {
    // :pending={1|0}
    if (StringSubstr(message, from, 8) == "pending=") {
       success = (StrToInteger(StringSubstr(message, from+8)) != 0);
-      if (success) { if (__LOG) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error"                           )); }
-      else         {           warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "confirmation", "error (what use case is this???)")); }
+      if (success) { if (__LOG) log("ProcessLfxTerminalMessage(5)  #"+ ticket +" pending order "+ ifString(success, "notification", "error"                           )); }
+      else         {           warn("ProcessLfxTerminalMessage(6)  #"+ ticket +" pending order "+ ifString(success, "notification", "error (what use case is this???)")); }
       return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // :open={1|0}
    if (StringSubstr(message, from, 5) == "open=") {
       success = (StrToInteger(StringSubstr(message, from+5)) != 0);
-      if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessLfxTerminalMessage(7)  #"+ ticket +" open position "+ ifString(success, "notification", "error"));
       return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
    // :close={1|0}
    if (StringSubstr(message, from, 6) == "close=") {
       success = (StrToInteger(StringSubstr(message, from+6)) != 0);
-      if (__LOG) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "confirmation", "error"));
+      if (__LOG) log("ProcessLfxTerminalMessage(8)  #"+ ticket +" close position "+ ifString(success, "notification", "error"));
       return(RestoreRemoteOrders(false));                                     // RemoteOrders neu einlesen (auch bei Fehler)
    }
 
