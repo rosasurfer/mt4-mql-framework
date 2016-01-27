@@ -188,23 +188,23 @@ bool ProcessMessages() {
 
    for (int i=0; i < size; i++) {
       // (1) Channel auf neue Messages prüfen
-      int result = QC_CheckChannel(qc.SubscriptionChannels[i]);
-      if (result == QC_CHECK_CHANNEL_EMPTY)
+      int checkResult = QC_CheckChannel(qc.SubscriptionChannels[i]);
+      if (checkResult == QC_CHECK_CHANNEL_EMPTY)
          continue;
-      if (result < QC_CHECK_CHANNEL_EMPTY) {
-         if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("ProcessMessages(1)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
-         if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("ProcessMessages(2)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
-                                                  return(!catch("ProcessMessages(3)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
+      if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
+         if (checkResult == QC_CHECK_CHANNEL_ERROR)  return(!catch("ProcessMessages(1)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR));
+         if (checkResult == QC_CHECK_CHANNEL_NONE )  return(!catch("ProcessMessages(2)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\")  channel doesn't exist",                   ERR_WIN32_ERROR));
+                                                     return(!catch("ProcessMessages(3)->MT4iQuickChannel::QC_CheckChannel(ch=\""+ qc.SubscriptionChannels[i] +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
       }
 
       if (!hQC.Receivers[i]) /*&&*/ if (!StartReceiver(i)) return(false);
 
       // (2) neue Messages abholen
-      result = QC_GetMessages3(hQC.Receivers[i], messageBuffer, QC_MAX_BUFFER_SIZE);
-      if (result != QC_GET_MSG3_SUCCESS) {
-         if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("ProcessMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
-         if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("ProcessMessages(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
-                                                  return(!catch("ProcessMessages(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
+      int getResult = QC_GetMessages3(hQC.Receivers[i], messageBuffer, QC_MAX_BUFFER_SIZE);
+      if (getResult != QC_GET_MSG3_SUCCESS) {
+         if (getResult == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("ProcessMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
+         if (getResult == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("ProcessMessages(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
+                                                     return(!catch("ProcessMessages(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR));
       }
 
       // (3) Messages verarbeiten
@@ -231,7 +231,7 @@ bool ProcessMessages() {
             if (!StringLen(backChannel))   { warn("ProcessMessages(11)  invalid backchannel name in "+ servedSymbols[i] +" message \""+ msgs[j] +"\" (empty)");  continue; }
 
             // prüfen, ob auf dem angegebenen Backchannel ein Receiver online ist
-            result = QC_ChannelHasReceiver(backChannel);
+            int result = QC_ChannelHasReceiver(backChannel);
             if (result < 0) return(!catch("ProcessMessages(12)->MT4iQuickChannel::QC_ChannelHasReceiver(ch=\""+ backChannel +"\") => "+ ifString(result==QC_CHECK_CHANNEL_ERROR, "QC_CHECK_CHANNEL_ERROR", result), ERR_WIN32_ERROR));
             if (result != QC_CHECK_RECEIVER_OK) {
                debug("ProcessMessages(13)  no receiver auf backchannel \""+ backChannel +"\", ignoring message \""+ msgs[j] +"\"");

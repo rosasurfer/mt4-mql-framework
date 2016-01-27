@@ -525,13 +525,13 @@ int ShowOpenOrders() {
 
          // Daten auslesen
          ticket     = lfxOrders.iCache[i][I_TICKET];
-         type       =                     los.Type      (lfxOrders, i);
-         units      =                     los.Units     (lfxOrders, i);
-         openTime   = FxtToServerTime(Abs(los.OpenTime  (lfxOrders, i)));
-         openPrice  =                     los.OpenPrice (lfxOrders, i);
-         takeProfit =                     los.TakeProfit(lfxOrders, i);
-         stopLoss   =                     los.StopLoss  (lfxOrders, i);
-         comment    =                     los.Comment   (lfxOrders, i);
+         type       =                     los.Type           (lfxOrders, i);
+         units      =                     los.Units          (lfxOrders, i);
+         openTime   = FxtToServerTime(Abs(los.OpenTime       (lfxOrders, i)));
+         openPrice  =                     los.OpenPrice      (lfxOrders, i);
+         takeProfit =                     los.TakeProfitPrice(lfxOrders, i);
+         stopLoss   =                     los.StopLossPrice  (lfxOrders, i);
+         comment    =                     los.Comment        (lfxOrders, i);
 
          if (type > OP_SELL) {
             // Pending-Order
@@ -1104,9 +1104,9 @@ bool CheckLfxLimits() {
 
       if (!triggerTime) {
          // (2) Ein Limit wurde bei diesem Aufruf von IsLfxLimitTriggered() getriggert.
-         if (limitResult == OPEN_LIMIT_TRIGGERED)       log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" triggered ("+ NumberToStr(Close[0], PriceFormat) +")");
-         if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsStopLossValue  (lfxOrders, i), ifString(los.IsStopLossPrice  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
-         if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsTakeProfitValue(lfxOrders, i), ifString(los.IsTakeProfitPrice(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
+         if (limitResult == OPEN_LIMIT_TRIGGERED)       log("CheckLfxLimits(1)  #"+ los.Ticket(lfxOrders, i) +" "+ OperationTypeToStr(los.Type(lfxOrders, i))      +" at "+ NumberToStr(los.OpenPrice (lfxOrders, i), SubPipPriceFormat) +" (current="+ NumberToStr(Close[0], PriceFormat) +") triggered");
+         if (limitResult == STOPLOSS_LIMIT_TRIGGERED)   log("CheckLfxLimits(2)  #"+ los.Ticket(lfxOrders, i) +" StopLoss"  + ifString(los.IsStopLossPrice  (lfxOrders, i), " at "+ NumberToStr(los.StopLossPrice  (lfxOrders, i), SubPipPriceFormat) +" (current="+ NumberToStr(Close[0], PriceFormat) +")", "") + ifString(los.IsStopLossValue  (lfxOrders, i), ifString(los.IsStopLossPrice  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "") +" triggered");
+         if (limitResult == TAKEPROFIT_LIMIT_TRIGGERED) log("CheckLfxLimits(3)  #"+ los.Ticket(lfxOrders, i) +" TakeProfit"+ ifString(los.IsTakeProfitPrice(lfxOrders, i), " at "+ NumberToStr(los.TakeProfitPrice(lfxOrders, i), SubPipPriceFormat) +" (current="+ NumberToStr(Close[0], PriceFormat) +")", "") + ifString(los.IsTakeProfitValue(lfxOrders, i), ifString(los.IsTakeProfitPrice(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "") +" triggered");
 
          // Auslösen speichern und TradeCommand verschicken
          if (limitResult == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (lfxOrders, i, now.fxt);
@@ -1141,8 +1141,8 @@ bool CheckLfxLimits() {
             //else      Position wurde geschlossen oder ein Fehler trat auf. Es erfolgte keine Benachrichtigung.
          }
          else {
-            if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (lfxOrders, i), " at "+ NumberToStr(los.StopLoss  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsStopLossValue  (lfxOrders, i), ifString(los.IsStopLossPrice  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "");
-            else                                         errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(lfxOrders, i), " at "+ NumberToStr(los.TakeProfit(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsTakeProfitValue(lfxOrders, i), ifString(los.IsTakeProfitPrice(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "");
+            if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (lfxOrders, i), " at "+ NumberToStr(los.StopLossPrice  (lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsStopLossValue  (lfxOrders, i), ifString(los.IsStopLossPrice  (lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (lfxOrders, i), 2), "");
+            else                                         errorMsg = "#"+ los.Ticket(lfxOrders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(lfxOrders, i), " at "+ NumberToStr(los.TakeProfitPrice(lfxOrders, i), SubPipPriceFormat), "") + ifString(los.IsTakeProfitValue(lfxOrders, i), ifString(los.IsTakeProfitPrice(lfxOrders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(lfxOrders, i), 2), "");
             warnSMS("CheckLfxLimits(6)  "+ errorMsg +", continuing...");
 
             if (!lo.IsClosedPosition(order) && !lo.IsCloseError(order)) {
@@ -1220,9 +1220,9 @@ int IsLfxLimitTriggered(int i, datetime &triggerTime) {
          if (GE(Close[0], los.OpenPrice(lfxOrders, i))) return(OPEN_LIMIT_TRIGGERED);
                                                         return(NO_LIMIT_TRIGGERED  );
       default:
-         slPrice = los.StopLoss       (lfxOrders, i);
+         slPrice = los.StopLossPrice  (lfxOrders, i);
          slValue = los.StopLossValue  (lfxOrders, i);
-         tpPrice = los.TakeProfit     (lfxOrders, i);
+         tpPrice = los.TakeProfitPrice(lfxOrders, i);
          tpValue = los.TakeProfitValue(lfxOrders, i);
          profit  = lfxOrders.dCache[i][I_PROFIT];
    }
@@ -3894,22 +3894,22 @@ bool QC.HandleLfxTerminalMessages() {
       return(false);
 
    // (2) Channel auf neue Messages prüfen
-   int result = QC_CheckChannel(qc.TradeToLfxChannel);
-   if (result == QC_CHECK_CHANNEL_EMPTY)
+   int checkResult = QC_CheckChannel(qc.TradeToLfxChannel);
+   if (checkResult == QC_CHECK_CHANNEL_EMPTY)
       return(true);
-   if (result < QC_CHECK_CHANNEL_EMPTY) {
-      if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
-      if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
-                                               return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
+   if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
+      if (checkResult == QC_CHECK_CHANNEL_ERROR)  return(!catch("QC.HandleLfxTerminalMessages(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR));
+      if (checkResult == QC_CHECK_CHANNEL_NONE )  return(!catch("QC.HandleLfxTerminalMessages(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  channel doesn't exist",                   ERR_WIN32_ERROR));
+                                                  return(!catch("QC.HandleLfxTerminalMessages(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeToLfxChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
    }
 
    // (3) neue Messages abholen
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
-   result = QC_GetMessages3(hQC.TradeToLfxReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
-   if (result != QC_GET_MSG3_SUCCESS) {
-      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
-      if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleLfxTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
-                                               return(!catch("QC.HandleLfxTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
+   int getResult = QC_GetMessages3(hQC.TradeToLfxReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
+   if (getResult != QC_GET_MSG3_SUCCESS) {
+      if (getResult == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleLfxTerminalMessages(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
+      if (getResult == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleLfxTerminalMessages(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
+                                                  return(!catch("QC.HandleLfxTerminalMessages(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR));
    }
 
    // (4) Messages verarbeiten: Da hier sehr viele Messages in kurzer Zeit eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
@@ -4129,22 +4129,22 @@ bool QC.HandleTradeCommands() {
       return(false);
 
    // (2) Channel auf neue Messages prüfen
-   int result = QC_CheckChannel(qc.TradeCmdChannel);
-   if (result == QC_CHECK_CHANNEL_EMPTY)
+   int checkResult = QC_CheckChannel(qc.TradeCmdChannel);
+   if (checkResult == QC_CHECK_CHANNEL_EMPTY)
       return(true);
-   if (result < QC_CHECK_CHANNEL_EMPTY) {
-      if (result == QC_CHECK_CHANNEL_ERROR)    return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",           ERR_WIN32_ERROR));
-      if (result == QC_CHECK_CHANNEL_NONE )    return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  channel doesn't exist",              ERR_WIN32_ERROR));
-                                               return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  unexpected return value = "+ result, ERR_WIN32_ERROR));
+   if (checkResult < QC_CHECK_CHANNEL_EMPTY) {
+      if (checkResult == QC_CHECK_CHANNEL_ERROR)  return(!catch("QC.HandleTradeCommands(1)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\") => QC_CHECK_CHANNEL_ERROR",                ERR_WIN32_ERROR));
+      if (checkResult == QC_CHECK_CHANNEL_NONE )  return(!catch("QC.HandleTradeCommands(2)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  channel doesn't exist",                   ERR_WIN32_ERROR));
+                                                  return(!catch("QC.HandleTradeCommands(3)->MT4iQuickChannel::QC_CheckChannel(name=\""+ qc.TradeCmdChannel +"\")  unexpected return value = "+ checkResult, ERR_WIN32_ERROR));
    }
 
    // (3) neue Messages abholen
    string messageBuffer[]; if (!ArraySize(messageBuffer)) InitializeStringBuffer(messageBuffer, QC_MAX_BUFFER_SIZE);
-   result = QC_GetMessages3(hQC.TradeCmdReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
-   if (result != QC_GET_MSG3_SUCCESS) {
-      if (result == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QC_CheckChannel not empty/QC_GET_MSG3_CHANNEL_EMPTY mismatch",           ERR_WIN32_ERROR));
-      if (result == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  buffer to small (QC_MAX_BUFFER_SIZE/QC_GET_MSG3_INSUF_BUFFER mismatch)", ERR_WIN32_ERROR));
-                                               return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ result,                                     ERR_WIN32_ERROR));
+   int getResult = QC_GetMessages3(hQC.TradeCmdReceiver, messageBuffer, QC_MAX_BUFFER_SIZE);
+   if (getResult != QC_GET_MSG3_SUCCESS) {
+      if (getResult == QC_GET_MSG3_CHANNEL_EMPTY) return(!catch("QC.HandleTradeCommands(4)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_GetMessages3=CHANNEL_EMPTY", ERR_WIN32_ERROR));
+      if (getResult == QC_GET_MSG3_INSUF_BUFFER ) return(!catch("QC.HandleTradeCommands(5)->MT4iQuickChannel::QC_GetMessages3()  QuickChannel mis-match: QC_CheckChannel="+ checkResult +"chars/QC_MAX_BUFFER_SIZE="+ QC_MAX_BUFFER_SIZE +"/size(buffer)="+ (StringLen(messageBuffer[0])+1) +"/QC_GetMessages3=INSUF_BUFFER", ERR_WIN32_ERROR));
+                                                  return(!catch("QC.HandleTradeCommands(6)->MT4iQuickChannel::QC_GetMessages3()  unexpected return value = "+ getResult, ERR_WIN32_ERROR));
    }
 
    // (4) Messages verarbeiten
