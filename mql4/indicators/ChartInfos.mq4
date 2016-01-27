@@ -1090,7 +1090,7 @@ bool SetAuMDisplayStatus(bool status) {
  * @return bool - Erfolgsstatus
  */
 bool CheckLfxLimits() {
-   if (!IsConnected()) return(true);      // ohne Connection keine Limitprüfung: Offline-Chart, Online-Chart unter "MyFX-Synthetic", sonstiges
+   if (!IsConnected()) return(true);               // ohne Connection keine Limitprüfung: Offline-Chart, Online-Chart unter "MyFX-Synthetic", sonstiges
 
    datetime triggerTime, now.fxt=TimeFXT(); if (!now.fxt) return(false);
    string   errorMsg;
