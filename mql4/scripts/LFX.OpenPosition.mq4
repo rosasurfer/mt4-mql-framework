@@ -215,11 +215,10 @@ int onStart() {
    if (button != IDOK)
       return(catch("onStart(5)"));
 
-
-   // TODO: Fehler in Counter, wenn gleichzeitig zwei Orders erzeugt werden (2 x CHF.3)
+   // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
    int    magicNumber = CreateMagicNumber();
-   int    counter     = GetPositionCounter() + 1;
-   string comment     = lfxCurrency +"."+ counter;
+   int    marker      = LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId) + 1;
+   string comment     = lfxCurrency +"."+ marker;
 
 
    // (5) LFX-Order sperren, bis alle Teilpositionen geöffnet sind und die Order gespeichert ist               TODO: System-weites Lock setzen
@@ -260,21 +259,21 @@ int onStart() {
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(last_error);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket         (lo, magicNumber );                       // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setType           (lo, direction   );
-      lo.setUnits          (lo, realUnits   );
-      lo.setOpenTime       (lo, now.fxt     );
-      lo.setOpenEquity     (lo, equity      );
-      lo.setOpenPrice      (lo, openPrice   );
-      lo.setStopLossValue  (lo, EMPTY_VALUE );
-      lo.setTakeProfitValue(lo, EMPTY_VALUE );
-      lo.setComment        (lo, "#"+ counter);
+      lo.setTicket         (lo, magicNumber);                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setType           (lo, direction  );
+      lo.setUnits          (lo, realUnits  );
+      lo.setOpenTime       (lo, now.fxt    );
+      lo.setOpenEquity     (lo, equity     );
+      lo.setOpenPrice      (lo, openPrice  );
+      lo.setStopLossValue  (lo, EMPTY_VALUE);
+      lo.setTakeProfitValue(lo, EMPTY_VALUE);
+      lo.setComment        (lo, "#"+ marker);
    if (!LFX.SaveOrder(lo))
       return(_last_error(ReleaseLock(mutex)));
 
 
    // (8) Logmessage ausgeben
-   if (__LOG) log("onStart(7)  "+ lfxCurrency +"."+ counter +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   if (__LOG) log("onStart(7)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    // (9) Order freigeben
@@ -326,31 +325,6 @@ int CreateInstanceId() {
          id = 0;
    }
    return(id);
-}
-
-
-/**
- * Gibt den Positionszähler der letzten offenen Order im aktuellen Instrument zurück.
- *
- * @return int - Zähler
- */
-int GetPositionCounter() {
-   int counter, size=ArrayRange(lfxOrders, 0);
-
-   for (int i=0; i < size; i++) {
-      if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
-         continue;
-      if (!los.IsOpenPosition(lfxOrders, i))
-         continue;
-
-      string comment = los.Comment(lfxOrders, i);
-      if      (StringStartsWith(comment, lfxCurrency +".")) comment = StringRightFrom(comment, ".");
-      else if (StringStartsWith(comment, "#"))              comment = StringRight(comment, -1);
-      else
-         continue;
-      counter = Max(counter, StrToInteger(comment));
-   }
-   return(counter);
 }
 
 

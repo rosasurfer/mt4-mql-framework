@@ -122,16 +122,16 @@ int onStart() {
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
-      lo.setTicket         (lo, CreateMagicNumber()          );      // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
-      lo.setType           (lo, OP_BUYLIMIT                  );
-      lo.setUnits          (lo, Units                        );
-      lo.setOpenTime       (lo, now.fxt                      );
-      lo.setOpenPrice      (lo, LimitPrice                   );
-      lo.setStopLossPrice  (lo, StopLossPrice                );
-      lo.setStopLossValue  (lo, EMPTY_VALUE                  );
-      lo.setTakeProfitPrice(lo, TakeProfitPrice              );
-      lo.setTakeProfitValue(lo, EMPTY_VALUE                  );
-      lo.setComment        (lo, "#"+ (GetPositionCounter()+1));
+      lo.setTicket         (lo, CreateMagicNumber());                // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
+      lo.setType           (lo, OP_BUYLIMIT        );
+      lo.setUnits          (lo, Units              );
+      lo.setOpenTime       (lo, now.fxt            );
+      lo.setOpenPrice      (lo, LimitPrice         );
+      lo.setStopLossPrice  (lo, StopLossPrice      );
+      lo.setStopLossValue  (lo, EMPTY_VALUE        );
+      lo.setTakeProfitPrice(lo, TakeProfitPrice    );
+      lo.setTakeProfitValue(lo, EMPTY_VALUE        );                // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
+      lo.setComment        (lo, "#"+ (LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId)+1));
    if (!LFX.SaveOrder(lo))
       return(last_error);
 
@@ -191,29 +191,4 @@ int CreateInstanceId() {
          id = 0;
    }
    return(id);
-}
-
-
-/**
- * Gibt den Positionszähler der letzten offenen Order im aktuellen Instrument zurück.
- *
- * @return int - Zähler
- */
-int GetPositionCounter() {
-   int counter, size=ArrayRange(lfxOrders, 0);
-
-   for (int i=0; i < size; i++) {
-      if (los.CurrencyId(lfxOrders, i) != lfxCurrencyId)
-         continue;
-      if (!los.IsOpenPosition(lfxOrders, i))
-         continue;
-
-      string comment = los.Comment(lfxOrders, i);
-      if      (StringStartsWith(comment, lfxCurrency +".")) comment = StringRightFrom(comment, ".");
-      else if (StringStartsWith(comment, "#"))              comment = StringRight(comment, -1);
-      else
-         continue;
-      counter = Max(counter, StrToInteger(comment));
-   }
-   return(counter);
 }
