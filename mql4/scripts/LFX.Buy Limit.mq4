@@ -127,9 +127,9 @@ int onStart() {
       lo.setUnits          (lo, Units                        );
       lo.setOpenTime       (lo, now.fxt                      );
       lo.setOpenPrice      (lo, LimitPrice                   );
-      lo.setStopLoss       (lo, StopLossPrice                );
+      lo.setStopLossPrice  (lo, StopLossPrice                );
       lo.setStopLossValue  (lo, EMPTY_VALUE                  );
-      lo.setTakeProfit     (lo, TakeProfitPrice              );
+      lo.setTakeProfitPrice(lo, TakeProfitPrice              );
       lo.setTakeProfitValue(lo, EMPTY_VALUE                  );
       lo.setComment        (lo, "#"+ (GetPositionCounter()+1));
    if (!LFX.SaveOrder(lo))

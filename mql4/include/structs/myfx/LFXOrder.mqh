@@ -10,10 +10,10 @@
  *    int    openTriggerTime        //   4         lo[ 5]      // Zeitpunkt des Erreichens eines Open-Limits in FXT
  *    int    openTime;              //   4         lo[ 6]      // OpenTime in FXT (negativ: Zeitpunkt eines Fehlers beim Öffnen der Order)
  *    int    openPrice;             //   4         lo[ 7]      // OpenPrice in Points
- *    int    stopLoss;              //   4         lo[ 8]      // StopLoss-Preis in Points
+ *    int    stopLossPrice;         //   4         lo[ 8]      // StopLoss-Preis in Points
  *    int    stopLossValue;         //   4         lo[ 9]      // StopLoss-Value in Hundertsteln der Account-Währung
  *    BOOL   stopLossTriggered      //   4         lo[10]      // ob ein StopLoss-Limit ausgelöst wurde
- *    int    takeProfit;            //   4         lo[11]      // TakeProfit-Preis in Points
+ *    int    takeProfitPrice;       //   4         lo[11]      // TakeProfit-Preis in Points
  *    int    takeProfitValue;       //   4         lo[12]      // TakeProfit-Value in Hundertsteln der Account-Währung
  *    BOOL   takeProfitTriggered    //   4         lo[13]      // ob ein TakeProfit-Limit ausgelöst wurde
  *    int    closeTriggerTime       //   4         lo[14]      // Zeitpunkt des Erreichens eines Close-Limits in FXT
@@ -36,10 +36,10 @@
 #define I_LFX_ORDER.openTriggerTime       5
 #define I_LFX_ORDER.openTime              6
 #define I_LFX_ORDER.openPrice             7
-#define I_LFX_ORDER.stopLoss              8
+#define I_LFX_ORDER.stopLossPrice         8
 #define I_LFX_ORDER.stopLossValue         9
 #define I_LFX_ORDER.stopLossTriggered    10
-#define I_LFX_ORDER.takeProfit           11
+#define I_LFX_ORDER.takeProfitPrice      11
 #define I_LFX_ORDER.takeProfitValue      12
 #define I_LFX_ORDER.takeProfitTriggered  13
 #define I_LFX_ORDER.closeTriggerTime     14
@@ -60,10 +60,10 @@ double   lo.OpenEquity          (/*LFX_ORDER*/int lo[]         ) {              
 datetime lo.OpenTriggerTime     (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.openTriggerTime    ]);                                                                      LFX_ORDER.toStr(lo); }
 datetime lo.OpenTime            (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.openTime           ]);                                                                      LFX_ORDER.toStr(lo); }
 double   lo.OpenPrice           (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.openPrice          ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
-double   lo.StopLoss            (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.stopLoss           ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
+double   lo.StopLossPrice       (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.stopLossPrice      ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
 double   lo.StopLossValue       (/*LFX_ORDER*/int lo[]         ) {                                                   int v=lo[I_LFX_ORDER.stopLossValue      ]; if (v==EMPTY_VALUE) return(v); return(NormalizeDouble(v/100., 2));    LFX_ORDER.toStr(lo); }
 bool     lo.StopLossTriggered   (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.stopLossTriggered  ] != 0);                                                                 LFX_ORDER.toStr(lo); }
-double   lo.TakeProfit          (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.takeProfit         ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
+double   lo.TakeProfitPrice     (/*LFX_ORDER*/int lo[]         ) { int digits=lo.Digits(lo);        return(NormalizeDouble(lo[I_LFX_ORDER.takeProfitPrice    ]/MathPow(10, digits), digits));                                         LFX_ORDER.toStr(lo); }
 double   lo.TakeProfitValue     (/*LFX_ORDER*/int lo[]         ) {                                                   int v=lo[I_LFX_ORDER.takeProfitValue    ]; if (v==EMPTY_VALUE) return(v); return(NormalizeDouble(v/100., 2));    LFX_ORDER.toStr(lo); }
 bool     lo.TakeProfitTriggered (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.takeProfitTriggered] != 0);                                                                 LFX_ORDER.toStr(lo); }
 datetime lo.CloseTriggerTime    (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.closeTriggerTime   ]);                                                                      LFX_ORDER.toStr(lo); }
@@ -87,10 +87,10 @@ bool     lo.IsPendingPosition   (/*LFX_ORDER*/int lo[]         ) {              
 bool     lo.IsClosedPosition    (/*LFX_ORDER*/int lo[]         ) {                                    return(lo.IsPosition(lo) &&  lo.IsClosed(lo));                                                                                  LFX_ORDER.toStr(lo); }
 bool     lo.IsClosed            (/*LFX_ORDER*/int lo[]         ) {                                     return(lo.CloseTime(lo) > 0);                                                                                                  LFX_ORDER.toStr(lo); }
 bool     lo.IsStopLoss          (/*LFX_ORDER*/int lo[]         ) {                               return(lo.IsStopLossPrice(lo) || lo.IsStopLossValue(lo));                                                                            LFX_ORDER.toStr(lo); }
-bool     lo.IsStopLossPrice     (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.stopLoss     ] != 0          );                                                             LFX_ORDER.toStr(lo); }
+bool     lo.IsStopLossPrice     (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.stopLossPrice] != 0          );                                                             LFX_ORDER.toStr(lo); }
 bool     lo.IsStopLossValue     (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.stopLossValue] != EMPTY_VALUE);                                                             LFX_ORDER.toStr(lo); }
 bool     lo.IsTakeProfit        (/*LFX_ORDER*/int lo[]         ) {                             return(lo.IsTakeProfitPrice(lo) || lo.IsTakeProfitValue(lo));                                                                          LFX_ORDER.toStr(lo); }
-bool     lo.IsTakeProfitPrice   (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.takeProfit     ] != 0          );                                                           LFX_ORDER.toStr(lo); }
+bool     lo.IsTakeProfitPrice   (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.takeProfitPrice] != 0          );                                                           LFX_ORDER.toStr(lo); }
 bool     lo.IsTakeProfitValue   (/*LFX_ORDER*/int lo[]         ) {                                                  return(lo[I_LFX_ORDER.takeProfitValue] != EMPTY_VALUE);                                                           LFX_ORDER.toStr(lo); }
 bool     lo.IsOpenError         (/*LFX_ORDER*/int lo[]         ) {                                      return(lo.OpenTime(lo) < 0);                                                                                                  LFX_ORDER.toStr(lo); }
 bool     lo.IsCloseError        (/*LFX_ORDER*/int lo[]         ) {                                     return(lo.CloseTime(lo) < 0);                                                                                                  LFX_ORDER.toStr(lo); }
@@ -104,10 +104,10 @@ double   los.OpenEquity         (/*LFX_ORDER*/int lo[][], int i) {              
 datetime los.OpenTriggerTime    (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.openTriggerTime    ]);                                                                   LFX_ORDER.toStr(lo); }
 datetime los.OpenTime           (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.openTime           ]);                                                                   LFX_ORDER.toStr(lo); }
 double   los.OpenPrice          (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.openPrice          ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
-double   los.StopLoss           (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.stopLoss           ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
+double   los.StopLossPrice      (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.stopLossPrice      ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
 double   los.StopLossValue      (/*LFX_ORDER*/int lo[][], int i) {                                                   int v=lo[i][I_LFX_ORDER.stopLossValue      ]; if (v==EMPTY_VALUE) return(v); return(NormalizeDouble(v/100., 2)); LFX_ORDER.toStr(lo); }
 bool     los.StopLossTriggered  (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.stopLossTriggered  ] != 0);                                                              LFX_ORDER.toStr(lo); }
-double   los.TakeProfit         (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.takeProfit         ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
+double   los.TakeProfitPrice    (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][I_LFX_ORDER.takeProfitPrice    ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
 double   los.TakeProfitValue    (/*LFX_ORDER*/int lo[][], int i) {                                                   int v=lo[i][I_LFX_ORDER.takeProfitValue    ]; if (v==EMPTY_VALUE) return(v); return(NormalizeDouble(v/100., 2)); LFX_ORDER.toStr(lo); }
 bool     los.TakeProfitTriggered(/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.takeProfitTriggered] != 0);                                                              LFX_ORDER.toStr(lo); }
 datetime los.CloseTriggerTime   (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.closeTriggerTime   ]);                                                                   LFX_ORDER.toStr(lo); }
@@ -131,10 +131,10 @@ bool     los.IsPendingPosition  (/*LFX_ORDER*/int lo[][], int i) {              
 bool     los.IsClosedPosition   (/*LFX_ORDER*/int lo[][], int i) {                                   return(los.IsPosition(lo, i) &&  los.IsClosed(lo, i));                                                                           LFX_ORDER.toStr(lo); }
 bool     los.IsClosed           (/*LFX_ORDER*/int lo[][], int i) {                                    return(los.CloseTime(lo, i) > 0);                                                                                               LFX_ORDER.toStr(lo); }
 bool     los.IsStopLoss         (/*LFX_ORDER*/int lo[][], int i) {                              return(los.IsStopLossPrice(lo, i) || los.IsStopLossValue(lo, i));                                                                     LFX_ORDER.toStr(lo); }
-bool     los.IsStopLossPrice    (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.stopLoss     ] != 0          );                                                          LFX_ORDER.toStr(lo); }
+bool     los.IsStopLossPrice    (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.stopLossPrice] != 0          );                                                          LFX_ORDER.toStr(lo); }
 bool     los.IsStopLossValue    (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.stopLossValue] != EMPTY_VALUE);                                                          LFX_ORDER.toStr(lo); }
 bool     los.IsTakeProfit       (/*LFX_ORDER*/int lo[][], int i) {                            return(los.IsTakeProfitPrice(lo, i) || los.IsTakeProfitValue(lo, i));                                                                   LFX_ORDER.toStr(lo); }
-bool     los.IsTakeProfitPrice  (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.takeProfit     ] != 0          );                                                        LFX_ORDER.toStr(lo); }
+bool     los.IsTakeProfitPrice  (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.takeProfitPrice] != 0          );                                                        LFX_ORDER.toStr(lo); }
 bool     los.IsTakeProfitValue  (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][I_LFX_ORDER.takeProfitValue] != EMPTY_VALUE);                                                        LFX_ORDER.toStr(lo); }
 bool     los.IsOpenError        (/*LFX_ORDER*/int lo[][], int i) {                                     return(los.OpenTime(lo, i) < 0);                                                                                               LFX_ORDER.toStr(lo); }
 bool     los.IsCloseError       (/*LFX_ORDER*/int lo[][], int i) {                                    return(los.CloseTime(lo, i) < 0);                                                                                               LFX_ORDER.toStr(lo); }
@@ -149,11 +149,11 @@ double   lo.setLots                (/*LFX_ORDER*/int &lo[],          double   lo
 double   lo.setOpenEquity          (/*LFX_ORDER*/int &lo[],          double   openEquity         ) { int v=MathRound(openEquity * 100);                                                       lo[I_LFX_ORDER.openEquity         ] = v;    return(openEquity              ); LFX_ORDER.toStr(lo); }
 datetime lo.setOpenTriggerTime     (/*LFX_ORDER*/int &lo[],          datetime openTriggerTime    ) { int v=openTriggerTime;                                                                   lo[I_LFX_ORDER.openTriggerTime    ] = v;    return(openTriggerTime         ); LFX_ORDER.toStr(lo); }
 datetime lo.setOpenTime            (/*LFX_ORDER*/int &lo[],          datetime openTime           ) { int v=openTime;                                                                          lo[I_LFX_ORDER.openTime           ] = v;    return(openTime                ); LFX_ORDER.toStr(lo); }
-double   lo.setOpenPrice           (/*LFX_ORDER*/int &lo[],          double   openPrice          ) { int v=MathRound(openPrice  * MathPow(10, lo.Digits(lo)));                                lo[I_LFX_ORDER.openPrice          ] = v;    return(openPrice               ); LFX_ORDER.toStr(lo); }
-double   lo.setStopLoss            (/*LFX_ORDER*/int &lo[],          double   stopLoss           ) { int v=MathRound(stopLoss   * MathPow(10, lo.Digits(lo)));                                lo[I_LFX_ORDER.stopLoss           ] = v;    return(stopLoss                ); LFX_ORDER.toStr(lo); }
+double   lo.setOpenPrice           (/*LFX_ORDER*/int &lo[],          double   openPrice          ) { int v=MathRound(openPrice       * MathPow(10, lo.Digits(lo)));                           lo[I_LFX_ORDER.openPrice          ] = v;    return(openPrice               ); LFX_ORDER.toStr(lo); }
+double   lo.setStopLossPrice       (/*LFX_ORDER*/int &lo[],          double   stopLossPrice      ) { int v=MathRound(stopLossPrice   * MathPow(10, lo.Digits(lo)));                           lo[I_LFX_ORDER.stopLossPrice      ] = v;    return(stopLossPrice           ); LFX_ORDER.toStr(lo); }
 double   lo.setStopLossValue       (/*LFX_ORDER*/int &lo[],          double   stopLossValue      ) { int v=EMPTY_VALUE; if (stopLossValue  !=EMPTY_VALUE) v=MathRound(stopLossValue   * 100); lo[I_LFX_ORDER.stopLossValue      ] = v;    return(stopLossValue           ); LFX_ORDER.toStr(lo); }
 bool     lo.setStopLossTriggered   (/*LFX_ORDER*/int &lo[],          bool     stopLossTriggered  ) { int v=stopLossTriggered != 0;                                                            lo[I_LFX_ORDER.stopLossTriggered  ] = v;    return(stopLossTriggered != 0  ); LFX_ORDER.toStr(lo); }
-double   lo.setTakeProfit          (/*LFX_ORDER*/int &lo[],          double   takeProfit         ) { int v=MathRound(takeProfit * MathPow(10, lo.Digits(lo)));                                lo[I_LFX_ORDER.takeProfit         ] = v;    return(takeProfit              ); LFX_ORDER.toStr(lo); }
+double   lo.setTakeProfitPrice     (/*LFX_ORDER*/int &lo[],          double   takeProfitPrice    ) { int v=MathRound(takeProfitPrice * MathPow(10, lo.Digits(lo)));                           lo[I_LFX_ORDER.takeProfitPrice    ] = v;    return(takeProfitPrice         ); LFX_ORDER.toStr(lo); }
 double   lo.setTakeProfitValue     (/*LFX_ORDER*/int &lo[],          double   takeProfitValue    ) { int v=EMPTY_VALUE; if (takeProfitValue!=EMPTY_VALUE) v=MathRound(takeProfitValue * 100); lo[I_LFX_ORDER.takeProfitValue    ] = v;    return(takeProfitValue         ); LFX_ORDER.toStr(lo); }
 bool     lo.setTakeProfitTriggered (/*LFX_ORDER*/int &lo[],          bool     takeProfitTriggered) { int v=takeProfitTriggered != 0;                                                          lo[I_LFX_ORDER.takeProfitTriggered] = v;    return(takeProfitTriggered != 0); LFX_ORDER.toStr(lo); }
 datetime lo.setCloseTriggerTime    (/*LFX_ORDER*/int &lo[],          datetime closeTriggerTime   ) { int v=closeTriggerTime;                                                                  lo[I_LFX_ORDER.closeTriggerTime   ] = v;    return(closeTriggerTime        ); LFX_ORDER.toStr(lo); }
@@ -177,11 +177,11 @@ double   los.setLots               (/*LFX_ORDER*/int &lo[][], int i, double   lo
 double   los.setOpenEquity         (/*LFX_ORDER*/int &lo[][], int i, double   openEquity         ) { int v=MathRound(openEquity * 100);                                                       lo[i][I_LFX_ORDER.openEquity         ] = v; return(openEquity              ); LFX_ORDER.toStr(lo); }
 datetime los.setOpenTriggerTime    (/*LFX_ORDER*/int &lo[][], int i, datetime openTriggerTime    ) { int v=openTriggerTime;                                                                   lo[i][I_LFX_ORDER.openTriggerTime    ] = v; return(openTriggerTime         ); LFX_ORDER.toStr(lo); }
 datetime los.setOpenTime           (/*LFX_ORDER*/int &lo[][], int i, datetime openTime           ) { int v=openTime;                                                                          lo[i][I_LFX_ORDER.openTime           ] = v; return(openTime                ); LFX_ORDER.toStr(lo); }
-double   los.setOpenPrice          (/*LFX_ORDER*/int &lo[][], int i, double   openPrice          ) { int v=MathRound(openPrice  * MathPow(10, los.Digits(lo, i)));                            lo[i][I_LFX_ORDER.openPrice          ] = v; return(openPrice               ); LFX_ORDER.toStr(lo); }
-double   los.setStopLoss           (/*LFX_ORDER*/int &lo[][], int i, double   stopLoss           ) { int v=MathRound(stopLoss   * MathPow(10, los.Digits(lo, i)));                            lo[i][I_LFX_ORDER.stopLoss           ] = v; return(stopLoss                ); LFX_ORDER.toStr(lo); }
+double   los.setOpenPrice          (/*LFX_ORDER*/int &lo[][], int i, double   openPrice          ) { int v=MathRound(openPrice       * MathPow(10, los.Digits(lo, i)));                       lo[i][I_LFX_ORDER.openPrice          ] = v; return(openPrice               ); LFX_ORDER.toStr(lo); }
+double   los.setStopLossPrice      (/*LFX_ORDER*/int &lo[][], int i, double   stopLossPrice      ) { int v=MathRound(stopLossPrice   * MathPow(10, los.Digits(lo, i)));                       lo[i][I_LFX_ORDER.stopLossPrice      ] = v; return(stopLossPrice           ); LFX_ORDER.toStr(lo); }
 double   los.setStopLossValue      (/*LFX_ORDER*/int &lo[][], int i, double   stopLossValue      ) { int v=EMPTY_VALUE; if (stopLossValue  !=EMPTY_VALUE) v=MathRound(stopLossValue   * 100); lo[i][I_LFX_ORDER.stopLossValue      ] = v; return(stopLossValue           ); LFX_ORDER.toStr(lo); }
 bool     los.setStopLossTriggered  (/*LFX_ORDER*/int &lo[][], int i, bool     stopLossTriggered  ) { int v=stopLossTriggered != 0;                                                            lo[i][I_LFX_ORDER.stopLossTriggered  ] = v; return(stopLossTriggered != 0  ); LFX_ORDER.toStr(lo); }
-double   los.setTakeProfit         (/*LFX_ORDER*/int &lo[][], int i, double   takeProfit         ) { int v=MathRound(takeProfit * MathPow(10, los.Digits(lo, i)));                            lo[i][I_LFX_ORDER.takeProfit         ] = v; return(takeProfit              ); LFX_ORDER.toStr(lo); }
+double   los.setTakeProfitPrice    (/*LFX_ORDER*/int &lo[][], int i, double   takeProfitPrice    ) { int v=MathRound(takeProfitPrice * MathPow(10, los.Digits(lo, i)));                       lo[i][I_LFX_ORDER.takeProfitPrice    ] = v; return(takeProfitPrice         ); LFX_ORDER.toStr(lo); }
 double   los.setTakeProfitValue    (/*LFX_ORDER*/int &lo[][], int i, double   takeProfitValue    ) { int v=EMPTY_VALUE; if (takeProfitValue!=EMPTY_VALUE) v=MathRound(takeProfitValue * 100); lo[i][I_LFX_ORDER.takeProfitValue    ] = v; return(takeProfitValue         ); LFX_ORDER.toStr(lo); }
 bool     los.setTakeProfitTriggered(/*LFX_ORDER*/int &lo[][], int i, bool     takeProfitTriggered) { int v=takeProfitTriggered != 0;                                                          lo[i][I_LFX_ORDER.takeProfitTriggered] = v; return(takeProfitTriggered != 0); LFX_ORDER.toStr(lo); }
 datetime los.setCloseTriggerTime   (/*LFX_ORDER*/int &lo[][], int i, datetime closeTriggerTime   ) { int v=closeTriggerTime;                                                                  lo[i][I_LFX_ORDER.closeTriggerTime   ] = v; return(closeTriggerTime        ); LFX_ORDER.toStr(lo); }
@@ -233,10 +233,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
                                      ", openTriggerTime="    ,           ifString(lo.OpenTriggerTime    (lo), "'"+ TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL) +" FXT'", "0"),
                                      ", openTime="           ,           ifString(lo.OpenTime           (lo), "'"+ TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL) +" FXT'"+ ifString(lo.IsOpenError(lo), "(ERROR)", ""), "0"),
                                      ", openPrice="          ,        NumberToStr(lo.OpenPrice          (lo), priceFormat),
-                                     ", stopLoss="           ,           ifString(lo.IsStopLossPrice    (lo), NumberToStr(lo.StopLoss(lo), priceFormat), "0"),
+                                     ", stopLossPrice="      ,           ifString(lo.IsStopLossPrice    (lo), NumberToStr(lo.StopLossPrice(lo), priceFormat), "0"),
                                      ", stopLossValue="      ,           ifString(lo.IsStopLossValue    (lo), DoubleToStr(lo.StopLossValue(lo), 2), "NULL"),
                                      ", stopLossTriggered="  ,          BoolToStr(lo.StopLossTriggered  (lo)),
-                                     ", takeProfit="         ,           ifString(lo.IsTakeProfitPrice  (lo), NumberToStr(lo.TakeProfit(lo), priceFormat), "0"),
+                                     ", takeProfitPrice="    ,           ifString(lo.IsTakeProfitPrice  (lo), NumberToStr(lo.TakeProfitPrice(lo), priceFormat), "0"),
                                      ", takeProfitValue="    ,           ifString(lo.IsTakeProfitValue  (lo), DoubleToStr(lo.TakeProfitValue(lo), 2), "NULL"),
                                      ", takeProfitTriggered=",          BoolToStr(lo.TakeProfitTriggered(lo)),
                                      ", closeTriggerTime="   ,           ifString(lo.CloseTriggerTime   (lo), "'"+ TimeToStr(lo.CloseTriggerTime(lo), TIME_FULL) +" FXT'", "0"),
@@ -267,10 +267,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
                                                   ", openTriggerTime="    ,           ifString(los.OpenTriggerTime    (lo, i), "'"+ TimeToStr(los.OpenTriggerTime(lo, i), TIME_FULL) +" FXT'", "0"),
                                                   ", openTime="           ,           ifString(los.OpenTime           (lo, i), "'"+ TimeToStr(Abs(los.OpenTime(lo, i)), TIME_FULL) +" FXT'"+ ifString(los.IsOpenError(lo, i), "(ERROR)", ""), "0"),
                                                   ", openPrice="          ,        NumberToStr(los.OpenPrice          (lo, i), priceFormat),
-                                                  ", stopLoss="           ,           ifString(los.IsStopLossPrice    (lo, i), NumberToStr(los.StopLoss(lo, i), priceFormat), "0"),
+                                                  ", stopLossPrice="      ,           ifString(los.IsStopLossPrice    (lo, i), NumberToStr(los.StopLossPrice(lo, i), priceFormat), "0"),
                                                   ", stopLossValue="      ,           ifString(los.IsStopLossValue    (lo, i), DoubleToStr(los.StopLossValue(lo, i), 2), "NULL"),
                                                   ", stopLossTriggered="  ,          BoolToStr(los.StopLossTriggered  (lo, i)),
-                                                  ", takeProfit="         ,           ifString(los.IsTakeProfitPrice  (lo, i), NumberToStr(los.TakeProfit(lo, i), priceFormat), "0"),
+                                                  ", takeProfitPrice="    ,           ifString(los.IsTakeProfitPrice  (lo, i), NumberToStr(los.TakeProfitPrice(lo, i), priceFormat), "0"),
                                                   ", takeProfitValue="    ,           ifString(los.IsTakeProfitValue  (lo, i), DoubleToStr(los.TakeProfitValue(lo, i), 2), "NULL"),
                                                   ", takeProfitTriggered=",          BoolToStr(los.TakeProfitTriggered(lo, i)),
                                                   ", closeTriggerTime="   ,           ifString(los.CloseTriggerTime   (lo, i), "'"+ TimeToStr(los.CloseTriggerTime(lo, i), TIME_FULL) +" FXT'", "0"),
@@ -323,10 +323,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
    lo.OpenTime              (iNulls);       los.OpenTime              (iNulls, NULL);
    lo.OpenTriggerTime       (iNulls);       los.OpenTriggerTime       (iNulls, NULL);
    lo.Profit                (iNulls);       los.Profit                (iNulls, NULL);
-   lo.StopLoss              (iNulls);       los.StopLoss              (iNulls, NULL);
+   lo.StopLossPrice         (iNulls);       los.StopLossPrice         (iNulls, NULL);
    lo.StopLossTriggered     (iNulls);       los.StopLossTriggered     (iNulls, NULL);
    lo.StopLossValue         (iNulls);       los.StopLossValue         (iNulls, NULL);
-   lo.TakeProfit            (iNulls);       los.TakeProfit            (iNulls, NULL);
+   lo.TakeProfitPrice       (iNulls);       los.TakeProfitPrice       (iNulls, NULL);
    lo.TakeProfitTriggered   (iNulls);       los.TakeProfitTriggered   (iNulls, NULL);
    lo.TakeProfitValue       (iNulls);       los.TakeProfitValue       (iNulls, NULL);
    lo.Ticket                (iNulls);       los.Ticket                (iNulls, NULL);
@@ -345,10 +345,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
    lo.setOpenTime           (iNulls, NULL); los.setOpenTime           (iNulls, NULL, NULL);
    lo.setOpenTriggerTime    (iNulls, NULL); los.setOpenTriggerTime    (iNulls, NULL, NULL);
    lo.setProfit             (iNulls, NULL); los.setProfit             (iNulls, NULL, NULL);
-   lo.setStopLoss           (iNulls, NULL); los.setStopLoss           (iNulls, NULL, NULL);
+   lo.setStopLossPrice      (iNulls, NULL); los.setStopLossPrice      (iNulls, NULL, NULL);
    lo.setStopLossTriggered  (iNulls, NULL); los.setStopLossTriggered  (iNulls, NULL, NULL);
    lo.setStopLossValue      (iNulls, NULL); los.setStopLossValue      (iNulls, NULL, NULL);
-   lo.setTakeProfit         (iNulls, NULL); los.setTakeProfit         (iNulls, NULL, NULL);
+   lo.setTakeProfitPrice    (iNulls, NULL); los.setTakeProfitPrice    (iNulls, NULL, NULL);
    lo.setTakeProfitTriggered(iNulls, NULL); los.setTakeProfitTriggered(iNulls, NULL, NULL);
    lo.setTakeProfitValue    (iNulls, NULL); los.setTakeProfitValue    (iNulls, NULL, NULL);
    lo.setTicket             (iNulls, NULL); los.setTicket             (iNulls, NULL, NULL);
@@ -379,10 +379,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   datetime lo.OpenTriggerTime        (/*LFX_ORDER*/int lo[]);
 //   datetime lo.OpenTime               (/*LFX_ORDER*/int lo[]);
 //   double   lo.OpenPrice              (/*LFX_ORDER*/int lo[]);
-//   double   lo.StopLoss               (/*LFX_ORDER*/int lo[]);
+//   double   lo.StopLossPrice          (/*LFX_ORDER*/int lo[]);
 //   double   lo.StopLossValue          (/*LFX_ORDER*/int lo[]);
 //   bool     lo.StopLossTriggered      (/*LFX_ORDER*/int lo[]);
-//   double   lo.TakeProfit             (/*LFX_ORDER*/int lo[]);
+//   double   lo.TakeProfitPrice        (/*LFX_ORDER*/int lo[]);
 //   double   lo.TakeProfitValue        (/*LFX_ORDER*/int lo[]);
 //   bool     lo.TakeProfitTriggered    (/*LFX_ORDER*/int lo[]);
 //   datetime lo.CloseTriggerTime       (/*LFX_ORDER*/int lo[]);
@@ -418,10 +418,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   datetime los.OpenTriggerTime       (/*LFX_ORDER*/int lo[][], int i);
 //   datetime los.OpenTime              (/*LFX_ORDER*/int lo[][], int i);
 //   double   los.OpenPrice             (/*LFX_ORDER*/int lo[][], int i);
-//   double   los.StopLoss              (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.StopLossPrice         (/*LFX_ORDER*/int lo[][], int i);
 //   double   los.StopLossValue         (/*LFX_ORDER*/int lo[][], int i);
 //   bool     los.StopLossTriggered     (/*LFX_ORDER*/int lo[][], int i);
-//   double   los.TakeProfit            (/*LFX_ORDER*/int lo[][], int i);
+//   double   los.TakeProfitPrice       (/*LFX_ORDER*/int lo[][], int i);
 //   double   los.TakeProfitValue       (/*LFX_ORDER*/int lo[][], int i);
 //   bool     los.TakeProfitTriggered   (/*LFX_ORDER*/int lo[][], int i);
 //   datetime los.CloseTriggerTime      (/*LFX_ORDER*/int lo[][], int i);
@@ -458,10 +458,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   datetime lo.setOpenTriggerTime     (/*LFX_ORDER*/int lo[], datetime openTriggerTime    );
 //   datetime lo.setOpenTime            (/*LFX_ORDER*/int lo[], datetime openTime           );
 //   double   lo.setOpenPrice           (/*LFX_ORDER*/int lo[], double   openPrice          );
-//   double   lo.setStopLoss            (/*LFX_ORDER*/int lo[], double   stopLoss           );
+//   double   lo.setStopLossPrice       (/*LFX_ORDER*/int lo[], double   stopLossPrice      );
 //   double   lo.setStopLossValue       (/*LFX_ORDER*/int lo[], double   stopLossValue      );
 //   bool     lo.setStopLossTriggered   (/*LFX_ORDER*/int lo[], int      stopLossTriggered  );
-//   double   lo.setTakeProfit          (/*LFX_ORDER*/int lo[], double   takeProfit         );
+//   double   lo.setTakeProfitPrice     (/*LFX_ORDER*/int lo[], double   takeProfitPrice    );
 //   double   lo.setTakeProfitValue     (/*LFX_ORDER*/int lo[], double   takeProfitValue    );
 //   bool     lo.setTakeProfitTriggered (/*LFX_ORDER*/int lo[], int      takeProfitTriggered);
 //   datetime lo.setCloseTriggerTime    (/*LFX_ORDER*/int lo[], datetime closeTriggerTime   );
@@ -480,10 +480,10 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 //   datetime los.setOpenTriggerTime    (/*LFX_ORDER*/int lo[][], int i, datetime openTriggerTime    );
 //   datetime los.setOpenTime           (/*LFX_ORDER*/int lo[][], int i, datetime openTime           );
 //   double   los.setOpenPrice          (/*LFX_ORDER*/int lo[][], int i, double   openPrice          );
-//   double   los.setStopLoss           (/*LFX_ORDER*/int lo[][], int i, double   stopLoss           );
+//   double   los.setStopLossPrice      (/*LFX_ORDER*/int lo[][], int i, double   stopLossPrice      );
 //   double   los.setStopLossValue      (/*LFX_ORDER*/int lo[][], int i, double   stopLossValue      );
 //   bool     los.setStopLossTriggered  (/*LFX_ORDER*/int lo[][], int i, int      stopLossTriggered  );
-//   double   los.setTakeProfit         (/*LFX_ORDER*/int lo[][], int i, double   takeProfit         );
+//   double   los.setTakeProfitPrice    (/*LFX_ORDER*/int lo[][], int i, double   takeProfitPrice    );
 //   double   los.setTakeProfitValue    (/*LFX_ORDER*/int lo[][], int i, double   takeProfitValue    );
 //   bool     los.setTakeProfitTriggered(/*LFX_ORDER*/int lo[][], int i, int      takeProfitTriggered);
 //   datetime los.setCloseTriggerTime   (/*LFX_ORDER*/int lo[][], int i, datetime closeTriggerTime   );
