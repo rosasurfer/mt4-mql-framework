@@ -265,7 +265,7 @@ int onDeinit() {
 int onTick() {
    if (1 && 1) {
       if (!CalculateIndices())   return(last_error);
-    //if (!ProcessAllLimits())   return(last_error);
+      if (!ProcessAllLimits())   return(last_error);
       if (!UpdateIndexDisplay()) return(last_error);
 
       if (Recording.Enabled) {
@@ -273,10 +273,8 @@ int onTick() {
       }
    }
    return(last_error);
-   ProcessAllLimits();
 
-
-   // (4) regelmäßig prüfen, ob sich die Limite geändert haben (nicht bei jedem Tick)
+   // TODO: regelmäßig prüfen, ob sich die Limite geändert haben (nicht bei jedem Tick)
 }
 
 
@@ -677,8 +675,8 @@ bool ProcessAllLimits() {
  * Prüft die aktiven Limite der übergebenen Orders und verschickt bei Erreichen entsprechende TradeCommands. Die übergebenen Orders
  * sind bei Rückkehr entsprechend aktualisiert.
  *
- * @param  _IN_OUT_  LFX_ORDER orders[]  - Array von LFX_ORDERs
- * @param  _IN_      int       symbolIdx - Index des Symbols des Orderdatensatzes (entspricht dem Index in den übrigen globalen Arrays)
+ * @param  _IN_OUT_ LFX_ORDER orders[]  - Array von LFX_ORDERs
+ * @param  _IN_     int       symbolIdx - Index des Symbols des Orderdatensatzes (entspricht dem Index in den übrigen globalen Arrays)
  *
  * @return int - Anzahl der modifizierten Orders (dies müssen nicht zwangsläufig alles Orders mit gerade getriggertem Limit sein) oder
  *               -1 (EMPTY), falls ein Fehler auftrat.
@@ -731,15 +729,17 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
          else if (limitResult == STOPLOSS_LIMIT_TRIGGERED) errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered StopLoss"  + ifString(los.IsStopLossPrice  (orders, i),  " at "+ NumberToStr(los.StopLossPrice  (orders, i), priceFormats[symbolIdx]), "") + ifString(los.IsStopLossValue  (orders, i), ifString(los.IsStopLossPrice  (orders, i), " or", "") +" value of "+ DoubleToStr(los.StopLossValue  (orders, i), 2), "");
          else                /*TAKEPROFIT_LIMIT_TRIGGERED*/errorMsg = "#"+ los.Ticket(orders, i) +" missing trade confirmation for triggered TakeProfit"+ ifString(los.IsTakeProfitPrice(orders, i),  " at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormats[symbolIdx]), "") + ifString(los.IsTakeProfitValue(orders, i), ifString(los.IsTakeProfitPrice(orders, i), " or", "") +" value of "+ DoubleToStr(los.TakeProfitValue(orders, i), 2), "");
 
-         if (lo.Version(order) != los.Version(orders, i)) {                // gespeicherte Version ist modifiziert (muß neuer sein)
-            // Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
+         if (lo.Version(order) != los.Version(orders, i)) {                                        // Gespeicherte Version ist modifiziert (kann nur neuer sein)
+            // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
             // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-            debug("ProcessLimits(5)  "+ errorMsg +", continuing...");      // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-            ArraySetInts(orders, i, order);                                // lokale Order mit eingelesener Order überschreiben
+            log("ProcessLimits(5)  "+ errorMsg +", continuing...");                                // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+            if (limitResult == OPEN_LIMIT_TRIGGERED) log("ProcessLimits(6)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "order was opened",    "order open failed"    ));
+            else                                     log("ProcessLimits(7)  #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "position close failed"));
+            ArraySetInts(orders, i, order);                                                        // lokale Order mit neu eingelesener Order überschreiben
          }
          else {
             // Order ist unverändert, Fehler melden und speichern.
-            warnSMS("ProcessLimits(6)  "+ errorMsg +", continuing...");
+            warn("ProcessLimits(8)  "+ errorMsg +", continuing...");
             if (limitResult == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);
             else                                     los.setCloseTime(orders, i, -now);
             if (!LFX.SaveOrder(orders, i)) return(EMPTY);
@@ -748,7 +748,7 @@ int ProcessLimits(/*LFX_ORDER*/int orders[][], int symbolIdx) {
       }
    }
 
-   if (!catch("ProcessLimits(7)"))
+   if (!catch("ProcessLimits(9)"))
       return(modifiedOrders);
    return(EMPTY);
 }
