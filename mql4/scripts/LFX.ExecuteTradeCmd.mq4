@@ -124,11 +124,11 @@ int onStart() {
 /**
  * Öffnet eine Pending-Order.
  *
- * @param  LFX_ORDER lo[] - die zu öffnende Order
+ * @param  LFX_ORDER order - die zu öffnende LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool OpenOrder(/*LFX_ORDER*/int lo[]) {
+bool OpenOrder(/*LFX_ORDER*/int order[]) {
 
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
@@ -138,12 +138,14 @@ bool OpenOrder(/*LFX_ORDER*/int lo[]) {
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
+   if (__LOG) log("OpenOrder(1)  open #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
+
    int  subPositions, error;
 
-   bool success.open   = OpenOrder.Execute          (lo, subPositions); error = last_error;
-   bool success.save   = OpenOrder.Save             (lo, !success.open);
-   bool success.notify = OpenOrder.NotifyLfxTerminal(lo);
-   bool success.sms    = OpenOrder.SendSMS          (lo, subPositions, error);
+   bool success.open   = OpenOrder.Execute          (order, subPositions); error = last_error;
+   bool success.save   = OpenOrder.Save             (order, !success.open);
+   bool success.notify = OpenOrder.NotifyLfxTerminal(order);
+   bool success.sms    = OpenOrder.SendSMS          (order, subPositions, error);
 
    return(success.open && success.save && success.notify && success.sms);
 }
@@ -265,8 +267,6 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (5) Teilorders ausführen und dabei Gesamt-OpenPrice berechnen
-   if (__LOG) log("OpenOrder.Execute(6)  "+ tradeAccount.company +": "+ tradeAccount.number +" ("+ tradeAccount.currency +")");
-
    string comment = lo.Comment(lo);
       if ( StringStartsWith(comment, lfxCurrency)) comment = StringRightFrom(comment, lfxCurrency);
       if ( StringStartsWith(comment, "."        )) comment = StringRight(comment, -1);
@@ -308,9 +308,9 @@ bool OpenOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (7) Logmessage ausgeben
-   if (__LOG) log("OpenOrder.Execute(7)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   if (__LOG) log("OpenOrder.Execute(6)  "+ comment +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
-   return(!catch("OpenOrder.Execute(8)"));
+   return(!catch("OpenOrder.Execute(7)"));
 }
 
 
@@ -403,11 +403,11 @@ bool OpenOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, int error) {
 /**
  * Schließt eine offene Position.
  *
- * @param  LFX_ORDER lo[] - die zu schließende Order
+ * @param  LFX_ORDER order - die zu schließende LFX-Order
  *
  * @return bool - Erfolgsstatus
  */
-bool ClosePosition(/*LFX_ORDER*/int lo[]) {
+bool ClosePosition(/*LFX_ORDER*/int order[]) {
 
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
    // in eine eigene Funktion ausgelagert:
@@ -417,13 +417,15 @@ bool ClosePosition(/*LFX_ORDER*/int lo[]) {
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
-   string comment = lo.Comment(lo);
+   if (__LOG) log("ClosePosition(1)  close #"+ lo.Ticket(order) +" on "+ tradeAccount.company +":"+ tradeAccount.number +" ("+ tradeAccount.currency +")");
+
+   string comment = lo.Comment(order);
    int    error;
 
-   bool success.close  = ClosePosition.Execute          (lo); error = last_error;
-   bool success.save   = ClosePosition.Save             (lo, !success.close);
-   bool success.notify = ClosePosition.NotifyLfxTerminal(lo);
-   bool success.sms    = ClosePosition.SendSMS          (lo, comment, error);
+   bool success.close  = ClosePosition.Execute          (order); error = last_error;
+   bool success.save   = ClosePosition.Save             (order, !success.close);
+   bool success.notify = ClosePosition.NotifyLfxTerminal(order);
+   bool success.sms    = ClosePosition.SendSMS          (order, comment, error);
 
    return(success.close && success.save && success.notify && success.sms);
 }
@@ -459,7 +461,6 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    double slippage    = 0.1;
    color  markerColor = CLR_NONE;
    int    oeFlags     = NULL;
-   if (__LOG) log("ClosePosition.Execute(3)  "+ tradeAccount.company +": "+ tradeAccount.name +" ("+ tradeAccount.number +"), "+ tradeAccount.currency);
 
    /*ORDER_EXECUTION*/int oes[][ORDER_EXECUTION.intSize]; ArrayResize(oes, ticketsSize); InitializeByteBuffer(oes, ORDER_EXECUTION.size);
    if (!OrderMultiClose(tickets, slippage, markerColor, oeFlags, oes))
@@ -494,7 +495,7 @@ bool ClosePosition.Execute(/*LFX_ORDER*/int lo[]) {
    if (StringStartsWith(oldComment, "#"            )) oldComment = StringRight(oldComment, -1);
    int counter = StrToInteger(oldComment);
 
-   if (__LOG) log("ClosePosition.Execute(4)  "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   if (__LOG) log("ClosePosition.Execute(3)  "+ currency +"."+ counter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    return(true);
 }
