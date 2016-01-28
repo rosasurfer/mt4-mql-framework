@@ -1,1 +1,0 @@
-#include <../indicators/LFX-Recorder.mq4>
