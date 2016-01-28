@@ -8783,8 +8783,8 @@ name=Bollinger Bands
 flags=339
 window_num=0
 <inputs>
-MA.Periods=75
-MA.Timeframe=H1
+MA.Periods=3
+MA.Timeframe=D1
 MA.Methods=EMA
 Max.Values=3000
 Color.Bands=14772545
@@ -8801,8 +8801,8 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=75
-MA.Timeframe=H1
+MA.Periods=3
+MA.Timeframe=D1
 Max.Values=3000
 </inputs>
 </expert>
