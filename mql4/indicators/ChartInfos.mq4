@@ -56,11 +56,6 @@ double mm.realEquity;                                             // real verwen
 double mm.lotValue;                                               // Value eines Lots in Account-Currency
 double mm.unleveragedLots;                                        // Lotsize bei Hebel von 1:1
 
-double mm.defaultVola;
-double mm.defaultLeverage;
-double mm.defaultLots;                                            // Default-UnitSize: exakter Wert
-double mm.defaultLots.normalized;                                 //                   auf MODE_LOTSTEP normalisierter Wert
-
 double mm.ATRwAbs;                                                // wöchentliche ATR: absoluter Wert
 double mm.ATRwPct;                                                // wöchentliche ATR: prozentualer Wert
 
@@ -71,8 +66,13 @@ double mm.stdLots;                                                // resultieren
 double mm.customVola;                                             // benutzerdefinierte Volatilität einer Unit in Prozent je Woche
 double mm.customLeverage;                                         // benutzerdefinierter Hebel
 double mm.customLots;                                             // resultierende Lotsize
-
 bool   mm.isCustomUnitSize;                                       // ob die Default-UnitSize (mm.defaultLots) nach Std.-Werten oder benutzerdefiniert berechnet wird
+
+double mm.defaultVola;                                            // resultierende Moneymanagement-Werte (nach Standard- oder Custom- berechnet)
+double mm.defaultLeverage;                                        //
+double mm.defaultLots;                                            // UnitSize: exakter Wert
+double mm.defaultLots.normalized;                                 // UnitSize: auf MODE_LOTSTEP normalisierter Wert
+
 bool   mm.ready;                                                  // Flag
 
 double aum.value;                                                 // zusätzliche extern gehaltene bei Equity-Berechnungen zu berücksichtigende Assets
@@ -1469,7 +1469,7 @@ bool UpdateUnitSize() {
 
    // Anzeige nur bei internem Account:              V - Volatilität/Woche                      L - Leverage                                     Unitsize
    if (mode.intern) strUnitSize = StringConcatenate("V", DoubleToStr(mm.defaultVola, 1), "%     L", DoubleToStr(mm.defaultLeverage, 1), "  =  ", NumberToStr(mm.defaultLots.normalized, ", .+"), " lot");
-   else             strUnitSize = "";
+   else             strUnitSize = " ";
 
    // Anzeige aktualisieren (!!! max. 63 Zeichen !!!)
    ObjectSetText(label.unitSize, strUnitSize, 9, "Tahoma", SlateGray);
@@ -2177,13 +2177,13 @@ bool UpdateMoneyManagement() {
       mm.realEquity = externalAssets;                                         // ebenfalls falsch (nur Näherungswert)
    }
 
-   if (!Close[0] || !tickSize || !tickValue || !marginRequired) {             // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
+   if (!Bid || !tickSize || !tickValue || !marginRequired) {                  // bei Start oder Accountwechsel können einige Werte noch ungesetzt sein
       SetLastError(ERS_TERMINAL_NOT_YET_READY);
-      //debug("UpdateMoneyManagement(5)  Tick="+ Tick + ifString(!Close[0], "  Close=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
+      //debug("UpdateMoneyManagement(5)  Tick="+ Tick + ifString(!Bid, "  Bid=0", "") + ifString(!tickSize, "  tickSize=0", "") + ifString(!tickValue, "  tickValue=0", "") + ifString(!marginRequired, "  marginRequired=0", ""), last_error);
       return(false);
    }
 
-   mm.lotValue        = Close[0]/tickSize * tickValue;                        // Value eines Lots in Account-Currency
+   mm.lotValue        = Bid/tickSize * tickValue;                             // Value eines Lots in Account-Currency
    mm.unleveragedLots = mm.realEquity/mm.lotValue;                            // ungehebelte Lotsize (Leverage 1:1)
 
 
@@ -2200,7 +2200,6 @@ bool UpdateMoneyManagement() {
       double H = iHigh (NULL, PERIOD_W1, 0); if (!H)        return(false);
       double L = iLow  (NULL, PERIOD_W1, 0); if (!L)        return(false);
    mm.ATRwPct = mm.ATRwAbs/((MathMax(C, H) + MathMax(C, L))/2);               // median price
-
 
    if (mm.isCustomUnitSize) {
       // (3) customLots
