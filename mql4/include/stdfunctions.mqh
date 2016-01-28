@@ -3929,7 +3929,7 @@ double GetExternalAssets(string companyId, string accountId) {
       lastAccountId = accountId;
       lastAuM       = aum;
    }
-   return(aum);
+   return(lastAuM);
 }
 
 
