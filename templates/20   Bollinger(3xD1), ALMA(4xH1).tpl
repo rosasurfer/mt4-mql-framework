@@ -34,7 +34,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=300
 
 <indicator>
 name=main
@@ -8769,9 +8769,29 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
+<inputs>
+</inputs>
 </expert>
 period_flags=255
 show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Bollinger Bands
+flags=339
+window_num=0
+<inputs>
+MA.Periods=3
+MA.Timeframe=D1
+MA.Methods=EMA
+Max.Values=3000
+Color.Bands=14772545
+</inputs>
+</expert>
+period_flags=30
+show_data=1
 </indicator>
 
 <indicator>
@@ -8781,7 +8801,7 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=48
+MA.Periods=4
 MA.Timeframe=H1
 Max.Values=3000
 </inputs>
