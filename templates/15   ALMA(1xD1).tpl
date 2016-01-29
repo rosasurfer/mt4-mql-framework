@@ -8781,8 +8781,8 @@ name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=24
-MA.Timeframe=H1
+MA.Periods=1
+MA.Timeframe=D1
 Max.Values=3000
 </inputs>
 </expert>
