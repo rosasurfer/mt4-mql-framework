@@ -508,8 +508,8 @@ bool CalculateIndices() {
          double eurgbp = eurusd / gbpusd;
          double eurjpy = usdjpy * eurusd;
          double eursek = usdsek * eurusd;
-         //          EURX  = 34.38805726 * EURCHF^0.1113 * EURGBP^0.3056 * EURJPY^0.1891 * EURSEK^0.0785 * EURUSD^0.3155
-         index    [I_EURX] = 34.38805726 * MathPow(eurchf, 0.1113) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eursek, 0.0785) * MathPow(eurusd, 0.3155);
+         //          EURX  = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
+         index    [I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
          index.bid[I_EURX] = 0;                  // TODO
          index.ask[I_EURX] = 0;                  // TODO
       }
@@ -518,21 +518,20 @@ bool CalculateIndices() {
    if (USDX.Enabled) {
       isAvailable[I_USDX] = (usdcad_Bid && usdchf_Bid && usdjpy_Bid && usdsek_Bid && eurusd_Bid && gbpusd_Bid);
       if (isAvailable[I_USDX]) {
-         //          USDX  = 50.14348112 * USDCAD^0.091 * USDCHF^0.036 * USDJPY^0.136 * USDSEK^0.042 * EURUSD^-0.576 * GBPUSD^-0.119
-         index    [I_USDX] = 50.14348112 * (MathPow(usdcad    , 0.091) * MathPow(usdchf    , 0.036) * MathPow(usdjpy    , 0.136) * MathPow(usdsek    , 0.042)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
-         index.bid[I_USDX] = 50.14348112 * (MathPow(usdcad_Bid, 0.091) * MathPow(usdchf_Bid, 0.036) * MathPow(usdjpy_Bid, 0.136) * MathPow(usdsek_Bid, 0.042)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
-         index.ask[I_USDX] = 50.14348112 * (MathPow(usdcad_Ask, 0.091) * MathPow(usdchf_Ask, 0.036) * MathPow(usdjpy_Ask, 0.136) * MathPow(usdsek_Ask, 0.042)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
+         //          USDX  = 50.14348112 * EURUSD^-0.576 * USDJPY^0.136 * GBPUSD^-0.119 * USDCAD^0.091 * USDSEK^0.042 * USDCHF^0.036
+         index    [I_USDX] = 50.14348112 * (MathPow(usdjpy    , 0.136) * MathPow(usdcad    , 0.091) * MathPow(usdsek    , 0.042) * MathPow(usdchf    , 0.036)) / (MathPow(eurusd    , 0.576) * MathPow(gbpusd    , 0.119));
+         index.bid[I_USDX] = 50.14348112 * (MathPow(usdjpy_Bid, 0.136) * MathPow(usdcad_Bid, 0.091) * MathPow(usdsek_Bid, 0.042) * MathPow(usdchf_Bid, 0.036)) / (MathPow(eurusd_Ask, 0.576) * MathPow(gbpusd_Ask, 0.119));
+         index.ask[I_USDX] = 50.14348112 * (MathPow(usdjpy_Ask, 0.136) * MathPow(usdcad_Ask, 0.091) * MathPow(usdsek_Ask, 0.042) * MathPow(usdchf_Ask, 0.036)) / (MathPow(eurusd_Bid, 0.576) * MathPow(gbpusd_Bid, 0.119));
       }
    }
 
 
    // (3) Fehlerbehandlung
-   int error = GetLastError();
-   if (!error)                            return(true);
+   int error = GetLastError(); if (!error) return(true);
 
    debug("CalculateIndices(1)", error);
-   if (error == ERR_SYMBOL_NOT_AVAILABLE) return(true);
-   if (error == ERS_HISTORY_UPDATE      ) return(!SetLastError(error)); // true
+   if (error == ERR_SYMBOL_NOT_AVAILABLE)  return(true);
+   if (error == ERS_HISTORY_UPDATE      )  return(!SetLastError(error)); // = true
 
    return(!catch("CalculateIndices(2)", error));
 
