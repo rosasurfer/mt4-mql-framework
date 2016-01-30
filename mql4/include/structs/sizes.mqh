@@ -48,15 +48,15 @@
 #define TICK.intSize                     10
 
 
-// MT4-Expander structs
+// XTrade structs
 #define BAR.size                         48
 #define BAR.doubleSize                    6
 
 #define EXECUTION_CONTEXT.size          596
 #define EXECUTION_CONTEXT.intSize       149
 
-#define LFX_ORDER.size                  112
-#define LFX_ORDER.intSize                28
+#define LFX_ORDER.size                  120
+#define LFX_ORDER.intSize                30
 
 #define ORDER_EXECUTION.size            136
 #define ORDER_EXECUTION.intSize          34
