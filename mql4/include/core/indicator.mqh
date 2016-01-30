@@ -168,7 +168,6 @@ int start() {
    Tick++; zTick++;                                                                 // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.prevTime = Tick.Time;
    Tick.Time     = MarketInfo(Symbol(), MODE_TIME);                                 // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart immer falsch !!!
-   ValidBars     = IndicatorCounted();
 
    if (!Tick.Time) {
       int error = GetLastError();
@@ -179,12 +178,49 @@ int start() {
    }
 
 
-   // (1) Falls wir aus init() kommen, dessen Ergebnis prüfen
+   // (1) Valid- und ChangedBars berechnen (diese Originalwerte werden später bei Bedarf überschrieben)
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+
+
+   // (2) Tickstatus bestimmen
+   int vol = Volume[0];
+   static int last.vol;
+   if      (!vol || !last.vol) Tick.isVirtual = true;
+   else if ( vol ==  last.vol) Tick.isVirtual = true;
+   else                        Tick.isVirtual = (ChangedBars > 2);
+   last.vol = vol;
+
+
+   // (3) ValidBars und ChangedBars jetzt anhand der Zeitreihe selbst bestimmen. Dies stellt sicher, daß die Werte auch in synthetischen Charts korrekt sind.
+   //     IndicatorCounted() signalisiert dort bei jedem Tick alle Bars als modifiziert (TICK_OFFLINE_REFRESH). Die Logik des folgenden Abschnitts entspricht
+   //     der Logik der Funktion iChangedBars(), ist jedoch laufzeitoptimiert.
+
+   // Abschluß der Chart-Initialisierung überprüfen (!Bars kann bei Terminal-Start auftreten)
+   if (!Bars) return(UpdateProgramStatus(SetLastError(debug("start(2)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
+   static int      last.bars = -1;
+   static datetime last.oldestBarTime, last.newestBarTime;
+
+   if      (last.bars==-1)                                       ChangedBars = Bars;                     // erster Zugriff auf die Zeitreihe
+   else if (Bars==last.bars && Time[Bars-1]==last.oldestBarTime) ChangedBars = 1;                        // Baranzahl gleich und älteste Bar noch dieselbe
+   else {                                                                                                // normaler Tick (mit/ohne Lücke) oder synthetischer/sonstiger Tick
+    //if (Bars == last.bars) warn("start(3)  Bars==last.bars ("+ Bars +"): did we hit MAX_CHART_BARS?"); // (*) Hat sich die letzte Bar geändert, wurden Bars hinten "hinausgeschoben".
+      if (Time[0] != last.newestBarTime)                         ChangedBars = Bars - last.bars + 1;     // neue Bars zu Beginn hinzugekommen
+      else                                                       ChangedBars = Bars;                     // neue Bars in Lücke eingefügt: uneindeutig => alle als modifiziert melden
+   }
+   last.bars          = Bars;                                                                            // (*) TODO: In diesem Fall muß die Bar mit last.newestBarTime gesucht und
+   last.oldestBarTime = Time[Bars-1];                                                                    //           der Wert von ChangedBars daraus abgeleitet werden.
+   last.newestBarTime = Time[0];
+
+   ValidBars = Bars - ChangedBars;                                                                       // ValidBars aus ChangedBars ableiten
+
+
+   // (4) Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__WHEREAMI__ == RF_INIT) {
       __WHEREAMI__ = ec_setRootFunction(__ExecutionContext, RF_START);              // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe UpdateProgramStatus()
 
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(2)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         debug("start(4)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          last_error = NO_ERROR;
 
          error = init();                                                            // init() erneut aufrufen
@@ -209,33 +245,17 @@ int start() {
       if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE und *_HISTORY_INSUFFICIENT können je nach Kontext Fehler und/oder Status sein.
       if      (__STATUS_HISTORY_INSUFFICIENT           ) ValidBars = 0;
    }
+   ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
 
-
-   // (2) Abschluß der Chart-Initialisierung überprüfen (kann bei Terminal-Start auftreten)
-   if (!Bars)
-      return(UpdateProgramStatus(SetLastError(debug("start(3)  Bars = 0", ERS_TERMINAL_NOT_YET_READY))));
 
    /*
-   // (3) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
+   // (5) Werden Zeichenpuffer verwendet, muß in onTick() deren Initialisierung überprüft werden.
    if (ArraySize(buffer) == 0)
       return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // kann bei Terminal-Start auftreten
    */
 
    __STATUS_HISTORY_UPDATE       = false;
    __STATUS_HISTORY_INSUFFICIENT = false;
-
-
-   // (4) ChangedBars berechnen
-   ChangedBars = Bars - ValidBars;
-
-
-   // (5) Tickstatus bestimmen      !!! TODO !!! muß vor eigene Modifikation von ChangedBars gesetzt werden
-   int vol = Volume[0];
-   static int lastVol;
-   if      (!vol || !lastVol) Tick.isVirtual = true;
-   else if ( vol ==  lastVol) Tick.isVirtual = true;
-   else                       Tick.isVirtual = (ChangedBars > 2);
-   lastVol = vol;
 
 
    SetMainExecutionContext(__ExecutionContext, WindowExpertName(), Symbol(), Period());
@@ -260,7 +280,7 @@ int start() {
 
    error = GetLastError();
    if (error != NO_ERROR)
-      catch("start(4)", error);
+      catch("start(5)", error);
 
    if      (last_error == ERS_HISTORY_UPDATE      ) __STATUS_HISTORY_UPDATE       = true;
    else if (last_error == ERR_HISTORY_INSUFFICIENT) __STATUS_HISTORY_INSUFFICIENT = true;

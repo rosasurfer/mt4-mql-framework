@@ -6,7 +6,7 @@
  * @param  int    period    - Periode der zu untersuchenden Zeitreihe (NULL = aktuelle Periode)
  * @param  int    execFlags - Ausführungssteuerung: Flags der Fehler, die still gesetzt werden sollen (default: keine)
  *
- * @return int - Baranzahl oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - Baranzahl oder -1 (EMPTY), falls ein Fehler auftrat
  *
  *
  * @throws ERR_SERIES_NOT_AVAILABLE - Wird still gesetzt, wenn im Parameter execFlags das Flag MUTE_ERR_SERIES_NOT_AVAILABLE gesetzt ist.
@@ -16,8 +16,9 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    if (symbol == "0")                                                // (string) NULL
       symbol = Symbol();
 
-   // Die Anzahl der Bars einer Datenreihe ändert sich innerhalb eines Ticks nicht, auch wenn die reale Datenreihe selbst sich ändern sollte.
-   // Ein Programm, das während desselben Ticks mehrmals iBars() aufruft, wird während dieses Ticks immer dieselbe konstante Anzahl Bars "sehen".
+   // Während der Verarbeitung eines Ticks geben die Bar-Funktionen und Bar-Variablen immer dieselbe Anzahl zurück, auch wenn die reale
+   // Datenreihe sich bereits geändert haben sollte (in einem anderen Thread).
+   // Ein Programm, das während desselben Ticks mehrmals iBars() aufruft, wird während dieses Ticks also immer dieselbe Anzahl Bars "sehen".
 
    // TODO: - statische Variablen in Library speichern, um Timeframewechsel zu überdauern
    //       - statische Variablen bei Accountwechsel zurücksetzen
@@ -29,7 +30,7 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    #define I_CB.newestBarTime    4                                   // Zeit der neuesten Bar    (beim letzten Aufruf)
 
 
-   // (1) Speicherung der statischen Daten je Parameterkombination "Symbol,Periode" ermöglicht den parallelen Aufruf für mehrere Datenreihen
+   // (1) Die Speicherung der statischen Daten je Parameterkombination "Symbol,Periode" ermöglicht den parallelen Aufruf für mehrere Datenreihen.
    string keys[];
    int    last[][5];
    int    keysSize = ArraySize(keys);
@@ -87,12 +88,12 @@ int iChangedBars(string symbol/*=NULL*/, int period/*=NULL*/, int execFlags=NULL
    if (last[i][I_CB.bars]==-1) {                        changedBars = bars;                           // erster Zugriff auf die Zeitreihe
    }
    else if (bars==last[i][I_CB.bars] && oldestBarTime==last[i][I_CB.oldestBarTime]) {                 // Baranzahl gleich und älteste Bar noch dieselbe
-                                                        changedBars = 1;                              // normaler Tick (mit/ohne Lücke) oder synthetischer/sonstiger Tick: iVolume() kann
-   }                                                                                                  // nicht zur Unterscheidung zwischen changedBars=0|1 verwendet werden
+                                                        changedBars = 1;                              // normaler Tick (mit/ohne Lücke) oder synthetischer/sonstiger Tick: iVolume()
+   }                                                                                                  // kann nicht zur Unterscheidung zwischen changedBars=0|1 verwendet werden
    else {
-      if (bars == last[i][I_CB.bars])                                                                 // Wenn dies passiert (im Tester?) und Bars "hinten hinausgeschoben" wurden, muß die Bar
-         warn("iChangedBars(2)  bars==last.bars = "+ bars +" (did we hit MAX_CHART_BARS?)");          // mit last.firstBarTime gesucht und der Wert von changedBars daraus abgeleitet werden.
-
+      if (bars == last[i][I_CB.bars])                                                                 // Die letzte Bar hat sich geändert, Bars wurden hinten "hinausgeschoben".
+         warn("iChangedBars(2)  bars==last.bars = "+ bars +" (did we hit MAX_CHART_BARS?)");          // In diesem Fall muß die Bar mit last.newestBarTime gesucht und der Wert von
+                                                                                                      // changedBars daraus abgeleitet werden.
       if (newestBarTime != last[i][I_CB.newestBarTime]) changedBars = bars - last[i][I_CB.bars] + 1;  // neue Bars zu Beginn hinzugekommen
       else                                              changedBars = bars;                           // neue Bars in Lücke eingefügt: nicht eindeutig => alle als modifiziert melden
    }
