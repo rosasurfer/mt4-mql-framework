@@ -236,7 +236,7 @@ int UpdateInfos() {
          datetime lastTime = MarketInfo(symbol, MODE_TIME);
          if (lastTime > 0) {
             int tzOffset = GetServerToFxtTimeOffset(lastTime);
-            if (tzOffset != EMPTY_VALUE)
+            if (!IsEmptyValue(tzOffset))
                strOffset = ifString(tzOffset>= 0, "+", "-") + StringRight("0"+ Abs(tzOffset/HOURS), 2) + StringRight("0"+ tzOffset%HOURS, 2);
          }
          serverTimezone = serverTimezone + ifString(StringStartsWith(serverTimezone, "FXT"), "", " (FXT"+ strOffset +")");
