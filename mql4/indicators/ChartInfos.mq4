@@ -4063,10 +4063,10 @@ bool RestoreRemoteOrders(bool fromCache) {
          lfxOrders.pendingOrders++;
       }
 
-      if (los.IsOpenPosition(lfxOrders, i)) {
+      if (los.IsOpenPosition(lfxOrders, i)) {                        // TODO: !!! Der Account muß Teil des Schlüssels sein.
          string varName = StringConcatenate("LFX.#", lfxOrders.iCache[i][I_TICKET], ".profit");
          double value   = GlobalVariableGet(varName);
-         if (!value) {                                                  // 0 oder Fehler
+         if (!value) {                                               // 0 oder Fehler
             int error = GetLastError();
             if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
                return(!catch("RestoreRemoteOrders(1)->GlobalVariableGet(name=\""+ varName +"\")", error));
@@ -4097,7 +4097,7 @@ bool SaveRemoteOrderCache() {
    int size = ArrayRange(lfxOrders.iCache, 0);
 
    for (int i=0; i < size; i++) {
-      if (lfxOrders.iCache[i][I_IS_OPEN_POSITION] != 0) {
+      if (lfxOrders.iCache[i][I_IS_OPEN_POSITION] != 0) {            // TODO: !!! Der Account muß Teil des Schlüssels sein.
          varName = StringConcatenate("LFX.#", lfxOrders.iCache[i][I_TICKET], ".profit");
 
          if (!GlobalVariableSet(varName, lfxOrders.dCache[i][I_PROFIT])) {

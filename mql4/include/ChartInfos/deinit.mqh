@@ -41,7 +41,7 @@ int onDeinitParameterChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitChartChange() {
-   // RemoteOrder in Library zwischenspeichern, um in init() das Neuladen zu sparen
+   // RemoteOrders in Library zwischenspeichern, um in init() das Neuladen zu sparen
    if (ChartInfos.CopyRemoteOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
