@@ -163,18 +163,24 @@ double   external.closed.profit    [];
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX-Funktionen aufrufen bzw. über alle Orders iterieren zu müssen.
 int      lfxOrders.iCache[][1];                                      // = {Ticket}
-bool     lfxOrders.bCache[][4];                                      // = {IsPendingOrder, IsOpenPosition, IsPendingPosition, IsLocked}
-double   lfxOrders.dCache[][1];                                      // = {Profit}
+bool     lfxOrders.bCache[][4];                                      // = {IsPendingOrder, IsOpenPosition  , IsPendingPosition, IsLocked}
+double   lfxOrders.dCache[][5];                                      // = {Profit        , TakeProfitAmount, TakeProfitPercent, StopLossAmount, StopLossPercent}
 int      lfxOrders.pendingOrders;                                    // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
 int      lfxOrders.openPositions;                                    // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
 int      lfxOrders.pendingPositions;                                 // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
 
 #define I_IC.ticket                 0                                // Arrayindizes für Cache-Arrays
+
 #define I_BC.isPendingOrder         0
 #define I_BC.isOpenPosition         1
 #define I_BC.isPendingPosition      2
 #define I_BC.isLocked               3
+
 #define I_DC.profit                 0
+#define I_DC.takeProfitAmount       1
+#define I_DC.takeProfitPercent      2
+#define I_DC.stopLossAmount         3
+#define I_DC.stopLossPercent        4
 
 
 // Textlabel für die einzelnen Anzeigen
@@ -4108,6 +4114,11 @@ bool RestoreLfxOrders(bool fromCache) {
       else {
          lfxOrders.dCache[i][I_DC.profit] = los.Profit(lfxOrders, i);
       }
+
+      lfxOrders.dCache[i][I_DC.takeProfitAmount ] = los.TakeProfitValue  (lfxOrders, i);
+      lfxOrders.dCache[i][I_DC.takeProfitPercent] = los.TakeProfitPercent(lfxOrders, i);
+      lfxOrders.dCache[i][I_DC.stopLossAmount   ] = los.StopLossValue    (lfxOrders, i);
+      lfxOrders.dCache[i][I_DC.stopLossPercent  ] = los.StopLossPercent  (lfxOrders, i);
    }
    return(true);
 }
@@ -4205,8 +4216,6 @@ bool ProcessLfxProfits() {
          if (error!=NO_ERROR) /*&&*/ if (error!=ERR_GLOBAL_VARIABLE_NOT_FOUND)
             return(!catch("ProcessLfxProfits(1)->GlobalVariableGet()", error));
       }
-
-      // TODO: Prüfung auf Wertänderung nur innerhalb der Woche, nicht am Wochenende
       if (EQ(lfxOrders.dCache[i][I_DC.profit], lastValue, 2))        // Wert hat sich nicht geändert
          continue;
 
