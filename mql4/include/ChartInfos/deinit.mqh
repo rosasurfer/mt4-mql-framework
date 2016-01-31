@@ -28,7 +28,7 @@ int onDeinit() {
  */
 int onDeinitParameterChange() {
    // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
-   if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
+   if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.bCache, lfxOrders.dCache) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
@@ -42,7 +42,7 @@ int onDeinitParameterChange() {
  */
 int onDeinitChartChange() {
    // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
-   if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
+   if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.bCache, lfxOrders.dCache) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }

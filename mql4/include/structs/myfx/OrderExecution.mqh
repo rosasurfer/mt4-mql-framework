@@ -356,14 +356,6 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[], bool outputDebug=false
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "stdlib1.ex4"
-   string OperationTypeToStr(int type);
-#import
-
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 //#import "struct.ORDER_EXECUTION.ex4"
 //   // Getter
 //   int      oe.Error              (/*ORDER_EXECUTION*/int oe[]);

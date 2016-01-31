@@ -606,7 +606,7 @@ double  N_INF;                                              // -1.#INF: negative
 #define CID_GBP                        5
 #define CID_JPY                        6
 #define CID_NZD                        7
-#define CID_USD                        8        // zuerst die ID's der LFX-Indizes, dadurch "passen" diese in 3 Bits (für LFX-Basket)
+#define CID_USD                        8        // zuerst die ID's der LFX-Indizes, dadurch "passen" diese in 3 Bits (für LFX-Tickets)
 
 #define CID_CNY                        9
 #define CID_CZK                       10

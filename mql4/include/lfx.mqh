@@ -212,7 +212,7 @@ bool InitTradeAccount(string accountKey="") {
 
 
 /**
- * Ob die aktuell selektierte Order zu dieser Strategie gehört.
+ * Ob das aktuell selektierte Ticket eine LFX-Order ist.
  *
  * @return bool
  */
@@ -226,7 +226,7 @@ bool LFX.IsMyOrder() {
  *
  * @param  int magicNumber
  *
- * @return int - Currency-ID, entsprechend stdlib1::GetCurrencyId()
+ * @return int - Currency-ID, entsprechend std::GetCurrencyId()
  */
 int LFX.CurrencyId(int magicNumber) {
    return(magicNumber >> 18 & 0xF);                                  // 4 bit (Bit 19-22) => Bereich 1-15
@@ -535,7 +535,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 }
 
 
-// OrderType-Flags für LFX.GetOrders()
+// OrderType-Flags, siehe LFX.GetOrders()
 #define OF_OPEN                1
 #define OF_CLOSED              2
 #define OF_PENDINGORDER        4
@@ -641,74 +641,74 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
 
 
 /**
- * Speichert eine LFX-Order in der .ini-Datei des TradeAccounts.
+ * Speichert eine oder mehrere LFX-Orders in der .ini-Datei des TradeAccounts.
  *
- * @param  LFX_ORDER los[]  - ein einzelnes oder ein Array von LFX_ORDER-Structs
- * @param  int       index  - Arrayindex der zu speichernden Order, wenn los[] ein LFX_ORDER[]-Array ist.
- *                            Der Parameter wird ignoriert, wenn los[] eine einzelne LFX_ORDER ist.
- * @param  int       fCatch - Flag mit leise zu setzenden Fehler, sodaß sie vom Aufrufer behandelt werden können
+ * @param  LFX_ORDER orders[] - eine einzelne LFX_ORDER oder ein Array von LFX_ORDERs
+ * @param  int       index    - Arrayindex der zu speichernden Order, wenn orders[] ein LFX_ORDER[]-Array ist.
+ *                              Der Parameter wird ignoriert, wenn orders[] eine einzelne LFX_ORDER ist.
+ * @param  int       fCatch   - Flag mit leise zu setzenden Fehler, sodaß sie vom Aufrufer behandelt werden können
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
-   // (1) übergebene Order in eine einzelne Order umkopieren (Parameter los[] kann unterschiedliche Dimensionen haben)
-   int dims = ArrayDimension(los); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter los = "+ dims, ERR_INCOMPATIBLE_ARRAYS, fCatch));
+bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
+   // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
+   int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders = "+ dims, ERR_INCOMPATIBLE_ARRAYS, fCatch));
 
-   /*LFX_ORDER*/int lo[]; ArrayResize(lo, LFX_ORDER.intSize);
+   /*LFX_ORDER*/int order[]; ArrayResize(order, LFX_ORDER.intSize);
    if (dims == 1) {
-      // Parameter los[] ist einzelne Order
-      if (ArrayRange(los, 0) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)  invalid size of parameter los["+ ArrayRange(los, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
-      ArrayCopy(lo, los);
+      // Parameter orders[] ist einzelne Order
+      if (ArrayRange(orders, 0) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
+      ArrayCopy(order, orders);
    }
    else {
-      // Parameter los[] ist Order-Array
-      if (ArrayRange(los, 1) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter los["+ ArrayRange(los, 0) +"]["+ ArrayRange(los, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
-      int losSize = ArrayRange(los, 0);
-      if (index < 0 || index > losSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)  invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
-      int src  = GetIntsAddress(los) + index*LFX_ORDER.intSize*4;
-      int dest = GetIntsAddress(lo);
+      // Parameter orders[] ist Order-Array
+      if (ArrayRange(orders, 1) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]["+ ArrayRange(orders, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
+      int ordersSize = ArrayRange(orders, 0);
+      if (index < 0 || index > ordersSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)  invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
+      int src  = GetIntsAddress(orders) + index*LFX_ORDER.intSize*4;
+      int dest = GetIntsAddress(order);
       CopyMemory(dest, src, LFX_ORDER.intSize*4);
    }
 
 
    // (2) Aktuell gespeicherte Version der Order holen und konkurrierende Schreibzugriffe abfangen
-   /*LFX_ORDER*/int stored[], ticket=lo.Ticket(lo);
+   /*LFX_ORDER*/int stored[], ticket=lo.Ticket(order);
    int result = LFX.GetOrder(ticket, stored);                        // +1, wenn die Order erfolgreich gelesen wurden
    if (!result) return(false);                                       // -1, wenn die Order nicht gefunden wurde
    if (result > 0) {                                                 //  0, falls ein anderer Fehler auftrat
-      if (lo.Version(stored) > lo.Version(lo)) {
+      if (lo.Version(stored) > lo.Version(order)) {
          log("LFX.SaveOrder(5)  stored  ="+ LFX_ORDER.toStr(stored));
-         log("LFX.SaveOrder(6)  to store="+ LFX_ORDER.toStr(lo    ));
-         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(7)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION, fCatch));
+         log("LFX.SaveOrder(6)  to store="+ LFX_ORDER.toStr(order ));
+         return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(7)  concurrent modification of #"+ ticket +", expected version "+ lo.Version(order) +" of '"+ TimeToStr(lo.ModificationTime(order), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION, fCatch));
       }
    }
 
 
    // (3) Daten formatieren
    //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, OpenTime, OpenPrice, TakeProfitPrice, TakeProfitValue, TakeProfitPercent, TakeProfitTriggered, StopLossPrice, StopLossValue, StopLossPercent, StopLossTriggered, CloseTriggerTime, CloseTime, ClosePrice, Profit, ModificationTime, Version
-   string sSymbol              =                          lo.Currency           (lo);
-   string sComment             =                          lo.Comment            (lo);                                                                                               sComment           = StringPadRight(sComment          , 13, " ");
-   string sOperationType       = OperationTypeDescription(lo.Type               (lo));                                                                                              sOperationType     = StringPadRight(sOperationType    , 10, " ");
-   string sUnits               =              NumberToStr(lo.Units              (lo), ".+");                                                                                        sUnits             = StringPadLeft (sUnits            ,  5, " ");
-   string sOpenEquity          =                ifString(!lo.OpenEquity         (lo), "0", DoubleToStr(lo.OpenEquity(lo), 2));                                                      sOpenEquity        = StringPadLeft (sOpenEquity       , 10, " ");
-   string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (lo), "0", TimeToStr(lo.OpenTriggerTime(lo), TIME_FULL));                                           sOpenTriggerTime   = StringPadLeft (sOpenTriggerTime  , 19, " ");
-   string sOpenTime            =                 ifString(lo.OpenTime           (lo) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(lo)), TIME_FULL);                                    sOpenTime          = StringPadLeft (sOpenTime         , 19, " ");
-   string sOpenPrice           =              DoubleToStr(lo.OpenPrice          (lo), lo.Digits(lo));                                                                               sOpenPrice         = StringPadLeft (sOpenPrice        ,  9, " ");
-   string sTakeProfitPrice     =                ifString(!lo.IsTakeProfitPrice  (lo), "", DoubleToStr(lo.TakeProfitPrice  (lo), lo.Digits(lo)));                                    sTakeProfitPrice   = StringPadLeft (sTakeProfitPrice  ,  7, " ");
-   string sTakeProfitValue     =                ifString(!lo.IsTakeProfitValue  (lo), "", DoubleToStr(lo.TakeProfitValue  (lo), 2));                                                sTakeProfitValue   = StringPadLeft (sTakeProfitValue  ,  7, " ");
-   string sTakeProfitPercent   =                ifString(!lo.IsTakeProfitPercent(lo), "", DoubleToStr(lo.TakeProfitPercent(lo), 2));                                                sTakeProfitPercent = StringPadLeft (sTakeProfitPercent,  5, " ");
-   string sTakeProfitTriggered =                         (lo.TakeProfitTriggered(lo)!=0);
-   string sStopLossPrice       =                ifString(!lo.IsStopLossPrice    (lo), "", DoubleToStr(lo.StopLossPrice  (lo), lo.Digits(lo)));                                      sStopLossPrice     = StringPadLeft (sStopLossPrice    ,  7, " ");
-   string sStopLossValue       =                ifString(!lo.IsStopLossValue    (lo), "", DoubleToStr(lo.StopLossValue  (lo), 2));                                                  sStopLossValue     = StringPadLeft (sStopLossValue    ,  7, " ");
-   string sStopLossPercent     =                ifString(!lo.IsStopLossPercent  (lo), "", DoubleToStr(lo.StopLossPercent(lo), 2));                                                  sStopLossPercent   = StringPadLeft (sStopLossPercent  ,  5, " ");
-   string sStopLossTriggered   =                         (lo.StopLossTriggered  (lo)!=0);
-   string sCloseTriggerTime    =                ifString(!lo.CloseTriggerTime   (lo), "0", TimeToStr(lo.CloseTriggerTime(lo), TIME_FULL));                                          sCloseTriggerTime  = StringPadLeft (sCloseTriggerTime , 19, " ");
-   string sCloseTime           =                 ifString(lo.CloseTime          (lo) < 0, "-", "") + ifString(!lo.CloseTime(lo), "0", TimeToStr(Abs(lo.CloseTime(lo)), TIME_FULL)); sCloseTime         = StringPadLeft (sCloseTime        , 19, " ");
-   string sClosePrice          =                ifString(!lo.ClosePrice         (lo), "0", DoubleToStr(lo.ClosePrice(lo), lo.Digits(lo)));                                          sClosePrice        = StringPadLeft (sClosePrice       , 10, " ");
-   string sProfit              =                ifString(!lo.Profit             (lo), "0", DoubleToStr(lo.Profit(lo), 2));                                                          sProfit            = StringPadLeft (sProfit           ,  7, " ");
+   string sSymbol              =                          lo.Currency           (order);
+   string sComment             =                          lo.Comment            (order);                                                                                                     sComment           = StringPadRight(sComment          , 13, " ");
+   string sOperationType       = OperationTypeDescription(lo.Type               (order));                                                                                                    sOperationType     = StringPadRight(sOperationType    , 10, " ");
+   string sUnits               =              NumberToStr(lo.Units              (order), ".+");                                                                                              sUnits             = StringPadLeft (sUnits            ,  5, " ");
+   string sOpenEquity          =                ifString(!lo.OpenEquity         (order), "0", DoubleToStr(lo.OpenEquity(order), 2));                                                         sOpenEquity        = StringPadLeft (sOpenEquity       , 10, " ");
+   string sOpenTriggerTime     =                ifString(!lo.OpenTriggerTime    (order), "0", TimeToStr(lo.OpenTriggerTime(order), TIME_FULL));                                              sOpenTriggerTime   = StringPadLeft (sOpenTriggerTime  , 19, " ");
+   string sOpenTime            =                 ifString(lo.OpenTime           (order) < 0, "-", "") + TimeToStr(Abs(lo.OpenTime(order)), TIME_FULL);                                       sOpenTime          = StringPadLeft (sOpenTime         , 19, " ");
+   string sOpenPrice           =              DoubleToStr(lo.OpenPrice          (order), lo.Digits(order));                                                                                  sOpenPrice         = StringPadLeft (sOpenPrice        ,  9, " ");
+   string sTakeProfitPrice     =                ifString(!lo.IsTakeProfitPrice  (order), "", DoubleToStr(lo.TakeProfitPrice  (order), lo.Digits(order)));                                    sTakeProfitPrice   = StringPadLeft (sTakeProfitPrice  ,  7, " ");
+   string sTakeProfitValue     =                ifString(!lo.IsTakeProfitValue  (order), "", DoubleToStr(lo.TakeProfitValue  (order), 2));                                                   sTakeProfitValue   = StringPadLeft (sTakeProfitValue  ,  7, " ");
+   string sTakeProfitPercent   =                ifString(!lo.IsTakeProfitPercent(order), "", DoubleToStr(lo.TakeProfitPercent(order), 2));                                                   sTakeProfitPercent = StringPadLeft (sTakeProfitPercent,  5, " ");
+   string sTakeProfitTriggered =                         (lo.TakeProfitTriggered(order)!=0);
+   string sStopLossPrice       =                ifString(!lo.IsStopLossPrice    (order), "", DoubleToStr(lo.StopLossPrice  (order), lo.Digits(order)));                                      sStopLossPrice     = StringPadLeft (sStopLossPrice    ,  7, " ");
+   string sStopLossValue       =                ifString(!lo.IsStopLossValue    (order), "", DoubleToStr(lo.StopLossValue  (order), 2));                                                     sStopLossValue     = StringPadLeft (sStopLossValue    ,  7, " ");
+   string sStopLossPercent     =                ifString(!lo.IsStopLossPercent  (order), "", DoubleToStr(lo.StopLossPercent(order), 2));                                                     sStopLossPercent   = StringPadLeft (sStopLossPercent  ,  5, " ");
+   string sStopLossTriggered   =                         (lo.StopLossTriggered  (order)!=0);
+   string sCloseTriggerTime    =                ifString(!lo.CloseTriggerTime   (order), "0", TimeToStr(lo.CloseTriggerTime(order), TIME_FULL));                                             sCloseTriggerTime  = StringPadLeft (sCloseTriggerTime , 19, " ");
+   string sCloseTime           =                 ifString(lo.CloseTime          (order) < 0, "-", "") + ifString(!lo.CloseTime(order), "0", TimeToStr(Abs(lo.CloseTime(order)), TIME_FULL)); sCloseTime         = StringPadLeft (sCloseTime        , 19, " ");
+   string sClosePrice          =                ifString(!lo.ClosePrice         (order), "0", DoubleToStr(lo.ClosePrice(order), lo.Digits(order)));                                          sClosePrice        = StringPadLeft (sClosePrice       , 10, " ");
+   string sProfit              =                ifString(!lo.Profit             (order), "0", DoubleToStr(lo.Profit    (order), 2));                                                         sProfit            = StringPadLeft (sProfit           ,  7, " ");
 
      datetime modificationTime = TimeFXT(); if (!modificationTime) return(false);
-     int      version          = lo.Version(lo) + 1;
+     int      version          = lo.Version(order) + 1;
 
    string sModificationTime    = TimeToStr(modificationTime, TIME_FULL);
    string sVersion             = version;
@@ -726,8 +726,8 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 
 
    // (5) Version der übergebenen Order aktualisieren
-   if (dims == 1) {  lo.setModificationTime(los,        modificationTime);  lo.setVersion(los,        version); }
-   else           { los.setModificationTime(los, index, modificationTime); los.setVersion(los, index, version); }
+   if (dims == 1) {  lo.setModificationTime(orders,        modificationTime);  lo.setVersion(orders,        version); }
+   else           { los.setModificationTime(orders, index, modificationTime); los.setVersion(orders, index, version); }
    return(true);
 }
 
@@ -735,14 +735,14 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int los[], int index=NULL, int fCatch=NULL) {
 /**
  * Speichert die übergebenen LFX-Orders in der .ini-Datei des TradeAccounts.
  *
- * @param  LFX_ORDER los[] - Array von LFX_ORDER-Structs
+ * @param  LFX_ORDER orders[] - Array von LFX_ORDERs
  *
  * @return bool - Erfolgsstatus
  */
-bool LFX.SaveOrders(/*LFX_ORDER*/int los[][]) {
-   int size = ArrayRange(los, 0);
+bool LFX.SaveOrders(/*LFX_ORDER*/int orders[][]) {
+   int size = ArrayRange(orders, 0);
    for (int i=0; i < size; i++) {
-      if (!LFX.SaveOrder(los, i))
+      if (!LFX.SaveOrder(orders, i))
          return(false);
    }
    return(true);
@@ -1103,10 +1103,5 @@ void DummyCalls() {
    int    GetAccountNumber();
    bool   IntInArray(int haystack[], int needle);
    bool   IsIniKey(string fileName, string section, string key);
-   bool   IsPendingTradeOperation(int value);
-   bool   IsTradeOperation(int value);
-   string OperationTypeDescription(int type);
-   string OperationTypeToStr(int type);
    string StringReplace.Recursive(string object, string search, string replace);
-   int    StrToOperationType(string value);
 #import

@@ -5111,6 +5111,235 @@ bool IsCurrency(string value) {
 
 
 /**
+ * Ob der übergebene Parameter eine "pending" Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsPendingTradeOperation(int value) {
+   switch (value) {
+      case OP_BUYLIMIT :
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :
+      case OP_SELLSTOP :
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der übergebene Parameter eine Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsTradeOperation(int value) {
+   switch (value) {
+      case OP_BUY      :
+      case OP_SELL     :
+      case OP_BUYLIMIT :
+      case OP_SELLLIMIT:
+      case OP_BUYSTOP  :
+      case OP_SELLSTOP :
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der übergebene Parameter eine Long-Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsLongTradeOperation(int value) {
+   switch (value) {
+      case OP_BUY     :
+      case OP_BUYLIMIT:
+      case OP_BUYSTOP :
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Ob der übergebene Parameter eine Short-Tradeoperation bezeichnet.
+ *
+ * @param  int value - zu prüfender Wert
+ *
+ * @return bool
+ */
+bool IsShortTradeOperation(int value) {
+   switch (value) {
+      case OP_SELL     :
+      case OP_SELLLIMIT:
+      case OP_SELLSTOP :
+         return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Gibt die lesbare Konstante einer MessageBox-Command-ID zurück.
+ *
+ * @param  int cmd - Command-ID (entspricht dem gedrückten Messagebox-Button)
+ *
+ * @return string
+ */
+string MessageBoxCmdToStr(int cmd) {
+   switch (cmd) {
+      case IDOK      : return("IDOK"      );
+      case IDCANCEL  : return("IDCANCEL"  );
+      case IDABORT   : return("IDABORT"   );
+      case IDRETRY   : return("IDRETRY"   );
+      case IDIGNORE  : return("IDIGNORE"  );
+      case IDYES     : return("IDYES"     );
+      case IDNO      : return("IDNO"      );
+      case IDCLOSE   : return("IDCLOSE"   );
+      case IDHELP    : return("IDHELP"    );
+      case IDTRYAGAIN: return("IDTRYAGAIN");
+      case IDCONTINUE: return("IDCONTINUE");
+   }
+   return(_EMPTY_STR(catch("MessageBoxCmdToStr()  unknown message box command = "+ cmd, ERR_RUNTIME_ERROR)));
+}
+
+
+/**
+ * Gibt die Beschreibung eines Module-Types zurück.
+ *
+ * @param  int type - Module-Type
+ *
+ * @return string
+ */
+string ModuleTypeDescription(int type) {
+   string result = "";
+
+   if (type & MT_EXPERT    && 1) result = StringConcatenate(result, ".Expert"   );
+   if (type & MT_SCRIPT    && 1) result = StringConcatenate(result, ".Script"   );
+   if (type & MT_INDICATOR && 1) result = StringConcatenate(result, ".Indicator");
+   if (type & MT_LIBRARY   && 1) result = StringConcatenate(result, ".Library"  );
+
+   if (StringLen(result) > 0)
+      result = StringSubstr(result, 1);
+   return(result);
+}
+
+
+/**
+ * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
+ *
+ * @param  string value
+ *
+ * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
+ */
+int StrToOperationType(string value) {
+   string str = StringToUpper(StringTrim(value));
+
+   if (StringLen(str) == 1) {
+      switch (StrToInteger(str)) {
+         case OP_BUY      :
+            if (str == "0")    return(OP_BUY      ); break;          // OP_BUY = 0: Sonderfall
+         case OP_SELL     :    return(OP_SELL     );
+         case OP_BUYLIMIT :    return(OP_BUYLIMIT );
+         case OP_SELLLIMIT:    return(OP_SELLLIMIT);
+         case OP_BUYSTOP  :    return(OP_BUYSTOP  );
+         case OP_SELLSTOP :    return(OP_SELLSTOP );
+         case OP_BALANCE  :    return(OP_BALANCE  );
+         case OP_CREDIT   :    return(OP_CREDIT   );
+      }
+   }
+   else {
+      if (StringStartsWith(str, "OP_"))
+         str = StringRight(str, -3);
+      if (str == "BUY"       ) return(OP_BUY      );
+      if (str == "SELL"      ) return(OP_SELL     );
+      if (str == "BUYLIMIT"  ) return(OP_BUYLIMIT );
+      if (str == "BUY LIMIT" ) return(OP_BUYLIMIT );
+      if (str == "SELLLIMIT" ) return(OP_SELLLIMIT);
+      if (str == "SELL LIMIT") return(OP_SELLLIMIT);
+      if (str == "BUYSTOP"   ) return(OP_BUYSTOP  );
+      if (str == "STOP BUY"  ) return(OP_BUYSTOP  );
+      if (str == "SELLSTOP"  ) return(OP_SELLSTOP );
+      if (str == "STOP SELL" ) return(OP_SELLSTOP );
+      if (str == "BALANCE"   ) return(OP_BALANCE  );
+      if (str == "CREDIT"    ) return(OP_CREDIT   );
+   }
+
+   if (__LOG) log("StrToOperationType()  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   return(OP_UNDEFINED);
+}
+
+
+/**
+ * Gibt die lesbare Konstante eines Operation-Types zurück.
+ *
+ * @param  int type - Operation-Type
+ *
+ * @return string
+ */
+string OperationTypeToStr(int type) {
+   switch (type) {
+      case OP_BUY      : return("OP_BUY"      );
+      case OP_SELL     : return("OP_SELL"     );
+      case OP_BUYLIMIT : return("OP_BUYLIMIT" );
+      case OP_SELLLIMIT: return("OP_SELLLIMIT");
+      case OP_BUYSTOP  : return("OP_BUYSTOP"  );
+      case OP_SELLSTOP : return("OP_SELLSTOP" );
+      case OP_BALANCE  : return("OP_BALANCE"  );
+      case OP_CREDIT   : return("OP_CREDIT"   );
+      case OP_UNDEFINED: return("OP_UNDEFINED");
+   }
+   return(_EMPTY_STR(catch("OperationTypeToStr()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+string OrderTypeToStr(int type) {
+   return(OperationTypeToStr(type));
+}
+
+
+/**
+ * Gibt die Beschreibung eines Operation-Types zurück.
+ *
+ * @param  int type - Operation-Type
+ *
+ * @return string - Beschreibung oder Leerstring, falls ein Fehler auftrat
+ */
+string OperationTypeDescription(int type) {
+   switch (type) {
+      case OP_BUY      : return("Buy"       );
+      case OP_SELL     : return("Sell"      );
+      case OP_BUYLIMIT : return("Buy Limit" );
+      case OP_SELLLIMIT: return("Sell Limit");
+      case OP_BUYSTOP  : return("Stop Buy"  );
+      case OP_SELLSTOP : return("Stop Sell" );
+      case OP_BALANCE  : return("Balance"   );
+      case OP_CREDIT   : return("Credit"    );
+      case OP_UNDEFINED: return("undefined" );
+   }
+   return(_EMPTY_STR(catch("OperationTypeDescription()  invalid parameter type = "+ type +" (not an operation type)", ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Alias
+ */
+string OrderTypeDescription(int type) {
+   return(OperationTypeDescription(type));
+}
+
+
+/**
  * Unterdrückt unnütze Compilerwarnungen.
  */
 void __DummyCalls() {
@@ -5210,14 +5439,18 @@ void __DummyCalls() {
    IsLibrary();
    IsLocalConfigKey(NULL, NULL);
    IsLogging();
+   IsLongTradeOperation(NULL);
    IsMqlDirectory(NULL);
    IsMqlFile(NULL);
    IsNaN(NULL);
    IsNaT(NULL);
+   IsPendingTradeOperation(NULL);
    IsScript();
    IsShortAccountCompany(NULL);
+   IsShortTradeOperation(NULL);
    IsSuperContext();
    IsTicket(NULL);
+   IsTradeOperation(NULL);
    LE(NULL, NULL);
    log(NULL);
    LT(NULL, NULL);
@@ -5225,12 +5458,18 @@ void __DummyCalls() {
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
    Max(NULL, NULL);
+   MessageBoxCmdToStr(NULL);
    Min(NULL, NULL);
+   ModuleTypeDescription(NULL);
    ModuleTypesToStr(NULL);
    MT4InternalMsg();
    NE(NULL, NULL);
+   OperationTypeDescription(NULL);
+   OperationTypeToStr(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
+   OrderTypeDescription(NULL);
+   OrderTypeToStr(NULL);
    PeriodToStr(NULL);
    PipValue();
    PipValueEx(NULL);
@@ -5280,6 +5519,7 @@ void __DummyCalls() {
    StrToBool(NULL);
    StrToMaMethod(NULL);
    StrToMovingAverageMethod(NULL);
+   StrToOperationType(NULL);
    SumInts(iNulls);
    Tester.IsPaused();
    Tester.IsStopped();
@@ -5360,7 +5600,6 @@ void __DummyCalls() {
    bool     IsDirectory(string filename);
    bool     IsFile(string filename);
    bool     IsIniKey(string fileName, string section, string key);
-   string   ModuleTypeDescription(int type);
    string   NumberToStr(double number, string format);
    bool     ReverseStringArray(string array[]);
    bool     SendSMS(string receiver, string message);
