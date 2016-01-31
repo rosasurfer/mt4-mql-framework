@@ -27,8 +27,8 @@ int onDeinit() {
  * @return int - Fehlerstatus
  */
 int onDeinitParameterChange() {
-   // RemoteOrders in Library zwischenspeichern, um in init() das Neuladen zu sparen
-   if (ChartInfos.CopyRemoteOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
+   // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
+   if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
@@ -41,8 +41,8 @@ int onDeinitParameterChange() {
  * @return int - Fehlerstatus
  */
 int onDeinitChartChange() {
-   // RemoteOrders in Library zwischenspeichern, um in init() das Neuladen zu sparen
-   if (ChartInfos.CopyRemoteOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
+   // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
+   if (ChartInfos.CopyLfxOrders(true, lfxOrders, lfxOrders.iCache, lfxOrders.dCache) == -1)
       return(SetLastError(ERR_RUNTIME_ERROR));
    return(NO_ERROR);
 }
@@ -57,8 +57,8 @@ int onDeinitChartChange() {
 int onDeinitRemove() {
    // Profilwechsel oder Terminal-Shutdown
 
-   // gecachte RemoteOrder-Daten speichern
-   if (!SaveRemoteOrderCache())
+   // gecachte LFX-Orderdaten speichern
+   if (!SaveLfxOrderCache())
       return(last_error);
    return(NO_ERROR);
 }
@@ -71,8 +71,8 @@ int onDeinitRemove() {
  * @return int - Fehlerstatus
  */
 int onDeinitRecompile() {
-   // gecachte RemoteOrder-Daten speichern
-   if (!SaveRemoteOrderCache())
+   // gecachte LFX-Orderdaten speichern
+   if (!SaveLfxOrderCache())
       return(last_error);
    return(NO_ERROR);
 }

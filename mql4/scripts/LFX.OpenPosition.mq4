@@ -216,7 +216,7 @@ int onStart() {
       return(catch("onStart(5)"));
 
    // TODO: Fehler im Marker, wenn gleichzeitig zwei Orderdialoge aufgerufen und gehalten werden (2 x CHF.3)
-   int    magicNumber = CreateMagicNumber();
+   int    magicNumber = LFX.CreateMagicNumber(lfxOrders, lfxCurrency);
    int    marker      = LFX.GetMaxOpenOrderMarker(lfxOrders, lfxCurrencyId) + 1;
    string comment     = lfxCurrency +"."+ marker;
 
@@ -238,9 +238,8 @@ int onStart() {
       datetime expiration  = NULL;
       color    markerColor = CLR_NONE;
       int      oeFlags     = NULL;
-                                                                     // vor Trade-Request alle evt. aufgetretenen Fehler abfangen
-      if (IsError(stdlib.GetLastError())) return(_last_error(SetLastError(stdlib.GetLastError()), ReleaseLock(mutex)));
-      if (IsError(catch("onStart(6)")))   return(_last_error(                                     ReleaseLock(mutex)));
+                                                                     // vor Trade-Request auf evt. aufgetretene Fehler prüfen
+      if (IsError(catch("onStart(6)"))) return(_last_error(ReleaseLock(mutex)));
 
       /*ORDER_EXECUTION*/int oe[]; InitializeByteBuffer(oe, ORDER_EXECUTION.size);
       tickets[i] = OrderSendEx(symbols[i], directions[i], roundedLots[i], price, slippage, sl, tp, comment, magicNumber, expiration, markerColor, oeFlags, oe);
@@ -286,45 +285,6 @@ int onStart() {
 
       return(false);
    return(last_error);
-}
-
-
-/**
- * Generiert aus den internen Daten einen Wert für OrderMagicNumber().
- *
- * @return int - MagicNumber oder NULL, falls ein Fehler auftrat
- */
-int CreateMagicNumber() {
-   int iStrategy = STRATEGY_ID & 0x3FF << 22;                        // 10 bit (Bits 23-32)
-   int iCurrency = GetCurrencyId(lfxCurrency) & 0xF << 18;           //  4 bit (Bits 19-22)
-   int iInstance = CreateInstanceId() & 0x3FF << 4;                  // 10 bit (Bits  5-14)
-   return(iStrategy + iCurrency + iInstance);
-}
-
-
-/**
- * Erzeugt eine neue Instanz-ID.
- *
- * @return int - Instanz-ID im Bereich 1-1023 (10 bit)
- */
-int CreateInstanceId() {
-   int size=ArrayRange(lfxOrders, 0), id, ids[];
-   ArrayResize(ids, 0);
-
-   for (int i=0; i < size; i++) {
-      ArrayPushInt(ids, LFX.InstanceId(los.Ticket(lfxOrders, i)));
-   }
-
-   MathSrand(GetTickCount());
-   while (!id) {
-      id = MathRand();
-      while (id > 1023) {
-         id >>= 1;
-      }
-      if (IntInArray(ids, id))                                       // sicherstellen, daß die ID nicht gerade benutzt wird
-         id = 0;
-   }
-   return(id);
 }
 
 

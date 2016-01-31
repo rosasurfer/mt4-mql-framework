@@ -885,17 +885,17 @@ string BoolsToStr(bool values[][], string separator=", ") {
 
 
 /**
- * Speichert RemoteOrder-Daten in der Library oder restauriert sie aus in der Library gespeicherten Daten.
+ * Speichert LFX-Orderdaten in der Library oder restauriert sie aus in der Library gespeicherten Daten.
  *
- * @param  bool   store    - Richtung: TRUE  = kopiert aus den Parametern in die Library;
- *                                     FALSE = kopiert aus der Library in die Parameter
- * @param  int    orders[] - RemoteOrders
- * @param  int    iData [] - Integer-Daten
- * @param  double dData [] - Double-Daten
+ * @param  _IN_     bool   store    - Richtung: TRUE  = kopiert aus den Parametern in die Library;
+ *                                              FALSE = kopiert aus der Library in die Parameter
+ * @param  _IN_OUT_ int    orders[] - LFX-Orders
+ * @param  _IN_OUT_ int    iData [] - Integer-Daten
+ * @param  _IN_OUT_ double dData [] - Double-Daten
  *
  * @return int - Anzahl der kopierten Orders oder -1 (EMPTY), falls ein Fehler auftrat
  */
-int ChartInfos.CopyRemoteOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], double dData[][]) {
+int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], double dData[][]) {
    store = store!=0;
 
    static int    static.orders[][LFX_ORDER.intSize];
@@ -911,7 +911,7 @@ int ChartInfos.CopyRemoteOrders(bool store, /*LFX_ORDER*/int orders[][], int iDa
       if (ArrayRange(iData,  0) > 0) ArrayCopy(static.iData,  iData );
       if (ArrayRange(dData,  0) > 0) ArrayCopy(static.dData,  dData );
 
-      if (IsError(catch("ChartInfos.CopyRemoteOrders(1)")))
+      if (IsError(catch("ChartInfos.CopyLfxOrders(1)")))
          return(EMPTY);
    }
    else {
@@ -923,7 +923,7 @@ int ChartInfos.CopyRemoteOrders(bool store, /*LFX_ORDER*/int orders[][], int iDa
       if (ArrayRange(static.iData,  0) > 0) ArrayCopy(iData,  static.iData );
       if (ArrayRange(static.dData,  0) > 0) ArrayCopy(dData,  static.dData );
 
-      if (IsError(catch("ChartInfos.CopyRemoteOrders(2)")))
+      if (IsError(catch("ChartInfos.CopyLfxOrders(2)")))
          return(EMPTY);
    }
 

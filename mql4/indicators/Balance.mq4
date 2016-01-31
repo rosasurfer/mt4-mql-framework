@@ -24,8 +24,7 @@ double iBalance[];
  */
 int onInit() {
    // ERS_TERMINAL_NOT_YET_READY abfangen
-   if (!GetAccountNumber())
-      return(SetLastError(stdlib.GetLastError()));
+   if (!GetAccountNumber()) return(SetLastError(stdlib.GetLastError()));
 
    SetIndexBuffer(0, iBalance);
    SetIndexLabel (0, "Balance");

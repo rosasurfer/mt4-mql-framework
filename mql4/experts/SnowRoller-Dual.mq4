@@ -222,12 +222,7 @@ bool IsStartSignal(int direction) {
       string maMethod    = start.trend.method;
 
       int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
-      if (!trend) {
-         int error = stdlib.GetLastError();
-         if (IsError(error))
-            SetLastError(error);
-         return(false);
-      }
+      if (!trend) return(false);
 
       if ((direction==D_LONG && trend==1) || (direction==D_SHORT && trend==-1)) {
          if (__LOG) log(StringConcatenate("IsStartSignal(1)  start signal \"", start.trend.condition.txt, "\" ", ifString(trend > 0, "up", "down")));

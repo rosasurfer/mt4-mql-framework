@@ -1146,12 +1146,8 @@ bool IsStartSignal() {
             string maMethod    = start.trend.method;
 
             int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
-            if (!trend) {
-               int error = stdlib.GetLastError();
-               if (IsError(error))
-                  SetLastError(error);
-               return(false);
-            }
+            if (!trend) return(false);
+
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
                if (__LOG) log(StringConcatenate("IsStartSignal(1)  start condition \"", start.trend.condition.txt, "\" met"));
                return(true);
@@ -1310,12 +1306,8 @@ bool IsStopSignal() {
             string maMethod    = stop.trend.method;
 
             int trend = icMovingAverage(timeframe, maPeriods, maTimeframe, maMethod, "Close", MovingAverage.MODE_TREND, 1);
-            if (!trend) {
-               int error = stdlib.GetLastError();
-               if (IsError(error))
-                  SetLastError(error);
-               return(false);
-            }
+            if (!trend) return(false);
+
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
                if (__LOG) log(StringConcatenate("IsStopSignal(1)  stop condition \"", stop.trend.condition.txt, "\" met"));
                return(true);
@@ -3408,9 +3400,7 @@ bool ResolveStatusLocation() {
 
       // (2.3) ohne StatusLocation: ...dann Unterverzeichnisse des jeweiligen Symbols durchsuchen
       directory = StringConcatenate(directory, StdSymbol(), "\\");
-      int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY);
-      if (size == -1)
-         return(!SetLastError(stdlib.GetLastError()));
+      int size = FindFileNames(directory +"*", subdirs, FF_DIRSONLY); if (size == -1) return(!SetLastError(stdlib.GetLastError()));
       //debug("ResolveStatusLocation()  subdirs="+ StringsToStr(subdirs, NULL));
 
       for (int i=0; i < size; i++) {
@@ -3462,8 +3452,7 @@ bool ResolveStatusLocation.FindFile(string directory, string &lpFile) {
    string files[];
 
    int size = FindFileNames(filePattern, files, FF_FILESONLY);                   // Dateien suchen, die den Sequenznamen enthalten und mit "set" enden
-   if (size == -1)
-      return(!SetLastError(stdlib.GetLastError()));
+   if (size == -1) return(!SetLastError(stdlib.GetLastError()));
 
    //debug("ResolveStatusLocation.FindFile()  "+ size +" results for \""+ filePattern +"\"");
 
@@ -3810,9 +3799,7 @@ bool RestoreStatus() {
 
    // (3) Datei einlesen
    string lines[];
-   int size = FileReadLines(fileName, lines, true);
-   if (size < 0)
-      return(!SetLastError(stdlib.GetLastError()));
+   int size = FileReadLines(fileName, lines, true); if (size < 0) return(!SetLastError(stdlib.GetLastError()));
    if (size == 0) {
       FileDelete(fileName);
       return(_false(catch("RestoreStatus(4)  no status for sequence "+ ifString(IsTest(), "T", "") + sequenceId +" not found", ERR_RUNTIME_ERROR)));

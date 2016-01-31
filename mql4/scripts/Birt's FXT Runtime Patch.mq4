@@ -35,9 +35,7 @@ extern bool   Use.Variable.Spread.Files      = false;
  * @return int - Fehlerstatus
  */
 int onStart() {
-   int version = GetTerminalBuild();
-   if (!version)
-      return(SetLastError(stdlib.GetLastError()));
+   int version = GetTerminalBuild(); if (!version) return(SetLastError(stdlib.GetLastError()));
 
    Print("MT4 build "+ version +" detected.");
 

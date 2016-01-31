@@ -19,8 +19,7 @@ int onStart() {
    files[0] = GetGlobalConfigPath(); if (!StringLen(files[0])) return(SetLastError(stdlib.GetLastError()));
    files[1] = GetLocalConfigPath();  if (!StringLen(files[1])) return(SetLastError(stdlib.GetLastError()));
 
-   if (!EditFiles(files))
-      return(SetLastError(stdlib.GetLastError()));
+   if (!EditFiles(files)) return(SetLastError(stdlib.GetLastError()));
 
    return(catch("onStart(1)"));
 }
